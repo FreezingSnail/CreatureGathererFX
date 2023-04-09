@@ -20,4 +20,4 @@ jobs:
       run: cd build && ./build.sh
   
     - name: test
-      run: cd build & ./test.sh
+      run: cd build && ./test.sh
