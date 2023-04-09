@@ -14,10 +14,11 @@ jobs:
       uses: actions/checkout@v3
 
     - name: Install gtest manually
-      run: ls && ./setup.sh
+      run: ./setup.sh
 
     - name: configure
       run: cd build && ./build.sh
 
-    - name: test
-      run: ls && cd build && ./test.sh
+  test:
+      - name: test
+      run: cd build && ./test.sh
