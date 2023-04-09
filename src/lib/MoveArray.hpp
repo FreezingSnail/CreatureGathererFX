@@ -1,5 +1,6 @@
 #pragma once
-#include "Moves.h"
+#include <stdint.h>
+#include "Moves.hpp"
 
 
 static const uint8_t moveList[8] =	{ m00, m01, m02, m03, m04, m05, m06, m07 /*, m01, m01, m01, m01, m01, m01, m01, m01, m01, m01, m01, m01, m01, m01, m01, m01, m01, m01, m01, m01, m01, m01, m01, m01 */};

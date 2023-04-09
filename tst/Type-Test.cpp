@@ -1,5 +1,5 @@
 #include "gtest/gtest.h"
-#include "lib/TypeTable.h"
+#include "lib/TypeTable.hpp"
 
 TEST(MatchupTest, Typematchups) {
     //arrange

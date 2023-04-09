@@ -1,6 +1,6 @@
 #pragma once
 
-#include "//lib/TypeTable.h"
+#include "lib/TypeTable.hpp"
 
 typedef struct monsterSeed{
 
@@ -29,7 +29,7 @@ class Monster{
 			uint8_t moves[4];
 			stats_t statlist;
 
-            Load(monsterSeed_t seed)
+            void Load(monsterSeed_t seed);
 			Monster(uint32_t seed);
 			
 			uint8_t getType(); //seed.monsterid >>5 
