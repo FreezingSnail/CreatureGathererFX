@@ -9,7 +9,7 @@ This doc details plans / designs / layouts of:
 - 
 ## Opponents
 
-Actor storage class that holds 3 monster instances 
+Actor storage class that holds 3 Creature instances 
 
 ## Character 
 Extension of the actor that 
@@ -18,18 +18,18 @@ Extension of the actor that
 
 ## Matches
 
-## Monsters 
+## Creatures 
 
-Monster class is repsonsible for transforms program data into in memory representation
+Creature class is repsonsible for transforms program data into in memory representation
 
 ### Key Features
 
-### Monster  Progmem layout
-Monster seed used to generate in memory representations 
+### Creature  Progmem layout
+Creature seed used to generate in memory representations 
 
 |    |           |   |
 |----|-----------|---|
-|type|   monster | id|
+|type|  Creature | id|
 |000 |   00000   |   |
 
 |      |       |        |        |
@@ -37,8 +37,8 @@ Monster seed used to generate in memory representations
 |0000  |  0000 |   0000 |    0000|
 |atk   |  def  |   hp   |   speed|
 
-32bit flip of allowed moves per monster
+32bit flip of allowed moves per Creature
 
-Monster:
+Creature:
 
 type, Id, stats, move pool

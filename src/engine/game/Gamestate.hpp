@@ -1,11 +1,11 @@
 #pragma once
-#include "monster/Monster.hpp"
+#include "Creature/Creature.hpp"
 #include "item/Item.hpp"
 
 class GameState {
     private:
-    Monster OwnedMons[32];
-    Monster* currentParty[3];
+    Creature OwnedMons[32];
+    Creature* currentParty[3];
     uint8_t trophies; //bitarray for competeion tracking
     Item items[8];
 };

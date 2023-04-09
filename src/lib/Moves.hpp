@@ -1,4 +1,5 @@
 #pragma once
+#include <stdint.h>
 
 //move 
 // 00    000    000    
@@ -8,7 +9,7 @@
 /******************
  * Array moves[move id]
  * 
- * Array Monster moves[monster id][move list]
+ * Array Creature moves[Creature id][move list]
  * 
  * 
  * 

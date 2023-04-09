@@ -39,6 +39,7 @@ void BattleEngine::endEncounter() {
 
 void BattleEngine::getInput() {
     #ifdef DEBUG
+    //cli interface
     std::cout << "1-4 attacks. 5 item, 6 switch, 7 run" << std::endl;
     std::string input;
     std::cin >> input;

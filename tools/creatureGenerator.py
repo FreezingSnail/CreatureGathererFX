@@ -1,9 +1,9 @@
 import csv
 #cat this to a file lol
 print("#pragma once")
-print("static const monsterSeed_t monsterData[32] = { ")
+print("static const CreatureSeed_t CreatureData[32] = { ")
 
-with open('data/monstersheet', newline='') as csvfile:
+with open('data/Creaturesheet', newline='') as csvfile:
     reader = csv.DictReader(csvfile, delimiter='\t', quotechar='|')
     for row in reader:
         print(" { ", end='')
