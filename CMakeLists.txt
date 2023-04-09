@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 3.10)
 project(ArdumonFX)
+if (USE_DEBUG)
+  add_definitions(-DDEBUG)
+endif()
+
 
 set(CMAKE_CXX_STANDARD 14)
 
