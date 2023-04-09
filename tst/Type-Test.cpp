@@ -9,6 +9,5 @@ TEST(MatchupTest, Typematchups) {
     ASSERT_EQ (getMatchupModifier(1, 0),  1);
     ASSERT_EQ (getMatchupModifier(0, 1),  2);
     ASSERT_EQ (getMatchupModifier(1, 3),  3);
-    ASSERT_EQ(1,0);
 
 }
