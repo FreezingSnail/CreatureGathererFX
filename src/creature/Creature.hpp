@@ -47,6 +47,11 @@ class Creature{
 			uint8_t getHpStatSeed();
 			uint8_t getSpdStatSeed();
 
+			uint8_t getAtkStat();
+			uint8_t getDefStat();
+			uint8_t getHpStat();
+			uint8_t getSpdStat();
+
 			void printStats();
 
 

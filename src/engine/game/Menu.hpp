@@ -1,4 +1,5 @@
 #pragma once
+#include "action/Action.hpp"
 
 class Menu{
     enum state {
@@ -8,4 +9,5 @@ class Menu{
 
     public:
         Menu();
+        Action actionInput();
 };

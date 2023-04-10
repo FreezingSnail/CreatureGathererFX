@@ -62,6 +62,7 @@ void BattleEngine::getInput() {
     #endif
 
     // arduboy input from menu
+    this->playerAction = this->menu->actionInput();
 }
 
 void BattleEngine::opponentInput() {
@@ -78,3 +79,11 @@ void BattleEngine::opponentInput() {
         void BattleEngine::printEncounter() {
         }
 #endif
+
+void BattleEngine::LoadPlayer(Creature* playerParty[3]) {
+    
+    for(uint8_t i = 0; i < 3; i++) {
+        this->playerParty[i] = playerParty[i];
+        this->playerHealths[i] = this->playerParty[i]->getHpStat();
+    }
+}
