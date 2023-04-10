@@ -58,3 +58,20 @@ uint8_t Creature::getSpdStatSeed() {
 
 void Creature::printStats() {
 }
+
+uint8_t Creature::getAtkStat() {
+	uint8_t returnValue;
+	return returnValue;
+}
+uint8_t Creature::getDefStat() {
+	uint8_t returnValue;
+	return returnValue;
+}
+uint8_t Creature::getHpStat() {
+	uint8_t returnValue;
+	return returnValue;
+}
+uint8_t Creature::getSpdStat() {
+	uint8_t returnValue;
+	return returnValue;
+}
