@@ -10,11 +10,6 @@ void Creature::Load(CreatureSeed_t seed) {
 
 }
 
-uint8_t Creature::getType() {
-	uint8_t returnValue;
-	return returnValue;
-}
-
 void Creature::changeMove(uint8_t slot, uint8_t newMove) {
 }
 

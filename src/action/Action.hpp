@@ -11,6 +11,7 @@ typedef enum ActionType {
 
 class Action {
     public:
+        uint8_t priority;
         ActionType_t actionType;
 
         void setActionType(ActionType_t);

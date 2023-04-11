@@ -1,4 +1,5 @@
 #include "Battle.hpp"
+#include "Creature.hpp"
 #define DEBUG
 
 BattleEngine::BattleEngine() {
@@ -23,6 +24,27 @@ void BattleEngine::startEncounter() {
 void BattleEngine::turnTick() {
     this->getInput();
     this->opponentInput();
+    int8_t order = this->playerAction.priority != this->opponentAction.priority;
+    if(order > 0){
+        //player first
+        this->commitAction(&this->playerAction, this->playerCur, this->opponentCur);
+        this->commitAction(&this->opponentAction, this->opponentCur, this->playerCur);
+    } else if (order < 0) {
+        //opponent first
+        this->commitAction(&this->opponentAction, this->opponentCur, this->playerCur);
+        this->commitAction(&this->playerAction, this->playerCur, this->opponentCur);
+    } else {
+        order = this->playerCur->getSpdStat() - this->opponentCur->getSpdStat();
+        if(order > 0 || order == 0){
+            this->commitAction(&this->playerAction, this->playerCur, this->opponentCur);
+            this->commitAction(&this->opponentAction, this->opponentCur, this->playerCur);
+
+        } else if (order < 0) {
+            //opponent first
+            this->commitAction(&this->opponentAction, this->opponentCur, this->playerCur);
+            this->commitAction(&this->playerAction, this->playerCur, this->opponentCur);
+        }
+    }
 }
 
 bool BattleEngine::checkLoss() {
@@ -30,7 +52,6 @@ bool BattleEngine::checkLoss() {
 }
 
 bool BattleEngine::checkWin() {
-   
     return uint8_t(this->awakeMons & 0b00000111) == uint8_t(0) ;
 }
 
@@ -38,31 +59,8 @@ void BattleEngine::endEncounter() {
 }
 
 void BattleEngine::getInput() {
-    #ifdef DEBUG
-    //cli interface
-    std::cout << "1-4 attacks. 5 item, 6 switch, 7 run" << std::endl;
-    std::string input;
-    std::cin >> input;
-
-    switch(std::stoi(input)){
-        case 1:
-        case 2:
-        case 3:
-        case 4:
-            this->playerAction.setActionType(ActionType_t::ATTACK);
-            break;
-        case 5:
-        case 6:
-        case 7:
-        default:
-            break;
-    }
-
-
-    #endif
-
     // arduboy input from menu
-    this->playerAction = this->menu->actionInput();
+    this->menu->actionInput(&this->playerAction);
 }
 
 void BattleEngine::opponentInput() {
@@ -86,4 +84,38 @@ void BattleEngine::LoadPlayer(Creature* playerParty[3]) {
         this->playerParty[i] = playerParty[i];
         this->playerHealths[i] = this->playerParty[i]->getHpStat();
     }
+}
+
+void BattleEngine::commitAction(Action* action, Creature* commiter, Creature* reciever) {
+    switch (action->actionType) {
+    case ActionType_t::ATTACK:
+        uint16_t damage = calculateDamage(action, commiter, reciever);
+        applyDamage(damage, reciever);
+        break;
+    case ActionType_t::ITEM:
+        break;
+    case ActionType_t::CHANGE:
+        break;
+    case ActionType_t::ESCAPE:
+        // should add a check in here for opponent vs random encounter
+        this->endEncounter();
+        break;
+    
+    default:
+        break;
+    }
+}
+
+uint16_t calculateDamage(Action* action, Creature* committer, Creature* reciever) {
+
+}
+
+void BattleEngine::applyDamage(uint16_t damage, Creature* reciever) {
+    if( reciever == this->playerCur) {
+        this->playerHealths[this->playerIndex] -= damage;
+    } else {
+        this->opponentHealths[this->opponentIndex] -= damage;
+
+    }
+
 }

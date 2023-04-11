@@ -9,11 +9,13 @@ class BattleEngine {
     private:
         Creature* playerParty[3];
         Creature opponent[3];
-        int playerHealths[3];
-        int oponentHealths[3];
+        uint16_t playerHealths[3];
+        uint16_t opponentHealths[3];
         uint8_t awakeMons; //11100111 player and opponet bit array
         Creature* playerCur;
-        Creature* opponentCur;
+        Creature* opponentCur; 
+        uint8_t playerIndex;
+        uint8_t opponentIndex;
         Action playerAction;
         Action opponentAction;
         Menu* menu;
@@ -43,6 +45,10 @@ class BattleEngine {
         bool checkLoss();
 
         bool checkWin();
+
+        void commitAction(Action* action, Creature* commiter, Creature* receiver) ;
+
+        void applyDamage(uint16_t damage, Creature* receiver);
 
 
 
