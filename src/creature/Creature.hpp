@@ -24,6 +24,7 @@ class Creature{
 
 	public:
 			CreatureSeed_t seed;
+			Type_t type;
 			uint8_t level;
 			uint8_t type;
 			uint8_t moves[4];
@@ -33,7 +34,6 @@ class Creature{
 			Creature();
 			Creature(uint32_t seed);
 			
-			uint8_t getType(); //seed.Creatureid >>5 
 			void changeMove(uint8_t slot, uint8_t newMove);
 			void setStats();
 

@@ -9,5 +9,5 @@ class Menu{
 
     public:
         Menu();
-        Action actionInput();
+        void actionInput(Action* action);
 };
