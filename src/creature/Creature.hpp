@@ -23,18 +23,20 @@ typedef struct stats{
 class Creature{
 
 	public:
-			CreatureSeed_t seed;
+			CreatureSeed_t* seed;
 			Type_t type;
 			uint8_t level;
+			
+			// Moves are held as an index to the move array 
 			uint8_t moves[4];
 			stats_t statlist;
 
-            void Load(CreatureSeed_t seed);
+            void Load(CreatureSeed_t* seed);
 			Creature();
-			Creature(uint32_t seed);
 			
 			void changeMove(uint8_t slot, uint8_t newMove);
 			void setStats();
+			void setMoves(uint8_t moves[4]);
 
 			uint8_t getAdvantage(Type_t opponent);  //finds best advantage
 
@@ -52,7 +54,9 @@ class Creature{
 			uint8_t getSpdStat();
 			
 
-			void printStats();
+			#ifdef DEBUG
+				void printStats();
+			#endif
 
 
 };

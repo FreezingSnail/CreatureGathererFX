@@ -9,9 +9,11 @@ uint16_t calculateDamage(Action* action, Creature* committer, Creature* reciever
     //need to do something here with atk def stats
     uint8_t move = committer->moves[action->actionIndex];
     uint8_t mod = getMatchupModifier(getMoveType(move), uint8_t(reciever->type));
+    uint8_t power = getMovePower(move);
 
     
-    return 0;
+    // going too need to balance this eventually
+    return (power * committer->getAtkStat() / reciever->getDefStat()) * mod;
 }
 
 BattleEngine::BattleEngine() {
