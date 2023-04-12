@@ -1,16 +1,19 @@
 #include "Menu.hpp"
 #include "action/Action.hpp"
+#define DEBUG
 #ifdef DEBUG
+    #include <iostream>
+#endif
 
 Menu::Menu() {
 }
 
 void Menu::actionInput(Action* action) {
-    Action playerAction
+
     #ifdef DEBUG
     //cli interface
     std::cout << "1-4 attacks. 5 item, 6 switch, 7 run" << std::endl;
-    std::string input;
+    std::string input = "";
     std::cin >> input;
 
     switch(std::stoi(input)){
@@ -18,16 +21,16 @@ void Menu::actionInput(Action* action) {
         case 2:
         case 3:
         case 4:
-            action setActionType(ActionType_t::ATTACK);
+            action->setActionType(ActionType_t::ATTACK);
             break;
         case 5:
-            action setActionType(ActionType_t::ITEM);
+            action->setActionType(ActionType_t::ITEM);
             break;
         case 6:
-            action setActionType(ActionType_t::SWITCH;
+            action->setActionType(ActionType_t::CHANGE);
             break;
         case 7:
-            action setActionType(ActionType_t::ESCAPE);
+            action->setActionType(ActionType_t::ESCAPE);
             break;
         default:
             break;
@@ -35,6 +38,4 @@ void Menu::actionInput(Action* action) {
 
 
     #endif
-    Action returnValue;
-    return returnValue;
 }

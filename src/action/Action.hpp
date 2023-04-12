@@ -1,4 +1,5 @@
 #pragma once
+#include <stdint.h>
 
 // This is an encounter action
 // attack, change, item, escape

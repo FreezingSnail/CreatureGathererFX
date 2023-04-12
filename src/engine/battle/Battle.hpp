@@ -2,7 +2,7 @@
 #define DEBUG
 #include "creature/Creature.hpp"
 #include "action/Action.hpp"
-#include "game/Menu.hpp"
+#include "engine/game/Menu.hpp"
 
 
 class BattleEngine {
