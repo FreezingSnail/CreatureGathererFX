@@ -3,6 +3,7 @@
 #include "creature/Creature.hpp"
 #include "action/Action.hpp"
 #include "engine/game/Menu.hpp"
+#include "opponent/Opponent.hpp"
 
 
 class BattleEngine {
@@ -28,7 +29,7 @@ class BattleEngine {
 
         void LoadPlayer(Creature* playerParty[3]);
 
-        void LoadOpponent();
+        void LoadOpponent(Opponent* opponent);
 
         void startEncounter();
 

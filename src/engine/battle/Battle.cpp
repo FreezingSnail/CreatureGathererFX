@@ -1,8 +1,16 @@
 #include "Battle.hpp"
 #include "creature/Creature.hpp"
+#include "opponent/Opponent.hpp"
+#include "lib/TypeTable.hpp"
+#include "lib/Move.hpp"
 #define DEBUG
 
 uint16_t calculateDamage(Action* action, Creature* committer, Creature* reciever) {
+    //need to do something here with atk def stats
+    uint8_t move = committer->moves[action->actionIndex];
+    uint8_t mod = getMatchupModifier(getMoveType(move), uint8_t(reciever->type));
+
+    
     return 0;
 }
 
@@ -19,12 +27,13 @@ void BattleEngine::Encounter() {
 }
 
 
-void BattleEngine::LoadOpponent() {
+void BattleEngine::LoadOpponent(Opponent* opponent) {
 }
 
 void BattleEngine::startEncounter() {
 }
 
+//this function is terrible
 void BattleEngine::turnTick() {
     this->getInput();
     this->opponentInput();

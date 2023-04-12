@@ -36,6 +36,5 @@ void Menu::actionInput(Action* action) {
             break;
     }
 
-
     #endif
 }

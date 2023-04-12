@@ -50,6 +50,7 @@ class Creature{
 			uint8_t getDefStat();
 			uint8_t getHpStat();
 			uint8_t getSpdStat();
+			
 
 			void printStats();
 
