@@ -30,6 +30,7 @@ void BattleEngine::Encounter() {
 
 
 void BattleEngine::LoadOpponent(Opponent* opponent) {
+
 }
 
 void BattleEngine::startEncounter() {
