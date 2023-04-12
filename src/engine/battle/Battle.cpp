@@ -28,7 +28,9 @@ void BattleEngine::Encounter() {
 }
 
 
-void BattleEngine::LoadOpponent(Opponent* opponent) {
+void BattleEngine::LoadOpponent(OpponentSeed* seed) {
+    this->opponent->load(seed);
+
 
 }
 

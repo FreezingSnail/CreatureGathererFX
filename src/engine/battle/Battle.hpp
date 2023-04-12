@@ -28,7 +28,7 @@ class BattleEngine {
 
         void LoadPlayer(Creature* playerParty[3]);
 
-        void LoadOpponent(Opponent* opponent);
+        void LoadOpponent(OpponentSeed* seed);
 
         void startEncounter();
 
