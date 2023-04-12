@@ -1,2 +1,2 @@
-cmake .. -DCMAKE_BUILD_TYPE=Debug -G "Unix Makefiles"
+cmake -DUSE_DEBUG=ON .
 make all

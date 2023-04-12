@@ -1,5 +1,4 @@
 #pragma once
-#define DEBUG
 #include "creature/Creature.hpp"
 #include "action/Action.hpp"
 #include "engine/game/Menu.hpp"
