@@ -51,6 +51,10 @@ TEST(BattleEngineTests, checkLossTrue) {
     BattleEngine eng = BattleEngine();
     eng.loadAwakeMons(0b00000000);
     ASSERT_EQ (eng.checkLoss(),true);
+    eng.loadAwakeMons(0b00000010);
+    ASSERT_EQ (eng.checkLoss(),true);
+    eng.loadAwakeMons(0b00000100);
+    ASSERT_EQ (eng.checkLoss(),true);
 }
 
 TEST(BattleEngineTests, ApplyDamage) {
