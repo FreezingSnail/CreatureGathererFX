@@ -1,10 +1,18 @@
 
 #include "Creature.hpp"
+#include "opponent/OpponentSeed.hpp"
 
 uint8_t seedToStat(uint8_t seed) {
 	// Need to do some math here to scale a 4 bit number to 8
 	return seed;
 }
+
+//This will need to load the creature seed from the progmemstore
+CreatureSeed_t* getCreatureFromStore(uint8_t id) {
+	CreatureSeed_t* ptr;
+	return ptr;
+}
+
 
 Creature::Creature() {
 	this->statlist.attack = 0;
@@ -13,10 +21,23 @@ Creature::Creature() {
 	this->statlist.health = 0;
 }
 
-void Creature::Load(CreatureSeed_t* seed) {
+void Creature::load(CreatureSeed_t* seed) {
 	this->seed = seed;
 	this->setStats();
+	//Need some kind of default setting for moves ?
 
+}
+
+//00,id1,lvl1,move11,move12,move13,move14,
+void Creature::loadFromOpponentSeed(uint32_t seed){
+	CreatureSeed_t* cSeed = getCreatureFromStore(parseOpponentCreatureSeedID(seed));
+	this->load(cSeed);
+	this->level = parseOpponentCreatureSeedlvl(seed);
+	this->setMove(parseOpponentCreatureSeedMove(seed, 0), 0);
+	this->setMove(parseOpponentCreatureSeedMove(seed, 1), 1);
+	this->setMove(parseOpponentCreatureSeedMove(seed, 2), 2);
+	this->setMove(parseOpponentCreatureSeedMove(seed, 3), 3);
+	this->setStats();
 }
 
 void Creature::changeMove(uint8_t slot, uint8_t newMove) {
@@ -31,10 +52,8 @@ void Creature::setStats() {
 }
 
 // should prob have error checking but w/e
-void Creature::setMoves(uint8_t moves[4]){
-	for(uint8_t i = 0; i < 4; i++) {
-		this->moves[i] = moves[i];
-	}
+void Creature::setMove(uint8_t move, uint8_t slot){
+	this->moves[slot] = move;
 
 }
 // some ai to find best advantage should move this out of this class though
