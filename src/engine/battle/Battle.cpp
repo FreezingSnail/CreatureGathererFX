@@ -1,6 +1,10 @@
 #include "Battle.hpp"
-#include "Creature.hpp"
+#include "creature/Creature.hpp"
 #define DEBUG
+
+uint16_t calculateDamage(Action* action, Creature* committer, Creature* reciever) {
+    return 0;
+}
 
 BattleEngine::BattleEngine() {
 }
@@ -88,10 +92,11 @@ void BattleEngine::LoadPlayer(Creature* playerParty[3]) {
 
 void BattleEngine::commitAction(Action* action, Creature* commiter, Creature* reciever) {
     switch (action->actionType) {
-    case ActionType_t::ATTACK:
+    case ActionType_t::ATTACK: {
         uint16_t damage = calculateDamage(action, commiter, reciever);
         applyDamage(damage, reciever);
         break;
+    }
     case ActionType_t::ITEM:
         break;
     case ActionType_t::CHANGE:
@@ -106,9 +111,6 @@ void BattleEngine::commitAction(Action* action, Creature* commiter, Creature* re
     }
 }
 
-uint16_t calculateDamage(Action* action, Creature* committer, Creature* reciever) {
-
-}
 
 void BattleEngine::applyDamage(uint16_t damage, Creature* reciever) {
     if( reciever == this->playerCur) {

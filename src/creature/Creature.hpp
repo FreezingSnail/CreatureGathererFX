@@ -26,7 +26,6 @@ class Creature{
 			CreatureSeed_t seed;
 			Type_t type;
 			uint8_t level;
-			uint8_t type;
 			uint8_t moves[4];
 			stats_t statlist;
 
