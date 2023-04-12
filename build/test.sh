@@ -1,1 +1,1 @@
-./tst/ArdumonFX_tst
+./tst/CreatureGathererFX_tst
