@@ -26,17 +26,18 @@ class Creature{
 			CreatureSeed_t* seed;
 			Type_t type;
 			uint8_t level;
-			
+
 			// Moves are held as an index to the move array 
 			uint8_t moves[4];
 			stats_t statlist;
 
-            void Load(CreatureSeed_t* seed);
+            void load(CreatureSeed_t* seed);
+			void loadFromOpponentSeed(uint32_t seed);
 			Creature();
 			
 			void changeMove(uint8_t slot, uint8_t newMove);
 			void setStats();
-			void setMoves(uint8_t moves[4]);
+			void setMove(uint8_t move, uint8_t slot);
 
 			uint8_t getAdvantage(Type_t opponent);  //finds best advantage
 
@@ -62,3 +63,11 @@ class Creature{
 };
 
 
+
+
+
+
+static const CreatureSeed_t CreatureData[32] = { 
+ { 0b00000000, 0b1111000010000010, 0b00010101111100000000000000000000 },
+ { 0b00000001, 0b1111100000100010, 0b00010101111100000001001000001111 },
+};

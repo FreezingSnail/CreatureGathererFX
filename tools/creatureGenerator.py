@@ -1,6 +1,7 @@
 import csv
 #cat this to a file lol
 print("#pragma once")
+print("#include \"creature/Creature.hpp\"")
 print("static const CreatureSeed_t CreatureData[32] = { ")
 
 with open('data/Creaturesheet', newline='') as csvfile:
