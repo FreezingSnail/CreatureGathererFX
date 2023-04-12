@@ -1,2 +1,2 @@
-cmake -DUSE_DEBUG=ON .
+cmake -DUSE_DEBUG=ON ..
 make all
