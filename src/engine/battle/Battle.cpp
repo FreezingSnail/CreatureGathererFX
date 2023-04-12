@@ -3,7 +3,6 @@
 #include "opponent/Opponent.hpp"
 #include "lib/TypeTable.hpp"
 #include "lib/Move.hpp"
-#define DEBUG
 
 uint16_t calculateDamage(Action* action, Creature* committer, Creature* reciever) {
     //need to do something here with atk def stats

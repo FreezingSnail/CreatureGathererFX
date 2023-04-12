@@ -1,6 +1,6 @@
 #include "Menu.hpp"
 #include "action/Action.hpp"
-#define DEBUG
+
 #ifdef DEBUG
     #include <iostream>
 #endif
