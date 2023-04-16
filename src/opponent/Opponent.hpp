@@ -12,7 +12,7 @@ class Opponent {
 
         // This should load information from PROGMEM
         Opponent();
-        void load(OpponentSeed* seed);
+        void load(OpponentSeed_t* seed);
 
-        void loadCreature(OpponentSeed* seed);
+        void loadCreature(OpponentSeed_t* seed);
 };

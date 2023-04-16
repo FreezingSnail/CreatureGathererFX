@@ -1,15 +1,14 @@
 #pragma once
 #include <stdint.h>
 
-struct OpponentSeed {
+typedef struct OpponentSeed {
 
     //id,lvl,move4,move3,move2,move1
     uint32_t firstCreature;
     uint32_t secondCreature;
-
     uint32_t thirdCreature;
 
-};
+}OpponentSeed_t;
 
 
 //id1,lvl1,move11,move12,move13,move14,
