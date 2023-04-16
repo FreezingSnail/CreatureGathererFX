@@ -1,6 +1,6 @@
-
-#include "Creature.hpp"
+#include "creature/Creature.hpp"
 #include "opponent/OpponentSeed.hpp"
+#include "data/Creatures.hpp"
 
 uint8_t seedToStat(uint8_t seed) {
 	// Need to do some math here to scale a 4 bit number to 8
@@ -9,8 +9,8 @@ uint8_t seedToStat(uint8_t seed) {
 
 //This will need to load the creature seed from the progmemstore
 CreatureSeed_t* getCreatureFromStore(uint8_t id) {
-	CreatureSeed_t* ptr;
-	return ptr;
+	return &(CreatureData[id]);
+	//return nullptr;
 }
 
 
@@ -99,7 +99,7 @@ uint8_t Creature::getSpdStat() {
 }
 
 
-#ifdef DEBUG
+#ifdef CLI
 #include <iostream>
 void Creature::printStats() {
 	std::cout << "atk: " << this->getAtkStat() << "def: " << this->getDefStat() << "spd: " << this->getSpdStat() << "hp: " << this->getHpStat() <<std::endl;

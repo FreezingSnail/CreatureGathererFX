@@ -1,7 +1,9 @@
 cmake_minimum_required(VERSION 3.10)
 project(CreatureGathererFX)
 if (USE_DEBUG)
-  add_definitions(-DDEBUG)
+  add_definitions(-DCLI)
+  set(CMAKE_BUILD_TYPE Debug)
+  set(CMAKE_BUILD_TYPE RelWithDebInfo)
 endif()
 
 

@@ -55,13 +55,9 @@ class Creature{
 			uint8_t getSpdStat();
 			
 
-			#ifdef DEBUG
+			#ifdef CLI
 				void printStats();
 			#endif
 
 
 };
-
-
-
-
