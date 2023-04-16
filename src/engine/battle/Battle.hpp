@@ -3,17 +3,20 @@
 #include "action/Action.hpp"
 #include "engine/game/Menu.hpp"
 #include "opponent/Opponent.hpp"
+#include "player/Player.hpp"
 
 
 class BattleEngine {
     private:
         Creature* playerParty[3];
-        Creature opponent[3];
+        Opponent opponent;
         uint16_t playerHealths[3];
         uint16_t opponentHealths[3];
         uint8_t awakeMons; //11100111 player and opponet bit array
+
         Creature* playerCur;
         Creature* opponentCur; 
+
         uint8_t playerIndex;
         uint8_t opponentIndex;
         Action playerAction;
@@ -24,13 +27,13 @@ class BattleEngine {
     public:
         BattleEngine();
 
-        void Encounter();
+        void encounter(Player* player, OpponentSeed* seed);
 
-        void LoadPlayer(Creature* playerParty[3]);
+        void loadPlayer(Player* player);
 
-        void LoadOpponent(OpponentSeed* seed);
+        void loadOpponent(OpponentSeed* seed);
 
-        void startEncounter();
+        void startEncounter(Player* player, OpponentSeed* seed);
 
         void endEncounter();
 

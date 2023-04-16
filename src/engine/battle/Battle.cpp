@@ -1,6 +1,7 @@
 #include "Battle.hpp"
 #include "creature/Creature.hpp"
 #include "opponent/Opponent.hpp"
+#include "player/Player.hpp"
 #include "lib/TypeTable.hpp"
 #include "lib/Move.hpp"
 
@@ -19,8 +20,8 @@ BattleEngine::BattleEngine() {
 }
 
 // battle loop
-void BattleEngine::Encounter() {
-    this->startEncounter();
+void BattleEngine::encounter(Player* player, OpponentSeed* seed) {
+    this->startEncounter(player, seed);
     while(!this->checkLoss() || !this->checkWin()) {
         this->turnTick();
     }
@@ -28,13 +29,22 @@ void BattleEngine::Encounter() {
 }
 
 
-void BattleEngine::LoadOpponent(OpponentSeed* seed) {
-    this->opponent->load(seed);
-
-
+void BattleEngine::loadOpponent(OpponentSeed* seed) {
+    this->opponent.load(seed);
 }
 
-void BattleEngine::startEncounter() {
+void BattleEngine::loadPlayer(Player* player) {
+    
+    for(uint8_t i = 0; i < 3; i++) {
+        this->playerParty[i] = &(player->party[i]);
+        // for now the hp will refil every encounter so we dont need to use the player field
+        //this->playerHealths[i] = player->creatureHPs[i];
+        this->playerHealths[i] = this->playerParty[i]->getHpStat();
+    }
+}
+
+void BattleEngine::startEncounter(Player* player, OpponentSeed* seed) {
+    loadOpponent(seed);
 }
 
 //this function is terrible
@@ -73,6 +83,10 @@ bool BattleEngine::checkWin() {
 }
 
 void BattleEngine::endEncounter() {
+
+    #ifdef DEBUG
+        std::cout << "end encounter /n";
+    #endif
 }
 
 void BattleEngine::getInput() {
@@ -82,6 +96,10 @@ void BattleEngine::getInput() {
 
 void BattleEngine::opponentInput() {
     // ai to select best move
+
+    //For now just do the first slot attack
+    this->opponentAction.setActionType(ActionType_t::ATTACK);
+    this->opponentAction.actionIndex = 1;
 }
 
 
@@ -95,17 +113,12 @@ void BattleEngine::opponentInput() {
         }
 #endif
 
-void BattleEngine::LoadPlayer(Creature* playerParty[3]) {
-    
-    for(uint8_t i = 0; i < 3; i++) {
-        this->playerParty[i] = playerParty[i];
-        this->playerHealths[i] = this->playerParty[i]->getHpStat();
-    }
-}
-
 void BattleEngine::commitAction(Action* action, Creature* commiter, Creature* reciever) {
     switch (action->actionType) {
     case ActionType_t::ATTACK: {
+        #ifdef DEBUG
+            std::cout << "Attacking with index " << action->actionIndex <<std::endl;
+        #endif
         uint16_t damage = calculateDamage(action, commiter, reciever);
         applyDamage(damage, reciever);
         break;

@@ -7,7 +7,7 @@ Opponent::Opponent(){
 }
 
 
-void Opponent::load(OpponentSeed* seed) {
+void Opponent::load(OpponentSeed_t* seed) {
     this->levels[0] = parseOpponentCreatureSeedlvl(seed->firstCreature);
     this->levels[1] = parseOpponentCreatureSeedlvl(seed->secondCreature);
     this->levels[2] = parseOpponentCreatureSeedlvl(seed->thirdCreature);

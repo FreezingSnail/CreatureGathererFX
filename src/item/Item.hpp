@@ -3,4 +3,4 @@
 
 class Item {
     uint8_t count;
-}
+};
