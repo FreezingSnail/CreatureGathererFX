@@ -23,6 +23,9 @@ BattleEngine::BattleEngine() {
 void BattleEngine::encounter(Player* player, OpponentSeed* seed) {
     this->startEncounter(player, seed);
     while(!this->checkLoss() || !this->checkWin()) {
+        #ifdef CLI
+            this->printEncounter();
+        #endif
         this->turnTick();
     }
     this->endEncounter();
@@ -31,20 +34,30 @@ void BattleEngine::encounter(Player* player, OpponentSeed* seed) {
 
 void BattleEngine::loadOpponent(OpponentSeed* seed) {
     this->opponent.load(seed);
+    this->opponentIndex = 0;
+    this->opponentCur = &(this->opponent.party[0]);
+    this->opponentHealths[0] = this->opponent.party[0].getHpStat();
+    this->opponentHealths[1] = this->opponent.party[1].getHpStat();
+    this->opponentHealths[2] = this->opponent.party[2].getHpStat();
 }
 
 void BattleEngine::loadPlayer(Player* player) {
+    this->playerParty[0] = &(player->party[0]);
+    this->playerParty[1] = &(player->party[1]);
+    this->playerParty[2] = &(player->party[2]);
+    // for now the hp will refil every encounter so we dont need to use the player field
+    //this->playerHealths[i] = player->creatureHPs[i];
+    this->playerHealths[0] = this->playerParty[0]->getHpStat();
+    this->playerHealths[1] = this->playerParty[1]->getHpStat();
+    this->playerHealths[2] = this->playerParty[2]->getHpStat();
     
-    for(uint8_t i = 0; i < 3; i++) {
-        this->playerParty[i] = &(player->party[i]);
-        // for now the hp will refil every encounter so we dont need to use the player field
-        //this->playerHealths[i] = player->creatureHPs[i];
-        this->playerHealths[i] = this->playerParty[i]->getHpStat();
-    }
+    this->playerIndex = 0;
+    this->playerCur = this->playerParty[0];
 }
 
 void BattleEngine::startEncounter(Player* player, OpponentSeed* seed) {
-    loadOpponent(seed);
+    this->loadOpponent(seed);
+    this->loadPlayer(player);
 }
 
 //this function is terrible
@@ -84,7 +97,7 @@ bool BattleEngine::checkWin() {
 
 void BattleEngine::endEncounter() {
 
-    #ifdef DEBUG
+    #ifdef CLI
         std::cout << "end encounter /n";
     #endif
 }
@@ -104,22 +117,28 @@ void BattleEngine::opponentInput() {
 
 
 
-#ifdef DEBUG
+#ifdef CLI
         void BattleEngine::loadAwakeMons(uint8_t b){
             this->awakeMons = b;
         }
 
         void BattleEngine::printEncounter() {
+            std::cout << "PLAYER: cur: " << (unsigned)this->playerIndex << " lvl: " << (unsigned)this->playerCur->level << "\nhp:";
+            for(int i = 0; i < 3; i++ ){ std::cout << " " << (unsigned)this->playerHealths[i];}
+            std::cout << std::endl;
+            std::cout << "Opponent: cur:" << (unsigned)this->opponentIndex << " lvl: " << (unsigned)this->opponentCur->level << "\nhp:";
+            for(int i = 0; i < 3; i++ ){ std::cout << " " << (unsigned)this->opponentHealths[i];} 
+            std::cout << std::endl;
         }
 #endif
 
 void BattleEngine::commitAction(Action* action, Creature* commiter, Creature* reciever) {
     switch (action->actionType) {
     case ActionType_t::ATTACK: {
-        #ifdef DEBUG
-            std::cout << "Attacking with index " << action->actionIndex <<std::endl;
-        #endif
         uint16_t damage = calculateDamage(action, commiter, reciever);
+        #ifdef CLI
+            std::cout << "Attacking with index " << (unsigned)action->actionIndex << " Damage: " << unsigned(damage) << std::endl;
+        #endif
         applyDamage(damage, reciever);
         break;
     }

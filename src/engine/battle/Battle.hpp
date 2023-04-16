@@ -55,7 +55,7 @@ class BattleEngine {
 
 
 
-    #ifdef DEBUG
+    #ifdef CLI
         void loadAwakeMons(uint8_t);
         void printEncounter();
     #endif

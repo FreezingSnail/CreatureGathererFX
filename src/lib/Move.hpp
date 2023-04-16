@@ -1,7 +1,7 @@
 #pragma once
 #include <stdint.h>
 #include "Moves.hpp"
-#ifdef DEBUG
+#ifdef CLI
 	#include <iostream>
 	#include <bitset>
 #endif

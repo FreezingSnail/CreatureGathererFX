@@ -1,7 +1,7 @@
 #include "Menu.hpp"
 #include "action/Action.hpp"
 
-#ifdef DEBUG
+#ifdef CLI
     #include <iostream>
 #endif
 
@@ -10,13 +10,15 @@ Menu::Menu() {
 
 void Menu::actionInput(Action* action) {
 
-    #ifdef DEBUG
+    #ifdef CLI
     //cli interface
     std::cout << "1-4 attacks. 5 item, 6 switch, 7 run" << std::endl;
     std::string input = "";
     std::cin >> input;
+    int in = std::stoi(input);
+    action->actionIndex = in;
 
-    switch(std::stoi(input)){
+    switch(in){
         case 1:
         case 2:
         case 3:
