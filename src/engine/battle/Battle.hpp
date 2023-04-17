@@ -53,6 +53,10 @@ class BattleEngine {
 
         void applyDamage(uint16_t damage, Creature* receiver);
 
+        void playerActionFirst();
+        void opponentActionFirst();
+        void checkPlayerFaint();
+        void checkOpponentFaint();
 
 
     #ifdef CLI

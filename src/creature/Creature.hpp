@@ -4,13 +4,15 @@
 
 typedef struct CreatureSeed{
 
-        uint8_t Creatureid;			//000     00000
+        uint8_t creatureID;			//000     00000
 								    //type    Creature id
 
 		uint16_t statSeed;			// 0000		0000	0000	0000
 									// atk		def		hp		spd
 
         uint32_t movelist;			//32 binary flips
+
+		uint32_t startingMoves;		// need 20bits to store the 4 initial moves
 }CreatureSeed_t;
 
 typedef struct stats{
@@ -31,12 +33,12 @@ class Creature{
 			uint8_t moves[4];
 			stats_t statlist;
 
+			Creature();
             void load(CreatureSeed_t* seed);
 			void loadFromOpponentSeed(uint32_t seed);
-			Creature();
 			
-			void changeMove(uint8_t slot, uint8_t newMove);
 			void setStats();
+			void loadMoves();
 			void setMove(uint8_t move, uint8_t slot);
 
 			uint8_t getAdvantage(Type_t opponent);  //finds best advantage
@@ -56,6 +58,7 @@ class Creature{
 			
 
 			#ifdef CLI
+				void printMoves();
 				void printStats();
 			#endif
 

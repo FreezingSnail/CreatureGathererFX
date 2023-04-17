@@ -4,16 +4,29 @@
 #include "player/Player.hpp"
 #include "lib/TypeTable.hpp"
 #include "lib/Move.hpp"
+#ifdef CLI
+#include <iostream>
+#endif
 
 uint16_t calculateDamage(Action* action, Creature* committer, Creature* reciever) {
     //need to do something here with atk def stats
-    uint8_t move = committer->moves[action->actionIndex];
-    uint8_t mod = getMatchupModifier(getMoveType(move), uint8_t(reciever->type));
+    uint8_t move = moveList[committer->moves[action->actionIndex]];
+    float mod = getMatchupModifier(getMoveType(move), uint8_t(reciever->type))/2;
     uint8_t power = getMovePower(move);
+    #ifdef CLI
+        std::cout << "power: " << (unsigned)power << " attack stat: " << (unsigned)committer->getAtkStat() << " defense stat: " << (unsigned)reciever->getDefStat() << std::endl;
+        std::cout << "move type: " << (unsigned)getMoveType(move) << " reciever type: " << (unsigned)reciever->type << " modifier: " << std::fixed << mod << std::endl;
+    #endif
+    uint16_t damage = ((power * committer->getAtkStat() / reciever->getDefStat()) * mod);
+    if ( damage == 0 ){
+        if (mod == 0) {
+            return 0;
+        }
+        return 1;
+    }
 
-    
     // going too need to balance this eventually
-    return (power * committer->getAtkStat() / reciever->getDefStat()) * mod;
+    return damage;
 }
 
 BattleEngine::BattleEngine() {
@@ -22,9 +35,23 @@ BattleEngine::BattleEngine() {
 // battle loop
 void BattleEngine::encounter(Player* player, OpponentSeed* seed) {
     this->startEncounter(player, seed);
-    while(!this->checkLoss() || !this->checkWin()) {
+    while(true) {
+        if (this->checkLoss()) {
+            #ifdef CLI
+                std::cout << "You have been defeated" << std::endl;
+            #endif
+            break;
+        }
+        
+        if(this->checkWin()) {
+            #ifdef CLI
+                std::cout << "You have won the battle" << std::endl;
+            #endif
+            break;
+        }
         #ifdef CLI
             this->printEncounter();
+            this->playerCur->printMoves();
         #endif
         this->turnTick();
     }
@@ -66,39 +93,82 @@ void BattleEngine::turnTick() {
     this->opponentInput();
     int8_t order = this->playerAction.priority != this->opponentAction.priority;
     if(order > 0){
-        //player first
-        this->commitAction(&this->playerAction, this->playerCur, this->opponentCur);
-        this->commitAction(&this->opponentAction, this->opponentCur, this->playerCur);
+        this->playerActionFirst();
     } else if (order < 0) {
-        //opponent first
-        this->commitAction(&this->opponentAction, this->opponentCur, this->playerCur);
-        this->commitAction(&this->playerAction, this->playerCur, this->opponentCur);
+        this->opponentActionFirst();
     } else {
         order = this->playerCur->getSpdStat() - this->opponentCur->getSpdStat();
         if(order > 0 || order == 0){
-            this->commitAction(&this->playerAction, this->playerCur, this->opponentCur);
-            this->commitAction(&this->opponentAction, this->opponentCur, this->playerCur);
-
+            this->playerActionFirst();
         } else if (order < 0) {
-            //opponent first
-            this->commitAction(&this->opponentAction, this->opponentCur, this->playerCur);
-            this->commitAction(&this->playerAction, this->playerCur, this->opponentCur);
+            this->opponentActionFirst();
         }
     }
 }
 
+void BattleEngine::playerActionFirst() {
+    #ifdef CLI
+        std::cout << "player action \n";
+    #endif
+    this->commitAction(&this->playerAction, this->playerCur, this->opponentCur);
+    this->checkOpponentFaint();
+    #ifdef CLI
+        std::cout << "opponent action \n";
+    #endif
+    this->commitAction(&this->opponentAction, this->opponentCur, this->playerCur);
+    this->checkPlayerFaint();
+}
+
+void BattleEngine::opponentActionFirst() {
+    #ifdef CLI
+        std::cout << "opponent action \n";
+    #endif
+    this->commitAction(&this->opponentAction, this->opponentCur, this->playerCur);
+    this->checkPlayerFaint();
+    #ifdef CLI
+        std::cout << "player action \n";
+    #endif
+    this->commitAction(&this->playerAction, this->playerCur, this->opponentCur);
+    this->checkOpponentFaint();
+
+}
+
+void BattleEngine::checkPlayerFaint() {
+    if (this->playerHealths[this->playerIndex] <= 0 ){
+        #ifdef CLI
+        std::cout << "player faint \n";
+        #endif
+        this->playerIndex++;
+        this->playerCur = this->playerParty[this->playerIndex];
+        //this->awakeMons &= ~(1 << this->playerIndex);
+    }
+}
+
+void  BattleEngine::checkOpponentFaint() {
+    if (this->opponentHealths[this->opponentIndex] <= 0 ){
+        #ifdef CLI
+        std::cout << "opponent faint \n";
+        #endif
+        this->opponentIndex++;
+        this->opponentCur = &(this->opponent.party[this->opponentIndex]);
+        //this->awakeMons &= ~(1 << this->opponentIndex+5);
+    }
+}
+
 bool BattleEngine::checkLoss() {
-    return uint8_t(this->awakeMons & 0b11100000) == uint8_t(0) ;
+    //return uint8_t(this->awakeMons & 0b11100000) == uint8_t(0) ;
+    return (this->playerHealths[0] <= 0 && this->playerHealths[1] <= 0 && this->playerHealths[2] <= 0);
 }
 
 bool BattleEngine::checkWin() {
-    return uint8_t(this->awakeMons & 0b00000111) == uint8_t(0) ;
+    //return uint8_t(this->awakeMons & 0b00000111) == uint8_t(0) ;
+    return (this->opponentHealths[0] <= 0 && this->opponentHealths[1] <= 0 && this->opponentHealths[2] <= 0);
 }
 
 void BattleEngine::endEncounter() {
 
     #ifdef CLI
-        std::cout << "end encounter /n";
+        std::cout << "end encounter \n";
     #endif
 }
 
@@ -123,10 +193,12 @@ void BattleEngine::opponentInput() {
         }
 
         void BattleEngine::printEncounter() {
-            std::cout << "PLAYER: cur: " << (unsigned)this->playerIndex << " lvl: " << (unsigned)this->playerCur->level << "\nhp:";
+            std::cout << "PLAYER: cur: " << (unsigned)this->playerIndex << " lvl: " << (unsigned)this->playerCur->level;
+            std::cout << " type: " << (unsigned)this->playerCur->type << "\nhp:";
             for(int i = 0; i < 3; i++ ){ std::cout << " " << (unsigned)this->playerHealths[i];}
             std::cout << std::endl;
-            std::cout << "Opponent: cur:" << (unsigned)this->opponentIndex << " lvl: " << (unsigned)this->opponentCur->level << "\nhp:";
+            std::cout << "Opponent: cur:" << (unsigned)this->opponentIndex << " lvl: " << (unsigned)this->opponentCur->level;
+            std::cout << " type: " << (unsigned)this->opponentCur->type  << "\nhp:";
             for(int i = 0; i < 3; i++ ){ std::cout << " " << (unsigned)this->opponentHealths[i];} 
             std::cout << std::endl;
         }
@@ -159,9 +231,11 @@ void BattleEngine::commitAction(Action* action, Creature* commiter, Creature* re
 
 void BattleEngine::applyDamage(uint16_t damage, Creature* reciever) {
     if( reciever == this->playerCur) {
-        this->playerHealths[this->playerIndex] -= damage;
+        uint8_t hp = this->playerHealths[this->playerIndex];
+        this->playerHealths[this->playerIndex] -= damage >= hp ? hp : damage;
     } else {
-        this->opponentHealths[this->opponentIndex] -= damage;
+        uint8_t hp = this->opponentHealths[this->opponentIndex];
+        this->opponentHealths[this->opponentIndex] -= damage >= hp ? hp : damage;
 
     }
 

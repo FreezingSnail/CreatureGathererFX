@@ -1,6 +1,7 @@
 #include "creature/Creature.hpp"
 #include "opponent/OpponentSeed.hpp"
 #include "data/Creatures.hpp"
+#include "lib/Move.hpp"
 
 uint8_t seedToStat(uint8_t seed) {
 	// Need to do some math here to scale a 4 bit number to 8
@@ -23,7 +24,9 @@ Creature::Creature() {
 
 void Creature::load(CreatureSeed_t* seed) {
 	this->seed = seed;
+	this->type = (Type_t)(seed->creatureID >> 3);
 	this->setStats();
+	this->loadMoves();
 	//Need some kind of default setting for moves ?
 
 }
@@ -31,17 +34,26 @@ void Creature::load(CreatureSeed_t* seed) {
 //00,id1,lvl1,move11,move12,move13,move14,
 void Creature::loadFromOpponentSeed(uint32_t seed){
 	CreatureSeed_t* cSeed = getCreatureFromStore(parseOpponentCreatureSeedID(seed));
-	this->load(cSeed);
+	this->seed = cSeed;
+	this->type = (Type_t)(cSeed->creatureID >> 3);
+	this->setStats();
 	this->level = parseOpponentCreatureSeedlvl(seed);
 	this->setMove(parseOpponentCreatureSeedMove(seed, 0), 0);
 	this->setMove(parseOpponentCreatureSeedMove(seed, 1), 1);
 	this->setMove(parseOpponentCreatureSeedMove(seed, 2), 2);
 	this->setMove(parseOpponentCreatureSeedMove(seed, 3), 3);
-	this->setStats();
 }
 
-void Creature::changeMove(uint8_t slot, uint8_t newMove) {
-	this->moves[slot] = newMove;
+void Creature::loadMoves() {
+	this->setMove(this->seed->startingMoves & 0b11111, 0);
+	this->setMove((this->seed->startingMoves >> 5) & 0b11111, 1);
+	this->setMove((this->seed->startingMoves >> 10) & 0b11111, 2);
+	this->setMove((this->seed->startingMoves >> 15) & 0b11111, 3);
+}
+
+// should prob have error checking but w/e
+void Creature::setMove(uint8_t move, uint8_t slot){
+	this->moves[slot] = move;
 }
 
 void Creature::setStats() {
@@ -51,12 +63,8 @@ void Creature::setStats() {
 	this->statlist.health = seedToStat(this->getHpStatSeed());
 }
 
-// should prob have error checking but w/e
-void Creature::setMove(uint8_t move, uint8_t slot){
-	this->moves[slot] = move;
-
-}
 // some ai to find best advantage should move this out of this class though
+// going to need this for the opponent ai
 uint8_t Creature::getAdvantage(Type_t opponent) {
 	return 0;
 }
@@ -101,6 +109,15 @@ uint8_t Creature::getSpdStat() {
 
 #ifdef CLI
 #include <iostream>
+void Creature::printMoves() {
+	for (int i = 0; i < 4; i++) {
+		uint8_t raw = moveList[this->getMove(i)];
+		uint8_t id = getMoveID(raw);
+		uint8_t type = getMoveType(raw);
+		uint8_t power = getMovePower(raw);
+		std::cout << "Move " << i << " id: " << (unsigned)id << " type:" << (unsigned)type << " power:" << (unsigned)power << std::endl;
+	}
+}
 void Creature::printStats() {
 	std::cout << "atk: " << this->getAtkStat() << "def: " << this->getDefStat() << "spd: " << this->getSpdStat() << "hp: " << this->getHpStat() <<std::endl;
 }
