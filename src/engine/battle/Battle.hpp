@@ -31,7 +31,7 @@ class BattleEngine {
     public:
         BattleEngine(Arduboy2* arduboy);
 
-        void encounter(Player* player, OpponentSeed* seed);
+        void encounter();
 
         void loadPlayer(Player* player);
 
