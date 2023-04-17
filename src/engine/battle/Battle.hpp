@@ -1,13 +1,16 @@
 #pragma once
-#include "creature/Creature.hpp"
-#include "action/Action.hpp"
-#include "engine/game/Menu.hpp"
-#include "opponent/Opponent.hpp"
-#include "player/Player.hpp"
+#include "Arduboy2.h"
+#include "../../creature/Creature.hpp"
+#include "../../action/Action.hpp"
+#include "../../engine/game/Menu.hpp"
+#include "../../opponent/Opponent.hpp"
+#include "../../player/Player.hpp"
+#define DEBUG
 
 
 class BattleEngine {
     private:
+        Arduboy2 * arduboy;
         Creature* playerParty[3];
         Opponent opponent;
         uint16_t playerHealths[3];
@@ -22,10 +25,11 @@ class BattleEngine {
         Action playerAction;
         Action opponentAction;
         Menu* menu;
+        
 
 
     public:
-        BattleEngine();
+        BattleEngine(Arduboy2* arduboy);
 
         void encounter(Player* player, OpponentSeed* seed);
 
@@ -57,10 +61,10 @@ class BattleEngine {
         void opponentActionFirst();
         void checkPlayerFaint();
         void checkOpponentFaint();
+        uint16_t calculateDamage(Action* action, Creature* committer, Creature* reciever);
 
 
-    #ifdef CLI
-        void loadAwakeMons(uint8_t);
+    #ifdef DEBUG
         void printEncounter();
     #endif
 

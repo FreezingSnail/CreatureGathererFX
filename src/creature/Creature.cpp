@@ -1,7 +1,7 @@
-#include "creature/Creature.hpp"
-#include "opponent/OpponentSeed.hpp"
-#include "data/Creatures.hpp"
-#include "lib/Move.hpp"
+#include "Creature.hpp"
+#include "../opponent/OpponentSeed.hpp"
+#include "../data/Creatures.hpp"
+#include "../lib/Move.hpp"
 
 uint8_t seedToStat(uint8_t seed) {
 	// Need to do some math here to scale a 4 bit number to 8
@@ -86,7 +86,7 @@ uint8_t Creature::getDefStatSeed() {
 }
 
 uint8_t Creature::getHpStatSeed() {
-	return (this->seed->statSeed & 0b00000000111100000000) >> 4;
+	return (this->seed->statSeed & 0b0000000011110000) >> 4;
 }
 
 uint8_t Creature::getSpdStatSeed() {

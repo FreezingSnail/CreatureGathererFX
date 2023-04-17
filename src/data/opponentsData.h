@@ -1,5 +1,5 @@
 #pragma once
-#include "opponent/OpponentSeed.hpp"
+#include "../opponent/OpponentSeed.hpp"
 
 /* monId lvl mov1 mov2 mov3 mov4 x3, 3 32bit ints
 
