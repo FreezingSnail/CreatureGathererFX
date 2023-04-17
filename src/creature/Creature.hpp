@@ -1,6 +1,6 @@
 #pragma once
 
-#include "lib/TypeTable.hpp"
+#include "../lib/TypeTable.hpp"
 
 typedef struct CreatureSeed{
 

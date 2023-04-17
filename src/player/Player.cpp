@@ -1,6 +1,6 @@
 
 #include "Player.hpp"
-#include "data/Creatures.hpp"
+#include "../data/Creatures.hpp"
 
 Player::Player() {
 

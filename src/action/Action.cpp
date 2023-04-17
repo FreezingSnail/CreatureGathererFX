@@ -1,5 +1,5 @@
 #include "Action.hpp"
 
-void Action::setActionType(ActionType_t type) {
+void Action::setActionType(ActionType type) {
     this->actionType = type;
 }

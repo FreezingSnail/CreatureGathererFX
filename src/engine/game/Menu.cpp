@@ -1,5 +1,5 @@
 #include "Menu.hpp"
-#include "action/Action.hpp"
+#include "../../action/Action.hpp"
 
 #ifdef CLI
     #include <iostream>
@@ -23,16 +23,16 @@ void Menu::actionInput(Action* action) {
         case 1:
         case 2:
         case 3:
-            action->setActionType(ActionType_t::ATTACK);
+            action->setActionType(ActionType::ATTACK);
             break;
         case 5:
-            action->setActionType(ActionType_t::ITEM);
+            action->setActionType(ActionType::ITEM);
             break;
         case 6:
-            action->setActionType(ActionType_t::CHANGE);
+            action->setActionType(ActionType::CHNGE);
             break;
         case 7:
-            action->setActionType(ActionType_t::ESCAPE);
+            action->setActionType(ActionType::ESCAPE);
             break;
         default:
             break;

@@ -3,19 +3,19 @@
 
 // This is an encounter action
 // attack, change, item, escape
-typedef enum ActionType {
-    ATTACK,
-    CHANGE,
-    ITEM,
-    ESCAPE
-}ActionType_t;
+enum ActionType {
+    ATTACK = 0,
+    CHNGE = 1,
+    ITEM = 2,
+    ESCAPE = 3
+};
 
 class Action {
     public:
         uint8_t priority;
-        ActionType_t actionType;
+        ActionType actionType;
         uint8_t actionIndex;
 
-        void setActionType(ActionType_t);
+        void setActionType(ActionType type);
 
 };

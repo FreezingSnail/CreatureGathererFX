@@ -1,6 +1,6 @@
 #pragma once
-#include "Creature/Creature.hpp"
-#include "item/Item.hpp"
+#include "../../Creature/Creature.hpp"
+#include "../../item/Item.hpp"
 
 class GameState {
     private:

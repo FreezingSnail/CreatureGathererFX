@@ -1,6 +1,6 @@
 #pragma once
-#include "creature/Creature.hpp"
-#include "lib/Moves.hpp"
+#include "../creature/Creature.hpp"
+#include "../lib/Moves.hpp"
 
 
 // going to need to embed these into progmem at somepoint

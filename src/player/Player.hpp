@@ -1,7 +1,7 @@
 #pragma once
 #include <stdint.h>
-#include "creature/Creature.hpp"
-#include "item/Item.hpp"
+#include "../creature/Creature.hpp"
+#include "../item/Item.hpp"
 
 class Player {
 

@@ -1,6 +1,8 @@
 #pragma once
 #include <stdint.h>
+#ifdef CLI
 #include <iostream>
+#endif
 
 typedef enum class Types{
 	plain,
