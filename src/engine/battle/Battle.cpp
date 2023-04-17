@@ -16,10 +16,7 @@ uint16_t BattleEngine::calculateDamage(Action* action, Creature* committer, Crea
     uint8_t move = moveList[committer->moves[action->actionIndex]];
     float mod = getMatchupModifier(getMoveType(move), uint8_t(reciever->type))/2;
     uint8_t power = getMovePower(move);
-    #ifdef CLI
-        std::cout << "power: " << (unsigned)power << " attack stat: " << (unsigned)committer->getAtkStat() << " defense stat: " << (unsigned)reciever->getDefStat() << std::endl;
-        std::cout << "move type: " << (unsigned)getMoveType(move) << " reciever type: " << (unsigned)reciever->type << " modifier: " << std::fixed << mod << std::endl;
-    #endif
+
     #ifdef DEBUG
         this->arduboy->print(F("p:  atk:  def:\n"));
         this->arduboy->print((unsigned)power);  this->arduboy->print(" ");
@@ -31,6 +28,7 @@ uint16_t BattleEngine::calculateDamage(Action* action, Creature* committer, Crea
         this->arduboy->print((unsigned)reciever->type); this->arduboy->print(" ");
         this->arduboy->print((mod));this->arduboy->print(" ");
     #endif
+    
     uint16_t damage = ((power * committer->getAtkStat() / reciever->getDefStat()) * mod);
     if ( damage == 0 ){
         if (mod == 0) {
@@ -48,31 +46,23 @@ BattleEngine::BattleEngine(Arduboy2* arduboy) {
 }
 
 // battle loop
-void BattleEngine::encounter(Player* player, OpponentSeed* seed) {
-    this->startEncounter(player, seed);
-    while(true) {
-        if (this->checkLoss()) {
-            this->arduboy->print("win");
-            #ifdef CLI
-                std::cout << "You have been defeated" << std::endl;
-            #endif
-            break;
-        }
-        
-        if(this->checkWin()) {
-            this->arduboy->print("loose");
-            #ifdef CLI
-                std::cout << "You have won the battle" << std::endl;
-            #endif
-            break;
-        }
-        #ifdef CLI
-            this->printEncounter();
-            this->playerCur->printMoves();
-        #endif
-        this->turnTick();
+void BattleEngine::encounter() {
+    if (this->checkLoss()) {
+        this->arduboy->print("win\n");
     }
-    this->endEncounter();
+
+    if(this->checkWin()) {
+        this->arduboy->print("loose\n");
+    }
+    if(this->arduboy->justPressed(A_BUTTON)){
+    this->turnTick();
+    }
+    #ifdef DEBUG
+        this->printEncounter();
+        // this->playerCur->printMoves();
+    #endif
+
+   
 }
 
 
@@ -100,7 +90,7 @@ void BattleEngine::loadPlayer(Player* player) {
 }
 
 void BattleEngine::startEncounter(Player* player, OpponentSeed* seed) {
-    this->arduboy->print("starting encounter");
+    this->arduboy->print("starting encounter\n");
     this->loadOpponent(seed);
     this->loadPlayer(player);
 }
@@ -195,8 +185,10 @@ void BattleEngine::endEncounter() {
 void BattleEngine::getInput() {
     // arduboy input from menu
     //this->menu->actionInput(&this->playerAction);
-    while(!this->arduboy->justPressed(A_BUTTON)){}
+    this->arduboy->display();
+    //while(!this->arduboy->justPressed(A_BUTTON)){}
     this->arduboy->clear();
+
     this->opponentAction.setActionType(ActionType::ATTACK);
     this->opponentAction.actionIndex = 1;
 }
@@ -273,7 +265,7 @@ void BattleEngine::applyDamage(uint16_t damage, Creature* reciever) {
             this->arduboy->print(" lvl: "); this->arduboy->print((unsigned)this->playerCur->level);
             this->arduboy->print("\nhp:");
             for(int i = 0; i < 3; i++ ){ this->arduboy->print(" "); this->arduboy->print((unsigned)this->playerHealths[i]);}
-            this->arduboy->print("O: cur: "); this->arduboy->print((unsigned)this->opponentIndex); 
+            this->arduboy->print("\nO: cur: "); this->arduboy->print((unsigned)this->opponentIndex); 
             this->arduboy->print(" lvl: "); this->arduboy->print((unsigned)this->opponentCur->level);
             this->arduboy->print("\nhp:");
             for(int i = 0; i < 3; i++ ){ this->arduboy->print(" "); this->arduboy->print((unsigned)this->opponentHealths[i]);}
