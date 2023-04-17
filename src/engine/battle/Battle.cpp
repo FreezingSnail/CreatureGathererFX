@@ -5,6 +5,8 @@
 #include "../../player/Player.hpp"
 #include "../../lib/TypeTable.hpp"
 #include "../../lib/Move.hpp"
+#include "../../data/opponentsData.h"
+
 #ifdef CLI
 #include <iostream>
 #endif
@@ -13,7 +15,7 @@
 
 uint16_t BattleEngine::calculateDamage(Action* action, Creature* committer, Creature* reciever) {
     //need to do something here with atk def stats
-    uint8_t move = moveList[committer->moves[action->actionIndex]];
+    uint8_t move = getMove(committer->moves[action->actionIndex]);
     float mod = getMatchupModifier(getMoveType(move), uint8_t(reciever->type))/2;
     uint8_t power = getMovePower(move);
 
@@ -28,7 +30,7 @@ uint16_t BattleEngine::calculateDamage(Action* action, Creature* committer, Crea
         this->arduboy->print((unsigned)reciever->type); this->arduboy->print(" ");
         this->arduboy->print((mod));this->arduboy->print(" ");
     #endif
-    
+
     uint16_t damage = ((power * committer->getAtkStat() / reciever->getDefStat()) * mod);
     if ( damage == 0 ){
         if (mod == 0) {
@@ -66,8 +68,12 @@ void BattleEngine::encounter() {
 }
 
 
-void BattleEngine::loadOpponent(OpponentSeed* seed) {
-    this->opponent.load(seed);
+void BattleEngine::loadOpponent(uint8_t optID) {
+    OpponentSeed_t seed = OpponentSeed_t{0,0,1};
+
+    memcpy_P( &seed, &opts[optID], sizeof( OpponentSeed_t));
+
+    this->opponent.load(&seed);
     this->opponentIndex = 0;
     this->opponentCur = &(this->opponent.party[0]);
     this->opponentHealths[0] = this->opponent.party[0].getHpStat();
@@ -81,6 +87,7 @@ void BattleEngine::loadPlayer(Player* player) {
     this->playerParty[2] = &(player->party[2]);
     // for now the hp will refil every encounter so we dont need to use the player field
     //this->playerHealths[i] = player->creatureHPs[i];
+     this->playerHealths[0] = 10;
     this->playerHealths[0] = this->playerParty[0]->getHpStat();
     this->playerHealths[1] = this->playerParty[1]->getHpStat();
     this->playerHealths[2] = this->playerParty[2]->getHpStat();
@@ -89,9 +96,9 @@ void BattleEngine::loadPlayer(Player* player) {
     this->playerCur = this->playerParty[0];
 }
 
-void BattleEngine::startEncounter(Player* player, OpponentSeed* seed) {
+void BattleEngine::startEncounter(Player* player, uint8_t optID) {
     this->arduboy->print("starting encounter\n");
-    this->loadOpponent(seed);
+    this->loadOpponent(optID);
     this->loadPlayer(player);
 }
 

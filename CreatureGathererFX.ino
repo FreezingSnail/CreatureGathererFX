@@ -2,7 +2,6 @@
 //#include "src/lib/TypeTable.hpp"
 #include "src/engine/battle/Battle.hpp"  
 #include "src/player/Player.hpp"
-#include "src/data/opponentsData.h"
 
 // make an instance of arduboy used for many functions
 Arduboy2 arduboy;
@@ -15,7 +14,7 @@ BattleEngine engine = BattleEngine(&arduboy);
 void setup() {
   // initiate arduboy instance
   arduboy.begin();
-  engine.startEncounter(&player, &op1);
+  engine.startEncounter(&player, 0);
   // here we set the framerate to 15, we do not need to run at
   // default 60 and it saves us battery life
   arduboy.setFrameRate(15);

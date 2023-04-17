@@ -3,8 +3,8 @@
 #include "../data/Creatures.hpp"
 
 Player::Player() {
-
-    CreatureSeed_t cseed = CreatureData[0];
+    CreatureSeed_t cseed;
+    memcpy_P(&cseed, &CreatureData[0], sizeof(CreatureSeed_t));
     this->setMonster(0, &cseed);
     this->setMonster(1, &cseed);
     this->setMonster(2, &cseed);
