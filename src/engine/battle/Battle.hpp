@@ -35,9 +35,9 @@ class BattleEngine {
 
         void loadPlayer(Player* player);
 
-        void loadOpponent(OpponentSeed* seed);
+        void loadOpponent(uint8_t optID);
 
-        void startEncounter(Player* player, OpponentSeed* seed);
+        void startEncounter(Player* player, uint8_t optID);
 
         void endEncounter();
 

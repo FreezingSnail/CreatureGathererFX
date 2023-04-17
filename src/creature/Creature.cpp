@@ -9,8 +9,10 @@ uint8_t seedToStat(uint8_t seed) {
 }
 
 //This will need to load the creature seed from the progmemstore
-CreatureSeed_t* getCreatureFromStore(uint8_t id) {
-	return &(CreatureData[id]);
+CreatureSeed_t getCreatureFromStore(uint8_t id) {
+	CreatureSeed_t seed;
+	memcpy_P(&seed, &CreatureData[0], sizeof(CreatureSeed_t));
+	return seed;
 	//return nullptr;
 }
 
@@ -33,9 +35,9 @@ void Creature::load(CreatureSeed_t* seed) {
 
 //00,id1,lvl1,move11,move12,move13,move14,
 void Creature::loadFromOpponentSeed(uint32_t seed){
-	CreatureSeed_t* cSeed = getCreatureFromStore(parseOpponentCreatureSeedID(seed));
-	this->seed = cSeed;
-	this->type = (Type_t)(cSeed->creatureID >> 3);
+	CreatureSeed_t cSeed = getCreatureFromStore(parseOpponentCreatureSeedID(seed));
+	this->seed = &cSeed;
+	this->type = (Type_t)(cSeed.creatureID >> 3);
 	this->setStats();
 	this->level = parseOpponentCreatureSeedlvl(seed);
 	this->setMove(parseOpponentCreatureSeedMove(seed, 0), 0);
