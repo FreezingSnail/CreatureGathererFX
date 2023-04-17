@@ -22,6 +22,7 @@
  * ***************/
 
 //gana need 32 of these move lists
+static const  uint32_t movelistDebug = 0b1111111111111111111111111111111;
 static const  uint32_t movelist0 = 0b00000000000000000000000000000000;
 static const  uint32_t movelist1 = 0b00000000000000000000000000000000;
 static const  uint32_t movelist2 = 0b00000000000000000000000000000000;
