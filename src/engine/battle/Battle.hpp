@@ -63,6 +63,8 @@ class BattleEngine {
         void checkOpponentFaint();
         uint16_t calculateDamage(Action* action, Creature* committer, Creature* reciever);
 
+        void drawScene();
+
 
     #ifdef DEBUG
         void printEncounter();
