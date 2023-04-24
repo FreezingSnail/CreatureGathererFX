@@ -7,6 +7,7 @@
 Arduboy2 arduboy;
 Player player = Player();
 BattleEngine engine = BattleEngine(&arduboy);
+bool state = true;
 
 
 // This function runs once in your game.
@@ -14,7 +15,7 @@ BattleEngine engine = BattleEngine(&arduboy);
 void setup() {
   // initiate arduboy instance
   arduboy.begin();
-  engine.startEncounter(&player, 0);
+  //engine.startEncounter(&player, 0);
   // here we set the framerate to 15, we do not need to run at
   // default 60 and it saves us battery life
   arduboy.setFrameRate(15);
@@ -30,7 +31,12 @@ void loop() {
   arduboy.clear();
 
   arduboy.pollButtons();
-  engine.encounter();
+  if(state) {
+  engine.startEncounter(&player, 0);
+  }
+  state = false;
+  arduboy.print("The end");
+  //engine.encounter();
 
 
   arduboy.display();

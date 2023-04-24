@@ -33,12 +33,15 @@ class Creature{
 			uint8_t moves[4];
 			stats_t statlist;
 
+			const unsigned char* sprite;
+
 			Creature();
             void load(CreatureSeed_t* seed);
 			void loadFromOpponentSeed(uint32_t seed);
 			
 			void setStats();
 			void loadMoves();
+			void loadSprite();
 			void setMove(uint8_t move, uint8_t slot);
 
 			uint8_t getAdvantage(Type_t opponent);  //finds best advantage

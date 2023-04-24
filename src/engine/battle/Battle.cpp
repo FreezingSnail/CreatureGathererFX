@@ -11,7 +11,7 @@
 #include <iostream>
 #endif
 
-#define DEBUG
+//#define DEBUG
 
 uint16_t BattleEngine::calculateDamage(Action* action, Creature* committer, Creature* reciever) {
     //need to do something here with atk def stats
@@ -21,14 +21,14 @@ uint16_t BattleEngine::calculateDamage(Action* action, Creature* committer, Crea
 
     #ifdef DEBUG
         this->arduboy->print(F("p:  atk:  def:\n"));
-        this->arduboy->print((unsigned)power);  this->arduboy->print(" ");
-        this->arduboy->print((unsigned)committer->getAtkStat());this->arduboy->print(" ");
-        this->arduboy->print((unsigned)reciever->getDefStat());this->arduboy->print(" ");
-        this->arduboy->print("\n");
+        this->arduboy->print((unsigned)power);  this->arduboy->print(F(" "));
+        this->arduboy->print((unsigned)committer->getAtkStat());this->arduboy->print(F(" "));
+        this->arduboy->print((unsigned)reciever->getDefStat());this->arduboy->print(F(" "));
+        this->arduboy->print(F("\n"));
         this->arduboy->print(F("move Type: rtype: mod: \n"));
-        this->arduboy->print((unsigned)getMoveType(move)); this->arduboy->print(" "); 
-        this->arduboy->print((unsigned)reciever->type); this->arduboy->print(" ");
-        this->arduboy->print((mod));this->arduboy->print(" ");
+        this->arduboy->print((unsigned)getMoveType(move)); this->arduboy->print(F(" ")); 
+        this->arduboy->print((unsigned)reciever->type); this->arduboy->print(F(" "));
+        this->arduboy->print((mod));this->arduboy->print(F(" "));
     #endif
 
     uint16_t damage = ((power * committer->getAtkStat() / reciever->getDefStat()) * mod);
@@ -49,20 +49,32 @@ BattleEngine::BattleEngine(Arduboy2* arduboy) {
 
 // battle loop
 void BattleEngine::encounter() {
-    if (this->checkLoss()) {
-        this->arduboy->print("win\n");
-    }
+    while(true) {
+        this->arduboy->clear();
+        this->arduboy->pollButtons();
+        if (this->checkLoss()) {
+            this->arduboy->print(F("win\n"));
+            this->arduboy->display();
+            if(this->arduboy->justPressed(A_BUTTON)){
+                return;
+            }
+        }
 
-    if(this->checkWin()) {
-        this->arduboy->print("loose\n");
+        if(this->checkWin()) {
+            this->arduboy->print(F("loose\n"));
+            this->arduboy->display();
+            return;
+        }
+        if(this->arduboy->justPressed(A_BUTTON)){
+        this->turnTick();
+        }
+        this->drawScene();
+        #ifdef DEBUG
+            this->printEncounter();
+            // this->playerCur->printMoves();
+        #endif
+        this->arduboy->display();
     }
-    if(this->arduboy->justPressed(A_BUTTON)){
-    this->turnTick();
-    }
-    #ifdef DEBUG
-        this->printEncounter();
-        // this->playerCur->printMoves();
-    #endif
 
    
 }
@@ -100,6 +112,7 @@ void BattleEngine::startEncounter(Player* player, uint8_t optID) {
     this->arduboy->print("starting encounter\n");
     this->loadOpponent(optID);
     this->loadPlayer(player);
+    this->encounter();
 }
 
 //this function is terrible
@@ -208,32 +221,10 @@ void BattleEngine::opponentInput() {
     this->opponentAction.actionIndex = 1;
 }
 
-
-
-#ifdef CLI
-        void BattleEngine::loadAwakeMons(uint8_t b){
-            this->awakeMons = b;
-        }
-
-        void BattleEngine::printEncounter() {
-            std::cout << "PLAYER: cur: " << (unsigned)this->playerIndex << " lvl: " << (unsigned)this->playerCur->level;
-            std::cout << " type: " << (unsigned)this->playerCur->type << "\nhp:";
-            for(int i = 0; i < 3; i++ ){ std::cout << " " << (unsigned)this->playerHealths[i];}
-            std::cout << std::endl;
-            std::cout << "Opponent: cur:" << (unsigned)this->opponentIndex << " lvl: " << (unsigned)this->opponentCur->level;
-            std::cout << " type: " << (unsigned)this->opponentCur->type  << "\nhp:";
-            for(int i = 0; i < 3; i++ ){ std::cout << " " << (unsigned)this->opponentHealths[i];} 
-            std::cout << std::endl;
-        }
-#endif
-
 void BattleEngine::commitAction(Action* action, Creature* commiter, Creature* reciever) {
     switch (action->actionType) {
     case ActionType::ATTACK: {
         uint16_t damage = calculateDamage(action, commiter, reciever);
-        #ifdef CLI
-            std::cout << "Attacking with index " << (unsigned)action->actionIndex << " Damage: " << unsigned(damage) << std::endl;
-        #endif
         applyDamage(damage, reciever);
         break;
     }
@@ -264,18 +255,23 @@ void BattleEngine::applyDamage(uint16_t damage, Creature* reciever) {
 
 }
 
+void BattleEngine::drawScene() {
+    //this->arduboy->drawBitmap(0, 0, this->playerCur->sprite, 32, 32, 0);
+    Sprites::drawSelfMasked(32, 0, this->opponentCur->sprite, 0);
+}
+
 
 #ifdef DEBUG
 
         void BattleEngine::printEncounter() {
-            this->arduboy->print("P: cur: "); this->arduboy->print((unsigned)this->playerIndex); 
-            this->arduboy->print(" lvl: "); this->arduboy->print((unsigned)this->playerCur->level);
-            this->arduboy->print("\nhp:");
-            for(int i = 0; i < 3; i++ ){ this->arduboy->print(" "); this->arduboy->print((unsigned)this->playerHealths[i]);}
-            this->arduboy->print("\nO: cur: "); this->arduboy->print((unsigned)this->opponentIndex); 
-            this->arduboy->print(" lvl: "); this->arduboy->print((unsigned)this->opponentCur->level);
-            this->arduboy->print("\nhp:");
-            for(int i = 0; i < 3; i++ ){ this->arduboy->print(" "); this->arduboy->print((unsigned)this->opponentHealths[i]);}
+            this->arduboy->print(F("P: cur: ")); this->arduboy->print((unsigned)this->playerIndex); 
+            this->arduboy->print(F(" lvl: ")); this->arduboy->print((unsigned)this->playerCur->level);
+            this->arduboy->print(F("\nhp:"));
+            for(int i = 0; i < 3; i++ ){ this->arduboy->print(F(" ")); this->arduboy->print((unsigned)this->playerHealths[i]);}
+            this->arduboy->print(F("\nO: cur: ")); this->arduboy->print((unsigned)this->opponentIndex); 
+            this->arduboy->print(F(" lvl: ")); this->arduboy->print((unsigned)this->opponentCur->level);
+            this->arduboy->print(F("\nhp:"));
+            for(int i = 0; i < 3; i++ ){ this->arduboy->print(F(" ")); this->arduboy->print((unsigned)this->opponentHealths[i]);}
         }
 
 #endif

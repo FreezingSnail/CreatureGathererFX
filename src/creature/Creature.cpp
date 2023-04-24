@@ -2,6 +2,7 @@
 #include "../opponent/OpponentSeed.hpp"
 #include "../data/Creatures.hpp"
 #include "../lib/Move.hpp"
+#include "../sprites/sprites.hpp"
 
 uint8_t seedToStat(uint8_t seed) {
 	// Need to do some math here to scale a 4 bit number to 8
@@ -31,6 +32,8 @@ void Creature::load(CreatureSeed_t* seed) {
 	this->loadMoves();
 	//Need some kind of default setting for moves ?
 
+	this->loadSprite();
+
 }
 
 //00,id1,lvl1,move11,move12,move13,move14,
@@ -44,6 +47,8 @@ void Creature::loadFromOpponentSeed(uint32_t seed){
 	this->setMove(parseOpponentCreatureSeedMove(seed, 1), 1);
 	this->setMove(parseOpponentCreatureSeedMove(seed, 2), 2);
 	this->setMove(parseOpponentCreatureSeedMove(seed, 3), 3);
+
+	this->loadSprite();
 }
 
 void Creature::loadMoves() {
@@ -51,6 +56,14 @@ void Creature::loadMoves() {
 	this->setMove((this->seed->startingMoves >> 5) & 0b11111, 1);
 	this->setMove((this->seed->startingMoves >> 10) & 0b11111, 2);
 	this->setMove((this->seed->startingMoves >> 15) & 0b11111, 3);
+}
+
+void Creature::loadSprite() {
+	//this will need to take the creatureID to pull its sprite from the sheet
+	uint8_t id = this->seed->creatureID & 0b11111;
+
+	//force this for now since no sheet
+	this->sprite = snailSprite;
 }
 
 // should prob have error checking but w/e
