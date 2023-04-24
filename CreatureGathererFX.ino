@@ -2,11 +2,12 @@
 //#include "src/lib/TypeTable.hpp"
 #include "src/engine/battle/Battle.hpp"  
 #include "src/player/Player.hpp"
-
+#include "src/engine/game/menu.hpp"
 // make an instance of arduboy used for many functions
 Arduboy2 arduboy;
 Player player = Player();
-BattleEngine engine = BattleEngine(&arduboy);
+Menu menu = Menu(&arduboy);
+BattleEngine engine = BattleEngine(&arduboy, &menu);
 bool state = true;
 
 

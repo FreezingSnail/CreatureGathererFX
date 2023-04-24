@@ -29,7 +29,7 @@ class BattleEngine {
 
 
     public:
-        BattleEngine(Arduboy2* arduboy);
+        BattleEngine(Arduboy2* arduboy, Menu* menu);
 
         void encounter();
 
