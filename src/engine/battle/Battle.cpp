@@ -1,5 +1,6 @@
 #include "Arduboy2.h"
 #include "Battle.hpp"
+#include "../game/Menu.hpp"
 #include "../../creature/Creature.hpp"
 #include "../../opponent/Opponent.hpp"
 #include "../../player/Player.hpp"
@@ -43,8 +44,9 @@ uint16_t BattleEngine::calculateDamage(Action* action, Creature* committer, Crea
     return damage;
 }
 
-BattleEngine::BattleEngine(Arduboy2* arduboy) {
+BattleEngine::BattleEngine(Arduboy2* arduboy, Menu* menu) {
     this->arduboy = arduboy;
+    this->menu = menu;
 }
 
 // battle loop
@@ -112,6 +114,7 @@ void BattleEngine::startEncounter(Player* player, uint8_t optID) {
     this->arduboy->print("starting encounter\n");
     this->loadOpponent(optID);
     this->loadPlayer(player);
+    this->menu->setState(State_t::BATTLE);
     this->encounter();
 }
 
@@ -204,13 +207,7 @@ void BattleEngine::endEncounter() {
 
 void BattleEngine::getInput() {
     // arduboy input from menu
-    //this->menu->actionInput(&this->playerAction);
-    this->arduboy->display();
-    //while(!this->arduboy->justPressed(A_BUTTON)){}
-    this->arduboy->clear();
-
-    this->opponentAction.setActionType(ActionType::ATTACK);
-    this->opponentAction.actionIndex = 1;
+    this->menu->actionInput(&this->playerAction);
 }
 
 void BattleEngine::opponentInput() {

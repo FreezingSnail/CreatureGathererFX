@@ -1,23 +1,16 @@
 #include "Menu.hpp"
+#include "Arduboy2.h"
+#include "../../external/FlashStringHelper.h"
 #include "../../action/Action.hpp"
+#include "../../lib/Move.hpp"
 
-#ifdef CLI
-    #include <iostream>
-#endif
-
-Menu::Menu() {
+Menu::Menu(Arduboy2* arduboy) {
+    this->arduboy = arduboy;
 }
 
 void Menu::actionInput(Action* action) {
-
-    #ifdef CLI
-    //cli interface
-    std::cout << "0-3 attacks. 5 item, 6 switch, 7 run" << std::endl;
-    std::string input = "";
-    std::cin >> input;
-    int in = std::stoi(input);
-    action->actionIndex = in;
-
+    action->actionIndex = 0;
+/*
     switch(in){
         case 0:
         case 1:
@@ -37,6 +30,42 @@ void Menu::actionInput(Action* action) {
         default:
             break;
     }
+    */
+}
+void Menu::setState(State_t s) {
+    this->state = s;
+}
 
-    #endif
+void Menu::printCursor() {
+}
+
+void Menu::printMenu() {
+    switch(this->state){
+        case State_t::BATTLE:
+            this->printBattleMenu();
+        case State_t::WORLD:
+            this->printWorldMenu();
+    };
+}
+
+void Menu::printBattleMenu() {
+
+}
+
+void Menu::printMoveMenu() {
+    uint8_t moveIndex = 0;
+    this->arduboy->print(readFlashStringPointer(&moveNames[moveIndex]));
+
+}
+
+void Menu::printItemMenu() {
+}
+
+void Menu::printWorldMenu() {
+}
+
+void Menu::printCreatureMenu() {
+}
+
+void Menu::printInventoryMenu() {
 }
