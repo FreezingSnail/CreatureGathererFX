@@ -26,7 +26,7 @@ jobs:
       run: arduino-cli core install arduino:avr 
     
     - name: install Arduboy board
-      run: arduino-cli core install arduino:avr 
+      run: arduino-cli core install arduboy:avr 
 
     - name: build
       run: arduino-cli compile --fqbn "arduboy:avr:arduboy"  .  --output-dir .
