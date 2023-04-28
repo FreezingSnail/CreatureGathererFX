@@ -20,7 +20,7 @@ jobs:
       run: arduino-cli config init --additional-urls https://arduboy.github.io/board-support/package_arduboy_index.json
 
     - name: install Arduboy board
-      run: arduino-cli core update-index 
+      run: arduino-cli core update-index && arduino-cli core upginstallrade arduino:avr && arduino-cli core install arduboy:avr
 
     - name: build
       run: arduino-cli compile --fqbn "arduboy:avr:arduboy"  .  --output-dir .
