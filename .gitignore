@@ -2,3 +2,5 @@ lib/*
 build/*
 .vscode/
 *.hex
+*.eep
+*.elf
