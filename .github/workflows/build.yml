@@ -16,8 +16,11 @@ jobs:
     - name: Install Arduino CLI
       uses: arduino/setup-arduino-cli@v1
 
-    - name: Install Arduboy board
+    - name: Add Arduboy board
       run: arduino-cli config init --additional-urls https://arduboy.github.io/board-support/package_arduboy_index.json
+
+    - name: install Arduboy board
+      run: arduino-cli core upgrade arduboy-homemade:avr
 
     - name: build
       run: arduino-cli compile --fqbn "arduboy:avr:arduboy"  .  --output-dir .
