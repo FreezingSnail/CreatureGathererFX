@@ -19,7 +19,7 @@ jobs:
     - name: Add Arduboy board
       run: arduino-cli config init --additional-urls https://arduboy.github.io/board-support/package_arduboy_index.json
 
-    - name: install Arduboy board
+    - name: Update Index
       run: arduino-cli core update-index 
     
     - name: install arv board
@@ -29,7 +29,7 @@ jobs:
       run: arduino-cli core install arduboy:avr 
 
     - name: Install Arduboy library
-      run: arduino-cli lib install
+      run: arduino-cli lib install Arduboy2
 
     - name: build
       run: arduino-cli compile --fqbn "arduboy:avr:arduboy"  .  --output-dir .
