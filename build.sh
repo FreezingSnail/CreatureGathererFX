@@ -1,0 +1,1 @@
+arduino-cli compile --fqbn "arduboy:avr:arduboy"  .  --output-dir .
