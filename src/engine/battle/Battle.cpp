@@ -68,11 +68,12 @@ void BattleEngine::encounter() {
             return;
         }
         if(this->arduboy->justPressed(A_BUTTON)){
-        this->turnTick();
+            this->turnTick();
         }
+        this->menu->printMenu();
         this->drawScene();
         #ifdef DEBUG
-            this->printEncounter();
+            //this->printEncounter();
             // this->playerCur->printMoves();
         #endif
         this->arduboy->display();
@@ -254,7 +255,7 @@ void BattleEngine::applyDamage(uint16_t damage, Creature* reciever) {
 
 void BattleEngine::drawScene() {
     //this->arduboy->drawBitmap(0, 0, this->playerCur->sprite, 32, 32, 0);
-    Sprites::drawSelfMasked(32, 0, this->opponentCur->sprite, 0);
+    //Sprites::drawSelfMasked(32, 0, this->opponentCur->sprite, 0);
 }
 
 

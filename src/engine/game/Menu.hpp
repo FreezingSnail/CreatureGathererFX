@@ -7,11 +7,18 @@ typedef enum State {
     BATTLE
 }State_t;
 
+enum currentMenu {
+    BMAIN,
+    BMOVE,
+    BITEM
+};
+
 class Menu{
 
     private:
         Arduboy2* arduboy;
         State_t state;
+        currentMenu curMenu;
         // pointers to the move name strings based on the current creature moves
         char* moveList[4];
         // pointers to the item name strings based on the current creature moves

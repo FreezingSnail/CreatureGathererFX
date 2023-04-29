@@ -12,7 +12,12 @@ static const uint8_t* moveList[32] =	{ &m00, &m01, &m02, &m03, &m04, &m05, &m06,
 										&m20, &m21, &m22, &m23, &m24, &m25, &m26, &m27, &m28, &m29, 
 										&m31, &m31 };
 
-const char* const moveNames[] PROGMEM = {"move1", "move2", "move3", "move4"};
+const char move1[] PROGMEM = "move1";
+const char move2[] PROGMEM = "move2";
+const char move3[] PROGMEM = "move3";
+const char move4[] PROGMEM = "move4";
+
+const char* const moveNames[] PROGMEM = {move1, move2, move3, move4};
 //move 
 // 00    000    000    
 // id#   type   power 
