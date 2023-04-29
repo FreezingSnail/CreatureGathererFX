@@ -45,16 +45,26 @@ void Menu::printMenu() {
             this->printBattleMenu();
         case State_t::WORLD:
             this->printWorldMenu();
+        default:
+            this->printBattleMenu();
     };
 }
 
 void Menu::printBattleMenu() {
+    this->printMoveMenu();
 
 }
 
 void Menu::printMoveMenu() {
-    uint8_t moveIndex = 0;
-    this->arduboy->print(readFlashStringPointer(&moveNames[moveIndex]));
+    this->arduboy->print("move menu");
+    this->arduboy->setCursor(2, 40);
+    this->arduboy->print(readFlashStringPointer(&moveNames[0]));
+    this->arduboy->setCursor(60, 40);
+    this->arduboy->print(readFlashStringPointer(&moveNames[1]));
+    this->arduboy->setCursor(2, 50);
+    this->arduboy->print(readFlashStringPointer(&moveNames[2]));
+    this->arduboy->setCursor(60, 50);
+    this->arduboy->print(readFlashStringPointer(&moveNames[3]));
 
 }
 
