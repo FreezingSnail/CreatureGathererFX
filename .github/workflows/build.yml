@@ -29,5 +29,8 @@ jobs:
     - name: Install Arduboy library
       run: arduino-cli lib install Arduboy2
 
+    - name: Install bitmap library
+      run: arduino-cli lib install ArdBitmap
+
     - name: build
       run: arduino-cli compile --fqbn "arduboy:avr:arduboy"  .  --output-dir .

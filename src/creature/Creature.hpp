@@ -25,7 +25,9 @@ typedef struct stats{
 class Creature{
 
 	public:
-			CreatureSeed_t* seed;
+			// potential saving: read this from progmem when need it ? 
+			// 6 instances to 1 stack var
+			CreatureSeed_t seed;
 			Type_t type;
 			uint8_t level;
 
@@ -36,7 +38,7 @@ class Creature{
 			const unsigned char* sprite;
 
 			Creature();
-            void load(CreatureSeed_t* seed);
+            void load(CreatureSeed_t seed);
 			void loadFromOpponentSeed(uint32_t seed);
 			
 			void setStats();
@@ -58,7 +60,10 @@ class Creature{
 			uint8_t getDefStat();
 			uint8_t getHpStat();
 			uint8_t getSpdStat();
-			
+
+			uint8_t getID();
+
+			bool moveTypeBonus(uint8_t move);
 
 			#ifdef CLI
 				void printMoves();

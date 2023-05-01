@@ -7,10 +7,9 @@
 #include "../../lib/TypeTable.hpp"
 #include "../../lib/Move.hpp"
 #include "../../data/opponentsData.h"
+#include "../../sprites/creatureSprites.h"
 
-#ifdef CLI
-#include <iostream>
-#endif
+
 
 //#define DEBUG
 
@@ -19,17 +18,23 @@ uint16_t BattleEngine::calculateDamage(Action* action, Creature* committer, Crea
     uint8_t move = getMove(committer->moves[action->actionIndex]);
     float mod = getMatchupModifier(getMoveType(move), uint8_t(reciever->type))/2;
     uint8_t power = getMovePower(move);
+    bool bonus = committer->moveTypeBonus(move);
 
     #ifdef DEBUG
-        this->arduboy->print(F("p:  atk:  def:\n"));
-        this->arduboy->print((unsigned)power);  this->arduboy->print(F(" "));
-        this->arduboy->print((unsigned)committer->getAtkStat());this->arduboy->print(F(" "));
-        this->arduboy->print((unsigned)reciever->getDefStat());this->arduboy->print(F(" "));
-        this->arduboy->print(F("\n"));
-        this->arduboy->print(F("move Type: rtype: mod: \n"));
-        this->arduboy->print((unsigned)getMoveType(move)); this->arduboy->print(F(" ")); 
-        this->arduboy->print((unsigned)reciever->type); this->arduboy->print(F(" "));
-        this->arduboy->print((mod));this->arduboy->print(F(" "));
+        while(!this->arduboy->justPressed(B_BUTTON)){
+            this->arduboy->pollButtons();
+            this->arduboy->clear();
+            this->arduboy->print(F("p:  atk:  def:\n"));
+            this->arduboy->print((unsigned)power);  this->arduboy->print(F(" "));
+            this->arduboy->print((unsigned)committer->getAtkStat());this->arduboy->print(F(" "));
+            this->arduboy->print((unsigned)reciever->getDefStat());this->arduboy->print(F(" "));
+            this->arduboy->print(F("\n"));
+            this->arduboy->print(F("move Type: rtype: mod: \n"));
+            this->arduboy->print((unsigned)getMoveType(move)); this->arduboy->print(F(" ")); 
+            this->arduboy->print((unsigned)reciever->type); this->arduboy->print(F(" "));
+            this->arduboy->print((mod));this->arduboy->print(F(" "));
+            this->arduboy->display();
+        }
     #endif
 
     uint16_t damage = ((power * committer->getAtkStat() / reciever->getDefStat()) * mod);
@@ -38,6 +43,10 @@ uint16_t BattleEngine::calculateDamage(Action* action, Creature* committer, Crea
             return 0;
         }
         return 1;
+    }
+
+    if ( bonus ) {
+        return damage * 2;
     }
 
     // going too need to balance this eventually
@@ -50,34 +59,33 @@ BattleEngine::BattleEngine(Arduboy2* arduboy, Menu* menu) {
 }
 
 // battle loop
-void BattleEngine::encounter() {
-    while(true) {
-        this->arduboy->clear();
-        this->arduboy->pollButtons();
-        if (this->checkLoss()) {
-            this->arduboy->print(F("win\n"));
-            this->arduboy->display();
-            if(this->arduboy->justPressed(A_BUTTON)){
-                return;
-            }
-        }
 
-        if(this->checkWin()) {
-            this->arduboy->print(F("loose\n"));
-            this->arduboy->display();
+//Need to change something here for the flow of the game
+void BattleEngine::encounter() {
+
+    if (this->checkLoss()) {
+        this->arduboy->print(F("win\n"));
+        this->arduboy->display();
+        if(this->arduboy->justPressed(A_BUTTON)){
             return;
         }
-        if(this->arduboy->justPressed(A_BUTTON)){
-            this->turnTick();
-        }
-        this->menu->printMenu();
-        this->drawScene();
-        #ifdef DEBUG
-            //this->printEncounter();
-            // this->playerCur->printMoves();
-        #endif
-        this->arduboy->display();
     }
+
+    if(this->checkWin()) {
+        this->arduboy->print(F("loose\n"));
+        this->arduboy->display();
+        return;
+    }
+
+    this->turnTick();
+    this->menu->printMenu();
+    this->drawScene();
+    #ifdef DEBUG
+        //this->printEncounter();
+        // this->playerCur->printMoves();
+    #endif
+
+    
 
    
 }
@@ -116,12 +124,14 @@ void BattleEngine::startEncounter(Player* player, uint8_t optID) {
     this->loadOpponent(optID);
     this->loadPlayer(player);
     this->menu->setState(State_t::BATTLE);
-    this->encounter();
+    //this->encounter();
 }
 
 //this function is terrible
 void BattleEngine::turnTick() {
-    this->getInput();
+    if(!this->getInput()){
+        return;
+    }
     this->opponentInput();
     int8_t order = this->playerAction.priority != this->opponentAction.priority;
     if(order > 0){
@@ -139,27 +149,15 @@ void BattleEngine::turnTick() {
 }
 
 void BattleEngine::playerActionFirst() {
-    #ifdef CLI
-        std::cout << "player action \n";
-    #endif
     this->commitAction(&this->playerAction, this->playerCur, this->opponentCur);
     this->checkOpponentFaint();
-    #ifdef CLI
-        std::cout << "opponent action \n";
-    #endif
     this->commitAction(&this->opponentAction, this->opponentCur, this->playerCur);
     this->checkPlayerFaint();
 }
 
 void BattleEngine::opponentActionFirst() {
-    #ifdef CLI
-        std::cout << "opponent action \n";
-    #endif
     this->commitAction(&this->opponentAction, this->opponentCur, this->playerCur);
     this->checkPlayerFaint();
-    #ifdef CLI
-        std::cout << "player action \n";
-    #endif
     this->commitAction(&this->playerAction, this->playerCur, this->opponentCur);
     this->checkOpponentFaint();
 
@@ -167,9 +165,6 @@ void BattleEngine::opponentActionFirst() {
 
 void BattleEngine::checkPlayerFaint() {
     if (this->playerHealths[this->playerIndex] <= 0 ){
-        #ifdef CLI
-        std::cout << "player faint \n";
-        #endif
         this->playerIndex++;
         this->playerCur = this->playerParty[this->playerIndex];
         //this->awakeMons &= ~(1 << this->playerIndex);
@@ -178,9 +173,6 @@ void BattleEngine::checkPlayerFaint() {
 
 void  BattleEngine::checkOpponentFaint() {
     if (this->opponentHealths[this->opponentIndex] <= 0 ){
-        #ifdef CLI
-        std::cout << "opponent faint \n";
-        #endif
         this->opponentIndex++;
         this->opponentCur = &(this->opponent.party[this->opponentIndex]);
         //this->awakeMons &= ~(1 << this->opponentIndex+5);
@@ -198,17 +190,12 @@ bool BattleEngine::checkWin() {
 }
 
 void BattleEngine::endEncounter() {
-
     this->arduboy->print(F("\nend encounter \n"));
-
-    #ifdef CLI
-        std::cout << "end encounter \n";
-    #endif
 }
 
-void BattleEngine::getInput() {
+bool BattleEngine::getInput() {
     // arduboy input from menu
-    this->menu->actionInput(&this->playerAction);
+    return this->menu->actionInput(&this->playerAction);
 }
 
 void BattleEngine::opponentInput() {
@@ -254,14 +241,36 @@ void BattleEngine::applyDamage(uint16_t damage, Creature* reciever) {
 }
 
 void BattleEngine::drawScene() {
-    //this->arduboy->drawBitmap(0, 0, this->playerCur->sprite, 32, 32, 0);
-    //Sprites::drawSelfMasked(32, 0, this->opponentCur->sprite, 0);
+    this->drawPlayer();
+    this->drawOpponent();
+}
+
+void BattleEngine::drawOpponent() {
+    //would be nice to flip this sprite
+    uint8_t spriteIndex = this->opponentCur->getID();
+    Sprites::drawSelfMasked(0, 0, creatureSprites, spriteIndex);
+    this->arduboy->setCursor(70,35);
+    this->arduboy->print(F("HP: "));
+    this->arduboy->print((unsigned)this->opponentHealths[this->opponentIndex]);
+    this->arduboy->print(F("/"));
+    this->arduboy->print((unsigned)this->opponentCur->getHpStat());
+}
+
+void BattleEngine::drawPlayer() {
+    uint8_t spriteIndex = this->playerCur->getID();
+    Sprites::drawSelfMasked(96, 0, creatureSprites, spriteIndex);
+    this->arduboy->setCursor(2,35);
+    this->arduboy->print(F("HP: "));
+    this->arduboy->print((unsigned)this->playerHealths[this->playerIndex]);
+    this->arduboy->print(F("/"));
+    this->arduboy->print((unsigned)this->playerCur->getHpStat());
 }
 
 
 #ifdef DEBUG
 
         void BattleEngine::printEncounter() {
+            this->arduboy->setCursor(0,0);
             this->arduboy->print(F("P: cur: ")); this->arduboy->print((unsigned)this->playerIndex); 
             this->arduboy->print(F(" lvl: ")); this->arduboy->print((unsigned)this->playerCur->level);
             this->arduboy->print(F("\nhp:"));
