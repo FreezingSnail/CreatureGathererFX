@@ -4,3 +4,4 @@ build/*
 *.hex
 *.eep
 *.elf
+tools/image-converter.py

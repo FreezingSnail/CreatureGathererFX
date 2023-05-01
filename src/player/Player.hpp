@@ -15,6 +15,6 @@ class Player {
 
         Player();
 
-        void setMonster(uint8_t index, CreatureSeed_t* seed);
+        void setMonster(uint8_t index, CreatureSeed_t seed);
         
 };

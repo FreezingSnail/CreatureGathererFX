@@ -5,6 +5,7 @@
 #include "../../engine/game/Menu.hpp"
 #include "../../opponent/Opponent.hpp"
 #include "../../player/Player.hpp"
+
 #define DEBUG
 
 
@@ -42,7 +43,7 @@ class BattleEngine {
         void endEncounter();
 
         // sets playerAction
-        void getInput();
+        bool getInput();
 
         // Sets opponentAction
         void opponentInput();
@@ -64,6 +65,8 @@ class BattleEngine {
         uint16_t calculateDamage(Action* action, Creature* committer, Creature* reciever);
 
         void drawScene();
+        void drawPlayer();
+        void drawOpponent();
 
 
     #ifdef DEBUG

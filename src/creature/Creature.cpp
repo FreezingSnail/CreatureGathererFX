@@ -25,9 +25,9 @@ Creature::Creature() {
 	this->statlist.health = 0;
 }
 
-void Creature::load(CreatureSeed_t* seed) {
+void Creature::load(CreatureSeed_t seed) {
 	this->seed = seed;
-	this->type = (Type_t)(seed->creatureID >> 3);
+	this->type = (Type_t)(seed.creatureID >> 3);
 	this->setStats();
 	this->loadMoves();
 	//Need some kind of default setting for moves ?
@@ -39,7 +39,7 @@ void Creature::load(CreatureSeed_t* seed) {
 //00,id1,lvl1,move11,move12,move13,move14,
 void Creature::loadFromOpponentSeed(uint32_t seed){
 	CreatureSeed_t cSeed = getCreatureFromStore(parseOpponentCreatureSeedID(seed));
-	this->seed = &cSeed;
+	this->seed = cSeed;
 	this->type = (Type_t)(cSeed.creatureID >> 3);
 	this->setStats();
 	this->level = parseOpponentCreatureSeedlvl(seed);
@@ -52,15 +52,15 @@ void Creature::loadFromOpponentSeed(uint32_t seed){
 }
 
 void Creature::loadMoves() {
-	this->setMove(this->seed->startingMoves & 0b11111, 0);
-	this->setMove((this->seed->startingMoves >> 5) & 0b11111, 1);
-	this->setMove((this->seed->startingMoves >> 10) & 0b11111, 2);
-	this->setMove((this->seed->startingMoves >> 15) & 0b11111, 3);
+	this->setMove(this->seed.startingMoves & 0b11111, 0);
+	this->setMove((this->seed.startingMoves >> 5) & 0b11111, 1);
+	this->setMove((this->seed.startingMoves >> 10) & 0b11111, 2);
+	this->setMove((this->seed.startingMoves >> 15) & 0b11111, 3);
 }
 
 void Creature::loadSprite() {
 	//this will need to take the creatureID to pull its sprite from the sheet
-	uint8_t id = this->seed->creatureID & 0b11111;
+	uint8_t id = this->seed.creatureID & 0b11111;
 
 	//force this for now since no sheet
 	this->sprite = snailSprite;
@@ -93,19 +93,19 @@ uint8_t Creature::getLevel() {
 }
 
 uint8_t Creature::getAtkStatSeed() {
-	return (this->seed->statSeed & 0b1111000000000000) >> 12;
+	return (this->seed.statSeed & 0b1111000000000000) >> 12;
 }
 
 uint8_t Creature::getDefStatSeed() {
-	return (this->seed->statSeed & 0b0000111100000000) >> 8;
+	return (this->seed.statSeed & 0b0000111100000000) >> 8;
 }
 
 uint8_t Creature::getHpStatSeed() {
-	return (this->seed->statSeed & 0b0000000011110000) >> 4;
+	return (this->seed.statSeed & 0b0000000011110000) >> 4;
 }
 
 uint8_t Creature::getSpdStatSeed() {
-	return (this->seed->statSeed & 0b0000000000001111);
+	return (this->seed.statSeed & 0b0000000000001111);
 }
 
 uint8_t Creature::getAtkStat() {
@@ -121,19 +121,10 @@ uint8_t Creature::getSpdStat() {
 	return this->statlist.speed;
 }
 
+uint8_t Creature::getID() {
+	return this->seed.creatureID & 0b00011111;
+}
 
-#ifdef CLI
-#include <iostream>
-void Creature::printMoves() {
-	for (int i = 0; i < 4; i++) {
-		uint8_t raw = moveList[this->getMove(i)];
-		uint8_t id = getMoveID(raw);
-		uint8_t type = getMoveType(raw);
-		uint8_t power = getMovePower(raw);
-		std::cout << "Move " << i << " id: " << (unsigned)id << " type:" << (unsigned)type << " power:" << (unsigned)power << std::endl;
-	}
+bool Creature::moveTypeBonus(uint8_t move) {
+	return this->type == (Type_t)getMoveType(move);
 }
-void Creature::printStats() {
-	std::cout << "atk: " << this->getAtkStat() << "def: " << this->getDefStat() << "spd: " << this->getSpdStat() << "hp: " << this->getHpStat() <<std::endl;
-}
-#endif
