@@ -37,7 +37,7 @@ uint16_t BattleEngine::calculateDamage(Action* action, Creature* committer, Crea
         }
     #endif
 
-    uint16_t damage = ((power * committer->getAtkStat() / reciever->getDefStat()) * mod);
+    uint16_t damage = ((power * committer->getStatAtLevel(committer->getAtkStat()) / reciever->getStatAtLevel(reciever->getDefStat())) * mod);
     if ( damage == 0 ){
         if (mod == 0) {
             return 0;
