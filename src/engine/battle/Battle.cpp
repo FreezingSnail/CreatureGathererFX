@@ -241,6 +241,7 @@ void BattleEngine::applyDamage(uint16_t damage, Creature* reciever) {
 }
 
 void BattleEngine::drawScene() {
+    this->arduboy->drawRect(0,32, 128, 32);
     this->drawPlayer();
     this->drawOpponent();
 }
@@ -249,36 +250,55 @@ void BattleEngine::drawOpponent() {
     //would be nice to flip this sprite
     uint8_t spriteIndex = this->opponentCur->getID();
     Sprites::drawSelfMasked(0, 0, creatureSprites, spriteIndex);
-    this->arduboy->setCursor(70,35);
-    this->arduboy->print(F("HP: "));
-    this->arduboy->print((unsigned)this->opponentHealths[this->opponentIndex]);
-    this->arduboy->print(F("/"));
-    this->arduboy->print((unsigned)this->opponentCur->getHpStat());
+    this->drawOpponentHP();
 }
 
 void BattleEngine::drawPlayer() {
     uint8_t spriteIndex = this->playerCur->getID();
     Sprites::drawSelfMasked(96, 0, creatureSprites, spriteIndex);
+    this->drawPlayerHP();
+}
+
+void BattleEngine::drawPlayerHP() {
     this->arduboy->setCursor(2,35);
     this->arduboy->print(F("HP: "));
     this->arduboy->print((unsigned)this->playerHealths[this->playerIndex]);
     this->arduboy->print(F("/"));
     this->arduboy->print((unsigned)this->playerCur->getHpStat());
+    this->arduboy->setCursor(32,2);
+    this->arduboy->print(F("lv:"));
+    this->arduboy->print(this->playerCur->level);
+}
+
+void BattleEngine::drawOpponentHP() {
+    this->arduboy->setCursor(70,35);
+    this->arduboy->print(F("HP: "));
+    this->arduboy->print((unsigned)this->opponentHealths[this->opponentIndex]);
+    this->arduboy->print(F("/"));
+    this->arduboy->print((unsigned)this->opponentCur->getHpStat());
+    this->arduboy->setCursor(64,2);
+    this->arduboy->print(F("lv:"));
+    this->arduboy->print(this->opponentCur->level);
 }
 
 
 #ifdef DEBUG
 
         void BattleEngine::printEncounter() {
-            this->arduboy->setCursor(0,0);
-            this->arduboy->print(F("P: cur: ")); this->arduboy->print((unsigned)this->playerIndex); 
-            this->arduboy->print(F(" lvl: ")); this->arduboy->print((unsigned)this->playerCur->level);
-            this->arduboy->print(F("\nhp:"));
-            for(int i = 0; i < 3; i++ ){ this->arduboy->print(F(" ")); this->arduboy->print((unsigned)this->playerHealths[i]);}
-            this->arduboy->print(F("\nO: cur: ")); this->arduboy->print((unsigned)this->opponentIndex); 
-            this->arduboy->print(F(" lvl: ")); this->arduboy->print((unsigned)this->opponentCur->level);
-            this->arduboy->print(F("\nhp:"));
-            for(int i = 0; i < 3; i++ ){ this->arduboy->print(F(" ")); this->arduboy->print((unsigned)this->opponentHealths[i]);}
+            while(!this->arduboy->justPressed(B_BUTTON)){
+                this->arduboy->pollButtons();
+                this->arduboy->clear();
+                this->arduboy->setCursor(0,0);
+                this->arduboy->print(F("P: cur: ")); this->arduboy->print((unsigned)this->playerIndex); 
+                this->arduboy->print(F(" lvl: ")); this->arduboy->print((unsigned)this->playerCur->level);
+                this->arduboy->print(F("\nhp:"));
+                for(int i = 0; i < 3; i++ ){ this->arduboy->print(F(" ")); this->arduboy->print((unsigned)this->playerHealths[i]);}
+                this->arduboy->print(F("\nO: cur: ")); this->arduboy->print((unsigned)this->opponentIndex); 
+                this->arduboy->print(F(" lvl: ")); this->arduboy->print((unsigned)this->opponentCur->level);
+                this->arduboy->print(F("\nhp:"));
+                for(int i = 0; i < 3; i++ ){ this->arduboy->print(F(" ")); this->arduboy->print((unsigned)this->opponentHealths[i]);}
+                this->arduboy->display();
+            }
         }
 
 #endif

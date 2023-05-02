@@ -67,6 +67,8 @@ class BattleEngine {
         void drawScene();
         void drawPlayer();
         void drawOpponent();
+        void drawPlayerHP();
+        void drawOpponentHP();
 
 
     #ifdef DEBUG
