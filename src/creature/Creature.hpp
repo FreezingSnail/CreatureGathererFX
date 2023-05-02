@@ -61,6 +61,8 @@ class Creature{
 			uint8_t getHpStat();
 			uint8_t getSpdStat();
 
+			uint8_t getStatAtLevel(uint8_t stat);
+
 			uint8_t getID();
 
 			bool moveTypeBonus(uint8_t move);

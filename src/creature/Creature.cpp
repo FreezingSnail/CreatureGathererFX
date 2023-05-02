@@ -128,3 +128,8 @@ uint8_t Creature::getID() {
 bool Creature::moveTypeBonus(uint8_t move) {
 	return this->type == (Type_t)getMoveType(move);
 }
+
+uint8_t Creature::getStatAtLevel(uint8_t stat){
+	return (2*this->level)*(stat/3));
+
+}
