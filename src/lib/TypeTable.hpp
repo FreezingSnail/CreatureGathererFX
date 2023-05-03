@@ -55,6 +55,9 @@ typedef enum class Types{
 	{4,2,2,2,0,2,2,4}
 };
 */
+
+//TODO (snail) this needs to be changed, no longer in date.
+// preferably generated from a csv
 static const uint8_t typeTable[8][2] = 
 {   // 0 1 2 3     4 5 6 7 
 	{0b10101010, 0b10101010},

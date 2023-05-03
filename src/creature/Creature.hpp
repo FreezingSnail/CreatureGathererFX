@@ -4,11 +4,17 @@
 
 typedef struct CreatureSeed{
 
+		uint8_t evoLevel; 			// 000     00000
+									// waste   level to evolution
+
         uint8_t creatureID;			//000     00000
 								    //type    Creature id
+
+		uint8_t TypeEvoPtr;			// 000     00000
+									// type2   ptr to evolution
 		
-		uint8_t type2Special;		// 000   0     0000
-									// type2 waste special stat
+		uint8_t special;			// 0000     0000
+									// socDef   spcAtk stat
 
 		uint16_t statSeed;			// 0000		0000	0000	0000
 									// atk		def		hp		spd
@@ -16,14 +22,36 @@ typedef struct CreatureSeed{
         uint32_t movelist;			//32 binary flips
 
 		uint32_t startingMoves;		// need 20bits to store the 4 initial moves
+
 }CreatureSeed_t;
+
+//todo research huffman encoding to squash these in mem
+struct CreatureData{
+		uint32_t movelist;	//32 binary flips
+		unsigned char evoLevel:   	5;
+        unsigned char creatureID: 	3;
+		unsigned char type1: 		3;
+		unsigned char type2: 		3;
+		unsigned char EvoPtr:		5;
+		unsigned char hpSeed:		4;
+		unsigned char atkSeed:		4;
+		unsigned char defSeed:		4;	
+		unsigned char spcAtkSeed:	4;	
+		unsigned char spcDefSeed:	4;	
+		unsigned char spdSeed:		4;
+		unsigned char move1:		5;
+		unsigned char move2:		5;
+		unsigned char move3:		5;
+		unsigned char move4:		5;
+};
 
 typedef struct stats{
 	uint8_t attack;
 	uint8_t defense;
 	uint8_t health;
 	uint8_t speed;
-	uint8_t special;
+	uint8_t spcAtk;
+	uint8_t spcDef;
 }stats_t;
 
 class Creature{
