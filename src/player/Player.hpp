@@ -10,11 +10,11 @@ class Player {
         uint8_t creatureHPs[3];
         Item items[10];
 
-        Creature storedCreatures[10]; 
+        Creature storedCreatures[32]; 
 
 
         Player();
 
-        void setMonster(uint8_t index, CreatureSeed_t seed);
+        void setMonster(uint8_t index, uint64_t seed);
         
 };
