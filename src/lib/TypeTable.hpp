@@ -13,6 +13,7 @@ typedef enum class Types{
 	lightning,
 	plant,
 	elder,
+	none,
 }Type_t;
 
 /*************
