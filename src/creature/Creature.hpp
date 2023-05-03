@@ -6,6 +6,9 @@ typedef struct CreatureSeed{
 
         uint8_t creatureID;			//000     00000
 								    //type    Creature id
+		
+		uint8_t type2Special;		// 000   0     0000
+									// type2 waste special stat
 
 		uint16_t statSeed;			// 0000		0000	0000	0000
 									// atk		def		hp		spd
@@ -16,10 +19,11 @@ typedef struct CreatureSeed{
 }CreatureSeed_t;
 
 typedef struct stats{
-	uint16_t attack;
-	uint16_t defense;
-	uint16_t health;
-	uint16_t speed;
+	uint8_t attack;
+	uint8_t defense;
+	uint8_t health;
+	uint8_t speed;
+	uint8_t special;
 }stats_t;
 
 class Creature{
@@ -28,7 +32,8 @@ class Creature{
 			// potential saving: read this from progmem when need it ? 
 			// 6 instances to 1 stack var
 			CreatureSeed_t seed;
-			Type_t type;
+			Type_t type1;
+			Type_t type2;
 			uint8_t level;
 
 			// Moves are held as an index to the move array 
@@ -55,13 +60,15 @@ class Creature{
 			uint8_t getDefStatSeed();
 			uint8_t getHpStatSeed();
 			uint8_t getSpdStatSeed();
+			uint8_t getSpcStatSeed();
 
 			uint8_t getAtkStat();
 			uint8_t getDefStat();
 			uint8_t getHpStat();
 			uint8_t getSpdStat();
+			uint8_t getSpcStat();
 
-			uint8_t getStatAtLevel(uint8_t stat);
+			uint8_t seedToStat(uint8_t seed);
 
 			uint8_t getID();
 

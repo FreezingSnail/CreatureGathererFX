@@ -3,11 +3,8 @@
 #include "../data/Creatures.hpp"
 #include "../lib/Move.hpp"
 #include "../sprites/sprites.hpp"
+#include "../sprites/creatureSprites.h"
 
-uint8_t seedToStat(uint8_t seed) {
-	// Need to do some math here to scale a 4 bit number to 8
-	return seed;
-}
 
 //This will need to load the creature seed from the progmemstore
 CreatureSeed_t getCreatureFromStore(uint8_t id) {
@@ -23,11 +20,13 @@ Creature::Creature() {
 	this->statlist.defense = 0;
 	this->statlist.speed = 0;
 	this->statlist.health = 0;
+	this->statlist.special = 0;
 }
 
 void Creature::load(CreatureSeed_t seed) {
 	this->seed = seed;
-	this->type = (Type_t)(seed.creatureID >> 3);
+	this->type1 = (Type_t)(seed.creatureID >> 3);
+	this->type2 = (Type_t)(seed.type2Special >> 5);
 	this->setStats();
 	this->loadMoves();
 	//Need some kind of default setting for moves ?
@@ -40,7 +39,7 @@ void Creature::load(CreatureSeed_t seed) {
 void Creature::loadFromOpponentSeed(uint32_t seed){
 	CreatureSeed_t cSeed = getCreatureFromStore(parseOpponentCreatureSeedID(seed));
 	this->seed = cSeed;
-	this->type = (Type_t)(cSeed.creatureID >> 3);
+	this->type1 = (Type_t)(cSeed.creatureID >> 3);
 	this->setStats();
 	this->level = parseOpponentCreatureSeedlvl(seed);
 	this->setMove(parseOpponentCreatureSeedMove(seed, 0), 0);
@@ -63,7 +62,7 @@ void Creature::loadSprite() {
 	uint8_t id = this->seed.creatureID & 0b11111;
 
 	//force this for now since no sheet
-	this->sprite = snailSprite;
+	this->sprite = creatureSprites[this->getID()];
 }
 
 // should prob have error checking but w/e
@@ -76,6 +75,8 @@ void Creature::setStats() {
 	this->statlist.defense = seedToStat(this->getDefStatSeed());
 	this->statlist.speed = seedToStat(this->getSpdStatSeed());
 	this->statlist.health = seedToStat(this->getHpStatSeed());
+	this->statlist.special = seedToStat(this->getSpcStatSeed());
+
 }
 
 // some ai to find best advantage should move this out of this class though
@@ -108,6 +109,10 @@ uint8_t Creature::getSpdStatSeed() {
 	return (this->seed.statSeed & 0b0000000000001111);
 }
 
+uint8_t Creature::getSpcStatSeed() {
+	return (this->seed.type2Special & 0b00001111);
+}
+
 uint8_t Creature::getAtkStat() {
 	return this->statlist.attack;
 }
@@ -121,15 +126,20 @@ uint8_t Creature::getSpdStat() {
 	return this->statlist.speed;
 }
 
+uint8_t Creature::getSpcStat() {
+	return this->statlist.special;
+}
+
 uint8_t Creature::getID() {
 	return this->seed.creatureID & 0b00011111;
 }
 
 bool Creature::moveTypeBonus(uint8_t move) {
-	return this->type == (Type_t)getMoveType(move);
+	
+	return this->type1 == (Type_t)getMoveType(move) || this->type2 == (Type_t)getMoveType(move);
 }
 
-uint8_t Creature::getStatAtLevel(uint8_t stat){
-	return (2*this->level)*(stat/3));
-
+uint8_t Creature::seedToStat(uint8_t seed) {
+	// Need to do some math here to scale a 4 bit number to 8
+	return (2*this->level)*(seed/3);
 }

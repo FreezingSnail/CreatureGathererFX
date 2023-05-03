@@ -16,7 +16,7 @@
 uint16_t BattleEngine::calculateDamage(Action* action, Creature* committer, Creature* reciever) {
     //need to do something here with atk def stats
     uint8_t move = getMove(committer->moves[action->actionIndex]);
-    float mod = getMatchupModifier(getMoveType(move), uint8_t(reciever->type))/2;
+    float mod = getMatchupModifier(getMoveType(move), uint8_t(reciever->type1))*getMatchupModifier(getMoveType(move), uint8_t(reciever->type2))/2;
     uint8_t power = getMovePower(move);
     bool bonus = committer->moveTypeBonus(move);
 
@@ -31,13 +31,13 @@ uint16_t BattleEngine::calculateDamage(Action* action, Creature* committer, Crea
             this->arduboy->print(F("\n"));
             this->arduboy->print(F("move Type: rtype: mod: \n"));
             this->arduboy->print((unsigned)getMoveType(move)); this->arduboy->print(F(" ")); 
-            this->arduboy->print((unsigned)reciever->type); this->arduboy->print(F(" "));
+            this->arduboy->print((unsigned)reciever->type1); this->arduboy->print(F(" "));
             this->arduboy->print((mod));this->arduboy->print(F(" "));
             this->arduboy->display();
         }
     #endif
 
-    uint16_t damage = ((power * committer->getStatAtLevel(committer->getAtkStat()) / reciever->getStatAtLevel(reciever->getDefStat())) * mod);
+    uint16_t damage = ((power * committer->getAtkStat() / reciever->getDefStat()) * mod);
     if ( damage == 0 ){
         if (mod == 0) {
             return 0;
