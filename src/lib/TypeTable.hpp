@@ -5,7 +5,7 @@
 #endif
 
 typedef enum class Types{
-	plain,
+	spirit,
 	water,
 	wind,
 	earth,

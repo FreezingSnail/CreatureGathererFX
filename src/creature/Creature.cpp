@@ -5,11 +5,10 @@
 #include "../sprites/sprites.hpp"
 #include "../sprites/creatureSprites.h"
 
-
 //This will need to load the creature seed from the progmemstore
-CreatureSeed_t getCreatureFromStore(uint8_t id) {
-	CreatureSeed_t seed;
-	memcpy_P(&seed, &CreatureData[0], sizeof(CreatureSeed_t));
+uint64_t getCreatureFromStore(uint8_t id) {
+	uint64_t seed;
+	memcpy_P(&seed, &CreatureData[0], sizeof(uint64_t));
 	return seed;
 	//return nullptr;
 }
@@ -20,16 +19,17 @@ Creature::Creature() {
 	this->statlist.defense = 0;
 	this->statlist.speed = 0;
 	this->statlist.health = 0;
-	this->statlist.special = 0;
+	this->statlist.spcAtk = 0;
+	this->statlist.spcDef = 0;
 }
 
-void Creature::load(CreatureSeed_t seed) {
+void Creature::load(uint64_t seed) {
 	this->seed = seed;
-	this->type1 = (Type_t)(seed.creatureID >> 3);
-	this->type2 = (Type_t)(seed.type2Special >> 5);
+	this->type1 = (Type_t)(seed >> 56);
+	this->type2 = (Type_t)(seed >> 53 & 0b111);
 	this->setStats();
-	this->loadMoves();
 	//Need some kind of default setting for moves ?
+	this->loadMoves();
 
 	this->loadSprite();
 
@@ -37,9 +37,10 @@ void Creature::load(CreatureSeed_t seed) {
 
 //00,id1,lvl1,move11,move12,move13,move14,
 void Creature::loadFromOpponentSeed(uint32_t seed){
-	CreatureSeed_t cSeed = getCreatureFromStore(parseOpponentCreatureSeedID(seed));
+	uint64_t cSeed = getCreatureFromStore(parseOpponentCreatureSeedID(seed));
 	this->seed = cSeed;
-	this->type1 = (Type_t)(cSeed.creatureID >> 3);
+	this->type1 = (Type_t)(cSeed >> 56);
+	this->type2 = (Type_t)(cSeed >> 53 & 0b111);
 	this->setStats();
 	this->level = parseOpponentCreatureSeedlvl(seed);
 	this->setMove(parseOpponentCreatureSeedMove(seed, 0), 0);
@@ -51,17 +52,13 @@ void Creature::loadFromOpponentSeed(uint32_t seed){
 }
 
 void Creature::loadMoves() {
-	this->setMove(this->seed.startingMoves & 0b11111, 0);
-	this->setMove((this->seed.startingMoves >> 5) & 0b11111, 1);
-	this->setMove((this->seed.startingMoves >> 10) & 0b11111, 2);
-	this->setMove((this->seed.startingMoves >> 15) & 0b11111, 3);
+	this->setMove((this->seed >> 19 & 0b11111111), 0);
+	this->setMove((this->seed >> 14 & 0b11111111), 1);
+	this->setMove((this->seed >> 9 & 0b11111111), 2);
+	this->setMove((this->seed >> 4 & 0b11111111), 3);
 }
 
 void Creature::loadSprite() {
-	//this will need to take the creatureID to pull its sprite from the sheet
-	uint8_t id = this->seed.creatureID & 0b11111;
-
-	//force this for now since no sheet
 	this->sprite = creatureSprites[this->getID()];
 }
 
@@ -75,7 +72,8 @@ void Creature::setStats() {
 	this->statlist.defense = seedToStat(this->getDefStatSeed());
 	this->statlist.speed = seedToStat(this->getSpdStatSeed());
 	this->statlist.health = seedToStat(this->getHpStatSeed());
-	this->statlist.special = seedToStat(this->getSpcStatSeed());
+	this->statlist.spcAtk = seedToStat(this->getSpcAtkStatSeed());
+	this->statlist.spcDef = seedToStat(this->getSpcDefStatSeed());
 
 }
 
@@ -94,23 +92,34 @@ uint8_t Creature::getLevel() {
 }
 
 uint8_t Creature::getAtkStatSeed() {
-	return (this->seed.statSeed & 0b1111000000000000) >> 12;
+	return (this->seed >> 49 & 0b111);
 }
 
 uint8_t Creature::getDefStatSeed() {
-	return (this->seed.statSeed & 0b0000111100000000) >> 8;
+	return (this->seed >> 45 & 0b1111);
 }
 
 uint8_t Creature::getHpStatSeed() {
-	return (this->seed.statSeed & 0b0000000011110000) >> 4;
+	return (this->seed >> 33 & 0b1111);;
 }
 
 uint8_t Creature::getSpdStatSeed() {
-	return (this->seed.statSeed & 0b0000000000001111);
+	return (this->seed >> 29 & 0b1111);
 }
 
-uint8_t Creature::getSpcStatSeed() {
-	return (this->seed.type2Special & 0b00001111);
+uint8_t Creature::getSpcAtkStatSeed() {
+	return (this->seed >> 41 & 0b1111);
+}
+uint8_t Creature::getSpcDefStatSeed() {
+	return (this->seed >> 36 & 0b1111);
+}
+
+uint8_t Creature::getEvolutionLevel() {
+	return (this->seed >> 24 & 0b11111111);
+}
+
+uint8_t Creature::getID() {
+	return (this->seed >> 59 & 0b11111111);
 }
 
 uint8_t Creature::getAtkStat() {
@@ -126,12 +135,12 @@ uint8_t Creature::getSpdStat() {
 	return this->statlist.speed;
 }
 
-uint8_t Creature::getSpcStat() {
-	return this->statlist.special;
+uint8_t Creature::getSpcAtkStat() {
+	return this->statlist.spcAtk;
 }
 
-uint8_t Creature::getID() {
-	return this->seed.creatureID & 0b00011111;
+uint8_t Creature::getSpcDefStat() {
+	return this->statlist.spcDef;
 }
 
 bool Creature::moveTypeBonus(uint8_t move) {
