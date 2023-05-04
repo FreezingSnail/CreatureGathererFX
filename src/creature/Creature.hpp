@@ -35,6 +35,11 @@ class Creature{
 			// potential saving: read this from progmem when need it ? 
 			// 6 instances to 1 stack var
 			uint64_t seed;
+			//todo(snail)
+			// need to squash these down into 1 byte -> 10 byte loss to 2byte loss
+			//if I squash these i can use the 5thbit as a flag to show the second type is none
+			// or just have the two types be the same
+			//if therye the same there's going to be issues with the modifer double counting tho
 			Type_t type1;
 			Type_t type2;
 			uint8_t level;
@@ -68,6 +73,12 @@ class Creature{
 			uint8_t getEvolutionLevel();
 			uint8_t getID();
 
+
+			//todo(snail)
+			//do I actually need these?
+			// the idea was to just use the seed to calc the stats on the fly as needed
+			//maybe I should go back to that aproach and save the 6 bytes per creature from ram
+
 			uint8_t getAtkStat();
 			uint8_t getDefStat();
 			uint8_t getHpStat();
@@ -76,8 +87,6 @@ class Creature{
 			uint8_t getSpcDefStat();
 
 			uint8_t seedToStat(uint8_t seed);
-
-
 			bool moveTypeBonus(uint8_t move);
 
 			#ifdef CLI

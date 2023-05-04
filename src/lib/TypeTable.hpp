@@ -1,20 +1,5 @@
 #pragma once
 #include <stdint.h>
-#ifdef CLI
-#include <iostream>
-#endif
-
-typedef enum class Types{
-	spirit,
-	water,
-	wind,
-	earth,
-	fire,
-	lightning,
-	plant,
-	elder,
-	none,
-}Type_t;
 
 /*************
 /	8x8 array  defense ->
@@ -62,8 +47,6 @@ static const uint8_t typeTable[8][2] =
 static uint8_t getMatchupModifier(uint8_t AttackT, uint8_t defType){
 
 	uint8_t mod = (uint8_t)(typeTable[AttackT][(defType/4)]);
-    // std::cout << "attakt: " << unsigned(AttackT) << " deft: " << unsigned(defType) << std::endl;
-    // std::cout << "mod: " << unsigned(mod) << " type table: " << unsigned(typeTable[AttackT][(defType/4)]) << std::endl;
 	switch (defType%4){
 		case 0:
 			return (mod >> 6);
