@@ -19,22 +19,7 @@ typedef enum class Types{
 /*************
 /	8x8 array  defense ->
 /atk
-/ |			  Plain, 	Water, 	Wind, 	Earth, 	Fire, 	Lightning, 	Plant, 	Elder
-/ V		p 	  1			1		1		1		1		1			1		1	
-/		
-		Wa 	  1			.5		1		2		2		1			0		.5
-
-		wi 	  1			1		1		.5		2		.5			1		1
-
-		E     1			.5		0		.5		1		2			.5		1
-
-		F     1			.5		1		.5		1		1			2		2
-
-		L     1			2		2		0		1		1			.5		.5
-
-		p     1			2		.5		2		.5		1			1		.5
-
-		E     2			1		1		1		0		1			1		2
+/ |			// need to redw this table
 /
 /
 /
@@ -58,6 +43,8 @@ typedef enum class Types{
 
 //TODO (snail) this needs to be changed, no longer in date.
 // preferably generated from a csv
+// Should try and change this all to constexpr
+//maybe put it in progmem too or someth
 static const uint8_t typeTable[8][2] = 
 {   // 0 1 2 3     4 5 6 7 
 	{0b10101010, 0b10101010},

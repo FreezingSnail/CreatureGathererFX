@@ -10,7 +10,6 @@ uint64_t getCreatureFromStore(uint8_t id) {
 	uint64_t seed;
 	memcpy_P(&seed, &CreatureData[0], sizeof(uint64_t));
 	return seed;
-	//return nullptr;
 }
 
 
@@ -23,6 +22,8 @@ Creature::Creature() {
 	this->statlist.spcDef = 0;
 }
 
+//todo(snail)
+// maybe I should move this out into an abstraction so its easier to change
 void Creature::load(uint64_t seed) {
 	this->seed = seed;
 	this->type1 = (Type_t)(seed >> 56);
@@ -30,9 +31,7 @@ void Creature::load(uint64_t seed) {
 	this->setStats();
 	//Need some kind of default setting for moves ?
 	this->loadMoves();
-
 	this->loadSprite();
-
 }
 
 //00,id1,lvl1,move11,move12,move13,move14,
@@ -47,7 +46,6 @@ void Creature::loadFromOpponentSeed(uint32_t seed){
 	this->setMove(parseOpponentCreatureSeedMove(seed, 1), 1);
 	this->setMove(parseOpponentCreatureSeedMove(seed, 2), 2);
 	this->setMove(parseOpponentCreatureSeedMove(seed, 3), 3);
-
 	this->loadSprite();
 }
 
@@ -144,11 +142,9 @@ uint8_t Creature::getSpcDefStat() {
 }
 
 bool Creature::moveTypeBonus(uint8_t move) {
-	
 	return this->type1 == (Type_t)getMoveType(move) || this->type2 == (Type_t)getMoveType(move);
 }
 
 uint8_t Creature::seedToStat(uint8_t seed) {
-	// Need to do some math here to scale a 4 bit number to 8
 	return (2*this->level)*(seed/3);
 }
