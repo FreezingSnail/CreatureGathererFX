@@ -1,23 +1,22 @@
-# name: Unit Tests
+name: Unit Tests
+on:
+  push:
+    branches: [ test ]
+  pull_request:
+    branches: [ test ]
 
-# on:
-#   push:
-#     branches: [ main ]
-#   pull_request:
-#     branches: [ main ]
+jobs:
+  Build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
 
-# jobs:
-#   Build:
-#     runs-on: ubuntu-latest
-#     steps:
-#     - name: Checkout
-#       uses: actions/checkout@v3
+    - name: Install gtest manually
+      run: mkdir lib && cd lib && git clone --depth=1 --branch v1.13.0 https://github.com/google/googletest/
 
-#     - name: Install gtest manually
-#       run: mkdir lib && cd lib && git clone --depth=1 --branch v1.13.0 https://github.com/google/googletest/
-
-#     - name: configure
-#       run: cd build && cmake -DUSE_DEBUG=ON .. && make all
+    - name: configure
+      run: cd build && cmake -DUSE_DEBUG=ON .. && make all
   
-#     - name: test
-#       run: cd build && ./tst/CreatureGathererFX_tst
+    - name: test
+      run: cd build && ./tst/CreatureGathererFX_tst
