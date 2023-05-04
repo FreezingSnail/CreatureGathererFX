@@ -3,22 +3,22 @@
 #include "../lib/TypeTable.hpp"
 
 //todo research huffman encoding to squash these in mem
-struct CreatureData{
-	unsigned char type1: 		3;
-	unsigned char type2: 		3;
-	unsigned char hpSeed:		4;
-	unsigned char atkSeed:		4;
-	unsigned char defSeed:		4;	
-	unsigned char spcAtkSeed:	4;	
-	unsigned char spcDefSeed:	4;	
-	unsigned char spdSeed:		4;
-	unsigned char evoLevel:   	5;
-	unsigned char creatureID: 	5;
-	unsigned char move1:		5;
-	unsigned char move2:		5;
-	unsigned char move3:		5;
-	unsigned char move4:		5;
-};
+// struct CreatureData{
+// 	unsigned char type1: 		3;
+// 	unsigned char type2: 		3;
+// 	unsigned char hpSeed:		4;
+// 	unsigned char atkSeed:		4;
+// 	unsigned char defSeed:		4;	
+// 	unsigned char spcAtkSeed:	4;	
+// 	unsigned char spcDefSeed:	4;	
+// 	unsigned char spdSeed:		4;
+// 	unsigned char evoLevel:   	5;
+// 	unsigned char creatureID: 	5;
+// 	unsigned char move1:		5;
+// 	unsigned char move2:		5;
+// 	unsigned char move3:		5;
+// 	unsigned char move4:		5;
+// };
 
 typedef struct stats{
 	uint8_t attack;

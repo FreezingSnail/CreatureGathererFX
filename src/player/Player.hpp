@@ -10,7 +10,7 @@ class Player {
         uint8_t creatureHPs[3];
         Item items[10];
 
-        Creature storedCreatures[32]; 
+        Creature storedCreatures[6]; 
 
 
         Player();
