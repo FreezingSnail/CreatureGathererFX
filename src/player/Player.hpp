@@ -1,6 +1,7 @@
 #pragma once
 #include <stdint.h>
 #include "../creature/Creature.hpp"
+#include "../data/Creatures.hpp"
 #include "../item/Item.hpp"
 
 class Player {
@@ -10,11 +11,10 @@ class Player {
         uint8_t creatureHPs[3];
         Item items[10];
 
-        Creature storedCreatures[6]; 
+        //Creature storedCreatures[6]; 
 
 
         Player();
-
-        void setMonster(uint8_t index, uint64_t seed);
+        void setMonster(uint8_t index, CreatureData_t seed);
         
 };

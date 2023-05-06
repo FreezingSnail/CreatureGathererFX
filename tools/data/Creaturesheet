@@ -14,7 +14,7 @@ cuircuit	11	lightning	none	0	3	3	3	3	3	3	0	0	0	0
 hedge	12	plant	none	0	3	3	3	3	3	3	0	0	0	0
 cloud	13	wind	none	0	8	8	8	8	8	8	0	0	0	0
 rock	14	earth	none	0	8	8	8	8	8	8	0	0	0	0
-wet	15	Water	none	0	8	8	8	8	8	8	0	0	0	0
+wet	15	water	none	0	8	8	8	8	8	8	0	0	0	0
 wiggleworm	16	earth	none	14	12	12	12	12	12	12	0	0	0	0
 waggleworm	17	earth	fire	0	8	8	8	8	8	8	0	0	0	0
 skimskate	18	water	none	14	8	8	8	8	8	8	0	0	0	0
