@@ -26,8 +26,8 @@ uint16_t BattleEngine::calculateDamage(Action* action, Creature* committer, Crea
             this->arduboy->clear();
             this->arduboy->print(F("p:  atk:  def:\n"));
             this->arduboy->print((unsigned)power);  this->arduboy->print(F(" "));
-            this->arduboy->print((unsigned)committer->getAtkStat());this->arduboy->print(F(" "));
-            this->arduboy->print((unsigned)reciever->getDefStat());this->arduboy->print(F(" "));
+            this->arduboy->print((unsigned)committer->statlist.attack);this->arduboy->print(F(" "));
+            this->arduboy->print((unsigned)reciever->statlist.defense);this->arduboy->print(F(" "));
             this->arduboy->print(F("\n"));
             this->arduboy->print(F("move Type: rtype: mod: \n"));
             this->arduboy->print((unsigned)getMoveType(move)); this->arduboy->print(F(" ")); 
@@ -37,7 +37,7 @@ uint16_t BattleEngine::calculateDamage(Action* action, Creature* committer, Crea
         }
     #endif
 
-    uint16_t damage = (power * committer->getAtkStat() / reciever->getDefStat()) ;
+    uint16_t damage = (power * committer->statlist.attack) / reciever->statlist.defense;
     damage = applyModifier(damage, (Type)getMoveType(move), reciever->types );
     // if ( damage == 0 ){
     //     if (mod == 0) {
@@ -58,6 +58,7 @@ uint16_t BattleEngine::calculateDamage(Action* action, Creature* committer, Crea
 BattleEngine::BattleEngine(Arduboy2* arduboy, Menu* menu) {
     this->arduboy = arduboy;
     this->menu = menu;
+    this->activeBattle = false;
 }
 
 // battle loop
@@ -68,9 +69,7 @@ void BattleEngine::encounter() {
     if (this->checkLoss()) {
         this->arduboy->print(F("win\n"));
         this->arduboy->display();
-        if(this->arduboy->justPressed(A_BUTTON)){
-            return;
-        }
+        return;
     }
 
     if(this->checkWin()) {
@@ -101,9 +100,9 @@ void BattleEngine::loadOpponent(uint8_t optID) {
     this->opponent.load(&seed);
     this->opponentIndex = 0;
     this->opponentCur = &(this->opponent.party[0]);
-    this->opponentHealths[0] = this->opponent.party[0].getHpStat();
-    this->opponentHealths[1] = this->opponent.party[1].getHpStat();
-    this->opponentHealths[2] = this->opponent.party[2].getHpStat();
+    this->opponentHealths[0] = this->opponent.party[0].statlist.hp;
+    this->opponentHealths[1] = this->opponent.party[1].statlist.hp;
+    this->opponentHealths[2] = this->opponent.party[2].statlist.hp;
 }
 
 void BattleEngine::loadPlayer(Player* player) {
@@ -113,9 +112,9 @@ void BattleEngine::loadPlayer(Player* player) {
     // for now the hp will refil every encounter so we dont need to use the player field
     //this->playerHealths[i] = player->creatureHPs[i];
      this->playerHealths[0] = 10;
-    this->playerHealths[0] = this->playerParty[0]->getHpStat();
-    this->playerHealths[1] = this->playerParty[1]->getHpStat();
-    this->playerHealths[2] = this->playerParty[2]->getHpStat();
+    this->playerHealths[0] = this->playerParty[0]->statlist.hp;
+    this->playerHealths[1] = this->playerParty[1]->statlist.hp;
+    this->playerHealths[2] = this->playerParty[2]->statlist.hp;
     
     this->playerIndex = 0;
     this->playerCur = this->playerParty[0];
@@ -141,7 +140,7 @@ void BattleEngine::turnTick() {
     } else if (order < 0) {
         this->opponentActionFirst();
     } else {
-        order = this->playerCur->getSpdStat() - this->opponentCur->getSpdStat();
+        order = this->playerCur->statlist.speed - this->opponentCur->statlist.speed;
         if(order > 0 || order == 0){
             this->playerActionFirst();
         } else if (order < 0) {
@@ -250,13 +249,13 @@ void BattleEngine::drawScene() {
 
 void BattleEngine::drawOpponent() {
     //would be nice to flip this sprite
-    uint8_t spriteIndex = this->opponentCur->getID();
+    uint8_t spriteIndex = this->opponentCur->id;
     Sprites::drawSelfMasked(0, 0, creatureSprites, spriteIndex);
     this->drawOpponentHP();
 }
 
 void BattleEngine::drawPlayer() {
-    uint8_t spriteIndex = this->playerCur->getID();
+    uint8_t spriteIndex = this->playerCur->id;
     Sprites::drawSelfMasked(96, 0, creatureSprites, spriteIndex);
     this->drawPlayerHP();
 }
@@ -266,7 +265,7 @@ void BattleEngine::drawPlayerHP() {
     this->arduboy->print(F("HP: "));
     this->arduboy->print((unsigned)this->playerHealths[this->playerIndex]);
     this->arduboy->print(F("/"));
-    this->arduboy->print((unsigned)this->playerCur->getHpStat());
+    this->arduboy->print((unsigned)this->playerCur->statlist.hp);
     this->arduboy->setCursor(32,2);
     this->arduboy->print(F("lv:"));
     this->arduboy->print(this->playerCur->level);
@@ -277,7 +276,7 @@ void BattleEngine::drawOpponentHP() {
     this->arduboy->print(F("HP: "));
     this->arduboy->print((unsigned)this->opponentHealths[this->opponentIndex]);
     this->arduboy->print(F("/"));
-    this->arduboy->print((unsigned)this->opponentCur->getHpStat());
+    this->arduboy->print((unsigned)this->opponentCur->statlist.hp);
     this->arduboy->setCursor(64,2);
     this->arduboy->print(F("lv:"));
     this->arduboy->print(this->opponentCur->level);

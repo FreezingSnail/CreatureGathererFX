@@ -26,6 +26,8 @@ class BattleEngine {
         Action playerAction;
         Action opponentAction;
         Menu* menu;
+
+        bool activeBattle;
         
 
 
