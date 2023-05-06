@@ -149,8 +149,7 @@ uint8_t Creature::getSpcDefStat() {
 }
 
 bool Creature::moveTypeBonus(uint8_t move) {
-	//return this->type1 == (Type_t)getMoveType(move) || this->type2 == (Type_t)getMoveType(move);
-	return false;
+	return this->types.getType1() == (Type)getMoveType(move) || this->types.getType2() == (Type)getMoveType(move);
 }
 
 uint8_t Creature::seedToStat(uint8_t seed) {
