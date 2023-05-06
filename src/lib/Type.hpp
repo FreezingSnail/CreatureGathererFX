@@ -1,14 +1,19 @@
-typedef enum class Types{
-	spirit,
-	water,
-	wind,
-	earth,
-	fire,
-	lightning,
-	plant,
-	elder,
-	none,
-}Type_t;
+#pragma once
+#include <stdint.h>
+#include <avr/pgmspace.h>
+
+
+enum class Type{
+	SPIRIT,
+	WATER,
+	WIND,
+	EARTH,
+	FIRE,
+	LIGHTNING,
+	PLANT,
+	ELDER,
+	NONE,
+};
 
 constexpr const uint8_t TypeCount = 9;
 
@@ -17,10 +22,10 @@ class DualType
 private:
 	uint8_t value;
 
-	constexpr const uint8_t Type1Mask = 0b11100000;
-	constexpr const uint8_t Type2Mask = 0b00001111;
-	constexpr const uint8_t Type1Shift = 4;
-	constexpr const uint8_t Type2Shift = 0;
+ 	static const uint8_t Type1Mask = 0b11100000;
+	static const uint8_t Type2Mask = 0b00001111;
+	static const uint8_t Type1Shift = 4;
+	static const uint8_t Type2Shift = 0;
 
 	constexpr uint8_t packTypes(Type type1, Type type2)
 	{
@@ -28,7 +33,8 @@ private:
 	}
   
 public:
-	constexpr DualType(Type type) : value(packTypes(type, Type::None)) {}
+	constexpr DualType() : value(packTypes(Type::NONE, Type::NONE)) {}
+	constexpr DualType(Type type) : value(packTypes(type, Type::NONE)) {}
 	constexpr DualType(Type type1, Type type2) : value(packTypes(type1, type2)) {}
 	
 	constexpr Type getType1(void) const
@@ -45,71 +51,137 @@ public:
 enum class Modifier : uint8_t
 {
     None,
-    Quarter,
+//  Quarter,
 	Half,
     Same,
 	Double,
-	Quadruple,
+//	Quadruple,
 };
 
-uint16_t applyModifier(uint16_t value, Modifier modifier)
+static uint16_t applyMod(uint16_t value, Modifier modifier)
 {
 	switch(modifier)
 	{
 		case Modifier::Same: return value;
 		case Modifier::Half: return value >> 1;
 		case Modifier::Double: return value << 1;
-		case Modifier::Quarter: return value >> 2;
-		case Modifier::Quadruple: return value << 2;
+	//	case Modifier::Quarter: return value >> 2;
+	//	case Modifier::Quadruple: return value << 2;
 		default: return value;
 	}
 }
 
-Modifier typeTable[TypeCount][TypeCount] PROGMEM =
+const Modifier typeTable[TypeCount][TypeCount] PROGMEM =
 {
-	// // Fire
-	// {
-	// 	Modifier::Half, // Fire
-	// 	Modifier::Quarter, // Water
-	// 	Modifier::Same, // Electric
-	// 	Modifier::Double, // Wind
-	// },
-	// // Water
-	// {
-	// 	Modifier::Double, // Fire
-	// 	Modifier::Same, // Water
-	// 	Modifier::Same, // Electric
-	// 	Modifier::Half, // Wind
-	// },
-	// // Electric
-	// {
-	// 	Modifier::Same, // Fire
-	// 	Modifier::Quadruple, // Water
-	// 	Modifier::Same, // Electric
-	// 	Modifier::Half, // Wind
-	// },
-	// // Wind
-	// {
-	// 	Modifier::Half, // Fire
-	// 	Modifier::Double, // Water
-	// 	Modifier::Same, // Electric
-	// 	Modifier::Half, // Wind
-	// },
+	// Spirit
+	{
+		Modifier::Same, 	//Spirit
+		Modifier::Same, 	//Water
+		Modifier::Same, 	//Wind
+		Modifier::Same, 	//Earth
+		Modifier::Same,		//Fire
+		Modifier::Same, 	//Lightning
+		Modifier::Same,		//Plant
+		Modifier::None,		//Elder
+
+	},
+	// Water
+	{
+		Modifier::Same, 	//Spirit
+		Modifier::Same, 	//Water
+		Modifier::Double, 	//Wind
+		Modifier::Half, 	//Earth
+		Modifier::Double,	//Fire
+		Modifier::Same, 	//Lightning
+		Modifier::Half,	//Plant
+		Modifier::Half,		//Elder
+	},
+	// wind
+	{
+		Modifier::Same, 	//Spirit
+		Modifier::Same, 	//Water
+		Modifier::Same, 	//Wind
+		Modifier::Double, 	//Earth
+		Modifier::Half,		//Fire
+		Modifier::Half, 	//Lightning
+		Modifier::Double,	//Plant
+		Modifier::Half,		//Elder
+	},
+	// Earth
+	{
+		Modifier::Same, 	//Spirit
+		Modifier::Double, 	//Water
+		Modifier::Half, 	//Wind
+		Modifier::Same, 	//Earth
+		Modifier::Same,		//Fire
+		Modifier::Double, 	//Lightning
+		Modifier::Half,		//Plant
+		Modifier::Half,		//Elder
+	},
+	// Fire
+	{
+		Modifier::Same, 	//Spirit
+		Modifier::None, 	//Water
+		Modifier::Double, 	//Wind
+		Modifier::Half, 	//Earth
+		Modifier::Same,		//Fire
+		Modifier::Double, 	//Lightning
+		Modifier::Double,	//Plant
+		Modifier::Same,		//Elder
+
+	},
+	// Lightning
+	{
+		Modifier::Same, 	//Spirit
+		Modifier::Double, 	//Water
+		Modifier::Double, 	//Wind
+		Modifier::Half, 	//Earth
+		Modifier::Same,		//Fire
+		Modifier::Double, 	//Lightning
+		Modifier::Double,	//Plant
+		Modifier::Same,		//Elder
+
+	},
+	// Plant
+	{
+		Modifier::Same, 	//Spirit
+		Modifier::None, 	//Water
+		Modifier::Double, 	//Wind
+		Modifier::Half, 	//Earth
+		Modifier::Same,		//Fire
+		Modifier::Double, 	//Lightning
+		Modifier::Double,	//Plant
+		Modifier::Same,		//Elder
+
+	},
+	// Elder
+	{
+		Modifier::Same, 	//Spirit
+		Modifier::None, 	//Water
+		Modifier::Double, 	//Wind
+		Modifier::Half, 	//Earth
+		Modifier::Same,		//Fire
+		Modifier::Double, 	//Lightning
+		Modifier::Double,	//Plant
+		Modifier::Same,		//Elder
+
+	},
+	
 };
 
 
-Modifier getModifier(Type attackType, Type defendingType)
+static Modifier getModifier(Type attackType, Type defendingType)
 {
-	return (attackType == Type::None || defendingType == Type::None)
+	return (attackType == Type::NONE || defendingType == Type::NONE)
 	? Modifier::None :
 	static_cast<Modifier>(pgm_read_byte(&typeTable[static_cast<uint8_t>(attackType)][static_cast<uint8_t>(defendingType)]));
 }
 
-uint16_t handleAttack(uint16_t baseValue, Type attackType, DualType defendingType)
+static uint16_t applyModifier(uint16_t baseValue, Type attackType, DualType defendingType)
 {
 	const Modifier mod1 = getModifier(attackType, defendingType.getType1());
-	baseValue = applyModifier(baseValue, mod1);
+	baseValue = applyMod(baseValue, mod1);
 	const Modifier mod2 = getModifier(attackType, defendingType.getType2());
-	baseValue = applyModifier(baseValue, mod2);
+	baseValue = applyMod(baseValue, mod2);
 	return baseValue;
 }
