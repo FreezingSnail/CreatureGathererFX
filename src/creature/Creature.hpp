@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../lib/TypeTable.hpp"
+#include "../lib/Type.hpp"
 
 //todo research huffman encoding to squash these in mem
 // struct CreatureData{
@@ -40,8 +40,7 @@ class Creature{
 			//if I squash these i can use the 5thbit as a flag to show the second type is none
 			// or just have the two types be the same
 			//if therye the same there's going to be issues with the modifer double counting tho
-			Type_t type1;
-			Type_t type2;
+			DualType types;
 			uint8_t level;
 
 			// Moves are held as an index to the move array 
@@ -57,9 +56,10 @@ class Creature{
 			void setStats();
 			void loadMoves();
 			void loadSprite();
+			void loadTypes();
 			void setMove(uint8_t move, uint8_t slot);
 
-			uint8_t getAdvantage(Type_t opponent);  //finds best advantage
+			uint8_t getAdvantage(DualType opponent);  //finds best advantage
 
 
 			uint8_t getMove(uint8_t slot);
