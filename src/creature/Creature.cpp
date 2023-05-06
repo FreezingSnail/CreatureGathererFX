@@ -26,8 +26,6 @@ Creature::Creature() {
 // maybe I should move this out into an abstraction so its easier to change
 void Creature::load(uint64_t seed) {
 	this->seed = seed;
-	this->type1 = (Type_t)(seed >> 56);
-	this->type2 = (Type_t)(seed >> 53 & 0b111);
 	this->setStats();
 	//Need some kind of default setting for moves ?
 	this->loadMoves();
@@ -38,8 +36,7 @@ void Creature::load(uint64_t seed) {
 void Creature::loadFromOpponentSeed(uint32_t seed){
 	uint64_t cSeed = getCreatureFromStore(parseOpponentCreatureSeedID(seed));
 	this->seed = cSeed;
-	this->type1 = (Type_t)(cSeed >> 56);
-	this->type2 = (Type_t)(cSeed >> 53 & 0b111);
+	this->loadTypes();
 	this->setStats();
 	this->level = parseOpponentCreatureSeedlvl(seed);
 	this->setMove(parseOpponentCreatureSeedMove(seed, 0), 0);
@@ -60,6 +57,16 @@ void Creature::loadSprite() {
 	this->sprite = creatureSprites[this->getID()];
 }
 
+void Creature::loadTypes() {
+	uint8_t typeSeed = this->seed >> 56 & 0b111;
+	uint8_t type2Seed = this->seed >> 53 & 0b111;
+	if ( typeSeed == type2Seed) {
+		this->types = DualType((Type)typeSeed);
+	} else {
+		this->types = DualType((Type)typeSeed, (Type)type2Seed);
+	}
+}
+
 // should prob have error checking but w/e
 void Creature::setMove(uint8_t move, uint8_t slot){
 	this->moves[slot] = move;
@@ -77,7 +84,7 @@ void Creature::setStats() {
 
 // some ai to find best advantage should move this out of this class though
 // going to need this for the opponent ai
-uint8_t Creature::getAdvantage(Type_t opponent) {
+uint8_t Creature::getAdvantage(DualType opponent) {
 	return 0;
 }
 
@@ -142,7 +149,7 @@ uint8_t Creature::getSpcDefStat() {
 }
 
 bool Creature::moveTypeBonus(uint8_t move) {
-	return this->type1 == (Type_t)getMoveType(move) || this->type2 == (Type_t)getMoveType(move);
+	return this->types.getType1() == (Type)getMoveType(move) || this->types.getType2() == (Type)getMoveType(move);
 }
 
 uint8_t Creature::seedToStat(uint8_t seed) {

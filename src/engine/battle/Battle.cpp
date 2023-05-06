@@ -4,7 +4,7 @@
 #include "../../creature/Creature.hpp"
 #include "../../opponent/Opponent.hpp"
 #include "../../player/Player.hpp"
-#include "../../lib/TypeTable.hpp"
+//#include "../../lib/TypeTable.hpp"
 #include "../../lib/Move.hpp"
 #include "../../data/opponentsData.h"
 #include "../../sprites/creatureSprites.h"
@@ -16,7 +16,7 @@
 uint16_t BattleEngine::calculateDamage(Action* action, Creature* committer, Creature* reciever) {
     //need to do something here with atk def stats
     uint8_t move = getMove(committer->moves[action->actionIndex]);
-    float mod = getMatchupModifier(getMoveType(move), uint8_t(reciever->type1))*getMatchupModifier(getMoveType(move), uint8_t(reciever->type2))/2;
+    //float mod = getMatchupModifier(getMoveType(move), uint8_t(reciever->type1))*getMatchupModifier(getMoveType(move), uint8_t(reciever->type2))/2;
     uint8_t power = getMovePower(move);
     bool bonus = committer->moveTypeBonus(move);
 
@@ -31,20 +31,22 @@ uint16_t BattleEngine::calculateDamage(Action* action, Creature* committer, Crea
             this->arduboy->print(F("\n"));
             this->arduboy->print(F("move Type: rtype: mod: \n"));
             this->arduboy->print((unsigned)getMoveType(move)); this->arduboy->print(F(" ")); 
-            this->arduboy->print((unsigned)reciever->type1); this->arduboy->print(F(" "));
-            this->arduboy->print((mod));this->arduboy->print(F(" "));
+           // this->arduboy->print((unsigned)reciever->type1); this->arduboy->print(F(" "));
+            //this->arduboy->print((mod));this->arduboy->print(F(" "));
             this->arduboy->display();
         }
     #endif
 
-    uint16_t damage = ((power * committer->getAtkStat() / reciever->getDefStat()) * mod);
-    if ( damage == 0 ){
-        if (mod == 0) {
-            return 0;
-        }
-        return 1;
-    }
+    uint16_t damage = (power * committer->getAtkStat() / reciever->getDefStat()) ;
+    damage = applyModifier(damage, (Type)getMoveType(move), reciever->types );
+    // if ( damage == 0 ){
+    //     if (mod == 0) {
+    //         return 0;
+    //     }
+    //     return 1;
+    // }
 
+    //TODO (Snail) need to move this modifiers location in the formula
     if ( bonus ) {
         return damage * 2;
     }
