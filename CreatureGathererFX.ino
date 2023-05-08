@@ -7,7 +7,6 @@ Arduboy2 arduboy;
 Player player = Player();
 Menu menu = Menu(&arduboy);
 BattleEngine engine = BattleEngine(&arduboy, &menu);
-bool state = true;
 
 
 void setup() {
@@ -21,13 +20,13 @@ void setup() {
 
 
 void loop() {
-  // pause render until it's time for the next frame
-  if (!(arduboy.nextFrame()))
+  if (!(arduboy.nextFrame())){
     return;
+  }
   arduboy.clear();
 
   arduboy.pollButtons();
-  if(state) {
+  if(true) {
     engine.encounter();
   }
   //engine.encounter();
