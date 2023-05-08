@@ -4,11 +4,21 @@
 #include "../../action/Action.hpp"
 #include "../../lib/Move.hpp"
 #include "../../lib/Text.hpp"
+#include "../../lib/Type.hpp"
+#include "../../data/Creatures.hpp"
 
 
 Menu::Menu(Arduboy2* arduboy) {
     this->arduboy = arduboy;
     this->cursorIndex = 0;
+    this->arduboy->setTextColor(BLACK);
+}
+
+void Menu::registerMoveList(uint8_t move1, uint8_t move2, uint8_t move3, uint8_t move4) {
+    this->moveList[0] = move1;
+    this->moveList[1] = move2;
+    this->moveList[2] = move3;
+    this->moveList[3] = move4;
 }
 
 bool Menu::actionInput(Action* action) {
@@ -24,9 +34,22 @@ void Menu::setState(State_t s) {
     this->state = s;
 }
 
+//This doesnt work at all lol
+void Menu::wait() {
+    while(!this->arduboy->justPressed(A_BUTTON)) {
+        this->arduboy->pollButtons();
+    }
+    uint8_t count = 0;
+    while (count < 15) {
+        if (!this->arduboy->nextFrame())
+            continue;
+        count++;
+    }
+    //this->arduboy->pollButtons();
+}
+
 void Menu::printMenu() {
     this->moveCursor();
-    this->printCursor();
     this->tansverseMenu();
     switch(this->state){
         case State_t::BATTLE:
@@ -39,6 +62,8 @@ void Menu::printMenu() {
 }
 
 void Menu::printBattleMenu() {
+    this->arduboy->fillRect(0,32, 128, 32);
+    this->printCursor();
     switch (this->curMenu) {
         case MenuType::BMAIN:
             this->arduboy->setCursor(6, 45);
@@ -60,13 +85,13 @@ void Menu::printBattleMenu() {
 
 void Menu::printMoveMenu() {
     this->arduboy->setCursor(6, 45);
-    this->arduboy->print(readFlashStringPointer(&moveNames[0]));
+    this->arduboy->print(readFlashStringPointer(&moveNames[this->moveList[0]]));
     this->arduboy->setCursor(64, 45);
-    this->arduboy->print(readFlashStringPointer(&moveNames[1]));
+    this->arduboy->print(readFlashStringPointer(&moveNames[this->moveList[1]]));
     this->arduboy->setCursor(6, 55);
-    this->arduboy->print(readFlashStringPointer(&moveNames[2]));
+    this->arduboy->print(readFlashStringPointer(&moveNames[this->moveList[2]]));
     this->arduboy->setCursor(64, 55);
-    this->arduboy->print(readFlashStringPointer(&moveNames[3]));
+    this->arduboy->print(readFlashStringPointer(&moveNames[this->moveList[3]]));
 
 }
 
@@ -160,4 +185,35 @@ void Menu::tansverseMenu() {
     this->queued = true;
     this->queuedAction.setActionType(type);
     this->queuedAction.actionIndex = index;
+ }
+
+ void Menu::printAttack(uint8_t creatureID, uint8_t attackID, Modifier modifier) {
+    //this->arduboy->clear();
+    this->arduboy->setCursor(1, 45);
+    this->arduboy->fillRect(0,32, 128, 32, WHITE);
+    this->arduboy->print(readFlashStringPointer(&creatureNames[creatureID]));
+    this->arduboy->print(F(" used"));
+    //need a list of move names
+    this->arduboy->setCursor(1, 55);
+    this->arduboy->print(readFlashStringPointer(&moveNames[attackID]));
+    this->arduboy->display();
+    //Need to come back to this its not easy to get the modifier rn
+    // switch (Modifier) {
+    //     case: Modifier::None {
+    //         this->arduboy->println(F("weak hit"));
+    //     }
+    //     case: Modifier::Half {
+    //         this->arduboy->println(F("it fails"));
+    //     }
+    //     case Modifier::Same {
+    //         //this->arduboy->println(F("it fails"));
+    //         // prob just say nothign for a normal hit?
+    //     }
+    //     case Modifier::Double {
+    //         this->arduboy->println(F("heavy hit"));
+    //     }
+    // }
+
+    this->wait();
+
  }

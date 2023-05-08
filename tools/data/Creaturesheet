@@ -1,33 +1,33 @@
-Name	id	type1	type2	evelevel	atk	def	spcatk	spcdef	hp	spd	move1	move2	move3	move4
-SquibbleSnail	0	wind	none	8	3	3	3	3	3	3	0	0	0	0
-SquableSnail	1	wind	none	16	8	8	8	8	8	8	0	0	0	0
-ScrambleSnail	2	wind	plant	24	12	12	12	12	12	12	0	0	0	0
-SkitterCrab	3	earth	none	8	3	3	3	3	3	3	0	0	0	0
-ScatterCrab	4	earth	none	16	8	8	8	8	8	8	0	0	0	0
-ShatterCrab	5	earth	lightning	24	12	12	12	12	12	12	0	0	0	0
-squid	6	water	none	8	3	3	3	3	3	3	0	0	0	0
-bigsquid	7	water	none	16	8	8	8	8	8	8	0	0	0	0
-BiggestSquid	8	water	fire	24	12	12	12	12	12	12	0	0	0	0
-bell	9	spirit	none	0	3	3	3	3	3	3	0	0	0	0
-spark	10	fire	none	0	3	3	3	3	3	3	0	0	0	0
-cuircuit	11	lightning	none	0	3	3	3	3	3	3	0	0	0	0
-hedge	12	plant	none	0	3	3	3	3	3	3	0	0	0	0
-cloud	13	wind	none	0	8	8	8	8	8	8	0	0	0	0
-rock	14	earth	none	0	8	8	8	8	8	8	0	0	0	0
-wet	15	water	none	0	8	8	8	8	8	8	0	0	0	0
-wiggleworm	16	earth	none	14	12	12	12	12	12	12	0	0	0	0
-waggleworm	17	earth	fire	0	8	8	8	8	8	8	0	0	0	0
-skimskate	18	water	none	14	8	8	8	8	8	8	0	0	0	0
-skimray	19	water	plant	0	12	12	12	12	12	12	0	0	0	0
-billow	20	wind	none	14	8	8	8	8	8	8	0	0	0	0
-howl	21	wind	lightning	0	12	12	12	12	12	12	0	0	0	0
-item	22	spirit	none	14	8	8	8	8	8	8	0	0	0	0
-item2	23	spirit	elder	0	12	12	12	12	12	12	0	0	0	0
-zip	24	lightning	none	14	8	8	8	8	8	8	0	0	0	0
-zap	25	lightning	water	0	12	12	12	12	12	12	0	0	0	0
-suculent	26	plant	none	14	8	8	8	8	8	8	0	0	0	0
-cactus	27	plant	earth	0	12	12	12	12	12	12	0	0	0	0
-flickerfly	28	fire	none	14	8	8	8	8	8	8	0	0	0	0
-flitfly	29	fire	wind	0	12	12	12	12	12	12	0	0	0	0
-dragon?	30	elder	plant	0	8	8	8	8	8	8	0	0	0	0
-skull	31	elder	fire	0	10	10	15	14	14	14	0	0	0	0
+id	type1	type2	evelevel	atk	def	spcatk	spcdef	hp	spd	move1	move2	move3	move4
+0	wind	none	8	3	3	3	3	3	3	0	0	0	0
+1	wind	none	16	8	8	8	8	8	8	0	0	0	0
+2	wind	plant	24	12	12	12	12	12	12	0	0	0	0
+3	earth	none	8	3	3	3	3	3	3	0	0	0	0
+4	earth	none	16	8	8	8	8	8	8	0	0	0	0
+5	earth	lightning	24	12	12	12	12	12	12	0	0	0	0
+6	water	none	8	3	3	3	3	3	3	0	0	0	0
+7	water	none	16	8	8	8	8	8	8	0	0	0	0
+8	water	fire	24	12	12	12	12	12	12	0	0	0	0
+9	spirit	none	0	3	3	3	3	3	3	0	0	0	0
+10	fire	none	0	3	3	3	3	3	3	0	0	0	0
+11	lightning	none	0	3	3	3	3	3	3	0	0	0	0
+12	plant	none	0	3	3	3	3	3	3	0	0	0	0
+13	wind	none	0	8	8	8	8	8	8	0	0	0	0
+14	earth	none	0	8	8	8	8	8	8	0	0	0	0
+15	earth	none	14	12	12	12	12	12	12	0	0	0	0
+16	earth	fire	0	8	8	8	8	8	8	0	0	0	0
+17	water	none	14	8	8	8	8	8	8	0	0	0	0
+18	water	plant	0	12	12	12	12	12	12	0	0	0	0
+19	wind	none	14	8	8	8	8	8	8	0	0	0	0
+20	wind	lightning	0	12	12	12	12	12	12	0	0	0	0
+21	spirit	none	14	8	8	8	8	8	8	0	0	0	0
+22	spirit	elder	0	12	12	12	12	12	12	0	0	0	0
+23	lightning	none	14	8	8	8	8	8	8	0	0	0	0
+24	lightning	water	0	12	12	12	12	12	12	0	0	0	0
+25	plant	none	14	8	8	8	8	8	8	0	0	0	0
+26	plant	earth	0	12	12	12	12	12	12	0	0	0	0
+27	fire	none	14	8	8	8	8	8	8	0	0	0	0
+28	fire	wind	0	12	12	12	12	12	12	0	0	0	0
+29	elder	plant	0	8	8	8	8	8	8	0	0	0	0
+30	elder	fire	0	10	10	15	14	14	14	0	0	0	0
+31	elder	lightning	0	15	15	10	10	14	14	0	0	0	0

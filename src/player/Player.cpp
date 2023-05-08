@@ -4,12 +4,14 @@
 
 Player::Player() {
     CreatureData_t cseed;
-    memcpy_P(&cseed, &CreatureData[0], sizeof(CreatureData_t));
+    memcpy_P(&cseed, &CreatureData[3], sizeof(CreatureData_t));
     this->party[0].level = 1;
-    this->party[1].level = 1;
-    this->party[2].level = 1;
     this->setMonster(0, cseed);
+    memcpy_P(&cseed, &CreatureData[2], sizeof(CreatureData_t));
+    this->party[1].level = 1;
     this->setMonster(1, cseed);
+    memcpy_P(&cseed, &CreatureData[1], sizeof(CreatureData_t));
+    this->party[2].level = 1;
     this->setMonster(2, cseed);
 }
 
