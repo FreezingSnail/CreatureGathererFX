@@ -73,7 +73,8 @@ void Creature::setStats(CreatureData_t seed) {
   this->statlist.attack = seedToStat((seed.atkSeed));
   this->statlist.defense = seedToStat((seed.defSeed));
   this->statlist.speed = seedToStat((seed.spdSeed));
-  this->statlist.hp = seedToStat((seed.hpSeed));
+  // need to bulk up lineraly
+  this->statlist.hp = seedToStat((seed.hpSeed)) + 30;
   this->statlist.spcAtk = seedToStat((seed.spcAtkSeed));
   this->statlist.spcDef = seedToStat((seed.spcDefSeed));
 }

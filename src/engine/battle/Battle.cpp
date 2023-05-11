@@ -44,7 +44,7 @@ uint16_t BattleEngine::calculateDamage(Action *action, Creature *committer,
   // #endif
 
   uint16_t damage =
-      (power * committer->statlist.attack) / reciever->statlist.defense;
+      (power + committer->statlist.attack) / reciever->statlist.defense;
   damage = applyModifier(damage, (Type)move.getMoveType(), reciever->types);
   // if ( damage == 0 ){
   //     if (mod == 0) {
