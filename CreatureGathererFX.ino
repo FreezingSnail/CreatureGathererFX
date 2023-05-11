@@ -1,13 +1,13 @@
 #include "Arduboy2.h"
-#include "src/engine/battle/Battle.hpp"  
-#include "src/player/Player.hpp"
+#include "src/engine/battle/Battle.hpp"
 #include "src/engine/game/Menu.hpp"
+#include "src/player/Player.hpp"
+
 
 Arduboy2 arduboy;
 Player player = Player();
 Menu menu = Menu(&arduboy);
 BattleEngine engine = BattleEngine(&arduboy, &menu);
-
 
 void setup() {
   // initiate arduboy instance
@@ -18,18 +18,17 @@ void setup() {
   arduboy.setFrameRate(15);
 }
 
-
 void loop() {
-  if (!(arduboy.nextFrame())){
+  if (!(arduboy.nextFrame())) {
     return;
   }
   arduboy.clear();
 
   arduboy.pollButtons();
-  if(true) {
+  if (true) {
     engine.encounter();
   }
-  //engine.encounter();
+  // engine.encounter();
 
   arduboy.display();
 }
