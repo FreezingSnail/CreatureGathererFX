@@ -1,5 +1,6 @@
 #include "Arduboy2.h"
 #include "src/engine/battle/Battle.hpp"
+#include "src/engine/world/World.hpp"
 #include "src/engine/game/Menu.hpp"
 #include "src/player/Player.hpp"
 
@@ -8,6 +9,7 @@ Arduboy2 arduboy;
 Player player = Player();
 Menu menu = Menu(&arduboy);
 BattleEngine engine = BattleEngine(&arduboy, &menu);
+WorldEngine world = WorldEngine(&arduboy);
 
 void setup() {
   // initiate arduboy instance
@@ -25,10 +27,10 @@ void loop() {
   arduboy.clear();
 
   arduboy.pollButtons();
-  if (true) {
+  if (false) {
     engine.encounter();
   }
-  // engine.encounter();
+  world.runMap();
 
   arduboy.display();
 }
