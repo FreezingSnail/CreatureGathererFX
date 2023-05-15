@@ -1,15 +1,16 @@
 #include "Arduboy2.h"
 #include "src/engine/battle/Battle.hpp"
-#include "src/engine/world/World.hpp"
+#include "src/engine/game/Gamestate.hpp"
 #include "src/engine/game/Menu.hpp"
+#include "src/engine/world/World.hpp"
 #include "src/player/Player.hpp"
-
 
 Arduboy2 arduboy;
 Player player = Player();
 Menu menu = Menu(&arduboy);
-BattleEngine engine = BattleEngine(&arduboy, &menu);
-WorldEngine world = WorldEngine(&arduboy);
+GameState state = GameState::OVERWORLD;
+BattleEngine engine = BattleEngine(&arduboy, &menu, &state);
+WorldEngine world = WorldEngine(&arduboy, &state);
 
 void setup() {
   // initiate arduboy instance
@@ -27,10 +28,14 @@ void loop() {
   arduboy.clear();
 
   arduboy.pollButtons();
-  if (false) {
+  switch (state) {
+  case GameState::FIGHT:
     engine.encounter();
+    break;
+  case GameState::OVERWORLD:
+    world.runMap();
+    break;
   }
-  world.runMap();
 
   arduboy.display();
 }
