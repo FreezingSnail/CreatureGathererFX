@@ -1,13 +1,16 @@
 #include "Arduboy2.h"
 #include "src/engine/battle/Battle.hpp"
+#include "src/engine/game/Gamestate.hpp"
 #include "src/engine/game/Menu.hpp"
+#include "src/engine/world/World.hpp"
 #include "src/player/Player.hpp"
-
 
 Arduboy2 arduboy;
 Player player = Player();
 Menu menu = Menu(&arduboy);
-BattleEngine engine = BattleEngine(&arduboy, &menu);
+GameState state = GameState::OVERWORLD;
+BattleEngine engine = BattleEngine(&arduboy, &menu, &state);
+WorldEngine world = WorldEngine(&arduboy, &state);
 
 void setup() {
   // initiate arduboy instance
@@ -15,7 +18,8 @@ void setup() {
   engine.startEncounter(&player, 0);
   // here we set the framerate to 15, we do not need to run at
   // default 60 and it saves us battery life
-  arduboy.setFrameRate(15);
+  arduboy.setFrameRate(30);
+  arduboy.initRandomSeed();
 }
 
 void loop() {
@@ -25,10 +29,14 @@ void loop() {
   arduboy.clear();
 
   arduboy.pollButtons();
-  if (true) {
+  switch (state) {
+  case GameState::FIGHT:
     engine.encounter();
+    break;
+  case GameState::OVERWORLD:
+    world.runMap();
+    break;
   }
-  // engine.encounter();
 
   arduboy.display();
 }
