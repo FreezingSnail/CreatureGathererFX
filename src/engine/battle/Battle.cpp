@@ -2,6 +2,7 @@
 #include "../../creature/Creature.hpp"
 #include "../../opponent/Opponent.hpp"
 #include "../../player/Player.hpp"
+#include "../game/Gamestate.hpp"
 #include "../game/Menu.hpp"
 #include "Arduboy2.h"
 //#include "../../lib/TypeTable.hpp"
@@ -10,6 +11,13 @@
 #include "../../sprites/creatureSprites.h"
 
 //#define DEBUG
+
+BattleEngine::BattleEngine(Arduboy2 *arduboy, Menu *menu, GameState *state) {
+  this->arduboy = arduboy;
+  this->menu = menu;
+  this->state = state;
+  this->activeBattle = false;
+}
 
 uint16_t BattleEngine::calculateDamage(Action *action, Creature *committer,
                                        Creature *reciever) {
@@ -63,12 +71,6 @@ uint16_t BattleEngine::calculateDamage(Action *action, Creature *committer,
 
   // going too need to balance this eventually
   return damage;
-}
-
-BattleEngine::BattleEngine(Arduboy2 *arduboy, Menu *menu) {
-  this->arduboy = arduboy;
-  this->menu = menu;
-  this->activeBattle = false;
 }
 
 // battle loop
@@ -203,14 +205,22 @@ bool BattleEngine::checkOpponentFaint() {
 
 bool BattleEngine::checkLoss() {
   // return uint8_t(this->awakeMons & 0b11100000) == uint8_t(0) ;
-  return (this->playerHealths[0] <= 0 && this->playerHealths[1] <= 0 &&
-          this->playerHealths[2] <= 0);
+  if (this->playerHealths[0] <= 0 && this->playerHealths[1] <= 0 &&
+      this->playerHealths[2] <= 0) {
+    *this->state = GameState::OVERWORLD;
+    return true;
+  }
+  return false;
 }
 
 bool BattleEngine::checkWin() {
   // return uint8_t(this->awakeMons & 0b00000111) == uint8_t(0) ;
-  return (this->opponentHealths[0] <= 0 && this->opponentHealths[1] <= 0 &&
-          this->opponentHealths[2] <= 0);
+  if (this->opponentHealths[0] <= 0 && this->opponentHealths[1] <= 0 &&
+      this->opponentHealths[2] <= 0) {
+    *this->state = GameState::OVERWORLD;
+    return true;
+  }
+  return false;
 }
 
 void BattleEngine::endEncounter() {
