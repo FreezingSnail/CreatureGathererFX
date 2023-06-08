@@ -9,33 +9,38 @@ Arduboy2 arduboy;
 Player player = Player();
 Menu menu = Menu(&arduboy);
 GameState state = GameState::OVERWORLD;
-BattleEngine engine = BattleEngine(&arduboy, &menu, &state);
-WorldEngine world = WorldEngine(&arduboy, &state);
+BattleEngine engine = BattleEngine(&arduboy, &player, &menu, &state);
+WorldEngine world = WorldEngine(&arduboy, &state, &engine);
 
 void setup() {
   // initiate arduboy instance
   arduboy.begin();
-  engine.startEncounter(&player, 0);
-  // here we set the framerate to 15, we do not need to run at
-  // default 60 and it saves us battery life
+  // engine.startFight(0);
+  engine.startEncounter(1, 1);
+  //     here we set the framerate to 15, we do not need to run at
+  //     default 60 and it saves us battery life
   arduboy.setFrameRate(30);
   arduboy.initRandomSeed();
 }
 
+bool __attribute__((optimize("-O0"))) debugframe() {
+  return arduboy.nextFrame();
+}
+
 void loop() {
-  if (!(arduboy.nextFrame())) {
+  if (!debugframe()) {
     return;
   }
   arduboy.clear();
 
   arduboy.pollButtons();
   switch (state) {
-  case GameState::FIGHT:
-    engine.encounter();
-    break;
-  case GameState::OVERWORLD:
-    world.runMap();
-    break;
+    case GameState::FIGHT:
+      engine.encounter();
+      break;
+    case GameState::OVERWORLD:
+      world.runMap();
+      break;
   }
 
   arduboy.display();

@@ -1,1 +1,1 @@
-arduino-cli compile --fqbn "arduboy:avr:arduboy"  .  --output-dir .
+arduino-cli compile --fqbn "arduboy:avr:arduboy" --optimize-for-debug  --output-dir .
