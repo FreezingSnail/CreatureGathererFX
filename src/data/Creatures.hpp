@@ -22,6 +22,9 @@ typedef struct CreatureD {
 // going to need to embed these into progmem at somepoint
 // each instance wastes 4 bits
 
+const CreatureData_t emptyCreature PROGMEM = {0, 0, 0, 0, 0, 0, 0,
+                                              0, 0, 0, 0, 0, 0, 0};
+
 const CreatureData_t CreatureData[32] PROGMEM = {
     {0, 2, 8, 8, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0},
     {1, 2, 8, 16, 8, 8, 8, 8, 8, 8, 0, 0, 0, 0},

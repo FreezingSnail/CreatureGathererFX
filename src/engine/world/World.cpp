@@ -1,16 +1,21 @@
 #include "World.hpp"
+
 #include "../../sprites/characterSheet.h"
 #include "../../sprites/tilesheet.h"
+#include "../battle/Battle.hpp"
 #include "../game/Gamestate.hpp"
 #include "Arduboy2.h"
+#include "Encounter.hpp"
 #include "Map.hpp"
 
 #define TILE_SIZE 16
 
-WorldEngine::WorldEngine(Arduboy2 *arduboy, GameState *state) {
+WorldEngine::WorldEngine(Arduboy2 *arduboy, GameState *state,
+                         BattleEngine *battleEngine) {
   this->arduboy = arduboy;
+  this->encounterTable = Encounter(arduboy);
+  this->battleEngine = battleEngine;
   this->state = state;
-  this->ticker = 1;
   this->mapx = 0;
   this->mapy = 0;
   this->curx = 4;
@@ -69,7 +74,7 @@ void WorldEngine::drawPlayer() {
                          frame);
 }
 
-void WorldEngine::runMap() {
+void __attribute__((optimize("-O0"))) WorldEngine::runMap() {
   this->drawMap();
   this->drawPlayer();
 
@@ -82,37 +87,36 @@ void WorldEngine::runMap() {
 
 void WorldEngine::moveChar() {
   switch (this->playerDirection) {
-  case Up:
-    this->mapy++;
-    break;
-  case Down:
-    this->mapy--;
-    break;
-  case Left:
-    this->mapx++;
-    break;
-  case Right:
-    this->mapx--;
-    break;
+    case Up:
+      this->mapy++;
+      break;
+    case Down:
+      this->mapy--;
+      break;
+    case Left:
+      this->mapx++;
+      break;
+    case Right:
+      this->mapx--;
+      break;
   }
-  this->ticker++;
   this->stepTicker++;
   if (this->stepTicker == TILE_SIZE) {
     this->stepTicker = 0;
     this->moving = false;
     switch (this->playerDirection) {
-    case Up:
-      this->cury--;
-      break;
-    case Down:
-      this->cury++;
-      break;
-    case Left:
-      this->curx--;
-      break;
-    case Right:
-      this->curx++;
-      break;
+      case Up:
+        this->cury--;
+        break;
+      case Down:
+        this->cury++;
+        break;
+      case Left:
+        this->curx--;
+        break;
+      case Right:
+        this->curx++;
+        break;
     }
     this->encounter();
   }
@@ -120,13 +124,16 @@ void WorldEngine::moveChar() {
 
 TileType WorldEngine::getTile() { return (TileType)0; }
 
-void WorldEngine::encounter() {
+void __attribute__((optimize("-O0"))) WorldEngine::encounter() {
   TileType t = gameMap[this->cury][this->curx];
   if (t == TileType::GRASS) {
     int chance = random(1, 101);
     if (chance <= 50) {
+      uint8_t creatureID = this->encounterTable.rollEncounter();
+      uint8_t level = this->encounterTable.rollLevel();
+      this->debug = creatureID;
+      this->battleEngine->startEncounter(creatureID, level);
       *this->state = GameState::FIGHT;
-      this->ticker++;
     }
   }
 }
@@ -135,18 +142,18 @@ bool WorldEngine::moveable() {
   int tilex = this->curx;
   int tiley = this->cury;
   switch (this->playerDirection) {
-  case Up:
-    tiley--;
-    break;
-  case Down:
-    tiley++;
-    break;
-  case Left:
-    tilex--;
-    break;
-  case Right:
-    tilex++;
-    break;
+    case Up:
+      tiley--;
+      break;
+    case Down:
+      tiley++;
+      break;
+    case Left:
+      tilex--;
+      break;
+    case Right:
+      tilex++;
+      break;
   }
 
   if (tilex < 0 || tiley < 0 || tilex >= WORLD_WIDTH || tiley >= WORLD_HEIGHT) {
@@ -154,11 +161,11 @@ bool WorldEngine::moveable() {
   }
   this->nextTile = gameMap[tiley][tilex];
   switch (this->nextTile) {
-  case WATER:
-  case STONE:
-    return false;
+    case WATER:
+    case STONE:
+      return false;
 
-  default:
-    return true;
+    default:
+      return true;
   }
 }
