@@ -16,16 +16,16 @@ void Encounter::loadEncounterTable(int areaIndex) {
   EncounterTable_t table;
   memcpy_P(&table, &encounterRates[areaIndex], sizeof(EncounterTable_t));
   for (uint8_t i = 0; i < table.rate1; i++) {
-    this->table[i] = table.rate1;
+    this->table[i] = table.c1;
   }
   for (uint8_t i = 0; i < table.rate2; i++) {
-    this->table[i + table.rate1] = table.rate1;
+    this->table[i + table.rate1] = table.c2;
   }
   for (uint8_t i = 0; i < table.rate3; i++) {
-    this->table[i + table.rate1 + table.rate2] = table.rate1;
+    this->table[i + table.rate1 + table.rate2] = table.c3;
   }
   for (uint8_t i = 0; i < table.rate4; i++) {
-    this->table[i + table.rate1 + table.rate2 + table.rate3] = table.rate1;
+    this->table[i + table.rate1 + table.rate2 + table.rate3] = table.c4;
   }
 
   this->avgLevel = table.avgLevel;
