@@ -4,4 +4,9 @@ build/*
 *.hex
 *.eep
 *.elf
+.*
+tst/*
+1.8.6
+Makefile
+libraries
 tools/image-converter.py
