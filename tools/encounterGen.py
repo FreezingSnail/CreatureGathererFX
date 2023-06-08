@@ -14,7 +14,7 @@ class EncounterTable(object):
 
 
     def __str__(self):
-        return "{  0x" + self.toCreatureList() + ", 0x" + self.toRates() +" },"
+        return "{  0x" + self.toCreatureList() + ", " + self.r1 + ", " + self.r2 + ", " + self.r3 + ", " + self.r4 + " },"
     
     def toCreatureList(self) -> str:
         cList = [0]*32
@@ -58,7 +58,7 @@ def toInt():
     return encounters
 
 def names(rates):
-    print("const encounterRates[]" + " PROGMEM = {")
+    print("const EncounterTable_t encounterRates[8] PROGMEM = {")
     for e in rates:
         print(e)
 
