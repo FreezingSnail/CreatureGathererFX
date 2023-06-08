@@ -1,15 +1,16 @@
 #include "Creature.hpp"
+
 #include <avr/pgmspace.h>
+
 #include "../data/Creatures.hpp"
 #include "../lib/Move.hpp"
 #include "../opponent/OpponentSeed.hpp"
 #include "../sprites/creatureSprites.h"
 
-
 // This will need to load the creature seed from the progmemstore
 const CreatureData_t getCreatureFromStore(uint8_t id) {
   CreatureData_t cseed;
-  memcpy_P(&cseed, &CreatureData[0], sizeof(CreatureData_t));
+  memcpy_P(&cseed, &CreatureData[id], sizeof(CreatureData_t));
   return cseed;
 }
 
