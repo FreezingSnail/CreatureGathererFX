@@ -154,7 +154,6 @@ void BattleEngine::startFight(uint8_t optID) {
 
 void __attribute__((optimize("-O0")))
 BattleEngine::startEncounter(uint8_t creatureID, uint8_t level) {
-  this->db = 1;
   this->LoadCreature(creatureID, level);
   this->loadPlayer(this->player);
   this->menu->setState(State_t::BATTLE);

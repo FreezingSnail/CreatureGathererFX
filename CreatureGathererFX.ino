@@ -19,16 +19,12 @@ void setup() {
   engine.startEncounter(1, 1);
   //     here we set the framerate to 15, we do not need to run at
   //     default 60 and it saves us battery life
-  arduboy.setFrameRate(30);
+  arduboy.setFrameRate(60);
   arduboy.initRandomSeed();
 }
 
-bool __attribute__((optimize("-O0"))) debugframe() {
-  return arduboy.nextFrame();
-}
-
 void loop() {
-  if (!debugframe()) {
+  if (!arduboy.nextFrame()) {
     return;
   }
   arduboy.clear();
