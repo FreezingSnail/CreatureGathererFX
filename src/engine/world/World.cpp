@@ -14,6 +14,7 @@ WorldEngine::WorldEngine(Arduboy2 *arduboy, GameState *state,
                          BattleEngine *battleEngine) {
   this->arduboy = arduboy;
   this->encounterTable = Encounter(arduboy);
+  this->battleEngine = battleEngine;
   this->state = state;
   this->mapx = 0;
   this->mapy = 0;
@@ -130,11 +131,9 @@ void __attribute__((optimize("-O0"))) WorldEngine::encounter() {
     if (chance <= 50) {
       uint8_t creatureID = this->encounterTable.rollEncounter();
       uint8_t level = this->encounterTable.rollLevel();
-      this->debug = 1;
+      this->debug = creatureID;
       this->battleEngine->startEncounter(creatureID, level);
-      // this->battleEngine->startFight(0);
-      //*this->state = GameState::FIGHT;
-      this->debug = 2;
+      *this->state = GameState::FIGHT;
     }
   }
 }

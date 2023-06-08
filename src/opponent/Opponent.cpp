@@ -20,11 +20,11 @@ Opponent::loadEncounterOpt(uint8_t id, uint8_t level) {
   // CreatureData_t eseed;
   //  memcpy_P(&eseed, &emptyCreature, sizeof(CreatureData_t));
   CreatureData_t cseed;
-  memcpy_P(&cseed, &CreatureData[6], sizeof(CreatureData_t));
+  memcpy_P(&cseed, &CreatureData[id], sizeof(CreatureData_t));
   this->levels[0] = 2;
   this->levels[1] = 0;
   this->levels[2] = 0;
   this->party[0].load(cseed);
-  // this->party[1].load(eseed);
-  // this->party[2].load(eseed);
+  //  this->party[1].load(eseed);
+  //  this->party[2].load(eseed);
 }

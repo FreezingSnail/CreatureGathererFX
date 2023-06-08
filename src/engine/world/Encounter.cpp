@@ -37,6 +37,6 @@ uint8_t Encounter::rollEncounter() {
 }
 
 uint8_t Encounter::rollLevel() {
-  int8_t roll = random(-3, 4);
+  int8_t roll = random(0, 7) - 4;
   return this->avgLevel + roll;
 }

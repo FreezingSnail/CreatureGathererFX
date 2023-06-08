@@ -35,11 +35,15 @@ void Menu::setState(State_t s) { this->state = s; }
 
 // This doesnt work at all lol
 void Menu::wait() {
+  while (!this->arduboy->justPressed(A_BUTTON)) {
+    this->arduboy->pollButtons();
+  }
   uint8_t count = 0;
   while (count < 15) {
+    if (!this->arduboy->nextFrame()) continue;
     count++;
   }
-  // this->arduboy->pollButtons();
+  // this->arduboy->clear();
 }
 
 void Menu::printMenu() {
@@ -202,5 +206,5 @@ void Menu::printAttack(uint8_t creatureID, uint8_t attackID,
   //      }
   //  }
 
-  // this->wait();
+  this->wait();
 }
