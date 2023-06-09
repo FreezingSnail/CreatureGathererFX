@@ -11,8 +11,6 @@
 #include "../../lib/Move.hpp"
 #include "../../sprites/creatureSprites.h"
 
-//#define DEBUG
-
 BattleEngine::BattleEngine(Arduboy2 *arduboy, Player *player, Menu *menu,
                            GameState *state) {
   this->arduboy = arduboy;
@@ -31,39 +29,9 @@ uint16_t BattleEngine::calculateDamage(Action *action, Creature *committer,
   // uint8_t(reciever->type2))/2;
   uint8_t power = move.getMovePower();
   bool bonus = committer->moveTypeBonus(committer->moves[action->actionIndex]);
-
-  // #ifdef DEBUG
-  //     while(!this->arduboy->justPressed(B_BUTTON)){
-  //         this->arduboy->setTextColor(WHITE);
-  //         this->arduboy->pollButtons();
-  //         this->arduboy->clear();
-  //         this->arduboy->print(F("p:  atk:  def:\n"));
-  //         this->arduboy->print((unsigned)power);  this->arduboy->print(F("
-  //         "));
-  //         this->arduboy->print((unsigned)committer->statlist.attack);this->arduboy->print(F("
-  //         "));
-  //         this->arduboy->print((unsigned)reciever->statlist.defense);this->arduboy->print(F("
-  //         ")); this->arduboy->print(F("\n")); this->arduboy->print(F("move
-  //         Type: rtype: mod: \n"));
-  //         this->arduboy->print((unsigned)getMoveType(move));
-  //         this->arduboy->print(F(" "));
-  //        // this->arduboy->print((unsigned)reciever->type1);
-  //        this->arduboy->print(F(" "));
-  //         //this->arduboy->print((mod));this->arduboy->print(F(" "));
-  //         this->arduboy->display();
-  //     }
-  // #endif
-
   uint16_t damage =
       (power + committer->statlist.attack) / reciever->statlist.defense;
   damage = applyModifier(damage, (Type)move.getMoveType(), reciever->types);
-  // if ( damage == 0 ){
-  //     if (mod == 0) {
-  //         return 0;
-  //     }
-  //     return 1;
-  // }
-
   this->menu->printAttack(committer->id, committer->moves[action->actionIndex],
                           Modifier::Same);
 
@@ -71,7 +39,6 @@ uint16_t BattleEngine::calculateDamage(Action *action, Creature *committer,
   if (bonus) {
     return damage * 2;
   }
-
   // going too need to balance this eventually
   return damage;
 }
@@ -94,10 +61,6 @@ void __attribute__((optimize("-O0"))) BattleEngine::encounter() {
   this->menu->printMenu();
   this->drawScene();
   this->turnTick();
-#ifdef DEBUG
-  // this->printEncounter();
-  //  this->playerCur->printMoves();
-#endif
 }
 
 void BattleEngine::resetOpponent() {
@@ -144,28 +107,26 @@ void BattleEngine::loadPlayer(Player *player) {
 }
 
 void BattleEngine::startFight(uint8_t optID) {
-  // this->arduboy->print("starting encounter\n");
   this->loadOpponent(optID);
   this->loadPlayer(this->player);
   this->menu->setState(State_t::BATTLE);
   this->activeBattle = true;
-  // this->encounter();
 }
 
-void __attribute__((optimize("-O0")))
-BattleEngine::startEncounter(uint8_t creatureID, uint8_t level) {
+void BattleEngine::startEncounter(uint8_t creatureID, uint8_t level) {
   this->LoadCreature(creatureID, level);
   this->loadPlayer(this->player);
   this->menu->setState(State_t::BATTLE);
   this->activeBattle = true;
 }
 
-void BattleEngine::turnTick() {
+void __attribute__((optimize("-O0"))) BattleEngine::turnTick() {
   if (!this->getInput()) {
     return;
   }
   this->opponentInput();
-  int8_t order = this->playerAction.priority != this->opponentAction.priority;
+  int8_t order = (int8_t)this->playerAction.priority -
+                 (int8_t)this->opponentAction.priority;
   if (order > 0) {
     this->playerActionFirst();
   } else if (order < 0) {
@@ -183,14 +144,14 @@ void BattleEngine::turnTick() {
 // Need to add a win/loss check ejection
 void BattleEngine::playerActionFirst() {
   this->commitAction(&this->playerAction, this->playerCur, this->opponentCur);
-  if (this->checkOpponentFaint()) return;
+  if (this->checkOpponentFaint() || !this->activeBattle) return;
   this->commitAction(&this->opponentAction, this->opponentCur, this->playerCur);
   this->checkPlayerFaint();
 }
 
 void BattleEngine::opponentActionFirst() {
   this->commitAction(&this->opponentAction, this->opponentCur, this->playerCur);
-  if (this->checkPlayerFaint()) return;
+  if (this->checkPlayerFaint() || !this->activeBattle) return;
   this->commitAction(&this->playerAction, this->playerCur, this->opponentCur);
   this->checkOpponentFaint();
 }
@@ -223,7 +184,7 @@ bool BattleEngine::checkLoss() {
   // return uint8_t(this->awakeMons & 0b11100000) == uint8_t(0) ;
   if (this->playerHealths[0] <= 0 && this->playerHealths[1] <= 0 &&
       this->playerHealths[2] <= 0) {
-    *this->state = GameState::OVERWORLD;
+    this->endEncounter();
     return true;
   }
   return false;
@@ -233,7 +194,7 @@ bool BattleEngine::checkWin() {
   // return uint8_t(this->awakeMons & 0b00000111) == uint8_t(0) ;
   if (this->opponentHealths[0] <= 0 && this->opponentHealths[1] <= 0 &&
       this->opponentHealths[2] <= 0) {
-    *this->state = GameState::OVERWORLD;
+    this->endEncounter();
     return true;
   }
   return false;
@@ -241,6 +202,8 @@ bool BattleEngine::checkWin() {
 
 void BattleEngine::endEncounter() {
   this->arduboy->print(F("\nend encounter \n"));
+  this->activeBattle = false;
+  *this->state = GameState::OVERWORLD;
 }
 
 bool BattleEngine::getInput() {
@@ -252,7 +215,7 @@ void BattleEngine::opponentInput() {
   // ai to select best move
 
   // For now just do the first slot attack
-  this->opponentAction.setActionType(ActionType::ATTACK);
+  this->opponentAction.setActionType(ActionType::ATTACK, Priority::NORMAL);
   this->opponentAction.actionIndex = 1;
 }
 
@@ -264,7 +227,12 @@ void BattleEngine::commitAction(Action *action, Creature *commiter,
       applyDamage(damage, reciever);
       break;
     }
-    case ActionType::ITEM:
+    case ActionType::CATCH:
+      if (this->tryCapture()) {
+        this->player->storeCreature(0, this->opponentCur->id,
+                                    this->opponentCur->level);
+        endEncounter();
+      }
       break;
     case ActionType::CHNGE:
       break;
@@ -286,6 +254,11 @@ void BattleEngine::applyDamage(uint16_t damage, Creature *reciever) {
     uint8_t hp = this->opponentHealths[this->opponentIndex];
     this->opponentHealths[this->opponentIndex] -= damage >= hp ? hp : damage;
   }
+}
+
+bool BattleEngine::tryCapture() {
+  int roll = random(1, 10);
+  return roll < 5;
 }
 
 void BattleEngine::drawScene() {
@@ -325,34 +298,3 @@ void BattleEngine::drawOpponentHP() {
   this->arduboy->print(F("lv:"));
   this->arduboy->print(this->opponentCur->level);
 }
-
-#ifdef DEBUG
-
-void BattleEngine::printEncounter() {
-  // while (!this->arduboy->justPressed(B_BUTTON)) {
-  //   this->arduboy->pollButtons();
-  //   this->arduboy->clear();
-  //   this->arduboy->setCursor(0, 0);
-  //   this->arduboy->print(F("P: cur: "));
-  //   this->arduboy->print((unsigned)this->playerIndex);
-  //   this->arduboy->print(F(" lvl: "));
-  //   this->arduboy->print((unsigned)this->playerCur->level);
-  //   this->arduboy->print(F("\nhp:"));
-  //   for (int i = 0; i < 3; i++) {
-  //     this->arduboy->print(F(" "));
-  //     this->arduboy->print((unsigned)this->playerHealths[i]);
-  //   }
-  //   this->arduboy->print(F("\nO: cur: "));
-  //   this->arduboy->print((unsigned)this->opponentIndex);
-  //   this->arduboy->print(F(" lvl: "));
-  //   this->arduboy->print((unsigned)this->opponentCur->level);
-  //   this->arduboy->print(F("\nhp:"));
-  //   for (int i = 0; i < 3; i++) {
-  //     this->arduboy->print(F(" "));
-  //     this->arduboy->print((unsigned)this->opponentHealths[i]);
-  //   }
-  //   this->arduboy->display();
-  // }
-}
-
-#endif
