@@ -80,8 +80,5 @@ class BattleEngine {
 
  private:
   void resetOpponent();
-
-#ifdef DEBUG
-  void printEncounter();
-#endif
+  bool tryCapture();
 };

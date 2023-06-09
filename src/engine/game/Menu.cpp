@@ -25,7 +25,8 @@ void Menu::registerMoveList(uint8_t move1, uint8_t move2, uint8_t move3,
 bool Menu::actionInput(Action* action) {
   if (this->queued) {
     this->queued = false;
-    action->setActionType(this->queuedAction.actionType);
+    action->setActionType(this->queuedAction.actionType,
+                          this->queuedAction.priority);
     action->actionIndex = this->queuedAction.actionIndex;
     return true;
   }
@@ -123,6 +124,13 @@ void Menu::moveCursor() {
   } else if (this->arduboy->justPressed(RIGHT_BUTTON)) {
     this->cursorIndex++;
   }
+
+  if (this->cursorIndex > 3) {
+    this->cursorIndex = 0;
+  }
+  if (this->cursorIndex < 0) {
+    this->cursorIndex = 3;
+  }
 }
 
 void Menu::tansverseMenu() {
@@ -134,7 +142,8 @@ void Menu::tansverseMenu() {
             this->curMenu = BMOVE;
             break;
           case 1:
-            this->curMenu = BITEM;
+            this->curMenu = BCATCH;
+            this->queueAction(ActionType::CATCH, 0);
             break;
           case 2:
             this->curMenu = BCHANGE;
@@ -144,6 +153,7 @@ void Menu::tansverseMenu() {
             // need to redeisgn how an action is qued
             break;
         }
+        this->curMenu = BMAIN;
         this->cursorIndex = 0;
         break;
 
@@ -162,6 +172,7 @@ void Menu::tansverseMenu() {
             this->queueAction(ActionType::ATTACK, 3);
             break;
         }
+        this->curMenu = BMAIN;
         this->cursorIndex = 0;
         break;
     }
@@ -174,7 +185,14 @@ void Menu::tansverseMenu() {
 
 void Menu::queueAction(ActionType type, uint8_t index) {
   this->queued = true;
-  this->queuedAction.setActionType(type);
+  Priority p = Priority::NORMAL;
+  switch (type) {
+    case ActionType::CHNGE:
+    case ActionType::CATCH:
+    case ActionType::ESCAPE:
+      p = Priority::FAST;
+  }
+  this->queuedAction.setActionType(type, p);
   this->queuedAction.actionIndex = index;
 }
 
