@@ -147,6 +147,35 @@ void BattleEngine::opponentActionFirst() {
   this->checkOpponentFaint();
 }
 
+void BattleEngine::changeCurMon(uint8_t id) {
+  int index = 0;
+  for (uint8_t i = 0; i < 3; i++) {
+    if (this->playerParty[i]->id == id) {
+      this->playerCur = this->playerParty[i]->id;
+      index = i;
+      break;
+    }
+  }
+  this->playerCur = this->playerParty[index];
+  this->menu->registerMoveList(
+      this->playerCur->moves[0], this->playerCur->moves[1],
+      this->playerCur->moves[2], this->playerCur->moves[3]);
+  switch (index) {
+  case 0:
+    this->menu->registerCreatureList(this->playerParty[1]->id,
+                                     this->playerParty[2]->id);
+    break;
+  case 1:
+    this->menu->registerCreatureList(this->playerParty[0]->id,
+                                     this->playerParty[2]->id);
+    break;
+  case 2:
+    this->menu->registerCreatureList(this->playerParty[0]->id,
+                                     this->playerParty[1]->id);
+    break;
+  }
+}
+
 bool BattleEngine::tryCapture() {
   int roll = random(1, 10);
   return roll < 5;
@@ -198,6 +227,7 @@ void BattleEngine::commitAction(Action *action, Creature *commiter,
     }
     break;
   case ActionType::CHNGE:
+    this->changeCurMon(action->actionIndex);
     break;
   case ActionType::ESCAPE:
     // should add a check in here for opponent vs random encounter
@@ -279,6 +309,8 @@ void BattleEngine::loadPlayer(Player *player) {
   this->menu->registerMoveList(
       this->playerCur->moves[0], this->playerCur->moves[1],
       this->playerCur->moves[2], this->playerCur->moves[3]);
+  this->menu->registerCreatureList(this->playerParty[1]->id,
+                                   this->playerParty[2]->id);
 }
 
 void BattleEngine::resetOpponent() {

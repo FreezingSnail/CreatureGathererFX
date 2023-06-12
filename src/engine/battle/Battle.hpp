@@ -52,6 +52,7 @@ private:
   bool checkOpponentFaint();
   void playerActionFirst();
   void opponentActionFirst();
+  void changeCurMon(uint8_t index);
   bool tryCapture();
   void endEncounter();
 
