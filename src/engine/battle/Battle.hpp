@@ -10,14 +10,14 @@
 #define DEBUG
 
 class BattleEngine {
- private:
+private:
   Arduboy2 *arduboy;
   Creature *playerParty[3];
   Player *player;
   Opponent opponent;
   uint16_t playerHealths[3];
   uint16_t opponentHealths[3];
-  uint8_t awakeMons;  // 11100111 player and opponet bit array
+  uint8_t awakeMons; // 11100111 player and opponet bit array
 
   Creature *playerCur;
   Creature *opponentCur;
@@ -33,52 +33,48 @@ class BattleEngine {
 
   int db;
 
- public:
+public:
   BattleEngine(Arduboy2 *arduboy, Player *player, Menu *menu, GameState *state);
 
-  void encounter();
-
-  void loadPlayer(Player *player);
-
-  void loadOpponent(uint8_t optID);
-
-  void LoadCreature(uint8_t creatureID, uint8_t level);
-
+  // entry points
   void startFight(uint8_t optID);
   void startEncounter(uint8_t creatureID, uint8_t level);
 
-  void endEncounter();
+  // flow control
+  void encounter();
 
-  // sets playerAction
-  bool getInput();
-
-  // Sets opponentAction
-  void opponentInput();
-
+private:
+  // flow control
   void turnTick();
-
   bool checkLoss();
-
   bool checkWin();
-
-  void commitAction(Action *action, Creature *commiter, Creature *receiver);
-
-  void applyDamage(uint16_t damage, Creature *receiver);
-
-  void playerActionFirst();
-  void opponentActionFirst();
   bool checkPlayerFaint();
   bool checkOpponentFaint();
+  void playerActionFirst();
+  void opponentActionFirst();
+  bool tryCapture();
+  void endEncounter();
+
+  // inputs
+  bool getInput();
+  void opponentInput();
+
+  // event execution
+  void commitAction(Action *action, Creature *commiter, Creature *receiver);
+  void applyDamage(uint16_t damage, Creature *receiver);
   uint16_t calculateDamage(Action *action, Creature *committer,
                            Creature *reciever);
 
+  // data loading
+  void loadPlayer(Player *player);
+  void loadOpponent(uint8_t optID);
+  void LoadCreature(uint8_t creatureID, uint8_t level);
+  void resetOpponent();
+
+  // drawing
   void drawScene();
   void drawPlayer();
   void drawOpponent();
   void drawPlayerHP();
   void drawOpponentHP();
-
- private:
-  void resetOpponent();
-  bool tryCapture();
 };

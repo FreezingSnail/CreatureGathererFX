@@ -11,6 +11,8 @@
 #include "../../lib/Move.hpp"
 #include "../../sprites/creatureSprites.h"
 
+#define dbf = __attribute__((optimize("-O0")))
+
 BattleEngine::BattleEngine(Arduboy2 *arduboy, Player *player, Menu *menu,
                            GameState *state) {
   this->arduboy = arduboy;
@@ -20,91 +22,11 @@ BattleEngine::BattleEngine(Arduboy2 *arduboy, Player *player, Menu *menu,
   this->activeBattle = false;
 }
 
-uint16_t BattleEngine::calculateDamage(Action *action, Creature *committer,
-                                       Creature *reciever) {
-  // need to do something here with atk def stats
-  Move move = committer->moveList[action->actionIndex];
-  // float mod = getMatchupModifier(getMoveType(move),
-  // uint8_t(reciever->type1))*getMatchupModifier(getMoveType(move),
-  // uint8_t(reciever->type2))/2;
-  uint8_t power = move.getMovePower();
-  bool bonus = committer->moveTypeBonus(committer->moves[action->actionIndex]);
-  uint16_t damage =
-      (power + committer->statlist.attack) / reciever->statlist.defense;
-  damage = applyModifier(damage, (Type)move.getMoveType(), reciever->types);
-  this->menu->printAttack(committer->id, committer->moves[action->actionIndex],
-                          Modifier::Same);
-
-  // TODO (Snail) need to move this modifiers location in the formula
-  if (bonus) {
-    return damage * 2;
-  }
-  // going too need to balance this eventually
-  return damage;
-}
-
-// battle loop
-
-// Need to change something here for the flow of the game
-void __attribute__((optimize("-O0"))) BattleEngine::encounter() {
-  this->db = 3;
-  if (this->checkLoss()) {
-    this->activeBattle = false;
-    return;
-  }
-
-  if (this->checkWin()) {
-    this->activeBattle = false;
-    return;
-  }
-
-  this->menu->printMenu();
-  this->drawScene();
-  this->turnTick();
-}
-
-void BattleEngine::resetOpponent() {
-  this->opponentIndex = 0;
-  this->opponentCur = &(this->opponent.party[0]);
-  this->opponentHealths[0] = this->opponent.party[0].statlist.hp;
-  this->opponentHealths[1] = this->opponent.party[1].statlist.hp;
-  this->opponentHealths[2] = this->opponent.party[2].statlist.hp;
-}
-
-void BattleEngine::loadOpponent(uint8_t optID) {
-  OpponentSeed_t seed = OpponentSeed_t{0, 0, 1};
-  memcpy_P(&seed, &opts[optID], sizeof(OpponentSeed_t));
-
-  this->opponent.load(&seed);
-  this->resetOpponent();
-}
-
-void __attribute__((optimize("-O0")))
-BattleEngine::LoadCreature(uint8_t creatureID, uint8_t level) {
-  this->db = 2;
-  this->opponent.levels[2] = 12;
-  this->opponent.loadEncounterOpt(creatureID, level);
-  this->resetOpponent();
-}
-
-void BattleEngine::loadPlayer(Player *player) {
-  this->playerParty[0] = &(player->party[0]);
-  this->playerParty[1] = &(player->party[1]);
-  this->playerParty[2] = &(player->party[2]);
-  // for now the hp will refil every encounter so we dont need to use the player
-  // field
-  // this->playerHealths[i] = player->creatureHPs[i];
-  this->playerHealths[0] = 10;
-  this->playerHealths[0] = this->playerParty[0]->statlist.hp;
-  this->playerHealths[1] = this->playerParty[1]->statlist.hp;
-  this->playerHealths[2] = this->playerParty[2]->statlist.hp;
-
-  this->playerIndex = 0;
-  this->playerCur = this->playerParty[0];
-  this->menu->registerMoveList(
-      this->playerCur->moves[0], this->playerCur->moves[1],
-      this->playerCur->moves[2], this->playerCur->moves[3]);
-}
+//////////////////////////////////////////////////////////////////////////////
+//
+//        Entry Functions
+//
+//////////////////////////////////////////////////////////////////////////////
 
 void BattleEngine::startFight(uint8_t optID) {
   this->loadOpponent(optID);
@@ -120,7 +42,30 @@ void BattleEngine::startEncounter(uint8_t creatureID, uint8_t level) {
   this->activeBattle = true;
 }
 
-void __attribute__((optimize("-O0"))) BattleEngine::turnTick() {
+//////////////////////////////////////////////////////////////////////////////
+//
+//        flow control Functions
+//
+//////////////////////////////////////////////////////////////////////////////
+
+// Need to change something here for the flow of the game
+void BattleEngine::encounter() {
+  if (this->checkLoss()) {
+    this->activeBattle = false;
+    return;
+  }
+
+  if (this->checkWin()) {
+    this->activeBattle = false;
+    return;
+  }
+
+  this->menu->printMenu();
+  this->drawScene();
+  this->turnTick();
+}
+
+void BattleEngine::turnTick() {
   if (!this->getInput()) {
     return;
   }
@@ -141,19 +86,24 @@ void __attribute__((optimize("-O0"))) BattleEngine::turnTick() {
   }
 }
 
-// Need to add a win/loss check ejection
-void BattleEngine::playerActionFirst() {
-  this->commitAction(&this->playerAction, this->playerCur, this->opponentCur);
-  if (this->checkOpponentFaint() || !this->activeBattle) return;
-  this->commitAction(&this->opponentAction, this->opponentCur, this->playerCur);
-  this->checkPlayerFaint();
+bool BattleEngine::checkLoss() {
+  // return uint8_t(this->awakeMons & 0b11100000) == uint8_t(0) ;
+  if (this->playerHealths[0] <= 0 && this->playerHealths[1] <= 0 &&
+      this->playerHealths[2] <= 0) {
+    this->endEncounter();
+    return true;
+  }
+  return false;
 }
 
-void BattleEngine::opponentActionFirst() {
-  this->commitAction(&this->opponentAction, this->opponentCur, this->playerCur);
-  if (this->checkPlayerFaint() || !this->activeBattle) return;
-  this->commitAction(&this->playerAction, this->playerCur, this->opponentCur);
-  this->checkOpponentFaint();
+bool BattleEngine::checkWin() {
+  // return uint8_t(this->awakeMons & 0b00000111) == uint8_t(0) ;
+  if (this->opponentHealths[0] <= 0 && this->opponentHealths[1] <= 0 &&
+      this->opponentHealths[2] <= 0) {
+    this->endEncounter();
+    return true;
+  }
+  return false;
 }
 
 // These are just place holders until menu & ai written for proper swapping
@@ -180,24 +130,26 @@ bool BattleEngine::checkOpponentFaint() {
   return false;
 }
 
-bool BattleEngine::checkLoss() {
-  // return uint8_t(this->awakeMons & 0b11100000) == uint8_t(0) ;
-  if (this->playerHealths[0] <= 0 && this->playerHealths[1] <= 0 &&
-      this->playerHealths[2] <= 0) {
-    this->endEncounter();
-    return true;
-  }
-  return false;
+// Need to add a win/loss check ejection
+void BattleEngine::playerActionFirst() {
+  this->commitAction(&this->playerAction, this->playerCur, this->opponentCur);
+  if (this->checkOpponentFaint() || !this->activeBattle)
+    return;
+  this->commitAction(&this->opponentAction, this->opponentCur, this->playerCur);
+  this->checkPlayerFaint();
 }
 
-bool BattleEngine::checkWin() {
-  // return uint8_t(this->awakeMons & 0b00000111) == uint8_t(0) ;
-  if (this->opponentHealths[0] <= 0 && this->opponentHealths[1] <= 0 &&
-      this->opponentHealths[2] <= 0) {
-    this->endEncounter();
-    return true;
-  }
-  return false;
+void BattleEngine::opponentActionFirst() {
+  this->commitAction(&this->opponentAction, this->opponentCur, this->playerCur);
+  if (this->checkPlayerFaint() || !this->activeBattle)
+    return;
+  this->commitAction(&this->playerAction, this->playerCur, this->opponentCur);
+  this->checkOpponentFaint();
+}
+
+bool BattleEngine::tryCapture() {
+  int roll = random(1, 10);
+  return roll < 5;
 }
 
 void BattleEngine::endEncounter() {
@@ -206,6 +158,12 @@ void BattleEngine::endEncounter() {
   *this->state = GameState::OVERWORLD;
 }
 
+//////////////////////////////////////////////////////////////////////////////
+//
+//        Input Functions
+//
+//////////////////////////////////////////////////////////////////////////////
+
 bool BattleEngine::getInput() {
   // arduboy input from menu
   return this->menu->actionInput(&this->playerAction);
@@ -213,36 +171,41 @@ bool BattleEngine::getInput() {
 
 void BattleEngine::opponentInput() {
   // ai to select best move
-
   // For now just do the first slot attack
   this->opponentAction.setActionType(ActionType::ATTACK, Priority::NORMAL);
   this->opponentAction.actionIndex = 1;
 }
 
+//////////////////////////////////////////////////////////////////////////////
+//
+//        Event Execution Functions
+//
+//////////////////////////////////////////////////////////////////////////////
+
 void BattleEngine::commitAction(Action *action, Creature *commiter,
                                 Creature *reciever) {
   switch (action->actionType) {
-    case ActionType::ATTACK: {
-      uint16_t damage = calculateDamage(action, commiter, reciever);
-      applyDamage(damage, reciever);
-      break;
+  case ActionType::ATTACK: {
+    uint16_t damage = calculateDamage(action, commiter, reciever);
+    applyDamage(damage, reciever);
+    break;
+  }
+  case ActionType::CATCH:
+    if (this->tryCapture()) {
+      this->player->storeCreature(0, this->opponentCur->id,
+                                  this->opponentCur->level);
+      endEncounter();
     }
-    case ActionType::CATCH:
-      if (this->tryCapture()) {
-        this->player->storeCreature(0, this->opponentCur->id,
-                                    this->opponentCur->level);
-        endEncounter();
-      }
-      break;
-    case ActionType::CHNGE:
-      break;
-    case ActionType::ESCAPE:
-      // should add a check in here for opponent vs random encounter
-      this->endEncounter();
-      break;
+    break;
+  case ActionType::CHNGE:
+    break;
+  case ActionType::ESCAPE:
+    // should add a check in here for opponent vs random encounter
+    this->endEncounter();
+    break;
 
-    default:
-      break;
+  default:
+    break;
   }
 }
 
@@ -256,10 +219,81 @@ void BattleEngine::applyDamage(uint16_t damage, Creature *reciever) {
   }
 }
 
-bool BattleEngine::tryCapture() {
-  int roll = random(1, 10);
-  return roll < 5;
+uint16_t BattleEngine::calculateDamage(Action *action, Creature *committer,
+                                       Creature *reciever) {
+  // need to do something here with atk def stats
+  Move move = committer->moveList[action->actionIndex];
+  // float mod = getMatchupModifier(getMoveType(move),
+  // uint8_t(reciever->type1))*getMatchupModifier(getMoveType(move),
+  // uint8_t(reciever->type2))/2;
+  uint8_t power = move.getMovePower();
+  bool bonus = committer->moveTypeBonus(committer->moves[action->actionIndex]);
+  uint16_t damage =
+      (power + committer->statlist.attack) / reciever->statlist.defense;
+  damage = applyModifier(damage, (Type)move.getMoveType(), reciever->types);
+  this->menu->printAttack(committer->id, committer->moves[action->actionIndex],
+                          Modifier::Same);
+
+  // TODO (Snail) need to move this modifiers location in the formula
+  if (bonus) {
+    return damage * 2;
+  }
+  // going too need to balance this eventually
+  return damage;
 }
+
+//////////////////////////////////////////////////////////////////////////////
+//
+//        Load Functions
+//
+//////////////////////////////////////////////////////////////////////////////
+
+void BattleEngine::loadOpponent(uint8_t optID) {
+  OpponentSeed_t seed = OpponentSeed_t{0, 0, 1};
+  memcpy_P(&seed, &opts[optID], sizeof(OpponentSeed_t));
+
+  this->opponent.load(&seed);
+  this->resetOpponent();
+}
+
+void BattleEngine::LoadCreature(uint8_t creatureID, uint8_t level) {
+  this->db = 2;
+  this->opponent.levels[2] = 12;
+  this->opponent.loadEncounterOpt(creatureID, level);
+  this->resetOpponent();
+}
+
+void BattleEngine::loadPlayer(Player *player) {
+  this->playerParty[0] = &(player->party[0]);
+  this->playerParty[1] = &(player->party[1]);
+  this->playerParty[2] = &(player->party[2]);
+  // for now the hp will refil every encounter so we dont need to use the player
+  // field
+  // this->playerHealths[i] = player->creatureHPs[i];
+  this->playerHealths[0] = this->playerParty[0]->statlist.hp;
+  this->playerHealths[1] = this->playerParty[1]->statlist.hp;
+  this->playerHealths[2] = this->playerParty[2]->statlist.hp;
+
+  this->playerIndex = 0;
+  this->playerCur = this->playerParty[0];
+  this->menu->registerMoveList(
+      this->playerCur->moves[0], this->playerCur->moves[1],
+      this->playerCur->moves[2], this->playerCur->moves[3]);
+}
+
+void BattleEngine::resetOpponent() {
+  this->opponentIndex = 0;
+  this->opponentCur = &(this->opponent.party[0]);
+  this->opponentHealths[0] = this->opponent.party[0].statlist.hp;
+  this->opponentHealths[1] = this->opponent.party[1].statlist.hp;
+  this->opponentHealths[2] = this->opponent.party[2].statlist.hp;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+//
+//        Draw Functions
+//
+//////////////////////////////////////////////////////////////////////////////
 
 void BattleEngine::drawScene() {
   this->drawPlayer();
