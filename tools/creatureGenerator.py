@@ -25,27 +25,6 @@ def TypeExpand(type: str) -> str:
     
     return type
 
-# def TypeExpand(type: str) -> str:
-#     if type == "spirit":
-#         return "Type::SPIRIT"
-#     elif type == "water":
-#         return "Type::WATER"
-#     elif type == "wind":
-#         return "Type::WIND"
-#     elif type == "earth":
-#         return "Type::EARTH"
-#     elif type == "fire":
-#         return "Type::FIRE"
-#     elif type == "lightning":
-#         return "Type::LIGHTNING"
-#     elif type == "plant":
-#         return "Type::PLANT"
-#     elif type == "elder":
-#         return "Type::ELDER"
-#     elif type == "none":
-#         return "Type::NONE"
-    
-#     return type 
  
 def typeToBin(type: str) ->str:
     if type == "spirit":
