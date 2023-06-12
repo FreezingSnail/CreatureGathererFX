@@ -1,5 +1,6 @@
 #pragma once
 #include "../../action/Action.hpp"
+#include "../../lib/Move.hpp"
 #include "../../lib/Type.hpp"
 #include "Arduboy2.h"
 
@@ -18,7 +19,7 @@ private:
   Arduboy2 *arduboy;
   State_t state;
   MenuType curMenu;
-  // pointers to the move name strings based on the current creature moves
+  // move IDs
   uint8_t moveList[4];
   uint8_t creatureList[2];
   // pointers to the item name strings based on the current creature moves
@@ -27,6 +28,7 @@ private:
   int8_t cursorIndex;
   bool queued;
   Action queuedAction;
+  MoveBitSet debug_m;
 
 public:
   Menu(Arduboy2 *arduboy);
@@ -36,6 +38,8 @@ public:
   bool actionInput(Action *action);
   void setState(State_t s);
   void wait();
+
+  void drawInfoRec();
   void printMenu();
 
   // battle menus

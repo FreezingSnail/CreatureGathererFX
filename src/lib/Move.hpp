@@ -13,10 +13,9 @@
 //  id#   type   power
 
 struct MoveBitSet {
-  uint8_t type : 3;
-  uint8_t power : 4; // maybe this should be 2 bit 0-3 for 4 power levels? ->
-                     // could open up room for effects
-  uint8_t physical : 1;
+  uint8_t type;
+  uint8_t power;
+  uint8_t physical;
 };
 
 const MoveBitSet movePack[32] PROGMEM = {
@@ -62,10 +61,10 @@ const char move30[] PROGMEM = "slam";
 const char move31[] PROGMEM = "elderSlam";
 
 const char *const moveNames[32] PROGMEM = {
-    move1,  move2,  move3,  move4,  move5,  move6,  move7,  move8,
-    move9,  move10, move11, move12, move13, move14, move15, move16,
-    move17, move18, move19, move20, move21, move22, move23, move24,
-    move25, move26, move27, move28, move29, move30, move31};
+    move0,  move1,  move2,  move3,  move4,  move5,  move6,  move7,
+    move8,  move9,  move10, move11, move12, move13, move14, move15,
+    move16, move17, move18, move19, move20, move21, move22, move23,
+    move24, move25, move26, move27, move28, move29, move30, move31};
 
 static MoveBitSet getMovePack(uint8_t index) {
   MoveBitSet move;

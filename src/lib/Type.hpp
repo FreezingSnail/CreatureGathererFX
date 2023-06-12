@@ -2,6 +2,18 @@
 #include <avr/pgmspace.h>
 #include <stdint.h>
 
+const char spirit[] PROGMEM = "Spirit";
+const char water[] PROGMEM = "Water";
+const char wind[] PROGMEM = "Wind";
+const char earth[] PROGMEM = "Earth";
+const char fire[] PROGMEM = "Fire";
+const char lightning[] PROGMEM = "Lightning";
+const char plant[] PROGMEM = "Plant";
+const char elder[] PROGMEM = "Elder";
+
+const char *const typeNames[8] PROGMEM = {spirit, water,     wind,  earth,
+                                          fire,   lightning, plant, elder};
+
 enum class Type {
   SPIRIT,
   WATER,

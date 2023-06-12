@@ -164,6 +164,11 @@ void Menu::queueAction(ActionType type, uint8_t index) {
 //
 //////////////////////////////////////////////////////////////////////////////
 
+void Menu::drawInfoRec() {
+  this->arduboy->fillRect(35, 1, 60, 30, WHITE);
+  this->arduboy->drawRect(36, 2, 58, 28, BLACK);
+}
+
 void Menu::printCursor() {
   switch (this->cursorIndex) {
   case 0:
@@ -232,9 +237,22 @@ void Menu::printMoveMenu() {
 }
 
 void Menu::printMoveInfo() {
-  this->arduboy->drawRect(1, 40, 35, 80);
-  this->arduboy->drawRect(2, 41, 34, 79, BLACK);
-  this->arduboy->setCursor(2, 41);
+  this->drawInfoRec();
+  uint8_t moveID = this->moveList[this->cursorIndex];
+  MoveBitSet m = getMovePack(moveID);
+  this->debug_m = m;
+  this->arduboy->setCursor(38, 4);
+
+  this->arduboy->print(readFlashStringPointer(&typeNames[m.type]));
+  this->arduboy->setCursor(38, 12);
+  if (m.physical) {
+    this->arduboy->print(F("Phys"));
+  } else {
+    this->arduboy->print(F("Spec"));
+  }
+  this->arduboy->setCursor(38, 19);
+  this->arduboy->print(F("power:"));
+  this->arduboy->print(m.power);
 }
 
 void Menu::printItemMenu() {}

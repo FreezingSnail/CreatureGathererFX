@@ -349,9 +349,9 @@ void BattleEngine::drawPlayerHP() {
   this->arduboy->print((unsigned)this->playerHealths[this->playerIndex]);
   this->arduboy->print(F("/"));
   this->arduboy->print((unsigned)this->playerCur->statlist.hp);
-  this->arduboy->setCursor(32, 2);
-  this->arduboy->print(F("lv:"));
-  this->arduboy->print(this->playerCur->level);
+  // this->arduboy->setCursor(32, 2);
+  // this->arduboy->print(F("lv:"));
+  // this->arduboy->print(this->playerCur->level);
 }
 
 void BattleEngine::drawOpponentHP() {
@@ -360,7 +360,7 @@ void BattleEngine::drawOpponentHP() {
   this->arduboy->print((unsigned)this->opponentHealths[this->opponentIndex]);
   this->arduboy->print(F("/"));
   this->arduboy->print((unsigned)this->opponentCur->statlist.hp);
-  this->arduboy->setCursor(64, 2);
-  this->arduboy->print(F("lv:"));
-  this->arduboy->print(this->opponentCur->level);
+  // this->arduboy->setCursor(64, 2);
+  // this->arduboy->print(F("lv:"));
+  // this->arduboy->print(this->opponentCur->level);
 }

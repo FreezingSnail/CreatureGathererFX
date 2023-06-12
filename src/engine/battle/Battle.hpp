@@ -7,8 +7,6 @@
 #include "../game/Gamestate.hpp"
 #include "Arduboy2.h"
 
-#define DEBUG
-
 class BattleEngine {
 private:
   Arduboy2 *arduboy;
