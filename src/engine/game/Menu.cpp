@@ -164,6 +164,24 @@ void Menu::queueAction(ActionType type, uint8_t index) {
 //
 //////////////////////////////////////////////////////////////////////////////
 
+void Menu::printCursor() {
+  switch (this->cursorIndex) {
+  case 0:
+    this->arduboy->setCursor(0, 45);
+    break;
+  case 1:
+    this->arduboy->setCursor(58, 45);
+    break;
+  case 2:
+    this->arduboy->setCursor(0, 55);
+    break;
+  case 3:
+    this->arduboy->setCursor(58, 55);
+    break;
+  }
+  this->arduboy->print(F(">"));
+}
+
 void Menu::printMenu() {
   this->moveCursor();
   this->tansverseMenu();
@@ -210,6 +228,13 @@ void Menu::printMoveMenu() {
   this->arduboy->print(readFlashStringPointer(&moveNames[this->moveList[2]]));
   this->arduboy->setCursor(64, 55);
   this->arduboy->print(readFlashStringPointer(&moveNames[this->moveList[3]]));
+  this->printMoveInfo();
+}
+
+void Menu::printMoveInfo() {
+  this->arduboy->drawRect(1, 40, 35, 80);
+  this->arduboy->drawRect(2, 41, 34, 79, BLACK);
+  this->arduboy->setCursor(2, 41);
 }
 
 void Menu::printItemMenu() {}
@@ -226,24 +251,6 @@ void Menu::printCreatureMenu() {
 }
 
 void Menu::printInventoryMenu() {}
-
-void Menu::printCursor() {
-  switch (this->cursorIndex) {
-  case 0:
-    this->arduboy->setCursor(0, 45);
-    break;
-  case 1:
-    this->arduboy->setCursor(58, 45);
-    break;
-  case 2:
-    this->arduboy->setCursor(0, 55);
-    break;
-  case 3:
-    this->arduboy->setCursor(58, 55);
-    break;
-  }
-  this->arduboy->print(F(">"));
-}
 
 void Menu::printAttack(uint8_t creatureID, uint8_t attackID,
                        Modifier modifier) {

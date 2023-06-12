@@ -42,6 +42,7 @@ public:
   void printBattleMenu();
   void printMoveMenu();
   void printItemMenu();
+  void printMoveInfo();
 
   // world menus
   void printWorldMenu();
