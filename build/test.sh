@@ -1,1 +1,0 @@
-./tst/CreatureGathererFX_tst
