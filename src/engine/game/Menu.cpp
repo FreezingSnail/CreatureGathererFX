@@ -40,7 +40,6 @@ bool Menu::actionInput(Action *action) {
   }
   return false;
 }
-void Menu::setState(GameState_t s) { *this->state = s; }
 
 // This doesnt work at all lol
 void Menu::wait() {
@@ -181,6 +180,17 @@ void dbf Menu::creatureRental() {
       this->arduboy->print(
           readFlashStringPointer(&creatureNames[this->cursorIndex + i]));
   }
+
+  if (this->arduboy->justPressed(A_BUTTON)) {
+    // Register the creature
+  }
+}
+
+int8_t Menu::registerCreature() {
+  if (this->arduboy->justPressed(A_BUTTON)) {
+    return this->cursorIndex;
+  }
+  return -1;
 }
 
 void Menu::queueAction(ActionType type, uint8_t index) {
