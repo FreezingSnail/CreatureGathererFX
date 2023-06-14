@@ -4,7 +4,7 @@
 #include "../../lib/Type.hpp"
 #include "Arduboy2.h"
 
-typedef enum State { WORLD, BATTLE } State_t;
+typedef enum State { WORLD, BATTLE, ARENA } State_t;
 
 enum MenuType {
   BMAIN,
@@ -22,6 +22,7 @@ private:
   // move IDs
   uint8_t moveList[4];
   uint8_t creatureList[2];
+  uint8_t rentalIndex;
   // pointers to the item name strings based on the current creature moves
   char *items[32];
 
@@ -42,6 +43,9 @@ public:
   void drawInfoRec();
   void printMenu();
 
+  // Arena menus
+  void creatureRental();
+
   // battle menus
   void printBattleMenu();
   void printMoveMenu();
@@ -58,6 +62,7 @@ public:
 
   void printAttack(uint8_t creatureID, uint8_t attackID, Modifier modifier);
 
-  void tansverseMenu();
+  void transverseMenu();
+  void tansverseBattleMenu();
   void queueAction(ActionType type, uint8_t index);
 };
