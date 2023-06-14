@@ -11,10 +11,10 @@
 #include "../../lib/Move.hpp"
 #include "../../sprites/creatureSprites.h"
 
-#define dbf = __attribute__((optimize("-O0")))
+#define dbf __attribute__((optimize("-O0")))
 
 BattleEngine::BattleEngine(Arduboy2 *arduboy, Player *player, Menu *menu,
-                           GameState *state) {
+                           GameState_t *state) {
   this->arduboy = arduboy;
   this->player = player;
   this->menu = menu;
@@ -31,14 +31,14 @@ BattleEngine::BattleEngine(Arduboy2 *arduboy, Player *player, Menu *menu,
 void BattleEngine::startFight(uint8_t optID) {
   this->loadOpponent(optID);
   this->loadPlayer(this->player);
-  this->menu->setState(State_t::BATTLE);
+  this->menu->setState(GameState_t::BATTLE);
   this->activeBattle = true;
 }
 
 void BattleEngine::startEncounter(uint8_t creatureID, uint8_t level) {
   this->LoadCreature(creatureID, level);
   this->loadPlayer(this->player);
-  this->menu->setState(State_t::BATTLE);
+  this->menu->setState(GameState_t::BATTLE);
   this->activeBattle = true;
 }
 
@@ -184,7 +184,7 @@ bool BattleEngine::tryCapture() {
 void BattleEngine::endEncounter() {
   this->arduboy->print(F("\nend encounter \n"));
   this->activeBattle = false;
-  *this->state = GameState::OVERWORLD;
+  *this->state = GameState_t::WORLD;
 }
 
 //////////////////////////////////////////////////////////////////////////////

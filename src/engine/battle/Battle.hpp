@@ -25,14 +25,15 @@ private:
   Action playerAction;
   Action opponentAction;
   Menu *menu;
-  GameState *state;
+  GameState_t *state;
 
   bool activeBattle;
 
   int db;
 
 public:
-  BattleEngine(Arduboy2 *arduboy, Player *player, Menu *menu, GameState *state);
+  BattleEngine(Arduboy2 *arduboy, Player *player, Menu *menu,
+               GameState_t *state);
 
   // entry points
   void startFight(uint8_t optID);

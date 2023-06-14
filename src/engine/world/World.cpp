@@ -10,7 +10,7 @@
 
 #define TILE_SIZE 16
 
-WorldEngine::WorldEngine(Arduboy2 *arduboy, GameState *state,
+WorldEngine::WorldEngine(Arduboy2 *arduboy, GameState_t *state,
                          BattleEngine *battleEngine) {
   this->arduboy = arduboy;
   this->encounterTable = Encounter(arduboy);
@@ -87,36 +87,36 @@ void __attribute__((optimize("-O0"))) WorldEngine::runMap() {
 
 void WorldEngine::moveChar() {
   switch (this->playerDirection) {
-    case Up:
-      this->mapy++;
-      break;
-    case Down:
-      this->mapy--;
-      break;
-    case Left:
-      this->mapx++;
-      break;
-    case Right:
-      this->mapx--;
-      break;
+  case Up:
+    this->mapy++;
+    break;
+  case Down:
+    this->mapy--;
+    break;
+  case Left:
+    this->mapx++;
+    break;
+  case Right:
+    this->mapx--;
+    break;
   }
   this->stepTicker++;
   if (this->stepTicker == TILE_SIZE) {
     this->stepTicker = 0;
     this->moving = false;
     switch (this->playerDirection) {
-      case Up:
-        this->cury--;
-        break;
-      case Down:
-        this->cury++;
-        break;
-      case Left:
-        this->curx--;
-        break;
-      case Right:
-        this->curx++;
-        break;
+    case Up:
+      this->cury--;
+      break;
+    case Down:
+      this->cury++;
+      break;
+    case Left:
+      this->curx--;
+      break;
+    case Right:
+      this->curx++;
+      break;
     }
     this->encounter();
   }
@@ -133,7 +133,7 @@ void __attribute__((optimize("-O0"))) WorldEngine::encounter() {
       uint8_t level = this->encounterTable.rollLevel();
       this->debug = creatureID;
       this->battleEngine->startEncounter(creatureID, level);
-      *this->state = GameState::FIGHT;
+      *this->state = GameState_t::BATTLE;
     }
   }
 }
@@ -142,18 +142,18 @@ bool WorldEngine::moveable() {
   int tilex = this->curx;
   int tiley = this->cury;
   switch (this->playerDirection) {
-    case Up:
-      tiley--;
-      break;
-    case Down:
-      tiley++;
-      break;
-    case Left:
-      tilex--;
-      break;
-    case Right:
-      tilex++;
-      break;
+  case Up:
+    tiley--;
+    break;
+  case Down:
+    tiley++;
+    break;
+  case Left:
+    tilex--;
+    break;
+  case Right:
+    tilex++;
+    break;
   }
 
   if (tilex < 0 || tiley < 0 || tilex >= WORLD_WIDTH || tiley >= WORLD_HEIGHT) {
@@ -161,11 +161,11 @@ bool WorldEngine::moveable() {
   }
   this->nextTile = gameMap[tiley][tilex];
   switch (this->nextTile) {
-    case WATER:
-    case STONE:
-      return false;
+  case WATER:
+  case STONE:
+    return false;
 
-    default:
-      return true;
+  default:
+    return true;
   }
 }

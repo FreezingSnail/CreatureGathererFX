@@ -2,7 +2,7 @@
 #include "../../creature/Creature.hpp"
 #include "../../item/Item.hpp"
 
-enum GameState { OVERWORLD, FIGHT, TORN };
+typedef enum State { WORLD, BATTLE, ARENA } GameState_t;
 
 // class GameState {
 // private:
