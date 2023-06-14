@@ -35,7 +35,6 @@ public:
                         uint8_t move4);
   void registerCreatureList(uint8_t c1, uint8_t c2);
   bool actionInput(Action *action);
-  void setState(GameState_t s);
   void wait();
 
   void drawInfoRec();
@@ -43,6 +42,7 @@ public:
 
   // Arena menus
   void creatureRental();
+  int8_t registerCreature();
 
   // battle menus
   void printBattleMenu();

@@ -31,14 +31,14 @@ BattleEngine::BattleEngine(Arduboy2 *arduboy, Player *player, Menu *menu,
 void BattleEngine::startFight(uint8_t optID) {
   this->loadOpponent(optID);
   this->loadPlayer(this->player);
-  this->menu->setState(GameState_t::BATTLE);
+  *this->state = GameState_t::BATTLE;
   this->activeBattle = true;
 }
 
 void BattleEngine::startEncounter(uint8_t creatureID, uint8_t level) {
   this->LoadCreature(creatureID, level);
   this->loadPlayer(this->player);
-  this->menu->setState(GameState_t::BATTLE);
+  *this->state = GameState_t::BATTLE;
   this->activeBattle = true;
 }
 
@@ -287,8 +287,6 @@ void BattleEngine::loadOpponent(uint8_t optID) {
 }
 
 void BattleEngine::LoadCreature(uint8_t creatureID, uint8_t level) {
-  this->db = 2;
-  this->opponent.levels[2] = 12;
   this->opponent.loadEncounterOpt(creatureID, level);
   this->resetOpponent();
 }
