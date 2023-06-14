@@ -1,19 +1,20 @@
 #include "Menu.hpp"
-
 #include "../../action/Action.hpp"
 #include "../../data/Creatures.hpp"
 #include "../../external/FlashStringHelper.h"
 #include "../../lib/Move.hpp"
 #include "../../lib/Text.hpp"
 #include "../../lib/Type.hpp"
+#include "../game/Gamestate.hpp"
 #include "Arduboy2.h"
 
-Menu::Menu(Arduboy2 *arduboy) {
+#define dbf __attribute__((optimize("-O0")))
+
+Menu::Menu(Arduboy2 *arduboy, GameState_t *state) {
   this->arduboy = arduboy;
   this->cursorIndex = 0;
-  this->rentalIndex = 0;
   this->arduboy->setTextColor(BLACK);
-  this->state = ARENA;
+  this->state = state;
 }
 
 void Menu::registerMoveList(uint8_t move1, uint8_t move2, uint8_t move3,
@@ -39,7 +40,7 @@ bool Menu::actionInput(Action *action) {
   }
   return false;
 }
-void Menu::setState(State_t s) { this->state = s; }
+void Menu::setState(GameState_t s) { *this->state = s; }
 
 // This doesnt work at all lol
 void Menu::wait() {
@@ -56,12 +57,16 @@ void Menu::wait() {
 }
 
 void Menu::moveCursor() {
-  if (this->state == ARENA) {
+  if (*this->state == ARENA) {
     if (this->arduboy->justPressed(DOWN_BUTTON)) {
       this->cursorIndex++;
     } else if (this->arduboy->justPressed(UP_BUTTON)) {
       this->cursorIndex--;
     }
+    if (this->cursorIndex < 0)
+      this->cursorIndex = 0;
+    if (this->cursorIndex > 31)
+      this->cursorIndex = 31;
     return;
   }
   if (this->curMenu == BCHANGE) {
@@ -92,15 +97,14 @@ void Menu::moveCursor() {
 }
 
 void Menu::transverseMenu() {
-  switch (this->state) {
+  switch (*this->state) {
   case WORLD:
     break;
   case BATTLE:
     this->tansverseBattleMenu();
     break;
   case ARENA:
-    this->arduboy->setTextColor(WHITE);
-    this->creatureRental();
+    break;
   }
 }
 
@@ -168,14 +172,14 @@ void Menu::tansverseBattleMenu() {
   }
 }
 
-void Menu::creatureRental() {
-  this->moveCursor();
-  for (uint8_t i = 0; i < 4; i++) {
-    uint8_t cIndex = i + this->rentalIndex;
-    this->arduboy->setCursor(0, cursorIndex * 10);
-    this->arduboy->print(F(">"));
+void dbf Menu::creatureRental() {
+  this->arduboy->setCursor(0, 0);
+  this->arduboy->print(F(">"));
+  for (uint8_t i = 0; i < 6; i++) {
     this->arduboy->setCursor(10, i * 10);
-    this->arduboy->print(readFlashStringPointer(&creatureNames[cIndex]));
+    if (this->cursorIndex + i < 32)
+      this->arduboy->print(
+          readFlashStringPointer(&creatureNames[this->cursorIndex + i]));
   }
 }
 
@@ -198,6 +202,21 @@ void Menu::queueAction(ActionType type, uint8_t index) {
 //
 //////////////////////////////////////////////////////////////////////////////
 
+void Menu::printMenu() {
+  this->moveCursor();
+  this->transverseMenu();
+  switch (*this->state) {
+  case GameState_t::BATTLE:
+    this->printBattleMenu();
+  case GameState_t::WORLD:
+    this->printWorldMenu();
+    break;
+  case GameState_t::ARENA:
+    this->arduboy->setTextColor(WHITE);
+    this->creatureRental();
+  };
+}
+
 void Menu::drawInfoRec() {
   this->arduboy->fillRect(35, 1, 60, 30, WHITE);
   this->arduboy->drawRect(36, 2, 58, 28, BLACK);
@@ -219,19 +238,6 @@ void Menu::printCursor() {
     break;
   }
   this->arduboy->print(F(">"));
-}
-
-void Menu::printMenu() {
-  this->moveCursor();
-  this->transverseMenu();
-  switch (this->state) {
-  case State_t::BATTLE:
-    this->printBattleMenu();
-  case State_t::WORLD:
-    this->printWorldMenu();
-  default:
-    this->printBattleMenu();
-  };
 }
 
 void Menu::printBattleMenu() {

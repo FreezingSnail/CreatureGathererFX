@@ -2,9 +2,8 @@
 #include "../../action/Action.hpp"
 #include "../../lib/Move.hpp"
 #include "../../lib/Type.hpp"
+#include "../game/Gamestate.hpp"
 #include "Arduboy2.h"
-
-typedef enum State { WORLD, BATTLE, ARENA } State_t;
 
 enum MenuType {
   BMAIN,
@@ -17,12 +16,11 @@ enum MenuType {
 class Menu {
 private:
   Arduboy2 *arduboy;
-  State_t state;
+  GameState_t *state;
   MenuType curMenu;
   // move IDs
   uint8_t moveList[4];
   uint8_t creatureList[2];
-  uint8_t rentalIndex;
   // pointers to the item name strings based on the current creature moves
   char *items[32];
 
@@ -32,12 +30,12 @@ private:
   MoveBitSet debug_m;
 
 public:
-  Menu(Arduboy2 *arduboy);
+  Menu(Arduboy2 *arduboy, GameState_t *state);
   void registerMoveList(uint8_t move1, uint8_t move2, uint8_t move3,
                         uint8_t move4);
   void registerCreatureList(uint8_t c1, uint8_t c2);
   bool actionInput(Action *action);
-  void setState(State_t s);
+  void setState(GameState_t s);
   void wait();
 
   void drawInfoRec();

@@ -7,8 +7,8 @@
 
 Arduboy2 arduboy;
 Player player = Player();
-Menu menu = Menu(&arduboy);
-GameState state = GameState::TORN;
+GameState_t state = GameState_t::ARENA;
+Menu menu = Menu(&arduboy, &state);
 BattleEngine engine = BattleEngine(&arduboy, &player, &menu, &state);
 WorldEngine world = WorldEngine(&arduboy, &state, &engine);
 
@@ -31,14 +31,14 @@ void loop() {
 
   arduboy.pollButtons();
   switch (state) {
-  case GameState::FIGHT:
+  case GameState_t::BATTLE:
     engine.encounter();
     break;
-  case GameState::OVERWORLD:
+  case GameState_t::WORLD:
     world.runMap();
     break;
-  case GameState::TORN:
-    menu.transverseMenu();
+  case GameState_t::ARENA:
+    menu.printMenu();
     break;
   }
 

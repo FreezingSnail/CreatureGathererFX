@@ -11,7 +11,7 @@
 enum Direction { Up, Right, Down, Left };
 
 class WorldEngine {
- private:
+private:
   Arduboy2 *arduboy;
   Direction playerDirection;
   Encounter encounterTable;
@@ -20,13 +20,14 @@ class WorldEngine {
 
   bool moving;
   uint8_t stepTicker;
-  GameState *state;
+  GameState_t *state;
   TileType nextTile;
   int curx, cury;
   int debug;
 
- public:
-  WorldEngine(Arduboy2 *arduboy, GameState *state, BattleEngine *battleEngine);
+public:
+  WorldEngine(Arduboy2 *arduboy, GameState_t *state,
+              BattleEngine *battleEngine);
   void input();
   void runMap();
   void drawMap();
