@@ -13,9 +13,9 @@
 //  id#   type   power
 
 struct MoveBitSet {
-  uint8_t type;
-  uint8_t power;
-  uint8_t physical;
+  uint8_t type : 3;
+  uint8_t power : 4;
+  uint8_t physical : 1;
 };
 
 const MoveBitSet movePack[32] PROGMEM = {
