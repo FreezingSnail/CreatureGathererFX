@@ -1,4 +1,5 @@
 #pragma once
+#include "Arduboy2.h"
 
 #include "../data/Creatures.hpp"
 #include "../lib/Move.hpp"
@@ -54,6 +55,8 @@ public:
 
   uint8_t seedToStat(uint8_t seed);
   bool moveTypeBonus(uint8_t index);
+
+  void printCreature(Arduboy2 *arduboy);
 
 #ifdef CLI
   void printMoves();

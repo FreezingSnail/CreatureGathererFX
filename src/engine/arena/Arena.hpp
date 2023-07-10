@@ -12,8 +12,9 @@ private:
 
 public:
   Arena(Menu *menu, Player *player, BattleEngine *engine);
-  void arenaLoop();
+  void arenaLoop(Arduboy2 *arduboy);
   void registerRentals();
   uint8_t selectOpponent();
   void startBattle();
+  void displayRegisteredCount(Arduboy2 *arduboy);
 };
