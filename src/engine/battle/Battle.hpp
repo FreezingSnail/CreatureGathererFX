@@ -12,20 +12,20 @@ private:
   Arduboy2 *arduboy;
   Creature *playerParty[3];
   Player *player;
+  Menu *menu;
+  GameState_t *state;
+  Creature *playerCur;
+  Creature *opponentCur;
+
   Opponent opponent;
   uint16_t playerHealths[3];
   uint16_t opponentHealths[3];
   uint8_t awakeMons; // 11100111 player and opponet bit array
 
-  Creature *playerCur;
-  Creature *opponentCur;
-
   uint8_t playerIndex;
   uint8_t opponentIndex;
   Action playerAction;
   Action opponentAction;
-  Menu *menu;
-  GameState_t *state;
 
   bool activeBattle;
 

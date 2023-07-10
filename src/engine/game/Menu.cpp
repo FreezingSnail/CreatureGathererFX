@@ -5,6 +5,7 @@
 #include "../../lib/Move.hpp"
 #include "../../lib/Text.hpp"
 #include "../../lib/Type.hpp"
+#include "../draw.h"
 #include "../game/Gamestate.hpp"
 #include "Arduboy2.h"
 
@@ -283,26 +284,8 @@ void Menu::printMoveMenu() {
   this->arduboy->print(readFlashStringPointer(&moveNames[this->moveList[2]]));
   this->arduboy->setCursor(64, 55);
   this->arduboy->print(readFlashStringPointer(&moveNames[this->moveList[3]]));
-  this->printMoveInfo();
-}
-
-void Menu::printMoveInfo() {
   this->drawInfoRec();
-  uint8_t moveID = this->moveList[this->cursorIndex];
-  MoveBitSet m = getMovePack(moveID);
-  this->debug_m = m;
-  this->arduboy->setCursor(38, 4);
-
-  this->arduboy->print(readFlashStringPointer(&typeNames[m.type]));
-  this->arduboy->setCursor(38, 12);
-  if (m.physical) {
-    this->arduboy->print(F("Phys"));
-  } else {
-    this->arduboy->print(F("Spec"));
-  }
-  this->arduboy->setCursor(38, 19);
-  this->arduboy->print(F("power:"));
-  this->arduboy->print(m.power);
+  printMoveInfo(this->arduboy, this->moveList[cursorIndex]);
 }
 
 void Menu::printItemMenu() {}

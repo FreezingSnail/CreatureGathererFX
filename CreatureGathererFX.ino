@@ -1,4 +1,5 @@
 #include "Arduboy2.h"
+#include "src/engine/arena/Arena.hpp"
 #include "src/engine/battle/Battle.hpp"
 #include "src/engine/game/Gamestate.hpp"
 #include "src/engine/game/Menu.hpp"
@@ -10,6 +11,7 @@ Player player = Player();
 GameState_t state = GameState_t::ARENA;
 Menu menu = Menu(&arduboy, &state);
 BattleEngine engine = BattleEngine(&arduboy, &player, &menu, &state);
+Arena arena = Arena(&menu, &player, &engine);
 WorldEngine world = WorldEngine(&arduboy, &state, &engine);
 
 void setup() {
@@ -38,7 +40,7 @@ void loop() {
     world.runMap();
     break;
   case GameState_t::ARENA:
-    menu.printMenu();
+    arena.arenaLoop();
     break;
   }
 
