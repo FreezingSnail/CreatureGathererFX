@@ -1,8 +1,10 @@
 #include "Creature.hpp"
 
 #include <avr/pgmspace.h>
+#include "Arduboy2.h"
 
 #include "../data/Creatures.hpp"
+#include "../external/FlashStringHelper.h"
 #include "../lib/Move.hpp"
 #include "../opponent/OpponentSeed.hpp"
 #include "../sprites/creatureSprites.h"
@@ -94,4 +96,31 @@ bool Creature::moveTypeBonus(uint8_t index) {
 uint8_t Creature::seedToStat(uint8_t seed) {
   return seed;
   // return (2*this->level)*(seed/3);
+}
+
+void Creature::printCreature(Arduboy2 *arduboy) {
+  arduboy->fillRect(0,0, 128, 66, WHITE);
+  arduboy->drawRect(2,1, 124, 43, BLACK);
+  arduboy->setCursor(4,3);
+  arduboy->print(F("HP: ")); arduboy->print(this->statlist.hp);
+  arduboy->setCursor(60,3);
+  arduboy->print(F(" AtK: ")); arduboy->println(this->statlist.attack);
+  arduboy->setCursor(4,11);
+  arduboy->print(F("Def: ")); arduboy->print(this->statlist.defense);
+  arduboy->setCursor(60,11);
+  arduboy->print(F(" Spd: ")); arduboy->println(this->statlist.speed);
+  arduboy->setCursor(4,19);
+  arduboy->print(F("SAtk: ")); arduboy->print(this->statlist.spcAtk);
+  arduboy->setCursor(60,19);
+  arduboy->print(F(" SDef: ")); arduboy->println(this->statlist.spcDef);
+  for( uint8_t i = 0; i < 4; i++){
+    if (this->moves[i] == 32) {
+      continue;
+    }
+    uint8_t offset = i%2;
+    arduboy->setCursor(4+(60*offset), 27+(8*(i/2)));
+    arduboy->print(readFlashStringPointer(&moveNames[this->moves[i]]));
+  }
+
+
 }

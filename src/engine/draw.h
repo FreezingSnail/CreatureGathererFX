@@ -3,6 +3,9 @@
 #include "Arduboy2.h"
 
 static void printMoveInfo(Arduboy2 *arduboy, uint8_t index) {
+  if (index == 32) {
+    return;
+  }
   MoveBitSet m = getMovePack(index);
   arduboy->setCursor(38, 4);
 

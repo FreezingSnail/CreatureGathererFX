@@ -18,7 +18,7 @@ struct MoveBitSet {
   uint8_t physical : 1;
 };
 
-const MoveBitSet movePack[32] PROGMEM = {
+const MoveBitSet movePack[33] PROGMEM = {
     {0, 10, 0}, {0, 5, 1},  {0, 7, 1},  {0, 10, 1}, {1, 4, 0},  {1, 7, 0},
     {1, 10, 0}, {1, 7, 1},  {2, 5, 0},  {2, 10, 0}, {2, 10, 1}, {2, 7, 1},
     {3, 7, 0},  {3, 5, 1},  {3, 7, 1},  {3, 10, 1}, {4, 8, 0},  {4, 12, 0},

@@ -11,8 +11,9 @@
 
 #define dbf __attribute__((optimize("-O0")))
 
-Menu::Menu(Arduboy2 *arduboy, GameState_t *state) {
+Menu::Menu(Arduboy2 *arduboy, GameState_t *state, Player *player) {
   this->arduboy = arduboy;
+  this->player = player;
   this->cursorIndex = 0;
   this->arduboy->setTextColor(BLACK);
   this->state = state;
@@ -148,8 +149,10 @@ void Menu::tansverseBattleMenu() {
         this->queueAction(ActionType::ATTACK, 3);
         break;
       }
-      this->curMenu = BMAIN;
-      this->cursorIndex = 0;
+      if ( this->moveList[this->cursorIndex] != 32) {
+        this->curMenu = BMAIN;
+        this->cursorIndex = 0;
+      }
       break;
 
     case BCHANGE:
@@ -195,6 +198,9 @@ int8_t Menu::registerCreature() {
 }
 
 void Menu::queueAction(ActionType type, uint8_t index) {
+  if (this->moveList[index] == 32) {
+    return;
+  }
   this->queued = true;
   Priority p = Priority::NORMAL;
   switch (type) {
@@ -252,13 +258,13 @@ void Menu::printCursor() {
 }
 
 void Menu::printBattleMenu() {
-  this->arduboy->fillRect(0, 32, 128, 32);
-  this->printCursor();
+  this->arduboy->fillRect(0, 43, 128, 32, WHITE);
+  this->arduboy->drawRect(1, 44, 125, 21, BLACK);
   switch (this->curMenu) {
   case MenuType::BMAIN:
-    this->arduboy->setCursor(6, 45);
+    this->arduboy->setCursor(6, 46);
     this->arduboy->print(asFlashStringHelper(moveM));
-    this->arduboy->setCursor(64, 45);
+    this->arduboy->setCursor(64, 46);
     this->arduboy->print(asFlashStringHelper(itemM));
     this->arduboy->setCursor(6, 55);
     this->arduboy->print(asFlashStringHelper(changeM));
@@ -273,12 +279,13 @@ void Menu::printBattleMenu() {
     this->printCreatureMenu();
     break;
   }
+  this->printCursor();
 }
 
 void Menu::printMoveMenu() {
-  this->arduboy->setCursor(6, 45);
+  this->arduboy->setCursor(6, 46);
   this->arduboy->print(readFlashStringPointer(&moveNames[this->moveList[0]]));
-  this->arduboy->setCursor(64, 45);
+  this->arduboy->setCursor(64, 46);
   this->arduboy->print(readFlashStringPointer(&moveNames[this->moveList[1]]));
   this->arduboy->setCursor(6, 55);
   this->arduboy->print(readFlashStringPointer(&moveNames[this->moveList[2]]));
@@ -293,6 +300,7 @@ void Menu::printItemMenu() {}
 void Menu::printWorldMenu() {}
 
 void Menu::printCreatureMenu() {
+  this->player->party[this->cursorIndex].printCreature(this->arduboy);
   this->arduboy->setCursor(6, 45);
   this->arduboy->print(
       readFlashStringPointer(&creatureNames[this->creatureList[0]]));

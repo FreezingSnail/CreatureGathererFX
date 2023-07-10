@@ -62,8 +62,8 @@ void BattleEngine::encounter() {
     return;
   }
 
-  this->menu->printMenu();
   this->drawScene();
+  this->menu->printMenu();
   this->turnTick();
 }
 
@@ -344,6 +344,7 @@ void BattleEngine::drawPlayer() {
 }
 
 void BattleEngine::drawPlayerHP() {
+  this->arduboy->setTextColor(WHITE);
   this->arduboy->setCursor(70, 35);
   this->arduboy->print(F("HP: "));
   this->arduboy->print((unsigned)this->playerHealths[this->playerIndex]);
@@ -352,9 +353,11 @@ void BattleEngine::drawPlayerHP() {
   // this->arduboy->setCursor(32, 2);
   // this->arduboy->print(F("lv:"));
   // this->arduboy->print(this->playerCur->level);
+  this->arduboy->setTextColor(BLACK);
 }
 
 void BattleEngine::drawOpponentHP() {
+  this->arduboy->setTextColor(WHITE);
   this->arduboy->setCursor(2, 35);
   this->arduboy->print(F("HP: "));
   this->arduboy->print((unsigned)this->opponentHealths[this->opponentIndex]);
@@ -363,4 +366,5 @@ void BattleEngine::drawOpponentHP() {
   // this->arduboy->setCursor(64, 2);
   // this->arduboy->print(F("lv:"));
   // this->arduboy->print(this->opponentCur->level);
+  this->arduboy->setTextColor(BLACK);
 }

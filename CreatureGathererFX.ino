@@ -9,7 +9,7 @@
 Arduboy2 arduboy;
 Player player = Player();
 GameState_t state = GameState_t::ARENA;
-Menu menu = Menu(&arduboy, &state);
+Menu menu = Menu(&arduboy, &state, &player);
 BattleEngine engine = BattleEngine(&arduboy, &player, &menu, &state);
 Arena arena = Arena(&menu, &player, &engine);
 WorldEngine world = WorldEngine(&arduboy, &state, &engine);
@@ -40,7 +40,7 @@ void loop() {
     world.runMap();
     break;
   case GameState_t::ARENA:
-    arena.arenaLoop();
+    arena.arenaLoop(&arduboy);
     break;
   }
 

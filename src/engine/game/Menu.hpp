@@ -3,6 +3,7 @@
 #include "../../lib/Move.hpp"
 #include "../../lib/Type.hpp"
 #include "../game/Gamestate.hpp"
+#include "../../player/Player.hpp"
 #include "Arduboy2.h"
 
 enum MenuType {
@@ -17,6 +18,7 @@ class Menu {
 private:
   Arduboy2 *arduboy;
   GameState_t *state;
+  Player *player;
   MenuType curMenu;
   // move IDs
   uint8_t moveList[4];
@@ -30,7 +32,7 @@ private:
   MoveBitSet debug_m;
 
 public:
-  Menu(Arduboy2 *arduboy, GameState_t *state);
+  Menu(Arduboy2 *arduboy, GameState_t *state, Player *player);
   void registerMoveList(uint8_t move1, uint8_t move2, uint8_t move3,
                         uint8_t move4);
   void registerCreatureList(uint8_t c1, uint8_t c2);
