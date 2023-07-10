@@ -33,6 +33,7 @@ void BattleEngine::startFight(uint8_t optID) {
   this->loadPlayer(this->player);
   *this->state = GameState_t::BATTLE;
   this->activeBattle = true;
+  this->arduboy->setTextColor(BLACK);
 }
 
 void BattleEngine::startEncounter(uint8_t creatureID, uint8_t level) {
@@ -40,6 +41,7 @@ void BattleEngine::startEncounter(uint8_t creatureID, uint8_t level) {
   this->loadPlayer(this->player);
   *this->state = GameState_t::BATTLE;
   this->activeBattle = true;
+  this->arduboy->setTextColor(BLACK);
 }
 
 //////////////////////////////////////////////////////////////////////////////
