@@ -7,7 +7,7 @@ using uint24_t = __uint24;
 // Initialize FX hardware using  FX::begin(FX_DATA_PAGE); in the setup() function.
 
 constexpr uint16_t FX_DATA_PAGE  = 0xffee;
-constexpr uint24_t FX_DATA_BYTES = 4428;
+constexpr uint24_t FX_DATA_BYTES = 4524;
 
 constexpr uint24_t characterSheet = 0x000000;
 constexpr uint16_t characterSheetWidth  = 12;
@@ -20,7 +20,7 @@ constexpr uint16_t creatureSpritesHeight = 32;
 constexpr uint8_t  creatureSpritesFrames = 32;
 
 constexpr uint24_t tilesheet = 0x001128;
-constexpr uint16_t tilesheetWidth  = 8;
-constexpr uint16_t tilesheetHeight = 8;
+constexpr uint16_t tilesheetWidth  = 16;
+constexpr uint16_t tilesheetHeight = 16;
 constexpr uint8_t  tilesheetFrames = 4;
 

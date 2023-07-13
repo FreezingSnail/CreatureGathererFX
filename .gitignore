@@ -10,3 +10,5 @@ tst/*
 Makefile
 libraries
 tools/image-converter.py 
+CreatureGathererFX.ino.with_bootloader.bin
+tools/creature_builder/*

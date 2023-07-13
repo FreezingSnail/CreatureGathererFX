@@ -8,7 +8,7 @@
 #include "Map.hpp"
 #include <ArduboyFX.h>
 
-#define TILE_SIZE 8
+#define TILE_SIZE 16
 
 WorldEngine::WorldEngine(Arduboy2 *arduboy, GameState_t *state,
                          BattleEngine *battleEngine) {
