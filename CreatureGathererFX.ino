@@ -1,9 +1,12 @@
-#include "Arduboy2.h"
+#include <Arduboy2.h>
+#include <ArduboyFX.h>
+
 #include "src/engine/arena/Arena.hpp"
 #include "src/engine/battle/Battle.hpp"
 #include "src/engine/game/Gamestate.hpp"
 #include "src/engine/game/Menu.hpp"
 #include "src/engine/world/World.hpp"
+#include "src/fxdata/fxdata.h"
 #include "src/player/Player.hpp"
 
 Arduboy2 arduboy;
@@ -23,13 +26,13 @@ void setup() {
   //     default 60 and it saves us battery life
   arduboy.setFrameRate(30);
   arduboy.initRandomSeed();
+  FX::begin(FX_DATA_PAGE);
 }
 
 void loop() {
   if (!arduboy.nextFrame()) {
     return;
   }
-  arduboy.clear();
 
   arduboy.pollButtons();
   switch (state) {
@@ -44,5 +47,5 @@ void loop() {
     break;
   }
 
-  arduboy.display();
+  FX::display(CLEAR_BUFFER);
 }

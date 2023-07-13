@@ -1,15 +1,16 @@
 #include "Battle.hpp"
+#include <ArduboyFX.h>
 
 #include "../../creature/Creature.hpp"
+#include "../../fxdata/fxdata.h"
 #include "../../opponent/Opponent.hpp"
 #include "../../player/Player.hpp"
 #include "../game/Gamestate.hpp"
 #include "../game/Menu.hpp"
-#include "Arduboy2.h"
+
 //#include "../../lib/TypeTable.hpp"
 #include "../../data/opponentsData.h"
 #include "../../lib/Move.hpp"
-#include "../../sprites/creatureSprites.h"
 
 #define dbf __attribute__((optimize("-O0")))
 
@@ -334,12 +335,14 @@ void BattleEngine::drawScene() {
 
 void BattleEngine::drawOpponent() {
   // would be nice to flip this sprite
-  Sprites::drawSelfMasked(0, 0, creatureSprites, this->opponentCur->id);
+  // Sprites::drawSelfMasked(0, 0, creatureSprites, this->opponentCur->id);
+  FX::drawBitmap(0, 0, creatureSprites, 1, dbmWhite);
   this->drawOpponentHP();
 }
 
 void BattleEngine::drawPlayer() {
-  Sprites::drawSelfMasked(96, 0, creatureSprites, this->playerCur->id);
+  // Sprites::drawSelfMasked(96, 0, creatureSprites, this->playerCur->id);
+  FX::drawBitmap(96, 0, creatureSprites, this->playerCur->id, dbmWhite);
   this->drawPlayerHP();
 }
 

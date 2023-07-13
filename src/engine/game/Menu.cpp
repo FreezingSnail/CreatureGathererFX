@@ -7,7 +7,7 @@
 #include "../../lib/Type.hpp"
 #include "../draw.h"
 #include "../game/Gamestate.hpp"
-#include "Arduboy2.h"
+#include <ArduboyFX.h>
 
 #define dbf __attribute__((optimize("-O0")))
 
@@ -149,7 +149,7 @@ void Menu::tansverseBattleMenu() {
         this->queueAction(ActionType::ATTACK, 3);
         break;
       }
-      if ( this->moveList[this->cursorIndex] != 32) {
+      if (this->moveList[this->cursorIndex] != 32) {
         this->curMenu = BMAIN;
         this->cursorIndex = 0;
       }

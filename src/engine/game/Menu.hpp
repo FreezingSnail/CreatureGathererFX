@@ -2,9 +2,9 @@
 #include "../../action/Action.hpp"
 #include "../../lib/Move.hpp"
 #include "../../lib/Type.hpp"
-#include "../game/Gamestate.hpp"
 #include "../../player/Player.hpp"
-#include "Arduboy2.h"
+#include "../game/Gamestate.hpp"
+#include <ArduboyFX.h>
 
 enum MenuType {
   BMAIN,

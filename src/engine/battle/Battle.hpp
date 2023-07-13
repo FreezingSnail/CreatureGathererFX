@@ -5,7 +5,7 @@
 #include "../../opponent/Opponent.hpp"
 #include "../../player/Player.hpp"
 #include "../game/Gamestate.hpp"
-#include "Arduboy2.h"
+#include <ArduboyFX.h>
 
 class BattleEngine {
 private:

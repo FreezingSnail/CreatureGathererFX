@@ -1,13 +1,12 @@
 #include "Creature.hpp"
 
+#include <ArduboyFX.h>
 #include <avr/pgmspace.h>
-#include "Arduboy2.h"
 
 #include "../data/Creatures.hpp"
 #include "../external/FlashStringHelper.h"
 #include "../lib/Move.hpp"
 #include "../opponent/OpponentSeed.hpp"
-#include "../sprites/creatureSprites.h"
 
 // This will need to load the creature seed from the progmemstore
 const CreatureData_t getCreatureFromStore(uint8_t id) {
@@ -32,7 +31,7 @@ void Creature::load(CreatureData_t seed) {
   this->setStats(seed);
   // Need some kind of default setting for moves ?
   this->loadMoves(seed);
-  this->loadSprite(seed);
+  // this->loadSprite(seed);
 }
 
 // 00,id1,lvl1,move11,move12,move13,move14,
@@ -47,7 +46,7 @@ void Creature::loadFromOpponentSeed(uint32_t seed) {
   this->setMove(parseOpponentCreatureSeedMove(seed, 1), 1);
   this->setMove(parseOpponentCreatureSeedMove(seed, 2), 2);
   this->setMove(parseOpponentCreatureSeedMove(seed, 3), 3);
-  this->loadSprite(cSeed);
+  // this->loadSprite(cSeed);
 }
 
 void Creature::loadMoves(CreatureData_t seed) {
@@ -57,9 +56,9 @@ void Creature::loadMoves(CreatureData_t seed) {
   this->setMove(static_cast<uint8_t>((seed.move4)), 3);
 }
 
-void Creature::loadSprite(CreatureData_t seed) {
-  this->sprite = creatureSprites[static_cast<uint8_t>((seed.id))];
-}
+// void Creature::loadSprite(CreatureData_t seed) {
+//   this->sprite = creatureSprites[static_cast<uint8_t>((seed.id))];
+// }
 
 void Creature::loadTypes(CreatureData_t seed) {
   this->types = DualType((Type) static_cast<uint8_t>((seed.type1)),
@@ -99,28 +98,32 @@ uint8_t Creature::seedToStat(uint8_t seed) {
 }
 
 void Creature::printCreature(Arduboy2 *arduboy) {
-  arduboy->fillRect(0,0, 128, 66, WHITE);
-  arduboy->drawRect(2,1, 124, 43, BLACK);
-  arduboy->setCursor(4,3);
-  arduboy->print(F("HP: ")); arduboy->print(this->statlist.hp);
-  arduboy->setCursor(60,3);
-  arduboy->print(F(" AtK: ")); arduboy->println(this->statlist.attack);
-  arduboy->setCursor(4,11);
-  arduboy->print(F("Def: ")); arduboy->print(this->statlist.defense);
-  arduboy->setCursor(60,11);
-  arduboy->print(F(" Spd: ")); arduboy->println(this->statlist.speed);
-  arduboy->setCursor(4,19);
-  arduboy->print(F("SAtk: ")); arduboy->print(this->statlist.spcAtk);
-  arduboy->setCursor(60,19);
-  arduboy->print(F(" SDef: ")); arduboy->println(this->statlist.spcDef);
-  for( uint8_t i = 0; i < 4; i++){
+  arduboy->fillRect(0, 0, 128, 66, WHITE);
+  arduboy->drawRect(2, 1, 124, 43, BLACK);
+  arduboy->setCursor(4, 3);
+  arduboy->print(F("HP: "));
+  arduboy->print(this->statlist.hp);
+  arduboy->setCursor(60, 3);
+  arduboy->print(F(" AtK: "));
+  arduboy->println(this->statlist.attack);
+  arduboy->setCursor(4, 11);
+  arduboy->print(F("Def: "));
+  arduboy->print(this->statlist.defense);
+  arduboy->setCursor(60, 11);
+  arduboy->print(F(" Spd: "));
+  arduboy->println(this->statlist.speed);
+  arduboy->setCursor(4, 19);
+  arduboy->print(F("SAtk: "));
+  arduboy->print(this->statlist.spcAtk);
+  arduboy->setCursor(60, 19);
+  arduboy->print(F(" SDef: "));
+  arduboy->println(this->statlist.spcDef);
+  for (uint8_t i = 0; i < 4; i++) {
     if (this->moves[i] == 32) {
       continue;
     }
-    uint8_t offset = i%2;
-    arduboy->setCursor(4+(60*offset), 27+(8*(i/2)));
+    uint8_t offset = i % 2;
+    arduboy->setCursor(4 + (60 * offset), 27 + (8 * (i / 2)));
     arduboy->print(readFlashStringPointer(&moveNames[this->moves[i]]));
   }
-
-
 }

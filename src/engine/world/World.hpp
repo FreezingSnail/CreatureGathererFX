@@ -3,9 +3,9 @@
 
 #include "../battle/Battle.hpp"
 #include "../game/Gamestate.hpp"
-#include "Arduboy2.h"
 #include "Encounter.hpp"
 #include "Map.hpp"
+#include <ArduboyFX.h>
 
 // Notes: character center on map at all times
 enum Direction { Up, Right, Down, Left };

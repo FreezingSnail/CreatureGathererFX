@@ -1,5 +1,5 @@
 #pragma once
-#include "Arduboy2.h"
+#include <ArduboyFX.h>
 
 #include "../data/Creatures.hpp"
 #include "../lib/Move.hpp"
@@ -37,7 +37,7 @@ public:
   Move moveList[4];
   stats_t statlist;
 
-  const unsigned char *sprite;
+  // const unsigned char *sprite;
 
   Creature();
   void load(CreatureData_t seed);
@@ -45,7 +45,7 @@ public:
 
   void setStats(CreatureData_t seed);
   void loadMoves(CreatureData_t seed);
-  void loadSprite(CreatureData_t seed);
+  // void loadSprite(CreatureData_t seed);
   void loadTypes(CreatureData_t seed);
   void setMove(uint8_t move, uint8_t slot);
 
