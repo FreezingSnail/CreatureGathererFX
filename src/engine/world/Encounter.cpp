@@ -3,11 +3,11 @@
 #include <stdint.h>
 
 #include "../../data/Encounters.hpp"
-#include "Arduboy2.h"
+#include <ArduboyFX.h>
 
 Encounter::Encounter() { this->arduboy = nullptr; }
 
-Encounter::Encounter(Arduboy2* arduboy) {
+Encounter::Encounter(Arduboy2 *arduboy) {
   this->arduboy = arduboy;
   this->loadEncounterTable(0);
 }

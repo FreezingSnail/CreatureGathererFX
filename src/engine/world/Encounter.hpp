@@ -3,15 +3,15 @@
 #include <stdint.h>
 
 #include "../../data/Encounters.hpp"
-#include "Arduboy2.h"
+#include <ArduboyFX.h>
 
 class Encounter {
- private:
+private:
   uint8_t table[10];
   uint8_t avgLevel;
   Arduboy2 *arduboy;
 
- public:
+public:
   Encounter();
   Encounter(Arduboy2 *arduboy);
   void loadEncounterTable(int areaIndex);

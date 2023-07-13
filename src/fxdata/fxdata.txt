@@ -1,0 +1,4 @@
+image_t characterSheet = "characterSheet_12x16.png"
+image_t creatureSprites = "creatureSprites_32x32.png"
+image_t tilesheet = "tilesheet_8x8.png"
+//include "creaturesData.txt"

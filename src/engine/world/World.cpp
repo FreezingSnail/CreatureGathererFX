@@ -1,14 +1,14 @@
 #include "World.hpp"
 
-#include "../../sprites/characterSheet.h"
-#include "../../sprites/tilesheet.h"
+#include "../../fxdata/fxdata.h"
+//#include "../../sprites/characterSheet.h"
 #include "../battle/Battle.hpp"
 #include "../game/Gamestate.hpp"
-#include "Arduboy2.h"
 #include "Encounter.hpp"
 #include "Map.hpp"
+#include <ArduboyFX.h>
 
-#define TILE_SIZE 16
+#define TILE_SIZE 8
 
 WorldEngine::WorldEngine(Arduboy2 *arduboy, GameState_t *state,
                          BattleEngine *battleEngine) {
@@ -32,9 +32,9 @@ void WorldEngine::drawMap() {
       const int tiley = y - this->mapy / TILE_SIZE;
       if (tilex >= 0 && tiley >= 0 && tilex < WORLD_WIDTH &&
           tiley < WORLD_HEIGHT) {
-        Sprites::drawOverwrite(x * TILE_SIZE + this->mapx % TILE_SIZE - 9,
-                               y * TILE_SIZE + this->mapy % TILE_SIZE - 8,
-                               tilesheet, gameMap[tiley][tilex]);
+        FX::drawBitmap(x * TILE_SIZE + this->mapx % TILE_SIZE - 9,
+                       y * TILE_SIZE + this->mapy % TILE_SIZE - 8, tilesheet,
+                       gameMap[tiley][tilex], dbmNormal);
       }
     }
   }
@@ -70,8 +70,8 @@ void WorldEngine::input() {
 void WorldEngine::drawPlayer() {
   uint8_t frame =
       ((int)(this->playerDirection) * 3) + ((this->stepTicker - 1) / 5);
-  Sprites::drawOverwrite(PLAYER_X_OFFSET, PLAYER_Y_OFFSET, characterSheet,
-                         frame);
+  FX::drawBitmap(PLAYER_X_OFFSET, PLAYER_Y_OFFSET, characterSheet, frame,
+                 dbmNormal);
 }
 
 void __attribute__((optimize("-O0"))) WorldEngine::runMap() {

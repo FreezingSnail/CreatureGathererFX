@@ -1,6 +1,6 @@
 #pragma once
 #include "../lib/Move.hpp"
-#include "Arduboy2.h"
+#include <ArduboyFX.h>
 
 static void printMoveInfo(Arduboy2 *arduboy, uint8_t index) {
   if (index == 32) {
