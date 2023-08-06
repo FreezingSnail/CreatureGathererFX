@@ -11,6 +11,7 @@ private:
   BattleEngine *engine;
 
 public:
+  Arena();
   Arena(Menu *menu, Player *player, BattleEngine *engine);
   void arenaLoop(Arduboy2 *arduboy);
   void registerRentals();

@@ -1,0 +1,79 @@
+namespace CreatureData {
+    uint8_t creature0[]  = "SquibbleSnail\0";
+    uint8_t creature1[]  = "SquableSnail\0";
+    uint8_t creature2[]  = "ScrambleSnail\0";
+    uint8_t creature3[]  = "SkitterCrab\0";
+    uint8_t creature4[]  = "ScatterCrab\0";
+    uint8_t creature5[]  = "ShatterCrab\0";
+    uint8_t creature6[]  = "squid\0";
+    uint8_t creature7[]  = "bigsquid\0";
+    uint8_t creature8[]  = "BiggestSquid\0";
+    uint8_t creature9[]  = "bell\0";
+    uint8_t creature10[]  = "spark\0";
+    uint8_t creature11[]  = "cuircuit\0";
+    uint8_t creature12[]  = "hedge\0";
+    uint8_t creature13[]  = "cloud\0";
+    uint8_t creature14[]  = "rock\0";
+    uint8_t creature15[]  = "wiggleworm\0";
+    uint8_t creature16[]  = "waggleworm\0";
+    uint8_t creature17[]  = "skimskate\0";
+    uint8_t creature18[]  = "skimray\0";
+    uint8_t creature19[]  = "billow\0";
+    uint8_t creature20[]  = "howl\0";
+    uint8_t creature21[]  = "item\0";
+    uint8_t creature22[]  = "item2\0";
+    uint8_t creature23[]  = "zip\0";
+    uint8_t creature24[]  = "zap\0";
+    uint8_t creature25[]  = "suculent\0";
+    uint8_t creature26[]  = "cactus\0";
+    uint8_t creature27[]  = "flickerfly\0";
+    uint8_t creature28[]  = "flitfly\0";
+    uint8_t creature29[]  = "dragon?\0";
+    uint8_t creature30[]  = "skull\0";
+    uint8_t creature31[]  = "ardu\0";
+
+    uint24_t creatureNames[]  = {
+    creature0,  creature1,  creature2,  creature3,  creature4,  creature5,
+    creature6,  creature7,  creature8,  creature9,  creature10, creature11,
+    creature12, creature13, creature14, creature15, creature16, creature17,
+    creature18, creature19, creature20, creature21, creature22, creature23,
+    creature24, creature25, creature26, creature27, creature28, creature29,
+    creature30, creature31};
+
+
+    uint8_t creatureData[] = {
+    {0, 2, 8, 8, 3, 3, 2, 2, 3, 3, 8, 32, 32, 32},
+    {1, 2, 8, 16, 8, 8, 7, 7, 8, 8, 8, 9, 32, 32},
+    {2, 2, 6, 24, 12, 12, 10, 10, 12, 12, 8, 9, 26, 10},
+    {3, 3, 8, 8, 2, 3, 2, 3, 4, 2, 13, 32, 32, 32},
+    {4, 3, 8, 16, 6, 9, 7, 9, 9, 6, 13, 20, 32, 32},
+    {5, 3, 5, 24, 10, 13, 11, 13, 13, 8, 13, 20, 21, 12},
+    {6, 1, 8, 8, 2, 2, 3, 3, 3, 3, 4, 32, 32, 32},
+    {7, 1, 8, 16, 7, 7, 8, 8, 8, 8, 4, 7, 32, 32},
+    {8, 1, 4, 24, 10, 10, 12, 12, 12, 12, 4, 7, 17, 6},
+    {9, 0, 8, 0, 8, 8, 3, 3, 9, 6, 1, 32, 32, 32},
+    {10, 4, 8, 0, 3, 3, 8, 8, 4, 9, 19, 32, 32, 32},
+    {11, 5, 8, 0, 3, 3, 8, 8, 4, 7, 20, 32, 32, 32},
+    {12, 6, 8, 0, 8, 8, 3, 3, 6, 4, 8, 32, 32, 32},
+    {13, 2, 8, 0, 8, 8, 3, 3, 8, 8, 10, 23, 32, 32},
+    {14, 3, 8, 0, 4, 10, 6, 12, 11, 2, 13, 2, 32, 32},
+    {15, 3, 8, 14, 2, 2, 7, 4, 4, 8, 13, 17, 32, 32},
+    {16, 3, 4, 0, 4, 4, 10, 6, 6, 12, 12, 17, 9, 32},
+    {17, 1, 8, 14, 8, 3, 7, 8, 6, 11, 4, 24, 32, 32},
+    {18, 1, 6, 0, 11, 4, 9, 12, 8, 13, 4, 24, 6, 27},
+    {19, 2, 8, 14, 10, 8, 7, 6, 8, 8, 11, 20, 32, 32},
+    {20, 2, 5, 0, 13, 10, 9, 8, 10, 12, 11, 20, 23, 10},
+    {21, 0, 8, 14, 8, 8, 8, 8, 8, 8, 2, 28, 32, 32},
+    {22, 0, 7, 0, 12, 13, 12, 12, 12, 10, 2, 28, 4, 30},
+    {23, 5, 8, 14, 8, 8, 8, 8, 8, 8, 23, 0, 32, 32},
+    {24, 5, 1, 0, 12, 12, 13, 12, 10, 12, 23, 0, 22, 6},
+    {25, 6, 8, 14, 8, 8, 8, 8, 8, 8, 24, 28, 32, 32},
+    {26, 6, 3, 0, 12, 12, 12, 13, 12, 10, 24, 28, 25, 12},
+    {27, 4, 8, 14, 8, 8, 8, 8, 8, 8, 16, 8, 32, 32},
+    {28, 4, 2, 0, 8, 8, 12, 11, 8, 13, 16, 8, 17, 10},
+    {29, 7, 6, 0, 13, 13, 13, 13, 13, 12, 29, 10, 3, 25},
+    {30, 7, 4, 0, 10, 10, 15, 14, 14, 14, 29, 17, 12, 0},
+    {31, 7, 5, 0, 15, 15, 10, 10, 14, 14, 31, 23, 15, 27},
+};
+}
+namespace_end

@@ -1,9 +1,9 @@
 #include "Encounter.hpp"
-
+#include <ArduboyFX.h>
 #include <stdint.h>
 
-#include "../../data/Encounters.hpp"
-#include <ArduboyFX.h>
+#include "../../fxdata/fxdata.h"
+
 
 Encounter::Encounter() { this->arduboy = nullptr; }
 
@@ -12,9 +12,11 @@ Encounter::Encounter(Arduboy2 *arduboy) {
   this->loadEncounterTable(0);
 }
 
-void Encounter::loadEncounterTable(int areaIndex) {
+void __attribute__((optimize("-O0"))) Encounter::loadEncounterTable(int areaIndex) {
   EncounterTable_t table;
-  memcpy_P(&table, &encounterRates[areaIndex], sizeof(EncounterTable_t));
+  uint24_t rowAddress = encounterRates + (sizeof(EncounterTable_t)*areaIndex);
+  FX::readDataObject(rowAddress, table);
+
   for (uint8_t i = 0; i < table.rate1; i++) {
     this->table[i] = table.c1;
   }

@@ -10,6 +10,7 @@
 
 #define TILE_SIZE 16
 
+WorldEngine::WorldEngine(){};
 WorldEngine::WorldEngine(Arduboy2 *arduboy, GameState_t *state,
                          BattleEngine *battleEngine) {
   this->arduboy = arduboy;

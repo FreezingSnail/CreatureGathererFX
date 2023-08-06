@@ -18,10 +18,3 @@ typedef struct CreatureD {
   unsigned char move3;
   unsigned char move4;
 } CreatureData_t;
-
-// going to need to embed these into progmem at somepoint
-// each instance wastes 4 bits
-
-const CreatureData_t emptyCreature PROGMEM = {0, 0, 0, 0, 0, 0, 0,
-                                              0, 0, 0, 0, 0, 0, 0};
-

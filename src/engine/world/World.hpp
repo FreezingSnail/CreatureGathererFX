@@ -26,6 +26,7 @@ private:
   int debug;
 
 public:
+  WorldEngine();
   WorldEngine(Arduboy2 *arduboy, GameState_t *state,
               BattleEngine *battleEngine);
   void input();
