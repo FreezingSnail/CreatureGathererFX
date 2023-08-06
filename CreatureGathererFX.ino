@@ -27,6 +27,8 @@ void setup() {
   arduboy.setFrameRate(30);
   arduboy.initRandomSeed();
   FX::begin(FX_DATA_PAGE);
+  FX::setFont(arduboyFont, dcmNormal); // select default font
+  FX::setCursorRange(0,32767); 
 }
 
 void loop() {

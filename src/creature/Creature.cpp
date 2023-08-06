@@ -7,11 +7,14 @@
 #include "../external/FlashStringHelper.h"
 #include "../lib/Move.hpp"
 #include "../opponent/OpponentSeed.hpp"
+#include "../fxdata/fxdata.h"
+
 
 // This will need to load the creature seed from the progmemstore
 const CreatureData_t getCreatureFromStore(uint8_t id) {
   CreatureData_t cseed;
-  memcpy_P(&cseed, &CreatureData[id], sizeof(CreatureData_t));
+  uint24_t rowAddress = CreatureData::creatureData + (sizeof(CreatureData_t)*id);
+  FX::readDataObject(rowAddress, cseed);
   return cseed;
 }
 
