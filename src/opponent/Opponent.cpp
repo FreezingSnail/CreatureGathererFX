@@ -2,6 +2,8 @@
 #include "Opponent.hpp"
 
 #include "../data/Creatures.hpp"
+#include "../fxdata/fxdata.h"
+
 #include "OpponentSeed.hpp"
 
 Opponent::Opponent() {}
@@ -17,10 +19,9 @@ void Opponent::load(OpponentSeed_t* seed) {
 
 void __attribute__((optimize("-O0")))
 Opponent::loadEncounterOpt(uint8_t id, uint8_t level) {
-  // CreatureData_t eseed;
-  //  memcpy_P(&eseed, &emptyCreature, sizeof(CreatureData_t));
   CreatureData_t cseed;
-  memcpy_P(&cseed, &CreatureData[id], sizeof(CreatureData_t));
+  uint24_t rowAddress = CreatureData::creatureData + (sizeof(CreatureData_t)*id);
+  FX::readDataObject(rowAddress, cseed);
   this->levels[0] = 2;
   this->levels[1] = 0;
   this->levels[2] = 0;

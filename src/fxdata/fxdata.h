@@ -6,8 +6,8 @@ using uint24_t = __uint24;
 
 // Initialize FX hardware using  FX::begin(FX_DATA_PAGE); in the setup() function.
 
-constexpr uint16_t FX_DATA_PAGE  = 0xffee;
-constexpr uint24_t FX_DATA_BYTES = 4524;
+constexpr uint16_t FX_DATA_PAGE  = 0xffb5;
+constexpr uint24_t FX_DATA_BYTES = 19167;
 
 constexpr uint24_t characterSheet = 0x000000;
 constexpr uint16_t characterSheetWidth  = 12;
@@ -24,3 +24,50 @@ constexpr uint16_t tilesheetWidth  = 16;
 constexpr uint16_t tilesheetHeight = 16;
 constexpr uint8_t  tilesheetFrames = 4;
 
+constexpr uint24_t arduboyFont = 0x0011AC;
+constexpr uint16_t arduboyFontWidth  = 6;
+constexpr uint16_t arduboyFontHeight = 8;
+constexpr uint16_t  arduboyFontFrames = 256;
+
+constexpr uint24_t maskedFont = 0x0017B0;
+constexpr uint16_t maskedFontWidth  = 16;
+constexpr uint16_t maskedFontHeight = 24;
+constexpr uint8_t  maskedFontFrames = 128;
+
+namespace CreatureData
+{
+  constexpr uint24_t creature0 = 0x0047B4;
+  constexpr uint24_t creature1 = 0x0047C2;
+  constexpr uint24_t creature2 = 0x0047CF;
+  constexpr uint24_t creature3 = 0x0047DD;
+  constexpr uint24_t creature4 = 0x0047E9;
+  constexpr uint24_t creature5 = 0x0047F5;
+  constexpr uint24_t creature6 = 0x004801;
+  constexpr uint24_t creature7 = 0x004807;
+  constexpr uint24_t creature8 = 0x004810;
+  constexpr uint24_t creature9 = 0x00481D;
+  constexpr uint24_t creature10 = 0x004822;
+  constexpr uint24_t creature11 = 0x004828;
+  constexpr uint24_t creature12 = 0x004831;
+  constexpr uint24_t creature13 = 0x004837;
+  constexpr uint24_t creature14 = 0x00483D;
+  constexpr uint24_t creature15 = 0x004842;
+  constexpr uint24_t creature16 = 0x00484D;
+  constexpr uint24_t creature17 = 0x004858;
+  constexpr uint24_t creature18 = 0x004862;
+  constexpr uint24_t creature19 = 0x00486A;
+  constexpr uint24_t creature20 = 0x004871;
+  constexpr uint24_t creature21 = 0x004876;
+  constexpr uint24_t creature22 = 0x00487B;
+  constexpr uint24_t creature23 = 0x004881;
+  constexpr uint24_t creature24 = 0x004885;
+  constexpr uint24_t creature25 = 0x004889;
+  constexpr uint24_t creature26 = 0x004892;
+  constexpr uint24_t creature27 = 0x004899;
+  constexpr uint24_t creature28 = 0x0048A4;
+  constexpr uint24_t creature29 = 0x0048AC;
+  constexpr uint24_t creature30 = 0x0048B4;
+  constexpr uint24_t creature31 = 0x0048BA;
+  constexpr uint24_t creatureNames = 0x0048BF;
+  constexpr uint24_t creatureData = 0x00491F;
+}

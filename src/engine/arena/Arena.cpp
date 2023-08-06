@@ -3,6 +3,7 @@
 #include "../battle/Battle.hpp"
 #include "../game/Menu.hpp"
 
+
 Arena::Arena(Menu *menu, Player *player, BattleEngine *engine) {
   this->menu = menu;
   this->player = player;

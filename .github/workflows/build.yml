@@ -16,6 +16,7 @@ jobs:
 
     - name: Add Arduboy board
       run: arduino-cli config init --additional-urls https://arduboy.github.io/board-support/package_arduboy_index.json
+        arduino-cli config add board_manager.additional_urls https://raw.githubusercontent.com/MrBlinky/Arduboy-homemade-package/master/package_arduboy_homemade_index.json
 
     - name: Update Index
       run: arduino-cli core update-index 
@@ -33,4 +34,4 @@ jobs:
       run: arduino-cli lib install ArdBitmap
 
     - name: build
-      run: arduino-cli compile --fqbn "arduboy:avr:arduboy"  .  --output-dir .
+      run: arduino-cli compile --fqbn "arduboy-homemade:avr:arduboy"  .  --output-dir .

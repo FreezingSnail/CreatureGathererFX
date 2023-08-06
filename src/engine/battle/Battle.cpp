@@ -154,7 +154,7 @@ void BattleEngine::changeCurMon(uint8_t id) {
   int index = 0;
   for (uint8_t i = 0; i < 3; i++) {
     if (this->playerParty[i]->id == id) {
-      this->playerCur = this->playerParty[i]->id;
+      this->playerCur = this->playerParty[i];
       index = i;
       break;
     }

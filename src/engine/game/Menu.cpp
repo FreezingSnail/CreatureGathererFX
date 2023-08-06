@@ -7,6 +7,9 @@
 #include "../../lib/Type.hpp"
 #include "../draw.h"
 #include "../game/Gamestate.hpp"
+#include "../../fxdata/fxdata.h"
+
+#include <Arduboy2.h>
 #include <ArduboyFX.h>
 
 #define dbf __attribute__((optimize("-O0")))
@@ -179,10 +182,13 @@ void dbf Menu::creatureRental() {
   this->arduboy->setCursor(0, 0);
   this->arduboy->print(F(">"));
   for (uint8_t i = 0; i < 6; i++) {
-    this->arduboy->setCursor(10, i * 10);
-    if (this->cursorIndex + i < 32)
-      this->arduboy->print(
-          readFlashStringPointer(&creatureNames[this->cursorIndex + i]));
+    FX::setCursor(10, i * 10);
+    if (this->cursorIndex + i < 32){
+      //this->arduboy->print(
+      //    readFlashStringPointer(&creatureNames[this->cursorIndex + i]));
+      uint24_t addr = FX::readIndexedUInt24(CreatureData::creatureNames, this->cursorIndex + i);
+      FX::drawString(addr);
+    }
   }
 
   if (this->arduboy->justPressed(A_BUTTON)) {
@@ -224,8 +230,10 @@ void Menu::printMenu() {
   this->transverseMenu();
   switch (*this->state) {
   case GameState_t::BATTLE:
+    FX::setFontMode(dbmInvert);
     this->printBattleMenu();
   case GameState_t::WORLD:
+    FX::setFontMode(dbmInvert);
     this->printWorldMenu();
     break;
   case GameState_t::ARENA:
@@ -301,12 +309,12 @@ void Menu::printWorldMenu() {}
 
 void Menu::printCreatureMenu() {
   this->player->party[this->cursorIndex].printCreature(this->arduboy);
-  this->arduboy->setCursor(6, 45);
-  this->arduboy->print(
-      readFlashStringPointer(&creatureNames[this->creatureList[0]]));
-  this->arduboy->setCursor(6, 55);
-  this->arduboy->print(
-      readFlashStringPointer(&creatureNames[this->creatureList[1]]));
+  FX::setCursor(6, 45);
+  uint24_t addr = FX::readIndexedUInt24(CreatureData::creatureNames, this->creatureList[0]);
+  FX::drawString(addr);
+  FX::setCursor(6, 55);
+  addr = FX::readIndexedUInt24(CreatureData::creatureNames, this->creatureList[1]);
+  FX::drawString(addr);
 }
 
 void Menu::printInventoryMenu() {}
@@ -314,12 +322,13 @@ void Menu::printInventoryMenu() {}
 void Menu::printAttack(uint8_t creatureID, uint8_t attackID,
                        Modifier modifier) {
   // this->arduboy->clear();
-  this->arduboy->setCursor(1, 45);
+  FX::setCursor(1, 45);
   this->arduboy->fillRect(0, 32, 128, 32, WHITE);
-  this->arduboy->print(readFlashStringPointer(&creatureNames[creatureID]));
-  this->arduboy->print(F(" used"));
+  uint24_t addr = FX::readIndexedUInt24(CreatureData::creatureNames, creatureID);
+  FX::drawString(addr);
+  FX::drawString(" used");
   // need a list of move names
-  this->arduboy->setCursor(1, 55);
+  FX::setCursor(1, 55);
   this->arduboy->print(readFlashStringPointer(&moveNames[attackID]));
   this->arduboy->display();
   // Need to come back to this its not easy to get the modifier rn
