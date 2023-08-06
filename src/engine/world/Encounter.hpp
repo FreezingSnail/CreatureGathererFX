@@ -2,8 +2,22 @@
 
 #include <stdint.h>
 
-#include "../../data/Encounters.hpp"
 #include <ArduboyFX.h>
+
+typedef struct EncounterTable {
+  unsigned char c1;
+  unsigned char c2;
+  unsigned char c3;
+  unsigned char c4;
+  // 4bit encounter rates
+  unsigned char rate1;
+  unsigned char rate2;
+  unsigned char rate3;
+  unsigned char rate4;
+  unsigned char avgLevel;
+
+} EncounterTable_t;
+
 
 class Encounter {
 private:

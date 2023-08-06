@@ -14,6 +14,7 @@
 
 #define dbf __attribute__((optimize("-O0")))
 
+BattleEngine::BattleEngine(){}
 BattleEngine::BattleEngine(Arduboy2 *arduboy, Player *player, Menu *menu,
                            GameState_t *state) {
   this->arduboy = arduboy;
@@ -283,7 +284,8 @@ uint16_t BattleEngine::calculateDamage(Action *action, Creature *committer,
 
 void BattleEngine::loadOpponent(uint8_t optID) {
   OpponentSeed_t seed = OpponentSeed_t{0, 0, 1};
-  memcpy_P(&seed, &opts[optID], sizeof(OpponentSeed_t));
+  uint24_t rowAddress = FX::readIndexedUInt24(opts, optID);
+  FX::readDataObject(rowAddress, seed);
 
   this->opponent.load(&seed);
   this->resetOpponent();

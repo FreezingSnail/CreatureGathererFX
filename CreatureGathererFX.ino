@@ -10,12 +10,12 @@
 #include "src/player/Player.hpp"
 
 Arduboy2 arduboy;
-Player player = Player();
-GameState_t state = GameState_t::ARENA;
-Menu menu = Menu(&arduboy, &state, &player);
-BattleEngine engine = BattleEngine(&arduboy, &player, &menu, &state);
-Arena arena = Arena(&menu, &player, &engine);
-WorldEngine world = WorldEngine(&arduboy, &state, &engine);
+Player player;
+GameState_t state;
+Menu menu;
+BattleEngine engine;
+Arena arena;
+WorldEngine world; 
 
 void setup() {
   // initiate arduboy instance
@@ -29,6 +29,13 @@ void setup() {
   FX::begin(FX_DATA_PAGE);
   FX::setFont(arduboyFont, dcmNormal); // select default font
   FX::setCursorRange(0,32767); 
+  
+  world = WorldEngine(&arduboy, &state, &engine);
+  player = Player();
+  state = GameState_t::ARENA;
+  menu = Menu(&arduboy, &state, &player);
+  engine = BattleEngine(&arduboy, &player, &menu, &state);
+  arena = Arena(&menu, &player, &engine);
 }
 
 void loop() {

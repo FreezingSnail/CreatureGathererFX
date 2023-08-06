@@ -126,7 +126,8 @@ void Creature::printCreature(Arduboy2 *arduboy) {
       continue;
     }
     uint8_t offset = i % 2;
-    arduboy->setCursor(4 + (60 * offset), 27 + (8 * (i / 2)));
-    arduboy->print(readFlashStringPointer(&moveNames[this->moves[i]]));
+    FX::setCursor(4 + (60 * offset), 27 + (8 * (i / 2)));
+    uint24_t rowAddress = FX::readIndexedUInt24(MoveData::moveNames, this->moves[i]);
+    FX::drawString(rowAddress);
   }
 }

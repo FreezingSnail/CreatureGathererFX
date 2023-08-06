@@ -14,6 +14,7 @@
 
 #define dbf __attribute__((optimize("-O0")))
 
+Menu::Menu() {}
 Menu::Menu(Arduboy2 *arduboy, GameState_t *state, Player *player) {
   this->arduboy = arduboy;
   this->player = player;
@@ -184,8 +185,6 @@ void dbf Menu::creatureRental() {
   for (uint8_t i = 0; i < 6; i++) {
     FX::setCursor(10, i * 10);
     if (this->cursorIndex + i < 32){
-      //this->arduboy->print(
-      //    readFlashStringPointer(&creatureNames[this->cursorIndex + i]));
       uint24_t addr = FX::readIndexedUInt24(CreatureData::creatureNames, this->cursorIndex + i);
       FX::drawString(addr);
     }
@@ -289,16 +288,19 @@ void Menu::printBattleMenu() {
   }
   this->printCursor();
 }
-
-void Menu::printMoveMenu() {
-  this->arduboy->setCursor(6, 46);
-  this->arduboy->print(readFlashStringPointer(&moveNames[this->moveList[0]]));
-  this->arduboy->setCursor(64, 46);
-  this->arduboy->print(readFlashStringPointer(&moveNames[this->moveList[1]]));
-  this->arduboy->setCursor(6, 55);
-  this->arduboy->print(readFlashStringPointer(&moveNames[this->moveList[2]]));
-  this->arduboy->setCursor(64, 55);
-  this->arduboy->print(readFlashStringPointer(&moveNames[this->moveList[3]]));
+void dbf Menu::printMoveMenu() {
+  FX::setCursor(6, 46);
+  uint24_t rowAddress = FX::readIndexedUInt24(MoveData::moveNames, this->moveList[0]);
+  FX::drawString(rowAddress);
+  FX::setCursor(64, 46);
+  rowAddress = FX::readIndexedUInt24(MoveData::moveNames, this->moveList[1]);
+  FX::drawString(rowAddress);
+  FX::setCursor(6, 55);
+  rowAddress = FX::readIndexedUInt24(MoveData::moveNames, this->moveList[2]);
+  FX::drawString(rowAddress);
+  FX::setCursor(64, 55);
+  rowAddress = FX::readIndexedUInt24(MoveData::moveNames, this->moveList[3]);
+  FX::drawString(rowAddress);
   this->drawInfoRec();
   printMoveInfo(this->arduboy, this->moveList[cursorIndex]);
 }
@@ -329,7 +331,9 @@ void Menu::printAttack(uint8_t creatureID, uint8_t attackID,
   FX::drawString(" used");
   // need a list of move names
   FX::setCursor(1, 55);
-  this->arduboy->print(readFlashStringPointer(&moveNames[attackID]));
+  uint24_t rowAddress = FX::readIndexedUInt24(MoveData::moveNames, attackID);
+  FX::drawString(rowAddress);
+  
   this->arduboy->display();
   // Need to come back to this its not easy to get the modifier rn
   //  switch (Modifier) {
