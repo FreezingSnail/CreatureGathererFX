@@ -24,7 +24,7 @@ void setup() {
   // engine.startEncounter(1, 1);
   //     here we set the framerate to 15, we do not need to run at
   //     default 60 and it saves us battery life
-  arduboy.setFrameRate(30);
+  arduboy.setFrameRate(45);
   arduboy.initRandomSeed();
   FX::begin(FX_DATA_PAGE);
   FX::setFont(arduboyFont, dcmNormal); // select default font
@@ -32,7 +32,7 @@ void setup() {
   
   world = WorldEngine(&arduboy, &state, &engine);
   player = Player();
-  state = GameState_t::ARENA;
+  state = GameState_t::WORLD;
   menu = Menu(&arduboy, &state, &player);
   engine = BattleEngine(&arduboy, &player, &menu, &state);
   arena = Arena(&menu, &player, &engine);

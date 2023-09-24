@@ -17,13 +17,15 @@ private:
   Encounter encounterTable;
   BattleEngine *battleEngine;
   int mapx, mapy;
+  uint8_t height, width;
 
   bool moving;
   uint8_t stepTicker;
   GameState_t *state;
-  TileType nextTile;
+  uint8_t nextTile;
   int curx, cury;
   int debug;
+  uint8_t warps[6][3];
 
 public:
   WorldEngine();
@@ -34,7 +36,11 @@ public:
   void drawMap();
   void drawPlayer();
   void moveChar();
-  TileType getTile();
+  uint8_t getTile();
   void encounter();
   bool moveable();
+
+  void loadMap(uint8_t mapIndex);
+  void warp();
+  void setPos(uint8_t x, uint8_t y);
 };
