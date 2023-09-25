@@ -1,4 +1,5 @@
 #include "World.hpp"
+#include <ArduboyFX.h>
 
 #include "../../fxdata/fxdata.h"
 //#include "../../sprites/characterSheet.h"
@@ -6,9 +7,16 @@
 #include "../game/Gamestate.hpp"
 #include "Encounter.hpp"
 #include "Map.hpp"
-#include <ArduboyFX.h>
 
 #define TILE_SIZE 16
+
+bool __attribute__((optimize("-O0"))) warpTile(uint8_t x, uint8_t y ) {
+  uint8_t tile = gameMap[y][x];
+  if (tile == 26 || tile == 28)
+    return true;
+
+  return false;
+}
 
 WorldEngine::WorldEngine(){};
 WorldEngine::WorldEngine(Arduboy2 *arduboy, GameState_t *state,
@@ -21,6 +29,20 @@ WorldEngine::WorldEngine(Arduboy2 *arduboy, GameState_t *state,
   this->mapy = 0;
   this->curx = 4;
   this->cury = 2;
+  this->loadMap(1);
+}
+
+void WorldEngine::loadMap(uint8_t mapIndex) {
+  FX::readDataObject(MapData::widths+ sizeof(uint8_t)*mapIndex, this->width);
+  FX::readDataObject(MapData::heights+ sizeof(uint8_t)*mapIndex, this->height);
+
+  uint24_t rowAddress = FX::readIndexedUInt24(MapData::maps, mapIndex);
+  for( uint8_t i = 0; i < this->height; i++) {
+    uint24_t offset = (sizeof(uint8_t)*this->width) * i;
+    FX::readDataBytes(rowAddress+offset, gameMap[i], sizeof(uint8_t)*this->width);
+  }
+  rowAddress = FX::readIndexedUInt24(MapData::warps, mapIndex);
+  FX::readDataObject(rowAddress, this->warps);
 }
 
 void WorldEngine::drawMap() {
@@ -31,8 +53,8 @@ void WorldEngine::drawMap() {
     for (int x = 0; x < tileswide; x++) {
       const int tilex = x - this->mapx / TILE_SIZE;
       const int tiley = y - this->mapy / TILE_SIZE;
-      if (tilex >= 0 && tiley >= 0 && tilex < WORLD_WIDTH &&
-          tiley < WORLD_HEIGHT) {
+      if (tilex >= 0 && tiley >= 0 && tilex < this->width &&
+          tiley < this->height) {
         FX::drawBitmap(x * TILE_SIZE + this->mapx % TILE_SIZE - 9,
                        y * TILE_SIZE + this->mapy % TILE_SIZE - 8, tilesheet,
                        gameMap[tiley][tilex], dbmNormal);
@@ -62,6 +84,8 @@ void WorldEngine::input() {
     if (this->moveable()) {
       this->moving = true;
     }
+  } else {
+    moving = false;
   }
 }
 
@@ -79,7 +103,7 @@ void __attribute__((optimize("-O0"))) WorldEngine::runMap() {
   this->drawMap();
   this->drawPlayer();
 
-  if (this->moving) {
+  if (this->moving && this->moveable()) {
     this->moveChar();
   } else {
     this->input();
@@ -104,7 +128,6 @@ void WorldEngine::moveChar() {
   this->stepTicker++;
   if (this->stepTicker == TILE_SIZE) {
     this->stepTicker = 0;
-    this->moving = false;
     switch (this->playerDirection) {
     case Up:
       this->cury--;
@@ -119,17 +142,21 @@ void WorldEngine::moveChar() {
       this->curx++;
       break;
     }
+    this->moving = false;
+    if(warpTile(this->curx, this->cury)) {
+      this->warp();
+    }
     this->encounter();
   }
 }
 
-TileType WorldEngine::getTile() { return (TileType)0; }
+uint8_t WorldEngine::getTile() { return (TileType)0; }
 
 void __attribute__((optimize("-O0"))) WorldEngine::encounter() {
-  TileType t = gameMap[this->cury][this->curx];
-  if (t == TileType::GRASS) {
+  uint8_t t = gameMap[this->cury][this->curx];
+  if (t == 0) {
     int chance = random(1, 101);
-    if (chance <= 50) {
+    if (chance <= 10) {
       uint8_t creatureID = this->encounterTable.rollEncounter();
       uint8_t level = this->encounterTable.rollLevel();
       this->debug = creatureID;
@@ -139,7 +166,7 @@ void __attribute__((optimize("-O0"))) WorldEngine::encounter() {
   }
 }
 
-bool WorldEngine::moveable() {
+bool __attribute__((optimize("-O0"))) WorldEngine::moveable() {
   int tilex = this->curx;
   int tiley = this->cury;
   switch (this->playerDirection) {
@@ -157,16 +184,40 @@ bool WorldEngine::moveable() {
     break;
   }
 
-  if (tilex < 0 || tiley < 0 || tilex >= WORLD_WIDTH || tiley >= WORLD_HEIGHT) {
+  if (tilex < 0 || tiley < 0 || tilex >= this->width || tiley >= this->height) {
     return false;
   }
   this->nextTile = gameMap[tiley][tilex];
   switch (this->nextTile) {
-  case WATER:
-  case STONE:
-    return false;
+  case TREES:
+  case GRASS:
+    return true;
 
   default:
     return true;
   }
+}
+
+void __attribute__((optimize("-O0"))) WorldEngine::warp() {
+  for (uint8_t i = 0; i < 6; i++) {
+    if(this->curx == this->warps[i][1] && this->cury == this->warps[i][0] ) {
+      this->loadMap(this->warps[i][2]);
+      this->setPos(warps[i][1], warps[i][0]);
+      return;
+    }
+  }
+}
+
+void  __attribute__((optimize("-O0"))) WorldEngine::setPos(uint8_t x, uint8_t y) {
+  this->curx = x;
+  this->cury = y;
+  int8_t xdif = 4-x;
+  int8_t ydif = 2-y;
+  this->mapx = xdif*16;
+  this->mapy = ydif*16;
+
+
+  //-144
+  //-400
+ 
 }
