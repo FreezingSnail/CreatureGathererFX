@@ -1,0 +1,62 @@
+{ "compressionlevel":-1,
+ "height":8,
+ "infinite":false,
+ "layers":[
+        {
+         "data":[3, 5, 5, 5, 5, 5, 5, 4,
+            6, 2, 2, 2, 2, 2, 2, 14,
+            6, 2, 10, 2, 2, 10, 2, 14,
+            6, 2, 2, 2, 2, 2, 2, 14,
+            6, 2, 2, 2, 2, 2, 2, 14,
+            6, 2, 10, 2, 2, 10, 2, 14,
+            6, 2, 2, 2, 2, 2, 2, 14,
+            11, 13, 13, 29, 13, 13, 13, 12],
+         "height":8,
+         "id":1,
+         "name":"house1",
+         "opacity":1,
+         "type":"tilelayer",
+         "visible":true,
+         "width":8,
+         "x":0,
+         "y":0
+        }, 
+        {
+         "data":[0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 33, 0, 0, 0, 0],
+         "height":8,
+         "id":2,
+         "name":"house1warps",
+         "opacity":1,
+         "type":"tilelayer",
+         "visible":true,
+         "width":8,
+         "x":0,
+         "y":0
+        }],
+ "nextlayerid":3,
+ "nextobjectid":1,
+ "orientation":"orthogonal",
+ "renderorder":"right-down",
+ "tiledversion":"1.10.2",
+ "tileheight":16,
+ "tilesets":[
+        {
+         "firstgid":1,
+         "source":"tilesheet_16x16.tsx"
+        }, 
+        {
+         "firstgid":33,
+         "source":"..\/Tilemaps\/warpTiles.tsx"
+        }],
+ "tilewidth":16,
+ "type":"map",
+ "version":"1.10",
+ "width":8
+}
