@@ -4,18 +4,18 @@
 #include "../game/Menu.hpp"
 
 class Arena {
-private:
-  uint8_t registerIndex;
-  Menu *menu;
-  Player *player;
-  BattleEngine *engine;
+  private:
+    uint8_t registerIndex;
+    Menu *menu;
+    Player *player;
+    BattleEngine *engine;
 
-public:
-  Arena();
-  Arena(Menu *menu, Player *player, BattleEngine *engine);
-  void arenaLoop(Arduboy2 *arduboy);
-  void registerRentals();
-  uint8_t selectOpponent();
-  void startBattle();
-  void displayRegisteredCount(Arduboy2 *arduboy);
+  public:
+    Arena();
+    Arena(Menu *menu, Player *player, BattleEngine *engine);
+    void arenaLoop(Arduboy2 *arduboy);
+    void registerRentals();
+    uint8_t selectOpponent();
+    void startBattle();
+    void displayRegisteredCount(Arduboy2 *arduboy);
 };

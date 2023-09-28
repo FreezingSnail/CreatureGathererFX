@@ -5,6 +5,7 @@ image_t tilesheet = "images/tilesheet_16x16.png"
 
 image_t arduboyFont = "images/arduboyFont_6x8.png"
 image_t maskedFont  = "images/maskedFont_16x24.png"
+image_t npc = "images/npc_16x16.png"
 
 include "data/encounters.txt"
 include "data/opponents.txt"

@@ -42,6 +42,12 @@ void loop() {
   if (!arduboy.nextFrame()) {
     return;
   }
+  arduboy.fillRect(0,0,120,120,WHITE);
+  arduboy.fillRect(10,10,40,20,BLACK);
+  FX::drawBitmap(20,20,npc, 0, dbfMasked);
+  FX::display(CLEAR_BUFFER);
+
+  return;
 
   arduboy.pollButtons();
   switch (state) {

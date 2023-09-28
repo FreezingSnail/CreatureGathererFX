@@ -6,14 +6,14 @@
 // signifying the part and a list of levels
 
 class Opponent {
- public:
-  Creature party[3];
-  uint8_t levels[3];
+  public:
+    Creature party[3];
+    uint8_t levels[3];
 
-  // This should load information from PROGMEM
-  Opponent();
-  void load(OpponentSeed_t* seed);
+    // This should load information from PROGMEM
+    Opponent();
+    void load(OpponentSeed_t *seed);
 
-  void loadCreature(OpponentSeed_t* seed);
-  void loadEncounterOpt(uint8_t creatureID, uint8_t level);
+    void loadCreature(OpponentSeed_t *seed);
+    void loadEncounterOpt(uint8_t creatureID, uint8_t level);
 };
