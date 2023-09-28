@@ -32,14 +32,12 @@ void __attribute__((optimize("-O0"))) Encounter::loadEncounterTable(int areaInde
     this->avgLevel = table.avgLevel;
 }
 
-uint8_t
-Encounter::rollEncounter() {
+uint8_t Encounter::rollEncounter() {
     uint8_t roll = random(0, 10);
     return this->table[roll];
 }
 
-uint8_t
-Encounter::rollLevel() {
+uint8_t Encounter::rollLevel() {
     int8_t roll = random(0, 7) - 4;
     return this->avgLevel + roll;
 }

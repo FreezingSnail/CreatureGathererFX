@@ -18,7 +18,7 @@ bool __attribute__((optimize("-O0"))) warpTile(uint8_t x, uint8_t y) {
     return false;
 }
 
-WorldEngine::WorldEngine(){};
+WorldEngine::WorldEngine() {}
 WorldEngine::WorldEngine(Arduboy2 *arduboy, GameState_t *state, BattleEngine *battleEngine) {
     this->arduboy = arduboy;
     this->encounterTable = Encounter(arduboy);
@@ -31,8 +31,7 @@ WorldEngine::WorldEngine(Arduboy2 *arduboy, GameState_t *state, BattleEngine *ba
     this->loadMap(1);
 }
 
-void
-WorldEngine::loadMap(uint8_t mapIndex) {
+void WorldEngine::loadMap(uint8_t mapIndex) {
     FX::readDataObject(MapData::widths + sizeof(uint8_t) * mapIndex, this->width);
     FX::readDataObject(MapData::heights + sizeof(uint8_t) * mapIndex, this->height);
 
@@ -45,8 +44,7 @@ WorldEngine::loadMap(uint8_t mapIndex) {
     FX::readDataObject(rowAddress, this->warps);
 }
 
-void
-WorldEngine::drawMap() {
+void WorldEngine::drawMap() {
     const int tileswide = (128 / TILE_SIZE) + 4;
     const int tilestall = (64 / TILE_SIZE) + 4;
 
@@ -62,8 +60,7 @@ WorldEngine::drawMap() {
     }
 }
 
-void
-WorldEngine::input() {
+void WorldEngine::input() {
     if (this->arduboy->pressed(UP_BUTTON)) {
         this->playerDirection = Up;
         if (this->moveable()) {
@@ -89,11 +86,10 @@ WorldEngine::input() {
     }
 }
 
-#define PLAYER_SIZE     16
+#define PLAYER_SIZE 16
 #define PLAYER_X_OFFSET WIDTH / 2 - PLAYER_SIZE / 2
 #define PLAYER_Y_OFFSET HEIGHT / 2 - PLAYER_SIZE / 2
-void
-WorldEngine::drawPlayer() {
+void WorldEngine::drawPlayer() {
     uint8_t frame = ((int)(this->playerDirection) * 3) + ((this->stepTicker - 1) / 5);
     FX::drawBitmap(PLAYER_X_OFFSET, PLAYER_Y_OFFSET, characterSheet, frame, dbmNormal);
 }
@@ -109,8 +105,7 @@ void __attribute__((optimize("-O0"))) WorldEngine::runMap() {
     }
 }
 
-void
-WorldEngine::moveChar() {
+void WorldEngine::moveChar() {
     switch (this->playerDirection) {
     case Up:
         this->mapy++;
@@ -150,10 +145,7 @@ WorldEngine::moveChar() {
     }
 }
 
-uint8_t
-WorldEngine::getTile() {
-    return (TileType)0;
-}
+uint8_t WorldEngine::getTile() { return (TileType)0; }
 
 void __attribute__((optimize("-O0"))) WorldEngine::encounter() {
     uint8_t t = gameMap[this->cury][this->curx];

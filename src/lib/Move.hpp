@@ -20,8 +20,7 @@ struct MoveBitSet {
     uint8_t physical : 1;
 };
 
-static MoveBitSet
-getMovePack(uint8_t index) {
+static MoveBitSet getMovePack(uint8_t index) {
     MoveBitSet move;
     uint24_t rowAddress = FX::readIndexedUInt24(MoveData::movePack, index);
     FX::readDataObject(rowAddress, move);

@@ -12,5 +12,5 @@ include "data/opponents.txt"
 include "data/creatureData.txt"
 
 include "data/moves.txt"
-
+include "data/event.txt"
 include "data/mapData.txt"

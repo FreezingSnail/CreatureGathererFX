@@ -1,0 +1,8 @@
+namespace EventData {
+    uint8_t m1e1Text[] = "event1test\0";
+    uint8_t m1e1 = { 5,5, 0};
+
+
+    uint24_t eventLocationTable = {m1e1};
+    uint24_t eventTextTable[] = {m1e1Text};
+} namespace_end

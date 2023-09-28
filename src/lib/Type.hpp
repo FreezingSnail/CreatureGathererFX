@@ -59,8 +59,7 @@ enum class Modifier : uint8_t {
     //	Quadruple,
 };
 
-static uint16_t
-applyMod(uint16_t value, Modifier modifier) {
+static uint16_t applyMod(uint16_t value, Modifier modifier) {
     switch (modifier) {
     case Modifier::Same:
         return value;
@@ -172,15 +171,13 @@ const Modifier typeTable[TypeCount][TypeCount] PROGMEM = {
 
 };
 
-static Modifier
-getModifier(Type attackType, Type defendingType) {
+static Modifier getModifier(Type attackType, Type defendingType) {
     return (attackType == Type::NONE || defendingType == Type::NONE)
                ? Modifier::None
                : static_cast<Modifier>(pgm_read_byte(&typeTable[static_cast<uint8_t>(attackType)][static_cast<uint8_t>(defendingType)]));
 }
 
-static uint16_t
-applyModifier(uint16_t baseValue, Type attackType, DualType defendingType) {
+static uint16_t applyModifier(uint16_t baseValue, Type attackType, DualType defendingType) {
     const Modifier mod1 = getModifier(attackType, defendingType.getType1());
     baseValue = applyMod(baseValue, mod1);
     const Modifier mod2 = getModifier(attackType, defendingType.getType2());
