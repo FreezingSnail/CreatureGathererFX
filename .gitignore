@@ -4,6 +4,7 @@ build/*
 *.hex
 *.eep
 *.elf
+*.bin
 .*
 tst/*
 1.8.6

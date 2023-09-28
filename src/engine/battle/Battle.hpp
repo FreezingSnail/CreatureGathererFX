@@ -8,74 +8,72 @@
 #include <ArduboyFX.h>
 
 class BattleEngine {
-private:
-  Arduboy2 *arduboy;
-  Creature *playerParty[3];
-  Player *player;
-  Menu *menu;
-  GameState_t *state;
-  Creature *playerCur;
-  Creature *opponentCur;
+  private:
+    Arduboy2 *arduboy;
+    Creature *playerParty[3];
+    Player *player;
+    Menu *menu;
+    GameState_t *state;
+    Creature *playerCur;
+    Creature *opponentCur;
 
-  Opponent opponent;
-  uint16_t playerHealths[3];
-  uint16_t opponentHealths[3];
-  uint8_t awakeMons; // 11100111 player and opponet bit array
+    Opponent opponent;
+    uint16_t playerHealths[3];
+    uint16_t opponentHealths[3];
+    uint8_t awakeMons;   // 11100111 player and opponet bit array
 
-  uint8_t playerIndex;
-  uint8_t opponentIndex;
-  Action playerAction;
-  Action opponentAction;
+    uint8_t playerIndex;
+    uint8_t opponentIndex;
+    Action playerAction;
+    Action opponentAction;
 
-  bool activeBattle;
+    bool activeBattle;
 
-  int db;
+    int db;
 
-public:
-  BattleEngine();
-  BattleEngine(Arduboy2 *arduboy, Player *player, Menu *menu,
-               GameState_t *state);
+  public:
+    BattleEngine();
+    BattleEngine(Arduboy2 *arduboy, Player *player, Menu *menu, GameState_t *state);
 
-  // entry points
-  void startFight(uint8_t optID);
-  void startEncounter(uint8_t creatureID, uint8_t level);
+    // entry points
+    void startFight(uint8_t optID);
+    void startEncounter(uint8_t creatureID, uint8_t level);
 
-  // flow control
-  void encounter();
+    // flow control
+    void encounter();
 
-private:
-  // flow control
-  void turnTick();
-  bool checkLoss();
-  bool checkWin();
-  bool checkPlayerFaint();
-  bool checkOpponentFaint();
-  void playerActionFirst();
-  void opponentActionFirst();
-  void changeCurMon(uint8_t index);
-  bool tryCapture();
-  void endEncounter();
+  private:
+    // flow control
+    void turnTick();
+    bool checkLoss();
+    bool checkWin();
+    bool checkPlayerFaint();
+    bool checkOpponentFaint();
+    void playerActionFirst();
+    void opponentActionFirst();
+    void changeCurMon(uint8_t index);
+    bool tryCapture();
+    void endEncounter();
 
-  // inputs
-  bool getInput();
-  void opponentInput();
+    // inputs
+    bool getInput();
+    void opponentInput();
 
-  // event execution
-  void commitAction(Action *action, Creature *commiter, Creature *receiver);
-  void applyDamage(uint16_t damage, Creature *receiver);
-  uint16_t calculateDamage(Action *action, Creature *committer,
-                           Creature *reciever);
+    // event execution
+    void commitAction(Action *action, Creature *commiter, Creature *receiver);
+    void applyDamage(uint16_t damage, Creature *receiver);
+    uint16_t calculateDamage(Action *action, Creature *committer, Creature *reciever);
 
-  // data loading
-  void loadPlayer(Player *player);
-  void loadOpponent(uint8_t optID);
-  void LoadCreature(uint8_t creatureID, uint8_t level);
-  void resetOpponent();
+    // data loading
+    void loadPlayer(Player *player);
+    void loadOpponent(uint8_t optID);
+    void LoadCreature(uint8_t creatureID, uint8_t level);
+    void resetOpponent();
 
-  // drawing
-  void drawScene();
-  void drawPlayer();
-  void drawOpponent();
-  void drawPlayerHP();
-  void drawOpponentHP();
+    // drawing
+    void drawScene();
+    void drawPlayer();
+    void drawOpponent();
+    void drawPlayerHP();
+    void drawOpponentHP();
 };
