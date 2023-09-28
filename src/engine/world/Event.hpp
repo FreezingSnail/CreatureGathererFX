@@ -2,8 +2,15 @@
 #include <ArduboyFX.h>
 #include <stdint.h>
 
+struct EventPack {
+    uint8_t x, y, spriteIndex;
+    uint24_t textAddress;
+};
+
 class Event {
   public:
-    uint8_t x, y;
-    char *text;
-}
+    EventPack event;
+    uint8_t text[30];
+
+    void loadEvent(uint8_t index);
+};

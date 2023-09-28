@@ -23,22 +23,19 @@ Menu::Menu(Arduboy2 *arduboy, GameState_t *state, Player *player) {
     this->state = state;
 }
 
-void
-Menu::registerMoveList(uint8_t move1, uint8_t move2, uint8_t move3, uint8_t move4) {
+void Menu::registerMoveList(uint8_t move1, uint8_t move2, uint8_t move3, uint8_t move4) {
     this->moveList[0] = move1;
     this->moveList[1] = move2;
     this->moveList[2] = move3;
     this->moveList[3] = move4;
 }
 
-void
-Menu::registerCreatureList(uint8_t c1, uint8_t c2) {
+void Menu::registerCreatureList(uint8_t c1, uint8_t c2) {
     this->creatureList[0] = c1;
     this->creatureList[1] = c2;
 }
 
-bool
-Menu::actionInput(Action *action) {
+bool Menu::actionInput(Action *action) {
     if (this->queued) {
         this->queued = false;
         action->setActionType(this->queuedAction.actionType, this->queuedAction.priority);
@@ -49,8 +46,7 @@ Menu::actionInput(Action *action) {
 }
 
 // This doesnt work at all lol
-void
-Menu::wait() {
+void Menu::wait() {
     while (!this->arduboy->justPressed(A_BUTTON)) {
         this->arduboy->pollButtons();
     }
@@ -63,8 +59,7 @@ Menu::wait() {
     // this->arduboy->clear();
 }
 
-void
-Menu::moveCursor() {
+void Menu::moveCursor() {
     if (*this->state == ARENA) {
         if (this->arduboy->justPressed(DOWN_BUTTON)) {
             this->cursorIndex++;
@@ -104,8 +99,7 @@ Menu::moveCursor() {
     }
 }
 
-void
-Menu::transverseMenu() {
+void Menu::transverseMenu() {
     switch (*this->state) {
     case WORLD:
         break;
@@ -117,8 +111,7 @@ Menu::transverseMenu() {
     }
 }
 
-void
-Menu::tansverseBattleMenu() {
+void Menu::tansverseBattleMenu() {
     if (this->arduboy->justPressed(A_BUTTON)) {
         switch (this->curMenu) {
         case BMAIN:
@@ -184,8 +177,7 @@ Menu::tansverseBattleMenu() {
     }
 }
 
-void dbf
-Menu::creatureRental() {
+void dbf Menu::creatureRental() {
     this->arduboy->setCursor(0, 0);
     this->arduboy->print(F(">"));
     for (uint8_t i = 0; i < 6; i++) {
@@ -201,16 +193,14 @@ Menu::creatureRental() {
     }
 }
 
-int8_t
-Menu::registerCreature() {
+int8_t Menu::registerCreature() {
     if (this->arduboy->justPressed(A_BUTTON)) {
         return this->cursorIndex;
     }
     return -1;
 }
 
-void
-Menu::queueAction(ActionType type, uint8_t index) {
+void Menu::queueAction(ActionType type, uint8_t index) {
     if (this->moveList[index] == 32) {
         return;
     }
@@ -232,8 +222,7 @@ Menu::queueAction(ActionType type, uint8_t index) {
 //
 //////////////////////////////////////////////////////////////////////////////
 
-void
-Menu::printMenu() {
+void Menu::printMenu() {
     this->moveCursor();
     this->transverseMenu();
     switch (*this->state) {
@@ -250,14 +239,12 @@ Menu::printMenu() {
     };
 }
 
-void
-Menu::drawInfoRec() {
+void Menu::drawInfoRec() {
     this->arduboy->fillRect(35, 1, 60, 30, WHITE);
     this->arduboy->drawRect(36, 2, 58, 28, BLACK);
 }
 
-void
-Menu::printCursor() {
+void Menu::printCursor() {
     switch (this->cursorIndex) {
     case 0:
         this->arduboy->setCursor(0, 45);
@@ -275,8 +262,7 @@ Menu::printCursor() {
     this->arduboy->print(F(">"));
 }
 
-void
-Menu::printBattleMenu() {
+void Menu::printBattleMenu() {
     this->arduboy->fillRect(0, 43, 128, 32, WHITE);
     this->arduboy->drawRect(1, 44, 125, 21, BLACK);
     switch (this->curMenu) {
@@ -300,8 +286,7 @@ Menu::printBattleMenu() {
     }
     this->printCursor();
 }
-void dbf
-Menu::printMoveMenu() {
+void dbf Menu::printMoveMenu() {
     FX::setCursor(6, 46);
     uint24_t rowAddress = FX::readIndexedUInt24(MoveData::moveNames, this->moveList[0]);
     FX::drawString(rowAddress);
@@ -318,14 +303,11 @@ Menu::printMoveMenu() {
     printMoveInfo(this->arduboy, this->moveList[cursorIndex]);
 }
 
-void
-Menu::printItemMenu() {}
+void Menu::printItemMenu() {}
 
-void
-Menu::printWorldMenu() {}
+void Menu::printWorldMenu() {}
 
-void
-Menu::printCreatureMenu() {
+void Menu::printCreatureMenu() {
     this->player->party[this->cursorIndex].printCreature(this->arduboy);
     FX::setCursor(6, 45);
     uint24_t addr = FX::readIndexedUInt24(CreatureData::creatureNames, this->creatureList[0]);
@@ -335,11 +317,9 @@ Menu::printCreatureMenu() {
     FX::drawString(addr);
 }
 
-void
-Menu::printInventoryMenu() {}
+void Menu::printInventoryMenu() {}
 
-void
-Menu::printAttack(uint8_t creatureID, uint8_t attackID, Modifier modifier) {
+void Menu::printAttack(uint8_t creatureID, uint8_t attackID, Modifier modifier) {
     // this->arduboy->clear();
     FX::setCursor(1, 45);
     this->arduboy->fillRect(0, 32, 128, 32, WHITE);

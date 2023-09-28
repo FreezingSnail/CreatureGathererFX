@@ -29,8 +29,7 @@ BattleEngine::BattleEngine(Arduboy2 *arduboy, Player *player, Menu *menu, GameSt
 //
 //////////////////////////////////////////////////////////////////////////////
 
-void
-BattleEngine::startFight(uint8_t optID) {
+void BattleEngine::startFight(uint8_t optID) {
     this->loadOpponent(optID);
     this->loadPlayer(this->player);
     *this->state = GameState_t::BATTLE;
@@ -38,8 +37,7 @@ BattleEngine::startFight(uint8_t optID) {
     this->arduboy->setTextColor(BLACK);
 }
 
-void
-BattleEngine::startEncounter(uint8_t creatureID, uint8_t level) {
+void BattleEngine::startEncounter(uint8_t creatureID, uint8_t level) {
     this->LoadCreature(creatureID, level);
     this->loadPlayer(this->player);
     *this->state = GameState_t::BATTLE;
@@ -54,8 +52,7 @@ BattleEngine::startEncounter(uint8_t creatureID, uint8_t level) {
 //////////////////////////////////////////////////////////////////////////////
 
 // Need to change something here for the flow of the game
-void
-BattleEngine::encounter() {
+void BattleEngine::encounter() {
     if (this->checkLoss()) {
         this->activeBattle = false;
         return;
@@ -71,8 +68,7 @@ BattleEngine::encounter() {
     this->turnTick();
 }
 
-void
-BattleEngine::turnTick() {
+void BattleEngine::turnTick() {
     if (!this->getInput()) {
         return;
     }
@@ -92,8 +88,7 @@ BattleEngine::turnTick() {
     }
 }
 
-bool
-BattleEngine::checkLoss() {
+bool BattleEngine::checkLoss() {
     // return uint8_t(this->awakeMons & 0b11100000) == uint8_t(0) ;
     if (this->playerHealths[0] <= 0 && this->playerHealths[1] <= 0 && this->playerHealths[2] <= 0) {
         this->endEncounter();
@@ -102,8 +97,7 @@ BattleEngine::checkLoss() {
     return false;
 }
 
-bool
-BattleEngine::checkWin() {
+bool BattleEngine::checkWin() {
     // return uint8_t(this->awakeMons & 0b00000111) == uint8_t(0) ;
     if (this->opponentHealths[0] <= 0 && this->opponentHealths[1] <= 0 && this->opponentHealths[2] <= 0) {
         this->endEncounter();
@@ -113,8 +107,7 @@ BattleEngine::checkWin() {
 }
 
 // These are just place holders until menu & ai written for proper swapping
-bool
-BattleEngine::checkPlayerFaint() {
+bool BattleEngine::checkPlayerFaint() {
     if (this->playerHealths[this->playerIndex] <= 0) {
         this->playerIndex++;
         this->playerCur = this->playerParty[this->playerIndex];
@@ -126,8 +119,7 @@ BattleEngine::checkPlayerFaint() {
     return false;
 }
 
-bool
-BattleEngine::checkOpponentFaint() {
+bool BattleEngine::checkOpponentFaint() {
     if (this->opponentHealths[this->opponentIndex] <= 0) {
         this->opponentIndex++;
         this->opponentCur = &(this->opponent.party[this->opponentIndex]);
@@ -138,8 +130,7 @@ BattleEngine::checkOpponentFaint() {
 }
 
 // Need to add a win/loss check ejection
-void
-BattleEngine::playerActionFirst() {
+void BattleEngine::playerActionFirst() {
     this->commitAction(&this->playerAction, this->playerCur, this->opponentCur);
     if (this->checkOpponentFaint() || !this->activeBattle)
         return;
@@ -147,8 +138,7 @@ BattleEngine::playerActionFirst() {
     this->checkPlayerFaint();
 }
 
-void
-BattleEngine::opponentActionFirst() {
+void BattleEngine::opponentActionFirst() {
     this->commitAction(&this->opponentAction, this->opponentCur, this->playerCur);
     if (this->checkPlayerFaint() || !this->activeBattle)
         return;
@@ -156,8 +146,7 @@ BattleEngine::opponentActionFirst() {
     this->checkOpponentFaint();
 }
 
-void
-BattleEngine::changeCurMon(uint8_t id) {
+void BattleEngine::changeCurMon(uint8_t id) {
     int index = 0;
     for (uint8_t i = 0; i < 3; i++) {
         if (this->playerParty[i]->id == id) {
@@ -182,14 +171,12 @@ BattleEngine::changeCurMon(uint8_t id) {
     }
 }
 
-bool
-BattleEngine::tryCapture() {
+bool BattleEngine::tryCapture() {
     int roll = random(1, 10);
     return roll < 5;
 }
 
-void
-BattleEngine::endEncounter() {
+void BattleEngine::endEncounter() {
     this->arduboy->print(F("\nend encounter \n"));
     this->activeBattle = false;
     *this->state = GameState_t::WORLD;
@@ -201,14 +188,12 @@ BattleEngine::endEncounter() {
 //
 //////////////////////////////////////////////////////////////////////////////
 
-bool
-BattleEngine::getInput() {
+bool BattleEngine::getInput() {
     // arduboy input from menu
     return this->menu->actionInput(&this->playerAction);
 }
 
-void
-BattleEngine::opponentInput() {
+void BattleEngine::opponentInput() {
     // ai to select best move
     // For now just do the first slot attack
     this->opponentAction.setActionType(ActionType::ATTACK, Priority::NORMAL);
@@ -221,8 +206,7 @@ BattleEngine::opponentInput() {
 //
 //////////////////////////////////////////////////////////////////////////////
 
-void
-BattleEngine::commitAction(Action *action, Creature *commiter, Creature *reciever) {
+void BattleEngine::commitAction(Action *action, Creature *commiter, Creature *reciever) {
     switch (action->actionType) {
     case ActionType::ATTACK: {
         uint16_t damage = calculateDamage(action, commiter, reciever);
@@ -248,8 +232,7 @@ BattleEngine::commitAction(Action *action, Creature *commiter, Creature *recieve
     }
 }
 
-void
-BattleEngine::applyDamage(uint16_t damage, Creature *reciever) {
+void BattleEngine::applyDamage(uint16_t damage, Creature *reciever) {
     if (reciever == this->playerCur) {
         uint8_t hp = this->playerHealths[this->playerIndex];
         this->playerHealths[this->playerIndex] -= damage >= hp ? hp : damage;
@@ -259,8 +242,7 @@ BattleEngine::applyDamage(uint16_t damage, Creature *reciever) {
     }
 }
 
-uint16_t
-BattleEngine::calculateDamage(Action *action, Creature *committer, Creature *reciever) {
+uint16_t BattleEngine::calculateDamage(Action *action, Creature *committer, Creature *reciever) {
     // need to do something here with atk def stats
     Move move = committer->moveList[action->actionIndex];
     // float mod = getMatchupModifier(getMoveType(move),
@@ -286,8 +268,7 @@ BattleEngine::calculateDamage(Action *action, Creature *committer, Creature *rec
 //
 //////////////////////////////////////////////////////////////////////////////
 
-void
-BattleEngine::loadOpponent(uint8_t optID) {
+void BattleEngine::loadOpponent(uint8_t optID) {
     OpponentSeed_t seed = OpponentSeed_t{0, 0, 1};
     uint24_t rowAddress = FX::readIndexedUInt24(opts, optID);
     FX::readDataObject(rowAddress, seed);
@@ -296,14 +277,12 @@ BattleEngine::loadOpponent(uint8_t optID) {
     this->resetOpponent();
 }
 
-void
-BattleEngine::LoadCreature(uint8_t creatureID, uint8_t level) {
+void BattleEngine::LoadCreature(uint8_t creatureID, uint8_t level) {
     this->opponent.loadEncounterOpt(creatureID, level);
     this->resetOpponent();
 }
 
-void
-BattleEngine::loadPlayer(Player *player) {
+void BattleEngine::loadPlayer(Player *player) {
     this->playerParty[0] = &(player->party[0]);
     this->playerParty[1] = &(player->party[1]);
     this->playerParty[2] = &(player->party[2]);
@@ -321,8 +300,7 @@ BattleEngine::loadPlayer(Player *player) {
     this->menu->registerCreatureList(this->playerParty[1]->id, this->playerParty[2]->id);
 }
 
-void
-BattleEngine::resetOpponent() {
+void BattleEngine::resetOpponent() {
     this->opponentIndex = 0;
     this->opponentCur = &(this->opponent.party[0]);
     this->opponentHealths[0] = this->opponent.party[0].statlist.hp;
@@ -336,29 +314,25 @@ BattleEngine::resetOpponent() {
 //
 //////////////////////////////////////////////////////////////////////////////
 
-void
-BattleEngine::drawScene() {
+void BattleEngine::drawScene() {
     this->drawPlayer();
     this->drawOpponent();
 }
 
-void
-BattleEngine::drawOpponent() {
+void BattleEngine::drawOpponent() {
     // would be nice to flip this sprite
     // Sprites::drawSelfMasked(0, 0, creatureSprites, this->opponentCur->id);
     FX::drawBitmap(0, 0, creatureSprites, 1, dbmWhite);
     this->drawOpponentHP();
 }
 
-void
-BattleEngine::drawPlayer() {
+void BattleEngine::drawPlayer() {
     // Sprites::drawSelfMasked(96, 0, creatureSprites, this->playerCur->id);
     FX::drawBitmap(96, 0, creatureSprites, this->playerCur->id, dbmWhite);
     this->drawPlayerHP();
 }
 
-void
-BattleEngine::drawPlayerHP() {
+void BattleEngine::drawPlayerHP() {
     this->arduboy->setTextColor(WHITE);
     this->arduboy->setCursor(70, 35);
     this->arduboy->print(F("HP: "));
@@ -371,8 +345,7 @@ BattleEngine::drawPlayerHP() {
     this->arduboy->setTextColor(BLACK);
 }
 
-void
-BattleEngine::drawOpponentHP() {
+void BattleEngine::drawOpponentHP() {
     this->arduboy->setTextColor(WHITE);
     this->arduboy->setCursor(2, 35);
     this->arduboy->print(F("HP: "));
