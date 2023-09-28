@@ -27,7 +27,7 @@ jobs:
       run: arduino-cli core install arduino:avr 
     
     - name: install Arduboy board
-      run: arduino-cli core install arduboy:avr 
+      run: arduino-cli core install arduboy-homemade:avr 
 
     - name: Install Arduboy library
       run: arduino-cli lib install Arduboy2
