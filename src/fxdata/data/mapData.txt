@@ -1,6 +1,4 @@
 namespace MapData {
-        uint8_t map1Height = 30 
-        uint8_t map1Width = 20 
         uint8_t map1 = {
                 { 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24},
                 { 24, 0, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 24},
@@ -34,8 +32,6 @@ namespace MapData {
                 { 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24}
         };
 
-        uint8_t house1Height = 8 
-        uint8_t house1Width = 8 
         uint8_t house1 = {
                 { 2, 4, 4, 4, 4, 4, 4, 3},
                 { 5, 1, 1, 1, 1, 1, 1, 13},
@@ -47,21 +43,27 @@ namespace MapData {
                 { 10, 12, 12, 28, 12, 12, 12, 11}
         };
 
-        uint24_t maps[] = {map1, house1}
-        uint8_t widths = {20, 8}
-        uint8_t heights = {30, 8}
+        uint24_t m1submaps = {house1,}
+        uint8_t m1submapcount = 1
+
+        uint8_t m1widths = {20, 8}
+        uint8_t m1heights = {30, 8}
 
 
-        uint8_t map1Warps = {
-            {27, 13, 1}
+        uint8_t map1Warps[] = {
+            {27, 13, 0, 1},
+            {27, 13, 0, 1},
         }
-        uint8_t  house1Warps = {
-            {7, 3, 0}
+        uint8_t  house1Warps[] = {
+            {7, 3, 0,0},
         }
+        uint8_t m1warpCounts = { 2, 1 }
 
         uint24_t warps[] = {
-            map1Warps, house1Warps
+            {map1Warps, house1Warps},
         }
 
-
+        uint24_t maps[] = {
+            {m1submapcount, map1, m1submaps, m1warpCounts, m1widths, m1heights},
+        }
 } namespace_end

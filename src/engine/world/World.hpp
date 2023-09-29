@@ -4,6 +4,7 @@
 #include "../battle/Battle.hpp"
 #include "../game/Gamestate.hpp"
 #include "Encounter.hpp"
+#include "Event.hpp"
 #include "Map.hpp"
 #include <ArduboyFX.h>
 
@@ -25,7 +26,14 @@ class WorldEngine {
     uint8_t nextTile;
     int curx, cury;
     int debug;
-    uint8_t warps[6][3];
+
+    uint8_t mapIndex;
+    uint8_t submapCount;
+    uint24_t submapAdders[6];
+
+    uint8_t warps[6][4];
+    uint24_t debugAdder;
+    Event events[6];
 
   public:
     WorldEngine();
@@ -39,7 +47,8 @@ class WorldEngine {
     void encounter();
     bool moveable();
 
-    void loadMap(uint8_t mapIndex);
+    void loadMap(uint8_t mapIndex, uint8_t submapIndex);
     void warp();
     void setPos(uint8_t x, uint8_t y);
+    void loadEventTable();
 };

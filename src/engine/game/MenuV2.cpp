@@ -38,7 +38,7 @@ void __attribute__((optimize("-O0"))) MenuV2::pushEvent(Event event) {
     }
 
     this->head++;
-    this->popMenuStack[this->head] = PopUpMenu{0, 34, 120, 30, event.event.textAddress};
+    this->popMenuStack[this->head] = PopUpMenu{0, 34, 120, 30, event.textAddress};
 }
 
 void MenuV2::popMenu() {

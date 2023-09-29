@@ -4,12 +4,9 @@
 
 #include "../../fxdata/fxdata.h"
 
-void __attribute__((optimize("-O0"))) Event::loadEvent(uint8_t index) {
-    EventPack event;
-    uint24_t address = EventData::eventLocationTable;
-    FX::readDataObject(address, event);
-    this->event = event;
-    address = FX::readIndexedUInt24(EventData::eventTextTable, index);
-    this->event.textAddress = address;
-    FX::readDataBytes(address, this->text, 20);
+void __attribute__((optimize("-O0"))) Event::loadEvent(uint8_t mapIndex, uint8_t eventIndex) {
+    uint24_t address = EventData::eventTable + sizeof(uint24_t) * mapIndex;
+    address = FX::readIndexedUInt24(address, eventIndex);
+    FX::readDataObject(FX::readIndexedUInt24(address,0), this->cords);
+    this->textAddress = FX::readIndexedUInt24(address, 1);
 }
