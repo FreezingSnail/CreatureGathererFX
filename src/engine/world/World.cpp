@@ -28,10 +28,11 @@ WorldEngine::WorldEngine(Arduboy2 *arduboy, GameState_t *state, BattleEngine *ba
     this->mapy = 0;
     this->curx = 4;
     this->cury = 2;
-    this->loadMap(1);
+    this->loadMap(0, 1);
 }
 
-void WorldEngine::loadMap(uint8_t mapIndex) {
+void __attribute__((optimize("-O0"))) WorldEngine::loadMap(uint8_t mapIndex, uint8_t submapIndex) {
+    /*
     FX::readDataObject(MapData::widths + sizeof(uint8_t) * mapIndex, this->width);
     FX::readDataObject(MapData::heights + sizeof(uint8_t) * mapIndex, this->height);
 
@@ -42,6 +43,42 @@ void WorldEngine::loadMap(uint8_t mapIndex) {
     }
     rowAddress = FX::readIndexedUInt24(MapData::warps, mapIndex);
     FX::readDataObject(rowAddress, this->warps);
+    */
+
+    this->mapIndex = mapIndex;
+    // warp zones
+    uint24_t warpsAddress = MapData::warps + sizeof(uint24_t) * mapIndex;
+    warpsAddress = FX::readIndexedUInt24(warpsAddress, submapIndex);
+    FX::readDataObject(warpsAddress, this->warps);
+
+    // map data
+    // submap count
+    uint24_t address = MapData::maps + ((sizeof(uint24_t) * 5) * mapIndex);
+    FX::readDataObject(FX::readIndexedUInt24(address, 0), this->submapCount);
+
+    // map dims
+    uint24_t widthAddress = FX::readIndexedUInt24(address, 4);
+    uint24_t heightsAddress = FX::readIndexedUInt24(address, 5);
+    FX::readDataObject(widthAddress + sizeof(uint8_t) * submapIndex, this->width);
+    FX::readDataObject(heightsAddress + sizeof(uint8_t) * submapIndex, this->height);
+
+    // map address
+    uint24_t mapAddress;
+    if (submapIndex == 0) {
+        mapAddress = FX::readIndexedUInt24(address, 1);
+
+    } else {
+        mapAddress = FX::readIndexedUInt24(address, 2);
+        mapAddress = FX::readIndexedUInt24(mapAddress, submapIndex - 1);
+    }
+    this->debugAdder = mapAddress;
+
+    for (uint8_t i = 0; i < this->height; i++) {
+        uint24_t offset = (sizeof(uint8_t) * this->width) * i;
+        FX::readDataBytes(mapAddress + offset, gameMap[i], sizeof(uint8_t) * this->width);
+    }
+
+    uint24_t warpCountsAddress = FX::readIndexedUInt24(address, 3);
 }
 
 void WorldEngine::drawMap() {
@@ -196,7 +233,7 @@ bool __attribute__((optimize("-O0"))) WorldEngine::moveable() {
 void __attribute__((optimize("-O0"))) WorldEngine::warp() {
     for (uint8_t i = 0; i < 6; i++) {
         if (this->curx == this->warps[i][1] && this->cury == this->warps[i][0]) {
-            this->loadMap(this->warps[i][2]);
+            this->loadMap(this->warps[i][2], this->warps[i][3]);
             this->setPos(warps[i][1], warps[i][0]);
             return;
         }

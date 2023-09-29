@@ -1,5 +1,4 @@
 #pragma once
-#include <avr/pgmspace.h>
 
 // todo research huffman encoding to squash these in mem
 typedef struct CreatureD {

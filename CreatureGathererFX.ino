@@ -40,7 +40,7 @@ void setup() {
     menu = Menu(&arduboy, &state, &player);
     engine = BattleEngine(&arduboy, &player, &menu, &state);
     arena = Arena(&menu, &player, &engine);
-    event.loadEvent(0);
+    event.loadEvent(0,0);
     menu2 = MenuV2(&arduboy);
     menu2.pushEvent(event);
 }

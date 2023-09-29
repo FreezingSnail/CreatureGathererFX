@@ -3,14 +3,18 @@
 #include <stdint.h>
 
 struct EventPack {
-    uint8_t x, y, spriteIndex;
+    uint24_t cordAddress;
     uint24_t textAddress;
+};
+
+struct EventCords {
+    uint8_t x, y, spriteIndex;
 };
 
 class Event {
   public:
-    EventPack event;
-    uint8_t text[30];
+    EventCords cords;
+    uint24_t textAddress;
 
-    void loadEvent(uint8_t index);
+    void loadEvent(uint8_t index, uint8_t eventIndex);
 };

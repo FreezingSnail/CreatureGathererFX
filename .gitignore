@@ -1,4 +1,5 @@
 lib/*
+libs/*
 build/*
 .vscode/
 *.hex
