@@ -15,6 +15,7 @@ class Event {
   public:
     EventCords cords;
     uint24_t textAddress;
+    uint24_t debug;
 
-    void loadEvent(uint8_t index, uint8_t eventIndex);
+    void loadEvent(uint8_t index, uint8_t subIndex, uint8_t eventIndex);
 };

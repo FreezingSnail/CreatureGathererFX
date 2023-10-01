@@ -1,10 +1,26 @@
 namespace EventData {
-    uint8_t m1e1Text[] = "event1test\0";
-    uint8_t m1e1 = { 5, 5, 0};
-
-
-    uint24_t m1Events = {
+    uint8_t m1e1Text[] = "m1event1test\0";
+    uint8_t m1e1 = { 5,5,0};
+    uint24_t m1eTable =  {
         {m1e1, m1e1Text},
-    };
-    uint24_t eventTable = {m1Events};
+        {m1e1, m1e1Text}
+    }
+
+    uint8_t m1s1e1Text[] = "m1s1event1test\0";
+    uint8_t m1s1e1 = { 5,5,0};
+    uint8_t m1s1e21Text[] = "m1s1event2test\0";
+    uint8_t m1s1e2 = { 8,8,0};
+    uint24_t m1s1eTable =  {
+        {m1s1e1Text, m1s1e1},
+        {m1s1e21Text, m1s1e2}
+    }
+
+    m1Table = {
+        m1eTable, m1s1eTable
+    }
+
+
+    uint24_t eventTable[] = {
+        m1Table
+    }
 } namespace_end

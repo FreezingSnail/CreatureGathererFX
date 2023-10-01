@@ -13,3 +13,5 @@ libraries
 tools/image-converter.py 
 CreatureGathererFX.ino.with_bootloader.bin
 tools/creature_builder/*
+imgui.ini
+src/fxdata/images/npc_16x16.png:Zone.Identifier
