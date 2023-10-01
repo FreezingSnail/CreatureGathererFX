@@ -59,8 +59,11 @@ namespace MapData {
         }
         uint8_t m1warpCounts = { 2, 1 }
 
+        uint24_t m1warps[] = {
+            map1Warps, house1Warps
+        }
         uint24_t warps[] = {
-            {map1Warps, house1Warps},
+            m1warps
         }
 
         uint24_t maps[] = {

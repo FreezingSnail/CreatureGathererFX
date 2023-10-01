@@ -37,6 +37,7 @@ void __attribute__((optimize("-O0"))) WorldEngine::loadMap(uint8_t mapIndex, uin
     FX::readDataObject(MapData::heights + sizeof(uint8_t) * mapIndex, this->height);
 
     uint24_t rowAddress = FX::readIndexedUInt24(MapData::maps, mapIndex);
+    // rowAddress = FX::readIndexedUInt24(rowAddress, mapIndex);
     for (uint8_t i = 0; i < this->height; i++) {
         uint24_t offset = (sizeof(uint8_t) * this->width) * i;
         FX::readDataBytes(rowAddress + offset, gameMap[i], sizeof(uint8_t) * this->width);
@@ -79,6 +80,10 @@ void __attribute__((optimize("-O0"))) WorldEngine::loadMap(uint8_t mapIndex, uin
     }
 
     uint24_t warpCountsAddress = FX::readIndexedUInt24(address, 3);
+
+    for (uint8_t i = 0; i < 6; i++) {
+        this->events[i].loadEvent(mapIndex, submapIndex, i);
+    }
 }
 
 void WorldEngine::drawMap() {

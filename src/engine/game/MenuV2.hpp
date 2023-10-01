@@ -15,7 +15,7 @@ class MenuV2 {
 
     MenuV2();
     MenuV2(Arduboy2 *arduboy);
-    void drawPopMenu();
+    bool drawPopMenu();
     void pushMenu(PopUpMenu menuInfo);
     void pushEvent(Event event);
     void popMenu();

@@ -6,8 +6,8 @@ using uint24_t = __uint24;
 
 // Initialize FX hardware using  FX::begin(FX_DATA_PAGE); in the setup() function.
 
-constexpr uint16_t FX_DATA_PAGE  = 0xffac;
-constexpr uint24_t FX_DATA_BYTES = 21502;
+constexpr uint16_t FX_DATA_PAGE  = 0xffab;
+constexpr uint24_t FX_DATA_BYTES = 21567;
 
 constexpr uint24_t characterSheet = 0x000000;
 constexpr uint16_t characterSheetWidth  = 12;
@@ -37,7 +37,6 @@ constexpr uint8_t  maskedFontFrames = 128;
 constexpr uint24_t npc = 0x004B34;
 constexpr uint16_t npcWidth  = 16;
 constexpr uint16_t npcHeight = 16;
-constexpr uint8_t  npcFrames = 2;
 
 constexpr uint24_t encounterRates = 0x004B78;
 constexpr uint24_t op1 = 0x004BC0;
@@ -155,23 +154,30 @@ namespace MoveData
 namespace EventData
 {
   constexpr uint24_t m1e1Text = 0x005121;
-  constexpr uint24_t m1e1 = 0x00512C;
-  constexpr uint24_t m1Events = 0x00512F;
-  constexpr uint24_t eventTable = 0x005135;
+  constexpr uint24_t m1e1 = 0x00512E;
+  constexpr uint24_t m1eTable = 0x005131;
+  constexpr uint24_t m1s1e1Text = 0x00513D;
+  constexpr uint24_t m1s1e1 = 0x00514C;
+  constexpr uint24_t m1s1e21Text = 0x00514F;
+  constexpr uint24_t m1s1e2 = 0x00515E;
+  constexpr uint24_t m1s1eTable = 0x005161;
+  constexpr uint24_t m1Table = 0x00516D;
+  constexpr uint24_t eventTable = 0x005173;
 }
 
 namespace MapData
 {
-  constexpr uint24_t map1 = 0x005138;
-  constexpr uint24_t house1 = 0x005390;
-  constexpr uint24_t m1submaps = 0x0053D0;
-  constexpr uint24_t m1submapcount = 0x0053D3;
-  constexpr uint24_t m1widths = 0x0053D4;
-  constexpr uint24_t m1heights = 0x0053D6;
-  constexpr uint24_t map1Warps = 0x0053D8;
-  constexpr uint24_t house1Warps = 0x0053E0;
-  constexpr uint24_t m1warpCounts = 0x0053E4;
-  constexpr uint24_t warps = 0x0053E6;
-  constexpr uint24_t maps = 0x0053EC;
+  constexpr uint24_t map1 = 0x005176;
+  constexpr uint24_t house1 = 0x0053CE;
+  constexpr uint24_t m1submaps = 0x00540E;
+  constexpr uint24_t m1submapcount = 0x005411;
+  constexpr uint24_t m1widths = 0x005412;
+  constexpr uint24_t m1heights = 0x005414;
+  constexpr uint24_t map1Warps = 0x005416;
+  constexpr uint24_t house1Warps = 0x00541E;
+  constexpr uint24_t m1warpCounts = 0x005422;
+  constexpr uint24_t m1warps = 0x005424;
+  constexpr uint24_t warps = 0x00542A;
+  constexpr uint24_t maps = 0x00542D;
 }
 

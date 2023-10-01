@@ -13,14 +13,15 @@ MenuV2::MenuV2() {}
 
 MenuV2::MenuV2(Arduboy2 *Arduboy2) { this->arduboy = arduboy; }
 
-void __attribute__((optimize("-O0"))) MenuV2::drawPopMenu() {
+bool __attribute__((optimize("-O0"))) MenuV2::drawPopMenu() {
     if (this->head < 0) {
-        return;
+        return false;
     }
     PopUpMenu curMenu = this->popMenuStack[this->head];
     drawRect(this->arduboy, &curMenu);
     FX::setCursor(curMenu.x + 3, curMenu.y + 3);
     FX::drawString(curMenu.textAddress);
+    return true;
 }
 
 void MenuV2::pushMenu(PopUpMenu info) {
