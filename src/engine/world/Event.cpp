@@ -16,3 +16,5 @@ void __attribute__((optimize("-O0"))) Event::loadEvent(uint8_t mapIndex, uint8_t
     FX::readDataObject(FX::readIndexedUInt24(address, 1), event);
     this->cords = event;
 }
+
+void Event::draw(int16_t mapx, int16_t mapy) { FX::drawBitmap(mapx, mapy, npc, 0, dbmMasked); }

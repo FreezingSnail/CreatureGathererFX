@@ -9,6 +9,8 @@
 #include "Map.hpp"
 
 #define TILE_SIZE 16
+constexpr uint8_t tileswide = (128 / TILE_SIZE) + 4;
+constexpr uint8_t tilestall = (64 / TILE_SIZE) + 4;
 
 bool __attribute__((optimize("-O0"))) warpTile(uint8_t x, uint8_t y) {
     uint8_t tile = gameMap[y][x];
@@ -36,7 +38,6 @@ void __attribute__((optimize("-O0"))) WorldEngine::loadMap(uint8_t mapIndex, uin
     // warp zones
     uint24_t warpsAddress = FX::readIndexedUInt24(MapData::warps, mapIndex);
     warpsAddress = FX::readIndexedUInt24(warpsAddress, submapIndex);
-    this->debug = warpsAddress;
     FX::readDataObject(warpsAddress, this->warps);
 
     // map data
@@ -59,14 +60,11 @@ void __attribute__((optimize("-O0"))) WorldEngine::loadMap(uint8_t mapIndex, uin
         mapAddress = FX::readIndexedUInt24(address, 2);
         mapAddress = FX::readIndexedUInt24(mapAddress, submapIndex - 1);
     }
-    this->debugAdder = mapAddress;
 
     for (uint8_t i = 0; i < this->height; i++) {
         uint24_t offset = (sizeof(uint8_t) * this->width) * i;
         FX::readDataBytes(mapAddress + offset, gameMap[i], sizeof(uint8_t) * this->width);
     }
-
-    uint24_t warpCountsAddress = FX::readIndexedUInt24(address, 3);
 
     for (uint8_t i = 0; i < 6; i++) {
         this->events[i].loadEvent(mapIndex, submapIndex, i);
@@ -74,9 +72,6 @@ void __attribute__((optimize("-O0"))) WorldEngine::loadMap(uint8_t mapIndex, uin
 }
 
 void WorldEngine::drawMap() {
-    const int tileswide = (128 / TILE_SIZE) + 4;
-    const int tilestall = (64 / TILE_SIZE) + 4;
-
     for (int y = 0; y < tilestall; y++) {
         for (int x = 0; x < tileswide; x++) {
             const int tilex = x - this->mapx / TILE_SIZE;
@@ -85,6 +80,37 @@ void WorldEngine::drawMap() {
                 FX::drawBitmap(x * TILE_SIZE + this->mapx % TILE_SIZE - 9, y * TILE_SIZE + this->mapy % TILE_SIZE - 8, tilesheet,
                                gameMap[tiley][tilex], dbmNormal);
             }
+        }
+    }
+}
+constexpr int8_t EVENT_X_OFFSET = WIDTH / 2;
+constexpr int8_t EVENT_Y_OFFSET = HEIGHT / 2;
+
+void WorldEngine::drawEvents() {
+    // mapx -> 0 @ 4 -> n*-16 + 64 offset
+    // mapy 0 @ 2 -> n*-16 + 32 offset
+    for (uint8_t i = 0; i < 6; i++) {
+        Event *e = &this->events[i];
+        if (e->cords.x < (this->curx + 6) && e->cords.x > (this->curx - 6) && e->cords.y < (this->cury + 3) &&
+            e->cords.y > (this->cury - 3)) {
+            // draw event
+            int16_t xOffset = e->cords.x - this->curx;
+            int16_t yOffset = e->cords.y - this->cury;
+            int xMod = 0;
+            int yMod = 0;
+            if (this->playerDirection == Up) {
+                yMod = 1;
+            } else if (this->playerDirection == Down) {
+                yMod = -1;
+            } else if (this->playerDirection == Left) {
+                xMod = 1;
+            } else if (this->playerDirection == Right) {
+                xMod = -1;
+            }
+
+            uint16_t x = EVENT_X_OFFSET - 9 + (xOffset * TILE_SIZE) + (this->stepTicker % TILE_SIZE) * xMod;
+            uint16_t y = EVENT_Y_OFFSET - 8 + (yOffset * TILE_SIZE) + (this->stepTicker % TILE_SIZE) * yMod;
+            e->draw(x, y);
         }
     }
 }
@@ -126,6 +152,7 @@ void WorldEngine::drawPlayer() {
 void __attribute__((optimize("-O0"))) WorldEngine::runMap() {
     this->drawMap();
     this->drawPlayer();
+    this->drawEvents();
 
     if (this->moving && this->moveable()) {
         this->moveChar();
@@ -183,7 +210,6 @@ void __attribute__((optimize("-O0"))) WorldEngine::encounter() {
         if (chance <= 10) {
             uint8_t creatureID = this->encounterTable.rollEncounter();
             uint8_t level = this->encounterTable.rollLevel();
-            this->debug = creatureID;
             this->battleEngine->startEncounter(creatureID, level);
             *this->state = GameState_t::BATTLE;
         }

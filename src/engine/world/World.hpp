@@ -41,6 +41,7 @@ class WorldEngine {
     void input();
     void runMap();
     void drawMap();
+    void drawEvents();
     void drawPlayer();
     void moveChar();
     uint8_t getTile();
