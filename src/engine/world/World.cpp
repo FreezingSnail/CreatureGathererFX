@@ -32,24 +32,11 @@ WorldEngine::WorldEngine(Arduboy2 *arduboy, GameState_t *state, BattleEngine *ba
 }
 
 void __attribute__((optimize("-O0"))) WorldEngine::loadMap(uint8_t mapIndex, uint8_t submapIndex) {
-    /*
-    FX::readDataObject(MapData::widths + sizeof(uint8_t) * mapIndex, this->width);
-    FX::readDataObject(MapData::heights + sizeof(uint8_t) * mapIndex, this->height);
-
-    uint24_t rowAddress = FX::readIndexedUInt24(MapData::maps, mapIndex);
-    // rowAddress = FX::readIndexedUInt24(rowAddress, mapIndex);
-    for (uint8_t i = 0; i < this->height; i++) {
-        uint24_t offset = (sizeof(uint8_t) * this->width) * i;
-        FX::readDataBytes(rowAddress + offset, gameMap[i], sizeof(uint8_t) * this->width);
-    }
-    rowAddress = FX::readIndexedUInt24(MapData::warps, mapIndex);
-    FX::readDataObject(rowAddress, this->warps);
-    */
-
     this->mapIndex = mapIndex;
     // warp zones
-    uint24_t warpsAddress = MapData::warps + sizeof(uint24_t) * mapIndex;
+    uint24_t warpsAddress = FX::readIndexedUInt24(MapData::warps, mapIndex);
     warpsAddress = FX::readIndexedUInt24(warpsAddress, submapIndex);
+    this->debug = warpsAddress;
     FX::readDataObject(warpsAddress, this->warps);
 
     // map data
