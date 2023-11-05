@@ -21,11 +21,12 @@ bool __attribute__((optimize("-O0"))) warpTile(uint8_t x, uint8_t y) {
 }
 
 WorldEngine::WorldEngine() {}
-WorldEngine::WorldEngine(Arduboy2 *arduboy, GameState_t *state, BattleEngine *battleEngine) {
+WorldEngine::WorldEngine(Arduboy2 *arduboy, GameState_t *state, BattleEngine *battleEngine, MenuV2 *menu2) {
     this->arduboy = arduboy;
     this->encounterTable = Encounter(arduboy);
     this->battleEngine = battleEngine;
     this->state = state;
+    this->menu2 = menu2;
     this->mapx = 0;
     this->mapy = 0;
     this->curx = 4;
@@ -156,8 +157,13 @@ void __attribute__((optimize("-O0"))) WorldEngine::runMap() {
 
     if (this->moving && this->moveable()) {
         this->moveChar();
-    } else {
+    } else if (!this->menu2->drawPopMenu()) {
+        this->interact();
         this->input();
+    } else {
+        if (this->arduboy->justPressed(A_BUTTON)) {
+            this->menu2->popMenu();
+        }
     }
 }
 
@@ -237,6 +243,12 @@ bool __attribute__((optimize("-O0"))) WorldEngine::moveable() {
     if (tilex < 0 || tiley < 0 || tilex >= this->width || tiley >= this->height) {
         return false;
     }
+
+    for (uint8_t i = 0; i < EVENTCOUNT; i++) {
+        Event e = this->events[i];
+        if (e.cords.x == tilex && e.cords.y == tiley)
+            return false;
+    }
     this->nextTile = gameMap[tiley][tilex];
     switch (this->nextTile) {
     case TREES:
@@ -248,7 +260,37 @@ bool __attribute__((optimize("-O0"))) WorldEngine::moveable() {
     }
 }
 
-void __attribute__((optimize("-O0"))) WorldEngine::warp() {
+void __attribute__((optimize("-O0"))) WorldEngine::interact() {
+    if (this->arduboy->justPressed(A_BUTTON)) {
+        this->debug = 1;
+        int tilex = this->curx;
+        int tiley = this->cury;
+        switch (this->playerDirection) {
+        case Up:
+            tiley--;
+            break;
+        case Down:
+            tiley++;
+            break;
+        case Left:
+            tilex--;
+            break;
+        case Right:
+            tilex++;
+            break;
+        }
+        for (uint8_t i = 0; i < EVENTCOUNT; i++) {
+            Event e = this->events[i];
+            if (e.cords.x == tilex && e.cords.y == tiley) {
+                this->debug = 2;
+                this->menu2->pushEvent(e);
+                return;
+            }
+        }
+    }
+}
+
+void WorldEngine::warp() {
     for (uint8_t i = 0; i < 6; i++) {
         if (this->curx == this->warps[i][1] && this->cury == this->warps[i][0]) {
             this->loadMap(this->warps[i][2], this->warps[i][3]);

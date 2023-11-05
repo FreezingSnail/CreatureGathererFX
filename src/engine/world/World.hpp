@@ -3,10 +3,14 @@
 
 #include "../battle/Battle.hpp"
 #include "../game/Gamestate.hpp"
+#include "../game/MenuV2.hpp"
+
 #include "Encounter.hpp"
 #include "Event.hpp"
 #include "Map.hpp"
 #include <ArduboyFX.h>
+
+#define EVENTCOUNT 6
 
 // Notes: character center on map at all times
 enum Direction { Up, Right, Down, Left };
@@ -17,6 +21,7 @@ class WorldEngine {
     Direction playerDirection;
     Encounter encounterTable;
     BattleEngine *battleEngine;
+    MenuV2 *menu2;
     int mapx, mapy;
     uint8_t height, width;
 
@@ -33,11 +38,11 @@ class WorldEngine {
 
     uint8_t warps[6][4];
     uint24_t debugAdder;
-    Event events[6];
+    Event events[EVENTCOUNT];
 
   public:
     WorldEngine();
-    WorldEngine(Arduboy2 *arduboy, GameState_t *state, BattleEngine *battleEngine);
+    WorldEngine(Arduboy2 *arduboy, GameState_t *state, BattleEngine *battleEngine, MenuV2 *menu2);
     void input();
     void runMap();
     void drawMap();
@@ -47,6 +52,7 @@ class WorldEngine {
     uint8_t getTile();
     void encounter();
     bool moveable();
+    void interact();
 
     void loadMap(uint8_t mapIndex, uint8_t submapIndex);
     void warp();

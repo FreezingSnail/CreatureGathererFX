@@ -14,7 +14,7 @@ void setup() {
     FX::begin(FX_DATA_PAGE);
     FX::setFont(arduboyFont, dcmNormal);   // select default font
     FX::setCursorRange(0, 32767);
-    world = WorldEngine(&arduboy, &state, &engine);
+    world = WorldEngine(&arduboy, &state, &engine, &menu2);
     player = Player();
 
     state = GameState_t::WORLD;
