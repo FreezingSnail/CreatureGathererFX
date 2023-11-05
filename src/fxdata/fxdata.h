@@ -7,7 +7,7 @@ using uint24_t = __uint24;
 // Initialize FX hardware using  FX::begin(FX_DATA_PAGE); in the setup() function.
 
 constexpr uint16_t FX_DATA_PAGE  = 0xffab;
-constexpr uint24_t FX_DATA_BYTES = 21567;
+constexpr uint24_t FX_DATA_BYTES = 21695;
 
 constexpr uint24_t characterSheet = 0x000000;
 constexpr uint16_t characterSheetWidth  = 12;
@@ -179,5 +179,10 @@ namespace MapData
   constexpr uint24_t m1warps = 0x005424;
   constexpr uint24_t warps = 0x00542A;
   constexpr uint24_t maps = 0x00542D;
+}
+
+namespace MoveLists
+{
+  constexpr uint24_t moveList = 0x00543F;
 }
 
