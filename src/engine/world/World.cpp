@@ -97,8 +97,8 @@ void WorldEngine::drawEvents() {
             // draw event
             int16_t xOffset = e->cords.x - this->curx;
             int16_t yOffset = e->cords.y - this->cury;
-            uint8_t xMod = 0;
-            uint8_t yMod = 0;
+            int xMod = 0;
+            int yMod = 0;
             if (this->playerDirection == Up) {
                 yMod = 1;
             } else if (this->playerDirection == Down) {
