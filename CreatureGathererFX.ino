@@ -21,7 +21,7 @@ void setup() {
     menu = Menu(&arduboy, &state, &player);
 
     engine = BattleEngine(&arduboy, &player, &menu, &state);
-    arena = Arena(&menu, &player, &engine);
+    arena = Arena(&menu, &player, &engine, &arduboy);
     menu2 = MenuV2(&arduboy);
     event = Event();
     // event.loadEvent(0, 1, 1);
