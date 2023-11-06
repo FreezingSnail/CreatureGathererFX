@@ -15,10 +15,7 @@
 #define dbf __attribute__((optimize("-O0")))
 
 BattleEngine::BattleEngine() {}
-BattleEngine::BattleEngine(Arduboy2 *arduboy, Player *player, Menu *menu, GameState_t *state) {
-    this->arduboy = arduboy;
-    this->player = player;
-    this->menu = menu;
+BattleEngine::BattleEngine(GameState_t *state) {
     this->state = state;
     this->activeBattle = false;
 }
@@ -29,20 +26,20 @@ BattleEngine::BattleEngine(Arduboy2 *arduboy, Player *player, Menu *menu, GameSt
 //
 //////////////////////////////////////////////////////////////////////////////
 
-void BattleEngine::startFight(uint8_t optID) {
+void BattleEngine::startFight(Arduboy2 *arduboy, Player *player, Menu *menu, uint8_t optID) {
     this->loadOpponent(optID);
-    this->loadPlayer(this->player);
+    this->loadPlayer(menu, player);
     *this->state = GameState_t::BATTLE;
     this->activeBattle = true;
-    this->arduboy->setTextColor(BLACK);
+    arduboy->setTextColor(BLACK);
 }
 
-void BattleEngine::startEncounter(uint8_t creatureID, uint8_t level) {
+void BattleEngine::startEncounter(Arduboy2 *arduboy, Player *player, Menu *menu, uint8_t creatureID, uint8_t level) {
     this->LoadCreature(creatureID, level);
-    this->loadPlayer(this->player);
+    this->loadPlayer(menu, player);
     *this->state = GameState_t::BATTLE;
     this->activeBattle = true;
-    this->arduboy->setTextColor(BLACK);
+    arduboy->setTextColor(BLACK);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -52,7 +49,7 @@ void BattleEngine::startEncounter(uint8_t creatureID, uint8_t level) {
 //////////////////////////////////////////////////////////////////////////////
 
 // Need to change something here for the flow of the game
-void BattleEngine::encounter() {
+void BattleEngine::encounter(Arduboy2 *arduboy, Player *player, Menu *menu) {
     if (this->checkLoss()) {
         this->activeBattle = false;
         return;
@@ -63,27 +60,27 @@ void BattleEngine::encounter() {
         return;
     }
 
-    this->drawScene();
-    this->menu->printMenu();
-    this->turnTick();
+    this->drawScene(arduboy);
+    menu->printMenu();
+    this->turnTick(player, menu);
 }
 
-void BattleEngine::turnTick() {
-    if (!this->getInput()) {
+void BattleEngine::turnTick(Player *player, Menu *menu) {
+    if (!this->getInput(menu)) {
         return;
     }
     this->opponentInput();
     int8_t order = (int8_t)this->playerAction.priority - (int8_t)this->opponentAction.priority;
     if (order > 0) {
-        this->playerActionFirst();
+        this->playerActionFirst(player, menu);
     } else if (order < 0) {
-        this->opponentActionFirst();
+        this->opponentActionFirst(player, menu);
     } else {
         order = this->playerCur->statlist.speed - this->opponentCur->statlist.speed;
         if (order > 0 || order == 0) {
-            this->playerActionFirst();
+            this->playerActionFirst(player, menu);
         } else if (order < 0) {
-            this->opponentActionFirst();
+            this->opponentActionFirst(player, menu);
         }
     }
 }
@@ -107,13 +104,12 @@ bool BattleEngine::checkWin() {
 }
 
 // These are just place holders until menu & ai written for proper swapping
-bool BattleEngine::checkPlayerFaint() {
+bool BattleEngine::checkPlayerFaint(Menu *menu) {
     if (this->playerHealths[this->playerIndex] <= 0) {
         this->playerIndex++;
         this->playerCur = this->playerParty[this->playerIndex];
         // this->awakeMons &= ~(1 << this->playerIndex);
-        this->menu->registerMoveList(this->playerCur->moves[0], this->playerCur->moves[1], this->playerCur->moves[2],
-                                     this->playerCur->moves[3]);
+        menu->registerMoveList(this->playerCur->moves[0], this->playerCur->moves[1], this->playerCur->moves[2], this->playerCur->moves[3]);
         return true;
     }
     return false;
@@ -130,23 +126,23 @@ bool BattleEngine::checkOpponentFaint() {
 }
 
 // Need to add a win/loss check ejection
-void BattleEngine::playerActionFirst() {
-    this->commitAction(&this->playerAction, this->playerCur, this->opponentCur);
+void BattleEngine::playerActionFirst(Player *player, Menu *menu) {
+    this->commitAction(player, menu, &this->playerAction, this->playerCur, this->opponentCur);
     if (this->checkOpponentFaint() || !this->activeBattle)
         return;
-    this->commitAction(&this->opponentAction, this->opponentCur, this->playerCur);
-    this->checkPlayerFaint();
+    this->commitAction(player, menu, &this->opponentAction, this->opponentCur, this->playerCur);
+    this->checkPlayerFaint(menu);
 }
 
-void BattleEngine::opponentActionFirst() {
-    this->commitAction(&this->opponentAction, this->opponentCur, this->playerCur);
-    if (this->checkPlayerFaint() || !this->activeBattle)
+void BattleEngine::opponentActionFirst(Player *player, Menu *menu) {
+    this->commitAction(player, menu, &this->opponentAction, this->opponentCur, this->playerCur);
+    if (this->checkPlayerFaint(menu) || !this->activeBattle)
         return;
-    this->commitAction(&this->playerAction, this->playerCur, this->opponentCur);
+    this->commitAction(player, menu, &this->playerAction, this->playerCur, this->opponentCur);
     this->checkOpponentFaint();
 }
 
-void BattleEngine::changeCurMon(uint8_t id) {
+void BattleEngine::changeCurMon(Menu *menu, uint8_t id) {
     uint8_t index = 0;
     for (uint8_t i = 0; i < 3; i++) {
         if (this->playerParty[i]->id == id) {
@@ -156,17 +152,16 @@ void BattleEngine::changeCurMon(uint8_t id) {
         }
     }
     this->playerCur = this->playerParty[index];
-    this->menu->registerMoveList(this->playerCur->moves[0], this->playerCur->moves[1], this->playerCur->moves[2],
-                                 this->playerCur->moves[3]);
+    menu->registerMoveList(this->playerCur->moves[0], this->playerCur->moves[1], this->playerCur->moves[2], this->playerCur->moves[3]);
     switch (index) {
     case 0:
-        this->menu->registerCreatureList(this->playerParty[1]->id, this->playerParty[2]->id);
+        menu->registerCreatureList(this->playerParty[1]->id, this->playerParty[2]->id);
         break;
     case 1:
-        this->menu->registerCreatureList(this->playerParty[0]->id, this->playerParty[2]->id);
+        menu->registerCreatureList(this->playerParty[0]->id, this->playerParty[2]->id);
         break;
     case 2:
-        this->menu->registerCreatureList(this->playerParty[0]->id, this->playerParty[1]->id);
+        menu->registerCreatureList(this->playerParty[0]->id, this->playerParty[1]->id);
         break;
     }
 }
@@ -177,7 +172,6 @@ bool BattleEngine::tryCapture() {
 }
 
 void BattleEngine::endEncounter() {
-    this->arduboy->print(F("\nend encounter \n"));
     this->activeBattle = false;
     *this->state = GameState_t::WORLD;
 }
@@ -188,9 +182,9 @@ void BattleEngine::endEncounter() {
 //
 //////////////////////////////////////////////////////////////////////////////
 
-bool BattleEngine::getInput() {
+bool BattleEngine::getInput(Menu *menu) {
     // arduboy input from menu
-    return this->menu->actionInput(&this->playerAction);
+    return menu->actionInput(&this->playerAction);
 }
 
 void BattleEngine::opponentInput() {
@@ -206,21 +200,21 @@ void BattleEngine::opponentInput() {
 //
 //////////////////////////////////////////////////////////////////////////////
 
-void BattleEngine::commitAction(Action *action, Creature *commiter, Creature *reciever) {
+void BattleEngine::commitAction(Player *player, Menu *menu, Action *action, Creature *commiter, Creature *reciever) {
     switch (action->actionType) {
     case ActionType::ATTACK: {
-        uint16_t damage = calculateDamage(action, commiter, reciever);
+        uint16_t damage = calculateDamage(menu, action, commiter, reciever);
         applyDamage(damage, reciever);
         break;
     }
     case ActionType::CATCH:
         if (this->tryCapture()) {
-            this->player->storeCreature(0, this->opponentCur->id, this->opponentCur->level);
+            player->storeCreature(0, this->opponentCur->id, this->opponentCur->level);
             endEncounter();
         }
         break;
     case ActionType::CHNGE:
-        this->changeCurMon(action->actionIndex);
+        this->changeCurMon(menu, action->actionIndex);
         break;
     case ActionType::ESCAPE:
         // should add a check in here for opponent vs random encounter
@@ -242,7 +236,7 @@ void BattleEngine::applyDamage(uint16_t damage, Creature *reciever) {
     }
 }
 
-uint16_t BattleEngine::calculateDamage(Action *action, Creature *committer, Creature *reciever) {
+uint16_t BattleEngine::calculateDamage(Menu *menu, Action *action, Creature *committer, Creature *reciever) {
     // need to do something here with atk def stats
     Move move = committer->moveList[action->actionIndex];
     // float mod = getMatchupModifier(getMoveType(move),
@@ -252,7 +246,7 @@ uint16_t BattleEngine::calculateDamage(Action *action, Creature *committer, Crea
     bool bonus = committer->moveTypeBonus(committer->moves[action->actionIndex]);
     uint16_t damage = (power + committer->statlist.attack) / reciever->statlist.defense;
     damage = applyModifier(damage, (Type)move.getMoveType(), reciever->types);
-    this->menu->printAttack(committer->id, committer->moves[action->actionIndex], Modifier::Same);
+    menu->printAttack(committer->id, committer->moves[action->actionIndex], Modifier::Same);
 
     // TODO (Snail) need to move this modifiers location in the formula
     if (bonus) {
@@ -282,7 +276,7 @@ void BattleEngine::LoadCreature(uint8_t creatureID, uint8_t level) {
     this->resetOpponent();
 }
 
-void BattleEngine::loadPlayer(Player *player) {
+void BattleEngine::loadPlayer(Menu *menu, Player *player) {
     this->playerParty[0] = &(player->party[0]);
     this->playerParty[1] = &(player->party[1]);
     this->playerParty[2] = &(player->party[2]);
@@ -295,9 +289,8 @@ void BattleEngine::loadPlayer(Player *player) {
 
     this->playerIndex = 0;
     this->playerCur = this->playerParty[0];
-    this->menu->registerMoveList(this->playerCur->moves[0], this->playerCur->moves[1], this->playerCur->moves[2],
-                                 this->playerCur->moves[3]);
-    this->menu->registerCreatureList(this->playerParty[1]->id, this->playerParty[2]->id);
+    menu->registerMoveList(this->playerCur->moves[0], this->playerCur->moves[1], this->playerCur->moves[2], this->playerCur->moves[3]);
+    menu->registerCreatureList(this->playerParty[1]->id, this->playerParty[2]->id);
 }
 
 void BattleEngine::resetOpponent() {
@@ -314,46 +307,46 @@ void BattleEngine::resetOpponent() {
 //
 //////////////////////////////////////////////////////////////////////////////
 
-void BattleEngine::drawScene() {
-    this->drawPlayer();
-    this->drawOpponent();
+void BattleEngine::drawScene(Arduboy2 *arduboy) {
+    this->drawPlayer(arduboy);
+    this->drawOpponent(arduboy);
 }
 
-void BattleEngine::drawOpponent() {
+void BattleEngine::drawOpponent(Arduboy2 *arduboy) {
     // would be nice to flip this sprite
     // Sprites::drawSelfMasked(0, 0, creatureSprites, this->opponentCur->id);
     FX::drawBitmap(0, 0, creatureSprites, 1, dbmWhite);
-    this->drawOpponentHP();
+    this->drawOpponentHP(arduboy);
 }
 
-void BattleEngine::drawPlayer() {
+void BattleEngine::drawPlayer(Arduboy2 *arduboy) {
     // Sprites::drawSelfMasked(96, 0, creatureSprites, this->playerCur->id);
     FX::drawBitmap(96, 0, creatureSprites, this->playerCur->id, dbmWhite);
-    this->drawPlayerHP();
+    this->drawPlayerHP(arduboy);
 }
 
-void BattleEngine::drawPlayerHP() {
-    this->arduboy->setTextColor(WHITE);
-    this->arduboy->setCursor(70, 35);
-    this->arduboy->print(F("HP: "));
-    this->arduboy->print((unsigned)this->playerHealths[this->playerIndex]);
-    this->arduboy->print(F("/"));
-    this->arduboy->print((unsigned)this->playerCur->statlist.hp);
-    // this->arduboy->setCursor(32, 2);
-    // this->arduboy->print(F("lv:"));
-    // this->arduboy->print(this->playerCur->level);
-    this->arduboy->setTextColor(BLACK);
+void BattleEngine::drawPlayerHP(Arduboy2 *arduboy) {
+    arduboy->setTextColor(WHITE);
+    arduboy->setCursor(70, 35);
+    arduboy->print(F("HP: "));
+    arduboy->print((unsigned)this->playerHealths[this->playerIndex]);
+    arduboy->print(F("/"));
+    arduboy->print((unsigned)this->playerCur->statlist.hp);
+    // arduboy->setCursor(32, 2);
+    // arduboy->print(F("lv:"));
+    // arduboy->print(this->playerCur->level);
+    arduboy->setTextColor(BLACK);
 }
 
-void BattleEngine::drawOpponentHP() {
-    this->arduboy->setTextColor(WHITE);
-    this->arduboy->setCursor(2, 35);
-    this->arduboy->print(F("HP: "));
-    this->arduboy->print((unsigned)this->opponentHealths[this->opponentIndex]);
-    this->arduboy->print(F("/"));
-    this->arduboy->print((unsigned)this->opponentCur->statlist.hp);
-    // this->arduboy->setCursor(64, 2);
-    // this->arduboy->print(F("lv:"));
-    // this->arduboy->print(this->opponentCur->level);
-    this->arduboy->setTextColor(BLACK);
+void BattleEngine::drawOpponentHP(Arduboy2 *arduboy) {
+    arduboy->setTextColor(WHITE);
+    arduboy->setCursor(2, 35);
+    arduboy->print(F("HP: "));
+    arduboy->print((unsigned)this->opponentHealths[this->opponentIndex]);
+    arduboy->print(F("/"));
+    arduboy->print((unsigned)this->opponentCur->statlist.hp);
+    // arduboy->setCursor(64, 2);
+    // arduboy->print(F("lv:"));
+    // arduboy->print(this->opponentCur->level);
+    arduboy->setTextColor(BLACK);
 }

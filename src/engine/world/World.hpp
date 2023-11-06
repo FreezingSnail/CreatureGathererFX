@@ -43,13 +43,13 @@ class WorldEngine {
     WorldEngine();
     WorldEngine(Arduboy2 *arduboy, GameState_t *state, BattleEngine *battleEngine, MenuV2 *menu2);
     void input();
-    void runMap();
+    void runMap(Player *player, Menu *menu);
     void drawMap();
     void drawEvents();
     void drawPlayer();
-    void moveChar();
+    void moveChar(Player *player, Menu *menu);
     uint8_t getTile();
-    void encounter();
+    void encounter(Arduboy2 *arduboy, Player *player, Menu *menu);
     bool moveable();
     void interact();
 

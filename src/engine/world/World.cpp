@@ -150,13 +150,13 @@ void WorldEngine::drawPlayer() {
     FX::drawBitmap(PLAYER_X_OFFSET, PLAYER_Y_OFFSET, characterSheet, frame, dbmNormal);
 }
 
-void __attribute__((optimize("-O0"))) WorldEngine::runMap() {
+void __attribute__((optimize("-O0"))) WorldEngine::runMap(Player *player, Menu *menu) {
     this->drawMap();
     this->drawPlayer();
     this->drawEvents();
 
     if (this->moving && this->moveable()) {
-        this->moveChar();
+        this->moveChar(player, menu);
     } else if (!this->menu2->drawPopMenu()) {
         this->interact();
         this->input();
@@ -167,7 +167,7 @@ void __attribute__((optimize("-O0"))) WorldEngine::runMap() {
     }
 }
 
-void WorldEngine::moveChar() {
+void WorldEngine::moveChar(Player *player, Menu *menu) {
     switch (this->playerDirection) {
     case Up:
         this->mapy++;
@@ -203,20 +203,20 @@ void WorldEngine::moveChar() {
         if (warpTile(this->curx, this->cury)) {
             this->warp();
         }
-        this->encounter();
+        this->encounter(this->arduboy, player, menu);
     }
 }
 
 uint8_t WorldEngine::getTile() { return (TileType)0; }
 
-void __attribute__((optimize("-O0"))) WorldEngine::encounter() {
+void __attribute__((optimize("-O0"))) WorldEngine::encounter(Arduboy2 *arduboy, Player *player, Menu *menu) {
     uint8_t t = gameMap[this->cury][this->curx];
     if (t == 0) {
         uint8_t chance = random(1, 101);
         if (chance <= 10) {
             uint8_t creatureID = this->encounterTable.rollEncounter();
             uint8_t level = this->encounterTable.rollLevel();
-            this->battleEngine->startEncounter(creatureID, level);
+            this->battleEngine->startEncounter(this->arduboy, player, menu, creatureID, level);
             *this->state = GameState_t::BATTLE;
         }
     }

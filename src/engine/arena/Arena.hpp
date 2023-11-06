@@ -6,10 +6,6 @@
 class Arena {
   private:
     uint8_t registerIndex;
-    Menu *menu;
-    Player *player;
-    BattleEngine *engine;
-    Arduboy2 *arduboy;
 
     uint8_t moveIndex;
     uint8_t moveCreature;
@@ -17,12 +13,11 @@ class Arena {
     uint32_t debug;
 
   public:
-    Arena();
-    Arena(Menu *menu, Player *player, BattleEngine *engine, Arduboy2 *arduboy);
-    void arenaLoop(Arduboy2 *arduboy);
-    void registerRentals();
-    void registerMoves();
+    Arena() = default;
+    void arenaLoop(Arduboy2 *arduboy, Menu *menu, Player *player, BattleEngine *engine);
+    void registerRentals(Menu *menu, Player *player);
+    void registerMoves(Arduboy2 *arduboy, Player *player);
     uint8_t selectOpponent();
-    void startBattle();
+    void startBattle(Arduboy2 *arduboy, BattleEngine *engine, Player *player, Menu *menu);
     void displayRegisteredCount(Arduboy2 *arduboy);
 };
