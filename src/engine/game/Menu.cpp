@@ -292,11 +292,6 @@ void Menu::printMenu() {
     };
 }
 
-void Menu::drawInfoRec() {
-    this->arduboy->fillRect(35, 1, 60, 30, WHITE);
-    this->arduboy->drawRect(36, 2, 58, 28, BLACK);
-}
-
 void Menu::printCursor() {
     switch (this->cursorIndex) {
     case 0:
@@ -352,8 +347,7 @@ void dbf Menu::printMoveMenu() {
     FX::setCursor(64, 55);
     rowAddress = FX::readIndexedUInt24(MoveData::moveNames, this->moveList[3]);
     FX::drawString(rowAddress);
-    this->drawInfoRec();
-    printMoveInfo(this->arduboy, this->moveList[cursorIndex]);
+    printMoveInfo(this->arduboy, this->moveList[cursorIndex], 38, 4);
 }
 
 void Menu::printItemMenu() {}

@@ -38,7 +38,6 @@ class Menu {
     bool actionInput(Action *action);
     void wait();
 
-    void drawInfoRec();
     void printMenu();
 
     // Arena menus

@@ -10,6 +10,8 @@ class Arena {
     uint8_t moveIndex;
     uint8_t moveCreature;
     uint8_t cursor;
+    uint8_t movePointer;
+    int8_t moves[16];
     uint32_t debug;
 
   public:

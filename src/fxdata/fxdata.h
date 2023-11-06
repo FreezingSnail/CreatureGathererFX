@@ -7,7 +7,7 @@ using uint24_t = __uint24;
 // Initialize FX hardware using  FX::begin(FX_DATA_PAGE); in the setup() function.
 
 constexpr uint16_t FX_DATA_PAGE  = 0xffab;
-constexpr uint24_t FX_DATA_BYTES = 21695;
+constexpr uint24_t FX_DATA_BYTES = 21563;
 
 constexpr uint24_t characterSheet = 0x000000;
 constexpr uint16_t characterSheetWidth  = 12;
@@ -116,73 +116,40 @@ namespace MoveData
   constexpr uint24_t move32 = 0x004FD8;
   constexpr uint24_t moveNames = 0x004FDA;
   constexpr uint24_t movePack = 0x00503D;
-  constexpr uint24_t movelistDebug = 0x00509D;
-  constexpr uint24_t movelist0 = 0x0050A1;
-  constexpr uint24_t movelist1 = 0x0050A5;
-  constexpr uint24_t movelist2 = 0x0050A9;
-  constexpr uint24_t movelist3 = 0x0050AD;
-  constexpr uint24_t movelist4 = 0x0050B1;
-  constexpr uint24_t movelist5 = 0x0050B5;
-  constexpr uint24_t movelist6 = 0x0050B9;
-  constexpr uint24_t movelist7 = 0x0050BD;
-  constexpr uint24_t movelist8 = 0x0050C1;
-  constexpr uint24_t movelist9 = 0x0050C5;
-  constexpr uint24_t movelist10 = 0x0050C9;
-  constexpr uint24_t movelist11 = 0x0050CD;
-  constexpr uint24_t movelist12 = 0x0050D1;
-  constexpr uint24_t movelist13 = 0x0050D5;
-  constexpr uint24_t movelist14 = 0x0050D9;
-  constexpr uint24_t movelist15 = 0x0050DD;
-  constexpr uint24_t movelist16 = 0x0050E1;
-  constexpr uint24_t movelist17 = 0x0050E5;
-  constexpr uint24_t movelist18 = 0x0050E9;
-  constexpr uint24_t movelist19 = 0x0050ED;
-  constexpr uint24_t movelist20 = 0x0050F1;
-  constexpr uint24_t movelist21 = 0x0050F5;
-  constexpr uint24_t movelist22 = 0x0050F9;
-  constexpr uint24_t movelist23 = 0x0050FD;
-  constexpr uint24_t movelist24 = 0x005101;
-  constexpr uint24_t movelist25 = 0x005105;
-  constexpr uint24_t movelist26 = 0x005109;
-  constexpr uint24_t movelist27 = 0x00510D;
-  constexpr uint24_t movelist28 = 0x005111;
-  constexpr uint24_t movelist29 = 0x005115;
-  constexpr uint24_t movelist30 = 0x005119;
-  constexpr uint24_t movelist31 = 0x00511D;
 }
 
 namespace EventData
 {
-  constexpr uint24_t m1e1Text = 0x005121;
-  constexpr uint24_t m1e1 = 0x00512E;
-  constexpr uint24_t m1eTable = 0x005131;
-  constexpr uint24_t m1s1e1Text = 0x00513D;
-  constexpr uint24_t m1s1e1 = 0x00514C;
-  constexpr uint24_t m1s1e21Text = 0x00514F;
-  constexpr uint24_t m1s1e2 = 0x00515E;
-  constexpr uint24_t m1s1eTable = 0x005161;
-  constexpr uint24_t m1Table = 0x00516D;
-  constexpr uint24_t eventTable = 0x005173;
+  constexpr uint24_t m1e1Text = 0x00509D;
+  constexpr uint24_t m1e1 = 0x0050AA;
+  constexpr uint24_t m1eTable = 0x0050AD;
+  constexpr uint24_t m1s1e1Text = 0x0050B9;
+  constexpr uint24_t m1s1e1 = 0x0050C8;
+  constexpr uint24_t m1s1e21Text = 0x0050CB;
+  constexpr uint24_t m1s1e2 = 0x0050DA;
+  constexpr uint24_t m1s1eTable = 0x0050DD;
+  constexpr uint24_t m1Table = 0x0050E9;
+  constexpr uint24_t eventTable = 0x0050EF;
 }
 
 namespace MapData
 {
-  constexpr uint24_t map1 = 0x005176;
-  constexpr uint24_t house1 = 0x0053CE;
-  constexpr uint24_t m1submaps = 0x00540E;
-  constexpr uint24_t m1submapcount = 0x005411;
-  constexpr uint24_t m1widths = 0x005412;
-  constexpr uint24_t m1heights = 0x005414;
-  constexpr uint24_t map1Warps = 0x005416;
-  constexpr uint24_t house1Warps = 0x00541E;
-  constexpr uint24_t m1warpCounts = 0x005422;
-  constexpr uint24_t m1warps = 0x005424;
-  constexpr uint24_t warps = 0x00542A;
-  constexpr uint24_t maps = 0x00542D;
+  constexpr uint24_t map1 = 0x0050F2;
+  constexpr uint24_t house1 = 0x00534A;
+  constexpr uint24_t m1submaps = 0x00538A;
+  constexpr uint24_t m1submapcount = 0x00538D;
+  constexpr uint24_t m1widths = 0x00538E;
+  constexpr uint24_t m1heights = 0x005390;
+  constexpr uint24_t map1Warps = 0x005392;
+  constexpr uint24_t house1Warps = 0x00539A;
+  constexpr uint24_t m1warpCounts = 0x00539E;
+  constexpr uint24_t m1warps = 0x0053A0;
+  constexpr uint24_t warps = 0x0053A6;
+  constexpr uint24_t maps = 0x0053A9;
 }
 
 namespace MoveLists
 {
-  constexpr uint24_t moveList = 0x00543F;
+  constexpr uint24_t moveList = 0x0053BB;
 }
 

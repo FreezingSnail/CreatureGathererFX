@@ -15,14 +15,14 @@
 //  id#   type   power
 
 struct MoveBitSet {
-    uint8_t type : 3;
-    uint8_t power : 4;
-    uint8_t physical : 1;
+    uint8_t type;
+    uint8_t power;
+    uint8_t physical;
 };
 
 static MoveBitSet getMovePack(uint8_t index) {
     MoveBitSet move;
-    uint24_t rowAddress = FX::readIndexedUInt24(MoveData::movePack, index);
+    uint24_t rowAddress = MoveData::movePack + sizeof(MoveBitSet) * index;
     FX::readDataObject(rowAddress, move);
     return move;
 }
