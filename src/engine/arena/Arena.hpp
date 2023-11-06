@@ -7,6 +7,7 @@ class Arena {
   private:
     uint8_t registerIndex;
     bool start;
+    uint8_t cursor;
     Menu *menu;
     Player *player;
     BattleEngine *engine;
