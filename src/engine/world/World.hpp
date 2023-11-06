@@ -22,15 +22,14 @@ class WorldEngine {
     Encounter encounterTable;
     BattleEngine *battleEngine;
     MenuV2 *menu2;
-    int mapx, mapy;
+    uint8_t mapx, mapy;
     uint8_t height, width;
 
     bool moving;
     uint8_t stepTicker;
     GameState_t *state;
     uint8_t nextTile;
-    int curx, cury;
-    int debug;
+    uint8_t curx, cury;
 
     uint8_t mapIndex;
     uint8_t submapCount;

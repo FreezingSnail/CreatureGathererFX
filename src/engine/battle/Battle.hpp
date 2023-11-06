@@ -29,8 +29,6 @@ class BattleEngine {
 
     bool activeBattle;
 
-    int db;
-
   public:
     BattleEngine();
     BattleEngine(Arduboy2 *arduboy, Player *player, Menu *menu, GameState_t *state);
