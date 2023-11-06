@@ -8,6 +8,8 @@
 
 void Arena::arenaLoop(Arduboy2 *arduboy, Menu *menu, Player *player, BattleEngine *engine) {
     if (this->moveIndex == 12) {
+        this->cursor = 0;
+        this->movePointer = 0;
         this->moveIndex = 0;
         this->registerIndex = 0;
         this->startBattle(arduboy, engine, player, menu);
@@ -67,7 +69,6 @@ void Arena::registerMoves(Arduboy2 *arduboy, Player *player) {
     uint32_t movePool = FX::readIndexedUInt32(MoveLists::moveList, 0);
     int8_t moves[16];
     validMoves(movePool, moves);
-    validMoves(movePool, this->moves);
     arduboy->setCursor(0, 0);
     arduboy->print(this->moveIndex);
     addr = FX::readIndexedUInt24(CreatureData::creatureNames, curMonID);
@@ -91,7 +92,8 @@ void Arena::registerMoves(Arduboy2 *arduboy, Player *player) {
     arduboy->print(F(">"));
 
     if (arduboy->justPressed(A_BUTTON)) {
-        player->party[this->moveCreature].setMove(this->moveIndex % 4, this->cursor);
+        this->cursor = moves[this->movePointer];
+        player->party[this->moveCreature].setMove(this->cursor, this->moveIndex % 4);
         this->moveIndex++;
     }
     if (arduboy->justPressed(DOWN_BUTTON)) {
