@@ -17,7 +17,7 @@ void setup() {
     world = WorldEngine(&arduboy, &state, &engine, &menu2);
     player = Player();
 
-    state = GameState_t::WORLD;
+    state = GameState_t::ARENA;
     menu = Menu(&arduboy, &state, &player);
 
     engine = BattleEngine(&arduboy, &player, &menu, &state);
