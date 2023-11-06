@@ -29,4 +29,5 @@ void Player::loadreature(uint8_t index, uint8_t creatureIndex) {
 
 void Player::setCreature(uint8_t index, CreatureData_t seed) { this->party[index].load(seed); }
 
-void Player::storeCreature(uint8_t slot, uint8_t id, uint8_t level) { this->storedCreatures[slot] = caughtCreature{id, level}; }
+void Player::storeCreature(uint8_t slot, uint8_t id, uint8_t level) {   // this->storedCreatures[slot] = caughtCreature{id, level};
+}

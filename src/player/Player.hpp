@@ -16,7 +16,7 @@ class Player {
     uint8_t creatureHPs[3];
     Item items[10];
 
-    caughtCreature storedCreatures[6];
+    // caughtCreature storedCreatures[6];
 
     Player();
     void loadreature(uint8_t index, uint8_t creatureIndex);
