@@ -73,10 +73,10 @@ void __attribute__((optimize("-O0"))) WorldEngine::loadMap(uint8_t mapIndex, uin
 }
 
 void WorldEngine::drawMap() {
-    for (int y = 0; y < tilestall; y++) {
-        for (int x = 0; x < tileswide; x++) {
-            const int tilex = x - this->mapx / TILE_SIZE;
-            const int tiley = y - this->mapy / TILE_SIZE;
+    for (uint8_t y = 0; y < tilestall; y++) {
+        for (uint8_t x = 0; x < tileswide; x++) {
+            const uint8_t tilex = x - this->mapx / TILE_SIZE;
+            const uint8_t tiley = y - this->mapy / TILE_SIZE;
             if (tilex >= 0 && tiley >= 0 && tilex < this->width && tiley < this->height) {
                 FX::drawBitmap(x * TILE_SIZE + this->mapx % TILE_SIZE - 9, y * TILE_SIZE + this->mapy % TILE_SIZE - 8, tilesheet,
                                gameMap[tiley][tilex], dbmNormal);
@@ -97,8 +97,8 @@ void WorldEngine::drawEvents() {
             // draw event
             int16_t xOffset = e->cords.x - this->curx;
             int16_t yOffset = e->cords.y - this->cury;
-            int xMod = 0;
-            int yMod = 0;
+            uint8_t xMod = 0;
+            uint8_t yMod = 0;
             if (this->playerDirection == Up) {
                 yMod = 1;
             } else if (this->playerDirection == Down) {
@@ -212,7 +212,7 @@ uint8_t WorldEngine::getTile() { return (TileType)0; }
 void __attribute__((optimize("-O0"))) WorldEngine::encounter() {
     uint8_t t = gameMap[this->cury][this->curx];
     if (t == 0) {
-        int chance = random(1, 101);
+        uint8_t chance = random(1, 101);
         if (chance <= 10) {
             uint8_t creatureID = this->encounterTable.rollEncounter();
             uint8_t level = this->encounterTable.rollLevel();
@@ -223,8 +223,8 @@ void __attribute__((optimize("-O0"))) WorldEngine::encounter() {
 }
 
 bool __attribute__((optimize("-O0"))) WorldEngine::moveable() {
-    int tilex = this->curx;
-    int tiley = this->cury;
+    uint8_t tilex = this->curx;
+    uint8_t tiley = this->cury;
     switch (this->playerDirection) {
     case Up:
         tiley--;
@@ -262,9 +262,8 @@ bool __attribute__((optimize("-O0"))) WorldEngine::moveable() {
 
 void __attribute__((optimize("-O0"))) WorldEngine::interact() {
     if (this->arduboy->justPressed(A_BUTTON)) {
-        this->debug = 1;
-        int tilex = this->curx;
-        int tiley = this->cury;
+        uint8_t tilex = this->curx;
+        uint8_t tiley = this->cury;
         switch (this->playerDirection) {
         case Up:
             tiley--;
@@ -282,7 +281,6 @@ void __attribute__((optimize("-O0"))) WorldEngine::interact() {
         for (uint8_t i = 0; i < EVENTCOUNT; i++) {
             Event e = this->events[i];
             if (e.cords.x == tilex && e.cords.y == tiley) {
-                this->debug = 2;
                 this->menu2->pushEvent(e);
                 return;
             }

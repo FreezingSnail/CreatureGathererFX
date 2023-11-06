@@ -24,12 +24,11 @@ class Menu {
     uint8_t moveList[4];
     uint8_t creatureList[2];
     // pointers to the item name strings based on the current creature moves
-    char *items[32];
+    // char *items[32];
 
     int8_t cursorIndex;
     bool queued;
     Action queuedAction;
-    MoveBitSet debug_m;
 
   public:
     Menu();

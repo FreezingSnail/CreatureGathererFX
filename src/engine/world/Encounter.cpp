@@ -11,7 +11,7 @@ Encounter::Encounter(Arduboy2 *arduboy) {
     this->loadEncounterTable(0);
 }
 
-void __attribute__((optimize("-O0"))) Encounter::loadEncounterTable(int areaIndex) {
+void __attribute__((optimize("-O0"))) Encounter::loadEncounterTable(uint8_t areaIndex) {
     EncounterTable_t table;
     uint24_t rowAddress = encounterRates + (sizeof(EncounterTable_t) * areaIndex);
     FX::readDataObject(rowAddress, table);

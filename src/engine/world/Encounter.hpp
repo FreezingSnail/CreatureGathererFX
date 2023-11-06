@@ -27,7 +27,7 @@ class Encounter {
   public:
     Encounter();
     Encounter(Arduboy2 *arduboy);
-    void loadEncounterTable(int areaIndex);
+    void loadEncounterTable(uint8_t areaIndex);
     // returns creatureID based on available encounters and rates of current
     // EncounterTable
     uint8_t rollEncounter();
