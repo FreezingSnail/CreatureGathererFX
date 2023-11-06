@@ -1,6 +1,7 @@
 #include "Arena.hpp"
 #include "../../player/Player.hpp"
 #include "../battle/Battle.hpp"
+#include "../draw.h"
 #include "../game/Menu.hpp"
 #include <Arduboy2.h>
 #include <ArduboyFX.h>
@@ -32,6 +33,26 @@ void Arena::registerRentals(Menu *menu, Player *player) {
     }
 }
 
+static void validMoves(uint32_t movePool, int8_t *moves) {
+    uint8_t bitIndex = 0;
+    uint8_t bitGood = 0;
+    for (uint8_t i = 0; i < 16; i++) {
+        moves[i] = -1;
+    }
+    for (uint8_t i = 0; i < 16; i++) {
+        while (bitIndex < 32) {
+            bitGood = (movePool >> (31 - bitIndex)) & 1;
+            if (bitGood) {
+                moves[i] = bitIndex;
+                bitIndex++;
+                break;
+            }
+            bitGood = 0;
+            bitIndex++;
+        }
+    }
+}
+
 void Arena::registerMoves(Arduboy2 *arduboy, Player *player) {
 
     if (this->moveIndex > 7) {
@@ -44,40 +65,51 @@ void Arena::registerMoves(Arduboy2 *arduboy, Player *player) {
     uint8_t curMonID = player->party[this->moveCreature].id;
     uint24_t addr = MoveLists::moveList + sizeof(uint32_t) * curMonID;
     uint32_t movePool = FX::readIndexedUInt32(MoveLists::moveList, 0);
+    int8_t moves[16];
+    validMoves(movePool, moves);
+    validMoves(movePool, this->moves);
     arduboy->setCursor(0, 0);
     arduboy->print(this->moveIndex);
     addr = FX::readIndexedUInt24(CreatureData::creatureNames, curMonID);
     FX::setCursor(0, 10);
     FX::drawString(addr);
-    uint8_t bitIndex = this->cursor;
-    uint8_t bitGood = 0;
     this->debug = movePool;
+    arduboy->setCursor(10, 0);
+    arduboy->print(this->cursor);
+    arduboy->setCursor(20, 0);
+    arduboy->print(this->movePointer);
     for (uint8_t i = 0; i < 4; i++) {
-        while (bitGood == 0 && bitIndex < 32) {
-            bitGood = (movePool >> (32 - bitIndex)) & 1;
-            bitIndex++;
-        }
 
-        if (bitGood && bitIndex < 32) {
-            FX::setCursor(10, 20 + (i * 10));
-            uint24_t moveAddress = FX::readIndexedUInt24(MoveData::moveNames, bitIndex);
+        FX::setCursor(10, 20 + (i * 10));
+        int8_t move = moves[this->movePointer + i];
+        if (move != -1) {
+            uint24_t moveAddress = FX::readIndexedUInt24(MoveData::moveNames, move);
             FX::drawString(moveAddress);
-            bitIndex++;
         }
-        arduboy->setCursor(0, 20);
-        arduboy->print(F(">"));
     }
+    arduboy->setCursor(0, 20);
+    arduboy->print(F(">"));
 
     if (arduboy->justPressed(A_BUTTON)) {
         player->party[this->moveCreature].setMove(this->moveIndex % 4, this->cursor);
         this->moveIndex++;
     }
     if (arduboy->justPressed(DOWN_BUTTON)) {
-        this->cursor++;
+        if (this->movePointer < 16 && moves[this->movePointer + 1] != -1) {
+            this->movePointer++;
+            this->cursor = moves[this->movePointer];
+        }
     }
     if (arduboy->justPressed(UP_BUTTON)) {
-        this->cursor--;
+        if (this->movePointer > 0) {
+            this->movePointer--;
+            this->cursor = moves[this->movePointer];
+        }
     }
+
+    setTextColorBlack(arduboy);
+    printMoveInfo(arduboy, this->cursor, 70, 10);
+    setTextColorWhite(arduboy);
 }
 
 uint8_t Arena::selectOpponent() { return 0; }
