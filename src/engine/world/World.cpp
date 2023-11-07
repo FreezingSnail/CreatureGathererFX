@@ -21,7 +21,7 @@ bool __attribute__((optimize("-O0"))) warpTile(uint8_t x, uint8_t y) {
 }
 
 WorldEngine::WorldEngine() {}
-WorldEngine::WorldEngine(Arduboy2 *arduboy, GameState_t *state, BattleEngine *battleEngine, MenuV2 *menu2) {
+void WorldEngine::init(Arduboy2 *arduboy, GameState_t *state, BattleEngine *battleEngine, MenuV2 *menu2) {
     this->arduboy = arduboy;
     this->encounterTable = Encounter(arduboy);
     this->battleEngine = battleEngine;
@@ -216,7 +216,7 @@ void __attribute__((optimize("-O0"))) WorldEngine::encounter(Arduboy2 *arduboy, 
         if (chance <= 10) {
             uint8_t creatureID = this->encounterTable.rollEncounter();
             uint8_t level = this->encounterTable.rollLevel();
-            this->battleEngine->startEncounter(this->arduboy, player, menu, creatureID, level);
+            this->battleEngine->startEncounter(*this->arduboy, *player, *menu, creatureID, level);
             *this->state = GameState_t::BATTLE;
         }
     }

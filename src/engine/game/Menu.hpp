@@ -32,7 +32,7 @@ class Menu {
 
   public:
     Menu();
-    Menu(Arduboy2 *arduboy, GameState_t *state, Player *player);
+    void init(Arduboy2 *arduboy, GameState_t *state, Player *player);
     void registerMoveList(uint8_t move1, uint8_t move2, uint8_t move3, uint8_t move4);
     void registerCreatureList(uint8_t c1, uint8_t c2);
     bool actionInput(Action *action);

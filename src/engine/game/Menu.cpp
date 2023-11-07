@@ -15,7 +15,7 @@
 #define dbf __attribute__((optimize("-O0")))
 
 Menu::Menu() {}
-Menu::Menu(Arduboy2 *arduboy, GameState_t *state, Player *player) {
+void Menu::init(Arduboy2 *arduboy, GameState_t *state, Player *player) {
     this->arduboy = arduboy;
     this->player = player;
     this->cursorIndex = 0;
