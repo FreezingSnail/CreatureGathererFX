@@ -11,7 +11,7 @@ void drawRect(Arduboy2 *ardu, PopUpMenu *popMenu) {
 
 MenuV2::MenuV2() {}
 
-MenuV2::MenuV2(Arduboy2 *Arduboy2) { this->arduboy = arduboy; }
+void MenuV2::init(Arduboy2 *Arduboy2) { this->arduboy = arduboy; }
 
 bool __attribute__((optimize("-O0"))) MenuV2::drawPopMenu() {
     if (this->head < 0) {

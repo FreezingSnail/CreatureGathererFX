@@ -1,7 +1,15 @@
 #include "src/Globals.hpp"
 #include "src/engine/world/Event.hpp"
 
-Event event;
+Arduboy2 arduboy;
+Player player = Player();
+GameState_t state;
+Menu menu;
+BattleEngine engine;
+Arena arena = Arena();
+WorldEngine world;
+MenuV2 menu2;
+
 void setup() {
     arduboy.begin();
     arduboy.setFrameRate(45);
@@ -11,14 +19,11 @@ void setup() {
     FX::setFont(arduboyFont, dcmNormal);   // select default font
     FX::setCursorRange(0, 32767);
 
-    world = WorldEngine(&arduboy, &state, &engine, &menu2);
-    player = Player();
+    world.init(&arduboy, &state, &engine, &menu2);
     state = GameState_t::ARENA;
-    menu = Menu(&arduboy, &state, &player);
-    engine = BattleEngine(&state);
-    arena = Arena();
-    menu2 = MenuV2(&arduboy);
-    event = Event();
+    menu.init(&arduboy, &state, &player);
+    engine.init(&state);
+    menu2.init(&arduboy);
 }
 
 void loop() {
@@ -30,13 +35,13 @@ void loop() {
 
     switch (state) {
     case GameState_t::BATTLE:
-        engine.encounter(&arduboy, &player, &menu);
+        engine.encounter(arduboy, player, menu);
         break;
     case GameState_t::WORLD:
         world.runMap(&player, &menu);
         break;
     case GameState_t::ARENA:
-        arena.arenaLoop(&arduboy, &menu, &player, &engine);
+        arena.arenaLoop(arduboy, menu, player, engine);
         break;
     }
 }
