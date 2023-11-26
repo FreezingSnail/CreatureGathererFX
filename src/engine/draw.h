@@ -45,25 +45,25 @@ static void printBattleMenu(Arduboy2 &arduboy) {
     arduboy.print(asFlashStringHelper(moveM));
     arduboy.setCursor(64, 46);
     arduboy.print(asFlashStringHelper(itemM));
-    arduboy.setCursor(6, 55);
+    arduboy.setCursor(6, 54);
     arduboy.print(asFlashStringHelper(changeM));
-    arduboy.setCursor(64, 55);
+    arduboy.setCursor(64, 54);
     arduboy.print(asFlashStringHelper(escapeM));
 }
 
 static void printCursor(Arduboy2 &arduboy, int8_t index) {
     switch (index) {
     case 0:
-        arduboy.setCursor(0, 45);
+        arduboy.setCursor(0, 46);
         break;
     case 1:
-        arduboy.setCursor(58, 45);
+        arduboy.setCursor(58, 46);
         break;
     case 2:
-        arduboy.setCursor(0, 55);
+        arduboy.setCursor(0, 54);
         break;
     case 3:
-        arduboy.setCursor(58, 55);
+        arduboy.setCursor(58, 54);
         break;
     }
     arduboy.print(F(">"));
