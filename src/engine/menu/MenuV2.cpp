@@ -7,6 +7,7 @@
 #define dbf __attribute__((optimize("-O0")))
 #define CURRENT_MENU this->stack[this->menuPointer]
 
+MenuV2::MenuV2() { this->menuPointer = -1; }
 void MenuV2::updateMoveList(BattleEngine &engine) { this->moveList = engine.getPlayerCurCreatureMoves(); }
 
 void MenuV2::push(MenuEnum type) {

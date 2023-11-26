@@ -15,7 +15,6 @@ void Arena::arenaLoop(Arduboy2 &arduboy, Menu &menu, MenuV2 &menu2, Player &play
         this->moveIndex = 0;
         this->registerIndex = 0;
         this->startBattle(arduboy, engine, player, menu);
-        menu2.push(BATTLE_OPTIONS);
     }
 
     if (this->registerIndex < 3) {
@@ -121,7 +120,7 @@ void __attribute__((optimize("-O0"))) Arena::registerMoves(Arduboy2 &arduboy, Pl
 uint8_t Arena::selectOpponent() { return 0; }
 
 void Arena::startBattle(Arduboy2 &arduboy, BattleEngine &engine, Player &player, Menu &menu) {
-    engine.startFight(arduboy, player, menu, this->selectOpponent());
+    engine.startFight(arduboy, player, this->selectOpponent());
 }
 
 void Arena::displayRegisteredCount(Arduboy2 &arduboy) {
