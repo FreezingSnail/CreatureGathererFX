@@ -138,7 +138,6 @@ void MenuV2::run(Arduboy2 &arduboy, BattleEngine &engine) {
 
 void dbf MenuV2::print(Arduboy2 &arduboy, BattleEngine &engine) {
     arduboy.fillRect(0, 43, 128, 32, WHITE);
-    arduboy.drawRect(1, 44, 125, 21, BLACK);
     switch (CURRENT_MENU) {
     case BATTLE_OPTIONS:
         printBattleMenu(arduboy);
@@ -157,4 +156,5 @@ void dbf MenuV2::print(Arduboy2 &arduboy, BattleEngine &engine) {
         break;
     }
     printCursor(arduboy, this->cursorIndex);
+    arduboy.drawRect(1, 44, 126, 19, BLACK);
 }
