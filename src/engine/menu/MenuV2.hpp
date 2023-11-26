@@ -27,6 +27,6 @@ class MenuV2 {
     void pop();
     void transverse(Arduboy2 &arduboy);
     void action(Arduboy2 &arduboy, BattleEngine &engine);
-    void print(Arduboy2 &arduboy, BattleEngine &engine);
+    void printMenu(Arduboy2 &arduboy, BattleEngine &engine);
     void updateMoveList(BattleEngine &engine);
 };

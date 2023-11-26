@@ -70,7 +70,7 @@ class BattleEngine {
     void opponentInput();
 
     // event execution
-    void commitAction(Player &player, Action *action, Creature *commiter, Creature *receiver);
+    void commitAction(Player &player, Action *action, Creature *commiter, Creature *receiver, bool isPlayer);
     void applyDamage(uint16_t damage, Creature *receiver);
     uint16_t calculateDamage(Action *action, Creature *committer, Creature *reciever);
 
