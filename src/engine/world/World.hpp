@@ -3,7 +3,7 @@
 
 #include "../battle/Battle.hpp"
 #include "../game/Gamestate.hpp"
-#include "../game/MenuV2.hpp"
+#include "../menu/MenuV2.hpp"
 
 #include "Encounter.hpp"
 #include "Event.hpp"

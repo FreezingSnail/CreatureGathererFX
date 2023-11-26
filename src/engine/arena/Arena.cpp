@@ -3,16 +3,19 @@
 #include "../battle/Battle.hpp"
 #include "../draw.h"
 #include "../game/Menu.hpp"
+#include "../menu/MenuV2.hpp"
+
 #include <Arduboy2.h>
 #include <ArduboyFX.h>
 
-void Arena::arenaLoop(Arduboy2 &arduboy, Menu &menu, Player &player, BattleEngine &engine) {
+void Arena::arenaLoop(Arduboy2 &arduboy, Menu &menu, MenuV2 &menu2, Player &player, BattleEngine &engine) {
     if (this->moveIndex == 12) {
         this->cursor = 0;
         this->movePointer = 0;
         this->moveIndex = 0;
         this->registerIndex = 0;
         this->startBattle(arduboy, engine, player, menu);
+        menu2.push(BATTLE_OPTIONS);
     }
 
     if (this->registerIndex < 3) {

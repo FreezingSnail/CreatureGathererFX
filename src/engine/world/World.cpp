@@ -157,12 +157,12 @@ void __attribute__((optimize("-O0"))) WorldEngine::runMap(Player *player, Menu *
 
     if (this->moving && this->moveable()) {
         this->moveChar(player, menu);
-    } else if (!this->menu2->drawPopMenu()) {
+    } else if (!this->menu2->dialogMenu.drawPopMenu()) {
         this->interact();
         this->input();
     } else {
         if (this->arduboy->justPressed(A_BUTTON)) {
-            this->menu2->popMenu();
+            this->menu2->dialogMenu.popMenu();
         }
     }
 }
@@ -281,7 +281,7 @@ void __attribute__((optimize("-O0"))) WorldEngine::interact() {
         for (uint8_t i = 0; i < EVENTCOUNT; i++) {
             Event e = this->events[i];
             if (e.cords.x == tilex && e.cords.y == tiley) {
-                this->menu2->pushEvent(e);
+                this->menu2->dialogMenu.pushEvent(e);
                 return;
             }
         }

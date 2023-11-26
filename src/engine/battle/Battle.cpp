@@ -2,6 +2,7 @@
 #include <ArduboyFX.h>
 
 #include "../../creature/Creature.hpp"
+#include "../../engine/menu/MenuV2.hpp"
 #include "../../fxdata/fxdata.h"
 #include "../../opponent/Opponent.hpp"
 #include "../../player/Player.hpp"
@@ -20,6 +21,25 @@ void BattleEngine::init(GameState_t *state) {
     this->activeBattle = false;
 }
 
+uint8_t *BattleEngine::getPlayerCurCreatureMoves() { return this->playerCur->moves; }
+
+void BattleEngine::updateInactiveCreatures(uint8_t *list) {
+    uint8_t index = 0;
+    for (uint8_t i = 0; i < 3; i++) {
+        if (this->playerCur != this->playerParty[i]) {
+            list[index] = this->playerParty[i]->id;
+            index++;
+        }
+    }
+}
+
+Creature *BattleEngine::getCreature(uint8_t index) {
+    for (uint8_t i = 0; i < 3; i++) {
+        if (this->playerParty[i]->id == index) {
+            return this->playerParty[i];
+        }
+    }
+}
 //////////////////////////////////////////////////////////////////////////////
 //
 //        Entry Functions
@@ -27,6 +47,7 @@ void BattleEngine::init(GameState_t *state) {
 //////////////////////////////////////////////////////////////////////////////
 
 void BattleEngine::startFight(Arduboy2 &arduboy, Player &player, Menu &menu, uint8_t optID) {
+    // TODO Need to tie this to pushing v2 menu
     this->loadOpponent(optID);
     this->loadPlayer(menu, player);
     *this->state = GameState_t::BATTLE;
@@ -61,12 +82,12 @@ void BattleEngine::encounter(Arduboy2 &arduboy, Player &player, Menu &menu) {
     }
 
     this->drawScene(arduboy);
-    menu.printMenu();
+    // menu.printMenu();
     this->turnTick(player, menu);
 }
 
 void BattleEngine::turnTick(Player &player, Menu &menu) {
-    if (!this->getInput(menu)) {
+    if (!this->queued) {
         return;
     }
     this->opponentInput();
@@ -83,7 +104,10 @@ void BattleEngine::turnTick(Player &player, Menu &menu) {
             this->opponentActionFirst(player, menu);
         }
     }
+    this->queued = false;
 }
+
+// TODO Need to tie these to pushing v2 menu
 
 bool BattleEngine::checkLoss() {
     // return uint8_t(this->awakeMons & 0b11100000) == uint8_t(0) ;
@@ -142,28 +166,27 @@ void BattleEngine::opponentActionFirst(Player &player, Menu &menu) {
     this->checkOpponentFaint();
 }
 
-void BattleEngine::changeCurMon(Menu &menu, uint8_t id) {
-    uint8_t index = 0;
+void BattleEngine::setMoveList(uint8_t **pointer) { *pointer = this->playerCur->moves; }
+
+void BattleEngine::changeCurMon(uint8_t id) {
     for (uint8_t i = 0; i < 3; i++) {
         if (this->playerParty[i]->id == id) {
             this->playerCur = this->playerParty[i];
-            index = i;
             break;
         }
     }
-    this->playerCur = this->playerParty[index];
-    menu.registerMoveList(this->playerCur->moves[0], this->playerCur->moves[1], this->playerCur->moves[2], this->playerCur->moves[3]);
-    switch (index) {
-    case 0:
-        menu.registerCreatureList(this->playerParty[1]->id, this->playerParty[2]->id);
-        break;
-    case 1:
-        menu.registerCreatureList(this->playerParty[0]->id, this->playerParty[2]->id);
-        break;
-    case 2:
-        menu.registerCreatureList(this->playerParty[0]->id, this->playerParty[1]->id);
-        break;
-    }
+    // this->playerCur = this->playerParty[index];
+    //  menu.registerMoveList(this->playerCur->moves[0], this->playerCur->moves[1], this->playerCur->moves[2],
+    //  this->playerCur->moves[3]); switch (index) { case 0:
+    //      menu.registerCreatureList(this->playerParty[1]->id, this->playerParty[2]->id);
+    //      break;
+    //  case 1:
+    //      menu.registerCreatureList(this->playerParty[0]->id, this->playerParty[2]->id);
+    //      break;
+    //  case 2:
+    //      menu.registerCreatureList(this->playerParty[0]->id, this->playerParty[1]->id);
+    //      break;
+    //  }
 }
 
 bool BattleEngine::tryCapture() {
@@ -187,6 +210,20 @@ bool BattleEngine::getInput(Menu &menu) {
     return menu.actionInput(&this->playerAction);
 }
 
+void ::BattleEngine::queueAction(ActionType type, uint8_t index) {
+
+    this->queued = true;
+    Priority p = Priority::NORMAL;
+    switch (type) {
+    case ActionType::CHNGE:
+    case ActionType::CATCH:
+    case ActionType::ESCAPE:
+        p = Priority::FAST;
+    }
+    this->playerAction.setActionType(type, p);
+    this->playerAction.actionIndex = index;
+}
+
 void BattleEngine::opponentInput() {
     // ai to select best move
     // For now just do the first slot attack
@@ -203,7 +240,7 @@ void BattleEngine::opponentInput() {
 void BattleEngine::commitAction(Player &player, Menu &menu, Action *action, Creature *commiter, Creature *reciever) {
     switch (action->actionType) {
     case ActionType::ATTACK: {
-        uint16_t damage = calculateDamage(menu, action, commiter, reciever);
+        uint16_t damage = calculateDamage(action, commiter, reciever);
         applyDamage(damage, reciever);
         break;
     }
@@ -214,7 +251,7 @@ void BattleEngine::commitAction(Player &player, Menu &menu, Action *action, Crea
         }
         break;
     case ActionType::CHNGE:
-        this->changeCurMon(menu, action->actionIndex);
+        this->changeCurMon(action->actionIndex);
         break;
     case ActionType::ESCAPE:
         // should add a check in here for opponent vs random encounter
@@ -236,7 +273,7 @@ void BattleEngine::applyDamage(uint16_t damage, Creature *reciever) {
     }
 }
 
-uint16_t BattleEngine::calculateDamage(Menu &menu, Action *action, Creature *committer, Creature *reciever) {
+uint16_t BattleEngine::calculateDamage(Action *action, Creature *committer, Creature *reciever) {
     // need to do something here with atk def stats
     Move move = committer->moveList[action->actionIndex];
     // float mod = getMatchupModifier(getMoveType(move),
@@ -246,7 +283,6 @@ uint16_t BattleEngine::calculateDamage(Menu &menu, Action *action, Creature *com
     bool bonus = committer->moveTypeBonus(committer->moves[action->actionIndex]);
     uint16_t damage = (power + committer->statlist.attack) / reciever->statlist.defense;
     damage = applyModifier(damage, (Type)move.getMoveType(), reciever->types);
-    menu.printAttack(committer->id, committer->moves[action->actionIndex], Modifier::Same);
 
     // TODO (Snail) need to move this modifiers location in the formula
     if (bonus) {

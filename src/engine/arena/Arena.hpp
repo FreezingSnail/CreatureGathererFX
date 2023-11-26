@@ -2,6 +2,7 @@
 #include "../../player/Player.hpp"
 #include "../battle/Battle.hpp"
 #include "../game/Menu.hpp"
+#include "../menu/MenuV2.hpp"
 
 class Arena {
   private:
@@ -15,7 +16,7 @@ class Arena {
 
   public:
     Arena() = default;
-    void arenaLoop(Arduboy2 &arduboy, Menu &menu, Player &player, BattleEngine &engine);
+    void arenaLoop(Arduboy2 &arduboy, Menu &menu, MenuV2 &menu2, Player &player, BattleEngine &engine);
     void registerRentals(Menu &menu, Player &player);
     void registerMoves(Arduboy2 &arduboy, Player &player);
     uint8_t selectOpponent();

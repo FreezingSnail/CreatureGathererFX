@@ -7,7 +7,7 @@
 #include "engine/battle/Battle.hpp"
 #include "engine/game/Gamestate.hpp"
 #include "engine/game/Menu.hpp"
-#include "engine/game/MenuV2.hpp"
+#include "engine/menu/MenuV2.hpp"
 #include "engine/world/World.hpp"
 #include "fxdata/fxdata.h"
 #include "player/Player.hpp"
