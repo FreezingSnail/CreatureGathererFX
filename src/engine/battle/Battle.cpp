@@ -14,8 +14,25 @@
 #include "../../lib/Move.hpp"
 
 #define dbf __attribute__((optimize("-O0")))
+#define XSTART 0
+#define YSTART 43
+#define MWIDTH 128
+#define MHEIGHT 32
 
 BattleEngine::BattleEngine() {}
+
+static PopUpDialog newDialogBox(DialogType type, uint24_t number, uint16_t damage) {
+    PopUpDialog dialog;
+    dialog.height = MHEIGHT;
+    dialog.width = MWIDTH;
+    dialog.x = XSTART;
+    dialog.y = YSTART;
+    dialog.type = type;
+    dialog.textAddress = number;
+    dialog.damage = damage;
+
+    return dialog;
+}
 
 void dbf BattleEngine::init(GameState_t *state, MenuV2 *menu2) {
     this->state = state;
@@ -150,18 +167,18 @@ bool BattleEngine::checkOpponentFaint() {
 
 // Need to add a win/loss check ejection
 void BattleEngine::playerActionFirst(Player &player) {
-    this->commitAction(player, &this->playerAction, this->playerCur, this->opponentCur);
+    this->commitAction(player, &this->playerAction, this->playerCur, this->opponentCur, true);
     if (this->checkOpponentFaint() || !this->activeBattle)
         return;
-    this->commitAction(player, &this->opponentAction, this->opponentCur, this->playerCur);
+    this->commitAction(player, &this->opponentAction, this->opponentCur, this->playerCur, false);
     this->checkPlayerFaint();
 }
 
 void BattleEngine::opponentActionFirst(Player &player) {
-    this->commitAction(player, &this->opponentAction, this->opponentCur, this->playerCur);
+    this->commitAction(player, &this->opponentAction, this->opponentCur, this->playerCur, false);
     if (this->checkPlayerFaint() || !this->activeBattle)
         return;
-    this->commitAction(player, &this->playerAction, this->playerCur, this->opponentCur);
+    this->commitAction(player, &this->playerAction, this->playerCur, this->opponentCur, true);
     this->checkOpponentFaint();
 }
 
@@ -232,16 +249,24 @@ void BattleEngine::opponentInput() {
 //
 //////////////////////////////////////////////////////////////////////////////
 
-void BattleEngine::commitAction(Player &player, Action *action, Creature *commiter, Creature *reciever) {
+void BattleEngine::commitAction(Player &player, Action *action, Creature *commiter, Creature *reciever, bool isPlayer) {
     switch (action->actionType) {
     case ActionType::ATTACK: {
         uint16_t damage = calculateDamage(action, commiter, reciever);
         applyDamage(damage, reciever);
+        if (isPlayer) {
+            menu2->dialogMenu.pushMenu(newDialogBox(DAMAGE, uint24_t(damage), damage));
+            menu2->dialogMenu.pushMenu(newDialogBox(NAME, commiter->id, 0));
+        } else {
+            menu2->dialogMenu.pushMenu(newDialogBox(ENEMY_DAMAGE, uint24_t(damage), damage));
+            menu2->dialogMenu.pushMenu(newDialogBox(ENEMY_NAME, commiter->id, 0));
+        }
         break;
     }
     case ActionType::CATCH:
         if (this->tryCapture()) {
-            player.storeCreature(0, this->opponentCur->id, this->opponentCur->level);
+            // idk if this is staying at all
+            // player.storeCreature(0, this->opponentCur->id, this->opponentCur->level);
             endEncounter();
         }
         break;

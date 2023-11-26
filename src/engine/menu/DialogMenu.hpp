@@ -6,6 +6,8 @@
 struct PopUpDialog {
     uint8_t x, y, width, height;
     uint24_t textAddress;
+    uint16_t damage;
+    DialogType type;
 };
 
 class DialogMenu {
