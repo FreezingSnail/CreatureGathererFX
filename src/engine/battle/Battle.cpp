@@ -16,9 +16,11 @@
 #define dbf __attribute__((optimize("-O0")))
 
 BattleEngine::BattleEngine() {}
-void BattleEngine::init(GameState_t *state) {
+
+void dbf BattleEngine::init(GameState_t *state, MenuV2 *menu2) {
     this->state = state;
     this->activeBattle = false;
+    this->menu2 = menu2;
 }
 
 uint8_t *BattleEngine::getPlayerCurCreatureMoves() { return this->playerCur->moves; }
@@ -46,21 +48,22 @@ Creature *BattleEngine::getCreature(uint8_t index) {
 //
 //////////////////////////////////////////////////////////////////////////////
 
-void BattleEngine::startFight(Arduboy2 &arduboy, Player &player, Menu &menu, uint8_t optID) {
-    // TODO Need to tie this to pushing v2 menu
+void BattleEngine::startFight(Arduboy2 &arduboy, Player &player, uint8_t optID) {
     this->loadOpponent(optID);
-    this->loadPlayer(menu, player);
+    this->loadPlayer(player);
     *this->state = GameState_t::BATTLE;
     this->activeBattle = true;
     arduboy.setTextColor(BLACK);
+    this->menu2->push(BATTLE_OPTIONS);
 }
 
-void BattleEngine::startEncounter(Arduboy2 &arduboy, Player &player, Menu &menu, uint8_t creatureID, uint8_t level) {
+void BattleEngine::startEncounter(Arduboy2 &arduboy, Player &player, uint8_t creatureID, uint8_t level) {
     this->LoadCreature(creatureID, level);
-    this->loadPlayer(menu, player);
+    this->loadPlayer(player);
     *this->state = GameState_t::BATTLE;
     this->activeBattle = true;
     arduboy.setTextColor(BLACK);
+    this->menu2->push(BATTLE_OPTIONS);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -70,7 +73,7 @@ void BattleEngine::startEncounter(Arduboy2 &arduboy, Player &player, Menu &menu,
 //////////////////////////////////////////////////////////////////////////////
 
 // Need to change something here for the flow of the game
-void BattleEngine::encounter(Arduboy2 &arduboy, Player &player, Menu &menu) {
+void BattleEngine::encounter(Arduboy2 &arduboy, Player &player) {
     if (this->checkLoss()) {
         this->activeBattle = false;
         return;
@@ -82,32 +85,29 @@ void BattleEngine::encounter(Arduboy2 &arduboy, Player &player, Menu &menu) {
     }
 
     this->drawScene(arduboy);
-    // menu.printMenu();
-    this->turnTick(player, menu);
+    this->turnTick(player);
 }
 
-void BattleEngine::turnTick(Player &player, Menu &menu) {
+void BattleEngine::turnTick(Player &player) {
     if (!this->queued) {
         return;
     }
     this->opponentInput();
     int8_t order = (int8_t)this->playerAction.priority - (int8_t)this->opponentAction.priority;
     if (order > 0) {
-        this->playerActionFirst(player, menu);
+        this->playerActionFirst(player);
     } else if (order < 0) {
-        this->opponentActionFirst(player, menu);
+        this->opponentActionFirst(player);
     } else {
         order = this->playerCur->statlist.speed - this->opponentCur->statlist.speed;
         if (order > 0 || order == 0) {
-            this->playerActionFirst(player, menu);
+            this->playerActionFirst(player);
         } else if (order < 0) {
-            this->opponentActionFirst(player, menu);
+            this->opponentActionFirst(player);
         }
     }
     this->queued = false;
 }
-
-// TODO Need to tie these to pushing v2 menu
 
 bool BattleEngine::checkLoss() {
     // return uint8_t(this->awakeMons & 0b11100000) == uint8_t(0) ;
@@ -128,12 +128,11 @@ bool BattleEngine::checkWin() {
 }
 
 // These are just place holders until menu & ai written for proper swapping
-bool BattleEngine::checkPlayerFaint(Menu &menu) {
+bool BattleEngine::checkPlayerFaint() {
     if (this->playerHealths[this->playerIndex] <= 0) {
         this->playerIndex++;
         this->playerCur = this->playerParty[this->playerIndex];
         // this->awakeMons &= ~(1 << this->playerIndex);
-        menu.registerMoveList(this->playerCur->moves[0], this->playerCur->moves[1], this->playerCur->moves[2], this->playerCur->moves[3]);
         return true;
     }
     return false;
@@ -150,19 +149,19 @@ bool BattleEngine::checkOpponentFaint() {
 }
 
 // Need to add a win/loss check ejection
-void BattleEngine::playerActionFirst(Player &player, Menu &menu) {
-    this->commitAction(player, menu, &this->playerAction, this->playerCur, this->opponentCur);
+void BattleEngine::playerActionFirst(Player &player) {
+    this->commitAction(player, &this->playerAction, this->playerCur, this->opponentCur);
     if (this->checkOpponentFaint() || !this->activeBattle)
         return;
-    this->commitAction(player, menu, &this->opponentAction, this->opponentCur, this->playerCur);
-    this->checkPlayerFaint(menu);
+    this->commitAction(player, &this->opponentAction, this->opponentCur, this->playerCur);
+    this->checkPlayerFaint();
 }
 
-void BattleEngine::opponentActionFirst(Player &player, Menu &menu) {
-    this->commitAction(player, menu, &this->opponentAction, this->opponentCur, this->playerCur);
-    if (this->checkPlayerFaint(menu) || !this->activeBattle)
+void BattleEngine::opponentActionFirst(Player &player) {
+    this->commitAction(player, &this->opponentAction, this->opponentCur, this->playerCur);
+    if (this->checkPlayerFaint() || !this->activeBattle)
         return;
-    this->commitAction(player, menu, &this->playerAction, this->playerCur, this->opponentCur);
+    this->commitAction(player, &this->playerAction, this->playerCur, this->opponentCur);
     this->checkOpponentFaint();
 }
 
@@ -197,6 +196,7 @@ bool BattleEngine::tryCapture() {
 void BattleEngine::endEncounter() {
     this->activeBattle = false;
     *this->state = GameState_t::WORLD;
+    this->menu2->pop();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -204,11 +204,6 @@ void BattleEngine::endEncounter() {
 //        Input Functions
 //
 //////////////////////////////////////////////////////////////////////////////
-
-bool BattleEngine::getInput(Menu &menu) {
-    // arduboy input from menu
-    return menu.actionInput(&this->playerAction);
-}
 
 void ::BattleEngine::queueAction(ActionType type, uint8_t index) {
 
@@ -237,7 +232,7 @@ void BattleEngine::opponentInput() {
 //
 //////////////////////////////////////////////////////////////////////////////
 
-void BattleEngine::commitAction(Player &player, Menu &menu, Action *action, Creature *commiter, Creature *reciever) {
+void BattleEngine::commitAction(Player &player, Action *action, Creature *commiter, Creature *reciever) {
     switch (action->actionType) {
     case ActionType::ATTACK: {
         uint16_t damage = calculateDamage(action, commiter, reciever);
@@ -312,7 +307,7 @@ void BattleEngine::LoadCreature(uint8_t creatureID, uint8_t level) {
     this->resetOpponent();
 }
 
-void BattleEngine::loadPlayer(Menu &menu, Player &player) {
+void BattleEngine::loadPlayer(Player &player) {
     this->playerParty[0] = &(player.party[0]);
     this->playerParty[1] = &(player.party[1]);
     this->playerParty[2] = &(player.party[2]);
@@ -325,8 +320,6 @@ void BattleEngine::loadPlayer(Menu &menu, Player &player) {
 
     this->playerIndex = 0;
     this->playerCur = this->playerParty[0];
-    menu.registerMoveList(this->playerCur->moves[0], this->playerCur->moves[1], this->playerCur->moves[2], this->playerCur->moves[3]);
-    menu.registerCreatureList(this->playerParty[1]->id, this->playerParty[2]->id);
 }
 
 void BattleEngine::resetOpponent() {

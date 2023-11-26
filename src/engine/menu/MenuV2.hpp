@@ -1,5 +1,5 @@
 #pragma once
-#include "../battle/Battle.hpp"
+// #include "../battle/Battle.hpp"
 #include "DialogMenu.hpp"
 #include <ArduboyFX.h>
 
@@ -9,6 +9,7 @@ enum MenuEnum {
     BATTLE_OPTIONS,
     WORLD_OPTIONS,
 };
+class BattleEngine;
 
 class MenuV2 {
   public:
@@ -19,6 +20,7 @@ class MenuV2 {
     DialogMenu dialogMenu;
     uint8_t creatures[2];
 
+    MenuV2();
     void setMoveList(uint8_t *pointer);
     void run(Arduboy2 &arduboy, BattleEngine &engine);
     void push(MenuEnum type);

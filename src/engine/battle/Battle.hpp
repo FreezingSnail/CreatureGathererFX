@@ -2,10 +2,13 @@
 #include "../../action/Action.hpp"
 #include "../../creature/Creature.hpp"
 #include "../../engine/game/Menu.hpp"
+// #include "../../engine/menu/MenuV2.hpp"
 #include "../../opponent/Opponent.hpp"
 #include "../../player/Player.hpp"
 #include "../game/Gamestate.hpp"
 #include <ArduboyFX.h>
+
+class MenuV2;
 
 class BattleEngine {
   private:
@@ -13,6 +16,7 @@ class BattleEngine {
     GameState_t *state;
     Creature *playerCur;
     Creature *opponentCur;
+    MenuV2 *menu2;
 
     Opponent opponent;
     uint16_t playerHealths[3];
@@ -31,14 +35,14 @@ class BattleEngine {
 
   public:
     BattleEngine();
-    void init(GameState_t *state);
+    void init(GameState_t *state, MenuV2 *menu);
 
     // entry points
-    void startFight(Arduboy2 &arduboy, Player &player, Menu &menu, uint8_t optID);
-    void startEncounter(Arduboy2 &arduboy, Player &player, Menu &menu, uint8_t creatureID, uint8_t level);
+    void startFight(Arduboy2 &arduboy, Player &player, uint8_t optID);
+    void startEncounter(Arduboy2 &arduboy, Player &player, uint8_t creatureID, uint8_t level);
 
     // flow control
-    void encounter(Arduboy2 &arduboy, Player &player, Menu &menu);
+    void encounter(Arduboy2 &arduboy, Player &player);
 
     // menu interface
     void queueAction(ActionType type, uint8_t index);
@@ -49,29 +53,29 @@ class BattleEngine {
 
   private:
     // flow control
-    void turnTick(Player &player, Menu &menu);
+    void turnTick(Player &player);
     bool checkLoss();
     bool checkWin();
-    bool checkPlayerFaint(Menu &menu);
+    bool checkPlayerFaint();
     bool checkOpponentFaint();
-    void playerActionFirst(Player &player, Menu &menu);
-    void opponentActionFirst(Player &player, Menu &menu);
+    void playerActionFirst(Player &player);
+    void opponentActionFirst(Player &player);
     void setMoveList(uint8_t **pointer);
     void changeCurMon(uint8_t index);
     bool tryCapture();
     void endEncounter();
 
     // inputs
-    bool getInput(Menu &menu);
+    bool getInput();
     void opponentInput();
 
     // event execution
-    void commitAction(Player &player, Menu &menu, Action *action, Creature *commiter, Creature *receiver);
+    void commitAction(Player &player, Action *action, Creature *commiter, Creature *receiver);
     void applyDamage(uint16_t damage, Creature *receiver);
     uint16_t calculateDamage(Action *action, Creature *committer, Creature *reciever);
 
     // data loading
-    void loadPlayer(Menu &menu, Player &player);
+    void loadPlayer(Player &player);
     void loadOpponent(uint8_t optID);
     void LoadCreature(uint8_t creatureID, uint8_t level);
     void resetOpponent();
