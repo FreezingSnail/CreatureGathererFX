@@ -23,7 +23,7 @@ void setup() {
     state = GameState_t::ARENA;
     menu.init(&arduboy, &state, &player);
     engine.init(&state);
-    menu2.init(&arduboy);
+    menu2.dialogMenu.init(&arduboy);
 }
 
 void loop() {
@@ -41,7 +41,9 @@ void loop() {
         world.runMap(&player, &menu);
         break;
     case GameState_t::ARENA:
-        arena.arenaLoop(arduboy, menu, player, engine);
+        arena.arenaLoop(arduboy, menu, menu2, player, engine);
         break;
     }
+
+    menu2.run(arduboy, engine);
 }

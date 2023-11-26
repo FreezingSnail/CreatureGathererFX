@@ -284,7 +284,7 @@ void Menu::printMenu() {
         this->printBattleMenu();
     case GameState_t::WORLD:
         FX::setFontMode(dbmInvert);
-        this->printWorldMenu();
+        // this->printWorldMenu();
         break;
     case GameState_t::ARENA:
         this->arduboy->setTextColor(WHITE);
@@ -326,45 +326,43 @@ void Menu::printBattleMenu() {
 
         break;
     case MenuType::BMOVE:
-        this->printMoveMenu();
+        //        this->printMoveMenu();
         break;
     case MenuType::BCHANGE:
-        this->printCreatureMenu();
+        // this->printCreatureMenu();
         break;
     }
     this->printCursor();
 }
-void dbf Menu::printMoveMenu() {
-    FX::setCursor(6, 46);
-    uint24_t rowAddress = FX::readIndexedUInt24(MoveData::moveNames, this->moveList[0]);
-    FX::drawString(rowAddress);
-    FX::setCursor(64, 46);
-    rowAddress = FX::readIndexedUInt24(MoveData::moveNames, this->moveList[1]);
-    FX::drawString(rowAddress);
-    FX::setCursor(6, 55);
-    rowAddress = FX::readIndexedUInt24(MoveData::moveNames, this->moveList[2]);
-    FX::drawString(rowAddress);
-    FX::setCursor(64, 55);
-    rowAddress = FX::readIndexedUInt24(MoveData::moveNames, this->moveList[3]);
-    FX::drawString(rowAddress);
-    printMoveInfo(this->arduboy, this->moveList[cursorIndex], 38, 4);
-}
+// void dbf Menu::printMoveMenu() {
+//     FX::setCursor(6, 46);
+//     uint24_t rowAddress = FX::readIndexedUInt24(MoveData::moveNames, this->moveList[0]);
+//     FX::drawString(rowAddress);
+//     FX::setCursor(64, 46);
+//     rowAddress = FX::readIndexedUInt24(MoveData::moveNames, this->moveList[1]);
+//     FX::drawString(rowAddress);
+//     FX::setCursor(6, 55);
+//     rowAddress = FX::readIndexedUInt24(MoveData::moveNames, this->moveList[2]);
+//     FX::drawString(rowAddress);
+//     FX::setCursor(64, 55);
+//     rowAddress = FX::readIndexedUInt24(MoveData::moveNames, this->moveList[3]);
+//     FX::drawString(rowAddress);
+//     printMoveInfo(this->arduboy, this->moveList[cursorIndex], 38, 4);
+// }
 
-void Menu::printItemMenu() {}
+// void Menu::printItemMenu() {}
 
-void Menu::printWorldMenu() {}
+// void Menu::printWorldMenu() {}
 
-void Menu::printCreatureMenu() {
-    this->player->party[this->cursorIndex].printCreature(this->arduboy);
-    FX::setCursor(6, 45);
-    uint24_t addr = FX::readIndexedUInt24(CreatureData::creatureNames, this->creatureList[0]);
-    FX::drawString(addr);
-    FX::setCursor(6, 55);
-    addr = FX::readIndexedUInt24(CreatureData::creatureNames, this->creatureList[1]);
-    FX::drawString(addr);
-}
-
-void Menu::printInventoryMenu() {}
+// void Menu::printCreatureMenu() {
+//     this->player->party[this->cursorIndex].printCreature(this->arduboy);
+//     FX::setCursor(6, 45);
+//     uint24_t addr = FX::readIndexedUInt24(CreatureData::creatureNames, this->creatureList[0]);
+//     FX::drawString(addr);
+//     FX::setCursor(6, 55);
+//     addr = FX::readIndexedUInt24(CreatureData::creatureNames, this->creatureList[1]);
+//     FX::drawString(addr);
+// }
 
 void Menu::printAttack(uint8_t creatureID, uint8_t attackID, Modifier modifier) {
     // this->arduboy->clear();

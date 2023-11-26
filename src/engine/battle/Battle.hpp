@@ -26,6 +26,9 @@ class BattleEngine {
 
     bool activeBattle;
 
+    bool queued;
+    Action queuedAction;
+
   public:
     BattleEngine();
     void init(GameState_t *state);
@@ -37,6 +40,13 @@ class BattleEngine {
     // flow control
     void encounter(Arduboy2 &arduboy, Player &player, Menu &menu);
 
+    // menu interface
+    void queueAction(ActionType type, uint8_t index);
+
+    uint8_t *getPlayerCurCreatureMoves();
+    void updateInactiveCreatures(uint8_t *list);
+    Creature *getCreature(uint8_t index);
+
   private:
     // flow control
     void turnTick(Player &player, Menu &menu);
@@ -46,7 +56,8 @@ class BattleEngine {
     bool checkOpponentFaint();
     void playerActionFirst(Player &player, Menu &menu);
     void opponentActionFirst(Player &player, Menu &menu);
-    void changeCurMon(Menu &menu, uint8_t index);
+    void setMoveList(uint8_t **pointer);
+    void changeCurMon(uint8_t index);
     bool tryCapture();
     void endEncounter();
 
@@ -57,7 +68,7 @@ class BattleEngine {
     // event execution
     void commitAction(Player &player, Menu &menu, Action *action, Creature *commiter, Creature *receiver);
     void applyDamage(uint16_t damage, Creature *receiver);
-    uint16_t calculateDamage(Menu &menu, Action *action, Creature *committer, Creature *reciever);
+    uint16_t calculateDamage(Action *action, Creature *committer, Creature *reciever);
 
     // data loading
     void loadPlayer(Menu &menu, Player &player);

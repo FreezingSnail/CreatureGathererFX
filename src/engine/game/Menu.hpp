@@ -50,9 +50,9 @@ class Menu {
     void printItemMenu();
 
     // world menus
-    void printWorldMenu();
-    void printCreatureMenu();
-    void printInventoryMenu();
+    // void printWorldMenu();
+    // void printCreatureMenu();
+    // void printInventoryMenu();
 
     void printCursor();
     void moveCursor();

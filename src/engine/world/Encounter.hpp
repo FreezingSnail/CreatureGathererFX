@@ -1,8 +1,6 @@
 #pragma once
-
-#include <stdint.h>
-
 #include <ArduboyFX.h>
+#include <stdint.h>
 
 typedef struct EncounterTable {
     unsigned char c1;
