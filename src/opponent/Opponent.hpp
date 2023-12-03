@@ -13,6 +13,7 @@ class Opponent {
     // This should load information from PROGMEM
     Opponent();
     void load(OpponentSeed_t *seed);
+    void Read(uint8_t index);
 
     void loadCreature(OpponentSeed_t *seed);
     void loadEncounterOpt(uint8_t creatureID, uint8_t level);

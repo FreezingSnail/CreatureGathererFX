@@ -19,7 +19,8 @@ class Player {
     // caughtCreature storedCreatures[6];
 
     Player();
-    void loadreature(uint8_t index, uint8_t creatureIndex);
+    void basic();
+    void loadCreature(uint8_t index, uint8_t creatureIndex);
     void setCreature(uint8_t index, CreatureData_t seed);
     void storeCreature(uint8_t slot, uint8_t id, uint8_t level);
 };

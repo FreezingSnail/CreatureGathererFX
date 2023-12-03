@@ -42,6 +42,7 @@ class Creature {
     Creature();
     void load(CreatureData_t seed);
     void loadFromOpponentSeed(uint32_t seed);
+    void arenaLoad(uint24_t addr);
 
     void setStats(CreatureData_t seed);
     void loadMoves(CreatureData_t seed);

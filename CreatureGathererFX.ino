@@ -24,6 +24,8 @@ void setup() {
     menu.init(&arduboy, &state, &player);
     menu2.dialogMenu.init(&arduboy);
     engine.init(&state, &menu2);
+    player.basic();
+    engine.startArena(arduboy, player, 6);
 }
 
 void loop() {

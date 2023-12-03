@@ -73,6 +73,16 @@ void BattleEngine::startFight(Arduboy2 &arduboy, Player &player, uint8_t optID) 
     arduboy.setTextColor(BLACK);
     this->menu2->push(BATTLE_OPTIONS);
 }
+void BattleEngine::startArena(Arduboy2 &arduboy, Player &player, uint8_t optID) {
+    opponent.Read(optID);
+    resetOpponent();
+
+    loadPlayer(player);
+    *this->state = GameState_t::BATTLE;
+    activeBattle = true;
+    arduboy.setTextColor(BLACK);
+    menu2->push(BATTLE_OPTIONS);
+}
 
 void BattleEngine::startEncounter(Arduboy2 &arduboy, Player &player, uint8_t creatureID, uint8_t level) {
     this->LoadCreature(creatureID, level);
