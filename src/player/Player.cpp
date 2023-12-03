@@ -20,7 +20,13 @@ Player::Player() {
     // this->setCreature(2, cseed);
 }
 
-void Player::loadreature(uint8_t index, uint8_t creatureIndex) {
+void Player::basic() {
+    loadCreature(0, 0);
+    loadCreature(1, 1);
+    loadCreature(2, 2);
+}
+
+void Player::loadCreature(uint8_t index, uint8_t creatureIndex) {
     CreatureData_t cseed;
     uint24_t rowAddress = CreatureData::creatureData + (sizeof(CreatureData_t) * creatureIndex);
     FX::readDataObject(rowAddress, cseed);

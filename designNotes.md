@@ -35,3 +35,12 @@ This doc details plans / designs / layouts of:
   - table of learnable moves
 ### Game representation
 - decompresses seed into useable format
+
+
+## Gathering
+Instead of attacking creatures to weaken and capture them, the main mechanic will be focused around gathering 
+
+- areas to gather in
+- area with encounter rate determined by item in gathering lure box in center of area
+maybe gather in combat for items to use at the collection box?
+unsure exactly how want to have player add creatures into ownership

@@ -39,6 +39,7 @@ class BattleEngine {
 
     // entry points
     void startFight(Arduboy2 &arduboy, Player &player, uint8_t optID);
+    void startArena(Arduboy2 &arduboy, Player &player, uint8_t optID);
     void startEncounter(Arduboy2 &arduboy, Player &player, uint8_t creatureID, uint8_t level);
 
     // flow control

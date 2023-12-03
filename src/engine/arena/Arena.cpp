@@ -29,7 +29,7 @@ void Arena::arenaLoop(Arduboy2 &arduboy, Menu &menu, MenuV2 &menu2, Player &play
 void Arena::registerRentals(Menu &menu, Player &player) {
     int8_t creatureID = menu.registerCreature();
     if (creatureID >= 0) {
-        player.loadreature(this->registerIndex, creatureID);
+        player.loadCreature(this->registerIndex, creatureID);
         this->registerIndex++;
         if (this->registerIndex == 3) {
             this->cursor = 0;
@@ -119,9 +119,7 @@ void __attribute__((optimize("-O0"))) Arena::registerMoves(Arduboy2 &arduboy, Pl
 
 uint8_t Arena::selectOpponent() { return 0; }
 
-void Arena::startBattle(Arduboy2 &arduboy, BattleEngine &engine, Player &player, Menu &menu) {
-    engine.startFight(arduboy, player, this->selectOpponent());
-}
+void Arena::startBattle(Arduboy2 &arduboy, BattleEngine &engine, Player &player, Menu &menu) { engine.startArena(arduboy, player, 4); }
 
 void Arena::displayRegisteredCount(Arduboy2 &arduboy) {
     for (uint8_t i = 0; i < this->registerIndex; i++) {

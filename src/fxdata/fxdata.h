@@ -6,8 +6,8 @@ using uint24_t = __uint24;
 
 // Initialize FX hardware using  FX::begin(FX_DATA_PAGE); in the setup() function.
 
-constexpr uint16_t FX_DATA_PAGE  = 0xffab;
-constexpr uint24_t FX_DATA_BYTES = 21598;
+constexpr uint16_t FX_DATA_PAGE  = 0xffa9;
+constexpr uint24_t FX_DATA_BYTES = 22176;
 
 constexpr uint24_t characterSheet = 0x000000;
 constexpr uint16_t characterSheetWidth  = 12;
@@ -156,7 +156,54 @@ namespace MoveLists
 namespace MenuFXData
 {
   constexpr uint24_t attackText = 0x00543B;
-  constexpr uint24_t enemyAttackText = 0x005444;
-  constexpr uint24_t damageText = 0x005451;
+  constexpr uint24_t enemyAttackText = 0x00544C;
+  constexpr uint24_t damageText = 0x005459;
+}
+
+namespace Teams
+{
+namespace StockCreatures
+{
+    constexpr uint24_t null = 0x005466;
+    constexpr uint24_t SquibbleSnail = 0x00546B;
+    constexpr uint24_t SquableSnail = 0x005470;
+    constexpr uint24_t ScrambleSnail = 0x005475;
+    constexpr uint24_t SkitterCrab = 0x00547A;
+    constexpr uint24_t ScatterCrab = 0x00547F;
+    constexpr uint24_t ShatterCrab = 0x005484;
+    constexpr uint24_t squid = 0x005489;
+    constexpr uint24_t bigsquid = 0x00548E;
+    constexpr uint24_t BiggestSquid = 0x005493;
+    constexpr uint24_t bell = 0x005498;
+    constexpr uint24_t ember = 0x00549D;
+    constexpr uint24_t cuircuit = 0x0054A2;
+    constexpr uint24_t hedge = 0x0054A7;
+    constexpr uint24_t cloud = 0x0054AC;
+    constexpr uint24_t rock = 0x0054B1;
+    constexpr uint24_t wiggleworm = 0x0054B6;
+    constexpr uint24_t waggleworm = 0x0054BB;
+    constexpr uint24_t skimskate = 0x0054C0;
+    constexpr uint24_t skimray = 0x0054C5;
+    constexpr uint24_t billow = 0x0054CA;
+    constexpr uint24_t howl = 0x0054CF;
+    constexpr uint24_t item = 0x0054D4;
+    constexpr uint24_t item2 = 0x0054D9;
+    constexpr uint24_t zip = 0x0054DE;
+    constexpr uint24_t zap = 0x0054E3;
+    constexpr uint24_t suculent = 0x0054E8;
+    constexpr uint24_t cactus = 0x0054ED;
+    constexpr uint24_t flickerfly = 0x0054F2;
+    constexpr uint24_t flitfly = 0x0054F7;
+    constexpr uint24_t dragon = 0x0054FC;
+    constexpr uint24_t skull = 0x005501;
+    constexpr uint24_t ardu = 0x005506;
+}
+
+namespace Names
+{
+    constexpr uint24_t jimbo = 0x00550B;
+}
+
+  constexpr uint24_t teamList = 0x005511;
 }
 

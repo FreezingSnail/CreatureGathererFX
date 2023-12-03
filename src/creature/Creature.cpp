@@ -50,6 +50,20 @@ void Creature::loadFromOpponentSeed(uint32_t seed) {
     // this->loadSprite(cSeed);
 }
 
+void __attribute__((optimize("-O0"))) Creature::arenaLoad(uint24_t addr) {
+    uint8_t data[5];
+    FX::readDataObject(addr, data);
+    CreatureData_t cSeed = getCreatureFromStore(parseOpponentCreatureSeedID(data[0]));
+    this->id = static_cast<uint8_t>((cSeed.id));
+    this->loadTypes(cSeed);
+    this->level = 32;
+    this->setStats(cSeed);
+    this->setMove(data[0], 0);
+    this->setMove(data[1], 1);
+    this->setMove(data[2], 2);
+    this->setMove(data[3], 3);
+}
+
 void Creature::loadMoves(CreatureData_t seed) {
     this->setMove(static_cast<uint8_t>((seed.move1)), 0);
     this->setMove(static_cast<uint8_t>((seed.move2)), 1);
