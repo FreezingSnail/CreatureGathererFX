@@ -1,5 +1,6 @@
 #include "src/Globals.hpp"
 #include "src/engine/world/Event.hpp"
+ARDUBOY_NO_USB
 
 Arduboy2 arduboy;
 Player player = Player();
@@ -24,28 +25,39 @@ void setup() {
     menu.init(&arduboy, &state, &player);
     menu2.dialogMenu.init(&arduboy);
     engine.init(&state, &menu2);
-    player.basic();
-    engine.startArena(arduboy, player, 6);
+    // player.basic();
+    // engine.startArena(arduboy, player, 6);
 }
 
 void loop() {
     if (!arduboy.nextFrame()) {
         return;
     }
-    FX::display(CLEAR_BUFFER);
     arduboy.pollButtons();
+
+    if (menu2.dialogMenu.peek()) {
+        menu2.run(arduboy, engine);
+        menu2.dialogMenu.drawPopMenu();
+        FX::display();
+        return;
+    } else {
+        FX::display(CLEAR_BUFFER);
+    }
 
     switch (state) {
     case GameState_t::BATTLE:
+
         engine.encounter(arduboy, player);
         break;
     case GameState_t::WORLD:
-        world.runMap(&player, &menu);
+        // world.runMap(&player, &menu);
+        uint8_t index;
+        index = rand() % 18;
+        engine.startArena(arduboy, player, index);
         break;
     case GameState_t::ARENA:
         arena.arenaLoop(arduboy, menu, menu2, player, engine);
         break;
     }
-
     menu2.run(arduboy, engine);
 }

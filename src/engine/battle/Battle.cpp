@@ -102,11 +102,15 @@ void BattleEngine::startEncounter(Arduboy2 &arduboy, Player &player, uint8_t cre
 // Need to change something here for the flow of the game
 void BattleEngine::encounter(Arduboy2 &arduboy, Player &player) {
     if (this->checkLoss()) {
+        this->endEncounter();
+        menu2->dialogMenu.pushMenu(newDialogBox(LOSS, 0, 0));
         this->activeBattle = false;
         return;
     }
 
     if (this->checkWin()) {
+        this->endEncounter();
+        menu2->dialogMenu.pushMenu(newDialogBox(WIN, 0, 0));
         this->activeBattle = false;
         return;
     }
@@ -139,7 +143,6 @@ void BattleEngine::turnTick(Player &player) {
 bool BattleEngine::checkLoss() {
     // return uint8_t(this->awakeMons & 0b11100000) == uint8_t(0) ;
     if (this->playerHealths[0] <= 0 && this->playerHealths[1] <= 0 && this->playerHealths[2] <= 0) {
-        this->endEncounter();
         return true;
     }
     return false;
@@ -148,7 +151,6 @@ bool BattleEngine::checkLoss() {
 bool BattleEngine::checkWin() {
     // return uint8_t(this->awakeMons & 0b00000111) == uint8_t(0) ;
     if (this->opponentHealths[0] <= 0 && this->opponentHealths[1] <= 0 && this->opponentHealths[2] <= 0) {
-        this->endEncounter();
         return true;
     }
     return false;
@@ -157,9 +159,12 @@ bool BattleEngine::checkWin() {
 // These are just place holders until menu & ai written for proper swapping
 bool BattleEngine::checkPlayerFaint() {
     if (this->playerHealths[this->playerIndex] <= 0) {
-        this->playerIndex++;
-        this->playerCur = this->playerParty[this->playerIndex];
-        // this->awakeMons &= ~(1 << this->playerIndex);
+        // this->playerIndex++;
+        // this->playerCur = this->playerParty[this->playerIndex];
+        //  this->awakeMons &= ~(1 << this->playerIndex);
+        menu2->dialogMenu.pushMenu(newDialogBox(FAINT, playerCur->id, 0));
+        menu2->push(BATTLE_CREATURE_SELECT);
+
         return true;
     }
     return false;
@@ -167,8 +172,13 @@ bool BattleEngine::checkPlayerFaint() {
 
 bool BattleEngine::checkOpponentFaint() {
     if (this->opponentHealths[this->opponentIndex] <= 0) {
+        menu2->dialogMenu.pushMenu(newDialogBox(FAINT, opponentCur->id, 0));
         this->opponentIndex++;
         this->opponentCur = &(this->opponent.party[this->opponentIndex]);
+        if (!checkWin()) {
+            menu2->dialogMenu.pushMenu(newDialogBox(SWITCH, opponentCur->id, 0));
+        }
+
         // this->awakeMons &= ~(1 << this->opponentIndex+5);
         return true;
     }
@@ -265,11 +275,11 @@ void BattleEngine::commitAction(Player &player, Action *action, Creature *commit
         uint16_t damage = calculateDamage(action, commiter, reciever);
         applyDamage(damage, reciever);
         if (isPlayer) {
-            menu2->dialogMenu.pushMenu(newDialogBox(DAMAGE, uint24_t(damage), damage));
             menu2->dialogMenu.pushMenu(newDialogBox(NAME, commiter->id, 0));
+            menu2->dialogMenu.pushMenu(newDialogBox(DAMAGE, uint24_t(damage), damage));
         } else {
-            menu2->dialogMenu.pushMenu(newDialogBox(ENEMY_DAMAGE, uint24_t(damage), damage));
             menu2->dialogMenu.pushMenu(newDialogBox(ENEMY_NAME, commiter->id, 0));
+            menu2->dialogMenu.pushMenu(newDialogBox(ENEMY_DAMAGE, uint24_t(damage), damage));
         }
         break;
     }
@@ -313,13 +323,13 @@ uint16_t BattleEngine::calculateDamage(Action *action, Creature *committer, Crea
     bool bonus = committer->moveTypeBonus(committer->moves[action->actionIndex]);
     uint16_t damage = (power + committer->statlist.attack) / reciever->statlist.defense;
     damage = applyModifier(damage, (Type)move.getMoveType(), reciever->types);
-
+    damage = damage == 0 ? 1 : damage;
     // TODO (Snail) need to move this modifiers location in the formula
     if (bonus) {
         return damage * 2;
     }
     // going too need to balance this eventually
-    return damage;
+    return damage == 0 ? 1 : damage;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -379,7 +389,7 @@ void BattleEngine::drawScene(Arduboy2 &arduboy) {
 void BattleEngine::drawOpponent(Arduboy2 &arduboy) {
     // would be nice to flip this sprite
     // Sprites::drawSelfMasked(0, 0, creatureSprites, this->opponentCur->id);
-    FX::drawBitmap(0, 0, creatureSprites, 1, dbmWhite);
+    FX::drawBitmap(0, 0, creatureSprites, opponentCur->id, dbmWhite);
     this->drawOpponentHP(arduboy);
 }
 

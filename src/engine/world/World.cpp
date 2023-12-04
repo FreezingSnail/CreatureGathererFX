@@ -157,7 +157,7 @@ void __attribute__((optimize("-O0"))) WorldEngine::runMap(Player *player, Menu *
 
     if (this->moving && this->moveable()) {
         this->moveChar(player, menu);
-    } else if (!this->menu2->dialogMenu.drawPopMenu()) {
+    } else if (!this->menu2->dialogMenu.peek()) {
         this->interact();
         this->input();
     } else {

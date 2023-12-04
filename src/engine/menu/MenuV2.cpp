@@ -126,20 +126,21 @@ void MenuV2::action(Arduboy2 &arduboy, BattleEngine &engine) {
     }
 }
 
-void MenuV2::run(Arduboy2 &arduboy, BattleEngine &engine) {
-    if (this->menuPointer < 0)
+void dbf MenuV2::run(Arduboy2 &arduboy, BattleEngine &engine) {
+    if (this->menuPointer < 0 && !dialogMenu.peek())
         return;
-    if (dialogMenu.drawPopMenu()) {
+    if (dialogMenu.peek()) {
+        dialogMenu.drawPopMenu();
         if (arduboy.justPressed(A_BUTTON)) {
             dialogMenu.popMenu();
         }
-        return;
+    } else {
+        this->updateMoveList(engine);
+        engine.updateInactiveCreatures(this->creatures);
+        this->transverse(arduboy);
+        this->action(arduboy, engine);
+        this->printMenu(arduboy, engine);
     }
-    this->updateMoveList(engine);
-    engine.updateInactiveCreatures(this->creatures);
-    this->transverse(arduboy);
-    this->action(arduboy, engine);
-    this->printMenu(arduboy, engine);
 }
 
 void dbf MenuV2::printMenu(Arduboy2 &arduboy, BattleEngine &engine) {
