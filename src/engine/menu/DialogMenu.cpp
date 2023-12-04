@@ -12,12 +12,9 @@ void drawRect(Arduboy2 *ardu, PopUpDialog *popMenu) {
 
 void DialogMenu::init(Arduboy2 *Arduboy2) { this->arduboy = arduboy; }
 
-bool dbf DialogMenu::drawPopMenu() {
-    if (this->dialogPointer < 0) {
-        return false;
-    }
-    PopUpDialog curMenu = this->popDialogStack[this->dialogPointer];
-    drawRect(this->arduboy, &curMenu);
+void dbf DialogMenu::drawPopMenu() {
+    PopUpDialog curMenu = popDialogStack[0];
+    drawRect(arduboy, &curMenu);
     uint24_t addr;
     switch (curMenu.type) {
     case DAMAGE:
@@ -42,35 +39,61 @@ bool dbf DialogMenu::drawPopMenu() {
         FX::setCursor(curMenu.x + 3, curMenu.y + 13);
         FX::drawString(MenuFXData::enemyAttackText);
         break;
+    case FAINT:
+        FX::setCursor(curMenu.x + 3, curMenu.y + 3);
+        addr = FX::readIndexedUInt24(CreatureData::creatureNames, curMenu.textAddress);
+        FX::drawString(addr);
+        FX::setCursor(curMenu.x + 3, curMenu.y + 13);
+        FX::drawString("Fainted");
+        break;
+    case SWITCH:
+        FX::setCursor(curMenu.x + 3, curMenu.y + 3);
+        addr = FX::readIndexedUInt24(CreatureData::creatureNames, curMenu.textAddress);
+        FX::drawString(addr);
+        FX::setCursor(curMenu.x + 3, curMenu.y + 13);
+        FX::drawString("enters the field");
+        break;
+    case WIN:
+        FX::setCursor(curMenu.x + 3, curMenu.y + 3);
+        FX::drawString("You win");
+        break;
+    case LOSS:
+        FX::setCursor(curMenu.x + 3, curMenu.y + 3);
+        addr = FX::readIndexedUInt24(CreatureData::creatureNames, curMenu.textAddress);
+        FX::drawString(addr);
+        FX::setCursor(curMenu.x + 3, curMenu.y + 13);
+        FX::drawString("You loose");
+        break;
+
     default:
         FX::setCursor(curMenu.x + 3, curMenu.y + 3);
         FX::drawString(curMenu.textAddress);
     }
+}
 
+bool DialogMenu::peek() {
+    if (dialogPointer < 0)
+        return false;
     return true;
 }
 
 void DialogMenu::pushMenu(PopUpDialog info) {
-    if (this->dialogPointer == 3) {
-        return;
-    }
-
-    this->dialogPointer++;
-    this->popDialogStack[this->dialogPointer] = info;
+    dialogPointer++;
+    popDialogStack[dialogPointer] = info;
 }
 
 void DialogMenu::pushEvent(Event event) {
-    if (this->dialogPointer == 3) {
-        return;
-    }
-
-    this->dialogPointer++;
-    this->popDialogStack[this->dialogPointer] = PopUpDialog{0, 34, 120, 30, event.textAddress};
+    dialogPointer++;
+    popDialogStack[dialogPointer] = PopUpDialog{0, 34, 120, 30, event.textAddress};
 }
 
 void DialogMenu::popMenu() {
-    if (this->dialogPointer == -1) {
+    if (dialogPointer <= 0) {
+        dialogPointer--;
         return;
     }
-    this->dialogPointer--;
+    for (uint8_t i = 0; i < dialogPointer; i++) {
+        popDialogStack[i] = popDialogStack[i + 1];
+    }
+    dialogPointer--;
 }

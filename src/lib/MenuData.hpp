@@ -14,4 +14,8 @@ enum DialogType {
     NAME,
     ENEMY_DAMAGE,
     ENEMY_NAME,
+    FAINT,
+    SWITCH,
+    WIN,
+    LOSS,
 };

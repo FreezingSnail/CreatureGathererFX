@@ -9,6 +9,7 @@ class Opponent {
   public:
     Creature party[3];
     uint8_t levels[3];
+    uint24_t nameptr;
 
     // This should load information from PROGMEM
     Opponent();
