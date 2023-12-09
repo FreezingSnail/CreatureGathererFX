@@ -1,5 +1,5 @@
 namespace MenuFXData {
-    uint8_t attackText[] = "Attacks_the_foe!\0";
+    uint8_t attackText[] = "Attacks\x20the_foe!\0";
     uint8_t enemyAttackText[] = "Attacks_you!\0";
     uint8_t damageText[] = "Damage_delt!\0";
 
