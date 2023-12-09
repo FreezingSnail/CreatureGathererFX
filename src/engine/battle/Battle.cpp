@@ -10,7 +10,6 @@
 #include "../game/Menu.hpp"
 
 // #include "../../lib/TypeTable.hpp"
-#include "../../data/opponentsData.h"
 #include "../../lib/Move.hpp"
 
 #define dbf __attribute__((optimize("-O0")))
