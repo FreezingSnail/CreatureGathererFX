@@ -122,13 +122,13 @@ void BattleEngine::encounter(Player &player) {
 }
 
 void BattleEngine::turnTick(Player &player) {
-    std::cout << "turn tick" << std::endl;
+    // std::cout << "turn tick" << std::endl;
     this->playerAction.setActionType(ActionType::ATTACK, Priority::NORMAL);
-    this->playerAction.actionIndex = choseMove(opponentCur, playerCur);
-    std::cout << "player using action " << playerAction.actionIndex << std::endl;
+    this->playerAction.actionIndex = choseMove(playerCur, opponentCur);
+    // std::cout << "player using action " << int(playerAction.actionIndex) << std::endl;
 
     this->opponentInput();
-    std::cout << "opponent using action " << opponentAction.actionIndex << std::endl;
+    // std::cout << "opponent using action " << int(opponentAction.actionIndex) << std::endl;
 
     int8_t order = (int8_t)this->playerAction.priority - (int8_t)this->opponentAction.priority;
     if (order > 0) {
@@ -148,7 +148,7 @@ void BattleEngine::turnTick(Player &player) {
 bool BattleEngine::checkLoss() {
     // return uint8_t(this->awakeMons & 0b11100000) == uint8_t(0) ;
     if (this->playerHealths[0] <= 0 && this->playerHealths[1] <= 0 && this->playerHealths[2] <= 0) {
-        std::cout << "player lost " << std::endl;
+        // std::cout << "player lost " << std::endl;
         return true;
     }
     return false;
@@ -157,7 +157,7 @@ bool BattleEngine::checkLoss() {
 bool BattleEngine::checkWin() {
     // return uint8_t(this->awakeMons & 0b00000111) == uint8_t(0) ;
     if (this->opponentHealths[0] <= 0 && this->opponentHealths[1] <= 0 && this->opponentHealths[2] <= 0) {
-        std::cout << "player lost " << std::endl;
+        // std::cout << "player won " << std::endl;
 
         return true;
     }
@@ -167,10 +167,10 @@ bool BattleEngine::checkWin() {
 // These are just place holders until menu & ai written for proper swapping
 bool BattleEngine::checkPlayerFaint() {
     if (this->playerHealths[this->playerIndex] <= 0) {
-        std::cout << playerCur->id << " lost to " << opponentCur->id << std::endl;
+        // std::cout << "player " << int(playerCur->id) << " lost to " << int(opponentCur->id) << std::endl;
 
-        // this->playerIndex++;
-        // this->playerCur = this->playerParty[this->playerIndex];
+        this->playerIndex++;
+        this->playerCur = this->playerParty[this->playerIndex];
         //  this->awakeMons &= ~(1 << this->playerIndex);
         // menu2->dialogMenu.pushMenu(newDialogBox(FAINT, playerCur->id, 0));
         // menu2->push(BATTLE_CREATURE_SELECT);
@@ -181,8 +181,8 @@ bool BattleEngine::checkPlayerFaint() {
 }
 
 bool BattleEngine::checkOpponentFaint() {
-    std::cout << opponentCur->id << " lost to " << playerCur->id << std::endl;
     if (this->opponentHealths[this->opponentIndex] <= 0) {
+        // std::cout << "opponent " << int(opponentCur->id) << " lost to " << int(playerCur->id) << std::endl;
         // menu2->dialogMenu.pushMenu(newDialogBox(FAINT, opponentCur->id, 0));
         this->opponentIndex++;
         this->opponentCur = &(this->opponent.party[this->opponentIndex]);

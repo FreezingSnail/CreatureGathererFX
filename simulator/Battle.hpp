@@ -44,7 +44,6 @@ class BattleEngine {
     void updateInactiveCreatures(uint8_t *list);
     Creature *getCreature(uint8_t index);
 
-  private:
     // flow control
     void turnTick(Player &player);
     bool checkLoss();
