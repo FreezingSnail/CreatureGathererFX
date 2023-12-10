@@ -20,6 +20,41 @@
 
 BattleEngine::BattleEngine() {}
 
+uint16_t static calculateDamage(Action *action, Creature *committer, Creature *reciever) {
+    // need to do something here with atk def stats
+    Move move = committer->moveList[action->actionIndex];
+    // float mod = getMatchupModifier(getMoveType(move),
+    // uint8_t(reciever->type1))*getMatchupModifier(getMoveType(move),
+    // uint8_t(reciever->type2))/2;
+    uint8_t power = move.getMovePower();
+    bool bonus = committer->moveTypeBonus(move.getMoveType());
+    uint16_t damage = (power + committer->statlist.attack) / reciever->statlist.defense;
+    damage = applyModifier(damage, (Type)move.getMoveType(), reciever->types);
+    damage = damage == 0 ? 1 : damage;
+    // TODO (Snail) need to move this modifiers location in the formula
+
+    // going too need to balance this eventually
+    return damage == 0 ? 1 : damage;
+}
+
+static uint8_t choseMove(Creature *commiter, Creature *reciever) {
+    uint8_t selected = 0;
+    uint16_t maxDamage = 0;
+
+    DualType type = reciever->types;
+    // always choose the highest damage (hardest ai)
+    for (uint8_t i = 0; i < 4; i++) {
+        Action a;
+        a.actionIndex = i;
+        uint16_t damage = calculateDamage(&a, commiter, reciever);
+        if (damage > maxDamage) {
+            maxDamage = damage;
+            selected = i;
+        }
+    }
+    return selected;
+}
+
 static PopUpDialog newDialogBox(DialogType type, uint24_t number, uint16_t damage) {
     PopUpDialog dialog;
     dialog.height = MHEIGHT;
@@ -310,25 +345,6 @@ void BattleEngine::applyDamage(uint16_t damage, Creature *reciever) {
         uint8_t hp = this->opponentHealths[this->opponentIndex];
         this->opponentHealths[this->opponentIndex] -= damage >= hp ? hp : damage;
     }
-}
-
-uint16_t BattleEngine::calculateDamage(Action *action, Creature *committer, Creature *reciever) {
-    // need to do something here with atk def stats
-    Move move = committer->moveList[action->actionIndex];
-    // float mod = getMatchupModifier(getMoveType(move),
-    // uint8_t(reciever->type1))*getMatchupModifier(getMoveType(move),
-    // uint8_t(reciever->type2))/2;
-    uint8_t power = move.getMovePower();
-    bool bonus = committer->moveTypeBonus(committer->moves[action->actionIndex]);
-    uint16_t damage = (power + committer->statlist.attack) / reciever->statlist.defense;
-    damage = applyModifier(damage, (Type)move.getMoveType(), reciever->types);
-    damage = damage == 0 ? 1 : damage;
-    // TODO (Snail) need to move this modifiers location in the formula
-    if (bonus) {
-        return damage * 2;
-    }
-    // going too need to balance this eventually
-    return damage == 0 ? 1 : damage;
 }
 
 //////////////////////////////////////////////////////////////////////////////

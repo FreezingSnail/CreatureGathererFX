@@ -13,6 +13,41 @@
 #define MWIDTH 128
 #define MHEIGHT 32
 
+uint16_t static calculateDamage(Action *action, Creature *committer, Creature *reciever) {
+    // need to do something here with atk def stats
+    Move move = committer->moveList[action->actionIndex];
+    // float mod = getMatchupModifier(getMoveType(move),
+    // uint8_t(reciever->type1))*getMatchupModifier(getMoveType(move),
+    // uint8_t(reciever->type2))/2;
+    uint8_t power = move.getMovePower();
+    bool bonus = committer->moveTypeBonus(move.getMoveType());
+    uint16_t damage = (power + committer->statlist.attack) / reciever->statlist.defense;
+    damage = applyModifier(damage, (Type)move.getMoveType(), reciever->types);
+    damage = damage == 0 ? 1 : damage;
+    // TODO (Snail) need to move this modifiers location in the formula
+
+    // going too need to balance this eventually
+    return damage == 0 ? 1 : damage;
+}
+
+static uint8_t choseMove(Creature *commiter, Creature *reciever) {
+    uint8_t selected = 0;
+    uint16_t maxDamage = 0;
+
+    DualType type = reciever->types;
+    // always choose the highest damage (hardest ai)
+    for (uint8_t i = 0; i < 4; i++) {
+        Action a;
+        a.actionIndex = i;
+        uint16_t damage = calculateDamage(&a, commiter, reciever);
+        if (damage > maxDamage) {
+            maxDamage = damage;
+            selected = i;
+        }
+    }
+    return selected;
+}
+
 void BattleEngine::init() { this->activeBattle = false; }
 
 uint8_t *BattleEngine::getPlayerCurCreatureMoves() { return this->playerCur->moves; }
@@ -88,10 +123,13 @@ void BattleEngine::encounter(Player &player) {
 
 void BattleEngine::turnTick(Player &player) {
     std::cout << "turn tick" << std::endl;
-    if (!this->queued) {
-        return;
-    }
+    this->playerAction.setActionType(ActionType::ATTACK, Priority::NORMAL);
+    this->playerAction.actionIndex = choseMove(opponentCur, playerCur);
+    std::cout << "player using action " << playerAction.actionIndex << std::endl;
+
     this->opponentInput();
+    std::cout << "opponent using action " << opponentAction.actionIndex << std::endl;
+
     int8_t order = (int8_t)this->playerAction.priority - (int8_t)this->opponentAction.priority;
     if (order > 0) {
         this->playerActionFirst(player);
@@ -105,12 +143,12 @@ void BattleEngine::turnTick(Player &player) {
             this->opponentActionFirst(player);
         }
     }
-    this->queued = false;
 }
 
 bool BattleEngine::checkLoss() {
     // return uint8_t(this->awakeMons & 0b11100000) == uint8_t(0) ;
     if (this->playerHealths[0] <= 0 && this->playerHealths[1] <= 0 && this->playerHealths[2] <= 0) {
+        std::cout << "player lost " << std::endl;
         return true;
     }
     return false;
@@ -119,6 +157,8 @@ bool BattleEngine::checkLoss() {
 bool BattleEngine::checkWin() {
     // return uint8_t(this->awakeMons & 0b00000111) == uint8_t(0) ;
     if (this->opponentHealths[0] <= 0 && this->opponentHealths[1] <= 0 && this->opponentHealths[2] <= 0) {
+        std::cout << "player lost " << std::endl;
+
         return true;
     }
     return false;
@@ -127,6 +167,8 @@ bool BattleEngine::checkWin() {
 // These are just place holders until menu & ai written for proper swapping
 bool BattleEngine::checkPlayerFaint() {
     if (this->playerHealths[this->playerIndex] <= 0) {
+        std::cout << playerCur->id << " lost to " << opponentCur->id << std::endl;
+
         // this->playerIndex++;
         // this->playerCur = this->playerParty[this->playerIndex];
         //  this->awakeMons &= ~(1 << this->playerIndex);
@@ -139,6 +181,7 @@ bool BattleEngine::checkPlayerFaint() {
 }
 
 bool BattleEngine::checkOpponentFaint() {
+    std::cout << opponentCur->id << " lost to " << playerCur->id << std::endl;
     if (this->opponentHealths[this->opponentIndex] <= 0) {
         // menu2->dialogMenu.pushMenu(newDialogBox(FAINT, opponentCur->id, 0));
         this->opponentIndex++;
@@ -227,7 +270,7 @@ void BattleEngine::opponentInput() {
     // ai to select best move
     // For now just do the first slot attack
     this->opponentAction.setActionType(ActionType::ATTACK, Priority::NORMAL);
-    this->opponentAction.actionIndex = 1;
+    this->opponentAction.actionIndex = choseMove(opponentCur, playerCur);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -278,25 +321,6 @@ void BattleEngine::applyDamage(uint16_t damage, Creature *reciever) {
         uint8_t hp = this->opponentHealths[this->opponentIndex];
         this->opponentHealths[this->opponentIndex] -= damage >= hp ? hp : damage;
     }
-}
-
-uint16_t BattleEngine::calculateDamage(Action *action, Creature *committer, Creature *reciever) {
-    // need to do something here with atk def stats
-    Move move = committer->moveList[action->actionIndex];
-    // float mod = getMatchupModifier(getMoveType(move),
-    // uint8_t(reciever->type1))*getMatchupModifier(getMoveType(move),
-    // uint8_t(reciever->type2))/2;
-    uint8_t power = move.getMovePower();
-    bool bonus = committer->moveTypeBonus(committer->moves[action->actionIndex]);
-    uint16_t damage = (power + committer->statlist.attack) / reciever->statlist.defense;
-    damage = applyModifier(damage, (Type)move.getMoveType(), reciever->types);
-    damage = damage == 0 ? 1 : damage;
-    // TODO (Snail) need to move this modifiers location in the formula
-    if (bonus) {
-        return damage * 2;
-    }
-    // going too need to balance this eventually
-    return damage == 0 ? 1 : damage;
 }
 
 //////////////////////////////////////////////////////////////////////////////
