@@ -1,4 +1,5 @@
 #pragma once
+#include "../../Globals.hpp"
 #include "../../lib/MenuData.hpp"
 #include "../world/Event.hpp"
 #include <ArduboyFX.h>
