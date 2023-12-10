@@ -3,10 +3,4 @@
 #include <Arduboy2.h>
 #include <ArduboyFX.h>
 
-#include "engine/arena/Arena.hpp"
-#include "engine/battle/Battle.hpp"
-#include "engine/game/Gamestate.hpp"
-#include "engine/menu/MenuV2.hpp"
-#include "engine/world/World.hpp"
-#include "fxdata/fxdata.h"
-#include "player/Player.hpp"
+#define Arduboy2 Arduboy2Base

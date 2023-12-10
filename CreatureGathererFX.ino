@@ -1,5 +1,13 @@
 #include "src/Globals.hpp"
+#include "src/engine/arena/Arena.hpp"
+#include "src/engine/battle/Battle.hpp"
+#include "src/engine/game/Gamestate.hpp"
+#include "src/engine/menu/MenuV2.hpp"
 #include "src/engine/world/Event.hpp"
+#include "src/engine/world/World.hpp"
+#include "src/fxdata/fxdata.h"
+#include "src/player/Player.hpp"
+
 // ARDUBOY_NO_USB
 
 Arduboy2 arduboy;
