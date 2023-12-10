@@ -3,7 +3,7 @@
 
 // This is an encounter action
 // attack, change, item, escape
-enum ActionType { ATTACK = 0, CHNGE = 1, CATCH = 2, ESCAPE = 3 };
+enum ActionType { ATTACK = 0, CHNGE = 1, GATHER = 2, ESCAPE = 3 };
 enum Priority { SLOW = 0, NORMAL = 1, FAST = 2 };
 
 class Action {

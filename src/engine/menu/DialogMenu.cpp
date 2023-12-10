@@ -69,6 +69,16 @@ void DialogMenu::drawPopMenu() {
         FX::setCursor(curMenu.x + 3, curMenu.y + 3);
         FX::drawString("You escaped");
         break;
+    case GATHERING:
+        FX::setCursor(curMenu.x + 3, curMenu.y + 3);
+        FX::drawString("Gathering is not");
+        FX::setCursor(curMenu.x + 3, curMenu.y + 13);
+        FX::drawString("implemented yet");
+        break;
+    case TEAM_CHANGE:
+        FX::setCursor(curMenu.x + 3, curMenu.y + 3);
+        FX::drawString("You Change creature");
+        break;
 
     case EFFECTIVENESS:
         Modifier mod = Modifier(curMenu.textAddress);
@@ -84,7 +94,7 @@ void DialogMenu::drawPopMenu() {
             FX::drawString("damage");
             break;
         case Modifier::Double:
-            FX::drawString("It's does great");
+            FX::drawString("It does great");
             FX::setCursor(curMenu.x + 3, curMenu.y + 13);
             FX::drawString("damage");
             break;
@@ -98,7 +108,7 @@ void DialogMenu::drawPopMenu() {
 
     default:
         FX::setCursor(curMenu.x + 3, curMenu.y + 3);
-        FX::drawString(curMenu.textAddress);
+        FX::drawString("default");
     }
 }
 

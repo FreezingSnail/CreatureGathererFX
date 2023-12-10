@@ -44,7 +44,7 @@ static void printBattleMenu(Arduboy2 &arduboy) {
     arduboy.setCursor(6, 46);
     arduboy.print(asFlashStringHelper(moveM));
     arduboy.setCursor(64, 46);
-    // arduboy.print(asFlashStringHelper(itemM));
+    arduboy.print(asFlashStringHelper(gatherM));
     arduboy.setCursor(6, 54);
     arduboy.print(asFlashStringHelper(changeM));
     arduboy.setCursor(64, 54);

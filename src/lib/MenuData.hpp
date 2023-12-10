@@ -20,4 +20,6 @@ enum DialogType {
     LOSS,
     ESCAPE_ENCOUNTER,
     EFFECTIVENESS,
+    GATHERING,
+    TEAM_CHANGE,
 };

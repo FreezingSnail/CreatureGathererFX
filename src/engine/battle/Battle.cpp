@@ -13,10 +13,6 @@
 #include "../../lib/Move.hpp"
 
 #define dbf __attribute__((optimize("-O0")))
-#define XSTART 0
-#define YSTART 43
-#define MWIDTH 128
-#define MHEIGHT 32
 
 BattleEngine::BattleEngine() {}
 
@@ -53,19 +49,6 @@ static uint8_t choseMove(Creature *commiter, Creature *reciever) {
         }
     }
     return selected;
-}
-
-static PopUpDialog newDialogBox(DialogType type, uint24_t number, uint16_t damage) {
-    PopUpDialog dialog;
-    dialog.height = MHEIGHT;
-    dialog.width = MWIDTH;
-    dialog.x = XSTART;
-    dialog.y = YSTART;
-    dialog.type = type;
-    dialog.textAddress = number;
-    dialog.damage = damage;
-
-    return dialog;
 }
 
 void BattleEngine::init(GameState_t *state, MenuV2 *menu2) {
@@ -149,8 +132,8 @@ void BattleEngine::encounter(Arduboy2 &arduboy, Player &player) {
         return;
     }
 
-    this->drawScene(arduboy);
     this->turnTick(player);
+    this->drawScene(arduboy);
 }
 
 void BattleEngine::turnTick(Player &player) {
@@ -239,6 +222,7 @@ void BattleEngine::opponentActionFirst(Player &player) {
 void BattleEngine::setMoveList(uint8_t **pointer) { *pointer = this->playerCur->moves; }
 
 void BattleEngine::changeCurMon(uint8_t id) {
+    // TODO this breaks with repeate creatures on roster
     for (uint8_t i = 0; i < 3; i++) {
         if (this->playerParty[i]->id == id) {
             this->playerCur = this->playerParty[i];
@@ -282,7 +266,7 @@ void ::BattleEngine::queueAction(ActionType type, uint8_t index) {
     Priority p = Priority::NORMAL;
     switch (type) {
     case ActionType::CHNGE:
-    case ActionType::CATCH:
+    case ActionType::GATHER:
     case ActionType::ESCAPE:
         p = Priority::FAST;
     }
@@ -340,14 +324,16 @@ void dbf BattleEngine::commitAction(Player &player, Action *action, Creature *co
         }
         break;
     }
-    case ActionType::CATCH:
-        if (this->tryCapture()) {
-            // idk if this is staying at all
-            // player.storeCreature(0, this->opponentCur->id, this->opponentCur->level);
-            endEncounter();
-        }
+    case ActionType::GATHER:
+
+        // idk if this is staying at all
+        // player.storeCreature(0, this->opponentCur->id, this->opponentCur->level);
+        // menu2->dialogMenu.pushMenu(newDialogBox(GATHERING, 0, 0));
+
         break;
     case ActionType::CHNGE:
+        menu2->dialogMenu.pushMenu(newDialogBox(TEAM_CHANGE, 0, 0));
+        menu2->dialogMenu.pushMenu(newDialogBox(SWITCH, playerParty[action->actionIndex]->id, 0));
         this->changeCurMon(action->actionIndex);
         break;
     case ActionType::ESCAPE:
