@@ -121,7 +121,7 @@ void Menu::tansverseBattleMenu() {
                 break;
             case 1:
                 this->curMenu = BCATCH;
-                this->queueAction(ActionType::CATCH, 0);
+                this->queueAction(ActionType::GATHER, 0);
                 this->curMenu = BMAIN;
                 break;
             case 2:
@@ -261,7 +261,7 @@ void Menu::queueAction(ActionType type, uint8_t index) {
     Priority p = Priority::NORMAL;
     switch (type) {
     case ActionType::CHNGE:
-    case ActionType::CATCH:
+    case ActionType::GATHER:
     case ActionType::ESCAPE:
         p = Priority::FAST;
     }
@@ -318,7 +318,7 @@ void Menu::printBattleMenu() {
         this->arduboy->setCursor(6, 46);
         this->arduboy->print(asFlashStringHelper(moveM));
         this->arduboy->setCursor(64, 46);
-        this->arduboy->print(asFlashStringHelper(itemM));
+        this->arduboy->print(asFlashStringHelper(gatherM));
         this->arduboy->setCursor(6, 55);
         this->arduboy->print(asFlashStringHelper(changeM));
         this->arduboy->setCursor(64, 55);

@@ -68,7 +68,8 @@ void MenuV2::action(Arduboy2 &arduboy, BattleEngine &engine) {
                 this->push(BATTLE_MOVE_SELECT);
                 break;
             case 1:
-                // engine.queueAction(ActionType::CATCH, 0);
+                // engine.queueAction(ActionType::GATHER, 0);
+                dialogMenu.pushMenu(newDialogBox(GATHERING, 0, 0));
                 break;
             case 2:
                 this->push(BATTLE_CREATURE_SELECT);
