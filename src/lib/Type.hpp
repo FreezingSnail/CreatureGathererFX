@@ -52,11 +52,11 @@ class DualType {
 
 enum class Modifier : uint8_t {
     None,
-    //  Quarter,
+    Quarter,
     Half,
     Same,
     Double,
-    //	Quadruple,
+    Quadruple,
 };
 
 static uint16_t applyMod(uint16_t value, Modifier modifier) {
@@ -67,8 +67,10 @@ static uint16_t applyMod(uint16_t value, Modifier modifier) {
         return value >> 1;
     case Modifier::Double:
         return value << 1;
-        //	case Modifier::Quarter: return value >> 2;
-        //	case Modifier::Quadruple: return value << 2;
+    case Modifier::Quarter:
+        return value >> 2;
+    case Modifier::Quadruple:
+        return value << 2;
     default:
         return value;
     }
@@ -175,6 +177,36 @@ static Modifier getModifier(Type attackType, Type defendingType) {
     return (attackType == Type::NONE || defendingType == Type::NONE)
                ? Modifier::None
                : static_cast<Modifier>(pgm_read_byte(&typeTable[static_cast<uint8_t>(attackType)][static_cast<uint8_t>(defendingType)]));
+}
+
+static Modifier combineModifier(Modifier a, Modifier b) {
+    if (a == Modifier::None || b == Modifier::None) {
+        return Modifier::None;
+    }
+    switch (a) {
+    case Modifier::Same:
+        return b;
+    case Modifier::Half:
+        switch (b) {
+        case Modifier::Double:
+            return Modifier::Same;
+        case Modifier::Half:
+            return Modifier::Quarter;
+        default:
+            return Modifier::Half;
+        }
+    case Modifier::Double:
+        switch (b) {
+        case Modifier::Double:
+            return Modifier::Quadruple;
+        case Modifier::Half:
+            return Modifier::Same;
+        default:
+            return Modifier::Double;
+        }
+    }
+
+    return Modifier::None;
 }
 
 static uint16_t applyModifier(uint16_t baseValue, Type attackType, DualType defendingType) {

@@ -6,4 +6,4 @@ gen:
 	python3 Arduboy-Python-Utilities/fxdata-build.py src/fxdata/fxdata.txt
 
 sim:
-	g++   simulator/creature/Creature.cpp simulator/opponent/Opponent.cpp simulator/player/Player.cpp src/action/Action.cpp simulator/Battle.cpp simulator/main.cpp  -o simulator/simu.o
+	g++  -g -std=c++17 simulator/creature/Creature.cpp simulator/opponent/Opponent.cpp simulator/player/Player.cpp src/action/Action.cpp simulator/Battle.cpp simulator/main.cpp  -o simulator/simu.o
