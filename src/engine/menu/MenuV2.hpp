@@ -29,6 +29,7 @@ class MenuV2 {
     void action(Arduboy2 &arduboy, BattleEngine &engine);
     void printMenu(Arduboy2 &arduboy, BattleEngine &engine);
     void updateMoveList(BattleEngine &engine);
+    void creatureRental(Arduboy2 &arduboy);
 };
 
 #define XSTART 0

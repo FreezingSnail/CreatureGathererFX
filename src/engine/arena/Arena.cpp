@@ -2,32 +2,34 @@
 #include "../../player/Player.hpp"
 #include "../battle/Battle.hpp"
 #include "../draw.h"
-#include "../game/Menu.hpp"
 #include "../menu/MenuV2.hpp"
 
 #include <Arduboy2.h>
 #include <ArduboyFX.h>
 
-void Arena::arenaLoop(Arduboy2 &arduboy, Menu &menu, MenuV2 &menu2, Player &player, BattleEngine &engine) {
+void Arena::arenaLoop(Arduboy2 &arduboy, MenuV2 &menu2, Player &player, BattleEngine &engine) {
     if (this->moveIndex == 12) {
         this->cursor = 0;
         this->movePointer = 0;
         this->moveIndex = 0;
         this->registerIndex = 0;
-        this->startBattle(arduboy, engine, player, menu);
+        this->startBattle(arduboy, engine, player);
     }
 
     if (this->registerIndex < 3) {
-        menu.printMenu();
-        this->registerRentals(menu, player);
+        menu2.creatureRental(arduboy);
+        this->registerRentals(arduboy, player);
         this->displayRegisteredCount(arduboy);
     } else if (this->moveIndex < 12) {
         this->registerMoves(arduboy, player);
     }
 }
 
-void Arena::registerRentals(Menu &menu, Player &player) {
-    int8_t creatureID = menu.registerCreature();
+void Arena::registerRentals(Arduboy2 &arduboy, Player &player) {
+    int8_t creatureID = -1;
+    if (arduboy.justPressed(A_BUTTON)) {
+        creatureID = cursor;
+    }
     if (creatureID >= 0) {
         player.loadCreature(this->registerIndex, creatureID);
         this->registerIndex++;
@@ -117,7 +119,7 @@ void __attribute__((optimize("-O0"))) Arena::registerMoves(Arduboy2 &arduboy, Pl
 
 uint8_t Arena::selectOpponent() { return 0; }
 
-void Arena::startBattle(Arduboy2 &arduboy, BattleEngine &engine, Player &player, Menu &menu) { engine.startArena(arduboy, player, 4); }
+void Arena::startBattle(Arduboy2 &arduboy, BattleEngine &engine, Player &player) { engine.startArena(arduboy, player, 4); }
 
 void Arena::displayRegisteredCount(Arduboy2 &arduboy) {
     for (uint8_t i = 0; i < this->registerIndex; i++) {

@@ -177,35 +177,6 @@ void Menu::tansverseBattleMenu() {
     }
 }
 
-void printType(Type t, Arduboy2 *arduboy) {
-    switch (t) {
-    case Type::SPIRIT:
-        arduboy->print(F("SPIRIT"));
-        break;
-    case Type::WATER:
-        arduboy->print(F("WATER"));
-        break;
-    case Type::WIND:
-        arduboy->print(F("WIND"));
-        break;
-    case Type::EARTH:
-        arduboy->print(F("EARTH"));
-        break;
-    case Type::FIRE:
-        arduboy->print(F("FIRE"));
-        break;
-    case Type::LIGHTNING:
-        arduboy->print(F("LIGHTNING"));
-        break;
-    case Type::PLANT:
-        arduboy->print(F("PLANT"));
-        break;
-    case Type::ELDER:
-        arduboy->print(F("ELDER"));
-        break;
-    }
-}
-
 void Menu::creatureRental() {
     this->arduboy->setCursor(0, 55);
     this->arduboy->print(F(">"));
@@ -237,13 +208,7 @@ void Menu::creatureRental() {
     this->arduboy->print(F("spd: "));
     this->arduboy->print(cseed.spdSeed);
     this->arduboy->setCursor(0, 35);
-    printType(Type(cseed.type1), this->arduboy);
     this->arduboy->setCursor(0, 45);
-    printType(Type(cseed.type2), this->arduboy);
-
-    if (this->arduboy->justPressed(A_BUTTON)) {
-        // Register the creature
-    }
 }
 
 int8_t Menu::registerCreature() {

@@ -7,6 +7,35 @@
 #define dbf __attribute__((optimize("-O0")))
 #define CURRENT_MENU this->stack[this->menuPointer]
 
+static void printType(Type t, Arduboy2 *arduboy) {
+    switch (t) {
+    case Type::SPIRIT:
+        arduboy->print(F("SPIRIT"));
+        break;
+    case Type::WATER:
+        arduboy->print(F("WATER"));
+        break;
+    case Type::WIND:
+        arduboy->print(F("WIND"));
+        break;
+    case Type::EARTH:
+        arduboy->print(F("EARTH"));
+        break;
+    case Type::FIRE:
+        arduboy->print(F("FIRE"));
+        break;
+    case Type::LIGHTNING:
+        arduboy->print(F("LIGHTNING"));
+        break;
+    case Type::PLANT:
+        arduboy->print(F("PLANT"));
+        break;
+    case Type::ELDER:
+        arduboy->print(F("ELDER"));
+        break;
+    }
+}
+
 MenuV2::MenuV2() { this->menuPointer = -1; }
 void MenuV2::updateMoveList(BattleEngine &engine) { this->moveList = engine.getPlayerCurCreatureMoves(); }
 
@@ -162,4 +191,40 @@ void MenuV2::printMenu(Arduboy2 &arduboy, BattleEngine &engine) {
     }
     printCursor(arduboy, this->cursorIndex);
     arduboy.drawRect(1, 44, 126, 19, BLACK);
+}
+
+void MenuV2::creatureRental(Arduboy2 &arduboy) {
+    arduboy.setCursor(0, 55);
+    arduboy.print(F(">"));
+    FX::setCursor(10, 55);
+    this->cursorIndex = this->cursorIndex % 31;
+
+    uint24_t addr = FX::readIndexedUInt24(CreatureData::creatureNames, this->cursorIndex);
+    FX::drawString(addr);
+    FX::drawBitmap(0, 0, creatureSprites, this->cursorIndex, dbmWhite);
+    CreatureData_t cseed;
+    uint24_t rowAddress = CreatureData::creatureData + (sizeof(CreatureData_t) * this->cursorIndex);
+    FX::readDataObject(rowAddress, cseed);
+    arduboy.setCursor(35, 0);
+    arduboy.print(F("HP: "));
+    arduboy.print(cseed.hpSeed);
+    arduboy.setCursor(35, 10);
+    arduboy.print(F("atk:"));
+    arduboy.print(cseed.atkSeed);
+    arduboy.setCursor(35, 20);
+    arduboy.print(F("def:"));
+    arduboy.print(cseed.defSeed);
+    arduboy.setCursor(72, 0);
+    arduboy.print(F("spcA:"));
+    arduboy.print(cseed.spcAtkSeed);
+    arduboy.setCursor(72, 10);
+    arduboy.print(F("spcD:"));
+    arduboy.print(cseed.spcDefSeed);
+    arduboy.setCursor(72, 20);
+    arduboy.print(F("spd: "));
+    arduboy.print(cseed.spdSeed);
+    arduboy.setCursor(0, 35);
+    printType(Type(cseed.type1), &arduboy);
+    arduboy.setCursor(0, 45);
+    printType(Type(cseed.type2), &arduboy);
 }

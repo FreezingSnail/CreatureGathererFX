@@ -6,7 +6,6 @@
 #include "engine/arena/Arena.hpp"
 #include "engine/battle/Battle.hpp"
 #include "engine/game/Gamestate.hpp"
-#include "engine/game/Menu.hpp"
 #include "engine/menu/MenuV2.hpp"
 #include "engine/world/World.hpp"
 #include "fxdata/fxdata.h"

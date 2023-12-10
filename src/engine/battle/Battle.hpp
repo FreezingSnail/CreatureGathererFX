@@ -1,8 +1,6 @@
 #pragma once
 #include "../../action/Action.hpp"
 #include "../../creature/Creature.hpp"
-#include "../../engine/game/Menu.hpp"
-// #include "../../engine/menu/MenuV2.hpp"
 #include "../../opponent/Opponent.hpp"
 #include "../../player/Player.hpp"
 #include "../game/Gamestate.hpp"

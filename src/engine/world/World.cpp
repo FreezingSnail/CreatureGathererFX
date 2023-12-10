@@ -150,13 +150,13 @@ void WorldEngine::drawPlayer() {
     FX::drawBitmap(PLAYER_X_OFFSET, PLAYER_Y_OFFSET, characterSheet, frame, dbmNormal);
 }
 
-void __attribute__((optimize("-O0"))) WorldEngine::runMap(Player *player, Menu *menu) {
+void __attribute__((optimize("-O0"))) WorldEngine::runMap(Player *player) {
     this->drawMap();
     this->drawPlayer();
     this->drawEvents();
 
     if (this->moving && this->moveable()) {
-        this->moveChar(player, menu);
+        this->moveChar(player);
     } else if (!this->menu2->dialogMenu.peek()) {
         this->interact();
         this->input();
@@ -167,7 +167,7 @@ void __attribute__((optimize("-O0"))) WorldEngine::runMap(Player *player, Menu *
     }
 }
 
-void WorldEngine::moveChar(Player *player, Menu *menu) {
+void WorldEngine::moveChar(Player *player) {
     switch (this->playerDirection) {
     case Up:
         this->mapy++;
@@ -203,13 +203,13 @@ void WorldEngine::moveChar(Player *player, Menu *menu) {
         if (warpTile(this->curx, this->cury)) {
             this->warp();
         }
-        this->encounter(this->arduboy, player, menu);
+        this->encounter(this->arduboy, player);
     }
 }
 
 uint8_t WorldEngine::getTile() { return (TileType)0; }
 
-void __attribute__((optimize("-O0"))) WorldEngine::encounter(Arduboy2 *arduboy, Player *player, Menu *menu) {
+void __attribute__((optimize("-O0"))) WorldEngine::encounter(Arduboy2 *arduboy, Player *player) {
     uint8_t t = gameMap[this->cury][this->curx];
     if (t == 0) {
         uint8_t chance = random(1, 101);
