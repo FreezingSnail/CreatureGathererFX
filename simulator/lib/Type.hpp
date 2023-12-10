@@ -30,13 +30,13 @@ class DualType {
   private:
     uint8_t value;
 
-    static const uint8_t Type1Mask = 0b11100000;
+    static const uint8_t Type1Mask = 0b11110000;
     static const uint8_t Type2Mask = 0b00001111;
     static const uint8_t Type1Shift = 4;
     static const uint8_t Type2Shift = 0;
 
     constexpr uint8_t packTypes(Type type1, Type type2) {
-        return ((static_cast<uint8_t>(type1) & Type1Mask) << Type1Shift) | ((static_cast<uint8_t>(type2) & Type2Mask) << Type2Shift);
+        return ((static_cast<uint8_t>(type1)) << Type1Shift) | ((static_cast<uint8_t>(type2) & Type2Mask));
     }
 
   public:
@@ -44,9 +44,9 @@ class DualType {
     constexpr DualType(Type type) : value(packTypes(type, Type::NONE)) {}
     constexpr DualType(Type type1, Type type2) : value(packTypes(type1, type2)) {}
 
-    constexpr Type getType1(void) const { return static_cast<Type>((this->value >> Type1Shift) & Type1Mask); }
+    constexpr Type getType1(void) const { return static_cast<Type>((this->value >> Type1Shift)); }
 
-    constexpr Type getType2(void) const { return static_cast<Type>((this->value >> Type2Shift) & Type2Mask); }
+    constexpr Type getType2(void) const { return static_cast<Type>(this->value & Type2Mask); }
 };
 
 enum class Modifier : uint8_t {

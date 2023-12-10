@@ -68,16 +68,13 @@ void MenuV2::action(Arduboy2 &arduboy, BattleEngine &engine) {
                 this->push(BATTLE_MOVE_SELECT);
                 break;
             case 1:
-                engine.queueAction(ActionType::CATCH, 0);
-                this->pop();
+                // engine.queueAction(ActionType::CATCH, 0);
                 break;
             case 2:
                 this->push(BATTLE_CREATURE_SELECT);
                 break;
             case 3:
-                engine.queueAction(ActionType::ESCAPE, 0);
-                this->pop();
-                // need to redeisgn how an action is qued
+                engine.queueAction(ActionType::ESCAPE, 0);   // need to redeisgn how an action is qued
                 break;
             }
             this->cursorIndex = 0;
@@ -126,7 +123,7 @@ void MenuV2::action(Arduboy2 &arduboy, BattleEngine &engine) {
     }
 }
 
-void dbf MenuV2::run(Arduboy2 &arduboy, BattleEngine &engine) {
+void MenuV2::run(Arduboy2 &arduboy, BattleEngine &engine) {
     if (this->menuPointer < 0 && !dialogMenu.peek())
         return;
     if (dialogMenu.peek()) {
@@ -143,7 +140,7 @@ void dbf MenuV2::run(Arduboy2 &arduboy, BattleEngine &engine) {
     }
 }
 
-void dbf MenuV2::printMenu(Arduboy2 &arduboy, BattleEngine &engine) {
+void MenuV2::printMenu(Arduboy2 &arduboy, BattleEngine &engine) {
     arduboy.fillRect(0, 43, 128, 32, WHITE);
     switch (CURRENT_MENU) {
     case BATTLE_OPTIONS:

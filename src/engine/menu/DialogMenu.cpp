@@ -1,6 +1,7 @@
 #pragma once
 #include "DialogMenu.hpp"
 #include "../../fxdata/fxdata.h"
+#include "../../lib/Type.hpp"
 #include "../world/Event.hpp"
 #include <ArduboyFX.h>
 #define dbf __attribute__((optimize("-O0")))
@@ -12,7 +13,7 @@ void drawRect(Arduboy2 *ardu, PopUpDialog *popMenu) {
 
 void DialogMenu::init(Arduboy2 *Arduboy2) { this->arduboy = arduboy; }
 
-void dbf DialogMenu::drawPopMenu() {
+void DialogMenu::drawPopMenu() {
     PopUpDialog curMenu = popDialogStack[0];
     drawRect(arduboy, &curMenu);
     uint24_t addr;
@@ -63,6 +64,36 @@ void dbf DialogMenu::drawPopMenu() {
         FX::drawString(addr);
         FX::setCursor(curMenu.x + 3, curMenu.y + 13);
         FX::drawString("You loose");
+        break;
+    case ESCAPE_ENCOUNTER:
+        FX::setCursor(curMenu.x + 3, curMenu.y + 3);
+        FX::drawString("You escaped");
+        break;
+
+    case EFFECTIVENESS:
+        Modifier mod = Modifier(curMenu.textAddress);
+        FX::setCursor(curMenu.x + 3, curMenu.y + 3);
+
+        switch (mod) {
+        case Modifier::Quarter:
+            FX::drawString("It's barely damaging");
+            break;
+        case Modifier::Half:
+            FX::drawString("It does some");
+            FX::setCursor(curMenu.x + 3, curMenu.y + 13);
+            FX::drawString("damage");
+            break;
+        case Modifier::Double:
+            FX::drawString("It's does great");
+            FX::setCursor(curMenu.x + 3, curMenu.y + 13);
+            FX::drawString("damage");
+            break;
+        case Modifier::Quadruple:
+            FX::drawString("It's devistating");
+            FX::setCursor(curMenu.x + 3, curMenu.y + 13);
+            FX::drawString("damage");
+            break;
+        }
         break;
 
     default:

@@ -79,10 +79,7 @@ void __attribute__((optimize("-O0"))) Arena::registerMoves(Arduboy2 &arduboy, Pl
     addr = FX::readIndexedUInt24(CreatureData::creatureNames, curMonID);
     FX::setCursor(0, 10);
     FX::drawString(addr);
-    arduboy.setCursor(10, 0);
-    arduboy.print(this->cursor);
-    arduboy.setCursor(20, 0);
-    arduboy.print(this->movePointer);
+
     for (uint8_t i = 0; i < 4; i++) {
         FX::setCursor(10, 20 + (i * 10));
         int8_t move = moves[this->movePointer + i];
@@ -98,6 +95,7 @@ void __attribute__((optimize("-O0"))) Arena::registerMoves(Arduboy2 &arduboy, Pl
         this->cursor = moves[this->movePointer];
         player.party[this->moveCreature].setMove(this->cursor, this->moveIndex % 4);
         this->moveIndex++;
+        movePointer = 0;
     }
     if (arduboy.justPressed(DOWN_BUTTON)) {
         if (this->movePointer < 16 && moves[this->movePointer + 1] != -1) {

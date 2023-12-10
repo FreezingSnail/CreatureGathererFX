@@ -68,7 +68,7 @@ static PopUpDialog newDialogBox(DialogType type, uint24_t number, uint16_t damag
     return dialog;
 }
 
-void dbf BattleEngine::init(GameState_t *state, MenuV2 *menu2) {
+void BattleEngine::init(GameState_t *state, MenuV2 *menu2) {
     this->state = state;
     this->activeBattle = false;
     this->menu2 = menu2;
@@ -294,7 +294,7 @@ void BattleEngine::opponentInput() {
     // ai to select best move
     // For now just do the first slot attack
     this->opponentAction.setActionType(ActionType::ATTACK, Priority::NORMAL);
-    this->opponentAction.actionIndex = 1;
+    this->opponentAction.actionIndex = choseMove(opponentCur, playerCur);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -303,10 +303,19 @@ void BattleEngine::opponentInput() {
 //
 //////////////////////////////////////////////////////////////////////////////
 
-void BattleEngine::commitAction(Player &player, Action *action, Creature *commiter, Creature *reciever, bool isPlayer) {
+void dbf BattleEngine::commitAction(Player &player, Action *action, Creature *commiter, Creature *reciever, bool isPlayer) {
     switch (action->actionType) {
     case ActionType::ATTACK: {
         uint16_t damage = calculateDamage(action, commiter, reciever);
+        Move move = commiter->moveList[action->actionIndex];
+        debug = move.getMoveType();
+        Modifier m1 = getModifier(Type(move.getMoveType()), reciever->types.getType1());
+        debug = uint8_t(reciever->types.getType1());
+
+        Modifier m2 = getModifier(Type(move.getMoveType()), reciever->types.getType2());
+        Modifier mod = combineModifier(m1, m2);
+        debug = uint8_t(reciever->types.getType2());
+
         applyDamage(damage, reciever);
         if (isPlayer) {
             menu2->dialogMenu.pushMenu(newDialogBox(NAME, commiter->id, 0));
@@ -314,6 +323,20 @@ void BattleEngine::commitAction(Player &player, Action *action, Creature *commit
         } else {
             menu2->dialogMenu.pushMenu(newDialogBox(ENEMY_NAME, commiter->id, 0));
             menu2->dialogMenu.pushMenu(newDialogBox(ENEMY_DAMAGE, uint24_t(damage), damage));
+        }
+        switch (mod) {
+        case Modifier::Quarter:
+            menu2->dialogMenu.pushMenu(newDialogBox(EFFECTIVENESS, uint24_t(Modifier::Quarter), 0));
+            break;
+        case Modifier::Half:
+            menu2->dialogMenu.pushMenu(newDialogBox(EFFECTIVENESS, uint24_t(Modifier::Half), 0));
+            break;
+        case Modifier::Double:
+            menu2->dialogMenu.pushMenu(newDialogBox(EFFECTIVENESS, uint24_t(Modifier::Double), 0));
+            break;
+        case Modifier::Quadruple:
+            menu2->dialogMenu.pushMenu(newDialogBox(EFFECTIVENESS, uint24_t(Modifier::Quadruple), 0));
+            break;
         }
         break;
     }
@@ -329,6 +352,7 @@ void BattleEngine::commitAction(Player &player, Action *action, Creature *commit
         break;
     case ActionType::ESCAPE:
         // should add a check in here for opponent vs random encounter
+        menu2->dialogMenu.pushMenu(newDialogBox(ESCAPE_ENCOUNTER, 0, 0));
         this->endEncounter();
         break;
 

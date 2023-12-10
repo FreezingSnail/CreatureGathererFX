@@ -9,6 +9,8 @@
 #include "../lib/Move.hpp"
 #include "../opponent/OpponentSeed.hpp"
 
+#define dbf __attribute__((optimize("-O0")))
+
 // This will need to load the creature seed from the progmemstore
 const CreatureData_t getCreatureFromStore(uint8_t id) {
     CreatureData_t cseed;
@@ -30,6 +32,7 @@ Creature::Creature() {
 //  maybe I should move this out into an abstraction so its easier to change
 void Creature::load(CreatureData_t seed) {
     this->id = static_cast<uint8_t>((seed.id));
+    this->loadTypes(seed);
     this->setStats(seed);
     // Need some kind of default setting for moves ?
     this->loadMoves(seed);
@@ -38,7 +41,7 @@ void Creature::load(CreatureData_t seed) {
 
 // 00,id1,lvl1,move11,move12,move13,move14,
 void Creature::loadFromOpponentSeed(uint32_t seed) {
-    CreatureData_t cSeed = getCreatureFromStore(parseOpponentCreatureSeedID(seed));
+    CreatureData_t cSeed = getCreatureFromStore(seed);
     this->id = static_cast<uint8_t>((cSeed.id));
     this->loadTypes(cSeed);
     this->level = parseOpponentCreatureSeedlvl(seed);
@@ -50,7 +53,7 @@ void Creature::loadFromOpponentSeed(uint32_t seed) {
     // this->loadSprite(cSeed);
 }
 
-void __attribute__((optimize("-O0"))) Creature::arenaLoad(uint24_t addr, uint8_t lvl) {
+void Creature::arenaLoad(uint24_t addr, uint8_t lvl) {
     uint8_t data[4];
     data[0] = FX::readIndexedUInt8(addr, 1);
     data[1] = FX::readIndexedUInt8(addr, 2);
@@ -58,7 +61,7 @@ void __attribute__((optimize("-O0"))) Creature::arenaLoad(uint24_t addr, uint8_t
     data[3] = FX::readIndexedUInt8(addr, 4);
 
     this->id = FX::readIndexedUInt8(addr, 0);
-    CreatureData_t cSeed = getCreatureFromStore(parseOpponentCreatureSeedID(id));
+    CreatureData_t cSeed = getCreatureFromStore(id);
 
     this->loadTypes(cSeed);
     this->level = lvl;
@@ -80,7 +83,7 @@ void Creature::loadMoves(CreatureData_t seed) {
 //   this->sprite = creatureSprites[static_cast<uint8_t>((seed.id))];
 // }
 
-void Creature::loadTypes(CreatureData_t seed) {
+void dbf Creature::loadTypes(CreatureData_t seed) {
     this->types = DualType((Type) static_cast<uint8_t>((seed.type1)), (Type) static_cast<uint8_t>((seed.type2)));
 }
 

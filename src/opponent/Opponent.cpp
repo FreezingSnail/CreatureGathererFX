@@ -17,7 +17,7 @@ void Opponent::load(OpponentSeed_t *seed) {
     this->party[2].loadFromOpponentSeed(seed->thirdCreature);
 }
 
-void dbf Opponent::Read(uint8_t index) {
+void Opponent::Read(uint8_t index) {
     uint24_t creatures[3];
     uint24_t addr = Teams::teamList + sizeof(uint24_t) * 7 * index;
     creatures[0] = FX::readIndexedUInt24(addr, 0);

@@ -206,7 +206,7 @@ void printType(Type t, Arduboy2 *arduboy) {
     }
 }
 
-void dbf Menu::creatureRental() {
+void Menu::creatureRental() {
     this->arduboy->setCursor(0, 55);
     this->arduboy->print(F(">"));
     FX::setCursor(10, 55);
@@ -227,13 +227,13 @@ void dbf Menu::creatureRental() {
     this->arduboy->setCursor(35, 20);
     this->arduboy->print(F("def:"));
     this->arduboy->print(cseed.defSeed);
-    this->arduboy->setCursor(70, 0);
+    this->arduboy->setCursor(72, 0);
     this->arduboy->print(F("spcA:"));
     this->arduboy->print(cseed.spcAtkSeed);
-    this->arduboy->setCursor(70, 10);
+    this->arduboy->setCursor(72, 10);
     this->arduboy->print(F("spcD:"));
     this->arduboy->print(cseed.spcDefSeed);
-    this->arduboy->setCursor(70, 20);
+    this->arduboy->setCursor(72, 20);
     this->arduboy->print(F("spd: "));
     this->arduboy->print(cseed.spdSeed);
     this->arduboy->setCursor(0, 35);
