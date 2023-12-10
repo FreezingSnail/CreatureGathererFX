@@ -2,6 +2,8 @@
 #include <avr/pgmspace.h>
 #include <stdint.h>
 
+#define dbf __attribute__((optimize("-O0")))
+
 const char spirit[] PROGMEM = "Spirit";
 const char water[] PROGMEM = "Water";
 const char wind[] PROGMEM = "Wind";
@@ -31,13 +33,13 @@ class DualType {
   private:
     uint8_t value;
 
-    static const uint8_t Type1Mask = 0b11100000;
+    static const uint8_t Type1Mask = 0b11110000;
     static const uint8_t Type2Mask = 0b00001111;
     static const uint8_t Type1Shift = 4;
     static const uint8_t Type2Shift = 0;
 
     constexpr uint8_t packTypes(Type type1, Type type2) {
-        return ((static_cast<uint8_t>(type1) & Type1Mask) << Type1Shift) | ((static_cast<uint8_t>(type2) & Type2Mask) << Type2Shift);
+        return ((static_cast<uint8_t>(type1)) << Type1Shift) | ((static_cast<uint8_t>(type2) & Type2Mask));
     }
 
   public:
@@ -45,9 +47,9 @@ class DualType {
     constexpr DualType(Type type) : value(packTypes(type, Type::NONE)) {}
     constexpr DualType(Type type1, Type type2) : value(packTypes(type1, type2)) {}
 
-    constexpr Type getType1(void) const { return static_cast<Type>((this->value >> Type1Shift) & Type1Mask); }
+    constexpr Type getType1(void) const { return static_cast<Type>((this->value >> Type1Shift)); }
 
-    constexpr Type getType2(void) const { return static_cast<Type>((this->value >> Type2Shift) & Type2Mask); }
+    constexpr Type getType2(void) const { return static_cast<Type>(this->value & Type2Mask); }
 };
 
 enum class Modifier : uint8_t {
@@ -174,7 +176,10 @@ const Modifier typeTable[TypeCount][TypeCount] PROGMEM = {
 };
 
 static Modifier getModifier(Type attackType, Type defendingType) {
-    return (attackType == Type::NONE || defendingType == Type::NONE)
+    if (defendingType == Type::NONE) {
+        return Modifier::Same;
+    }
+    return (attackType == Type::NONE)
                ? Modifier::None
                : static_cast<Modifier>(pgm_read_byte(&typeTable[static_cast<uint8_t>(attackType)][static_cast<uint8_t>(defendingType)]));
 }
@@ -207,6 +212,12 @@ static Modifier combineModifier(Modifier a, Modifier b) {
     }
 
     return Modifier::None;
+}
+
+static Modifier getModifier(Type attackType, DualType defendingType) {
+    Modifier m1 = getModifier(attackType, defendingType.getType1());
+    Modifier m2 = getModifier(attackType, defendingType.getType2());
+    return combineModifier(m1, m2);
 }
 
 static uint16_t applyModifier(uint16_t baseValue, Type attackType, DualType defendingType) {

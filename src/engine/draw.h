@@ -44,7 +44,7 @@ static void printBattleMenu(Arduboy2 &arduboy) {
     arduboy.setCursor(6, 46);
     arduboy.print(asFlashStringHelper(moveM));
     arduboy.setCursor(64, 46);
-    arduboy.print(asFlashStringHelper(itemM));
+    // arduboy.print(asFlashStringHelper(itemM));
     arduboy.setCursor(6, 54);
     arduboy.print(asFlashStringHelper(changeM));
     arduboy.setCursor(64, 54);
@@ -74,13 +74,13 @@ static void printMoveMenu(Arduboy2 &arduboy, int8_t index, uint8_t *moveList) {
     FX::setCursor(6, 46);
     uint24_t rowAddress = FX::readIndexedUInt24(MoveData::moveNames, moveList[0]);
     FX::drawString(rowAddress);
-    FX::setCursor(64, 46);
+    FX::setCursor(69, 46);
     rowAddress = FX::readIndexedUInt24(MoveData::moveNames, moveList[1]);
     FX::drawString(rowAddress);
     FX::setCursor(6, 55);
     rowAddress = FX::readIndexedUInt24(MoveData::moveNames, moveList[2]);
     FX::drawString(rowAddress);
-    FX::setCursor(64, 55);
+    FX::setCursor(69, 55);
     rowAddress = FX::readIndexedUInt24(MoveData::moveNames, moveList[3]);
     FX::drawString(rowAddress);
     printMoveInfo(&arduboy, moveList[index], 38, 4);

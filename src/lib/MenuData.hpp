@@ -18,4 +18,6 @@ enum DialogType {
     SWITCH,
     WIN,
     LOSS,
+    ESCAPE_ENCOUNTER,
+    EFFECTIVENESS,
 };

@@ -12,6 +12,7 @@ class MenuV2;
 
 class BattleEngine {
   private:
+    uint8_t debug;
     Creature *playerParty[3];
     GameState_t *state;
     Creature *playerCur;
