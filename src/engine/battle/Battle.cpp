@@ -7,7 +7,6 @@
 #include "../../opponent/Opponent.hpp"
 #include "../../player/Player.hpp"
 #include "../game/Gamestate.hpp"
-#include "../game/Menu.hpp"
 
 // #include "../../lib/TypeTable.hpp"
 #include "../../lib/Move.hpp"

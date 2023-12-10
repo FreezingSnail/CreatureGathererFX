@@ -1,7 +1,6 @@
 #pragma once
 #include "../../player/Player.hpp"
 #include "../battle/Battle.hpp"
-#include "../game/Menu.hpp"
 #include "../menu/MenuV2.hpp"
 
 class Arena {
@@ -16,10 +15,10 @@ class Arena {
 
   public:
     Arena() = default;
-    void arenaLoop(Arduboy2 &arduboy, Menu &menu, MenuV2 &menu2, Player &player, BattleEngine &engine);
-    void registerRentals(Menu &menu, Player &player);
+    void arenaLoop(Arduboy2 &arduboy, MenuV2 &menu2, Player &player, BattleEngine &engine);
+    void registerRentals(Arduboy2 &arduboy, Player &player);
     void registerMoves(Arduboy2 &arduboy, Player &player);
     uint8_t selectOpponent();
-    void startBattle(Arduboy2 &arduboy, BattleEngine &engine, Player &player, Menu &menu);
+    void startBattle(Arduboy2 &arduboy, BattleEngine &engine, Player &player);
     void displayRegisteredCount(Arduboy2 &arduboy);
 };

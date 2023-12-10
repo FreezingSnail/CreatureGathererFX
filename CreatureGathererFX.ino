@@ -5,7 +5,6 @@
 Arduboy2 arduboy;
 Player player = Player();
 GameState_t state;
-Menu menu;
 BattleEngine engine;
 Arena arena = Arena();
 WorldEngine world;
@@ -22,7 +21,6 @@ void setup() {
 
     world.init(&arduboy, &state, &engine, &menu2);
     state = GameState_t::ARENA;
-    menu.init(&arduboy, &state, &player);
     menu2.dialogMenu.init(&arduboy);
     engine.init(&state, &menu2);
     // player.basic();
@@ -56,7 +54,7 @@ void loop() {
         engine.startArena(arduboy, player, index);
         break;
     case GameState_t::ARENA:
-        arena.arenaLoop(arduboy, menu, menu2, player, engine);
+        arena.arenaLoop(arduboy, menu2, player, engine);
         break;
     }
     menu2.run(arduboy, engine);
