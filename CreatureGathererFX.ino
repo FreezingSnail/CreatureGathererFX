@@ -1,6 +1,6 @@
 #include "src/Globals.hpp"
 #include "src/engine/world/Event.hpp"
-ARDUBOY_NO_USB
+// ARDUBOY_NO_USB
 
 Arduboy2 arduboy;
 Player player = Player();
