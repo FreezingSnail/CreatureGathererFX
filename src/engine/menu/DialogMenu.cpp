@@ -2,6 +2,7 @@
 #include "DialogMenu.hpp"
 #include "../../fxdata/fxdata.h"
 #include "../../lib/Type.hpp"
+#include "../draw.h"
 #include "../world/Event.hpp"
 #include <ArduboyFX.h>
 #define dbf __attribute__((optimize("-O0")))
@@ -17,6 +18,7 @@ void DialogMenu::drawPopMenu() {
     PopUpDialog curMenu = popDialogStack[0];
     drawRect(arduboy, &curMenu);
     uint24_t addr;
+    setTextColorBlack();
     switch (curMenu.type) {
     case DAMAGE:
     case ENEMY_DAMAGE:
@@ -45,29 +47,29 @@ void DialogMenu::drawPopMenu() {
         addr = FX::readIndexedUInt24(CreatureData::creatureNames, curMenu.textAddress);
         FX::drawString(addr);
         FX::setCursor(curMenu.x + 3, curMenu.y + 13);
-        FX::drawString("Fainted");
+        FX::drawString(MenuFXData::Fainted);
         break;
     case SWITCH:
         FX::setCursor(curMenu.x + 3, curMenu.y + 3);
         addr = FX::readIndexedUInt24(CreatureData::creatureNames, curMenu.textAddress);
         FX::drawString(addr);
         FX::setCursor(curMenu.x + 3, curMenu.y + 13);
-        FX::drawString("enters the field");
+        FX::drawString(MenuFXData::SwitchIn);
         break;
     case WIN:
         FX::setCursor(curMenu.x + 3, curMenu.y + 3);
-        FX::drawString("You win");
+        FX::drawString(MenuFXData::win);
         break;
     case LOSS:
         FX::setCursor(curMenu.x + 3, curMenu.y + 3);
         addr = FX::readIndexedUInt24(CreatureData::creatureNames, curMenu.textAddress);
         FX::drawString(addr);
         FX::setCursor(curMenu.x + 3, curMenu.y + 13);
-        FX::drawString("You loose");
+        FX::drawString(MenuFXData::lose);
         break;
     case ESCAPE_ENCOUNTER:
         FX::setCursor(curMenu.x + 3, curMenu.y + 3);
-        FX::drawString("You escaped");
+        FX::drawString(MenuFXData::escaped);
         break;
     case GATHERING:
         FX::setCursor(curMenu.x + 3, curMenu.y + 3);
@@ -77,7 +79,7 @@ void DialogMenu::drawPopMenu() {
         break;
     case TEAM_CHANGE:
         FX::setCursor(curMenu.x + 3, curMenu.y + 3);
-        FX::drawString("You Change creature");
+        FX::drawString(MenuFXData::changedIn);
         break;
 
     case EFFECTIVENESS:
@@ -86,29 +88,25 @@ void DialogMenu::drawPopMenu() {
 
         switch (mod) {
         case Modifier::Quarter:
-            FX::drawString("It's barely damaging");
+            FX::drawString(MenuFXData::quarter);
             break;
         case Modifier::Half:
-            FX::drawString("It does some");
+            FX::drawString(MenuFXData::half);
             FX::setCursor(curMenu.x + 3, curMenu.y + 13);
-            FX::drawString("damage");
+            FX::drawString(MenuFXData::damage);
             break;
         case Modifier::Double:
-            FX::drawString("It does great");
+            FX::drawString(MenuFXData::doubled);
             FX::setCursor(curMenu.x + 3, curMenu.y + 13);
-            FX::drawString("damage");
+            FX::drawString(MenuFXData::damage);
             break;
         case Modifier::Quadruple:
-            FX::drawString("It's devistating");
+            FX::drawString(MenuFXData::quad);
             FX::setCursor(curMenu.x + 3, curMenu.y + 13);
-            FX::drawString("damage");
+            FX::drawString(MenuFXData::damage);
             break;
         }
         break;
-
-    default:
-        FX::setCursor(curMenu.x + 3, curMenu.y + 3);
-        FX::drawString("default");
     }
 }
 

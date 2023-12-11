@@ -6,7 +6,7 @@
 
 Encounter::Encounter() { this->arduboy = nullptr; }
 
-Encounter::Encounter(Arduboy2 *arduboy) {
+Encounter::Encounter(Arduboy2Base *arduboy) {
     this->arduboy = arduboy;
     this->loadEncounterTable(0);
 }

@@ -15,6 +15,11 @@ void Arena::arenaLoop(Arduboy2 &arduboy, MenuV2 &menu2, Player &player, BattleEn
     }
 
     if (this->registerIndex < 3) {
+        if (arduboy.justPressed(DOWN_BUTTON)) {
+            menu2.cursorIndex += 1;
+        } else if (arduboy.justPressed(UP_BUTTON)) {
+            menu2.cursorIndex -= 1;
+        }
         menu2.creatureRental(arduboy);
         this->registerRentals(arduboy, player);
         this->displayRegisteredCount(arduboy);
@@ -57,8 +62,8 @@ static void validMoves(uint32_t movePool, int8_t *moves) {
     }
 }
 
-void __attribute__((optimize("-O0"))) Arena::registerMoves(Arduboy2 &arduboy, Player &player) {
-
+void Arena::registerMoves(Arduboy2 &arduboy, Player &player) {
+    setTextColorWhite();
     if (this->moveIndex > 7) {
         this->moveCreature = 3;
     } else if (this->moveIndex > 3) {
@@ -74,8 +79,8 @@ void __attribute__((optimize("-O0"))) Arena::registerMoves(Arduboy2 &arduboy, Pl
     this->debug = movePool;
     int8_t moves[16];
     validMoves(movePool, moves);
-    arduboy.setCursor(0, 0);
-    arduboy.print(this->moveIndex);
+    FX::setCursor(0, 0);
+    FX::drawNumber(this->moveIndex);
     addr = FX::readIndexedUInt24(CreatureData::creatureNames, curMonID);
     FX::setCursor(0, 10);
     FX::drawString(addr);
@@ -88,8 +93,8 @@ void __attribute__((optimize("-O0"))) Arena::registerMoves(Arduboy2 &arduboy, Pl
             FX::drawString(moveAddress);
         }
     }
-    arduboy.setCursor(0, 20);
-    arduboy.print(F(">"));
+    FX::setCursor(0, 20);
+    FX::drawString(MenuFXData::pointerText);
 
     if (arduboy.justPressed(A_BUTTON)) {
         this->cursor = moves[this->movePointer];
@@ -110,9 +115,7 @@ void __attribute__((optimize("-O0"))) Arena::registerMoves(Arduboy2 &arduboy, Pl
         }
     }
 
-    setTextColorBlack(&arduboy);
-    printMoveInfo(&arduboy, this->cursor, 70, 10);
-    setTextColorWhite(&arduboy);
+    printMoveInfo(&arduboy, this->cursor, 70, 20);
 }
 
 uint8_t Arena::selectOpponent() { return 0; }

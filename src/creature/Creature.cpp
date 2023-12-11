@@ -1,6 +1,5 @@
 #include "Creature.hpp"
-
-#include <ArduboyFX.h>
+#include <Arduboy2.h>
 #include <avr/pgmspace.h>
 
 #include "../data/Creatures.hpp"
@@ -119,27 +118,27 @@ uint8_t Creature::seedToStat(uint8_t seed) {
     // return (2*this->level)*(seed/3);
 }
 
-void Creature::printCreature(Arduboy2 *arduboy) {
+void Creature::printCreature(Arduboy2Base *arduboy) {
     arduboy->fillRect(0, 0, 128, 66, WHITE);
     arduboy->drawRect(2, 1, 124, 43, BLACK);
-    arduboy->setCursor(4, 3);
-    arduboy->print(F("HP: "));
-    arduboy->print(this->statlist.hp);
-    arduboy->setCursor(60, 3);
-    arduboy->print(F(" AtK: "));
-    arduboy->println(this->statlist.attack);
-    arduboy->setCursor(4, 11);
-    arduboy->print(F("Def: "));
-    arduboy->print(this->statlist.defense);
-    arduboy->setCursor(60, 11);
-    arduboy->print(F(" Spd: "));
-    arduboy->println(this->statlist.speed);
-    arduboy->setCursor(4, 19);
-    arduboy->print(F("SAtk: "));
-    arduboy->print(this->statlist.spcAtk);
-    arduboy->setCursor(60, 19);
-    arduboy->print(F(" SDef: "));
-    arduboy->println(this->statlist.spcDef);
+    FX::setCursor(4, 3);
+    FX::drawString(MenuFXData::hpText);
+    FX::drawNumber(this->statlist.hp);
+    FX::setCursor(60, 3);
+    FX::drawString(MenuFXData::atkText);
+    FX::drawNumber(this->statlist.attack);
+    FX::setCursor(4, 11);
+    FX::drawString(MenuFXData::defText);
+    FX::drawNumber(this->statlist.defense);
+    FX::setCursor(60, 11);
+    FX::drawString(MenuFXData::spdText);
+    FX::drawNumber(this->statlist.speed);
+    FX::setCursor(4, 19);
+    FX::drawString(MenuFXData::satkText);
+    FX::drawNumber(this->statlist.spcAtk);
+    FX::setCursor(60, 19);
+    FX::drawString(MenuFXData::sdefText);
+    FX::drawNumber(this->statlist.spcDef);
     for (uint8_t i = 0; i < 4; i++) {
         if (this->moves[i] == 32) {
             continue;

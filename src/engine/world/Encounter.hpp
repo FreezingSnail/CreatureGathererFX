@@ -20,11 +20,11 @@ class Encounter {
   private:
     uint8_t table[10];
     uint8_t avgLevel;
-    Arduboy2 *arduboy;
+    Arduboy2Base *arduboy;
 
   public:
     Encounter();
-    Encounter(Arduboy2 *arduboy);
+    Encounter(Arduboy2Base *arduboy);
     void loadEncounterTable(uint8_t areaIndex);
     // returns creatureID based on available encounters and rates of current
     // EncounterTable
