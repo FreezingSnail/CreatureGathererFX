@@ -2,7 +2,6 @@
 #include "../creature/Creature.hpp"
 #include "../external/FlashStringHelper.h"
 #include "../lib/Move.hpp"
-#include "../lib/Text.hpp"
 
 #include <ArduboyFX.h>
 static void printType(Type t) {
