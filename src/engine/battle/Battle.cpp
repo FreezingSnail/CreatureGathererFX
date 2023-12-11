@@ -81,31 +81,30 @@ Creature *BattleEngine::getCreature(uint8_t index) {
 //
 //////////////////////////////////////////////////////////////////////////////
 
-void BattleEngine::startFight(Arduboy2 &arduboy, Player &player, uint8_t optID) {
+void BattleEngine::startFight(Arduboy2Base &arduboy, Player &player, uint8_t optID) {
     this->loadOpponent(optID);
     this->loadPlayer(player);
     *this->state = GameState_t::BATTLE;
     this->activeBattle = true;
-    arduboy.setTextColor(BLACK);
+    FX::setFontMode(dcmBlack);   // select default font
     this->menu2->push(BATTLE_OPTIONS);
 }
-void BattleEngine::startArena(Arduboy2 &arduboy, Player &player, uint8_t optID) {
+void BattleEngine::startArena(Arduboy2Base &arduboy, Player &player, uint8_t optID) {
     opponent.Read(optID);
     resetOpponent();
-
     loadPlayer(player);
     *this->state = GameState_t::BATTLE;
     activeBattle = true;
-    arduboy.setTextColor(BLACK);
+    FX::setFontMode(dcmBlack);   // select default font
     menu2->push(BATTLE_OPTIONS);
 }
 
-void BattleEngine::startEncounter(Arduboy2 &arduboy, Player &player, uint8_t creatureID, uint8_t level) {
+void BattleEngine::startEncounter(Arduboy2Base &arduboy, Player &player, uint8_t creatureID, uint8_t level) {
     this->LoadCreature(creatureID, level);
     this->loadPlayer(player);
     *this->state = GameState_t::BATTLE;
     this->activeBattle = true;
-    arduboy.setTextColor(BLACK);
+    FX::setFontMode(dcmBlack);   // select default font
     this->menu2->push(BATTLE_OPTIONS);
 }
 
@@ -116,7 +115,7 @@ void BattleEngine::startEncounter(Arduboy2 &arduboy, Player &player, uint8_t cre
 //////////////////////////////////////////////////////////////////////////////
 
 // Need to change something here for the flow of the game
-void BattleEngine::encounter(Arduboy2 &arduboy, Player &player) {
+void BattleEngine::encounter(Arduboy2Base &arduboy, Player &player) {
     if (this->checkLoss()) {
         this->endEncounter();
         menu2->dialogMenu.pushMenu(newDialogBox(LOSS, 0, 0));
@@ -405,46 +404,40 @@ void BattleEngine::resetOpponent() {
 //
 //////////////////////////////////////////////////////////////////////////////
 
-void BattleEngine::drawScene(Arduboy2 &arduboy) {
+void BattleEngine::drawScene(Arduboy2Base &arduboy) {
     this->drawPlayer(arduboy);
     this->drawOpponent(arduboy);
 }
 
-void BattleEngine::drawOpponent(Arduboy2 &arduboy) {
+void BattleEngine::drawOpponent(Arduboy2Base &arduboy) {
     // would be nice to flip this sprite
     // Sprites::drawSelfMasked(0, 0, creatureSprites, this->opponentCur->id);
     FX::drawBitmap(0, 0, creatureSprites, opponentCur->id, dbmWhite);
     this->drawOpponentHP(arduboy);
 }
 
-void BattleEngine::drawPlayer(Arduboy2 &arduboy) {
+void BattleEngine::drawPlayer(Arduboy2Base &arduboy) {
     // Sprites::drawSelfMasked(96, 0, creatureSprites, this->playerCur->id);
     FX::drawBitmap(96, 0, creatureSprites, this->playerCur->id, dbmWhite);
     this->drawPlayerHP(arduboy);
 }
 
-void BattleEngine::drawPlayerHP(Arduboy2 &arduboy) {
-    arduboy.setTextColor(WHITE);
-    arduboy.setCursor(70, 35);
-    arduboy.print(F("HP: "));
-    arduboy.print((unsigned)this->playerHealths[this->playerIndex]);
-    arduboy.print(F("/"));
-    arduboy.print((unsigned)this->playerCur->statlist.hp);
-    // arduboy.setCursor(32, 2);
-    // arduboy.print(F("lv:"));
-    // arduboy.print(this->playerCur->level);
-    arduboy.setTextColor(BLACK);
+void BattleEngine::drawPlayerHP(Arduboy2Base &arduboy) {
+    FX::setFont(arduboyFont, dcmNormal);
+    FX::setCursor(70, 35);   // select default font
+    FX::drawString(MenuFXData::hpText);
+    FX::drawNumber((unsigned)this->playerHealths[this->playerIndex]);
+    FX::drawString(("/"));
+    FX::drawNumber((unsigned)this->playerCur->statlist.hp);
+    FX::setFont(arduboyFont, dcmBlack);
 }
 
-void BattleEngine::drawOpponentHP(Arduboy2 &arduboy) {
-    arduboy.setTextColor(WHITE);
-    arduboy.setCursor(2, 35);
-    arduboy.print(F("HP: "));
-    arduboy.print((unsigned)this->opponentHealths[this->opponentIndex]);
-    arduboy.print(F("/"));
-    arduboy.print((unsigned)this->opponentCur->statlist.hp);
-    // arduboy.setCursor(64, 2);
-    // arduboy.print(F("lv:"));
-    // arduboy.print(this->opponentCur->level);
-    arduboy.setTextColor(BLACK);
+void BattleEngine::drawOpponentHP(Arduboy2Base &arduboy) {
+    FX::setFont(arduboyFont, dcmNormal);
+    FX::setCursor(2, 35);   // select default font
+    FX::drawString(MenuFXData::hpText);
+    FX::drawNumber((unsigned)this->opponentHealths[this->opponentIndex]);
+    FX::drawString(("/"));
+    FX::drawNumber((unsigned)this->opponentCur->statlist.hp);
+    FX::setFont(arduboyFont, dcmBlack);
 }

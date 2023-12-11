@@ -8,6 +8,7 @@ enum MenuEnum {
     BATTLE_CREATURE_SELECT,
     BATTLE_OPTIONS,
     WORLD_OPTIONS,
+
 };
 class BattleEngine;
 
@@ -22,14 +23,14 @@ class MenuV2 {
 
     MenuV2();
     void setMoveList(uint8_t *pointer);
-    void run(Arduboy2 &arduboy, BattleEngine &engine);
+    void run(Arduboy2Base &arduboy, BattleEngine &engine);
     void push(MenuEnum type);
     void pop();
-    void transverse(Arduboy2 &arduboy);
-    void action(Arduboy2 &arduboy, BattleEngine &engine);
-    void printMenu(Arduboy2 &arduboy, BattleEngine &engine);
+    void transverse(Arduboy2Base &arduboy);
+    void action(Arduboy2Base &arduboy, BattleEngine &engine);
+    void printMenu(Arduboy2Base &arduboy, BattleEngine &engine);
     void updateMoveList(BattleEngine &engine);
-    void creatureRental(Arduboy2 &arduboy);
+    void creatureRental(Arduboy2Base &arduboy);
 };
 
 #define XSTART 0

@@ -21,7 +21,7 @@ bool __attribute__((optimize("-O0"))) warpTile(uint8_t x, uint8_t y) {
 }
 
 WorldEngine::WorldEngine() {}
-void WorldEngine::init(Arduboy2 *arduboy, GameState_t *state, BattleEngine *battleEngine, MenuV2 *menu2) {
+void WorldEngine::init(Arduboy2Base *arduboy, GameState_t *state, BattleEngine *battleEngine, MenuV2 *menu2) {
     this->arduboy = arduboy;
     this->encounterTable = Encounter(arduboy);
     this->battleEngine = battleEngine;
@@ -209,7 +209,7 @@ void WorldEngine::moveChar(Player *player) {
 
 uint8_t WorldEngine::getTile() { return (TileType)0; }
 
-void __attribute__((optimize("-O0"))) WorldEngine::encounter(Arduboy2 *arduboy, Player *player) {
+void __attribute__((optimize("-O0"))) WorldEngine::encounter(Arduboy2Base *arduboy, Player *player) {
     uint8_t t = gameMap[this->cury][this->curx];
     if (t == 0) {
         uint8_t chance = random(1, 101);

@@ -17,7 +17,7 @@ enum Direction { Up, Right, Down, Left };
 
 class WorldEngine {
   private:
-    Arduboy2 *arduboy;
+    Arduboy2Base *arduboy;
     Direction playerDirection;
     Encounter encounterTable;
     BattleEngine *battleEngine;
@@ -41,7 +41,7 @@ class WorldEngine {
 
   public:
     WorldEngine();
-    void init(Arduboy2 *arduboy, GameState_t *state, BattleEngine *battleEngine, MenuV2 *menu2);
+    void init(Arduboy2Base *arduboy, GameState_t *state, BattleEngine *battleEngine, MenuV2 *menu2);
     void input();
     void runMap(Player *player);
     void drawMap();
@@ -49,7 +49,7 @@ class WorldEngine {
     void drawPlayer();
     void moveChar(Player *player);
     uint8_t getTile();
-    void encounter(Arduboy2 *arduboy, Player *player);
+    void encounter(Arduboy2Base *arduboy, Player *player);
     bool moveable();
     void interact();
 

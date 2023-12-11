@@ -2,6 +2,42 @@ namespace MenuFXData {
     uint8_t attackText[] = "Attacks\x20the_foe!\0";
     uint8_t enemyAttackText[] = "Attacks_you!\0";
     uint8_t damageText[] = "Damage_delt!\0";
+    uint8_t hpText[] = "HP:\x20\0";
+    uint8_t atkText[] = "atk:\x20\0";
+    uint8_t defText[] = "def:\x20\0";
+    uint8_t spdText[] = "spd:\x20\0";
+    uint8_t satkText[] = "satk:\x20\0";
+    uint8_t sdefText[] = "sdef:\x20\0";
+    uint8_t pointerText[] = ">\0";
+    uint8_t SPIRIT[] = "spirit\0";
+    uint8_t WATER[] = "water\0";
+    uint8_t WIND[] = "wind\0";
+    uint8_t EARTH[] = "earth\0";
+    uint8_t FIRE[] = "fire\0";
+    uint8_t LIGHTNING[] = "lightning\0";
+    uint8_t PLANT[] = "plant\0";
+    uint8_t ELDER[] = "elder\0";
+    uint8_t NONE[] = "\0";
+    uint8_t Fainted[] = "Fainted\0";
+    uint8_t SwitchIn[] = "enters\x20the\x20field\0";
+    uint8_t win[] = "You\x20win\0";
+    uint8_t lose[] = "You\x20`loose\0";
+    uint8_t escaped[] = "You\x20escaped\0";
+    uint8_t changedIn[] = "You\x20Change\x20creature\0";
+    uint8_t quarter[] = "It\x20barely\x20damages\0";
+    uint8_t half[] = "It\x20does\x20some\0";
+    uint8_t doubled[] = "It\x20does\x20great\0";
+    uint8_t quad[] = "It\x20is\x20devistating\0";
+    uint8_t damage[] = "damage\0";
+    uint8_t physical[] = "Phys\0";
+    uint8_t special[] = "Spec\0";
+    uint8_t power[] = "power:\0";
+    uint8_t move[] = "move\0";
+    uint8_t change[] = "change\0";
+    uint8_t escape[] = "escape\0";
+    uint8_t gather[] = "gather\0";
+
+
 
 
 

@@ -1,19 +1,42 @@
 #pragma once
+#include "../creature/Creature.hpp"
 #include "../external/FlashStringHelper.h"
 #include "../lib/Move.hpp"
 #include "../lib/Text.hpp"
 
 #include <ArduboyFX.h>
-
-static void setTextColorBlack(Arduboy2 *arduboy) {
-    arduboy->setTextBackground(WHITE);
-    arduboy->setTextColor(BLACK);
+static void printType(Type t) {
+    switch (t) {
+    case Type::SPIRIT:
+        FX::drawString(MenuFXData::SPIRIT);
+        break;
+    case Type::WATER:
+        FX::drawString(MenuFXData::WATER);
+        break;
+    case Type::WIND:
+        FX::drawString(MenuFXData::WIND);
+        break;
+    case Type::EARTH:
+        FX::drawString(MenuFXData::EARTH);
+        break;
+    case Type::FIRE:
+        FX::drawString(MenuFXData::FIRE);
+        break;
+    case Type::LIGHTNING:
+        FX::drawString(MenuFXData::LIGHTNING);
+        break;
+    case Type::PLANT:
+        FX::drawString(MenuFXData::PLANT);
+        break;
+    case Type::ELDER:
+        FX::drawString(MenuFXData::EARTH);
+        break;
+    }
 }
 
-static void setTextColorWhite(Arduboy2 *arduboy) {
-    arduboy->setTextBackground(BLACK);
-    arduboy->setTextColor(WHITE);
-}
+static void setTextColorBlack() { FX::setFontMode(dcmReverse); }
+
+static void setTextColorWhite() { FX::setFontMode(dcmWhite); }
 
 static void drawInfoRec(Arduboy2 *arduboy, uint8_t x, uint8_t y) {
     arduboy->fillRect(x - 3, y - 3, 60, 30, WHITE);
@@ -24,49 +47,50 @@ static void printMoveInfo(Arduboy2 *arduboy, uint8_t index, uint8_t x, uint8_t y
     if (index == 32) {
         return;
     }
+    setTextColorBlack();
     drawInfoRec(arduboy, x, y);
     MoveBitSet m = getMovePack(index);
-    arduboy->setCursor(x, y);
+    FX::setCursor(x, y);
 
-    arduboy->print(readFlashStringPointer(&typeNames[m.type]));
-    arduboy->setCursor(x, y + 8);
+    printType(Type(m.type));
+    FX::setCursor(x, y + 8);
     if (m.physical) {
-        arduboy->print(F("Phys"));
+        FX::drawString(MenuFXData::physical);
     } else {
-        arduboy->print(F("Spec"));
+        FX::drawString(MenuFXData::special);
     }
-    arduboy->setCursor(x, y + 16);
-    arduboy->print(F("power:"));
-    arduboy->print(m.power);
+    FX::setCursor(x, y + 16);
+    FX::drawString(MenuFXData::power);
+    FX::drawNumber(m.power);
 }
 
-static void printBattleMenu(Arduboy2 &arduboy) {
-    arduboy.setCursor(6, 46);
-    arduboy.print(asFlashStringHelper(moveM));
-    arduboy.setCursor(64, 46);
-    arduboy.print(asFlashStringHelper(gatherM));
-    arduboy.setCursor(6, 54);
-    arduboy.print(asFlashStringHelper(changeM));
-    arduboy.setCursor(64, 54);
-    arduboy.print(asFlashStringHelper(escapeM));
+static void printBattleMenu() {
+    FX::setCursor(6, 46);
+    FX::drawString(MenuFXData::move);
+    FX::setCursor(64, 46);
+    FX::drawString(MenuFXData::gather);
+    FX::setCursor(6, 54);
+    FX::drawString(MenuFXData::change);
+    FX::setCursor(64, 54);
+    FX::drawString(MenuFXData::escape);
 }
 
 static void printCursor(Arduboy2 &arduboy, int8_t index) {
     switch (index) {
     case 0:
-        arduboy.setCursor(0, 46);
+        FX::setCursor(0, 46);
         break;
     case 1:
-        arduboy.setCursor(58, 46);
+        FX::setCursor(58, 46);
         break;
     case 2:
-        arduboy.setCursor(0, 54);
+        FX::setCursor(0, 54);
         break;
     case 3:
-        arduboy.setCursor(58, 54);
+        FX::setCursor(58, 54);
         break;
     }
-    arduboy.print(F(">"));
+    FX::drawString(MenuFXData::pointerText);
 }
 
 static void printMoveMenu(Arduboy2 &arduboy, int8_t index, uint8_t *moveList) {
