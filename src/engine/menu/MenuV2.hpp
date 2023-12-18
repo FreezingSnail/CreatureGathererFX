@@ -23,14 +23,14 @@ class MenuV2 {
 
     MenuV2();
     void setMoveList(uint8_t *pointer);
-    void run(Arduboy2Base &arduboy, BattleEngine &engine);
+    void run(BattleEngine &engine);
     void push(MenuEnum type);
     void pop();
-    void transverse(Arduboy2Base &arduboy);
-    void action(Arduboy2Base &arduboy, BattleEngine &engine);
-    void printMenu(Arduboy2Base &arduboy, BattleEngine &engine);
+    void transverse();
+    void action(BattleEngine &engine);
+    void printMenu(BattleEngine &engine);
     void updateMoveList(BattleEngine &engine);
-    void creatureRental(Arduboy2Base &arduboy);
+    void creatureRental();
 };
 
 #define XSTART 0

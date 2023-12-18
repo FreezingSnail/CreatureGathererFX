@@ -5,32 +5,32 @@
 #include "../draw.h"
 #include "../menu/MenuV2.hpp"
 
-void Arena::arenaLoop(Arduboy2 &arduboy, MenuV2 &menu2, Player &player, BattleEngine &engine) {
+void Arena::arenaLoop(MenuV2 &menu2, Player &player, BattleEngine &engine) {
     if (this->moveIndex == 12) {
         this->cursor = 0;
         this->movePointer = 0;
         this->moveIndex = 0;
         this->registerIndex = 0;
-        this->startBattle(arduboy, engine, player);
+        this->startBattle(engine, player);
     }
 
     if (this->registerIndex < 3) {
-        if (arduboy.justPressed(DOWN_BUTTON)) {
+        if (Arduboy2::justPressed(DOWN_BUTTON)) {
             menu2.cursorIndex += 1;
-        } else if (arduboy.justPressed(UP_BUTTON)) {
+        } else if (Arduboy2::justPressed(UP_BUTTON)) {
             menu2.cursorIndex -= 1;
         }
-        menu2.creatureRental(arduboy);
-        this->registerRentals(arduboy, player);
-        this->displayRegisteredCount(arduboy);
+        menu2.creatureRental();
+        this->registerRentals(player);
+        this->displayRegisteredCount();
     } else if (this->moveIndex < 12) {
-        this->registerMoves(arduboy, player);
+        this->registerMoves(player);
     }
 }
 
-void Arena::registerRentals(Arduboy2 &arduboy, Player &player) {
+void Arena::registerRentals(Player &player) {
     int8_t creatureID = -1;
-    if (arduboy.justPressed(A_BUTTON)) {
+    if (Arduboy2::justPressed(A_BUTTON)) {
         creatureID = cursor;
     }
     if (creatureID >= 0) {
@@ -62,7 +62,7 @@ static void validMoves(uint32_t movePool, int8_t *moves) {
     }
 }
 
-void Arena::registerMoves(Arduboy2 &arduboy, Player &player) {
+void Arena::registerMoves(Player &player) {
     setTextColorWhite();
     if (this->moveIndex > 7) {
         this->moveCreature = 3;
@@ -96,34 +96,34 @@ void Arena::registerMoves(Arduboy2 &arduboy, Player &player) {
     FX::setCursor(0, 20);
     FX::drawString(MenuFXData::pointerText);
 
-    if (arduboy.justPressed(A_BUTTON)) {
+    if (Arduboy2::justPressed(A_BUTTON)) {
         this->cursor = moves[this->movePointer];
         player.party[this->moveCreature].setMove(this->cursor, this->moveIndex % 4);
         this->moveIndex++;
         movePointer = 0;
     }
-    if (arduboy.justPressed(DOWN_BUTTON)) {
+    if (Arduboy2::justPressed(DOWN_BUTTON)) {
         if (this->movePointer < 16 && moves[this->movePointer + 1] != -1) {
             this->movePointer++;
             this->cursor = moves[this->movePointer];
         }
     }
-    if (arduboy.justPressed(UP_BUTTON)) {
+    if (Arduboy2::justPressed(UP_BUTTON)) {
         if (this->movePointer > 0) {
             this->movePointer--;
             this->cursor = moves[this->movePointer];
         }
     }
 
-    printMoveInfo(&arduboy, this->cursor, 70, 20);
+    printMoveInfo(this->cursor, 70, 20);
 }
 
 uint8_t Arena::selectOpponent() { return 0; }
 
-void Arena::startBattle(Arduboy2 &arduboy, BattleEngine &engine, Player &player) { engine.startArena(arduboy, player, 4); }
+void Arena::startBattle(BattleEngine &engine, Player &player) { engine.startArena(player, 4); }
 
-void Arena::displayRegisteredCount(Arduboy2 &arduboy) {
+void Arena::displayRegisteredCount() {
     for (uint8_t i = 0; i < this->registerIndex; i++) {
-        arduboy.drawCircle(100 + (10 * i), 55, 3, WHITE);
+        Arduboy2::drawCircle(100 + (10 * i), 55, 3, WHITE);
     }
 }

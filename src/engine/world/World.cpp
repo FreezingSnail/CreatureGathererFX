@@ -216,7 +216,7 @@ void __attribute__((optimize("-O0"))) WorldEngine::encounter(Arduboy2Base *ardub
         if (chance <= 10) {
             uint8_t creatureID = this->encounterTable.rollEncounter();
             uint8_t level = this->encounterTable.rollLevel();
-            this->battleEngine->startEncounter(*this->arduboy, *player, creatureID, level);
+            this->battleEngine->startEncounter(*player, creatureID, level);
             *this->state = GameState_t::BATTLE;
         }
     }

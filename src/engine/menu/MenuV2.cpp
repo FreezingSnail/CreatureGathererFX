@@ -16,36 +16,36 @@ void MenuV2::push(MenuEnum type) {
 
 void MenuV2::pop() { this->menuPointer--; }
 
-void MenuV2::transverse(Arduboy2Base &arduboy) {
+void MenuV2::transverse() {
     switch (CURRENT_MENU) {
     case BATTLE_OPTIONS:
-        if (arduboy.justPressed(LEFT_BUTTON)) {
+        if (Arduboy2::justPressed(LEFT_BUTTON)) {
             this->cursorIndex--;
-        } else if (arduboy.justPressed(RIGHT_BUTTON)) {
+        } else if (Arduboy2::justPressed(RIGHT_BUTTON)) {
             this->cursorIndex++;
         }
-        if (arduboy.justPressed(DOWN_BUTTON)) {
+        if (Arduboy2::justPressed(DOWN_BUTTON)) {
             this->cursorIndex += 2;
-        } else if (arduboy.justPressed(UP_BUTTON)) {
+        } else if (Arduboy2::justPressed(UP_BUTTON)) {
             this->cursorIndex -= 2;
         }
         break;
     case BATTLE_MOVE_SELECT:
-        if (arduboy.justPressed(LEFT_BUTTON)) {
+        if (Arduboy2::justPressed(LEFT_BUTTON)) {
             this->cursorIndex--;
-        } else if (arduboy.justPressed(RIGHT_BUTTON)) {
+        } else if (Arduboy2::justPressed(RIGHT_BUTTON)) {
             this->cursorIndex++;
         }
-        if (arduboy.justPressed(DOWN_BUTTON)) {
+        if (Arduboy2::justPressed(DOWN_BUTTON)) {
             this->cursorIndex += 2;
-        } else if (arduboy.justPressed(UP_BUTTON)) {
+        } else if (Arduboy2::justPressed(UP_BUTTON)) {
             this->cursorIndex -= 2;
         }
         break;
     case BATTLE_CREATURE_SELECT:
-        if (arduboy.justPressed(DOWN_BUTTON)) {
+        if (Arduboy2::justPressed(DOWN_BUTTON)) {
             this->cursorIndex += 2;
-        } else if (arduboy.justPressed(UP_BUTTON)) {
+        } else if (Arduboy2::justPressed(UP_BUTTON)) {
             this->cursorIndex -= 2;
         }
         break;
@@ -58,8 +58,8 @@ void MenuV2::transverse(Arduboy2Base &arduboy) {
     }
 }
 
-void MenuV2::action(Arduboy2Base &arduboy, BattleEngine &engine) {
-    if (arduboy.justPressed(A_BUTTON)) {
+void MenuV2::action(BattleEngine &engine) {
+    if (Arduboy2::justPressed(A_BUTTON)) {
         switch (CURRENT_MENU) {
         case BATTLE_OPTIONS:
             switch (this->cursorIndex) {
@@ -116,32 +116,32 @@ void MenuV2::action(Arduboy2Base &arduboy, BattleEngine &engine) {
             }
             break;
         }
-    } else if (arduboy.justPressed(B_BUTTON)) {
+    } else if (Arduboy2::justPressed(B_BUTTON)) {
         if (CURRENT_MENU == BATTLE_MOVE_SELECT || CURRENT_MENU == BATTLE_CREATURE_SELECT) {
             this->pop();
         }
     }
 }
 
-void MenuV2::run(Arduboy2Base &arduboy, BattleEngine &engine) {
+void MenuV2::run(BattleEngine &engine) {
     if (this->menuPointer < 0 && !dialogMenu.peek())
         return;
     if (dialogMenu.peek()) {
         dialogMenu.drawPopMenu();
-        if (arduboy.justPressed(A_BUTTON)) {
+        if (Arduboy2::justPressed(A_BUTTON)) {
             dialogMenu.popMenu();
         }
     } else {
         this->updateMoveList(engine);
         engine.updateInactiveCreatures(this->creatures);
-        this->transverse(arduboy);
-        this->action(arduboy, engine);
-        this->printMenu(arduboy, engine);
+        this->transverse();
+        this->action(engine);
+        this->printMenu(engine);
     }
 }
 
-void MenuV2::printMenu(Arduboy2Base &arduboy, BattleEngine &engine) {
-    arduboy.fillRect(0, 43, 128, 32, WHITE);
+void MenuV2::printMenu(BattleEngine &engine) {
+    Arduboy2::fillRect(0, 43, 128, 32, WHITE);
     setTextColorBlack();
     switch (CURRENT_MENU) {
     case BATTLE_OPTIONS:
@@ -149,7 +149,7 @@ void MenuV2::printMenu(Arduboy2Base &arduboy, BattleEngine &engine) {
         break;
 
     case BATTLE_MOVE_SELECT:
-        printMoveMenu(arduboy, this->cursorIndex, this->moveList);
+        printMoveMenu(this->cursorIndex, this->moveList);
         break;
 
     case BATTLE_CREATURE_SELECT:
@@ -157,14 +157,14 @@ void MenuV2::printMenu(Arduboy2Base &arduboy, BattleEngine &engine) {
         if (this->cursorIndex == 0) {
             cIndex = this->creatures[0];
         }
-        printCreatureMenu(arduboy, this->creatures[0], this->creatures[1], engine.getCreature(cIndex));
+        printCreatureMenu(this->creatures[0], this->creatures[1], engine.getCreature(cIndex));
         break;
     }
-    printCursor(arduboy, this->cursorIndex);
-    arduboy.drawRect(1, 44, 126, 19, BLACK);
+    printCursor(this->cursorIndex);
+    Arduboy2::drawRect(1, 44, 126, 19, BLACK);
 }
 
-void MenuV2::creatureRental(Arduboy2Base &arduboy) {
+void MenuV2::creatureRental() {
     FX::setCursor(0, 55);
     FX::drawString(MenuFXData::pointerText);
     FX::setCursor(10, 55);

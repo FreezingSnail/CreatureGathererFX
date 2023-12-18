@@ -37,17 +37,17 @@ static void setTextColorBlack() { FX::setFontMode(dcmReverse); }
 
 static void setTextColorWhite() { FX::setFontMode(dcmWhite); }
 
-static void drawInfoRec(Arduboy2 *arduboy, uint8_t x, uint8_t y) {
-    arduboy->fillRect(x - 3, y - 3, 60, 30, WHITE);
-    arduboy->drawRect(x - 2, y - 2, 58, 28, BLACK);
+static void drawInfoRec(uint8_t x, uint8_t y) {
+    Arduboy2::fillRect(x - 3, y - 3, 60, 30, WHITE);
+    Arduboy2::drawRect(x - 2, y - 2, 58, 28, BLACK);
 }
 
-static void printMoveInfo(Arduboy2 *arduboy, uint8_t index, uint8_t x, uint8_t y) {
+static void printMoveInfo(uint8_t index, uint8_t x, uint8_t y) {
     if (index == 32) {
         return;
     }
     setTextColorBlack();
-    drawInfoRec(arduboy, x, y);
+    drawInfoRec(x, y);
     MoveBitSet m = getMovePack(index);
     FX::setCursor(x, y);
 
@@ -74,7 +74,7 @@ static void printBattleMenu() {
     FX::drawString(MenuFXData::escape);
 }
 
-static void printCursor(Arduboy2 &arduboy, int8_t index) {
+static void printCursor(int8_t index) {
     switch (index) {
     case 0:
         FX::setCursor(0, 46);
@@ -92,7 +92,7 @@ static void printCursor(Arduboy2 &arduboy, int8_t index) {
     FX::drawString(MenuFXData::pointerText);
 }
 
-static void printMoveMenu(Arduboy2 &arduboy, int8_t index, uint8_t *moveList) {
+static void printMoveMenu(int8_t index, uint8_t *moveList) {
 
     FX::setCursor(6, 46);
     uint24_t rowAddress = FX::readIndexedUInt24(MoveData::moveNames, moveList[0]);
@@ -106,11 +106,11 @@ static void printMoveMenu(Arduboy2 &arduboy, int8_t index, uint8_t *moveList) {
     FX::setCursor(69, 55);
     rowAddress = FX::readIndexedUInt24(MoveData::moveNames, moveList[3]);
     FX::drawString(rowAddress);
-    printMoveInfo(&arduboy, moveList[index], 38, 4);
+    printMoveInfo(moveList[index], 38, 4);
 }
 
-static void printCreatureMenu(Arduboy2 &arduboy, uint8_t c1, uint8_t c2, Creature *cpointer) {
-    cpointer->printCreature(&arduboy);
+static void printCreatureMenu(uint8_t c1, uint8_t c2, Creature *cpointer) {
+    cpointer->printCreature();
     FX::setCursor(6, 45);
     uint24_t addr = FX::readIndexedUInt24(CreatureData::creatureNames, c1);
     FX::drawString(addr);

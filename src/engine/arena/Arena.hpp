@@ -15,10 +15,10 @@ class Arena {
 
   public:
     Arena() = default;
-    void arenaLoop(Arduboy2 &arduboy, MenuV2 &menu2, Player &player, BattleEngine &engine);
-    void registerRentals(Arduboy2 &arduboy, Player &player);
-    void registerMoves(Arduboy2 &arduboy, Player &player);
+    void arenaLoop(MenuV2 &menu2, Player &player, BattleEngine &engine);
+    void registerRentals(Player &player);
+    void registerMoves(Player &player);
     uint8_t selectOpponent();
-    void startBattle(Arduboy2 &arduboy, BattleEngine &engine, Player &player);
-    void displayRegisteredCount(Arduboy2 &arduboy);
+    void startBattle(BattleEngine &engine, Player &player);
+    void displayRegisteredCount();
 };

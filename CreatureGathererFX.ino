@@ -10,7 +10,7 @@
 
 // ARDUBOY_NO_USB
 
-Arduboy2 arduboy;
+Arduboy2Base arduboy;
 Player player = Player();
 GameState_t state;
 BattleEngine engine;
@@ -42,7 +42,7 @@ void loop() {
     arduboy.pollButtons();
 
     if (menu2.dialogMenu.peek()) {
-        menu2.run(arduboy, engine);
+        menu2.run(engine);
         menu2.dialogMenu.drawPopMenu();
         FX::display();
         return;
@@ -53,17 +53,17 @@ void loop() {
     switch (state) {
     case GameState_t::BATTLE:
 
-        engine.encounter(arduboy, player);
+        engine.encounter(player);
         break;
     case GameState_t::WORLD:
         // world.runMap(&player, &menu);
         uint8_t index;
         index = rand() % 18;
-        engine.startArena(arduboy, player, index);
+        engine.startArena(player, index);
         break;
     case GameState_t::ARENA:
-        arena.arenaLoop(arduboy, menu2, player, engine);
+        arena.arenaLoop(menu2, player, engine);
         break;
     }
-    menu2.run(arduboy, engine);
+    menu2.run(engine);
 }
