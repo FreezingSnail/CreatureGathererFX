@@ -57,7 +57,7 @@ class Creature {
     uint8_t seedToStat(uint8_t seed);
     bool moveTypeBonus(uint8_t index);
 
-    void printCreature(Arduboy2Base *arduboy);
+    void printCreature();
 
 #ifdef CLI
     void printMoves();

@@ -118,9 +118,9 @@ uint8_t Creature::seedToStat(uint8_t seed) {
     // return (2*this->level)*(seed/3);
 }
 
-void Creature::printCreature(Arduboy2Base *arduboy) {
-    arduboy->fillRect(0, 0, 128, 66, WHITE);
-    arduboy->drawRect(2, 1, 124, 43, BLACK);
+void Creature::printCreature() {
+    Arduboy2::fillRect(0, 0, 128, 66, WHITE);
+    Arduboy2::drawRect(2, 1, 124, 43, BLACK);
     FX::setCursor(4, 3);
     FX::drawString(MenuFXData::hpText);
     FX::drawNumber(this->statlist.hp);

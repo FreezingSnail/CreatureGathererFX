@@ -37,12 +37,12 @@ class BattleEngine {
     void init(GameState_t *state, MenuV2 *menu);
 
     // entry points
-    void startFight(Arduboy2Base &arduboy, Player &player, uint8_t optID);
-    void startArena(Arduboy2Base &arduboy, Player &player, uint8_t optID);
-    void startEncounter(Arduboy2Base &arduboy, Player &player, uint8_t creatureID, uint8_t level);
+    void startFight(Player &player, uint8_t optID);
+    void startArena(Player &player, uint8_t optID);
+    void startEncounter(Player &player, uint8_t creatureID, uint8_t level);
 
     // flow control
-    void encounter(Arduboy2Base &arduboy, Player &player);
+    void encounter(Player &player);
 
     // menu interface
     void queueAction(ActionType type, uint8_t index);
@@ -80,9 +80,9 @@ class BattleEngine {
     void resetOpponent();
 
     // drawing
-    void drawScene(Arduboy2Base &arduboy);
-    void drawPlayer(Arduboy2Base &arduboy);
-    void drawOpponent(Arduboy2Base &arduboy);
-    void drawPlayerHP(Arduboy2Base &arduboy);
-    void drawOpponentHP(Arduboy2Base &arduboy);
+    void drawScene();
+    void drawPlayer();
+    void drawOpponent();
+    void drawPlayerHP();
+    void drawOpponentHP();
 };
