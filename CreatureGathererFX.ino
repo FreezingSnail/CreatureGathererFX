@@ -1,4 +1,7 @@
-#include "src/Globals.hpp"
+#define ABG_IMPLEMENTATION
+#define SPRITESU_IMPLEMENTATION
+#include "src/external/SpritesU.hpp"
+
 #include "src/engine/arena/Arena.hpp"
 #include "src/engine/battle/Battle.hpp"
 #include "src/engine/game/Gamestate.hpp"
@@ -8,11 +11,19 @@
 #include "src/fxdata/fxdata.h"
 #include "src/player/Player.hpp"
 
-#include "src/Globals.hpp"
+#define ABG_TIMER1
+#define ABG_SYNC_PARK_ROW
+
+#include "src/common.hpp"
+decltype(arduboy) arduboy;
+
+#define SPRITESU_OVERWRITE
+#define SPRITESU_PLUSMASK
+#define SPRITESU_RECT
+uint8_t debug;
 
 // ARDUBOY_NO_USB
 
-Arduboy2Base arduboy;
 Player player = Player();
 GameState_t state;
 BattleEngine engine;
@@ -22,8 +33,8 @@ MenuV2 menu2 = MenuV2();
 Font4x6 font = Font4x6();
 
 void setup() {
-    arduboy.begin();
-    arduboy.setFrameRate(45);
+    arduboy.boot();
+    arduboy.startGray();
     arduboy.initRandomSeed();
 
     FX::begin(FX_DATA_PAGE);
@@ -32,25 +43,27 @@ void setup() {
 
     world.init(&arduboy, &state, &engine, &menu2);
     state = GameState_t::ARENA;
-    menu2.dialogMenu.init(&arduboy);
     engine.init(&state, &menu2);
     // player.basic();
     // engine.startArena(arduboy, player, 6);
 }
 
 void loop() {
-    if (!arduboy.nextFrame()) {
-        return;
-    }
+
+    FX::enableOLED();
+    arduboy.waitForNextPlane();
+    FX::disableOLED();
     arduboy.pollButtons();
+    debug = arduboy.currentPlane();
+    // if (a.needsUpdate())
 
     if (menu2.dialogMenu.peek()) {
         menu2.run(engine);
         menu2.dialogMenu.drawPopMenu();
-        FX::display();
+        // FX::display();
         return;
     } else {
-        FX::display(CLEAR_BUFFER);
+        // FX::display(CLEAR_BUFFER);
     }
 
     switch (state) {

@@ -1,13 +1,14 @@
 #include "Battle.hpp"
-#include <ArduboyFX.h>
-
+#include "../../common.hpp"
 #include "../../creature/Creature.hpp"
 #include "../../engine/menu/MenuV2.hpp"
+#include "../../external/ArduboyG.h"
+#include "../../external/SpritesU.hpp"
 #include "../../fxdata/fxdata.h"
 #include "../../opponent/Opponent.hpp"
 #include "../../player/Player.hpp"
 #include "../game/Gamestate.hpp"
-
+#include <ArduboyFX.h>
 // #include "../../lib/TypeTable.hpp"
 #include "../../lib/Move.hpp"
 
@@ -129,15 +130,16 @@ void BattleEngine::encounter(Player &player) {
         this->activeBattle = false;
         return;
     }
-
-    this->turnTick(player);
     this->drawScene();
-}
-
-void BattleEngine::turnTick(Player &player) {
     if (!this->queued) {
         return;
     }
+
+    this->turnTick(player);
+}
+
+void BattleEngine::turnTick(Player &player) {
+
     this->opponentInput();
     int8_t order = (int8_t)this->playerAction.priority - (int8_t)this->opponentAction.priority;
     if (order > 0) {
@@ -418,7 +420,10 @@ void BattleEngine::drawOpponent() {
 
 void BattleEngine::drawPlayer() {
     // Sprites::drawSelfMasked(96, 0, creatureSprites, this->playerCur->id);
-    FX::drawBitmap(96, 0, creatureSprites, this->playerCur->id, dbmWhite);
+    // FX::drawBitmap(96, 0, creatureSprites, this->playerCur->id, dbmWhite);
+    SpritesU::drawOverwriteFX(96, 0, greyTest, arduboy.currentPlane());
+    debug = arduboy.currentPlane();
+
     this->drawPlayerHP();
 }
 

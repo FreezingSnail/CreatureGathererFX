@@ -1,5 +1,5 @@
 build:
-	arduino-cli compile --fqbn "arduboy-homemade:avr:arduboy" --optimize-for-debug  --output-dir .
+	arduino-cli compile --fqbn "arduboy-homemade:avr:arduboy" --optimize-for-debug  --output-dir . 
 
 gen:
 	./gen.sh

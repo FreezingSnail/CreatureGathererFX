@@ -1,5 +1,4 @@
 #include "MenuV2.hpp"
-#include "../../external/FlashStringHelper.h"
 #include "../battle/Battle.hpp"
 #include "../draw.h"
 #include "../../lib/Text.hpp"

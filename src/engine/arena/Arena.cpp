@@ -1,9 +1,9 @@
 #include "Arena.hpp"
-#include "../../Globals.hpp"
 #include "../../player/Player.hpp"
 #include "../battle/Battle.hpp"
 #include "../draw.h"
 #include "../menu/MenuV2.hpp"
+#include <ArduboyFX.h>
 #include "../../Globals.hpp"
 
 void Arena::arenaLoop(MenuV2 &menu2, Player &player, BattleEngine &engine) {
