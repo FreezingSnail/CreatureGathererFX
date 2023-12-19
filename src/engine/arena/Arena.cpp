@@ -92,6 +92,7 @@ void Arena::registerMoves(Player &player) {
             printString(font, moveAddress, 10, 20 + (i * 10));
         }
     }
+
     FX::setCursor(0, 20);
     FX::drawString(MenuFXData::pointerText);
 
