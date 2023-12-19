@@ -1,3 +1,6 @@
 [submodule "Arduboy-Python-Utilities"]
 	path = Arduboy-Python-Utilities
 	url = https://github.com/MrBlinky/Arduboy-Python-Utilities.git
+[submodule "Font4x6"]
+	path = Font4x6
+	url = https://github.com/filmote/Font4x6.git

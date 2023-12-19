@@ -8,6 +8,7 @@ SpaceAfterCStyleCast: false
 UseTab: Never
 # if (x) doStuff()  is not allowed, bad style
 AllowShortIfStatementsOnASingleLine: false
+SortIncludes: false
 # 
 AlignTrailingComments: true
 SpacesBeforeTrailingComments: 3

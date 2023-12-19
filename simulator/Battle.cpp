@@ -117,7 +117,7 @@ void BattleEngine::encounter(Player &player) {
         return;
     }
 
-    this->drawScene();
+    // this->drawScene();
     this->turnTick(player);
 }
 
@@ -258,7 +258,7 @@ void ::BattleEngine::queueAction(ActionType type, uint8_t index) {
     Priority p = Priority::NORMAL;
     switch (type) {
     case ActionType::CHNGE:
-    case ActionType::CATCH:
+    case ActionType::GATHER:
     case ActionType::ESCAPE:
         p = Priority::FAST;
     }
@@ -293,7 +293,7 @@ void BattleEngine::commitAction(Player &player, Action *action, Creature *commit
         }
         break;
     }
-    case ActionType::CATCH:
+    case ActionType::GATHER:
         if (this->tryCapture()) {
             // idk if this is staying at all
             // player.storeCreature(0, this->opponentCur->id, this->opponentCur->level);

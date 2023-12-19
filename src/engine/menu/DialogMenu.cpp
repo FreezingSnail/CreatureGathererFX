@@ -8,15 +8,16 @@
 #define dbf __attribute__((optimize("-O0")))
 
 void drawRect(Arduboy2 *ardu, PopUpDialog *popMenu) {
-    ardu->fillRect(popMenu->x, popMenu->y, popMenu->width, popMenu->height, WHITE);
-    ardu->drawRect(popMenu->x + 1, popMenu->y + 1, popMenu->width - 2, popMenu->height - 2, BLACK);
+    // ardu->fillRect(popMenu->x, popMenu->y, popMenu->width, popMenu->height, WHITE);
+    // ardu->drawRect(popMenu->x + 1, popMenu->y + 1, popMenu->width - 2, popMenu->height - 2, BLACK);
 }
 
 void DialogMenu::init(Arduboy2 *Arduboy2) { this->arduboy = arduboy; }
 
 void DialogMenu::drawPopMenu() {
     PopUpDialog curMenu = popDialogStack[0];
-    drawRect(arduboy, &curMenu);
+    FX::drawBitmap(0, 43, battleMenu, 0, dbmNormal);
+
     uint24_t addr;
     setTextColorBlack();
     switch (curMenu.type) {

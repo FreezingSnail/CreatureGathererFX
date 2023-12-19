@@ -7,7 +7,7 @@
 class MenuV2;
 
 class BattleEngine {
-  private:
+  public:
     Creature *playerParty[3];
     Creature *playerCur;
     Creature *opponentCur;
@@ -25,7 +25,6 @@ class BattleEngine {
     bool queued;
     Action queuedAction;
 
-  public:
     bool activeBattle;
     void init();
 
