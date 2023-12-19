@@ -2,44 +2,53 @@
 #include "../creature/Creature.hpp"
 #include "../external/FlashStringHelper.h"
 #include "../lib/Move.hpp"
+#include "../external/Font4x6.h"
+#include "../Globals.hpp"
 
 #include <ArduboyFX.h>
-static void printType(Type t) {
+static void printType(Type t, uint8_t x, uint8_t y) {
     switch (t) {
     case Type::SPIRIT:
-        FX::drawString(MenuFXData::SPIRIT);
+        printString(font, MenuFXData::SPIRIT, x, y);
         break;
     case Type::WATER:
-        FX::drawString(MenuFXData::WATER);
+        printString(font, MenuFXData::WATER, x, y);
         break;
     case Type::WIND:
-        FX::drawString(MenuFXData::WIND);
+        printString(font, MenuFXData::WIND, x, y);
         break;
     case Type::EARTH:
-        FX::drawString(MenuFXData::EARTH);
+        printString(font, MenuFXData::EARTH, x, y);
         break;
     case Type::FIRE:
-        FX::drawString(MenuFXData::FIRE);
+        printString(font, MenuFXData::FIRE, x, y);
         break;
     case Type::LIGHTNING:
-        FX::drawString(MenuFXData::LIGHTNING);
+        printString(font, MenuFXData::LIGHTNING, x, y);
         break;
     case Type::PLANT:
-        FX::drawString(MenuFXData::PLANT);
+        printString(font, MenuFXData::PLANT, x, y);
         break;
     case Type::ELDER:
-        FX::drawString(MenuFXData::EARTH);
+        printString(font, MenuFXData::EARTH, x, y);
         break;
     }
 }
 
-static void setTextColorBlack() { FX::setFontMode(dcmReverse); }
+static void setTextColorBlack() {
+    FX::setFontMode(dcmReverse);
+    font.setTextColor(BLACK);
+}
 
-static void setTextColorWhite() { FX::setFontMode(dcmWhite); }
+static void setTextColorWhite() {
+    FX::setFontMode(dcmWhite);
+    font.setTextColor(WHITE);
+}
 
 static void drawInfoRec(uint8_t x, uint8_t y) {
-    Arduboy2::fillRect(x - 3, y - 3, 60, 30, WHITE);
-    Arduboy2::drawRect(x - 2, y - 2, 58, 28, BLACK);
+    // Arduboy2::fillRect(x - 3, y - 3, 60, 30, WHITE);
+    // Arduboy2::drawRect(x - 2, y - 2, 58, 28, BLACK);
+    FX::drawBitmap(x - 3, y - 3, moveInfo, 0, dbmNormal);
 }
 
 static void printMoveInfo(uint8_t index, uint8_t x, uint8_t y) {
@@ -49,72 +58,59 @@ static void printMoveInfo(uint8_t index, uint8_t x, uint8_t y) {
     setTextColorBlack();
     drawInfoRec(x, y);
     MoveBitSet m = getMovePack(index);
-    FX::setCursor(x, y);
 
-    printType(Type(m.type));
-    FX::setCursor(x, y + 8);
+    printType(Type(m.type), x, y);
     if (m.physical) {
-        FX::drawString(MenuFXData::physical);
+        printString(font, MenuFXData::physical, x, y + 8);
     } else {
-        FX::drawString(MenuFXData::special);
+        printString(font, MenuFXData::special, x, y + 8);
     }
-    FX::setCursor(x, y + 16);
-    FX::drawString(MenuFXData::power);
-    FX::drawNumber(m.power);
+    printString(font, MenuFXData::power, x, y + 16);
+    font.setCursor(x + 30, y + 16);
+    font.print(m.power);
 }
 
 static void printBattleMenu() {
-    FX::setCursor(6, 46);
-    FX::drawString(MenuFXData::move);
-    FX::setCursor(64, 46);
-    FX::drawString(MenuFXData::gather);
-    FX::setCursor(6, 54);
-    FX::drawString(MenuFXData::change);
-    FX::setCursor(64, 54);
-    FX::drawString(MenuFXData::escape);
+    printString(font, MenuFXData::move, 6, 46);
+    printString(font, MenuFXData::gather, 64, 46);
+    printString(font, MenuFXData::change, 6, 54);
+    printString(font, MenuFXData::escape, 64, 54);
 }
 
 static void printCursor(int8_t index) {
     switch (index) {
     case 0:
-        FX::setCursor(0, 46);
+        printString(font, MenuFXData::pointerText, 0, 46);
         break;
     case 1:
-        FX::setCursor(58, 46);
+        printString(font, MenuFXData::pointerText, 58, 46);
         break;
     case 2:
-        FX::setCursor(0, 54);
+        printString(font, MenuFXData::pointerText, 0, 54);
         break;
     case 3:
-        FX::setCursor(58, 54);
+        printString(font, MenuFXData::pointerText, 58, 54);
         break;
     }
-    FX::drawString(MenuFXData::pointerText);
 }
 
 static void printMoveMenu(int8_t index, uint8_t *moveList) {
 
-    FX::setCursor(6, 46);
     uint24_t rowAddress = FX::readIndexedUInt24(MoveData::moveNames, moveList[0]);
-    FX::drawString(rowAddress);
-    FX::setCursor(69, 46);
+    printString(font, rowAddress, 6, 46);
     rowAddress = FX::readIndexedUInt24(MoveData::moveNames, moveList[1]);
-    FX::drawString(rowAddress);
-    FX::setCursor(6, 55);
+    printString(font, rowAddress, 69, 46);
     rowAddress = FX::readIndexedUInt24(MoveData::moveNames, moveList[2]);
-    FX::drawString(rowAddress);
-    FX::setCursor(69, 55);
+    printString(font, rowAddress, 6, 55);
     rowAddress = FX::readIndexedUInt24(MoveData::moveNames, moveList[3]);
-    FX::drawString(rowAddress);
+    printString(font, rowAddress, 69, 55);
     printMoveInfo(moveList[index], 38, 4);
 }
 
 static void printCreatureMenu(uint8_t c1, uint8_t c2, Creature *cpointer) {
     cpointer->printCreature();
-    FX::setCursor(6, 45);
     uint24_t addr = FX::readIndexedUInt24(CreatureData::creatureNames, c1);
-    FX::drawString(addr);
-    FX::setCursor(6, 55);
+    printString(font, addr, 6, 45);
     addr = FX::readIndexedUInt24(CreatureData::creatureNames, c2);
-    FX::drawString(addr);
+    printString(font, addr, 6, 55);
 }

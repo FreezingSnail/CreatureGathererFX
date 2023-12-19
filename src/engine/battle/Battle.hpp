@@ -9,7 +9,7 @@
 class MenuV2;
 
 class BattleEngine {
-  private:
+  public:
     uint8_t debug;
     Creature *playerParty[3];
     GameState_t *state;
@@ -32,7 +32,6 @@ class BattleEngine {
     bool queued;
     Action queuedAction;
 
-  public:
     BattleEngine();
     void init(GameState_t *state, MenuV2 *menu);
 
@@ -51,7 +50,6 @@ class BattleEngine {
     void updateInactiveCreatures(uint8_t *list);
     Creature *getCreature(uint8_t index);
 
-  private:
     // flow control
     void turnTick(Player &player);
     bool checkLoss();

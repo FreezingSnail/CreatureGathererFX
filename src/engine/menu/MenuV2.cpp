@@ -2,6 +2,8 @@
 #include "../../external/FlashStringHelper.h"
 #include "../battle/Battle.hpp"
 #include "../draw.h"
+#include "../../lib/Text.hpp"
+#include "../../Globals.hpp"
 
 #define dbf __attribute__((optimize("-O0"))
 #define CURRENT_MENU this->stack[this->menuPointer]
@@ -141,7 +143,8 @@ void MenuV2::run(BattleEngine &engine) {
 }
 
 void MenuV2::printMenu(BattleEngine &engine) {
-    Arduboy2::fillRect(0, 43, 128, 32, WHITE);
+    // Arduboy2::fillRect(0, 43, 128, 32, WHITE);
+    FX::drawBitmap(0, 43, battleMenu, 0, dbmNormal);
     setTextColorBlack();
     switch (CURRENT_MENU) {
     case BATTLE_OPTIONS:
@@ -161,41 +164,38 @@ void MenuV2::printMenu(BattleEngine &engine) {
         break;
     }
     printCursor(this->cursorIndex);
-    Arduboy2::drawRect(1, 44, 126, 19, BLACK);
+    // Arduboy2::drawRect(1, 44, 126, 19, BLACK);
 }
 
 void MenuV2::creatureRental() {
-    FX::setCursor(0, 55);
-    FX::drawString(MenuFXData::pointerText);
+    printString(font, MenuFXData::pointerText, 0, 55);
     FX::setCursor(10, 55);
     this->cursorIndex = this->cursorIndex % 31;
 
     uint24_t addr = FX::readIndexedUInt24(CreatureData::creatureNames, this->cursorIndex);
-    FX::drawString(addr);
+    printString(font, addr, 10, 55);
     FX::drawBitmap(0, 0, creatureSprites, this->cursorIndex, dbmWhite);
     CreatureData_t cseed;
     uint24_t rowAddress = CreatureData::creatureData + (sizeof(CreatureData_t) * this->cursorIndex);
     FX::readDataObject(rowAddress, cseed);
-    FX::setCursor(35, 0);
-    FX::drawString(MenuFXData::hpText);
-    FX::drawNumber(cseed.hpSeed);
-    FX::setCursor(35, 10);
-    FX::drawString(MenuFXData::atkText);
-    FX::drawNumber(cseed.atkSeed);
-    FX::setCursor(35, 20);
-    FX::drawString(MenuFXData::defText);
-    FX::drawNumber(cseed.defSeed);
-    FX::setCursor(72, 0);
-    FX::drawString(MenuFXData::satkText);
-    FX::drawNumber(cseed.spcAtkSeed);
-    FX::setCursor(72, 10);
-    FX::drawString(MenuFXData::sdefText);
-    FX::drawNumber(cseed.spcDefSeed);
-    FX::setCursor(72, 20);
-    FX::drawString(MenuFXData::spdText);
-    FX::drawNumber(cseed.spdSeed);
-    FX::setCursor(0, 35);
-    printType(Type(cseed.type1));
-    FX::setCursor(0, 45);
-    printType(Type(cseed.type2));
+    printString(font, MenuFXData::hpText, 35, 0);
+    font.setCursor(35 + 18, 0);
+    font.print(cseed.hpSeed);
+    printString(font, MenuFXData::atkText, 35, 10);
+    font.setCursor(35 + 18, 10);
+    font.print(cseed.atkSeed);
+    printString(font, MenuFXData::defText, 35, 20);
+    font.setCursor(35 + 18, 20);
+    font.print(cseed.defSeed);
+    printString(font, MenuFXData::satkText, 72, 0);
+    font.setCursor(72 + 23, 0);
+    font.print(cseed.spcAtkSeed);
+    printString(font, MenuFXData::sdefText, 72, 10);
+    font.setCursor(72 + 23, 10);
+    font.print(cseed.spcDefSeed);
+    printString(font, MenuFXData::spdText, 72, 20);
+    font.setCursor(72 + 23, 20);
+    font.print(cseed.spdSeed);
+    printType(Type(cseed.type1), 0, 35);
+    printType(Type(cseed.type2), 0, 45);
 }

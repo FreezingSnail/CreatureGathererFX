@@ -4,6 +4,7 @@
 #include "../battle/Battle.hpp"
 #include "../draw.h"
 #include "../menu/MenuV2.hpp"
+#include "../../Globals.hpp"
 
 void Arena::arenaLoop(MenuV2 &menu2, Player &player, BattleEngine &engine) {
     if (this->moveIndex == 12) {
@@ -79,18 +80,16 @@ void Arena::registerMoves(Player &player) {
     this->debug = movePool;
     int8_t moves[16];
     validMoves(movePool, moves);
-    FX::setCursor(0, 0);
-    FX::drawNumber(this->moveIndex);
+    font.setCursor(0, 0);
+    font.print(this->moveIndex);
     addr = FX::readIndexedUInt24(CreatureData::creatureNames, curMonID);
-    FX::setCursor(0, 10);
-    FX::drawString(addr);
+    printString(font, addr, 0, 10);
 
     for (uint8_t i = 0; i < 4; i++) {
-        FX::setCursor(10, 20 + (i * 10));
         int8_t move = moves[this->movePointer + i];
         if (move != -1) {
             uint24_t moveAddress = FX::readIndexedUInt24(MoveData::moveNames, move);
-            FX::drawString(moveAddress);
+            printString(font, moveAddress, 10, 20 + (i * 10));
         }
     }
     FX::setCursor(0, 20);

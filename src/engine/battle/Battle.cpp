@@ -423,21 +423,21 @@ void BattleEngine::drawPlayer() {
 }
 
 void BattleEngine::drawPlayerHP() {
-    FX::setFont(arduboyFont, dcmNormal);
+    FX::setFont(font4x6, dcmNormal);
     FX::setCursor(70, 35);   // select default font
     FX::drawString(MenuFXData::hpText);
     FX::drawNumber((unsigned)this->playerHealths[this->playerIndex]);
     FX::drawString(("/"));
     FX::drawNumber((unsigned)this->playerCur->statlist.hp);
-    FX::setFont(arduboyFont, dcmBlack);
+    FX::setFont(font4x6, dcmBlack);
 }
 
 void BattleEngine::drawOpponentHP() {
-    FX::setFont(arduboyFont, dcmNormal);
+    FX::setFont(font4x6, dcmNormal);
     FX::setCursor(2, 35);   // select default font
     FX::drawString(MenuFXData::hpText);
     FX::drawNumber((unsigned)this->opponentHealths[this->opponentIndex]);
     FX::drawString(("/"));
     FX::drawNumber((unsigned)this->opponentCur->statlist.hp);
-    FX::setFont(arduboyFont, dcmBlack);
+    FX::setFont(font4x6, dcmBlack);
 }
