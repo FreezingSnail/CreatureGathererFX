@@ -21,6 +21,11 @@ void DialogMenu::drawPopMenu() {
     uint24_t addr;
     setTextColorBlack();
     switch (curMenu.type) {
+    case TEXT:
+        FX::setCursor(curMenu.x + 3, curMenu.y + 13);
+        FX::drawString(curMenu.textAddress);
+
+        break;
     case DAMAGE:
     case ENEMY_DAMAGE:
         FX::setCursor(curMenu.x + 3, curMenu.y + 3);
@@ -124,7 +129,7 @@ void DialogMenu::pushMenu(PopUpDialog info) {
 
 void DialogMenu::pushEvent(Event event) {
     dialogPointer++;
-    popDialogStack[dialogPointer] = PopUpDialog{0, 34, 120, 30, event.textAddress};
+    popDialogStack[dialogPointer] = PopUpDialog{0, 34, 120, 30, event.textAddress, TEXT};
 }
 
 void DialogMenu::popMenu() {

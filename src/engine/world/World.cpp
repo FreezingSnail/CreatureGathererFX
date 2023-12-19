@@ -162,7 +162,7 @@ void __attribute__((optimize("-O0"))) WorldEngine::runMap(Player *player) {
         this->input();
     } else {
         if (this->arduboy->justPressed(A_BUTTON)) {
-            this->menu2->dialogMenu.popMenu();
+            // this->menu2->dialogMenu.popMenu();
         }
     }
 }
@@ -261,7 +261,7 @@ bool __attribute__((optimize("-O0"))) WorldEngine::moveable() {
 }
 
 void __attribute__((optimize("-O0"))) WorldEngine::interact() {
-    if (this->arduboy->justPressed(A_BUTTON)) {
+    if (this->arduboy->justPressed(B_BUTTON)) {
         uint8_t tilex = this->curx;
         uint8_t tiley = this->cury;
         switch (this->playerDirection) {
