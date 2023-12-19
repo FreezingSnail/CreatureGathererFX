@@ -71,39 +71,42 @@ static void printMoveInfo(uint8_t index, uint8_t x, uint8_t y) {
 }
 
 static void printBattleMenu() {
-    printString(font, MenuFXData::move, 6, 46);
-    printString(font, MenuFXData::gather, 64, 46);
-    printString(font, MenuFXData::change, 6, 54);
-    printString(font, MenuFXData::escape, 64, 54);
+    printString(font, MenuFXData::move, 6, 45);
+    printString(font, MenuFXData::gather, 64, 45);
+    printString(font, MenuFXData::change, 6, 53);
+    printString(font, MenuFXData::escape, 64, 53);
 }
 
 static void printCursor(int8_t index) {
     switch (index) {
     case 0:
-        printString(font, MenuFXData::pointerText, 0, 46);
+        FX::setCursor(0, 46);
         break;
     case 1:
-        printString(font, MenuFXData::pointerText, 58, 46);
+        FX::setCursor(58, 46);
         break;
     case 2:
-        printString(font, MenuFXData::pointerText, 0, 54);
+        FX::setCursor(0, 54);
         break;
     case 3:
-        printString(font, MenuFXData::pointerText, 58, 54);
+        FX::setCursor(58, 54);
         break;
     }
+    FX::setFont(arduboyFont, dbmReverse);
+    FX::drawChar('*');
+    FX::setFont(font4x6, dbmNormal);
 }
 
 static void printMoveMenu(int8_t index, uint8_t *moveList) {
 
     uint24_t rowAddress = FX::readIndexedUInt24(MoveData::moveNames, moveList[0]);
-    printString(font, rowAddress, 6, 46);
+    printString(font, rowAddress, 6, 45);
     rowAddress = FX::readIndexedUInt24(MoveData::moveNames, moveList[1]);
-    printString(font, rowAddress, 69, 46);
+    printString(font, rowAddress, 69, 45);
     rowAddress = FX::readIndexedUInt24(MoveData::moveNames, moveList[2]);
-    printString(font, rowAddress, 6, 55);
+    printString(font, rowAddress, 6, 53);
     rowAddress = FX::readIndexedUInt24(MoveData::moveNames, moveList[3]);
-    printString(font, rowAddress, 69, 55);
+    printString(font, rowAddress, 69, 53);
     printMoveInfo(moveList[index], 38, 4);
 }
 
