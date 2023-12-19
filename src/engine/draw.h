@@ -1,6 +1,5 @@
 #pragma once
 #include "../creature/Creature.hpp"
-#include "../external/FlashStringHelper.h"
 #include "../lib/Move.hpp"
 #include "../external/Font4x6.h"
 #include "../Globals.hpp"

@@ -1,5 +1,4 @@
 #pragma once
-#include "../../Globals.hpp"
 #include "../../action/Action.hpp"
 #include "../../creature/Creature.hpp"
 #include "../../opponent/Opponent.hpp"

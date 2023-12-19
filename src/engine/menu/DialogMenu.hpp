@@ -1,5 +1,4 @@
 #pragma once
-#include "../../Globals.hpp"
 #include "../../lib/MenuData.hpp"
 #include "../world/Event.hpp"
 #include <ArduboyFX.h>
@@ -13,11 +12,9 @@ struct PopUpDialog {
 
 class DialogMenu {
   public:
-    Arduboy2 *arduboy;
     PopUpDialog popDialogStack[6];
     int8_t dialogPointer = -1;
 
-    void init(Arduboy2 *arduboy);
     bool peek();
     void drawPopMenu();
     void pushMenu(PopUpDialog menuInfo);

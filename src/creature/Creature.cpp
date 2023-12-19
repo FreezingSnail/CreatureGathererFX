@@ -3,7 +3,6 @@
 #include <avr/pgmspace.h>
 
 #include "../data/Creatures.hpp"
-#include "../external/FlashStringHelper.h"
 #include "../fxdata/fxdata.h"
 #include "../lib/Move.hpp"
 #include "../opponent/OpponentSeed.hpp"

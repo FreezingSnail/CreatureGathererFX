@@ -1,10 +1,12 @@
 #pragma once
 #include "DialogMenu.hpp"
+#include "../../external/ArduboyG.h"
 #include "../../fxdata/fxdata.h"
 #include "../../lib/Type.hpp"
 #include "../draw.h"
 #include "../world/Event.hpp"
 #include <ArduboyFX.h>
+
 #define dbf __attribute__((optimize("-O0")))
 
 void drawRect(Arduboy2 *ardu, PopUpDialog *popMenu) {
@@ -12,9 +14,8 @@ void drawRect(Arduboy2 *ardu, PopUpDialog *popMenu) {
     // ardu->drawRect(popMenu->x + 1, popMenu->y + 1, popMenu->width - 2, popMenu->height - 2, BLACK);
 }
 
-void DialogMenu::init(Arduboy2 *Arduboy2) { this->arduboy = arduboy; }
-
 void DialogMenu::drawPopMenu() {
+    return;
     PopUpDialog curMenu = popDialogStack[0];
     FX::drawBitmap(0, 43, battleMenu, 0, dbmNormal);
 
