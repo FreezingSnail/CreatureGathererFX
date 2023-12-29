@@ -3,6 +3,7 @@ build:
 
 gen:
 	./gen.sh
+	python3 convert-sprite.py src/fxdata/images/ -s 4 -o src/fxdata/
 	python3 Arduboy-Python-Utilities/fxdata-build.py src/fxdata/fxdata.txt
 
 sim:

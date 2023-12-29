@@ -2,7 +2,7 @@
 #include "../creature/Creature.hpp"
 #include "../lib/Move.hpp"
 #include "../external/Font4x6.h"
-#include "../Globals.hpp"
+#include "../common.hpp"
 
 #include <ArduboyFX.h>
 static void printType(Type t, uint8_t x, uint8_t y) {
@@ -35,7 +35,7 @@ static void printType(Type t, uint8_t x, uint8_t y) {
 }
 
 static void setTextColorBlack() {
-    FX::setFontMode(dcmReverse);
+    FX::setFontMode(dcfWhiteBlack);
     font.setTextColor(BLACK);
 }
 
@@ -69,12 +69,7 @@ static void printMoveInfo(uint8_t index, uint8_t x, uint8_t y) {
     font.print(m.power);
 }
 
-static void printBattleMenu() {
-    printString(font, MenuFXData::move, 6, 45);
-    printString(font, MenuFXData::gather, 64, 45);
-    printString(font, MenuFXData::change, 6, 53);
-    printString(font, MenuFXData::escape, 64, 53);
-}
+static void printBattleMenu(int8_t index) { SpritesU::drawPlusMaskFX(0, 41, FIGHTMENU_IMG, FRAME(index)); }
 
 static void printCursor(int8_t index) {
     switch (index) {
@@ -92,7 +87,7 @@ static void printCursor(int8_t index) {
         break;
     }
     FX::setFont(arduboyFont, dbmReverse);
-    FX::drawChar('*');
+    // FX::drawChar('*');
     FX::setFont(font4x6, dbmNormal);
 }
 

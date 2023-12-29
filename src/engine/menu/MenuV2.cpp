@@ -2,7 +2,7 @@
 #include "../battle/Battle.hpp"
 #include "../draw.h"
 #include "../../lib/Text.hpp"
-#include "../../Globals.hpp"
+#include "../../common.hpp"
 
 #define dbf __attribute__((optimize("-O0"))
 #define CURRENT_MENU this->stack[this->menuPointer]
@@ -143,11 +143,11 @@ void MenuV2::run(BattleEngine &engine) {
 
 void MenuV2::printMenu(BattleEngine &engine) {
     // Arduboy2::fillRect(0, 43, 128, 32, WHITE);
-    FX::drawBitmap(0, 43, battleMenu, 0, dbmNormal);
+    // FX::drawBitmap(0, 43, battleMenu, 0, dbmNormal);
     setTextColorBlack();
     switch (CURRENT_MENU) {
     case BATTLE_OPTIONS:
-        printBattleMenu();
+        printBattleMenu(cursorIndex);
         break;
 
     case BATTLE_MOVE_SELECT:
