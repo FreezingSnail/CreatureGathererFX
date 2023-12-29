@@ -4,7 +4,7 @@
 #include "../draw.h"
 #include "../menu/MenuV2.hpp"
 #include <ArduboyFX.h>
-#include "../../Globals.hpp"
+#include "../../common.hpp"
 
 void Arena::arenaLoop(MenuV2 &menu2, Player &player, BattleEngine &engine) {
     if (this->moveIndex == 12) {

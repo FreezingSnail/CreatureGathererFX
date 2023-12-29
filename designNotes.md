@@ -44,3 +44,7 @@ Instead of attacking creatures to weaken and capture them, the main mechanic wil
 - area with encounter rate determined by item in gathering lure box in center of area
 maybe gather in combat for items to use at the collection box?
 unsure exactly how want to have player add creatures into ownership
+
+
+## events
+### data format -> linked list type event data, load one, when pop see if another in chain to load

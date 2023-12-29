@@ -42,9 +42,10 @@ void setup() {
     FX::setCursorRange(0, 32767);
 
     world.init(&arduboy, &state, &engine, &menu2);
-    state = GameState_t::ARENA;
+    state = GameState_t::BATTLE;
     engine.init(&state, &menu2);
-    // player.basic();
+    player.basic();
+    engine.startArena(player, 0);
     // engine.startArena(arduboy, player, 6);
 }
 
