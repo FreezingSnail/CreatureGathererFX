@@ -69,7 +69,7 @@ static void printMoveInfo(uint8_t index, uint8_t x, uint8_t y) {
     font.print(m.power);
 }
 
-static void printBattleMenu(int8_t index) { SpritesU::drawPlusMaskFX(0, 41, FIGHTMENU_IMG, FRAME(index)); }
+static void printBattleMenu(int8_t index) { FX::drawBitmap(0, 41, fightMenu, index, dbmNormal); }
 
 static void printCursor(int8_t index) {
     switch (index) {
@@ -105,6 +105,7 @@ static void printMoveMenu(int8_t index, uint8_t *moveList) {
 }
 
 static void printCreatureMenu(uint8_t c1, uint8_t c2, Creature *cpointer) {
+    font.setTextColor(BLACK);
     cpointer->printCreature();
     uint24_t addr = FX::readIndexedUInt24(CreatureData::creatureNames, c1);
     printString(font, addr, 6, 45);

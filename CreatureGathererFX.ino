@@ -1,6 +1,7 @@
-#define ABG_IMPLEMENTATION
 #define SPRITESU_IMPLEMENTATION
+#define SPRITESU_RECT
 #include "src/external/SpritesU.hpp"
+#include "src/common.hpp"
 
 #include "src/engine/arena/Arena.hpp"
 #include "src/engine/battle/Battle.hpp"
@@ -11,15 +12,8 @@
 #include "src/fxdata/fxdata.h"
 #include "src/player/Player.hpp"
 
-#define ABG_TIMER1
-#define ABG_SYNC_PARK_ROW
-
-#include "src/common.hpp"
 decltype(arduboy) arduboy;
 
-#define SPRITESU_OVERWRITE
-#define SPRITESU_PLUSMASK
-#define SPRITESU_RECT
 uint8_t debug;
 
 // ARDUBOY_NO_USB
@@ -33,9 +27,9 @@ MenuV2 menu2 = MenuV2();
 Font4x6 font = Font4x6();
 
 void setup() {
-    arduboy.boot();
-    arduboy.startGray();
+    arduboy.begin();
     arduboy.initRandomSeed();
+    arduboy.setFrameRate(45);
 
     FX::begin(FX_DATA_PAGE);
     FX::setFont(font4x6, dcmNormal);   // select default font
@@ -51,22 +45,19 @@ void setup() {
 
 void loop() {
 
-    FX::enableOLED();
-    arduboy.waitForNextPlane();
-    FX::disableOLED();
+    if (!arduboy.nextFrame()) {
+        return;
+    }
     arduboy.pollButtons();
-    debug = arduboy.currentPlane();
-    // if (a.needsUpdate())
 
     if (menu2.dialogMenu.peek()) {
         menu2.run(engine);
         menu2.dialogMenu.drawPopMenu();
-        // FX::display();
+        FX::display();
         return;
-    } else {
-        // FX::display(CLEAR_BUFFER);
     }
 
+    FX::display(CLEAR_BUFFER);
     switch (state) {
     case GameState_t::BATTLE:
         engine.encounter(player);

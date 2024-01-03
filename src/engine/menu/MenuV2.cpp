@@ -143,7 +143,7 @@ void MenuV2::run(BattleEngine &engine) {
 
 void MenuV2::printMenu(BattleEngine &engine) {
     // Arduboy2::fillRect(0, 43, 128, 32, WHITE);
-    // FX::drawBitmap(0, 43, battleMenu, 0, dbmNormal);
+    FX::drawBitmap(0, 43, battleMenu, 0, dbmNormal);
     setTextColorBlack();
     switch (CURRENT_MENU) {
     case BATTLE_OPTIONS:

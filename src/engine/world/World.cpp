@@ -12,7 +12,7 @@
 constexpr uint8_t tileswide = (128 / TILE_SIZE) + 4;
 constexpr uint8_t tilestall = (64 / TILE_SIZE) + 4;
 
-bool __attribute__((optimize("-O0"))) warpTile(uint8_t x, uint8_t y) {
+bool warpTile(uint8_t x, uint8_t y) {
     uint8_t tile = gameMap[y][x];
     if (tile == 26 || tile == 28)
         return true;
@@ -20,7 +20,8 @@ bool __attribute__((optimize("-O0"))) warpTile(uint8_t x, uint8_t y) {
     return false;
 }
 
-WorldEngine::WorldEngine() {}
+WorldEngine::WorldEngine() {
+}
 void WorldEngine::init(Arduboy2Base *arduboy, GameState_t *state, BattleEngine *battleEngine, MenuV2 *menu2) {
     this->arduboy = arduboy;
     this->encounterTable = Encounter(arduboy);
@@ -31,10 +32,13 @@ void WorldEngine::init(Arduboy2Base *arduboy, GameState_t *state, BattleEngine *
     this->mapy = 0;
     this->curx = 4;
     this->cury = 2;
-    this->loadMap(0, 1);
+    // this->loadMap(0, 1);
+    for (uint8_t i = 0; i < 9; i++) {
+        chunk[i].loadChunck(24, 24, i);
+    }
 }
 
-void __attribute__((optimize("-O0"))) WorldEngine::loadMap(uint8_t mapIndex, uint8_t submapIndex) {
+void WorldEngine::loadMap(uint8_t mapIndex, uint8_t submapIndex) {
     this->mapIndex = mapIndex;
     // warp zones
     uint24_t warpsAddress = FX::readIndexedUInt24(MapData::warps, mapIndex);
@@ -73,6 +77,19 @@ void __attribute__((optimize("-O0"))) WorldEngine::loadMap(uint8_t mapIndex, uin
 }
 
 void WorldEngine::drawMap() {
+    for (uint8_t y = 0; y < tilestall; y++) {
+        for (uint8_t x = 0; x < tileswide; x++) {
+            const uint8_t tilex = x - this->mapx / TILE_SIZE;
+            const uint8_t tiley = y - this->mapy / TILE_SIZE;
+            if (tilex >= 0 && tiley >= 0 && tilex < this->width && tiley < this->height) {
+                FX::drawBitmap(x * TILE_SIZE + this->mapx % TILE_SIZE - 9, y * TILE_SIZE + this->mapy % TILE_SIZE - 8, tilesheet,
+                               gameMap[tiley][tilex], dbmNormal);
+            }
+        }
+    }
+}
+
+void WorldEngine::drawChunk() {
     for (uint8_t y = 0; y < tilestall; y++) {
         for (uint8_t x = 0; x < tileswide; x++) {
             const uint8_t tilex = x - this->mapx / TILE_SIZE;
@@ -150,7 +167,7 @@ void WorldEngine::drawPlayer() {
     FX::drawBitmap(PLAYER_X_OFFSET, PLAYER_Y_OFFSET, characterSheet, frame, dbmNormal);
 }
 
-void __attribute__((optimize("-O0"))) WorldEngine::runMap(Player *player) {
+void WorldEngine::runMap(Player *player) {
     this->drawMap();
     this->drawPlayer();
     this->drawEvents();
@@ -207,9 +224,11 @@ void WorldEngine::moveChar(Player *player) {
     }
 }
 
-uint8_t WorldEngine::getTile() { return (TileType)0; }
+uint8_t WorldEngine::getTile() {
+    return (TileType)0;
+}
 
-void __attribute__((optimize("-O0"))) WorldEngine::encounter(Arduboy2Base *arduboy, Player *player) {
+void WorldEngine::encounter(Arduboy2Base *arduboy, Player *player) {
     uint8_t t = gameMap[this->cury][this->curx];
     if (t == 0) {
         uint8_t chance = random(1, 101);
@@ -222,7 +241,7 @@ void __attribute__((optimize("-O0"))) WorldEngine::encounter(Arduboy2Base *ardub
     }
 }
 
-bool __attribute__((optimize("-O0"))) WorldEngine::moveable() {
+bool WorldEngine::moveable() {
     uint8_t tilex = this->curx;
     uint8_t tiley = this->cury;
     switch (this->playerDirection) {
@@ -260,7 +279,7 @@ bool __attribute__((optimize("-O0"))) WorldEngine::moveable() {
     }
 }
 
-void __attribute__((optimize("-O0"))) WorldEngine::interact() {
+void WorldEngine::interact() {
     if (this->arduboy->justPressed(B_BUTTON)) {
         uint8_t tilex = this->curx;
         uint8_t tiley = this->cury;
@@ -298,7 +317,7 @@ void WorldEngine::warp() {
     }
 }
 
-void __attribute__((optimize("-O0"))) WorldEngine::setPos(uint8_t x, uint8_t y) {
+void WorldEngine::setPos(uint8_t x, uint8_t y) {
     this->curx = x;
     this->cury = y;
     int8_t xdif = 4 - x;

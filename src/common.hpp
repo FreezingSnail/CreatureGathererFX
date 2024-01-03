@@ -1,19 +1,13 @@
 #pragma once
 
-#define ABG_TIMER1
-#define ABG_SYNC_PARK_ROW
-
-#include "external/ArduboyG.h"
-extern ArduboyGBase_Config<ABG_Mode::L3> arduboy;
-
-#define SPRITESU_RECT
-#define SPRITESU_FX
 #define SPRITESU_RECT
 #include "external/SpritesU.hpp"
+
+#include <Arduboy2.h>
+extern Arduboy2Base arduboy;
 
 #include "external/Font4x6.h"
 extern Font4x6 font;
 #include "lib/Text.hpp"
 
-#define FRAMEGRAY(f) ((f * 3) + a.currentPlane())
-#define FRAME(f) ((f * 3))
+#define DGF __attribute__((optimize("-O0")))
