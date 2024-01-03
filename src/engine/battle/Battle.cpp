@@ -3,7 +3,6 @@
 #include "../../creature/Creature.hpp"
 #include "../../engine/menu/MenuV2.hpp"
 #include "../../external/ArduboyG.h"
-#include "../../external/SpritesU.hpp"
 #include "../../fxdata/fxdata.h"
 #include "../../opponent/Opponent.hpp"
 #include "../../player/Player.hpp"
@@ -413,16 +412,15 @@ void BattleEngine::drawScene() {
 
 void BattleEngine::drawOpponent() {
     // would be nice to flip this sprite
-    Sprites::drawSelfMasked(0, 0, CREATURESPRITES_IMG, this->opponentCur->id);
-    // FX::drawBitmap(0, 0, creatureSprites, opponentCur->id, dbmWhite);
+    // Sprites::drawSelfMasked(0, 0, creatureSprites, this->opponentCur->id);
+    FX::drawBitmap(0, 0, creatureSprites, opponentCur->id, dbmWhite);
     // this->drawOpponentHP();
 }
 
 void BattleEngine::drawPlayer() {
     // Sprites::drawSelfMasked(96, 0, creatureSprites, this->playerCur->id);
-    // FX::drawBitmap(96, 0, creatureSprites, this->playerCur->id, dbmWhite);
-    SpritesU::drawOverwriteFX(96, 0, greyTest, arduboy.currentPlane());
-    debug = arduboy.currentPlane();
+    FX::drawBitmap(96, 0, creatureSprites, this->playerCur->id, dbmWhite);
+    // SpritesU::drawOverwriteFX(96, 0, greyTest, arduboy.currentPlane());
 
     // this->drawPlayerHP();
 }

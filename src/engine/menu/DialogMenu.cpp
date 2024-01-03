@@ -6,16 +6,17 @@
 #include "../draw.h"
 #include "../world/Event.hpp"
 #include <ArduboyFX.h>
+#include "../../lib/Text.hpp"
 
 #define dbf __attribute__((optimize("-O0")))
 
-void drawRect(Arduboy2 *ardu, PopUpDialog *popMenu) {
+void drawRect(PopUpDialog *popMenu) {
     // ardu->fillRect(popMenu->x, popMenu->y, popMenu->width, popMenu->height, WHITE);
     // ardu->drawRect(popMenu->x + 1, popMenu->y + 1, popMenu->width - 2, popMenu->height - 2, BLACK);
 }
 
 void DialogMenu::drawPopMenu() {
-    return;
+
     PopUpDialog curMenu = popDialogStack[0];
     FX::drawBitmap(0, 43, battleMenu, 0, dbmNormal);
 
@@ -23,94 +24,93 @@ void DialogMenu::drawPopMenu() {
     setTextColorBlack();
     switch (curMenu.type) {
     case TEXT:
-        FX::setCursor(curMenu.x + 3, curMenu.y + 13);
-        FX::drawString(curMenu.textAddress);
+        // font.setCursor(curMenu.x + 3, curMenu.y + 13);
+        printString(font, curMenu.textAddress, curMenu.x + 3, curMenu.y + 13);
 
         break;
     case DAMAGE:
     case ENEMY_DAMAGE:
-        FX::setCursor(curMenu.x + 3, curMenu.y + 3);
-        FX::drawNumber(curMenu.damage);
-        FX::setCursor(curMenu.x + 20, curMenu.y + 3);
-        FX::drawString(MenuFXData::damageText);
+        font.setCursor(curMenu.x + 3, curMenu.y + 3);
+        font.println(curMenu.damage);
+        printString(font, MenuFXData::damageText, curMenu.x + 20, curMenu.y + 3);
         break;
 
     case NAME:
-        FX::setCursor(curMenu.x + 3, curMenu.y + 3);
+        // font.setCursor(curMenu.x + 3, curMenu.y + 3);
         addr = FX::readIndexedUInt24(CreatureData::creatureNames, curMenu.textAddress);
-        FX::drawString(addr);
-        FX::setCursor(curMenu.x + 3, curMenu.y + 13);
-        FX::drawString(MenuFXData::attackText);
+        printString(font, addr, curMenu.x + 3, curMenu.y + 3);
+        // font.setCursor(curMenu.x + 3, curMenu.y + 13);
+        printString(font, MenuFXData::attackText, curMenu.x + 3, curMenu.y + 13);
         break;
     case ENEMY_NAME:
-        FX::setCursor(curMenu.x + 3, curMenu.y + 3);
+        // font.setCursor(curMenu.x + 3, curMenu.y + 3);
         addr = FX::readIndexedUInt24(CreatureData::creatureNames, curMenu.textAddress);
-        FX::drawString(addr);
-        FX::setCursor(curMenu.x + 3, curMenu.y + 13);
-        FX::drawString(MenuFXData::enemyAttackText);
+        printString(font, addr, curMenu.x + 3, curMenu.y + 3);
+        // font.setCursor(curMenu.x + 3, curMenu.y + 13);
+        printString(font, MenuFXData::enemyAttackText, curMenu.x + 3, curMenu.y + 13);
         break;
     case FAINT:
-        FX::setCursor(curMenu.x + 3, curMenu.y + 3);
+        // font.setCursor(curMenu.x + 3, curMenu.y + 3);
         addr = FX::readIndexedUInt24(CreatureData::creatureNames, curMenu.textAddress);
-        FX::drawString(addr);
-        FX::setCursor(curMenu.x + 3, curMenu.y + 13);
-        FX::drawString(MenuFXData::Fainted);
+        printString(font, addr, curMenu.x + 3, curMenu.y + 3);
+        // font.setCursor(curMenu.x + 3, curMenu.y + 13);
+        printString(font, MenuFXData::Fainted, curMenu.x + 3, curMenu.y + 13);
         break;
     case SWITCH:
-        FX::setCursor(curMenu.x + 3, curMenu.y + 3);
+        // font.setCursor(curMenu.x + 3, curMenu.y + 3);
         addr = FX::readIndexedUInt24(CreatureData::creatureNames, curMenu.textAddress);
-        FX::drawString(addr);
-        FX::setCursor(curMenu.x + 3, curMenu.y + 13);
-        FX::drawString(MenuFXData::SwitchIn);
+        printString(font, addr, curMenu.x + 3, curMenu.y + 3);
+        // font.setCursor(curMenu.x + 3, curMenu.y + 13);
+        printString(font, MenuFXData::SwitchIn, curMenu.x + 3, curMenu.y + 13);
         break;
     case WIN:
-        FX::setCursor(curMenu.x + 3, curMenu.y + 3);
-        FX::drawString(MenuFXData::win);
+        font.setCursor(curMenu.x + 3, curMenu.y + 3);
+        printString(font, MenuFXData::win, curMenu.x + 3, curMenu.y + 13);
         break;
     case LOSS:
-        FX::setCursor(curMenu.x + 3, curMenu.y + 3);
+        // font.setCursor(curMenu.x + 3, curMenu.y + 3);
         addr = FX::readIndexedUInt24(CreatureData::creatureNames, curMenu.textAddress);
-        FX::drawString(addr);
-        FX::setCursor(curMenu.x + 3, curMenu.y + 13);
-        FX::drawString(MenuFXData::lose);
+        printString(font, addr, curMenu.x + 3, curMenu.y + 3);
+        // font.setCursor(curMenu.x + 3, curMenu.y + 13);
+        printString(font, MenuFXData::lose, curMenu.x + 3, curMenu.y + 13);
         break;
     case ESCAPE_ENCOUNTER:
-        FX::setCursor(curMenu.x + 3, curMenu.y + 3);
-        FX::drawString(MenuFXData::escaped);
+        // font.setCursor(curMenu.x + 3, curMenu.y + 3);
+        printString(font, MenuFXData::escaped, curMenu.x + 3, curMenu.y + 3);
         break;
     case GATHERING:
-        FX::setCursor(curMenu.x + 3, curMenu.y + 3);
-        FX::drawString("Gathering is not");
-        FX::setCursor(curMenu.x + 3, curMenu.y + 13);
-        FX::drawString("implemented yet");
+        // font.setCursor(curMenu.x + 3, curMenu.y + 3);
+        // printString(font, "Gathering is not", curMenu.x + 3, curMenu.y + 3);
+        // font.setCursor(curMenu.x + 3, curMenu.y + 13);
+        // printString(font, "implemented yet", curMenu.x + 3, curMenu.y + 13);
         break;
     case TEAM_CHANGE:
-        FX::setCursor(curMenu.x + 3, curMenu.y + 3);
-        FX::drawString(MenuFXData::changedIn);
+        // font.setCursor(curMenu.x + 3, curMenu.y + 3);
+        printString(font, MenuFXData::changedIn, curMenu.x + 3, curMenu.y + 3);
         break;
 
     case EFFECTIVENESS:
         Modifier mod = Modifier(curMenu.textAddress);
-        FX::setCursor(curMenu.x + 3, curMenu.y + 3);
+        font.setCursor(curMenu.x + 3, curMenu.y + 3);
 
         switch (mod) {
         case Modifier::Quarter:
-            FX::drawString(MenuFXData::quarter);
+            printString(font, MenuFXData::quarter, curMenu.x + 3, curMenu.y + 3);
             break;
         case Modifier::Half:
-            FX::drawString(MenuFXData::half);
-            FX::setCursor(curMenu.x + 3, curMenu.y + 13);
-            FX::drawString(MenuFXData::damage);
+            printString(font, MenuFXData::half, curMenu.x + 3, curMenu.y + 3);
+            //   font.setCursor(curMenu.x + 3, curMenu.y + 13);
+            printString(font, MenuFXData::damage, curMenu.x + 3, curMenu.y + 13);
             break;
         case Modifier::Double:
-            FX::drawString(MenuFXData::doubled);
-            FX::setCursor(curMenu.x + 3, curMenu.y + 13);
-            FX::drawString(MenuFXData::damage);
+            printString(font, MenuFXData::doubled, curMenu.x + 3, curMenu.y + 3);
+            //  font.setCursor(curMenu.x + 3, curMenu.y + 13);
+            printString(font, MenuFXData::damage, curMenu.x + 3, curMenu.y + 13);
             break;
         case Modifier::Quadruple:
-            FX::drawString(MenuFXData::quad);
-            FX::setCursor(curMenu.x + 3, curMenu.y + 13);
-            FX::drawString(MenuFXData::damage);
+            printString(font, MenuFXData::quad, curMenu.x + 3, curMenu.y + 3);
+            //  font.setCursor(curMenu.x + 3, curMenu.y + 13);
+            printString(font, MenuFXData::damage, curMenu.x + 3, curMenu.y + 13);
             break;
         }
         break;

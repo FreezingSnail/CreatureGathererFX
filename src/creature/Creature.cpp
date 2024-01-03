@@ -6,6 +6,8 @@
 #include "../fxdata/fxdata.h"
 #include "../lib/Move.hpp"
 #include "../opponent/OpponentSeed.hpp"
+#include "../common.hpp"
+#include "../lib/Text.hpp"
 
 #define dbf __attribute__((optimize("-O0")))
 
@@ -117,34 +119,36 @@ uint8_t Creature::seedToStat(uint8_t seed) {
     // return (2*this->level)*(seed/3);
 }
 
+// TODO deal with drawing numbers
 void Creature::printCreature() {
     // Arduboy2::fillRect(0, 0, 128, 66, WHITE);
-    // Arduboy2::drawRect(2, 1, 124, 43, BLACK);
-    FX::setCursor(4, 3);
-    FX::drawString(MenuFXData::hpText);
+    //  Arduboy2::drawRect(2, 1, 124, 43, BLACK);
+    SpritesU::fillRect(0, 0, 128, 60, WHITE);
+    FX::setCursor(34, 3);
+    printString(font, MenuFXData::hpText, 4, 3);
     FX::drawNumber(this->statlist.hp);
-    FX::setCursor(60, 3);
-    FX::drawString(MenuFXData::atkText);
+    FX::setCursor(90, 3);
+    printString(font, MenuFXData::atkText, 60, 3);
     FX::drawNumber(this->statlist.attack);
-    FX::setCursor(4, 11);
-    FX::drawString(MenuFXData::defText);
+    FX::setCursor(34, 11);
+    printString(font, MenuFXData::defText, 4, 11);
     FX::drawNumber(this->statlist.defense);
-    FX::setCursor(60, 11);
-    FX::drawString(MenuFXData::spdText);
+    FX::setCursor(90, 11);
+    printString(font, MenuFXData::spdText, 60, 11);
     FX::drawNumber(this->statlist.speed);
-    FX::setCursor(4, 19);
-    FX::drawString(MenuFXData::satkText);
+    FX::setCursor(34, 19);
+    printString(font, MenuFXData::satkText, 4, 19);
     FX::drawNumber(this->statlist.spcAtk);
-    FX::setCursor(60, 19);
-    FX::drawString(MenuFXData::sdefText);
+    FX::setCursor(90, 19);
+    printString(font, MenuFXData::sdefText, 60, 19);
     FX::drawNumber(this->statlist.spcDef);
     for (uint8_t i = 0; i < 4; i++) {
         if (this->moves[i] == 32) {
             continue;
         }
         uint8_t offset = i % 2;
-        FX::setCursor(4 + (60 * offset), 27 + (8 * (i / 2)));
+        // FX::setCursor(4 + (60 * offset), 27 + (8 * (i / 2)));
         uint24_t rowAddress = FX::readIndexedUInt24(MoveData::moveNames, this->moves[i]);
-        FX::drawString(rowAddress);
+        printString(font, rowAddress, 4 + (60 * offset), 27 + (8 * (i / 2)));
     }
 }

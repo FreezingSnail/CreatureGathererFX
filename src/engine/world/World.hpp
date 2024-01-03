@@ -8,6 +8,7 @@
 #include "Encounter.hpp"
 #include "Event.hpp"
 #include "Map.hpp"
+#include "Chunk.hpp"
 #include <ArduboyFX.h>
 
 #define EVENTCOUNT 6
@@ -38,6 +39,7 @@ class WorldEngine {
     uint8_t warps[6][4];
     uint24_t debugAdder;
     Event events[EVENTCOUNT];
+    Chunk chunk[9];
 
   public:
     WorldEngine();
@@ -45,6 +47,7 @@ class WorldEngine {
     void input();
     void runMap(Player *player);
     void drawMap();
+    void drawChunk();
     void drawEvents();
     void drawPlayer();
     void moveChar(Player *player);
