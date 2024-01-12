@@ -5,6 +5,8 @@ image_t tilesheet = "images/tilesheet16_16x16.png"
 image_t battleMenu = "images/battleMenu_128x20.png"
 image_t moveInfo = "images/moveInfo_60x30.png"
 image_t fightMenu = "images/fightMenu_128x24.png"
+image_t worldTiles = "images/worldTiles_16x16.png"
+
 
 image_t arduboyFont = "images/arduboyFont_6x8.png"
 image_t maskedFont  = "images/maskedFont_16x24.png"

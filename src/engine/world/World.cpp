@@ -10,7 +10,7 @@
 
 #define TILE_SIZE 16
 constexpr uint8_t tileswide = (128 / TILE_SIZE) + 4;
-constexpr uint8_t tilestall = (64 / TILE_SIZE) + 4;
+constexpr uint8_t tilestall = (64 / TILE_SIZE) + 2;
 
 bool warpTile(uint8_t x, uint8_t y) {
     uint8_t tile = gameMap[y][x];
@@ -33,74 +33,9 @@ void WorldEngine::init(Arduboy2Base *arduboy, GameState_t *state, BattleEngine *
     this->curx = 4;
     this->cury = 2;
     // this->loadMap(0, 1);
-    for (uint8_t i = 0; i < 9; i++) {
-        chunk[i].loadChunck(24, 24, i);
-    }
+    chunkmap.loadChunkMap();
 }
 
-void WorldEngine::loadMap(uint8_t mapIndex, uint8_t submapIndex) {
-    this->mapIndex = mapIndex;
-    // warp zones
-    uint24_t warpsAddress = FX::readIndexedUInt24(MapData::warps, mapIndex);
-    warpsAddress = FX::readIndexedUInt24(warpsAddress, submapIndex);
-    FX::readDataObject(warpsAddress, this->warps);
-
-    // map data
-    // submap count
-    uint24_t address = MapData::maps + ((sizeof(uint24_t) * 5) * mapIndex);
-    FX::readDataObject(FX::readIndexedUInt24(address, 0), this->submapCount);
-
-    // map dims
-    uint24_t widthAddress = FX::readIndexedUInt24(address, 4);
-    uint24_t heightsAddress = FX::readIndexedUInt24(address, 5);
-    FX::readDataObject(widthAddress + sizeof(uint8_t) * submapIndex, this->width);
-    FX::readDataObject(heightsAddress + sizeof(uint8_t) * submapIndex, this->height);
-
-    // map address
-    uint24_t mapAddress;
-    if (submapIndex == 0) {
-        mapAddress = FX::readIndexedUInt24(address, 1);
-
-    } else {
-        mapAddress = FX::readIndexedUInt24(address, 2);
-        mapAddress = FX::readIndexedUInt24(mapAddress, submapIndex - 1);
-    }
-
-    for (uint8_t i = 0; i < this->height; i++) {
-        uint24_t offset = (sizeof(uint8_t) * this->width) * i;
-        FX::readDataBytes(mapAddress + offset, gameMap[i], sizeof(uint8_t) * this->width);
-    }
-
-    for (uint8_t i = 0; i < 6; i++) {
-        this->events[i].loadEvent(mapIndex, submapIndex, i);
-    }
-}
-
-void WorldEngine::drawMap() {
-    for (uint8_t y = 0; y < tilestall; y++) {
-        for (uint8_t x = 0; x < tileswide; x++) {
-            const uint8_t tilex = x - this->mapx / TILE_SIZE;
-            const uint8_t tiley = y - this->mapy / TILE_SIZE;
-            if (tilex >= 0 && tiley >= 0 && tilex < this->width && tiley < this->height) {
-                FX::drawBitmap(x * TILE_SIZE + this->mapx % TILE_SIZE - 9, y * TILE_SIZE + this->mapy % TILE_SIZE - 8, tilesheet,
-                               gameMap[tiley][tilex], dbmNormal);
-            }
-        }
-    }
-}
-
-void WorldEngine::drawChunk() {
-    for (uint8_t y = 0; y < tilestall; y++) {
-        for (uint8_t x = 0; x < tileswide; x++) {
-            const uint8_t tilex = x - this->mapx / TILE_SIZE;
-            const uint8_t tiley = y - this->mapy / TILE_SIZE;
-            if (tilex >= 0 && tiley >= 0 && tilex < this->width && tiley < this->height) {
-                FX::drawBitmap(x * TILE_SIZE + this->mapx % TILE_SIZE - 9, y * TILE_SIZE + this->mapy % TILE_SIZE - 8, tilesheet,
-                               gameMap[tiley][tilex], dbmNormal);
-            }
-        }
-    }
-}
 constexpr int8_t EVENT_X_OFFSET = WIDTH / 2;
 constexpr int8_t EVENT_Y_OFFSET = HEIGHT / 2;
 
@@ -168,7 +103,8 @@ void WorldEngine::drawPlayer() {
 }
 
 void WorldEngine::runMap(Player *player) {
-    this->drawMap();
+    // this->drawMap();
+    chunkmap.drawChunkMap(this->mapx, this->mapy);
     this->drawPlayer();
     this->drawEvents();
 
@@ -220,7 +156,7 @@ void WorldEngine::moveChar(Player *player) {
         if (warpTile(this->curx, this->cury)) {
             this->warp();
         }
-        this->encounter(this->arduboy, player);
+        // this->encounter(this->arduboy, player);
     }
 }
 
@@ -242,6 +178,7 @@ void WorldEngine::encounter(Arduboy2Base *arduboy, Player *player) {
 }
 
 bool WorldEngine::moveable() {
+    return true;
     uint8_t tilex = this->curx;
     uint8_t tiley = this->cury;
     switch (this->playerDirection) {
@@ -310,7 +247,7 @@ void WorldEngine::interact() {
 void WorldEngine::warp() {
     for (uint8_t i = 0; i < 6; i++) {
         if (this->curx == this->warps[i][1] && this->cury == this->warps[i][0]) {
-            this->loadMap(this->warps[i][2], this->warps[i][3]);
+            // this->loadMap(this->warps[i][2], this->warps[i][3]);
             this->setPos(warps[i][1], warps[i][0]);
             return;
         }
@@ -325,3 +262,57 @@ void WorldEngine::setPos(uint8_t x, uint8_t y) {
     this->mapx = xdif * 16;
     this->mapy = ydif * 16;
 }
+/*
+void WorldEngine::loadMap(uint8_t mapIndex, uint8_t submapIndex) {
+   this->mapIndex = mapIndex;
+   // warp zones
+   uint24_t warpsAddress = FX::readIndexedUInt24(MapData::warps, mapIndex);
+   warpsAddress = FX::readIndexedUInt24(warpsAddress, submapIndex);
+   FX::readDataObject(warpsAddress, this->warps);
+
+   // map data
+   // submap count
+   uint24_t address = MapData::maps + ((sizeof(uint24_t) * 5) * mapIndex);
+   FX::readDataObject(FX::readIndexedUInt24(address, 0), this->submapCount);
+
+   // map dims
+   uint24_t widthAddress = FX::readIndexedUInt24(address, 4);
+   uint24_t heightsAddress = FX::readIndexedUInt24(address, 5);
+   FX::readDataObject(widthAddress + sizeof(uint8_t) * submapIndex, this->width);
+   FX::readDataObject(heightsAddress + sizeof(uint8_t) * submapIndex, this->height);
+
+   // map address
+   uint24_t mapAddress;
+   if (submapIndex == 0) {
+       mapAddress = FX::readIndexedUInt24(address, 1);
+
+   } else {
+       mapAddress = FX::readIndexedUInt24(address, 2);
+       mapAddress = FX::readIndexedUInt24(mapAddress, submapIndex - 1);
+   }
+
+   for (uint8_t i = 0; i < this->height; i++) {
+       uint24_t offset = (sizeof(uint8_t) * this->width) * i;
+       FX::readDataBytes(mapAddress + offset, gameMap[i], sizeof(uint8_t) * this->width);
+   }
+
+   for (uint8_t i = 0; i < 6; i++) {
+       this->events[i].loadEvent(mapIndex, submapIndex, i);
+   }
+}
+
+void WorldEngine::drawMap() {
+   for (uint8_t y = 0; y < tilestall; y++) {
+       for (uint8_t x = 0; x < tileswide; x++) {
+           const uint8_t tilex = x - this->mapx / TILE_SIZE;
+           const uint8_t tiley = y - this->mapy / TILE_SIZE;
+           if (tilex >= 0 && tiley >= 0 && tilex < this->width && tiley < this->height) {
+               FX::drawBitmap(x * TILE_SIZE + this->mapx % TILE_SIZE - 9, y * TILE_SIZE + this->mapy % TILE_SIZE - 8, tilesheet,
+                              gameMap[tiley][tilex], dbmNormal);
+           }
+       }
+   }
+}
+
+
+*/
