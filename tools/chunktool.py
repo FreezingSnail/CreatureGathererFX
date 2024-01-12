@@ -55,7 +55,7 @@ def import_json(file_path):
 
 def layer_to_uint8_array(data: List, array_name: str):
 
-    hex_data = [f"{d}" for d in data]
+    hex_data = [f"{(d-1)}" for d in data]
 
     # Generate C array
     c_array = "{"

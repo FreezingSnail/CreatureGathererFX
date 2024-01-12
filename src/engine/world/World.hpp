@@ -8,13 +8,10 @@
 #include "Encounter.hpp"
 #include "Event.hpp"
 #include "Map.hpp"
-#include "Chunk.hpp"
+#include "ChunkMap.hpp"
 #include <ArduboyFX.h>
 
 #define EVENTCOUNT 6
-
-// Notes: character center on map at all times
-enum Direction { Up, Right, Down, Left };
 
 class WorldEngine {
   private:
@@ -39,7 +36,7 @@ class WorldEngine {
     uint8_t warps[6][4];
     uint24_t debugAdder;
     Event events[EVENTCOUNT];
-    Chunk chunk[9];
+    ChunkMap chunkmap;
 
   public:
     WorldEngine();
@@ -47,7 +44,6 @@ class WorldEngine {
     void input();
     void runMap(Player *player);
     void drawMap();
-    void drawChunk();
     void drawEvents();
     void drawPlayer();
     void moveChar(Player *player);
