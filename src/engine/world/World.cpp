@@ -34,6 +34,11 @@ void WorldEngine::init(Arduboy2Base *arduboy, GameState_t *state, BattleEngine *
     this->cury = 2;
     // this->loadMap(0, 1);
     chunkmap.loadChunkMap();
+    up = 2;
+    side = 3;
+    curChunk = 5;
+    chunkX = 0;
+    chunkY = 0;
 }
 
 constexpr int8_t EVENT_X_OFFSET = WIDTH / 2;
@@ -73,11 +78,13 @@ void WorldEngine::input() {
         this->playerDirection = Up;
         if (this->moveable()) {
             this->moving = true;
+            up -= 1;
         }
     } else if (this->arduboy->pressed(DOWN_BUTTON)) {
         this->playerDirection = Down;
         if (this->moveable()) {
             this->moving = true;
+            up += 1;
         }
     } else if (this->arduboy->pressed(LEFT_BUTTON)) {
         this->playerDirection = Left;
@@ -104,8 +111,6 @@ void WorldEngine::drawPlayer() {
 
 void WorldEngine::runMap(Player *player) {
     // this->drawMap();
-    chunkmap.drawChunkMap(this->mapx, this->mapy);
-    this->drawPlayer();
     this->drawEvents();
 
     if (this->moving && this->moveable()) {
@@ -117,6 +122,33 @@ void WorldEngine::runMap(Player *player) {
         if (this->arduboy->justPressed(A_BUTTON)) {
             // this->menu2->dialogMenu.popMenu();
         }
+    }
+
+    int8_t t = stepTicker;
+    switch (this->playerDirection) {
+    case Up:
+        break;
+    case Down:
+        t = stepTicker * -1;
+        break;
+    case Left:
+        break;
+    case Right:
+        break;
+    }
+    chunkmap.drawChunkMap(t, chunkX, chunkY);
+    this->drawPlayer();
+    if (up == 4 && !moving) {
+        up = 0;
+        chunkmap.shiftChunks(Up);
+    } else if (up == -1 && !moving) {
+        up = 3;
+        chunkmap.shiftChunks(Down);
+    }
+    if (chunkY > 2) {
+        chunkY = -1;
+    } else if (chunkY < -1) {
+        chunkY = 2;
     }
 }
 
@@ -141,9 +173,11 @@ void WorldEngine::moveChar(Player *player) {
         switch (this->playerDirection) {
         case Up:
             this->cury--;
+            chunkY += 1;
             break;
         case Down:
             this->cury++;
+            chunkY -= 1;
             break;
         case Left:
             this->curx--;

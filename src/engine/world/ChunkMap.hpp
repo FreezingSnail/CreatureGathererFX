@@ -5,7 +5,7 @@ enum Direction { Up, Right, Down, Left };
 class ChunkMap {
   public:
     uint8_t currentChunkIndex;
-    uint8_t chunkWidth, chunkHeight, m, n;
+    uint8_t chunkWidth, chunkHeight, m, n, chunkM, chunkN;
     Chunk *map[12];
     Chunk chunks[12];
     uint8_t debug[12];
@@ -14,5 +14,5 @@ class ChunkMap {
 
     void indexToChunkCord(uint8_t index, uint8_t *x, uint8_t *y);
 
-    void drawChunkMap(uint8_t curX, uint8_t curY);
+    void drawChunkMap(uint8_t ticker, uint8_t xTileOffset, uint8_t yTileOffset);
 };
