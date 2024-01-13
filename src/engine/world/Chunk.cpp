@@ -15,6 +15,8 @@ constexpr uint8_t CHUNK_SIZE = 4;
 void Chunk::loadChunck(uint8_t m, uint8_t n, uint8_t chunk_index) {
     // Calculate the number of chunks per row
     uint8_t chunks_per_row = m / CHUNK_SIZE;
+    uint8_t chunks_per_col = n / CHUNK_SIZE;
+    chunkIndex = chunk_index;
 
     // Calculate the starting index of the chunk
     uint8_t start_row = (chunk_index / chunks_per_row) * CHUNK_SIZE;
@@ -24,11 +26,19 @@ void Chunk::loadChunck(uint8_t m, uint8_t n, uint8_t chunk_index) {
     uint8_t index = 0;
     for (uint8_t i = 0; i < CHUNK_SIZE; i++) {
         for (uint8_t j = 0; j < CHUNK_SIZE; j++) {
-            uint8_t dataIndex = ((start_row + i) * m) + (start_col + j);
+            uint16_t dataIndex = ((start_row + i) * m) + (start_col + j);
 
-            tiles[index] = FX::readIndexedUInt8(testmap, dataIndex);
-            // debug[index] = dataIndex;
+            // the index is a 16 bit width address but only 8bit width is allowed
+            // need to convert 16 bit to 8 bit + offset
+            // i.e. 256 -> 1,0 257 -> 1,1
+            uint8_t offset = dataIndex >> 8;
+            uint8_t integer = dataIndex & 0xFF;
+            tiles[index] = FX::readIndexedUInt8(testmap + (offset * 256), integer);
             index++;
+
+            // this->offset[index] = offset;
+            // value[index] = integer;
+            debug[index] = testmap + (offset * 256) + integer;
         }
     }
 }

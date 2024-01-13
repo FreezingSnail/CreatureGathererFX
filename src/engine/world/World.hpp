@@ -22,6 +22,8 @@ class WorldEngine {
     MenuV2 *menu2;
     int mapx, mapy;
     uint8_t height, width;
+    int8_t up, side;
+    int8_t curChunk, chunkX, chunkY;
 
     bool moving;
     uint8_t stepTicker;
