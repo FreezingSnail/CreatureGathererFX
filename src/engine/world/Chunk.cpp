@@ -38,7 +38,8 @@ void Chunk::loadChunck(uint8_t m, uint8_t n, uint8_t chunk_index) {
 
             // this->offset[index] = offset;
             // value[index] = integer;
-            debug[index] = testmap + (offset * 256) + integer;
+            // debug[index] = testmap + (offset * 256) + integer;
+            debug[index] = dataIndex;
         }
     }
 }

@@ -9,6 +9,7 @@
 #include "Event.hpp"
 #include "Map.hpp"
 #include "ChunkMap.hpp"
+#include "TileMap.hpp"
 #include <ArduboyFX.h>
 
 #define EVENTCOUNT 6
@@ -25,6 +26,8 @@ class WorldEngine {
     int8_t up, side;
     int8_t curChunk, chunkX, chunkY;
 
+    TileMap tMap;
+
     bool moving;
     uint8_t stepTicker;
     GameState_t *state;
@@ -38,7 +41,7 @@ class WorldEngine {
     uint8_t warps[6][4];
     uint24_t debugAdder;
     Event events[EVENTCOUNT];
-    ChunkMap chunkmap;
+    // ChunkMap chunkmap;
 
   public:
     WorldEngine();

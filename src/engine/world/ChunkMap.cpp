@@ -1,14 +1,14 @@
 #include "ChunkMap.hpp"
 
-#define CHUNKS_WIDTH 4
+#define CHUNKS_WIDTH 3
 #define CHUNKS_HEIGHT 3
 #define CHUNK_OFFSET 16 * 4
 
 /**
     * Given the chunk map:
-    * 0  1  2  3
-    * 4  5  6  7
-    * 8  9  10 11
+    * 0  1  2
+    * 3  4  5
+    * 6  7  8
     *
     * The current chunk index is 5
     * as the player is in the center of the screen
@@ -26,9 +26,9 @@ void ChunkMap::loadChunkMap() {
     // given mxn map, the total chunks are
     // m/4 * n/4 or ChunkM x chunkN
     // assume start on chunk 0, top left
-    // load 0-4,
-    // load m + 0-4
-    // load 2m + 0-4
+    // load 0-3,
+    // load m + 0-3
+    // load 2m + 0-3
 
     currentChunkIndex = 5;
     m = 24;
@@ -37,9 +37,9 @@ void ChunkMap::loadChunkMap() {
     chunkN = n / 4;
 
     for (int i = 0; i < 3; ++i) {
-        for (uint8_t j = 0; j < 4; j++) {
+        for (uint8_t j = 0; j < 3; j++) {
             uint8_t chunk_index = (chunkM * i) + j;
-            uint8_t index = j + (i * 4);
+            uint8_t index = j + (i * 3);
             chunks[index].loadChunck(m, n, chunk_index);
             map[index] = &chunks[index];
             debug[index] = chunk_index;
@@ -52,7 +52,6 @@ void ChunkMap::loadChunkMap() {
     0 1 2
     3 4 5
     6 7 8
-    9 10 11
 
 */
 
@@ -61,15 +60,15 @@ void ChunkMap::shiftChunks(Direction direction) {
     switch (direction) {
     case Up:
 
-        for (uint8_t i = 0; i < 4; i++) {
+        for (uint8_t i = 0; i < 3; i++) {
             tmp[i] = map[i];
         }
-        for (uint8_t i = 0; i < 8; i++) {
+        for (uint8_t i = 0; i < 5; i++) {
             map[i] = map[i + CHUNKS_WIDTH];
             debug[i] = debug[i + CHUNKS_WIDTH];
         }
-        for (uint8_t i = 8; i < 12; i++) {
-            map[i] = tmp[i - 8];
+        for (uint8_t i = 6; i < 9; i++) {
+            map[i] = tmp[i - 6];
             debug[i] = currentChunkIndex - 1 + i + chunkM;
             map[i]->loadChunck(24, 24, currentChunkIndex - 1 + i + chunkM);
         }
@@ -82,7 +81,7 @@ void ChunkMap::shiftChunks(Direction direction) {
         }
 
         // Shift the first two rows down
-        for (uint8_t i = 11; i >= CHUNKS_WIDTH; i--) {
+        for (uint8_t i = 8; i >= CHUNKS_WIDTH; i--) {
             map[i] = map[i - CHUNKS_WIDTH];
             debug[i] = debug[i - CHUNKS_WIDTH];
         }
@@ -99,6 +98,9 @@ void ChunkMap::shiftChunks(Direction direction) {
 
     case Right:
         currentChunkIndex++;
+        tmp[0] = map[2];
+        tmp[1] = map[5];
+        tmp[2] = map[8];
         for (int i = 3; i > 0; i++) {
             map[i] = map[i + 1];
         }
@@ -109,13 +111,20 @@ void ChunkMap::shiftChunks(Direction direction) {
             map[i + (2 * chunkWidth)] = map[i + (2 * chunkWidth) + 1];
         }
 
-        map[3]->loadChunck(chunkWidth, chunkHeight, currentChunkIndex + 2 - chunkWidth);
-        map[7]->loadChunck(chunkWidth, chunkHeight, currentChunkIndex + 2);
-        map[11]->loadChunck(chunkWidth, chunkHeight, currentChunkIndex + 2 + chunkWidth);
+        map[2] = tmp[0];
+        map[5] = tmp[1];
+        map[8] = tmp[2];
+        map[2]->loadChunck(chunkWidth, chunkHeight, currentChunkIndex + 2 - chunkWidth);
+        map[5]->loadChunck(chunkWidth, chunkHeight, currentChunkIndex + 2);
+        map[8]->loadChunck(chunkWidth, chunkHeight, currentChunkIndex + 2 + chunkWidth);
         break;
 
     case Left:
         currentChunkIndex--;
+        tmp[0] = map[0];
+        tmp[1] = map[3];
+        tmp[2] = map[6];
+
         for (int i = 0; i < 3; i++) {
             map[i + 1] = map[i];
         }
@@ -126,9 +135,12 @@ void ChunkMap::shiftChunks(Direction direction) {
             map[i + (2 * chunkWidth) + 1] = map[i + (2 * chunkWidth)];
         }
 
-        map[0]->loadChunck(chunkWidth, chunkHeight, currentChunkIndex - 1 - chunkWidth);
-        map[4]->loadChunck(chunkWidth, chunkHeight, currentChunkIndex - 1);
-        map[8]->loadChunck(chunkWidth, chunkHeight, currentChunkIndex - 1 + chunkWidth);
+        map[2] = tmp[0];
+        map[5] = tmp[1];
+        map[6] = tmp[2];
+        map[2]->loadChunck(chunkWidth, chunkHeight, currentChunkIndex - 1 - chunkWidth);
+        map[5]->loadChunck(chunkWidth, chunkHeight, currentChunkIndex - 1);
+        map[6]->loadChunck(chunkWidth, chunkHeight, currentChunkIndex - 1 + chunkWidth);
         break;
     }
 }
@@ -150,17 +162,18 @@ void ChunkMap::drawChunkMap(uint8_t ticker, uint8_t xTileOffset, uint8_t yTileOf
     //         map[j + (4 * i)]->drawChunk(x, y, mapX, mapY);
     //     }
     // }
-    map[1]->drawChunk(0, (yTileOffset * 16) - (4 * 16), 0, ticker);
-    map[2]->drawChunk(CHUNK_OFFSET, (yTileOffset * 16) - (4 * 16), 0, ticker);
-    map[3]->drawChunk(CHUNK_OFFSET * 2, (yTileOffset * 16) - (4 * 16), 0, ticker);
 
-    map[5]->drawChunk(0, (yTileOffset * 16), 0, ticker);
-    map[6]->drawChunk(CHUNK_OFFSET, (yTileOffset * 16), 0, ticker);
-    map[7]->drawChunk(CHUNK_OFFSET * 2, (yTileOffset * 16), 0, ticker);
+    map[0]->drawChunk(0, (yTileOffset * 16) - (4 * 16), 0, ticker);
+    map[1]->drawChunk(CHUNK_OFFSET, (yTileOffset * 16) - (4 * 16), 0, ticker);
+    map[2]->drawChunk(CHUNK_OFFSET * 2, (yTileOffset * 16) - (4 * 16), 0, ticker);
 
-    map[9]->drawChunk(0, (yTileOffset * 16) + (4 * 16), 0, ticker);
-    map[10]->drawChunk(CHUNK_OFFSET, (yTileOffset * 16) + (4 * 16), 0, ticker);
-    map[11]->drawChunk(CHUNK_OFFSET * 2, (yTileOffset * 16) + (4 * 16), 0, ticker);
+    map[3]->drawChunk(0, (yTileOffset * 16), 0, ticker);
+    map[4]->drawChunk(CHUNK_OFFSET, (yTileOffset * 16), 0, ticker);
+    map[5]->drawChunk(CHUNK_OFFSET * 2, (yTileOffset * 16), 0, ticker);
+
+    map[6]->drawChunk(0, (yTileOffset * 16) + (4 * 16), 0, ticker);
+    map[7]->drawChunk(CHUNK_OFFSET, (yTileOffset * 16) + (4 * 16), 0, ticker);
+    map[8]->drawChunk(CHUNK_OFFSET * 2, (yTileOffset * 16) + (4 * 16), 0, ticker);
 }
 
 void ChunkMap::indexToChunkCord(uint8_t index, uint8_t *x, uint8_t *y) {
