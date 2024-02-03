@@ -4,17 +4,6 @@
 
 #define dbf __attribute__((optimize("-O0")))
 
-const char spirit[] PROGMEM = "Spirit";
-const char water[] PROGMEM = "Water";
-const char wind[] PROGMEM = "Wind";
-const char earth[] PROGMEM = "Earth";
-const char fire[] PROGMEM = "Fire";
-const char lightning[] PROGMEM = "Lightning";
-const char plant[] PROGMEM = "Plant";
-const char elder[] PROGMEM = "Elder";
-
-const char *const typeNames[8] PROGMEM = {spirit, water, wind, earth, fire, lightning, plant, elder};
-
 enum class Type {
     SPIRIT,
     WATER,
@@ -43,13 +32,20 @@ class DualType {
     }
 
   public:
-    constexpr DualType() : value(packTypes(Type::NONE, Type::NONE)) {}
-    constexpr DualType(Type type) : value(packTypes(type, Type::NONE)) {}
-    constexpr DualType(Type type1, Type type2) : value(packTypes(type1, type2)) {}
+    constexpr DualType() : value(packTypes(Type::NONE, Type::NONE)) {
+    }
+    constexpr DualType(Type type) : value(packTypes(type, Type::NONE)) {
+    }
+    constexpr DualType(Type type1, Type type2) : value(packTypes(type1, type2)) {
+    }
 
-    constexpr Type getType1(void) const { return static_cast<Type>((this->value >> Type1Shift)); }
+    constexpr Type getType1(void) const {
+        return static_cast<Type>((this->value >> Type1Shift));
+    }
 
-    constexpr Type getType2(void) const { return static_cast<Type>(this->value & Type2Mask); }
+    constexpr Type getType2(void) const {
+        return static_cast<Type>(this->value & Type2Mask);
+    }
 };
 
 enum class Modifier : uint8_t {

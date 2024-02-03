@@ -9,6 +9,9 @@
 #include "Map.hpp"
 
 #define TILE_SIZE 16
+#define MAPYADJUST -3
+#define MAPXADJUST -4
+
 constexpr uint8_t tileswide = (128 / TILE_SIZE) + 4;
 constexpr uint8_t tilestall = (64 / TILE_SIZE) + 2;
 
@@ -33,12 +36,14 @@ void WorldEngine::init(Arduboy2Base *arduboy, GameState_t *state, BattleEngine *
     this->curx = 4;
     this->cury = 2;
     // this->loadMap(0, 1);
-    chunkmap.loadChunkMap();
+    // chunkmap.loadChunkMap();
+    tMap.loadMap(0, 0);
+
     up = 2;
     side = 3;
     curChunk = 5;
-    chunkX = 0;
-    chunkY = 0;
+    chunkX = 4;
+    chunkY = 3;
 }
 
 constexpr int8_t EVENT_X_OFFSET = WIDTH / 2;
@@ -90,11 +95,13 @@ void WorldEngine::input() {
         this->playerDirection = Left;
         if (this->moveable()) {
             this->moving = true;
+            side -= 1;
         }
     } else if (this->arduboy->pressed(RIGHT_BUTTON)) {
         this->playerDirection = Right;
         if (this->moveable()) {
             this->moving = true;
+            side += 1;
         }
     } else {
         moving = false;
@@ -106,7 +113,7 @@ void WorldEngine::input() {
 #define PLAYER_Y_OFFSET HEIGHT / 2 - PLAYER_SIZE / 2
 void WorldEngine::drawPlayer() {
     uint8_t frame = ((int)(this->playerDirection) * 3) + ((this->stepTicker - 1) / 5);
-    FX::drawBitmap(PLAYER_X_OFFSET, PLAYER_Y_OFFSET, characterSheet, frame, dbmNormal);
+    FX::drawBitmap(3 * 16, 2 * 16, characterSheet, frame, dbmNormal);
 }
 
 void WorldEngine::runMap(Player *player) {
@@ -124,32 +131,46 @@ void WorldEngine::runMap(Player *player) {
         }
     }
 
-    int8_t t = stepTicker;
+    int8_t xTick = 0;
+    int8_t yTick = 0;
     switch (this->playerDirection) {
     case Up:
+        yTick = stepTicker;
         break;
     case Down:
-        t = stepTicker * -1;
+        yTick = stepTicker * -1;
         break;
     case Left:
+        xTick = stepTicker;
         break;
     case Right:
+        xTick = stepTicker * -1;
         break;
     }
-    chunkmap.drawChunkMap(t, chunkX, chunkY);
+    // chunkmap.drawChunkMap(t, chunkX, chunkY);
+    tMap.draw(0, 0, xTick, yTick);
+    // tMap.loadMap(chunkX - 4, chunkY - 3);
     this->drawPlayer();
     if (up == 4 && !moving) {
         up = 0;
-        chunkmap.shiftChunks(Up);
+        // chunkmap.shiftChunks(Up);
     } else if (up == -1 && !moving) {
         up = 3;
-        chunkmap.shiftChunks(Down);
+        // chunkmap.shiftChunks(Down);
     }
-    if (chunkY > 2) {
-        chunkY = -1;
-    } else if (chunkY < -1) {
-        chunkY = 2;
+    if (side == 4 && !moving) {
+        side = 0;
+        // chunkmap.shiftChunks(Right);
+    } else if (side == -1 && !moving) {
+        side = 3;
+        // chunkmap.shiftChunks(Left);
     }
+
+    // if (chunkY > 2) {
+    //     chunkY = -1;
+    // } else if (chunkY < -1) {
+    //     chunkY = 2;
+    // }
 }
 
 void WorldEngine::moveChar(Player *player) {
@@ -173,17 +194,23 @@ void WorldEngine::moveChar(Player *player) {
         switch (this->playerDirection) {
         case Up:
             this->cury--;
-            chunkY += 1;
+            chunkY -= 1;
+            tMap.shiftDown();
             break;
         case Down:
             this->cury++;
-            chunkY -= 1;
+            chunkY += 1;
+            tMap.shiftUp();
             break;
         case Left:
             this->curx--;
+            chunkX -= 1;
+            tMap.shiftRight();
             break;
         case Right:
             this->curx++;
+            chunkX += 1;
+            tMap.shiftLeft();
             break;
         }
         this->moving = false;

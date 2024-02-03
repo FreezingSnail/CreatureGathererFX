@@ -6,9 +6,9 @@ class ChunkMap {
   public:
     uint8_t currentChunkIndex;
     uint8_t chunkWidth, chunkHeight, m, n, chunkM, chunkN;
-    Chunk *map[12];
-    Chunk chunks[12];
-    uint8_t debug[12];
+    Chunk *map[9];
+    Chunk chunks[9];
+    uint8_t debug[9];
     void loadChunkMap();
     void shiftChunks(Direction direction);
 
