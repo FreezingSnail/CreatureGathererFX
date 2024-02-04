@@ -13,7 +13,8 @@
 
 #define dbf __attribute__((optimize("-O0")))
 
-BattleEngine::BattleEngine() {}
+BattleEngine::BattleEngine() {
+}
 
 uint16_t static calculateDamage(Action *action, Creature *committer, Creature *reciever) {
     // need to do something here with atk def stats
@@ -56,7 +57,9 @@ void BattleEngine::init(GameState_t *state, MenuV2 *menu2) {
     this->menu2 = menu2;
 }
 
-uint8_t *BattleEngine::getPlayerCurCreatureMoves() { return this->playerCur->moves; }
+uint8_t *BattleEngine::getPlayerCurCreatureMoves() {
+    return this->playerCur->moves;
+}
 
 void BattleEngine::updateInactiveCreatures(uint8_t *list) {
     uint8_t index = 0;
@@ -129,7 +132,6 @@ void BattleEngine::encounter(Player &player) {
         this->activeBattle = false;
         return;
     }
-    this->drawScene();
     if (!this->queued) {
         return;
     }
@@ -218,7 +220,9 @@ void BattleEngine::opponentActionFirst(Player &player) {
     this->checkOpponentFaint();
 }
 
-void BattleEngine::setMoveList(uint8_t **pointer) { *pointer = this->playerCur->moves; }
+void BattleEngine::setMoveList(uint8_t **pointer) {
+    *pointer = this->playerCur->moves;
+}
 
 void BattleEngine::changeCurMon(uint8_t id) {
     // TODO this breaks with repeate creatures on roster

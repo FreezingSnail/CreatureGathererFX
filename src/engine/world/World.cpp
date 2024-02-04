@@ -116,7 +116,6 @@ void WorldEngine::drawPlayer() {
 
 void WorldEngine::runMap(Player *player) {
     // this->drawMap();
-    this->drawEvents();
 
     if (this->moving && this->moveable()) {
         this->moveChar(player);
@@ -129,6 +128,19 @@ void WorldEngine::runMap(Player *player) {
         }
     }
 
+    if (up == 4 && !moving) {
+        up = 0;
+    } else if (up == -1 && !moving) {
+        up = 3;
+    }
+    if (side == 4 && !moving) {
+        side = 0;
+    } else if (side == -1 && !moving) {
+        side = 3;
+    }
+}
+
+void WorldEngine::draw() {
     int8_t xTick = 0;
     int8_t yTick = 0;
     switch (this->playerDirection) {
@@ -146,18 +158,8 @@ void WorldEngine::runMap(Player *player) {
         break;
     }
     tMap.draw(0, 0, xTick, yTick);
-    // tMap.loadMap(chunkX - 4, chunkY - 3);
-    this->drawPlayer();
-    if (up == 4 && !moving) {
-        up = 0;
-    } else if (up == -1 && !moving) {
-        up = 3;
-    }
-    if (side == 4 && !moving) {
-        side = 0;
-    } else if (side == -1 && !moving) {
-        side = 3;
-    }
+    drawPlayer();
+    drawEvents();
 }
 
 void WorldEngine::moveChar(Player *player) {

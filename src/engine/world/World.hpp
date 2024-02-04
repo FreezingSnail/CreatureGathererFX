@@ -48,6 +48,7 @@ class WorldEngine {
     void init(Arduboy2Base *arduboy, GameState_t *state, BattleEngine *battleEngine, MenuV2 *menu2);
     void input();
     void runMap(Player *player);
+    void draw();
     void drawMap();
     void drawEvents();
     void drawPlayer();
