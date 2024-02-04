@@ -4,6 +4,3 @@
 [submodule "ArduGray_Demo"]
 	path = ArduGray_Demo
 	url = https://github.com/tiberiusbrown/ArduGray_Demo.git
-[submodule "ArduboyFXFonts"]
-	path = ArduboyFXFonts
-	url = git@github.com:FreezingSnail/ArduboyFXFonts.git
