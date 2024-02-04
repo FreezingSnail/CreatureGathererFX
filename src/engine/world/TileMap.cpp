@@ -106,21 +106,10 @@ void TileMap::loadLine(uint8_t index, uint16_t startX, uint16_t startY) {
         this->map[index]->tiles[i] = FX::readPendingUInt8();
         map[index]->debug[i] = dataIndex;
     }
+    (void)FX::readEnd();
 }
 
 void TileMap::loadVLine(uint8_t index, uint16_t startX, uint16_t startY) {
-    // uint16_t dataIndex = startY * mapM + startX;
-    // // the index is a 16 bit width address but only 8bit width is allowed
-    // // need to convert 16 bit to 8 bit + offset
-    // // i.e. 256 -> 1,0 257 -> 1,1
-    // uint8_t offset = dataIndex >> 8;
-    // uint8_t integer = dataIndex & 0xFF;
-    // uint24_t addr = testmap + (offset * 256) + (integer + mapM) * sizeof(uint8_t);
-    // FX::seekData(addr);
-    // for (uint8_t i = 0; i < 6; i++) {
-    //     this->map[i]->tiles[index] = FX::readPendingUInt8();
-    //     map[i]->debug[index] = dataIndex;
-    // }
     for (uint8_t i = 0; i < 6; i++) {
         uint16_t dataIndex = (startY + i) * mapM + startX;
         // the index is a 16 bit width address but only 8bit width is allowed
