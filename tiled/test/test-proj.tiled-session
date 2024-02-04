@@ -1,0 +1,47 @@
+{
+    "activeFile": "",
+    "expandedProjectPaths": [
+    ],
+    "file.lastUsedOpenFilter": "All Files (*)",
+    "fileStates": {
+        "letters_16x16.tsx": {
+            "scaleInEditor": 1
+        },
+        "npc_16x16.tsx": {
+            "scaleInEditor": 1
+        },
+        "testInside.tmx": {
+            "scale": 7.08046875,
+            "selectedLayer": 1,
+            "viewCenter": {
+                "x": 64.12004854904558,
+                "y": 64.04943175548937
+            }
+        },
+        "testmap.tmx": {
+            "scale": 2.3601562499999997,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 190.6653426017875,
+                "y": 252.3138033763654
+            }
+        },
+        "worldTiles_16x16.tsx": {
+            "scaleInEditor": 1
+        }
+    },
+    "last.exportedFilePath": "//wsl.localhost/Debian/home/snail/code/CreatureGathererFX/tiled/test",
+    "last.imagePath": "//wsl.localhost/Debian/home/snail/code/CreatureGathererFX/images",
+    "loadedWorlds": [
+        "//wsl.localhost/Debian/home/snail/code/CreatureGathererFX/tiled/test/testWorld.world"
+    ],
+    "map.lastUsedExportFilter": "JSON map files (*.tmj *.json)",
+    "openFiles": [
+    ],
+    "project": "test-proj.tiled-project",
+    "recentFiles": [
+        "letters_16x16.tsx",
+        "worldTiles_16x16.tsx",
+        "npc_16x16.tsx"
+    ]
+}

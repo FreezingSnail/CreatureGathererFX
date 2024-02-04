@@ -3,7 +3,7 @@
 #include <avr/pgmspace.h>
 
 #include "../data/Creatures.hpp"
-#include "../fxdata/fxdata.h"
+#include "../fxdata.h"
 #include "../lib/Move.hpp"
 #include "../opponent/OpponentSeed.hpp"
 #include "../common.hpp"
@@ -105,9 +105,13 @@ void Creature::setStats(CreatureData_t seed) {
 
 // some ai to find best advantage should move this out of this class though
 // going to need this for the opponent ai
-uint8_t Creature::getAdvantage(DualType opponent) { return 0; }
+uint8_t Creature::getAdvantage(DualType opponent) {
+    return 0;
+}
 
-uint8_t Creature::getMove(uint8_t slot) { return this->moves[slot]; }
+uint8_t Creature::getMove(uint8_t slot) {
+    return this->moves[slot];
+}
 
 bool Creature::moveTypeBonus(uint8_t index) {
     return this->types.getType1() == (Type)this->moveList[index].getMoveType() ||

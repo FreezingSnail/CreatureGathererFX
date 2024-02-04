@@ -1,0 +1,74 @@
+{
+    "Map/SizeTest": {
+        "height": 4300,
+        "width": 2
+    },
+    "activeFile": "testInside.tmj",
+    "expandedProjectPaths": [
+        "."
+    ],
+    "file.lastUsedOpenFilter": "All Files (*)",
+    "fileStates": {
+        "letters_16x16.tsx": {
+            "scaleInDock": 1
+        },
+        "npc_16x16.tsx": {
+            "scaleInDock": 1
+        },
+        "testInside.tmj": {
+            "scale": 8,
+            "selectedLayer": 2,
+            "viewCenter": {
+                "x": 61,
+                "y": 115.3125
+            }
+        },
+        "testInside.tmx": {
+            "scale": 8,
+            "selectedLayer": 2,
+            "viewCenter": {
+                "x": 50.125,
+                "y": 67.875
+            }
+        },
+        "testmap.tmx": {
+            "scale": 2,
+            "selectedLayer": 2,
+            "viewCenter": {
+                "x": 228,
+                "y": 284.25
+            }
+        },
+        "worldTiles_16x16.tsx": {
+            "scaleInDock": 1
+        }
+    },
+    "last.exportedFilePath": "//wsl.localhost/Debian/home/snail/code/CreatureGathererFX/tiled",
+    "last.externalTilesetPath": "//wsl.localhost/Debian/home/snail/code/CreatureGathererFX/src/fxdata/images",
+    "last.imagePath": "//wsl.localhost/Debian/home/snail/code/CreatureGathererFX/src/fxdata/images",
+    "last.worldFilePath": "//wsl.localhost/Debian/home/snail/code/CreatureGathererFX/tiled",
+    "loadedWorlds": [
+        "//wsl.localhost/Debian/home/snail/code/CreatureGathererFX/tiled/testWorld.world"
+    ],
+    "map.height": 8,
+    "map.lastUsedExportFilter": "JSON map files (*.tmj *.json)",
+    "map.lastUsedFormat": "json",
+    "map.tileHeight": 16,
+    "map.tileWidth": 16,
+    "map.width": 8,
+    "openFiles": [
+        "testmap.tmx",
+        "testInside.tmj"
+    ],
+    "project": "maps.tiled-project",
+    "recentFiles": [
+        "testmap.tmx",
+        "testInside.tmj"
+    ],
+    "tileset.lastUsedFilter": "All Files (*)",
+    "tileset.lastUsedFormat": "tsx",
+    "tileset.tileSize": {
+        "height": 16,
+        "width": 16
+    }
+}

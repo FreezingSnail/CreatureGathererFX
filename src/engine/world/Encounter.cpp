@@ -2,9 +2,11 @@
 #include <ArduboyFX.h>
 #include <stdint.h>
 
-#include "../../fxdata/fxdata.h"
+#include "../../fxdata.h"
 
-Encounter::Encounter() { this->arduboy = nullptr; }
+Encounter::Encounter() {
+    this->arduboy = nullptr;
+}
 
 Encounter::Encounter(Arduboy2Base *arduboy) {
     this->arduboy = arduboy;

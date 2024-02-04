@@ -2,7 +2,7 @@
 #include <ArduboyFX.h>
 #include <stdint.h>
 
-#include "../../fxdata/fxdata.h"
+#include "../../fxdata.h"
 
 void __attribute__((optimize("-O0"))) Event::loadEvent(uint8_t mapIndex, uint8_t subIndex, uint8_t eventIndex) {
     EventCords event;
@@ -17,4 +17,6 @@ void __attribute__((optimize("-O0"))) Event::loadEvent(uint8_t mapIndex, uint8_t
     this->cords = event;
 }
 
-void Event::draw(int16_t mapx, int16_t mapy) { FX::drawBitmap(mapx, mapy, npc, 0, dbmMasked); }
+void Event::draw(int16_t mapx, int16_t mapy) {
+    FX::drawBitmap(mapx, mapy, npc, 0, dbmMasked);
+}

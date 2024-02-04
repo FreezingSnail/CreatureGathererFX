@@ -9,7 +9,7 @@
 #include "src/engine/menu/MenuV2.hpp"
 #include "src/engine/world/Event.hpp"
 #include "src/engine/world/World.hpp"
-#include "src/fxdata/fxdata.h"
+#include "src/fxdata.h"
 #include "src/player/Player.hpp"
 
 decltype(arduboy) arduboy;

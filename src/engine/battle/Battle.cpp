@@ -3,7 +3,7 @@
 #include "../../creature/Creature.hpp"
 #include "../../engine/menu/MenuV2.hpp"
 #include "../../external/ArduboyG.h"
-#include "../../fxdata/fxdata.h"
+#include "../../fxdata.h"
 #include "../../opponent/Opponent.hpp"
 #include "../../player/Player.hpp"
 #include "../game/Gamestate.hpp"

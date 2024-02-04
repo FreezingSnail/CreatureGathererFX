@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.10" tiledversion="1.10.2" orientation="orthogonal" renderorder="right-down" width="8" height="8" tilewidth="16" tileheight="16" infinite="0" nextlayerid="4" nextobjectid="1">
+ <tileset firstgid="1" source="worldTiles_16x16.tsx"/>
+ <tileset firstgid="33" source="npc_16x16.tsx"/>
+ <tileset firstgid="34" source="letters_16x16.tsx"/>
+ <layer id="1" name="map" width="8" height="8">
+  <data encoding="csv">
+3,5,5,5,5,5,5,4,
+6,2,2,2,2,2,2,14,
+6,2,2,2,2,2,2,14,
+6,2,10,3,4,2,2,14,
+6,2,2,11,12,2,2,14,
+6,2,2,2,2,2,2,14,
+6,2,2,2,2,2,2,14,
+11,13,13,13,29,13,13,12
+</data>
+ </layer>
+ <layer id="2" name="npc" width="8" height="8">
+  <data encoding="csv">
+0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,
+0,0,33,0,0,0,0,0,
+0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0
+</data>
+ </layer>
+ <layer id="3" name="warp" width="8" height="8">
+  <data encoding="csv">
+0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,
+0,0,0,0,99,0,0,0
+</data>
+ </layer>
+</map>

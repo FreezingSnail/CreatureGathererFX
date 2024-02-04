@@ -1,1 +1,0 @@
-python3 tools/movelistConverter.py > src/fxdata/data/movelists.txt
