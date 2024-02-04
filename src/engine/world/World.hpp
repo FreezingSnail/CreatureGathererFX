@@ -8,11 +8,12 @@
 #include "Encounter.hpp"
 #include "Event.hpp"
 #include "Map.hpp"
-#include "ChunkMap.hpp"
 #include "TileMap.hpp"
 #include <ArduboyFX.h>
 
 #define EVENTCOUNT 6
+
+enum class Direction { UP, RIGHT, DOWN, LEFT };
 
 class WorldEngine {
   private:
@@ -41,7 +42,6 @@ class WorldEngine {
     uint8_t warps[6][4];
     uint24_t debugAdder;
     Event events[EVENTCOUNT];
-    // ChunkMap chunkmap;
 
   public:
     WorldEngine();
