@@ -1,7 +1,7 @@
 #include "World.hpp"
 #include <ArduboyFX.h>
 
-#include "../../fxdata/fxdata.h"
+#include "../../fxdata.h"
 // #include "../../sprites/characterSheet.h"
 #include "../battle/Battle.hpp"
 #include "../game/Gamestate.hpp"

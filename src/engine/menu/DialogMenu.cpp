@@ -1,7 +1,7 @@
 #pragma once
 #include "DialogMenu.hpp"
 #include "../../external/ArduboyG.h"
-#include "../../fxdata/fxdata.h"
+#include "../../fxdata.h"
 #include "../../lib/Type.hpp"
 #include "../draw.h"
 #include "../world/Event.hpp"

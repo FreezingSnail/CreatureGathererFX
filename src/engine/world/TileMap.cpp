@@ -1,6 +1,6 @@
 #include "TileMap.hpp"
 #include <ArduboyFX.h>
-#include "../../fxdata/fxdata.h"
+#include "../../fxdata.h"
 
 #define TILE_WIDTH 16
 #define TILE_HEIGHT 16

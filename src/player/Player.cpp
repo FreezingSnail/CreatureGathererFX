@@ -2,7 +2,7 @@
 #include "Player.hpp"
 
 #include "../data/Creatures.hpp"
-#include "../fxdata/fxdata.h"
+#include "../fxdata.h"
 
 Player::Player() {
     // CreatureData_t cseed;
@@ -33,7 +33,9 @@ void Player::loadCreature(uint8_t index, uint8_t creatureIndex) {
     this->setCreature(index, cseed);
 }
 
-void Player::setCreature(uint8_t index, CreatureData_t seed) { this->party[index].load(seed); }
+void Player::setCreature(uint8_t index, CreatureData_t seed) {
+    this->party[index].load(seed);
+}
 
 void Player::storeCreature(uint8_t slot, uint8_t id, uint8_t level) {   // this->storedCreatures[slot] = caughtCreature{id, level};
 }
