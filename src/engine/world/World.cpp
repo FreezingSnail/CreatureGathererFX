@@ -36,12 +36,10 @@ void WorldEngine::init(Arduboy2Base *arduboy, GameState_t *state, BattleEngine *
     this->curx = 4;
     this->cury = 2;
     // this->loadMap(0, 1);
-    // chunkmap.loadChunkMap();
     tMap.loadMap(0, 0);
 
     up = 2;
     side = 3;
-    curChunk = 5;
     chunkX = 4;
     chunkY = 3;
 }
@@ -61,13 +59,13 @@ void WorldEngine::drawEvents() {
             int16_t yOffset = e->cords.y - this->cury;
             int xMod = 0;
             int yMod = 0;
-            if (this->playerDirection == Up) {
+            if (this->playerDirection == Direction::UP) {
                 yMod = 1;
-            } else if (this->playerDirection == Down) {
+            } else if (this->playerDirection == Direction::DOWN) {
                 yMod = -1;
-            } else if (this->playerDirection == Left) {
+            } else if (this->playerDirection == Direction::LEFT) {
                 xMod = 1;
-            } else if (this->playerDirection == Right) {
+            } else if (this->playerDirection == Direction::RIGHT) {
                 xMod = -1;
             }
 
@@ -80,25 +78,25 @@ void WorldEngine::drawEvents() {
 
 void WorldEngine::input() {
     if (this->arduboy->pressed(UP_BUTTON)) {
-        this->playerDirection = Up;
+        this->playerDirection = Direction::UP;
         if (this->moveable()) {
             this->moving = true;
             up -= 1;
         }
     } else if (this->arduboy->pressed(DOWN_BUTTON)) {
-        this->playerDirection = Down;
+        this->playerDirection = Direction::DOWN;
         if (this->moveable()) {
             this->moving = true;
             up += 1;
         }
     } else if (this->arduboy->pressed(LEFT_BUTTON)) {
-        this->playerDirection = Left;
+        this->playerDirection = Direction::LEFT;
         if (this->moveable()) {
             this->moving = true;
             side -= 1;
         }
     } else if (this->arduboy->pressed(RIGHT_BUTTON)) {
-        this->playerDirection = Right;
+        this->playerDirection = Direction::RIGHT;
         if (this->moveable()) {
             this->moving = true;
             side += 1;
@@ -134,57 +132,46 @@ void WorldEngine::runMap(Player *player) {
     int8_t xTick = 0;
     int8_t yTick = 0;
     switch (this->playerDirection) {
-    case Up:
+    case Direction::UP:
         yTick = stepTicker;
         break;
-    case Down:
+    case Direction::DOWN:
         yTick = stepTicker * -1;
         break;
-    case Left:
+    case Direction::LEFT:
         xTick = stepTicker;
         break;
-    case Right:
+    case Direction::RIGHT:
         xTick = stepTicker * -1;
         break;
     }
-    // chunkmap.drawChunkMap(t, chunkX, chunkY);
     tMap.draw(0, 0, xTick, yTick);
     // tMap.loadMap(chunkX - 4, chunkY - 3);
     this->drawPlayer();
     if (up == 4 && !moving) {
         up = 0;
-        // chunkmap.shiftChunks(Up);
     } else if (up == -1 && !moving) {
         up = 3;
-        // chunkmap.shiftChunks(Down);
     }
     if (side == 4 && !moving) {
         side = 0;
-        // chunkmap.shiftChunks(Right);
     } else if (side == -1 && !moving) {
         side = 3;
-        // chunkmap.shiftChunks(Left);
     }
-
-    // if (chunkY > 2) {
-    //     chunkY = -1;
-    // } else if (chunkY < -1) {
-    //     chunkY = 2;
-    // }
 }
 
 void WorldEngine::moveChar(Player *player) {
     switch (this->playerDirection) {
-    case Up:
+    case Direction::UP:
         this->mapy++;
         break;
-    case Down:
+    case Direction::DOWN:
         this->mapy--;
         break;
-    case Left:
+    case Direction::LEFT:
         this->mapx++;
         break;
-    case Right:
+    case Direction::RIGHT:
         this->mapx--;
         break;
     }
@@ -192,22 +179,22 @@ void WorldEngine::moveChar(Player *player) {
     if (this->stepTicker == TILE_SIZE) {
         this->stepTicker = 0;
         switch (this->playerDirection) {
-        case Up:
+        case Direction::UP:
             this->cury--;
             chunkY -= 1;
             tMap.shiftDown();
             break;
-        case Down:
+        case Direction::DOWN:
             this->cury++;
             chunkY += 1;
             tMap.shiftUp();
             break;
-        case Left:
+        case Direction::LEFT:
             this->curx--;
             chunkX -= 1;
             tMap.shiftRight();
             break;
-        case Right:
+        case Direction::RIGHT:
             this->curx++;
             chunkX += 1;
             tMap.shiftLeft();
@@ -243,16 +230,16 @@ bool WorldEngine::moveable() {
     uint8_t tilex = this->curx;
     uint8_t tiley = this->cury;
     switch (this->playerDirection) {
-    case Up:
+    case Direction::UP:
         tiley--;
         break;
-    case Down:
+    case Direction::DOWN:
         tiley++;
         break;
-    case Left:
+    case Direction::LEFT:
         tilex--;
         break;
-    case Right:
+    case Direction::RIGHT:
         tilex++;
         break;
     }
@@ -282,16 +269,16 @@ void WorldEngine::interact() {
         uint8_t tilex = this->curx;
         uint8_t tiley = this->cury;
         switch (this->playerDirection) {
-        case Up:
+        case Direction::UP:
             tiley--;
             break;
-        case Down:
+        case Direction::DOWN:
             tiley++;
             break;
-        case Left:
+        case Direction::LEFT:
             tilex--;
             break;
-        case Right:
+        case Direction::RIGHT:
             tilex++;
             break;
         }
@@ -323,57 +310,3 @@ void WorldEngine::setPos(uint8_t x, uint8_t y) {
     this->mapx = xdif * 16;
     this->mapy = ydif * 16;
 }
-/*
-void WorldEngine::loadMap(uint8_t mapIndex, uint8_t submapIndex) {
-   this->mapIndex = mapIndex;
-   // warp zones
-   uint24_t warpsAddress = FX::readIndexedUInt24(MapData::warps, mapIndex);
-   warpsAddress = FX::readIndexedUInt24(warpsAddress, submapIndex);
-   FX::readDataObject(warpsAddress, this->warps);
-
-   // map data
-   // submap count
-   uint24_t address = MapData::maps + ((sizeof(uint24_t) * 5) * mapIndex);
-   FX::readDataObject(FX::readIndexedUInt24(address, 0), this->submapCount);
-
-   // map dims
-   uint24_t widthAddress = FX::readIndexedUInt24(address, 4);
-   uint24_t heightsAddress = FX::readIndexedUInt24(address, 5);
-   FX::readDataObject(widthAddress + sizeof(uint8_t) * submapIndex, this->width);
-   FX::readDataObject(heightsAddress + sizeof(uint8_t) * submapIndex, this->height);
-
-   // map address
-   uint24_t mapAddress;
-   if (submapIndex == 0) {
-       mapAddress = FX::readIndexedUInt24(address, 1);
-
-   } else {
-       mapAddress = FX::readIndexedUInt24(address, 2);
-       mapAddress = FX::readIndexedUInt24(mapAddress, submapIndex - 1);
-   }
-
-   for (uint8_t i = 0; i < this->height; i++) {
-       uint24_t offset = (sizeof(uint8_t) * this->width) * i;
-       FX::readDataBytes(mapAddress + offset, gameMap[i], sizeof(uint8_t) * this->width);
-   }
-
-   for (uint8_t i = 0; i < 6; i++) {
-       this->events[i].loadEvent(mapIndex, submapIndex, i);
-   }
-}
-
-void WorldEngine::drawMap() {
-   for (uint8_t y = 0; y < tilestall; y++) {
-       for (uint8_t x = 0; x < tileswide; x++) {
-           const uint8_t tilex = x - this->mapx / TILE_SIZE;
-           const uint8_t tiley = y - this->mapy / TILE_SIZE;
-           if (tilex >= 0 && tiley >= 0 && tilex < this->width && tiley < this->height) {
-               FX::drawBitmap(x * TILE_SIZE + this->mapx % TILE_SIZE - 9, y * TILE_SIZE + this->mapy % TILE_SIZE - 8, tilesheet,
-                              gameMap[tiley][tilex], dbmNormal);
-           }
-       }
-   }
-}
-
-
-*/
