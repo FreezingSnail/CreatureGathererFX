@@ -7,15 +7,21 @@
 #define dbf __attribute__((optimize("-O0"))
 #define CURRENT_MENU this->stack[this->menuPointer]
 
-MenuV2::MenuV2() { this->menuPointer = -1; }
-void MenuV2::updateMoveList(BattleEngine &engine) { this->moveList = engine.getPlayerCurCreatureMoves(); }
+MenuV2::MenuV2() {
+    this->menuPointer = -1;
+}
+void MenuV2::updateMoveList(BattleEngine &engine) {
+    this->moveList = engine.getPlayerCurCreatureMoves();
+}
 
 void MenuV2::push(MenuEnum type) {
     this->menuPointer++;
     this->stack[this->menuPointer] = type;
 }
 
-void MenuV2::pop() { this->menuPointer--; }
+void MenuV2::pop() {
+    this->menuPointer--;
+}
 
 void MenuV2::transverse() {
     switch (CURRENT_MENU) {
@@ -124,11 +130,10 @@ void MenuV2::action(BattleEngine &engine) {
     }
 }
 
-void MenuV2::run(BattleEngine &engine) {
+void DGF MenuV2::run(BattleEngine &engine) {
     if (this->menuPointer < 0 && !dialogMenu.peek())
         return;
     if (dialogMenu.peek()) {
-        dialogMenu.drawPopMenu();
         if (Arduboy2::justPressed(A_BUTTON)) {
             dialogMenu.popMenu();
         }
@@ -137,7 +142,6 @@ void MenuV2::run(BattleEngine &engine) {
         engine.updateInactiveCreatures(this->creatures);
         this->transverse();
         this->action(engine);
-        this->printMenu(engine);
     }
 }
 

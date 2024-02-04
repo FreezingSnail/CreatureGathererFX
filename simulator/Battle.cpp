@@ -48,9 +48,13 @@ static uint8_t choseMove(Creature *commiter, Creature *reciever) {
     return selected;
 }
 
-void BattleEngine::init() { this->activeBattle = false; }
+void BattleEngine::init() {
+    this->activeBattle = false;
+}
 
-uint8_t *BattleEngine::getPlayerCurCreatureMoves() { return this->playerCur->moves; }
+uint8_t *BattleEngine::getPlayerCurCreatureMoves() {
+    return this->playerCur->moves;
+}
 
 void BattleEngine::updateInactiveCreatures(uint8_t *list) {
     uint8_t index = 0;
@@ -117,7 +121,6 @@ void BattleEngine::encounter(Player &player) {
         return;
     }
 
-    // this->drawScene();
     this->turnTick(player);
 }
 
@@ -213,7 +216,9 @@ void BattleEngine::opponentActionFirst(Player &player) {
     this->checkOpponentFaint();
 }
 
-void BattleEngine::setMoveList(uint8_t **pointer) { *pointer = this->playerCur->moves; }
+void BattleEngine::setMoveList(uint8_t **pointer) {
+    *pointer = this->playerCur->moves;
+}
 
 void BattleEngine::changeCurMon(uint8_t id) {
     for (uint8_t i = 0; i < 3; i++) {

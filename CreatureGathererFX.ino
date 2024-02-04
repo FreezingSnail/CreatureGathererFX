@@ -36,32 +36,23 @@ void setup() {
     FX::setCursorRange(0, 32767);
 
     world.init(&arduboy, &state, &engine, &menu2);
-    state = GameState_t::WORLD;
+    state = GameState_t::ARENA;
     engine.init(&state, &menu2);
     player.basic();
     // engine.startArena(player, 0);
-    //  engine.startArena(arduboy, player, 6);
+    //   engine.startArena(arduboy, player, 6);
 }
 
-void loop() {
-
-    if (!arduboy.nextFrame()) {
-        return;
-    }
-    arduboy.pollButtons();
-
+void run() {
     if (menu2.dialogMenu.peek()) {
         menu2.run(engine);
-        menu2.dialogMenu.drawPopMenu();
         FX::display();
         return;
     }
-
     FX::display(CLEAR_BUFFER);
     switch (state) {
     case GameState_t::BATTLE:
         engine.encounter(player);
-        engine.drawScene();
         break;
     case GameState_t::WORLD:
         world.runMap(&player);
@@ -73,6 +64,35 @@ void loop() {
         arena.arenaLoop(menu2, player, engine);
         break;
     }
-
     menu2.run(engine);
+}
+
+void render() {
+
+    switch (state) {
+    case GameState_t::BATTLE:
+        engine.drawScene();
+        if (menu2.dialogMenu.peek()) {
+            menu2.dialogMenu.drawPopMenu();
+        } else {
+            menu2.printMenu(engine);
+        }
+        break;
+    case GameState_t::WORLD:
+        world.draw();
+        break;
+    case GameState_t::ARENA:
+        arena.arenaLoop(menu2, player, engine);
+        break;
+    }
+}
+
+void loop() {
+    if (!arduboy.nextFrame()) {
+        return;
+    }
+    arduboy.pollButtons();
+
+    run();
+    render();
 }
