@@ -1,7 +1,6 @@
 
 image_t characterSheet = "images/characterSheet_12x16.png"
 image_t creatureSprites = "images/creatureSprites_32x32.png"
-image_t tilesheet = "images/tilesheet16_16x16.png"
 image_t battleMenu = "images/battleMenu_128x20.png"
 image_t moveInfo = "images/moveInfo_60x30.png"
 image_t fightMenu = "images/fightMenu_128x24.png"
@@ -25,6 +24,8 @@ include "data/menu.txt"
 include "data/teams.txt"
 
 include "data/chunks.txt"
+
+include "Sprites.txt"
 
  uint8_t greyTest[]  = {
   32,  32, 232,  84,  20,  20, 228,   4, 200, 168,  40,  40, 200,   0,   0,   0,

@@ -2,6 +2,7 @@ from PIL import Image
 import os
 import argparse
 import io
+import re
 
 
 def get_shade(rgba, shades, shade):
@@ -116,16 +117,20 @@ def main():
 
     all_buffers = ""
 
-    for filename in os.listdir(args.dirpath):
-        filepath = os.path.join(args.dirpath, filename)
-        if os.path.isfile(filepath):
+    pattern = re.compile(r'^.*_\d+x\d+\.png$')
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    dir_path = os.path.join(script_dir, args.dirpath)
+    for filename in os.listdir(dir_path):
+        filepath = os.path.join(script_dir, args.dirpath, filename)
+        if os.path.isfile(filepath) and pattern.match(filename):
             print(filename)
             file_details = parse_filename(filename)
             out = convert_header(filepath,  file_details[0].upper() + "_IMG", args.shades, file_details[1],
                                  file_details[2])
             all_buffers += out
 
-    with open(args.out+"Sprites.txt", 'w') as f:
+    out_dir = os.path.join(script_dir, args.out)
+    with open(out_dir+"Sprites.txt", 'w') as f:
         f.write(all_buffers)
 
 

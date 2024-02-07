@@ -1,7 +1,7 @@
 #include "World.hpp"
-#include <ArduboyFX.h>
 
 #include "../../fxdata.h"
+#include "../../common.hpp"
 // #include "../../sprites/characterSheet.h"
 #include "../battle/Battle.hpp"
 #include "../game/Gamestate.hpp"
@@ -26,7 +26,6 @@ bool warpTile(uint8_t x, uint8_t y) {
 WorldEngine::WorldEngine() {
 }
 void WorldEngine::init(Arduboy2Base *arduboy, GameState_t *state, BattleEngine *battleEngine, MenuV2 *menu2) {
-    this->arduboy = arduboy;
     this->encounterTable = Encounter(arduboy);
     this->battleEngine = battleEngine;
     this->state = state;
@@ -77,25 +76,25 @@ void WorldEngine::drawEvents() {
 }
 
 void WorldEngine::input() {
-    if (this->arduboy->pressed(UP_BUTTON)) {
+    if (arduboy.pressed(UP_BUTTON)) {
         this->playerDirection = Direction::UP;
         if (this->moveable()) {
             this->moving = true;
             up -= 1;
         }
-    } else if (this->arduboy->pressed(DOWN_BUTTON)) {
+    } else if (arduboy.pressed(DOWN_BUTTON)) {
         this->playerDirection = Direction::DOWN;
         if (this->moveable()) {
             this->moving = true;
             up += 1;
         }
-    } else if (this->arduboy->pressed(LEFT_BUTTON)) {
+    } else if (arduboy.pressed(LEFT_BUTTON)) {
         this->playerDirection = Direction::LEFT;
         if (this->moveable()) {
             this->moving = true;
             side -= 1;
         }
-    } else if (this->arduboy->pressed(RIGHT_BUTTON)) {
+    } else if (arduboy.pressed(RIGHT_BUTTON)) {
         this->playerDirection = Direction::RIGHT;
         if (this->moveable()) {
             this->moving = true;
@@ -111,7 +110,7 @@ void WorldEngine::input() {
 #define PLAYER_Y_OFFSET HEIGHT / 2 - PLAYER_SIZE / 2
 void WorldEngine::drawPlayer() {
     uint8_t frame = ((int)(this->playerDirection) * 3) + ((this->stepTicker - 1) / 5);
-    FX::drawBitmap(3 * 16, 2 * 16, characterSheet, frame, dbmNormal);
+    SpritesU::drawOverwriteFX(3 * 16, 2 * 16, CHARACTERSHEET_IMG, frame * 3 + arduboy.currentPlane());
 }
 
 void WorldEngine::runMap(Player *player) {
@@ -123,7 +122,7 @@ void WorldEngine::runMap(Player *player) {
         this->interact();
         this->input();
     } else {
-        if (this->arduboy->justPressed(A_BUTTON)) {
+        if (arduboy.justPressed(A_BUTTON)) {
             // this->menu2->dialogMenu.popMenu();
         }
     }
@@ -159,7 +158,7 @@ void WorldEngine::draw() {
     }
     tMap.draw(0, 0, xTick, yTick);
     drawPlayer();
-    drawEvents();
+    // drawEvents();
 }
 
 void WorldEngine::moveChar(Player *player) {
@@ -206,7 +205,7 @@ void WorldEngine::moveChar(Player *player) {
         if (warpTile(this->curx, this->cury)) {
             this->warp();
         }
-        // this->encounter(this->arduboy, player);
+        // this->encounter(arduboy, player);
     }
 }
 
@@ -267,7 +266,7 @@ bool WorldEngine::moveable() {
 }
 
 void WorldEngine::interact() {
-    if (this->arduboy->justPressed(B_BUTTON)) {
+    if (arduboy.justPressed(B_BUTTON)) {
         uint8_t tilex = this->curx;
         uint8_t tiley = this->cury;
         switch (this->playerDirection) {

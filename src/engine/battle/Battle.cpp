@@ -415,16 +415,13 @@ void BattleEngine::drawScene() {
 }
 
 void BattleEngine::drawOpponent() {
-    // would be nice to flip this sprite
-    // Sprites::drawSelfMasked(0, 0, creatureSprites, this->opponentCur->id);
-    FX::drawBitmap(0, 0, creatureSprites, opponentCur->id, dbmWhite);
+    SpritesU::drawOverwriteFX(0, 0, CREATURESPRITES_IMG, opponentCur->id * 3 + arduboy.currentPlane());
+
     // this->drawOpponentHP();
 }
 
 void BattleEngine::drawPlayer() {
-    // Sprites::drawSelfMasked(96, 0, creatureSprites, this->playerCur->id);
-    FX::drawBitmap(96, 0, creatureSprites, this->playerCur->id, dbmWhite);
-    // SpritesU::drawOverwriteFX(96, 0, greyTest, arduboy.currentPlane());
+    SpritesU::drawOverwriteFX(96, 0, CREATURESPRITES_IMG, playerCur->id * 3 + arduboy.currentPlane());
 
     // this->drawPlayerHP();
 }

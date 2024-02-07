@@ -1,6 +1,5 @@
+#define ABG_IMPLEMENTATION
 #define SPRITESU_IMPLEMENTATION
-#define SPRITESU_RECT
-#include "src/external/SpritesU.hpp"
 #include "src/common.hpp"
 
 #include "src/engine/arena/Arena.hpp"
@@ -27,29 +26,30 @@ MenuV2 menu2 = MenuV2();
 Font4x6 font = Font4x6();
 
 void setup() {
-    arduboy.begin();
+    // arduboy.begin();
+    // arduboy.setFrameRate(45);
+
+    arduboy.boot();
+    arduboy.startGray();
     arduboy.initRandomSeed();
-    arduboy.setFrameRate(45);
 
     FX::begin(FX_DATA_PAGE);
     FX::setFont(font4x6, dcmNormal);   // select default font
     FX::setCursorRange(0, 32767);
 
     world.init(&arduboy, &state, &engine, &menu2);
-    state = GameState_t::ARENA;
+    state = GameState_t::WORLD;
     engine.init(&state, &menu2);
     player.basic();
     // engine.startArena(player, 0);
-    //   engine.startArena(arduboy, player, 6);
+    //    engine.startArena(arduboy, player, 6);
 }
 
 void run() {
     if (menu2.dialogMenu.peek()) {
         menu2.run(engine);
-        FX::display();
         return;
     }
-    FX::display(CLEAR_BUFFER);
     switch (state) {
     case GameState_t::BATTLE:
         engine.encounter(player);
@@ -88,11 +88,12 @@ void render() {
 }
 
 void loop() {
-    if (!arduboy.nextFrame()) {
-        return;
-    }
+    FX::enableOLED();
+    arduboy.waitForNextPlane();
+    FX::disableOLED();
     arduboy.pollButtons();
 
-    run();
+    if (arduboy.needsUpdate())
+        run();
     render();
 }
