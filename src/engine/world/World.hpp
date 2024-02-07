@@ -17,7 +17,6 @@ enum class Direction { UP, RIGHT, DOWN, LEFT };
 
 class WorldEngine {
   private:
-    Arduboy2Base *arduboy;
     Direction playerDirection;
     Encounter encounterTable;
     BattleEngine *battleEngine;

@@ -1,4 +1,5 @@
 #include "TileMap.hpp"
+#include "../../common.hpp"
 #include <ArduboyFX.h>
 #include "../../fxdata.h"
 
@@ -142,7 +143,7 @@ void TileMap::draw(int8_t pX, int8_t pY, int8_t offsetX, int8_t offsetY) {
         for (uint8_t j = 0; j < 10; j++) {
             int8_t x = ((j * TILE_WIDTH) - (pX * TILE_WIDTH) - TILE_WIDTH) + offsetX;
             int8_t y = ((i * TILE_HEIGHT) - (pY * TILE_HEIGHT) - TILE_HEIGHT) + offsetY;
-            FX::drawBitmap(x, y, worldTiles, map[i]->tiles[j], dbmNormal);
+            SpritesU::drawOverwriteFX(x, y, WORLDTILES_IMG, this->map[i]->tiles[j] * 3);
         }
     }
 }
