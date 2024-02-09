@@ -26,6 +26,8 @@ include "data/teams.txt"
 include "data/chunks.txt"
 
 include "Sprites.txt"
+include "generated/string_images_black.txt"
+include "generated/string_images_white.txt"
 
  uint8_t greyTest[]  = {
   32,  32, 232,  84,  20,  20, 228,   4, 200, 168,  40,  40, 200,   0,   0,   0,
