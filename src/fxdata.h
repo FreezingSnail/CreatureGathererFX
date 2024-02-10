@@ -6,8 +6,8 @@ using uint24_t = __uint24;
 
 // Initialize FX hardware using  FX::begin(FX_DATA_PAGE); in the setup() function.
 
-constexpr uint16_t FX_DATA_PAGE  = 0xfdc6;
-constexpr uint24_t FX_DATA_BYTES = 145910;
+constexpr uint16_t FX_DATA_PAGE  = 0xfd94;
+constexpr uint24_t FX_DATA_BYTES = 158546;
 
 constexpr uint24_t characterSheet = 0x000000;
 constexpr uint16_t characterSheetWidth  = 12;
@@ -260,308 +260,94 @@ namespace Names
 }
 
 constexpr uint24_t testmap = 0x00609F;
-constexpr uint24_t ARDUBOYFONT_IMG = 0x0062DF;
-constexpr uint24_t LETTERS_IMG = 0x0074E1;
-constexpr uint24_t TILESHEET_IMG = 0x0134E3;
-constexpr uint24_t MOVEINFO_IMG = 0x0140E5;
-constexpr uint24_t FIGHTMENU_IMG = 0x0143B7;
-constexpr uint24_t MASKEDFONT_IMG = 0x0155B9;
-constexpr uint24_t BATTLEMENU_IMG = 0x01E5BB;
-constexpr uint24_t FONT_IMG = 0x01EA3D;
-constexpr uint24_t CREATURESPRITES_IMG = 0x01F174;
-constexpr uint24_t CHARACTERSHEET_IMG = 0x022176;
-constexpr uint24_t WORLDTILES_IMG = 0x0224D8;
-constexpr uint24_t NPC_IMG = 0x022ADA;
-namespace CreatureNames_black
+constexpr uint24_t arduboyFont = 0x0062DF;
+constexpr uint24_t letters = 0x0074E1;
+constexpr uint24_t tilesheet = 0x0134E3;
+constexpr uint24_t moveInfo = 0x0140E5;
+constexpr uint24_t fightMenu = 0x0143B7;
+constexpr uint24_t maskedFont = 0x0155B9;
+constexpr uint24_t battleMenu = 0x01E5BB;
+constexpr uint24_t Font = 0x01EA3D;
+constexpr uint24_t creatureSprites = 0x01F174;
+constexpr uint24_t characterSheet = 0x022176;
+constexpr uint24_t worldTiles = 0x0224D8;
+constexpr uint24_t npc = 0x022ADA;
+constexpr uint24_t creature9 = 0x022B9C;
+constexpr uint24_t creature21 = 0x022C2E;
+constexpr uint24_t creature24 = 0x022CC0;
+constexpr uint24_t creature5 = 0x022D2E;
+constexpr uint24_t test1 = 0x022EE0;
+constexpr uint24_t creature18 = 0x022F96;
+constexpr uint24_t creature25 = 0x023094;
+constexpr uint24_t creature15 = 0x0231B6;
+constexpr uint24_t creature1 = 0x023338;
+constexpr uint24_t creature28 = 0x0234EA;
+constexpr uint24_t creature10 = 0x0235E8;
+constexpr uint24_t creature3 = 0x0236AA;
+constexpr uint24_t creature7 = 0x02385C;
+constexpr uint24_t creature4 = 0x02397E;
+constexpr uint24_t creature8 = 0x023B30;
+constexpr uint24_t creature30 = 0x023CE2;
+constexpr uint24_t creature30 = 0x023DA4;
+constexpr uint24_t creature26 = 0x023E5A;
+constexpr uint24_t creature11 = 0x023F34;
+constexpr uint24_t creature19 = 0x024056;
+constexpr uint24_t creature5 = 0x024148;
+constexpr uint24_t test2 = 0x0242D6;
+constexpr uint24_t creature27 = 0x02438C;
+constexpr uint24_t creature27 = 0x02450E;
+constexpr uint24_t creature12 = 0x024678;
+constexpr uint24_t creature0 = 0x02473A;
+constexpr uint24_t creature13 = 0x024910;
+constexpr uint24_t creature6 = 0x0249D2;
+constexpr uint24_t creature12 = 0x024A88;
+constexpr uint24_t creature2 = 0x024B3E;
+constexpr uint24_t creature0 = 0x024D20;
+constexpr uint24_t creature24 = 0x024F02;
+constexpr uint24_t creature15 = 0x024F94;
+constexpr uint24_t test2 = 0x0250FE;
+constexpr uint24_t creature16 = 0x0251C0;
+constexpr uint24_t creature22 = 0x025342;
+constexpr uint24_t creature4 = 0x025404;
+constexpr uint24_t creature16 = 0x025592;
+constexpr uint24_t creature19 = 0x0256FC;
+constexpr uint24_t creature31 = 0x0257D6;
+constexpr uint24_t creature23 = 0x025868;
+constexpr uint24_t creature20 = 0x0258FA;
+constexpr uint24_t creature28 = 0x02598C;
+constexpr uint24_t creature22 = 0x025AAE;
+constexpr uint24_t creature17 = 0x025B64;
+constexpr uint24_t creature29 = 0x025CB6;
+constexpr uint24_t creature6 = 0x025DB4;
+constexpr uint24_t creature26 = 0x025E76;
+constexpr uint24_t creature13 = 0x025F68;
+constexpr uint24_t test1 = 0x02601E;
+constexpr uint24_t creature29 = 0x0260E0;
+constexpr uint24_t creature2 = 0x026202;
+constexpr uint24_t creature18 = 0x0263D8;
+constexpr uint24_t creature3 = 0x0264FA;
+constexpr uint24_t creature23 = 0x026688;
+constexpr uint24_t creature17 = 0x0266F6;
+constexpr uint24_t creature10 = 0x02683C;
+constexpr uint24_t creature14 = 0x0268F2;
+namespace CreatureNames
 {
-  constexpr uint24_t creature0 = 0x022B9C;
-  constexpr uint16_t creature0Width  = 78;
-  constexpr uint16_t creature0Height = 8;
-
-  constexpr uint24_t creature1 = 0x022BEE;
-  constexpr uint16_t creature1Width  = 72;
-  constexpr uint16_t creature1Height = 8;
-
-  constexpr uint24_t creature2 = 0x022C3A;
-  constexpr uint16_t creature2Width  = 78;
-  constexpr uint16_t creature2Height = 8;
-
-  constexpr uint24_t creature3 = 0x022C8C;
-  constexpr uint16_t creature3Width  = 66;
-  constexpr uint16_t creature3Height = 8;
-
-  constexpr uint24_t creature4 = 0x022CD2;
-  constexpr uint16_t creature4Width  = 66;
-  constexpr uint16_t creature4Height = 8;
-
-  constexpr uint24_t creature5 = 0x022D18;
-  constexpr uint16_t creature5Width  = 66;
-  constexpr uint16_t creature5Height = 8;
-
-  constexpr uint24_t creature6 = 0x022D5E;
-  constexpr uint16_t creature6Width  = 30;
-  constexpr uint16_t creature6Height = 8;
-
-  constexpr uint24_t creature7 = 0x022D80;
-  constexpr uint16_t creature7Width  = 48;
-  constexpr uint16_t creature7Height = 8;
-
-  constexpr uint24_t creature8 = 0x022DB4;
-  constexpr uint16_t creature8Width  = 72;
-  constexpr uint16_t creature8Height = 8;
-
-  constexpr uint24_t creature9 = 0x022E00;
-  constexpr uint16_t creature9Width  = 24;
-  constexpr uint16_t creature9Height = 8;
-
-  constexpr uint24_t creature10 = 0x022E1C;
-  constexpr uint16_t creature10Width  = 30;
-  constexpr uint16_t creature10Height = 8;
-
-  constexpr uint24_t creature11 = 0x022E3E;
-  constexpr uint16_t creature11Width  = 48;
-  constexpr uint16_t creature11Height = 8;
-
-  constexpr uint24_t creature12 = 0x022E72;
-  constexpr uint16_t creature12Width  = 30;
-  constexpr uint16_t creature12Height = 8;
-
-  constexpr uint24_t creature13 = 0x022E94;
-  constexpr uint16_t creature13Width  = 30;
-  constexpr uint16_t creature13Height = 8;
-
-  constexpr uint24_t creature14 = 0x022EB6;
-  constexpr uint16_t creature14Width  = 24;
-  constexpr uint16_t creature14Height = 8;
-
-  constexpr uint24_t creature15 = 0x022ED2;
-  constexpr uint16_t creature15Width  = 60;
-  constexpr uint16_t creature15Height = 8;
-
-  constexpr uint24_t creature16 = 0x022F12;
-  constexpr uint16_t creature16Width  = 60;
-  constexpr uint16_t creature16Height = 8;
-
-  constexpr uint24_t creature17 = 0x022F52;
-  constexpr uint16_t creature17Width  = 54;
-  constexpr uint16_t creature17Height = 8;
-
-  constexpr uint24_t creature18 = 0x022F8C;
-  constexpr uint16_t creature18Width  = 42;
-  constexpr uint16_t creature18Height = 8;
-
-  constexpr uint24_t creature19 = 0x022FBA;
-  constexpr uint16_t creature19Width  = 36;
-  constexpr uint16_t creature19Height = 8;
-
-  constexpr uint24_t creature20 = 0x022FE2;
-  constexpr uint16_t creature20Width  = 24;
-  constexpr uint16_t creature20Height = 8;
-
-  constexpr uint24_t creature21 = 0x022FFE;
-  constexpr uint16_t creature21Width  = 24;
-  constexpr uint16_t creature21Height = 8;
-
-  constexpr uint24_t creature22 = 0x02301A;
-  constexpr uint16_t creature22Width  = 30;
-  constexpr uint16_t creature22Height = 8;
-
-  constexpr uint24_t creature23 = 0x02303C;
-  constexpr uint16_t creature23Width  = 18;
-  constexpr uint16_t creature23Height = 8;
-
-  constexpr uint24_t creature24 = 0x023052;
-  constexpr uint16_t creature24Width  = 18;
-  constexpr uint16_t creature24Height = 8;
-
-  constexpr uint24_t creature25 = 0x023068;
-  constexpr uint16_t creature25Width  = 48;
-  constexpr uint16_t creature25Height = 8;
-
-  constexpr uint24_t creature26 = 0x02309C;
-  constexpr uint16_t creature26Width  = 36;
-  constexpr uint16_t creature26Height = 8;
-
-  constexpr uint24_t creature27 = 0x0230C4;
-  constexpr uint16_t creature27Width  = 60;
-  constexpr uint16_t creature27Height = 8;
-
-  constexpr uint24_t creature28 = 0x023104;
-  constexpr uint16_t creature28Width  = 42;
-  constexpr uint16_t creature28Height = 8;
-
-  constexpr uint24_t creature29 = 0x023132;
-  constexpr uint16_t creature29Width  = 42;
-  constexpr uint16_t creature29Height = 8;
-
-  constexpr uint24_t creature30 = 0x023160;
-  constexpr uint16_t creature30Width  = 30;
-  constexpr uint16_t creature30Height = 8;
-
-  constexpr uint24_t creature31 = 0x023182;
-  constexpr uint16_t creature31Width  = 24;
-  constexpr uint16_t creature31Height = 8;
-
-  constexpr uint24_t CreatureNames = 0x02319E;
+  constexpr uint24_t CreatureNames = 0x026984;
 }
 
-namespace Test_black
+namespace Test
 {
-  constexpr uint24_t test1 = 0x0231FE;
-  constexpr uint16_t test1Width  = 30;
-  constexpr uint16_t test1Height = 8;
-
-  constexpr uint24_t test2 = 0x023220;
-  constexpr uint16_t test2Width  = 30;
-  constexpr uint16_t test2Height = 8;
-
-  constexpr uint24_t Test = 0x023242;
+  constexpr uint24_t Test = 0x0269E4;
 }
 
-namespace CreatureNames_white
+namespace CreatureNames
 {
-  constexpr uint24_t creature0 = 0x023248;
-  constexpr uint16_t creature0Width  = 78;
-  constexpr uint16_t creature0Height = 8;
-
-  constexpr uint24_t creature1 = 0x02329A;
-  constexpr uint16_t creature1Width  = 72;
-  constexpr uint16_t creature1Height = 8;
-
-  constexpr uint24_t creature2 = 0x0232E6;
-  constexpr uint16_t creature2Width  = 78;
-  constexpr uint16_t creature2Height = 8;
-
-  constexpr uint24_t creature3 = 0x023338;
-  constexpr uint16_t creature3Width  = 66;
-  constexpr uint16_t creature3Height = 8;
-
-  constexpr uint24_t creature4 = 0x02337E;
-  constexpr uint16_t creature4Width  = 66;
-  constexpr uint16_t creature4Height = 8;
-
-  constexpr uint24_t creature5 = 0x0233C4;
-  constexpr uint16_t creature5Width  = 66;
-  constexpr uint16_t creature5Height = 8;
-
-  constexpr uint24_t creature6 = 0x02340A;
-  constexpr uint16_t creature6Width  = 30;
-  constexpr uint16_t creature6Height = 8;
-
-  constexpr uint24_t creature7 = 0x02342C;
-  constexpr uint16_t creature7Width  = 48;
-  constexpr uint16_t creature7Height = 8;
-
-  constexpr uint24_t creature8 = 0x023460;
-  constexpr uint16_t creature8Width  = 72;
-  constexpr uint16_t creature8Height = 8;
-
-  constexpr uint24_t creature9 = 0x0234AC;
-  constexpr uint16_t creature9Width  = 24;
-  constexpr uint16_t creature9Height = 8;
-
-  constexpr uint24_t creature10 = 0x0234C8;
-  constexpr uint16_t creature10Width  = 30;
-  constexpr uint16_t creature10Height = 8;
-
-  constexpr uint24_t creature11 = 0x0234EA;
-  constexpr uint16_t creature11Width  = 48;
-  constexpr uint16_t creature11Height = 8;
-
-  constexpr uint24_t creature12 = 0x02351E;
-  constexpr uint16_t creature12Width  = 30;
-  constexpr uint16_t creature12Height = 8;
-
-  constexpr uint24_t creature13 = 0x023540;
-  constexpr uint16_t creature13Width  = 30;
-  constexpr uint16_t creature13Height = 8;
-
-  constexpr uint24_t creature14 = 0x023562;
-  constexpr uint16_t creature14Width  = 24;
-  constexpr uint16_t creature14Height = 8;
-
-  constexpr uint24_t creature15 = 0x02357E;
-  constexpr uint16_t creature15Width  = 60;
-  constexpr uint16_t creature15Height = 8;
-
-  constexpr uint24_t creature16 = 0x0235BE;
-  constexpr uint16_t creature16Width  = 60;
-  constexpr uint16_t creature16Height = 8;
-
-  constexpr uint24_t creature17 = 0x0235FE;
-  constexpr uint16_t creature17Width  = 54;
-  constexpr uint16_t creature17Height = 8;
-
-  constexpr uint24_t creature18 = 0x023638;
-  constexpr uint16_t creature18Width  = 42;
-  constexpr uint16_t creature18Height = 8;
-
-  constexpr uint24_t creature19 = 0x023666;
-  constexpr uint16_t creature19Width  = 36;
-  constexpr uint16_t creature19Height = 8;
-
-  constexpr uint24_t creature20 = 0x02368E;
-  constexpr uint16_t creature20Width  = 24;
-  constexpr uint16_t creature20Height = 8;
-
-  constexpr uint24_t creature21 = 0x0236AA;
-  constexpr uint16_t creature21Width  = 24;
-  constexpr uint16_t creature21Height = 8;
-
-  constexpr uint24_t creature22 = 0x0236C6;
-  constexpr uint16_t creature22Width  = 30;
-  constexpr uint16_t creature22Height = 8;
-
-  constexpr uint24_t creature23 = 0x0236E8;
-  constexpr uint16_t creature23Width  = 18;
-  constexpr uint16_t creature23Height = 8;
-
-  constexpr uint24_t creature24 = 0x0236FE;
-  constexpr uint16_t creature24Width  = 18;
-  constexpr uint16_t creature24Height = 8;
-
-  constexpr uint24_t creature25 = 0x023714;
-  constexpr uint16_t creature25Width  = 48;
-  constexpr uint16_t creature25Height = 8;
-
-  constexpr uint24_t creature26 = 0x023748;
-  constexpr uint16_t creature26Width  = 36;
-  constexpr uint16_t creature26Height = 8;
-
-  constexpr uint24_t creature27 = 0x023770;
-  constexpr uint16_t creature27Width  = 60;
-  constexpr uint16_t creature27Height = 8;
-
-  constexpr uint24_t creature28 = 0x0237B0;
-  constexpr uint16_t creature28Width  = 42;
-  constexpr uint16_t creature28Height = 8;
-
-  constexpr uint24_t creature29 = 0x0237DE;
-  constexpr uint16_t creature29Width  = 42;
-  constexpr uint16_t creature29Height = 8;
-
-  constexpr uint24_t creature30 = 0x02380C;
-  constexpr uint16_t creature30Width  = 30;
-  constexpr uint16_t creature30Height = 8;
-
-  constexpr uint24_t creature31 = 0x02382E;
-  constexpr uint16_t creature31Width  = 24;
-  constexpr uint16_t creature31Height = 8;
-
-  constexpr uint24_t CreatureNames = 0x02384A;
+  constexpr uint24_t CreatureNames = 0x0269EA;
 }
 
-namespace Test_white
+namespace Test
 {
-  constexpr uint24_t test1 = 0x0238AA;
-  constexpr uint16_t test1Width  = 30;
-  constexpr uint16_t test1Height = 8;
-
-  constexpr uint24_t test2 = 0x0238CC;
-  constexpr uint16_t test2Width  = 30;
-  constexpr uint16_t test2Height = 8;
-
-  constexpr uint24_t Test = 0x0238EE;
+  constexpr uint24_t Test = 0x026A4A;
 }
 
-constexpr uint24_t greyTest = 0x0238F4;
+constexpr uint24_t greyTest = 0x026A50;
