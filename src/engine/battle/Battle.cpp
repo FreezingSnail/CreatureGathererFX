@@ -415,33 +415,35 @@ void BattleEngine::drawScene() {
 }
 
 void BattleEngine::drawOpponent() {
-    SpritesU::drawOverwriteFX(0, 0, CREATURESPRITES_IMG, opponentCur->id * 3 + arduboy.currentPlane());
+    SpritesU::drawOverwriteFX(0, 0, creatureSprites, opponentCur->id * 3 + arduboy.currentPlane());
 
     // this->drawOpponentHP();
 }
 
 void BattleEngine::drawPlayer() {
-    SpritesU::drawOverwriteFX(96, 0, CREATURESPRITES_IMG, playerCur->id * 3 + arduboy.currentPlane());
+    SpritesU::drawOverwriteFX(96, 0, creatureSprites, playerCur->id * 3 + arduboy.currentPlane());
+    uint24_t rowAddress = FX::readIndexedUInt24(CreatureNames::CreatureNames, playerCur->id);
+    SpritesU::drawOverwriteFX(60, 32, rowAddress, (playerCur->id) * 3 + arduboy.currentPlane());
 
     // this->drawPlayerHP();
 }
 
 void BattleEngine::drawPlayerHP() {
-    FX::setFont(font4x6, dcmNormal);
-    FX::setCursor(70, 35);   // select default font
-    FX::drawString(MenuFXData::hpText);
-    FX::drawNumber((unsigned)this->playerHealths[this->playerIndex]);
-    FX::drawString(("/"));
-    FX::drawNumber((unsigned)this->playerCur->statlist.hp);
-    FX::setFont(font4x6, dcmBlack);
+    // FX::setFont(font4x6, dcmNormal);
+    // FX::setCursor(70, 35);   // select default font
+    // FX::drawString(MenuFXData::hpText);
+    // FX::drawNumber((unsigned)this->playerHealths[this->playerIndex]);
+    // FX::drawString(("/"));
+    // FX::drawNumber((unsigned)this->playerCur->statlist.hp);
+    // FX::setFont(font4x6, dcmBlack);
 }
 
 void BattleEngine::drawOpponentHP() {
-    FX::setFont(font4x6, dcmNormal);
-    FX::setCursor(2, 35);   // select default font
-    FX::drawString(MenuFXData::hpText);
-    FX::drawNumber((unsigned)this->opponentHealths[this->opponentIndex]);
-    FX::drawString(("/"));
-    FX::drawNumber((unsigned)this->opponentCur->statlist.hp);
-    FX::setFont(font4x6, dcmBlack);
+    // FX::setFont(font4x6, dcmNormal);
+    //  FX::setCursor(2, 35);   // select default font
+    //  FX::drawString(MenuFXData::hpText);
+    //  FX::drawNumber((unsigned)this->opponentHealths[this->opponentIndex]);
+    //  FX::drawString(("/"));
+    //  FX::drawNumber((unsigned)this->opponentCur->statlist.hp);
+    //  FX::setFont(font4x6, dcmBlack);
 }

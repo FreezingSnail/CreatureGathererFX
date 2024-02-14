@@ -70,7 +70,7 @@ static void printMoveInfo(uint8_t index, uint8_t x, uint8_t y) {
 }
 
 static void printBattleMenu(int8_t index) {
-    FX::drawBitmap(0, 41, fightMenu, index, dbmNormal);
+    SpritesU::drawOverwriteFX(0, 40, fightMenu, index * 3 + arduboy.currentPlane());
 }
 
 static void printCursor(int8_t index) {
@@ -88,9 +88,9 @@ static void printCursor(int8_t index) {
         FX::setCursor(58, 54);
         break;
     }
-    FX::setFont(arduboyFont, dbmReverse);
-    // FX::drawChar('*');
-    FX::setFont(font4x6, dbmNormal);
+    // FX::setFont(arduboyFont, dbmReverse);
+    //  FX::drawChar('*');
+    // FX::setFont(font4x6, dbmNormal);
 }
 
 static void printMoveMenu(int8_t index, uint8_t *moveList) {
@@ -109,8 +109,8 @@ static void printMoveMenu(int8_t index, uint8_t *moveList) {
 static void printCreatureMenu(uint8_t c1, uint8_t c2, Creature *cpointer) {
     font.setTextColor(BLACK);
     cpointer->printCreature();
-    uint24_t addr = FX::readIndexedUInt24(CreatureData::creatureNames, c1);
+    uint24_t addr = FX::readIndexedUInt24(CreatureNames::CreatureNames, c1);
     printString(font, addr, 6, 45);
-    addr = FX::readIndexedUInt24(CreatureData::creatureNames, c2);
+    addr = FX::readIndexedUInt24(CreatureNames::CreatureNames, c2);
     printString(font, addr, 6, 55);
 }

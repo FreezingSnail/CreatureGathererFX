@@ -82,8 +82,7 @@ void Arena::registerMoves(Player &player) {
     validMoves(movePool, moves);
     font.setCursor(0, 0);
     font.print(this->moveIndex);
-    addr = FX::readIndexedUInt24(CreatureData::creatureNames, curMonID);
-    printString(font, addr, 0, 10);
+    SpritesU::drawOverwriteFX(0, 10, CreatureNames::CreatureNames, curMonID * 3 + arduboy.currentPlane());
 
     for (uint8_t i = 0; i < 4; i++) {
         int8_t move = moves[this->movePointer + i];
@@ -118,9 +117,13 @@ void Arena::registerMoves(Player &player) {
     printMoveInfo(this->cursor, 70, 20);
 }
 
-uint8_t Arena::selectOpponent() { return 0; }
+uint8_t Arena::selectOpponent() {
+    return 0;
+}
 
-void Arena::startBattle(BattleEngine &engine, Player &player) { engine.startArena(player, 4); }
+void Arena::startBattle(BattleEngine &engine, Player &player) {
+    engine.startArena(player, 4);
+}
 
 void Arena::displayRegisteredCount() {
     for (uint8_t i = 0; i < this->registerIndex; i++) {

@@ -34,15 +34,15 @@ void setup() {
     arduboy.initRandomSeed();
 
     FX::begin(FX_DATA_PAGE);
-    FX::setFont(font4x6, dcmNormal);   // select default font
+    // FX::setFont(Font, dcmNormal);   // select default font
     FX::setCursorRange(0, 32767);
 
     world.init(&arduboy, &state, &engine, &menu2);
     state = GameState_t::WORLD;
     engine.init(&state, &menu2);
     player.basic();
-    // engine.startArena(player, 0);
-    //    engine.startArena(arduboy, player, 6);
+    engine.startArena(player, 0);
+    //     engine.startArena(arduboy, player, 6);
 }
 
 void run() {
@@ -91,9 +91,10 @@ void loop() {
     FX::enableOLED();
     arduboy.waitForNextPlane();
     FX::disableOLED();
-    arduboy.pollButtons();
 
-    if (arduboy.needsUpdate())
+    if (arduboy.needsUpdate()) {
+        arduboy.pollButtons();
         run();
+    }
     render();
 }

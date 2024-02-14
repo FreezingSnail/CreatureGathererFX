@@ -97,6 +97,15 @@ def parse_filename(filename):
     return name, int(width), int(height)
 
 
+def sort_strings(strings):
+    def key_func(s):
+        match = re.match(r'(\D+)(\d+)', s)
+        prefix, num = match.groups()
+        return (prefix, int(num))
+
+    return sorted(strings, key=key_func)
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="This script converts images to a specific format.\n Place all images of the format <name>_<width>x<height>.png in a directory and run this script with the path to the dir as an argument.")
@@ -120,14 +129,15 @@ def main():
     pattern = re.compile(r'^.*_\d+x\d+\.png$')
     script_dir = os.path.dirname(os.path.abspath(__file__))
     dir_path = os.path.join(script_dir, args.dirpath)
+
     for filename in os.listdir(dir_path):
         filepath = os.path.join(script_dir, args.dirpath, filename)
         if os.path.isfile(filepath) and pattern.match(filename):
-            print(filename)
             file_details = parse_filename(filename)
-            out = convert_header(filepath,  file_details[0].upper() + "_IMG", args.shades, file_details[1],
+            out = convert_header(filepath,  file_details[0], args.shades, file_details[1],
                                  file_details[2])
             all_buffers += out
+            # print(filename, len(out), len(all_buffers))
 
     out_dir = os.path.join(script_dir, args.out)
     with open(out_dir+"Sprites.txt", 'w') as f:
