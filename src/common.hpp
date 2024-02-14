@@ -16,6 +16,8 @@ extern ArduboyGBase_Config<ABG_Mode::L4_Triplane> arduboy;
 extern Font4x6 font;
 #include "lib/Text.hpp"
 
-#define FRAME(x) x
+#include <stdint.h>
+
+#define FRAME(x) x * 3 + arduboy.currentPlane()
 
 #define DGF __attribute__((optimize("-O0")))
