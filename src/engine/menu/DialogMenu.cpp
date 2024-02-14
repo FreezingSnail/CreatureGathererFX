@@ -37,29 +37,40 @@ void DialogMenu::drawPopMenu() {
 
     case NAME:
         // font.setCursor(curMenu.x + 3, curMenu.y + 3);
-        addr = FX::readIndexedUInt24(CreatureData::creatureNames, curMenu.textAddress);
-        printString(font, addr, curMenu.x + 3, curMenu.y + 3);
+        addr = FX::readIndexedUInt24(CreatureNames::CreatureNames, curMenu.textAddress);
+        // printString(font, addr, curMenu.x + 3, curMenu.y + 3);
+        SpritesU::drawOverwriteFX(curMenu.x + 3, curMenu.y + 3, CreatureNames::CreatureNames,
+                                  curMenu.textAddress * 3 + arduboy.currentPlane());
         // font.setCursor(curMenu.x + 3, curMenu.y + 13);
         printString(font, MenuFXData::attackText, curMenu.x + 3, curMenu.y + 13);
         break;
     case ENEMY_NAME:
         // font.setCursor(curMenu.x + 3, curMenu.y + 3);
-        addr = FX::readIndexedUInt24(CreatureData::creatureNames, curMenu.textAddress);
-        printString(font, addr, curMenu.x + 3, curMenu.y + 3);
+        // addr = FX::readIndexedUInt24(CreatureData::creatureNames, curMenu.textAddress);
+        // printString(font, addr, curMenu.x + 3, curMenu.y + 3);
+        SpritesU::drawOverwriteFX(curMenu.x + 3, curMenu.y + 3, CreatureNames::CreatureNames,
+                                  curMenu.textAddress * 3 + arduboy.currentPlane());
+
         // font.setCursor(curMenu.x + 3, curMenu.y + 13);
         printString(font, MenuFXData::enemyAttackText, curMenu.x + 3, curMenu.y + 13);
         break;
     case FAINT:
         // font.setCursor(curMenu.x + 3, curMenu.y + 3);
-        addr = FX::readIndexedUInt24(CreatureData::creatureNames, curMenu.textAddress);
-        printString(font, addr, curMenu.x + 3, curMenu.y + 3);
+        // addr = FX::readIndexedUInt24(CreatureData::creatureNames, curMenu.textAddress);
+        // printString(font, addr, curMenu.x + 3, curMenu.y + 3);
         // font.setCursor(curMenu.x + 3, curMenu.y + 13);
+        SpritesU::drawOverwriteFX(curMenu.x + 3, curMenu.y + 3, CreatureNames::CreatureNames,
+                                  curMenu.textAddress * 3 + arduboy.currentPlane());
+
         printString(font, MenuFXData::Fainted, curMenu.x + 3, curMenu.y + 13);
         break;
     case SWITCH:
         // font.setCursor(curMenu.x + 3, curMenu.y + 3);
-        addr = FX::readIndexedUInt24(CreatureData::creatureNames, curMenu.textAddress);
-        printString(font, addr, curMenu.x + 3, curMenu.y + 3);
+        // addr = FX::readIndexedUInt24(CreatureData::creatureNames, curMenu.textAddress);
+        // printString(font, addr, curMenu.x + 3, curMenu.y + 3);
+        SpritesU::drawOverwriteFX(curMenu.x + 3, curMenu.y + 3, CreatureNames::CreatureNames,
+                                  curMenu.textAddress * 3 + arduboy.currentPlane());
+
         // font.setCursor(curMenu.x + 3, curMenu.y + 13);
         printString(font, MenuFXData::SwitchIn, curMenu.x + 3, curMenu.y + 13);
         break;
@@ -69,8 +80,11 @@ void DialogMenu::drawPopMenu() {
         break;
     case LOSS:
         // font.setCursor(curMenu.x + 3, curMenu.y + 3);
-        addr = FX::readIndexedUInt24(CreatureData::creatureNames, curMenu.textAddress);
-        printString(font, addr, curMenu.x + 3, curMenu.y + 3);
+        // addr = FX::readIndexedUInt24(CreatureData::creatureNames, curMenu.textAddress);
+        // printString(font, addr, curMenu.x + 3, curMenu.y + 3);
+        SpritesU::drawOverwriteFX(curMenu.x + 3, curMenu.y + 3, CreatureNames::CreatureNames,
+                                  curMenu.textAddress * 3 + arduboy.currentPlane());
+
         // font.setCursor(curMenu.x + 3, curMenu.y + 13);
         printString(font, MenuFXData::lose, curMenu.x + 3, curMenu.y + 13);
         break;

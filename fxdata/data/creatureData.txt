@@ -1,44 +1,5 @@
 namespace CreatureData {
-    uint8_t creature0[]  = "SquibbleSnail\0";
-    uint8_t creature1[]  = "SquableSnail\0";
-    uint8_t creature2[]  = "ScrambleSnail\0";
-    uint8_t creature3[]  = "SkitterCrab\0";
-    uint8_t creature4[]  = "ScatterCrab\0";
-    uint8_t creature5[]  = "ShatterCrab\0";
-    uint8_t creature6[]  = "squid\0";
-    uint8_t creature7[]  = "bigsquid\0";
-    uint8_t creature8[]  = "BiggestSquid\0";
-    uint8_t creature9[]  = "bell\0";
-    uint8_t creature10[]  = "spark\0";
-    uint8_t creature11[]  = "cuircuit\0";
-    uint8_t creature12[]  = "hedge\0";
-    uint8_t creature13[]  = "cloud\0";
-    uint8_t creature14[]  = "rock\0";
-    uint8_t creature15[]  = "wiggleworm\0";
-    uint8_t creature16[]  = "waggleworm\0";
-    uint8_t creature17[]  = "skimskate\0";
-    uint8_t creature18[]  = "skimray\0";
-    uint8_t creature19[]  = "billow\0";
-    uint8_t creature20[]  = "howl\0";
-    uint8_t creature21[]  = "item\0";
-    uint8_t creature22[]  = "item2\0";
-    uint8_t creature23[]  = "zip\0";
-    uint8_t creature24[]  = "zap\0";
-    uint8_t creature25[]  = "suculent\0";
-    uint8_t creature26[]  = "cactus\0";
-    uint8_t creature27[]  = "flickerfly\0";
-    uint8_t creature28[]  = "flitfly\0";
-    uint8_t creature29[]  = "dragon?\0";
-    uint8_t creature30[]  = "skull\0";
-    uint8_t creature31[]  = "ardu\0";
-
-    uint24_t creatureNames[]  = {
-    creature0,  creature1,  creature2,  creature3,  creature4,  creature5,
-    creature6,  creature7,  creature8,  creature9,  creature10, creature11,
-    creature12, creature13, creature14, creature15, creature16, creature17,
-    creature18, creature19, creature20, creature21, creature22, creature23,
-    creature24, creature25, creature26, creature27, creature28, creature29,
-    creature30, creature31};
+    
 
 
     uint8_t creatureData[] = {

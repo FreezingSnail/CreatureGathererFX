@@ -26,33 +26,37 @@ void MenuV2::pop() {
 void MenuV2::transverse() {
     switch (CURRENT_MENU) {
     case BATTLE_OPTIONS:
-        if (Arduboy2::justPressed(LEFT_BUTTON)) {
+        if (arduboy.justPressed(LEFT_BUTTON)) {
             this->cursorIndex--;
-        } else if (Arduboy2::justPressed(RIGHT_BUTTON)) {
+        }
+        if (arduboy.justPressed(RIGHT_BUTTON)) {
             this->cursorIndex++;
         }
-        if (Arduboy2::justPressed(DOWN_BUTTON)) {
+        if (arduboy.justPressed(DOWN_BUTTON)) {
             this->cursorIndex += 2;
-        } else if (Arduboy2::justPressed(UP_BUTTON)) {
+        }
+        if (arduboy.justPressed(UP_BUTTON)) {
             this->cursorIndex -= 2;
         }
         break;
     case BATTLE_MOVE_SELECT:
-        if (Arduboy2::justPressed(LEFT_BUTTON)) {
+        if (arduboy.justPressed(LEFT_BUTTON)) {
             this->cursorIndex--;
-        } else if (Arduboy2::justPressed(RIGHT_BUTTON)) {
+        }
+        if (arduboy.justPressed(RIGHT_BUTTON)) {
             this->cursorIndex++;
         }
-        if (Arduboy2::justPressed(DOWN_BUTTON)) {
+        if (arduboy.justPressed(DOWN_BUTTON)) {
             this->cursorIndex += 2;
-        } else if (Arduboy2::justPressed(UP_BUTTON)) {
+        }
+        if (arduboy.justPressed(UP_BUTTON)) {
             this->cursorIndex -= 2;
         }
         break;
     case BATTLE_CREATURE_SELECT:
-        if (Arduboy2::justPressed(DOWN_BUTTON)) {
+        if (arduboy.justPressed(DOWN_BUTTON)) {
             this->cursorIndex += 2;
-        } else if (Arduboy2::justPressed(UP_BUTTON)) {
+        } else if (arduboy.justPressed(UP_BUTTON)) {
             this->cursorIndex -= 2;
         }
         break;
@@ -66,7 +70,7 @@ void MenuV2::transverse() {
 }
 
 void MenuV2::action(BattleEngine &engine) {
-    if (Arduboy2::justPressed(A_BUTTON)) {
+    if (arduboy.justPressed(A_BUTTON)) {
         switch (CURRENT_MENU) {
         case BATTLE_OPTIONS:
             switch (this->cursorIndex) {
@@ -123,7 +127,7 @@ void MenuV2::action(BattleEngine &engine) {
             }
             break;
         }
-    } else if (Arduboy2::justPressed(B_BUTTON)) {
+    } else if (arduboy.justPressed(B_BUTTON)) {
         if (CURRENT_MENU == BATTLE_MOVE_SELECT || CURRENT_MENU == BATTLE_CREATURE_SELECT) {
             this->pop();
         }
@@ -134,27 +138,28 @@ void DGF MenuV2::run(BattleEngine &engine) {
     if (this->menuPointer < 0 && !dialogMenu.peek())
         return;
     if (dialogMenu.peek()) {
-        if (Arduboy2::justPressed(A_BUTTON)) {
+        if (arduboy.justPressed(A_BUTTON)) {
             dialogMenu.popMenu();
         }
     } else {
-        this->updateMoveList(engine);
+        // TODO very inefficient
+        updateMoveList(engine);
         engine.updateInactiveCreatures(this->creatures);
-        this->transverse();
-        this->action(engine);
+
+        transverse();
+        action(engine);
     }
 }
 
 void MenuV2::printMenu(BattleEngine &engine) {
-    // Arduboy2::fillRect(0, 43, 128, 32, WHITE);
-    FX::drawBitmap(0, 43, battleMenu, 0, dbmNormal);
-    setTextColorBlack();
+    // arduboy.fillRect(0, 43, 128, 32, WHITE);
     switch (CURRENT_MENU) {
     case BATTLE_OPTIONS:
         printBattleMenu(cursorIndex);
         break;
 
     case BATTLE_MOVE_SELECT:
+        SpritesU::drawOverwriteFX(0, 43, battleMenu, 0);
         printMoveMenu(this->cursorIndex, this->moveList);
         break;
 
@@ -167,16 +172,16 @@ void MenuV2::printMenu(BattleEngine &engine) {
         break;
     }
     printCursor(this->cursorIndex);
-    // Arduboy2::drawRect(1, 44, 126, 19, BLACK);
+    // arduboy.drawRect(1, 44, 126, 19, BLACK);
 }
 
+// TODO move text to drawing
 void MenuV2::creatureRental() {
     printString(font, MenuFXData::pointerText, 0, 55);
     FX::setCursor(10, 55);
     this->cursorIndex = this->cursorIndex % 31;
 
-    uint24_t addr = FX::readIndexedUInt24(CreatureData::creatureNames, this->cursorIndex);
-    printString(font, addr, 10, 55);
+    SpritesU::drawOverwriteFX(0, 55, CreatureNames::CreatureNames, this->cursorIndex * 3 + arduboy.currentPlane());
     FX::drawBitmap(0, 0, creatureSprites, this->cursorIndex, dbmWhite);
     CreatureData_t cseed;
     uint24_t rowAddress = CreatureData::creatureData + (sizeof(CreatureData_t) * this->cursorIndex);

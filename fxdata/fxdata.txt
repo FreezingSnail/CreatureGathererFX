@@ -1,17 +1,3 @@
-
-image_t characterSheet = "images/characterSheet_12x16.png"
-image_t creatureSprites = "images/creatureSprites_32x32.png"
-image_t battleMenu = "images/battleMenu_128x20.png"
-image_t moveInfo = "images/moveInfo_60x30.png"
-image_t fightMenu = "images/fightMenu_128x24.png"
-image_t worldTiles = "images/worldTiles_16x16.png"
-
-
-image_t arduboyFont = "images/arduboyFont_6x8.png"
-image_t maskedFont  = "images/maskedFont_16x24.png"
-image_t font4x6 = "images/Font_5x6.png"
-image_t npc = "images/npc_16x16.png"
-
 include "data/encounters.txt"
 include "data/opponents.txt"
 include "data/creatureData.txt"
@@ -26,8 +12,7 @@ include "data/teams.txt"
 include "data/chunks.txt"
 
 include "Sprites.txt"
-include "generated/string_images_black.txt"
-include "generated/string_images_white.txt"
+include "generated/Sprites.txt"
 
  uint8_t greyTest[]  = {
   32,  32, 232,  84,  20,  20, 228,   4, 200, 168,  40,  40, 200,   0,   0,   0,

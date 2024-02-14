@@ -110,7 +110,7 @@ void WorldEngine::input() {
 #define PLAYER_Y_OFFSET HEIGHT / 2 - PLAYER_SIZE / 2
 void WorldEngine::drawPlayer() {
     uint8_t frame = ((int)(this->playerDirection) * 3) + ((this->stepTicker - 1) / 5);
-    SpritesU::drawOverwriteFX(3 * 16, 2 * 16, CHARACTERSHEET_IMG, frame * 3 + arduboy.currentPlane());
+    SpritesU::drawOverwriteFX(3 * 16, 2 * 16, characterSheet, frame * 3 + arduboy.currentPlane());
 }
 
 void WorldEngine::runMap(Player *player) {
