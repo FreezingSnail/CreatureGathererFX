@@ -10,6 +10,7 @@
 #include "src/engine/world/World.hpp"
 #include "src/fxdata.h"
 #include "src/player/Player.hpp"
+#include "src/Animator.hpp"
 
 decltype(arduboy) arduboy;
 
@@ -24,6 +25,7 @@ Arena arena = Arena();
 WorldEngine world;
 MenuV2 menu2 = MenuV2();
 Font4x6 font = Font4x6();
+Animator animator = Animator();
 
 void setup() {
     // arduboy.begin();
@@ -46,10 +48,16 @@ void setup() {
 }
 
 void run() {
+
     if (menu2.dialogMenu.peek()) {
         menu2.run(engine);
         return;
     }
+
+    if (animator.playing) {
+        return;
+    }
+
     switch (state) {
     case GameState_t::BATTLE:
         engine.encounter(player);
@@ -68,7 +76,7 @@ void run() {
 }
 
 void render() {
-
+    animator.play();
     switch (state) {
     case GameState_t::BATTLE:
         engine.drawScene();
