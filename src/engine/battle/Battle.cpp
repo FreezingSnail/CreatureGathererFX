@@ -226,6 +226,9 @@ void BattleEngine::setMoveList(uint8_t **pointer) {
 
 void BattleEngine::changeCurMon(uint8_t id) {
     // TODO this breaks with repeate creatures on roster
+    // instead of using an id, there should be an active member index 0-2
+    // paired with the current active creature
+    // then the menu will skip the current active createure and display the other two
     for (uint8_t i = 0; i < 3; i++) {
         if (this->playerParty[i]->id == id) {
             this->playerCur = this->playerParty[i];

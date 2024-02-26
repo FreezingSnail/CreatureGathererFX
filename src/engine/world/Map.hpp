@@ -10,4 +10,3 @@ enum TileType { GRASS = 0, WATER = 8, TREES = 16, STONE = 24 };
 // relative loading also would help
 // 4x4 chuncks, -> 12 chunks at anytime should be held
 // without bit backing thats 192 tiles or 192 bytes vs the current 600
-static uint8_t gameMap[0][0] = {};
