@@ -16,7 +16,8 @@ constexpr uint8_t tileswide = (128 / TILE_SIZE) + 4;
 constexpr uint8_t tilestall = (64 / TILE_SIZE) + 2;
 
 bool warpTile(uint8_t x, uint8_t y) {
-    uint8_t tile = gameMap[y][x];
+    // TODO need to redo room change totally
+    uint8_t tile = 0;
     if (tile == 26 || tile == 28)
         return true;
 
@@ -214,7 +215,8 @@ uint8_t WorldEngine::getTile() {
 }
 
 void WorldEngine::encounter(Arduboy2Base *arduboy, Player *player) {
-    uint8_t t = gameMap[this->cury][this->curx];
+    // TODO use tile map
+    uint8_t t = 0;
     if (t == 0) {
         uint8_t chance = random(1, 101);
         if (chance <= 10) {
@@ -254,7 +256,7 @@ bool WorldEngine::moveable() {
         if (e.cords.x == tilex && e.cords.y == tiley)
             return false;
     }
-    this->nextTile = gameMap[tiley][tilex];
+    this->nextTile = tMap.lines[tiley].tiles[tilex];
     switch (this->nextTile) {
     case TREES:
     case GRASS:
