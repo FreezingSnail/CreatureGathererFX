@@ -17,3 +17,4 @@ imgui.ini
 src/fxdata/images/npc_16x16.png:Zone.Identifier
 *.o
 *png:Zone.Identifier
+fxdata/generated/*

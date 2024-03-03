@@ -11,13 +11,14 @@
 #include "src/fxdata.h"
 #include "src/player/Player.hpp"
 #include "src/Animator.hpp"
+#include "src/plants/PlantGamestate.hpp"
 
 decltype(arduboy) arduboy;
 
 uint8_t debug;
 
 // ARDUBOY_NO_USB
-
+PlantGameState plants;
 Player player = Player();
 GameState_t state;
 BattleEngine engine;
@@ -34,6 +35,7 @@ void setup() {
     arduboy.boot();
     arduboy.startGray();
     arduboy.initRandomSeed();
+    plants.tick();
 
     FX::begin(FX_DATA_PAGE);
     // FX::setFont(Font, dcmNormal);   // select default font
