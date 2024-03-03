@@ -5,7 +5,7 @@ This doc details plans / designs / layouts of:
 - in-memory representation
 - functions
 - codepaths
-- class responsibilities and dependancys
+- class responsibilities and dependancies
 
 # Features
 
@@ -28,16 +28,16 @@ This doc details plans / designs / layouts of:
 
 
 ## Creatures 
-### Memory Representaion
+### Memory Representation
 - seed
   - stat seeds
   - default moves
   - table of learnable moves
 ### Game representation
-- decompresses seed into useable format
+- decompresses seed into usable format
 
 
-## Gathering
+## [[Gathering]]
 Instead of attacking creatures to weaken and capture them, the main mechanic will be focused around gathering 
 
 - areas to gather in
@@ -45,6 +45,13 @@ Instead of attacking creatures to weaken and capture them, the main mechanic wil
 maybe gather in combat for items to use at the collection box?
 unsure exactly how want to have player add creatures into ownership
 
+[[Plant Gathering]]
 
 ## events
-### data format -> linked list type event data, load one, when pop see if another in chain to load
+data format -> linked list type event data, load one, when pop see if another in chain to load
+
+
+## [[Gameplay Loop]]
+- gather materials in field / combat
+- use materials in lure zones to get new creatures
+- move to next area via boss mechanism
