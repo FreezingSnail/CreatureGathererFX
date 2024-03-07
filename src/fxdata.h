@@ -6,8 +6,8 @@ using uint24_t = __uint24;
 
 // Initialize FX hardware using  FX::begin(FX_DATA_PAGE); in the setup() function.
 
-constexpr uint16_t FX_DATA_PAGE  = 0xfe0b;
-constexpr uint24_t FX_DATA_BYTES = 128052;
+constexpr uint16_t FX_DATA_PAGE  = 0xfdf3;
+constexpr uint24_t FX_DATA_BYTES = 134198;
 
 constexpr uint24_t encounterRates = 0x000000;
 constexpr uint24_t op1 = 0x000048;
@@ -180,60 +180,61 @@ namespace Names
 }
 
 constexpr uint24_t testmap = 0x000AD5;
-constexpr uint24_t Font = 0x000D15;
-constexpr uint24_t fightMenu = 0x00144C;
-constexpr uint24_t tilesheet = 0x00264E;
-constexpr uint24_t npc = 0x003250;
-constexpr uint24_t worldTiles = 0x003312;
-constexpr uint24_t arduboyFont = 0x003914;
-constexpr uint24_t battleMenu = 0x004B16;
-constexpr uint24_t letters = 0x004F98;
-constexpr uint24_t creatureSprites = 0x010F9A;
-constexpr uint24_t maskedFont = 0x013F9C;
-constexpr uint24_t characterSheet = 0x01CF9E;
-constexpr uint24_t moveInfo = 0x01D300;
-constexpr uint24_t creature6 = 0x01D5D2;
-constexpr uint24_t creature10 = 0x01D66A;
-constexpr uint24_t creature9 = 0x01D702;
-constexpr uint24_t creature5 = 0x01D77C;
-constexpr uint24_t creature16 = 0x01D8C8;
-constexpr uint24_t creature26 = 0x01D9F6;
-constexpr uint24_t creature27 = 0x01DAAC;
-constexpr uint24_t test1 = 0x01DBDA;
-constexpr uint24_t creature15 = 0x01DC72;
-constexpr uint24_t creature23 = 0x01DDA0;
-constexpr uint24_t creature3 = 0x01DDFC;
-constexpr uint24_t creature24 = 0x01DF48;
-constexpr uint24_t creature30 = 0x01DFA4;
-constexpr uint24_t creature2 = 0x01E03C;
-constexpr uint24_t creature25 = 0x01E1C4;
-constexpr uint24_t creature28 = 0x01E2B6;
-constexpr uint24_t creature7 = 0x01E38A;
-constexpr uint24_t creature17 = 0x01E47C;
-constexpr uint24_t creature4 = 0x01E58C;
-constexpr uint24_t creature14 = 0x01E6D8;
-constexpr uint24_t creature19 = 0x01E752;
-constexpr uint24_t creature22 = 0x01E808;
-constexpr uint24_t creature18 = 0x01E8A0;
-constexpr uint24_t creature21 = 0x01E974;
-constexpr uint24_t creature31 = 0x01E9EE;
-constexpr uint24_t creature8 = 0x01EA68;
-constexpr uint24_t creature0 = 0x01EBD2;
-constexpr uint24_t creature20 = 0x01ED5A;
-constexpr uint24_t creature13 = 0x01EDD4;
-constexpr uint24_t creature29 = 0x01EE6C;
-constexpr uint24_t creature1 = 0x01EF40;
-constexpr uint24_t creature12 = 0x01F0AA;
-constexpr uint24_t test2 = 0x01F142;
-constexpr uint24_t creature11 = 0x01F1DA;
+constexpr uint24_t arduboyFont = 0x000D15;
+constexpr uint24_t letters = 0x001F17;
+constexpr uint24_t tilesheet = 0x00DF19;
+constexpr uint24_t moveInfo = 0x00EB1B;
+constexpr uint24_t fightMenu = 0x00EDED;
+constexpr uint24_t maskedFont = 0x00FFEF;
+constexpr uint24_t battleMenu = 0x018FF1;
+constexpr uint24_t Font = 0x019473;
+constexpr uint24_t creatureSprites = 0x019BAA;
+constexpr uint24_t characterSheet = 0x01CBAC;
+constexpr uint24_t worldTiles = 0x01CF0E;
+constexpr uint24_t battleEffectTest = 0x01D510;
+constexpr uint24_t npc = 0x01ED12;
+constexpr uint24_t creature0 = 0x01EDD4;
+constexpr uint24_t creature8 = 0x01EF5C;
+constexpr uint24_t creature2 = 0x01F0C6;
+constexpr uint24_t creature16 = 0x01F24E;
+constexpr uint24_t creature24 = 0x01F37C;
+constexpr uint24_t creature13 = 0x01F3D8;
+constexpr uint24_t creature12 = 0x01F470;
+constexpr uint24_t creature22 = 0x01F508;
+constexpr uint24_t creature27 = 0x01F5A0;
+constexpr uint24_t creature23 = 0x01F6CE;
+constexpr uint24_t creature15 = 0x01F72A;
+constexpr uint24_t creature7 = 0x01F858;
+constexpr uint24_t creature25 = 0x01F94A;
+constexpr uint24_t test1 = 0x01FA3C;
+constexpr uint24_t creature26 = 0x01FAD4;
+constexpr uint24_t creature18 = 0x01FB8A;
+constexpr uint24_t test2 = 0x01FC5E;
+constexpr uint24_t creature4 = 0x01FCF6;
+constexpr uint24_t creature10 = 0x01FE42;
+constexpr uint24_t creature5 = 0x01FEDA;
+constexpr uint24_t creature3 = 0x020026;
+constexpr uint24_t creature17 = 0x020172;
+constexpr uint24_t creature28 = 0x020282;
+constexpr uint24_t creature6 = 0x020356;
+constexpr uint24_t creature31 = 0x0203EE;
+constexpr uint24_t creature9 = 0x020468;
+constexpr uint24_t creature30 = 0x0204E2;
+constexpr uint24_t creature21 = 0x02057A;
+constexpr uint24_t creature20 = 0x0205F4;
+constexpr uint24_t creature1 = 0x02066E;
+constexpr uint24_t creature14 = 0x0207D8;
+constexpr uint24_t creature29 = 0x020852;
+constexpr uint24_t creature11 = 0x020926;
+constexpr uint24_t creature19 = 0x020A18;
 namespace CreatureNames
 {
-  constexpr uint24_t CreatureNames = 0x01F2CC;
+  constexpr uint24_t CreatureNames = 0x020ACE;
 }
 
 namespace Test
 {
-  constexpr uint24_t Test = 0x01F32C;
+  constexpr uint24_t Test = 0x020B2E;
 }
 
-constexpr uint24_t greyTest = 0x01F332;
+constexpr uint24_t greyTest = 0x020B34;

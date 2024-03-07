@@ -16,7 +16,9 @@ extern ArduboyGBase_Config<ABG_Mode::L4_Triplane> arduboy;
 extern Font4x6 font;
 #include "lib/Text.hpp"
 
-#include <stdint.h>
+#include "Animator.hpp"
+extern Animator animator;
+
 
 #define FRAME(x) x * 3 + arduboy.currentPlane()
 

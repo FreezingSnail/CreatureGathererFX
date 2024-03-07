@@ -7,6 +7,7 @@
 #include "../world/Event.hpp"
 #include <ArduboyFX.h>
 #include "../../lib/Text.hpp"
+#include "../../common.hpp"
 
 #define dbf __attribute__((optimize("-O0")))
 
@@ -18,7 +19,7 @@ void drawRect(PopUpDialog *popMenu) {
 void DialogMenu::drawPopMenu() {
 
     PopUpDialog curMenu = popDialogStack[0];
-    FX::drawBitmap(0, 43, battleMenu, 0, dbmNormal);
+    SpritesU::drawOverwriteFX(0, 43, battleMenu, 0);
 
     uint24_t addr;
     setTextColorBlack();
