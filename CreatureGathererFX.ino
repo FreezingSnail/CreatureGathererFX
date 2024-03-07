@@ -10,10 +10,10 @@
 #include "src/engine/world/World.hpp"
 #include "src/fxdata.h"
 #include "src/player/Player.hpp"
-#include "src/Animator.hpp"
 #include "src/plants/PlantGamestate.hpp"
 
 decltype(arduboy) arduboy;
+
 
 uint8_t debug;
 
@@ -78,7 +78,6 @@ void run() {
 }
 
 void render() {
-    animator.play();
     switch (state) {
     case GameState_t::BATTLE:
         engine.drawScene();
@@ -95,6 +94,7 @@ void render() {
         arena.arenaLoop(menu2, player, engine);
         break;
     }
+     animator.play();
 }
 
 void loop() {

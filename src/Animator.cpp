@@ -1,10 +1,17 @@
 #include "Animator.hpp"
+#include "common.hpp"
+
+Animator::Animator() {
+    stackPointer = -1;
+}
 
 void Animator::push(Animation animation) {
     if (stackPointer >= 1)
         return;
+
     stackPointer++;
     animationStack[stackPointer] = animation;
+    start();
 }
 
 void Animator::pop() {
@@ -14,10 +21,15 @@ void Animator::pop() {
 }
 
 void Animator::play() {
+    ticker++;
+
     if (!playing)
         return;
-    SpritesU::drawOverwriteFX(animationStack[stackPointer].xOrigin, animationStack[stackPointer].yOrigin, animationStack[stackPointer].data,
-                              FRAME(currentFrame));
+    SpritesU::drawPlusMaskFX(animationStack[stackPointer].xOrigin, animationStack[stackPointer].yOrigin, animationStack[stackPointer].data,
+                             FRAME(currentFrame));
+    if (ticker % 20 != 0) {
+        return;
+    }
     currentFrame++;
     if (currentFrame >= animationStack[stackPointer].frames) {
         pop();
@@ -30,4 +42,5 @@ void Animator::play() {
 void Animator::start() {
     playing = true;
     currentFrame = 0;
+    ticker = 0;
 }

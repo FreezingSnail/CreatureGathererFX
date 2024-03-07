@@ -11,8 +11,6 @@
 // #include "../../lib/TypeTable.hpp"
 #include "../../lib/Move.hpp"
 
-#define dbf __attribute__((optimize("-O0")))
-
 BattleEngine::BattleEngine() {
 }
 
@@ -308,6 +306,7 @@ void dbf BattleEngine::commitAction(Player &player, Action *action, Creature *co
 
         applyDamage(damage, reciever);
         if (isPlayer) {
+            animator.push(Animation{60, 0, 8, battleEffectTest});
             menu2->dialogMenu.pushMenu(newDialogBox(NAME, commiter->id, 0));
             menu2->dialogMenu.pushMenu(newDialogBox(DAMAGE, uint24_t(damage), damage));
         } else {
