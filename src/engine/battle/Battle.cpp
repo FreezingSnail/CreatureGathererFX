@@ -306,7 +306,7 @@ void dbf BattleEngine::commitAction(Player &player, Action *action, Creature *co
 
         applyDamage(damage, reciever);
         if (isPlayer) {
-            animator.push(Animation{60, 0, 8, battleEffectTest});
+            animator.push(Animation{60, 0, 8, basicBeamL});
             menu2->dialogMenu.pushMenu(newDialogBox(NAME, commiter->id, 0));
             menu2->dialogMenu.pushMenu(newDialogBox(DAMAGE, uint24_t(damage), damage));
         } else {

@@ -10,7 +10,7 @@ Encounter::Encounter() {
 
 Encounter::Encounter(Arduboy2Base *arduboy) {
     this->arduboy = arduboy;
-    this->loadEncounterTable(0);
+    // this->loadEncounterTable(0);
 }
 
 void __attribute__((optimize("-O0"))) Encounter::loadEncounterTable(uint8_t areaIndex) {
