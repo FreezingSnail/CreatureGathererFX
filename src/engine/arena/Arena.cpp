@@ -82,7 +82,7 @@ void Arena::registerMoves(Player &player) {
     validMoves(movePool, moves);
     font.setCursor(0, 0);
     font.print(this->moveIndex);
-    SpritesU::drawOverwriteFX(0, 10, CreatureNames::CreatureNames, curMonID * 3 + arduboy.currentPlane());
+    // SpritesU::drawOverwriteFX(0, 10, CreatureNames::CreatureNames, curMonID * 3 + arduboy.currentPlane());
 
     for (uint8_t i = 0; i < 4; i++) {
         int8_t move = moves[this->movePointer + i];

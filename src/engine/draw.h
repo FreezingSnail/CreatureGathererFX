@@ -70,7 +70,6 @@ static void printMoveInfo(uint8_t index, uint8_t x, uint8_t y) {
 }
 
 static void printBattleMenu(int8_t index) {
-    SpritesU::drawOverwriteFX(0, 40, fightMenu, index * 3 + arduboy.currentPlane());
 }
 
 static void printCursor(int8_t index) {
@@ -109,8 +108,8 @@ static void printMoveMenu(int8_t index, uint8_t *moveList) {
 static void printCreatureMenu(uint8_t c1, uint8_t c2, Creature *cpointer) {
     font.setTextColor(BLACK);
     cpointer->printCreature();
-    uint24_t addr = FX::readIndexedUInt24(CreatureNames::CreatureNames, c1);
-    printString(font, addr, 6, 45);
-    addr = FX::readIndexedUInt24(CreatureNames::CreatureNames, c2);
-    printString(font, addr, 6, 55);
+    //  uint24_t addr = FX::readIndexedUInt24(CreatureNames::CreatureNames, c1);
+    // printString(font, addr, 6, 45);
+    // addr = FX::readIndexedUInt24(CreatureNames::CreatureNames, c2);
+    //  printString(font, addr, 6, 55);
 }

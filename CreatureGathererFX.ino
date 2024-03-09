@@ -14,7 +14,6 @@
 
 decltype(arduboy) arduboy;
 
-
 uint8_t debug;
 
 // ARDUBOY_NO_USB
@@ -94,7 +93,7 @@ void render() {
         arena.arenaLoop(menu2, player, engine);
         break;
     }
-     animator.play();
+    animator.play();
 }
 
 void loop() {

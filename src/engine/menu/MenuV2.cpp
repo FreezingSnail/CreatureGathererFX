@@ -10,6 +10,7 @@
 MenuV2::MenuV2() {
     this->menuPointer = -1;
 }
+// TODO: reads too much
 void MenuV2::updateMoveList(BattleEngine &engine) {
     this->moveList = engine.getPlayerCurCreatureMoves();
 }
@@ -155,11 +156,11 @@ void MenuV2::printMenu(BattleEngine &engine) {
     // arduboy.fillRect(0, 43, 128, 32, WHITE);
     switch (CURRENT_MENU) {
     case BATTLE_OPTIONS:
-        printBattleMenu(cursorIndex);
+        SpritesU::drawOverwriteFX(0, 40, fightMenu, FRAME(cursorIndex));
         break;
 
     case BATTLE_MOVE_SELECT:
-        SpritesU::drawOverwriteFX(0, 43, battleMenu, 0);
+        SpritesU::drawOverwriteFX(0, 40, battleMenu, FRAME(0));
         printMoveMenu(this->cursorIndex, this->moveList);
         break;
 

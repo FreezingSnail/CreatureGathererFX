@@ -111,7 +111,7 @@ def gen(namespaces, dims, tiles, args, mode="white", grey=False):
         for kv_pair in kv_pairs:
             key, value = kv_pair.split('=')
             key = key.replace(" ", "")
-            value = value.replace(" ", "")
+            #value = value.replace(" ", "")
             value = value.replace('"', "")
             # Convert the value to indices
             indices = string_to_indices(value)
