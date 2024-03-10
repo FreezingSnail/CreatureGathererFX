@@ -8,6 +8,7 @@ struct PopUpDialog {
     uint24_t textAddress;
     uint16_t damage;
     DialogType type;
+    uint24_t animation;
 };
 
 class DialogMenu {
@@ -20,4 +21,5 @@ class DialogMenu {
     void pushMenu(PopUpDialog menuInfo);
     void pushEvent(Event event);
     void popMenu();
+    void pushAnimation();
 };

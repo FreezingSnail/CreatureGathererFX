@@ -109,8 +109,23 @@ void DialogMenu::popMenu() {
         dialogPointer--;
         return;
     }
+    if (popDialogStack[0].animation != 0) {
+        pushAnimation();
+    }
+
     for (uint8_t i = 0; i < dialogPointer; i++) {
         popDialogStack[i] = popDialogStack[i + 1];
     }
     dialogPointer--;
+}
+
+void DialogMenu::pushAnimation() {
+    switch (popDialogStack[0].type) {
+    case NAME:
+        animator.push(Animation{60, 0, 8, popDialogStack[0].animation});
+        break;
+    case ENEMY_NAME:
+        animator.push(Animation{40, 0, 8, popDialogStack[0].animation});
+        break;
+    }
 }
