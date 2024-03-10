@@ -310,6 +310,7 @@ void dbf BattleEngine::commitAction(Player &player, Action *action, Creature *co
             menu2->dialogMenu.pushMenu(newDialogBox(NAME, commiter->id, 0));
             menu2->dialogMenu.pushMenu(newDialogBox(DAMAGE, uint24_t(damage), damage));
         } else {
+            animator.push(Animation{40, 0, 8, basicBeamR});
             menu2->dialogMenu.pushMenu(newDialogBox(ENEMY_NAME, commiter->id, 0));
             menu2->dialogMenu.pushMenu(newDialogBox(ENEMY_DAMAGE, uint24_t(damage), damage));
         }
