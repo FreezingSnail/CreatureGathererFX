@@ -306,12 +306,10 @@ void dbf BattleEngine::commitAction(Player &player, Action *action, Creature *co
 
         applyDamage(damage, reciever);
         if (isPlayer) {
-            animator.push(Animation{60, 0, 8, basicBeamL});
-            menu2->dialogMenu.pushMenu(newDialogBox(NAME, commiter->id, 0));
+            menu2->dialogMenu.pushMenu(newDialogBox(NAME, commiter->id, 0, basicBeamL));
             menu2->dialogMenu.pushMenu(newDialogBox(DAMAGE, uint24_t(damage), damage));
         } else {
-            animator.push(Animation{40, 0, 8, basicBeamR});
-            menu2->dialogMenu.pushMenu(newDialogBox(ENEMY_NAME, commiter->id, 0));
+            menu2->dialogMenu.pushMenu(newDialogBox(ENEMY_NAME, commiter->id, 0, basicBeamR));
             menu2->dialogMenu.pushMenu(newDialogBox(ENEMY_DAMAGE, uint24_t(damage), damage));
         }
         switch (mod) {
@@ -331,11 +329,9 @@ void dbf BattleEngine::commitAction(Player &player, Action *action, Creature *co
         break;
     }
     case ActionType::GATHER:
-
         // idk if this is staying at all
         // player.storeCreature(0, this->opponentCur->id, this->opponentCur->level);
         // menu2->dialogMenu.pushMenu(newDialogBox(GATHERING, 0, 0));
-
         break;
     case ActionType::CHNGE:
         menu2->dialogMenu.pushMenu(newDialogBox(TEAM_CHANGE, 0, 0));
