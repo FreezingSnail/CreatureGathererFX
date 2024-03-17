@@ -409,40 +409,47 @@ void BattleEngine::resetOpponent() {
 //////////////////////////////////////////////////////////////////////////////
 
 void BattleEngine::drawScene() {
+    SpritesU::drawPlusMaskFX(0, 15, fieldBacground, FRAME(0));
     this->drawPlayer();
     this->drawOpponent();
 }
 
 void BattleEngine::drawOpponent() {
-    SpritesU::drawOverwriteFX(0, 0, creatureSprites, opponentCur->id * 3 + arduboy.currentPlane());
+    SpritesU::drawPlusMaskFX(0, 0, ebigcreatureSprites, FRAME(opponentCur->id));
 
-    // this->drawOpponentHP();
+    this->drawOpponentHP();
 }
 
 void BattleEngine::drawPlayer() {
-    SpritesU::drawOverwriteFX(96, 0, creatureSprites, playerCur->id * 3 + arduboy.currentPlane());
-    uint24_t rowAddress = FX::readIndexedUInt24(CreatureNames::CreatureNames, playerCur->id);
-    SpritesU::drawOverwriteFX(60, 32, rowAddress, (playerCur->id) * 3 + arduboy.currentPlane());
+    SpritesU::drawPlusMaskFX(96, 0, creatureSprites, FRAME(playerCur->id));
+    // uint24_t rowAddress = FX::readIndexedUInt24(CreatureNames::CreatureNames, playerCur->id);
+    //  SpritesU::drawOverwriteFX(60, 32, rowAddress, (playerCur->id) * 3 + arduboy.currentPlane());
 
-    // this->drawPlayerHP();
+    this->drawPlayerHP();
 }
 
 void BattleEngine::drawPlayerHP() {
-    // FX::setFont(font4x6, dcmNormal);
-    // FX::setCursor(70, 35);   // select default font
-    // FX::drawString(MenuFXData::hpText);
-    // FX::drawNumber((unsigned)this->playerHealths[this->playerIndex]);
-    // FX::drawString(("/"));
-    // FX::drawNumber((unsigned)this->playerCur->statlist.hp);
-    // FX::setFont(font4x6, dcmBlack);
+    uint8_t curHealth = this->playerHealths[this->playerIndex];
+    uint8_t maxHealth = this->playerCur->statlist.hp;
+    double total = curHealth + maxHealth;
+    double scale = 40 / total;
+
+    curHealth = static_cast<int>(curHealth * scale);
+    maxHealth = static_cast<int>(maxHealth * scale);
+    uint8_t x2 = 110;
+    uint8_t x1 = x2 - curHealth;
+
+    SpritesU::fillRect(x1, 38, curHealth, 2, WHITE);
 }
 
 void BattleEngine::drawOpponentHP() {
-    // FX::setFont(font4x6, dcmNormal);
-    //  FX::setCursor(2, 35);   // select default font
-    //  FX::drawString(MenuFXData::hpText);
-    //  FX::drawNumber((unsigned)this->opponentHealths[this->opponentIndex]);
-    //  FX::drawString(("/"));
-    //  FX::drawNumber((unsigned)this->opponentCur->statlist.hp);
-    //  FX::setFont(font4x6, dcmBlack);
+    uint8_t curHealth = this->opponentHealths[this->playerIndex];
+    uint8_t maxHealth = this->opponentCur->statlist.hp;
+    double total = curHealth + maxHealth;
+    double scale = 40 / total;
+
+    curHealth = static_cast<int>(curHealth * scale);
+    maxHealth = static_cast<int>(maxHealth * scale);
+
+    SpritesU::fillRect(20, 38, curHealth, 2, WHITE);
 }
