@@ -11,6 +11,13 @@
 
 #define dbf __attribute__((optimize("-O0")))
 
+void drawStatNumbers(uint8_t x, uint8_t y, uint8_t number) {
+    uint8_t upper = number / 100;
+    uint8_t lower = number % 100;
+    SpritesU::drawPlusMaskFX(x, y, singlenumberswhite, FRAME(upper));
+    SpritesU::drawPlusMaskFX(x + 4, y, numberswhite, FRAME(lower));
+}
+
 // This will need to load the creature seed from the progmemstore
 const CreatureData_t getCreatureFromStore(uint8_t id) {
     CreatureData_t cseed;
@@ -125,34 +132,30 @@ uint8_t Creature::seedToStat(uint8_t seed) {
 
 // TODO deal with drawing numbers
 void Creature::printCreature() {
-    // Arduboy2::fillRect(0, 0, 128, 66, WHITE);
-    //  Arduboy2::drawRect(2, 1, 124, 43, BLACK);
-    SpritesU::fillRect(0, 0, 128, 60, WHITE);
-    FX::setCursor(34, 3);
-    printString(font, MenuFXData::hpText, 4, 3);
-    FX::drawNumber(this->statlist.hp);
-    FX::setCursor(90, 3);
-    printString(font, MenuFXData::atkText, 60, 3);
-    FX::drawNumber(this->statlist.attack);
-    FX::setCursor(34, 11);
-    printString(font, MenuFXData::defText, 4, 11);
-    FX::drawNumber(this->statlist.defense);
-    FX::setCursor(90, 11);
-    printString(font, MenuFXData::spdText, 60, 11);
-    FX::drawNumber(this->statlist.speed);
-    FX::setCursor(34, 19);
-    printString(font, MenuFXData::satkText, 4, 19);
-    FX::drawNumber(this->statlist.spcAtk);
-    FX::setCursor(90, 19);
-    printString(font, MenuFXData::sdefText, 60, 19);
-    FX::drawNumber(this->statlist.spcDef);
+    SpritesU::drawOverwriteFX(35, 0, hpText, FRAME(0));
+    SpritesU::drawOverwriteFX(35, 10, atkText, FRAME(0));
+    SpritesU::drawOverwriteFX(35, 20, defText, FRAME(0));
+    SpritesU::drawOverwriteFX(72, 0, satkText, FRAME(0));
+    SpritesU::drawOverwriteFX(72, 10, sdefText, FRAME(0));
+    SpritesU::drawOverwriteFX(72, 20, spdText, FRAME(0));
+
+    drawStatNumbers(60, 0, statlist.hp);
+    drawStatNumbers(60, 10, statlist.attack);
+    drawStatNumbers(60, 20, statlist.defense);
+    drawStatNumbers(103, 0, statlist.spcAtk);
+    drawStatNumbers(103, 10, statlist.spcDef);
+    drawStatNumbers(103, 20, statlist.speed);
+
     for (uint8_t i = 0; i < 4; i++) {
         if (this->moves[i] == 32) {
             continue;
         }
         uint8_t offset = i % 2;
-        // FX::setCursor(4 + (60 * offset), 27 + (8 * (i / 2)));
-        uint24_t rowAddress = FX::readIndexedUInt24(MoveData::moveNames, this->moves[i]);
-        printString(font, rowAddress, 4 + (60 * offset), 27 + (8 * (i / 2)));
+        uint8_t x = 4 + (60 * offset);
+        uint8_t y = 34 + (8 * (i / 2));
+
+        uint24_t rowAddress = FX::readIndexedUInt24(MoveNames::MoveNames, moves[i]);
+        debugg = rowAddress;
+        SpritesU::drawOverwriteFX(x, y, rowAddress, FRAME(1));
     }
 }

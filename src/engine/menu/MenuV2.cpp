@@ -169,7 +169,8 @@ void MenuV2::printMenu(BattleEngine &engine) {
         if (this->cursorIndex == 0) {
             cIndex = this->creatures[0];
         }
-        printCreatureMenu(this->creatures[0], this->creatures[1], engine.getCreature(cIndex));
+        printCreatureMenu(this->creatures[0], this->creatures[1], engine.getCreature(cIndex), this->cursorIndex);
+        SpritesU::drawPlusMaskFX(0, 0, ecreatureSprites, FRAME(engine.getCreature(cIndex)->id));
         break;
     }
     printCursor(this->cursorIndex);
@@ -187,24 +188,25 @@ void MenuV2::creatureRental() {
     CreatureData_t cseed;
     uint24_t rowAddress = CreatureData::creatureData + (sizeof(CreatureData_t) * this->cursorIndex);
     FX::readDataObject(rowAddress, cseed);
-    printString(font, MenuFXData::hpText, 35, 0);
-    font.setCursor(35 + 18, 0);
-    font.print(cseed.hpSeed);
-    printString(font, MenuFXData::atkText, 35, 10);
-    font.setCursor(35 + 18, 10);
-    font.print(cseed.atkSeed);
-    printString(font, MenuFXData::defText, 35, 20);
-    font.setCursor(35 + 18, 20);
-    font.print(cseed.defSeed);
-    printString(font, MenuFXData::satkText, 72, 0);
-    font.setCursor(72 + 23, 0);
-    font.print(cseed.spcAtkSeed);
-    printString(font, MenuFXData::sdefText, 72, 10);
-    font.setCursor(72 + 23, 10);
-    font.print(cseed.spcDefSeed);
-    printString(font, MenuFXData::spdText, 72, 20);
-    font.setCursor(72 + 23, 20);
-    font.print(cseed.spdSeed);
+
+    SpritesU::drawOverwriteFX(35, 0, hpText, FRAME(0));
+    SpritesU::drawPlusMaskFX(53, 0, cseed.hpSeed, FRAME(0));
+
+    SpritesU::drawOverwriteFX(35, 10, atkText, FRAME(0));
+    SpritesU::drawPlusMaskFX(53, 10, cseed.atkSeed, FRAME(0));
+
+    SpritesU::drawOverwriteFX(35, 20, defText, FRAME(0));
+    SpritesU::drawPlusMaskFX(53, 20, cseed.defSeed, FRAME(0));
+
+    SpritesU::drawOverwriteFX(72, 0, satkText, FRAME(0));
+    SpritesU::drawPlusMaskFX(72 + 18, 0, cseed.spcAtkSeed, FRAME(0));
+
+    SpritesU::drawOverwriteFX(72, 10, sdefText, FRAME(0));
+    SpritesU::drawPlusMaskFX(72 + 18, 10, cseed.spcDefSeed, FRAME(0));
+
+    SpritesU::drawOverwriteFX(72, 20, spdText, FRAME(0));
+    SpritesU::drawPlusMaskFX(72 + 18, 20, cseed.spdSeed, FRAME(0));
+
     printType(Type(cseed.type1), 0, 35);
     printType(Type(cseed.type2), 0, 45);
 }
