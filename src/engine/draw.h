@@ -105,11 +105,17 @@ static void printMoveMenu(int8_t index, uint8_t *moveList) {
     printMoveInfo(moveList[index], 38, 4);
 }
 
-static void printCreatureMenu(uint8_t c1, uint8_t c2, Creature *cpointer) {
-    font.setTextColor(BLACK);
+static void printCreatureMenu(uint8_t c1, uint8_t c2, Creature *cpointer, uint8_t index) {
+    SpritesU::fillRect(0, 33, 128, 31, WHITE);
+    SpritesU::fillRect(0, 0, 128, 32, BLACK);
     cpointer->printCreature();
-    //  uint24_t addr = FX::readIndexedUInt24(CreatureNames::CreatureNames, c1);
-    // printString(font, addr, 6, 45);
-    // addr = FX::readIndexedUInt24(CreatureNames::CreatureNames, c2);
-    //  printString(font, addr, 6, 55);
+    uint24_t c1addr = FX::readIndexedUInt24(CreatureNames::CreatureNames, c1);
+    uint24_t c2addr = FX::readIndexedUInt24(CreatureNames::CreatureNames, c2);
+    if (index == 0) {
+        SpritesU::drawOverwriteFX(6, 49, c1addr, FRAME(0));
+        SpritesU::drawOverwriteFX(6, 56, c2addr, FRAME(1));
+    } else {
+        SpritesU::drawOverwriteFX(6, 49, c1addr, FRAME(1));
+        SpritesU::drawOverwriteFX(6, 56, c2addr, FRAME(0));
+    }
 }

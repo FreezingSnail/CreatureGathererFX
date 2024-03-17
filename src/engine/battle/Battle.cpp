@@ -415,7 +415,7 @@ void BattleEngine::drawScene() {
 }
 
 void BattleEngine::drawOpponent() {
-    SpritesU::drawPlusMaskFX(0, 0, ebigcreatureSprites, FRAME(opponentCur->id));
+    SpritesU::drawPlusMaskFX(0, 0, ecreatureSprites, FRAME(opponentCur->id));
 
     this->drawOpponentHP();
 }
@@ -423,7 +423,7 @@ void BattleEngine::drawOpponent() {
 void BattleEngine::drawPlayer() {
     SpritesU::drawPlusMaskFX(96, 0, creatureSprites, FRAME(playerCur->id));
     // uint24_t rowAddress = FX::readIndexedUInt24(CreatureNames::CreatureNames, playerCur->id);
-    //  SpritesU::drawOverwriteFX(60, 32, rowAddress, (playerCur->id) * 3 + arduboy.currentPlane());
+    // SpritesU::drawOverwriteFX(60, 32, rowAddress, FRAME(0));
 
     this->drawPlayerHP();
 }

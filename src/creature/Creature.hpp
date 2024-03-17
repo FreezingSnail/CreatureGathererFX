@@ -36,6 +36,7 @@ class Creature {
     uint8_t moves[4];
     Move moveList[4];
     stats_t statlist;
+    uint24_t debugg = 0;
 
     // const unsigned char *sprite;
 

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdint.h>
+
 #define ABG_TIMER1
 #define ABG_SYNC_PARK_ROW
 
@@ -18,7 +20,6 @@ extern Font4x6 font;
 
 #include "Animator.hpp"
 extern Animator animator;
-
 
 #define FRAME(x) x * 3 + arduboy.currentPlane()
 
