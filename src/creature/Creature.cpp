@@ -7,7 +7,6 @@
 #include "../lib/Move.hpp"
 #include "../opponent/OpponentSeed.hpp"
 #include "../common.hpp"
-#include "../lib/Text.hpp"
 
 #define dbf __attribute__((optimize("-O0")))
 
