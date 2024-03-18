@@ -14,10 +14,6 @@ extern ArduboyGBase_Config<ABG_Mode::L4_Triplane> arduboy;
 #define SPRITESU_FX
 #include "external/SpritesU.hpp"
 
-#include "external/Font4x6.h"
-extern Font4x6 font;
-#include "lib/Text.hpp"
-
 #include "Animator.hpp"
 extern Animator animator;
 

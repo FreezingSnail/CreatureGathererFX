@@ -1,7 +1,6 @@
 #include "MenuV2.hpp"
 #include "../battle/Battle.hpp"
 #include "../draw.h"
-#include "../../lib/Text.hpp"
 #include "../../common.hpp"
 
 #define dbf __attribute__((optimize("-O0"))
@@ -179,7 +178,7 @@ void MenuV2::printMenu(BattleEngine &engine) {
 
 // TODO move text to drawing
 void MenuV2::creatureRental() {
-    printString(font, MenuFXData::pointerText, 0, 55);
+    //printString(font, MenuFXData::pointerText, 0, 55);
     FX::setCursor(10, 55);
     this->cursorIndex = this->cursorIndex % 31;
 

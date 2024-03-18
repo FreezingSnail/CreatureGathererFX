@@ -80,15 +80,15 @@ void Arena::registerMoves(Player &player) {
     this->debug = movePool;
     int8_t moves[16];
     validMoves(movePool, moves);
-    font.setCursor(0, 0);
-    font.print(this->moveIndex);
+    //font.setCursor(0, 0);
+    //font.print(this->moveIndex);
     // SpritesU::drawOverwriteFX(0, 10, CreatureNames::CreatureNames, curMonID * 3 + arduboy.currentPlane());
 
     for (uint8_t i = 0; i < 4; i++) {
         int8_t move = moves[this->movePointer + i];
         if (move != -1) {
             uint24_t moveAddress = FX::readIndexedUInt24(MoveData::moveNames, move);
-            printString(font, moveAddress, 10, 20 + (i * 10));
+            //printString(font, moveAddress, 10, 20 + (i * 10));
         }
     }
 

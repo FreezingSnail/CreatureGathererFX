@@ -6,7 +6,6 @@
 #include "../draw.h"
 #include "../world/Event.hpp"
 #include <ArduboyFX.h>
-#include "../../lib/Text.hpp"
 #include "../../common.hpp"
 
 #define WHITETEXT 1
@@ -24,8 +23,8 @@ void DialogMenu::drawPopMenu() {
         break;
     case DAMAGE:
     case ENEMY_DAMAGE:
-        font.setCursor(curMenu.x + 3, curMenu.y + 3);
-        font.println(curMenu.damage);
+        //font.setCursor(curMenu.x + 3, curMenu.y + 3);
+        //font.println(curMenu.damage);
         SpritesU::drawOverwriteFX(curMenu.x + 8, curMenu.y + 2, damageText, FRAME(WHITETEXT));
         break;
     case NAME:
@@ -62,9 +61,9 @@ void DialogMenu::drawPopMenu() {
         break;
     case GATHERING:
         // font.setCursor(curMenu.x + 3, curMenu.y + 3);
-        // //printString(font, "Gathering is not", curMenu.x + 3, curMenu.y + 3);
+        // ////printString(font, "Gathering is not", curMenu.x + 3, curMenu.y + 3);
         // font.setCursor(curMenu.x + 3, curMenu.y + 13);
-        // //printString(font, "implemented yet", curMenu.x + 3, curMenu.y + 13);
+        // ////printString(font, "implemented yet", curMenu.x + 3, curMenu.y + 13);
         break;
     case TEAM_CHANGE:
         SpritesU::drawOverwriteFX(curMenu.x + 3, curMenu.y, changedIn, FRAME(WHITETEXT));
