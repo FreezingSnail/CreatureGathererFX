@@ -23,9 +23,11 @@ void DialogMenu::drawPopMenu() {
         break;
     case DAMAGE:
     case ENEMY_DAMAGE:
-        //font.setCursor(curMenu.x + 3, curMenu.y + 3);
-        //font.println(curMenu.damage);
-        SpritesU::drawOverwriteFX(curMenu.x + 8, curMenu.y + 2, damageText, FRAME(WHITETEXT));
+        // font.setCursor(curMenu.x + 3, curMenu.y + 3);
+        // font.println(curMenu.damage);
+        SpritesU::drawOverwriteFX(curMenu.x + 12, curMenu.y + 2, damageText, FRAME(WHITETEXT));
+        drawNumbersBlack(curMenu.x + 4, curMenu.y + 3, curMenu.damage);
+
         break;
     case NAME:
         addr = FX::readIndexedUInt24(CreatureNames::CreatureNames, curMenu.textAddress);

@@ -36,7 +36,7 @@ void setup() {
     plants.tick();
 
     FX::begin(FX_DATA_PAGE);
-    // FX::setFont(Font, dcmNormal);   // select default font
+    FX::setFont(Font, dcmNormal);   // select default font
     FX::setCursorRange(0, 32767);
 
     world.init(&arduboy, &state, &engine, &menu2);
