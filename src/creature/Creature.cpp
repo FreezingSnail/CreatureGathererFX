@@ -7,17 +7,12 @@
 #include "../lib/Move.hpp"
 #include "../opponent/OpponentSeed.hpp"
 #include "../common.hpp"
+#include "../engine/draw.h"
 
 #define dbf __attribute__((optimize("-O0")))
 
-void drawStatNumbers(uint8_t x, uint8_t y, uint8_t number) {
-    uint8_t upper = number / 100;
-    uint8_t lower = number % 100;
-    SpritesU::drawPlusMaskFX(x, y, singlenumberswhite, FRAME(upper));
-    SpritesU::drawPlusMaskFX(x + 4, y, numberswhite, FRAME(lower));
-}
-
 // This will need to load the creature seed from the progmemstore
+
 const CreatureData_t getCreatureFromStore(uint8_t id) {
     CreatureData_t cseed;
     uint24_t rowAddress = CreatureData::creatureData + (sizeof(CreatureData_t) * id);
@@ -38,6 +33,8 @@ Creature::Creature() {
 //  maybe I should move this out into an abstraction so its easier to change
 void Creature::load(CreatureData_t seed) {
     this->id = static_cast<uint8_t>((seed.id));
+    // TODO: for testing
+    this->level = 31;
     this->loadTypes(seed);
     this->setStats(seed);
     // Need some kind of default setting for moves ?
@@ -125,7 +122,7 @@ bool Creature::moveTypeBonus(uint8_t index) {
 }
 
 uint8_t Creature::seedToStat(uint8_t seed) {
-    return seed;
+    return 2 * level + (seed * (level / 3));
     // return (2*this->level)*(seed/3);
 }
 

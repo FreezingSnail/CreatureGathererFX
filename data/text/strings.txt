@@ -66,6 +66,7 @@ namespace MoveNames {
     amove29 = "elderBeam"
     amove30 = "slam"
     amove31 = "elderSlam"
+    amove32 = ""
 }
 
 namespace MenuStrings {
