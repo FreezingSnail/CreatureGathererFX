@@ -218,9 +218,7 @@ static Modifier getModifier(Type attackType, DualType defendingType) {
 }
 
 static uint16_t applyModifier(uint16_t baseValue, Type attackType, DualType defendingType) {
-    const Modifier mod1 = getModifier(attackType, defendingType.getType1());
-    baseValue = applyMod(baseValue, mod1);
-    const Modifier mod2 = getModifier(attackType, defendingType.getType2());
-    baseValue = applyMod(baseValue, mod2);
+    const Modifier mod = getModifier(attackType, defendingType);
+    baseValue = applyMod(baseValue, mod);
     return baseValue;
 }

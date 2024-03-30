@@ -113,14 +113,16 @@ void MenuV2::action(BattleEngine &engine) {
             break;
 
         case BATTLE_CREATURE_SELECT:
-            switch (this->cursorIndex) {
-            case 0:
-                engine.queueAction(ActionType::CHNGE, this->creatures[0]);
-                break;
-            case 2:
-                engine.queueAction(ActionType::CHNGE, this->creatures[1]);
-                break;
-            }
+            engine.queueAction(ActionType::CHNGE, cursorIndex / 2);
+            // switch (this->cursorIndex) {
+            // case 0:
+            //     //TODO This busted
+            //     engine.queueAction(ActionType::CHNGE, this->creatures[0]);
+            //     break;
+            // case 2:
+            //     engine.queueAction(ActionType::CHNGE, this->creatures[1]);
+            //     break;
+            // }
             if (CURRENT_MENU == BATTLE_MOVE_SELECT || CURRENT_MENU == BATTLE_CREATURE_SELECT) {
                 this->pop();
                 this->cursorIndex = 0;
@@ -178,7 +180,7 @@ void MenuV2::printMenu(BattleEngine &engine) {
 
 // TODO move text to drawing
 void MenuV2::creatureRental() {
-    //printString(font, MenuFXData::pointerText, 0, 55);
+    // printString(font, MenuFXData::pointerText, 0, 55);
     FX::setCursor(10, 55);
     this->cursorIndex = this->cursorIndex % 31;
 

@@ -10,7 +10,7 @@ class Action {
   public:
     Priority priority;
     ActionType actionType;
-    uint8_t actionIndex;
+    int8_t actionIndex;
 
     void setActionType(ActionType type, Priority priority);
 };

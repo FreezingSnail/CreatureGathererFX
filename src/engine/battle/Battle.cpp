@@ -22,13 +22,14 @@ uint16_t static calculateDamage(Action *action, Creature *committer, Creature *r
     // uint8_t(reciever->type2))/2;
     uint8_t power = move.getMovePower();
     bool bonus = committer->moveTypeBonus(move.getMoveType());
-    uint16_t damage = (power + committer->statlist.attack) / reciever->statlist.defense;
+    // TODO: this daamage formula is bad
+    uint16_t damage = 50;   //(power * committer->statlist.attack) / (reciever->statlist.defense / 2);
     damage = applyModifier(damage, (Type)move.getMoveType(), reciever->types);
     damage = damage == 0 ? 1 : damage;
     // TODO (Snail) need to move this modifiers location in the formula
 
     // going too need to balance this eventually
-    return damage == 0 ? 1 : damage;
+    return damage;
 }
 
 static uint8_t choseMove(Creature *commiter, Creature *reciever) {
@@ -36,6 +37,7 @@ static uint8_t choseMove(Creature *commiter, Creature *reciever) {
     uint16_t maxDamage = 0;
 
     DualType type = reciever->types;
+    // TODO have multiple ai levels?
     // always choose the highest damage (hardest ai)
     for (uint8_t i = 0; i < 4; i++) {
         Action a;
@@ -87,7 +89,6 @@ void BattleEngine::startFight(Player &player, uint8_t optID) {
     this->loadPlayer(player);
     *this->state = GameState_t::BATTLE;
     this->activeBattle = true;
-    FX::setFontMode(dcmBlack);   // select default font
     this->menu2->push(BATTLE_OPTIONS);
 }
 void BattleEngine::startArena(Player &player, uint8_t optID) {
@@ -96,7 +97,6 @@ void BattleEngine::startArena(Player &player, uint8_t optID) {
     loadPlayer(player);
     *this->state = GameState_t::BATTLE;
     activeBattle = true;
-    FX::setFontMode(dcmBlack);   // select default font
     menu2->push(BATTLE_OPTIONS);
 }
 
@@ -105,7 +105,6 @@ void BattleEngine::startEncounter(Player &player, uint8_t creatureID, uint8_t le
     this->loadPlayer(player);
     *this->state = GameState_t::BATTLE;
     this->activeBattle = true;
-    FX::setFontMode(dcmBlack);   // select default font
     this->menu2->push(BATTLE_OPTIONS);
 }
 
@@ -222,16 +221,22 @@ void BattleEngine::setMoveList(uint8_t **pointer) {
     *pointer = this->playerCur->moves;
 }
 
-void BattleEngine::changeCurMon(uint8_t id) {
+void DGF BattleEngine::changeCurMon(uint8_t index) {
     // TODO this breaks with repeate creatures on roster
     // instead of using an id, there should be an active member index 0-2
     // paired with the current active creature
     // then the menu will skip the current active createure and display the other two
+    uint8_t j = 0;
     for (uint8_t i = 0; i < 3; i++) {
-        if (this->playerParty[i]->id == id) {
-            this->playerCur = this->playerParty[i];
-            break;
+        if (this->playerCur == this->playerParty[i]) {
+            continue;
         }
+        if (j == index) {
+            this->playerCur = this->playerParty[i];
+            playerIndex = i;
+            return;
+        }
+        j++;
     }
     // this->playerCur = this->playerParty[index];
     //  menu.registerMoveList(this->playerCur->moves[0], this->playerCur->moves[1], this->playerCur->moves[2],
@@ -298,11 +303,11 @@ void dbf BattleEngine::commitAction(Player &player, Action *action, Creature *co
         Move move = commiter->moveList[action->actionIndex];
         debug = move.getMoveType();
         Modifier m1 = getModifier(Type(move.getMoveType()), reciever->types.getType1());
-        debug = uint8_t(reciever->types.getType1());
+        // debug = uint8_t(reciever->types.getType1());
 
         Modifier m2 = getModifier(Type(move.getMoveType()), reciever->types.getType2());
         Modifier mod = combineModifier(m1, m2);
-        debug = uint8_t(reciever->types.getType2());
+        // debug = uint8_t(reciever->types.getType2());
 
         applyDamage(damage, reciever);
         if (isPlayer) {
@@ -335,6 +340,7 @@ void dbf BattleEngine::commitAction(Player &player, Action *action, Creature *co
         break;
     case ActionType::CHNGE:
         menu2->dialogMenu.pushMenu(newDialogBox(TEAM_CHANGE, 0, 0));
+        // TODO: this is wrong lol
         menu2->dialogMenu.pushMenu(newDialogBox(SWITCH, playerParty[action->actionIndex]->id, 0));
         this->changeCurMon(action->actionIndex);
         break;
