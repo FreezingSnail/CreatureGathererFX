@@ -20,7 +20,7 @@ This doc details plans / designs / layouts of:
   - random encounters with creatures
     - capture
     - escape
-  - opponent matchs (1-3 monster teams)
+  - opponent matches (1-3 monster teams)
 
 
 ## Opponents

@@ -9,28 +9,28 @@
 static void printType(Type t, uint8_t x, uint8_t y) {
     switch (t) {
     case Type::SPIRIT:
-        // printString(font, MenuFXData::SPIRIT, x, y);
+        SpritesU::drawOverwriteFX(x, y, spirit, FRAME(0));
         break;
     case Type::WATER:
-        // printString(font, MenuFXData::WATER, x, y);
+        SpritesU::drawOverwriteFX(x, y, water, FRAME(0));
         break;
     case Type::WIND:
-        // printString(font, MenuFXData::WIND, x, y);
+        SpritesU::drawOverwriteFX(x, y, wind, FRAME(0));
         break;
     case Type::EARTH:
-        // printString(font, MenuFXData::EARTH, x, y);
+        SpritesU::drawOverwriteFX(x, y, earth, FRAME(0));
         break;
     case Type::FIRE:
-        // printString(font, MenuFXData::FIRE, x, y);
+        SpritesU::drawOverwriteFX(x, y, fire, FRAME(0));
         break;
     case Type::LIGHTNING:
-        // printString(font, MenuFXData::LIGHTNING, x, y);
+        SpritesU::drawOverwriteFX(x, y, lightning, FRAME(0));
         break;
     case Type::PLANT:
-        // printString(font, MenuFXData::PLANT, x, y);
+        SpritesU::drawOverwriteFX(x, y, plant, FRAME(0));
         break;
     case Type::ELDER:
-        // printString(font, MenuFXData::EARTH, x, y);
+        SpritesU::drawOverwriteFX(x, y, elder, FRAME(0));
         break;
     }
 }
