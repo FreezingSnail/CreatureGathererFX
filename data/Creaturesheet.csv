@@ -1,33 +1,33 @@
-sum stats		Name	id	type1	type2	evelevel	atk	def	spcatk	spcdef	hp	spd	move1	move2	move3	move4
-16		SquibbleSnail	0	wind	none	8	3	3	2	2	3	3	8	32	32	32
-46		SquableSnail	1	wind	none	16	8	8	7	7	8	8	8	9	32	32
-68		ScrambleSnail	2	wind	plant	24	12	12	10	10	12	12	8	9	26	10
-16		SkitterCrab	3	earth	none	8	2	3	2	3	4	2	13	32	32	32
-46		ScatterCrab	4	earth	none	16	6	9	7	9	9	6	13	20	32	32
-68		ShatterCrab	5	earth	lightning	24	10	13	11	13	13	8	13	20	21	12
-16		squid	6	water	none	8	2	2	3	3	3	3	4	32	32	32
-46		bigsquid	7	water	none	16	7	7	8	8	8	8	4	7	32	32
-68		BiggestSquid	8	water	fire	24	10	10	12	12	12	12	4	7	17	6
-37		bell	9	spirit	none	0	8	8	3	3	9	6	1	32	32	32
-35		spark	10	fire	none	0	3	3	8	8	4	9	19	32	32	32
-33		cuircuit	11	lightning	none	0	3	3	8	8	4	7	20	32	32	32
-32		hedge	12	plant	none	0	8	8	3	3	6	4	8	32	32	32
-38		cloud	13	wind	none	0	8	8	3	3	8	8	10	23	32	32
-45		rock	14	earth	none	0	4	10	6	12	11	2	13	2	32	32
-27		wiggleworm	15	earth	none	14	2	2	7	4	4	8	13	17	32	32
-42		waggleworm	16	earth	fire	0	4	4	10	6	6	12	12	17	9	32
-43		skimskate	17	water	none	14	8	3	7	8	6	11	4	24	32	32
-57		skimray	18	water	plant	0	11	4	9	12	8	13	4	24	6	27
-47		billow	19	wind	none	14	10	8	7	6	8	8	11	20	32	32
-62		howl	20	wind	lightning	0	13	10	9	8	10	12	11	20	23	10
-48		item	21	spirit	none	14	8	8	8	8	8	8	2	28	32	32
-71		item2	22	spirit	elder	0	12	13	12	12	12	10	2	28	4	30
-48		zip	23	lightning	none	14	8	8	8	8	8	8	23	0	32	32
-71		zap	24	lightning	water	0	12	12	13	12	10	12	23	0	22	6
-48		suculent	25	plant	none	14	8	8	8	8	8	8	24	28	32	32
-71		cactus	26	plant	earth	0	12	12	12	13	12	10	24	28	25	12
-48		flickerfly	27	fire	none	14	8	8	8	8	8	8	16	8	32	32
-60		flitfly	28	fire	wind	0	8	8	12	11	8	13	16	8	17	10
-77		dragon?	29	elder	plant	0	13	13	13	13	13	12	29	10	3	25
-77		skull	30	elder	fire	0	10	10	15	14	14	14	29	17	12	0
-78		ardu	31	elder	lightning	0	15	15	10	10	14	14	31	23	15	27
+Name	id	type1	type2	evelevel	atk	deff	spcatk	spcdef	hp	spd	move1	move2	move3	move4
+SquibbleSnail	0	wind	none	8	3	3	2	2	3	3	8	32	32	32
+SquableSnail	1	wind	none	16	8	8	7	7	8	8	8	9	32	32
+ScrambleSnail	2	wind	plant	24	12	12	10	10	12	12	8	9	26	10
+SkitterCrab	3	earth	none	8	2	3	2	3	4	2	13	32	32	32
+ScatterCrab	4	earth	none	16	6	9	7	9	9	6	13	20	32	32
+ShatterCrab	5	earth	lightning	24	10	13	11	13	13	8	13	20	21	12
+squid	6	water	none	8	3	1	3	3	3	3	4	32	32	32
+bigsquid	7	water	none	16	8	6	8	8	8	8	4	7	32	32
+BiggestSquid	8	water	fire	24	11	10	11	12	12	12	4	7	17	6
+bell	9	spirit	none	0	8	8	3	3	9	6	1	32	32	32
+ember	10	fire	none	0	3	3	8	8	4	9	19	32	32	32
+cuircuit	11	lightning	none	0	3	3	8	8	4	7	20	32	32	32
+hedge	12	plant	none	0	8	8	3	3	6	4	8	32	32	32
+cloud	13	wind	none	0	8	8	3	3	8	8	10	23	32	32
+rock	14	earth	none	0	4	10	6	12	11	2	13	2	32	32
+wiggleworm	15	earth	none	14	2	2	7	4	4	8	13	17	32	32
+waggleworm	16	earth	fire	0	4	4	10	6	6	12	12	17	9	32
+skimskate	17	water	none	14	8	3	7	8	6	11	4	24	32	32
+skimray	18	water	plant	0	11	4	9	12	8	13	4	24	6	27
+billow	19	wind	none	14	10	8	7	6	8	8	11	20	32	32
+howl	20	wind	lightning	0	13	10	9	8	10	12	11	20	23	10
+item	21	spirit	none	14	8	8	8	8	8	8	2	28	32	32
+item2	22	spirit	elder	0	12	13	12	12	12	10	2	28	4	30
+zip	23	lightning	none	14	8	8	8	8	8	8	23	0	32	32
+zap	24	lightning	water	0	12	12	13	12	10	12	23	0	22	6
+suculent	25	plant	none	14	8	8	8	8	8	8	24	28	32	32
+cactus	26	plant	earth	0	12	12	12	13	12	10	24	28	25	12
+flickerfly	27	fire	none	14	8	8	8	8	8	8	16	8	32	32
+flitfly	28	fire	wind	0	8	8	12	11	8	13	16	8	17	10
+dragon	29	elder	plant	0	13	13	13	13	13	12	29	10	3	25
+skull	30	elder	fire	0	10	10	15	14	14	14	29	17	12	0
+ardu	31	elder	lightning	0	15	15	10	10	14	14	31	23	15	27
