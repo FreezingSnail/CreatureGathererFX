@@ -15,8 +15,9 @@ Can be sold shops
   - highest value to sell
 
 ### Field Gatherables
-- plant system 
+- plant system ([[Plant Gathering]])
 - Tends to have longest duration
+- Fossils ([[Fossil Gathering]])
 
 ### Synthetic 
 - shop item

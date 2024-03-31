@@ -46,9 +46,5 @@ upon entering area:
 on area exit:
 - write the state to eeprom using count and initial berry index as offset
 
-
-
-
-
 ### EEPROM
 0-31 index
