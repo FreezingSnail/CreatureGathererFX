@@ -32,7 +32,7 @@ uint16_t static calculateDamage(Action *action, Creature *committer, Creature *r
     return damage;
 }
 
-static uint8_t choseMove(Creature *commiter, Creature *reciever) {
+static uint8_t chooseMove(Creature *commiter, Creature *reciever) {
     uint8_t selected = 0;
     uint16_t maxDamage = 0;
 
@@ -84,11 +84,13 @@ Creature *BattleEngine::getCreature(uint8_t index) {
 //
 //////////////////////////////////////////////////////////////////////////////
 
+// TODO: make these one to get rid of repeated code
 void BattleEngine::startFight(Player &player, uint8_t optID) {
     this->loadOpponent(optID);
     this->loadPlayer(player);
     *this->state = GameState_t::BATTLE;
     this->activeBattle = true;
+    playerAction.actionIndex = -1;
     this->menu2->push(BATTLE_OPTIONS);
 }
 void BattleEngine::startArena(Player &player, uint8_t optID) {
@@ -97,6 +99,7 @@ void BattleEngine::startArena(Player &player, uint8_t optID) {
     loadPlayer(player);
     *this->state = GameState_t::BATTLE;
     activeBattle = true;
+    playerAction.actionIndex = -1;
     menu2->push(BATTLE_OPTIONS);
 }
 
@@ -105,6 +108,7 @@ void BattleEngine::startEncounter(Player &player, uint8_t creatureID, uint8_t le
     this->loadPlayer(player);
     *this->state = GameState_t::BATTLE;
     this->activeBattle = true;
+    playerAction.actionIndex = -1;
     this->menu2->push(BATTLE_OPTIONS);
 }
 
@@ -136,8 +140,11 @@ void BattleEngine::encounter(Player &player) {
     this->turnTick(player);
 }
 
-void BattleEngine::turnTick(Player &player) {
+void DGF BattleEngine::turnTick(Player &player) {
 
+    if (!queued) {
+        return;
+    }
     this->opponentInput();
     int8_t order = (int8_t)this->playerAction.priority - (int8_t)this->opponentAction.priority;
     if (order > 0) {
@@ -152,7 +159,6 @@ void BattleEngine::turnTick(Player &player) {
             this->opponentActionFirst(player);
         }
     }
-    this->queued = false;
 }
 
 bool BattleEngine::checkLoss() {
@@ -185,16 +191,15 @@ bool BattleEngine::checkPlayerFaint() {
     return false;
 }
 
-bool BattleEngine::checkOpponentFaint() {
+// TODO: Need to move this change action out to the normal loop so creature doesnt change mid turn
+bool DGF BattleEngine::checkOpponentFaint() {
     if (this->opponentHealths[this->opponentIndex] <= 0) {
         menu2->dialogMenu.pushMenu(newDialogBox(FAINT, opponentCur->id, 0));
-        this->opponentIndex++;
-        this->opponentCur = &(this->opponent.party[this->opponentIndex]);
         if (!checkWin()) {
-            menu2->dialogMenu.pushMenu(newDialogBox(SWITCH, opponentCur->id, 0));
+            this->opponentAction.setActionType(ActionType::CHNGE, Priority::FAST);
+            this->opponentIndex++;
+            this->opponentAction.actionIndex = int8_t(this->opponentIndex);
         }
-
-        // this->awakeMons &= ~(1 << this->opponentIndex+5);
         return true;
     }
     return false;
@@ -203,18 +208,36 @@ bool BattleEngine::checkOpponentFaint() {
 // Need to add a win/loss check ejection
 void BattleEngine::playerActionFirst(Player &player) {
     this->commitAction(player, &this->playerAction, this->playerCur, this->opponentCur, true);
-    if (this->checkOpponentFaint() || !this->activeBattle)
+    playerAction.actionIndex = -1;
+    if (this->checkOpponentFaint() || !this->activeBattle) {
+        playerAction.setActionType(ActionType::SKIP, Priority::NORMAL);
         return;
+    }
+    queued = false;
     this->commitAction(player, &this->opponentAction, this->opponentCur, this->playerCur, false);
+    opponentAction.actionIndex = -1;
     this->checkPlayerFaint();
+    if (this->checkPlayerFaint() || !this->activeBattle) {
+        opponentAction.setActionType(ActionType::SKIP, Priority::NORMAL);
+        return;
+    }
 }
 
 void BattleEngine::opponentActionFirst(Player &player) {
     this->commitAction(player, &this->opponentAction, this->opponentCur, this->playerCur, false);
-    if (this->checkPlayerFaint() || !this->activeBattle)
+    opponentAction.actionIndex = -1;
+    if (this->checkPlayerFaint() || !this->activeBattle) {
+        queued = false;
+        opponentAction.setActionType(ActionType::SKIP, Priority::NORMAL);
         return;
+    }
     this->commitAction(player, &this->playerAction, this->playerCur, this->opponentCur, true);
-    this->checkOpponentFaint();
+    playerAction.actionIndex = -1;
+    if (this->checkOpponentFaint() || !this->activeBattle) {
+        playerAction.setActionType(ActionType::SKIP, Priority::NORMAL);
+        return;
+    }
+    queued = false;
 }
 
 void BattleEngine::setMoveList(uint8_t **pointer) {
@@ -222,10 +245,7 @@ void BattleEngine::setMoveList(uint8_t **pointer) {
 }
 
 void DGF BattleEngine::changeCurMon(uint8_t index) {
-    // TODO this breaks with repeate creatures on roster
-    // instead of using an id, there should be an active member index 0-2
-    // paired with the current active creature
-    // then the menu will skip the current active createure and display the other two
+
     uint8_t j = 0;
     for (uint8_t i = 0; i < 3; i++) {
         if (this->playerCur == this->playerParty[i]) {
@@ -238,18 +258,11 @@ void DGF BattleEngine::changeCurMon(uint8_t index) {
         }
         j++;
     }
-    // this->playerCur = this->playerParty[index];
-    //  menu.registerMoveList(this->playerCur->moves[0], this->playerCur->moves[1], this->playerCur->moves[2],
-    //  this->playerCur->moves[3]); switch (index) { case 0:
-    //      menu.registerCreatureList(this->playerParty[1]->id, this->playerParty[2]->id);
-    //      break;
-    //  case 1:
-    //      menu.registerCreatureList(this->playerParty[0]->id, this->playerParty[2]->id);
-    //      break;
-    //  case 2:
-    //      menu.registerCreatureList(this->playerParty[0]->id, this->playerParty[1]->id);
-    //      break;
-    //  }
+}
+
+void DGF BattleEngine::changeOptMon(uint8_t index) {
+    this->opponentCur = &opponent.party[index];
+    opponentIndex = index;
 }
 
 bool BattleEngine::tryCapture() {
@@ -269,6 +282,7 @@ void BattleEngine::endEncounter() {
 //
 //////////////////////////////////////////////////////////////////////////////
 
+// TODO: prob can delete all this
 void ::BattleEngine::queueAction(ActionType type, uint8_t index) {
 
     this->queued = true;
@@ -284,10 +298,13 @@ void ::BattleEngine::queueAction(ActionType type, uint8_t index) {
 }
 
 void BattleEngine::opponentInput() {
+    // already queued an action
+    if (opponentAction.actionIndex != -1) {
+        return;
+    }
     // ai to select best move
-    // For now just do the first slot attack
     this->opponentAction.setActionType(ActionType::ATTACK, Priority::NORMAL);
-    this->opponentAction.actionIndex = choseMove(opponentCur, playerCur);
+    this->opponentAction.actionIndex = chooseMove(opponentCur, playerCur);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -311,26 +328,28 @@ void dbf BattleEngine::commitAction(Player &player, Action *action, Creature *co
 
         applyDamage(damage, reciever);
         if (isPlayer) {
-            menu2->dialogMenu.pushMenu(newDialogBox(NAME, commiter->id, 0, basicBeamL));
+            menu2->dialogMenu.pushMenu(newDialogBox(NAME, commiter->id, commiter->moves[action->actionIndex], basicBeamL));
             menu2->dialogMenu.pushMenu(newDialogBox(DAMAGE, uint24_t(damage), damage));
         } else {
-            menu2->dialogMenu.pushMenu(newDialogBox(ENEMY_NAME, commiter->id, 0, basicBeamR));
+            menu2->dialogMenu.pushMenu(newDialogBox(ENEMY_NAME, commiter->id, commiter->moves[action->actionIndex], basicBeamR));
             menu2->dialogMenu.pushMenu(newDialogBox(ENEMY_DAMAGE, uint24_t(damage), damage));
         }
-        switch (mod) {
-        case Modifier::Quarter:
-            menu2->dialogMenu.pushMenu(newDialogBox(EFFECTIVENESS, uint24_t(Modifier::Quarter), 0));
-            break;
-        case Modifier::Half:
-            menu2->dialogMenu.pushMenu(newDialogBox(EFFECTIVENESS, uint24_t(Modifier::Half), 0));
-            break;
-        case Modifier::Double:
-            menu2->dialogMenu.pushMenu(newDialogBox(EFFECTIVENESS, uint24_t(Modifier::Double), 0));
-            break;
-        case Modifier::Quadruple:
-            menu2->dialogMenu.pushMenu(newDialogBox(EFFECTIVENESS, uint24_t(Modifier::Quadruple), 0));
-            break;
-        }
+        if (mod != Modifier::Same)
+            menu2->dialogMenu.pushMenu(newDialogBox(EFFECTIVENESS, uint24_t(mod), 0));
+        // switch (mod) {
+        // case Modifier::Quarter:
+        //     menu2->dialogMenu.pushMenu(newDialogBox(EFFECTIVENESS, uint24_t(Modifier::Quarter), 0));
+        //     break;
+        // case Modifier::Half:
+        //     menu2->dialogMenu.pushMenu(newDialogBox(EFFECTIVENESS, uint24_t(Modifier::Half), 0));
+        //     break;
+        // case Modifier::Double:
+        //     menu2->dialogMenu.pushMenu(newDialogBox(EFFECTIVENESS, uint24_t(Modifier::Double), 0));
+        //     break;
+        // case Modifier::Quadruple:
+        //     menu2->dialogMenu.pushMenu(newDialogBox(EFFECTIVENESS, uint24_t(Modifier::Quadruple), 0));
+        //     break;
+        // }
         break;
     }
     case ActionType::GATHER:
@@ -339,10 +358,15 @@ void dbf BattleEngine::commitAction(Player &player, Action *action, Creature *co
         // menu2->dialogMenu.pushMenu(newDialogBox(GATHERING, 0, 0));
         break;
     case ActionType::CHNGE:
-        menu2->dialogMenu.pushMenu(newDialogBox(TEAM_CHANGE, 0, 0));
-        // TODO: this is wrong lol
-        menu2->dialogMenu.pushMenu(newDialogBox(SWITCH, playerParty[action->actionIndex]->id, 0));
-        this->changeCurMon(action->actionIndex);
+        if (isPlayer) {
+            menu2->dialogMenu.pushMenu(newDialogBox(TEAM_CHANGE, 0, 0));
+            menu2->dialogMenu.pushMenu(newDialogBox(SWITCH, playerParty[action->actionIndex]->id, 0));
+            this->changeCurMon(action->actionIndex);
+        } else {
+            menu2->dialogMenu.pushMenu(newDialogBox(SWITCH, opponent.party[action->actionIndex].id, 0));
+            this->changeOptMon(action->actionIndex);
+        }
+
         break;
     case ActionType::ESCAPE:
         // should add a check in here for opponent vs random encounter
@@ -406,6 +430,7 @@ void BattleEngine::resetOpponent() {
     this->opponentHealths[0] = this->opponent.party[0].statlist.hp;
     this->opponentHealths[1] = this->opponent.party[1].statlist.hp;
     this->opponentHealths[2] = this->opponent.party[2].statlist.hp;
+    opponentAction.actionIndex = -1;
 }
 
 //////////////////////////////////////////////////////////////////////////////

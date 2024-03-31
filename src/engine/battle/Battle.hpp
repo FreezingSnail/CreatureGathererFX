@@ -59,6 +59,7 @@ class BattleEngine {
     void opponentActionFirst(Player &player);
     void setMoveList(uint8_t **pointer);
     void changeCurMon(uint8_t index);
+    void changeOptMon(uint8_t index);
     bool tryCapture();
     void endEncounter();
 

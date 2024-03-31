@@ -113,16 +113,8 @@ void MenuV2::action(BattleEngine &engine) {
             break;
 
         case BATTLE_CREATURE_SELECT:
+            // TODO: bug where menu doesnt pop
             engine.queueAction(ActionType::CHNGE, cursorIndex / 2);
-            // switch (this->cursorIndex) {
-            // case 0:
-            //     //TODO This busted
-            //     engine.queueAction(ActionType::CHNGE, this->creatures[0]);
-            //     break;
-            // case 2:
-            //     engine.queueAction(ActionType::CHNGE, this->creatures[1]);
-            //     break;
-            // }
             if (CURRENT_MENU == BATTLE_MOVE_SELECT || CURRENT_MENU == BATTLE_CREATURE_SELECT) {
                 this->pop();
                 this->cursorIndex = 0;
@@ -165,6 +157,7 @@ void MenuV2::printMenu(BattleEngine &engine) {
         printMoveMenu(this->cursorIndex, this->moveList);
         break;
 
+    // TODO: Lets you pick a fainted creature
     case BATTLE_CREATURE_SELECT:
         uint8_t cIndex = this->creatures[1];
         if (this->cursorIndex == 0) {
