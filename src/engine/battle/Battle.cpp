@@ -180,12 +180,11 @@ bool BattleEngine::checkWin() {
 // These are just place holders until menu & ai written for proper swapping
 bool BattleEngine::checkPlayerFaint() {
     if (this->playerHealths[this->playerIndex] <= 0) {
-        // this->playerIndex++;
-        // this->playerCur = this->playerParty[this->playerIndex];
-        //  this->awakeMons &= ~(1 << this->playerIndex);
+        // TODO(BUG): can bacout out of change menu if creature is down
         menu2->dialogMenu.pushMenu(newDialogBox(FAINT, playerCur->id, 0));
-        menu2->push(BATTLE_CREATURE_SELECT);
-
+        if (!checkLoss()) {
+            menu2->push(BATTLE_CREATURE_SELECT);
+        }
         return true;
     }
     return false;
@@ -336,20 +335,6 @@ void dbf BattleEngine::commitAction(Player &player, Action *action, Creature *co
         }
         if (mod != Modifier::Same)
             menu2->dialogMenu.pushMenu(newDialogBox(EFFECTIVENESS, uint24_t(mod), 0));
-        // switch (mod) {
-        // case Modifier::Quarter:
-        //     menu2->dialogMenu.pushMenu(newDialogBox(EFFECTIVENESS, uint24_t(Modifier::Quarter), 0));
-        //     break;
-        // case Modifier::Half:
-        //     menu2->dialogMenu.pushMenu(newDialogBox(EFFECTIVENESS, uint24_t(Modifier::Half), 0));
-        //     break;
-        // case Modifier::Double:
-        //     menu2->dialogMenu.pushMenu(newDialogBox(EFFECTIVENESS, uint24_t(Modifier::Double), 0));
-        //     break;
-        // case Modifier::Quadruple:
-        //     menu2->dialogMenu.pushMenu(newDialogBox(EFFECTIVENESS, uint24_t(Modifier::Quadruple), 0));
-        //     break;
-        // }
         break;
     }
     case ActionType::GATHER:
