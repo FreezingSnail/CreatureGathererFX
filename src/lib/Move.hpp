@@ -10,7 +10,7 @@ struct MoveBitSet {
     uint8_t power;      // 5 bit
     uint8_t physical;   // 1 bit
     uint8_t accuracy;   // 2 bit
-    uint8_t effect;     // 5 bit
+    uint8_t effect;     // 5 bit (32 potential effects)
 };
 
 class Move {

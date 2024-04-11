@@ -16,7 +16,7 @@ decltype(arduboy) arduboy;
 
 uint8_t debug;
 
-// ARDUBOY_NO_USB
+//ARDUBOY_NO_USB
 PlantGameState plants;
 Player player = Player();
 GameState_t state;

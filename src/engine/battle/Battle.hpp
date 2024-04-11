@@ -4,6 +4,7 @@
 #include "../../opponent/Opponent.hpp"
 #include "../../player/Player.hpp"
 #include "../game/Gamestate.hpp"
+#include "../../lib/StatModifier.hpp"
 
 class MenuV2;
 
@@ -20,6 +21,9 @@ class BattleEngine {
     uint16_t playerHealths[3];
     uint16_t opponentHealths[3];
     uint8_t awakeMons;   // 11100111 player and opponet bit array
+
+    StatModifer playerModifiers;
+    StatModifer opponentModifiers;
 
     uint8_t playerIndex;
     uint8_t opponentIndex;
