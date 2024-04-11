@@ -4,15 +4,9 @@
 #include "../data/Creatures.hpp"
 #include "../lib/Move.hpp"
 #include "../lib/Type.hpp"
+#include "../lib/Stats.hpp"
 
-typedef struct stats {
-    uint8_t attack;
-    uint8_t defense;
-    uint8_t hp;
-    uint8_t speed;
-    uint8_t spcAtk;
-    uint8_t spcDef;
-} stats_t;
+
 
 class Creature {
 

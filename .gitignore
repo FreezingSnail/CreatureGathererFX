@@ -21,3 +21,4 @@ fxdata/Sprites.txt
 media/*
 imgui.ini
 *.o
+*.o*
