@@ -1,48 +1,39 @@
 #pragma once
-#include "../fxdata.h"
-#include "Type.hpp"
-#include <ArduboyFX.h>
-#include <avr/pgmspace.h>
 #include <stdint.h>
 
-#ifdef CLI
-#include <bitset>
-#include <iostream>
-#endif
+enum class Accuracy { HUNDRED, NINETY, EIGHTY, SEVENTY };
 
-// move
-//  00    000    000
-//  id#   type   power
+enum class Effect { NONE, EGOED, DRENCHED, BUFFETED, STUMBLED, BURNED, SHOCKED, ENTANGLED, CURSED };
 
 struct MoveBitSet {
-    uint8_t type;
-    uint8_t power;
-    uint8_t physical;
+    uint8_t type;       // 3 bit
+    uint8_t power;      // 5 bit
+    uint8_t physical;   // 1 bit
+    uint8_t accuracy;   // 2 bit
+    uint8_t effect;     // 5 bit
 };
-
-static MoveBitSet getMovePack(uint8_t index) {
-    MoveBitSet move;
-    uint24_t rowAddress = MoveData::movePack + sizeof(MoveBitSet) * index;
-    FX::readDataObject(rowAddress, move);
-    return move;
-}
 
 class Move {
   private:
-    uint8_t move;
-
     // 000 0000 0
-    static const uint8_t TypeMask = 0b11100000;
-    static const uint8_t PowerMask = 0b00011110;
-    static const uint8_t PhysMask = 0b00000001;
-    static const uint8_t TypeShift = 5;
-    static const uint8_t PowerShift = 1;
-
-    constexpr uint8_t packMove(MoveBitSet move) {
-        return (move.type << TypeShift) | (move.power << PowerShift) | move.physical;
-    }
+    static const uint16_t TypeMask = 0b1110000000000000;
+    static const uint16_t PowerMask = 0b0001111100000000;
+    static const uint16_t PhysMask = 0b0000000010000000;
+    static const uint16_t AccMask = 0b0000000001100000;
+    static const uint16_t EffectMask = 0b0000000000011111;
+    static const uint8_t TypeShift = 13;
+    static const uint8_t PowerShift = 8;
+    static const uint8_t PhysShift = 7;
+    static const uint8_t AccShift = 5;
 
   public:
+    uint16_t move;
+
+    constexpr uint16_t packMove(MoveBitSet move) {
+        return (move.type << TypeShift) | (move.power << PowerShift) | (move.physical << PhysShift) | (move.accuracy << AccShift) |
+               (move.effect);
+    }
+
     constexpr Move() : move(0) {
     }
 
@@ -50,14 +41,22 @@ class Move {
     }
 
     constexpr uint8_t getMovePower() {
-        return (this->move & PowerMask) >> 1;
+        return (this->move & PowerMask) >> PowerShift;
     }
 
     constexpr uint8_t getMoveType() {
-        return ((this->move & TypeMask) >> 5);
+        return (this->move & TypeMask) >> TypeShift;
     }
 
     constexpr bool isPhysical() {
-        return (this->move & PhysMask);
+        return (this->move & PhysMask) >> PhysShift;
+    }
+
+    constexpr Accuracy getMoveAccuracy() {
+        return Accuracy((this->move & AccMask) >> AccShift);
+    }
+
+    constexpr Effect getMoveEffect() {
+        return Effect((this->move & EffectMask));
     }
 };

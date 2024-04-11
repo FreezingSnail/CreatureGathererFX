@@ -19,3 +19,5 @@ src/fxdata/images/npc_16x16.png:Zone.Identifier
 fxdata/generated/*
 fxdata/Sprites.txt
 media/*
+imgui.ini
+*.o

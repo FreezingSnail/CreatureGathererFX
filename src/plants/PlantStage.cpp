@@ -24,6 +24,6 @@ void PlantStage::incrementAll() {
     }
 }
 
-uint8_t PlantStage::read(uint8_t index) {
+uint8_t PlantStage::getStage(uint8_t index) {
     return value >> (index * 2) & 0b11;
 }

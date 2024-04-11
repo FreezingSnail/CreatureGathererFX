@@ -11,5 +11,5 @@ class PlantStage {
   public:
     void increment(uint8_t index);
     void incrementAll();
-    uint8_t read(uint8_t index);
+    uint8_t getStage(uint8_t index);
 };
