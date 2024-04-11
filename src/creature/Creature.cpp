@@ -8,6 +8,7 @@
 #include "../opponent/OpponentSeed.hpp"
 #include "../common.hpp"
 #include "../engine/draw.h"
+#include "../lib/readFX.hpp"
 
 #define dbf __attribute__((optimize("-O0")))
 

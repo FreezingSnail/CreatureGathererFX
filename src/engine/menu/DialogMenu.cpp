@@ -7,6 +7,7 @@
 #include "../world/Event.hpp"
 #include <ArduboyFX.h>
 #include "../../common.hpp"
+#include "../../lib/readFX.hpp"
 
 #define WHITETEXT 1
 #define BLACKTEXT 0

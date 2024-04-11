@@ -5,6 +5,7 @@
 #include "../menu/MenuV2.hpp"
 #include <ArduboyFX.h>
 #include "../../common.hpp"
+#include "../../lib/readFX.hpp"
 
 void Arena::arenaLoop(MenuV2 &menu2, Player &player, BattleEngine &engine) {
     if (this->moveIndex == 12) {
@@ -80,15 +81,15 @@ void Arena::registerMoves(Player &player) {
     this->debug = movePool;
     int8_t moves[16];
     validMoves(movePool, moves);
-    //font.setCursor(0, 0);
-    //font.print(this->moveIndex);
-    // SpritesU::drawOverwriteFX(0, 10, CreatureNames::CreatureNames, curMonID * 3 + arduboy.currentPlane());
+    // font.setCursor(0, 0);
+    // font.print(this->moveIndex);
+    //  SpritesU::drawOverwriteFX(0, 10, CreatureNames::CreatureNames, curMonID * 3 + arduboy.currentPlane());
 
     for (uint8_t i = 0; i < 4; i++) {
         int8_t move = moves[this->movePointer + i];
         if (move != -1) {
             uint24_t moveAddress = FX::readIndexedUInt24(MoveData::moveNames, move);
-            //printString(font, moveAddress, 10, 20 + (i * 10));
+            // printString(font, moveAddress, 10, 20 + (i * 10));
         }
     }
 
