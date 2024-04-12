@@ -108,3 +108,7 @@ namespace MenuStrings {
     escape = "escape" 
     gather = "gather" 
 } 
+
+namespace EffectStrings {
+    applied = "applied effect"
+}

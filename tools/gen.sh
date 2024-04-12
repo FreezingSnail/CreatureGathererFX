@@ -7,6 +7,10 @@ python3 tools/convert-sprite.py ../images -s 4 -o ../fxdata/
 python3 tools/convert-sprite.py ../images/battleEffects -s 4 -o ../fxdata/battleEffects/
 python3 tools/convert-sprite.py ../fxdata/generated/images -s 4 -o ../fxdata/generated/
 cat fxdata/generated/images/string_images.txt >>fxdata/generated/Sprites.txt
+
+# Genreate FX data 
+python3 tools/moveGenerator.py --csv_path data/movesheet.csv > fxdata/data/movedata.txt
+
 #cp -r images fxdata/
 python3 Arduboy-Python-Utilities/fxdata-build.py fxdata/fxdata.txt
 #rm -rf fxdata/images
