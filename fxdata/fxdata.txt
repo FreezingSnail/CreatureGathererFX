@@ -8,6 +8,7 @@ include "data/mapData.txt"
 include "data/movelists.txt"
 include "data/menu.txt"
 include "data/teams.txt"
+include "data/movedata.txt"
 
 include "data/chunks.txt"
 

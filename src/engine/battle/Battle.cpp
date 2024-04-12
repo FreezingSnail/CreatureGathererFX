@@ -10,6 +10,7 @@
 #include <ArduboyFX.h>
 // #include "../../lib/TypeTable.hpp"
 #include "../../lib/Move.hpp"
+#include "../../lib/readFX.hpp"
 
 BattleEngine::BattleEngine() {
 }
@@ -23,7 +24,8 @@ uint16_t static calculateDamage(Action *action, Creature *committer, Creature *r
     uint8_t power = move.getMovePower();
     bool bonus = committer->moveTypeBonus(move.getMoveType());
     // TODO: this daamage formula is bad
-    uint16_t damage = 50;   //(power * committer->statlist.attack) / (reciever->statlist.defense / 2);
+    // TODO: apply stat modifiers, Maybe need to refactor this entirely
+    uint16_t damage = (power * committer->statlist.attack) / (reciever->statlist.defense / 2);
     damage = applyModifier(damage, (Type)move.getMoveType(), reciever->types);
     damage = damage == 0 ? 1 : damage;
     // TODO (Snail) need to move this modifiers location in the formula
@@ -326,6 +328,7 @@ void dbf BattleEngine::commitAction(Player &player, Action *action, Creature *co
         // debug = uint8_t(reciever->types.getType2());
 
         applyDamage(damage, reciever);
+        runEffect(commiter, reciever, move.getMoveEffect());
         if (isPlayer) {
             menu2->dialogMenu.pushMenu(newDialogBox(NAME, commiter->id, commiter->moves[action->actionIndex], basicBeamL));
             menu2->dialogMenu.pushMenu(newDialogBox(DAMAGE, uint24_t(damage), damage));
@@ -468,4 +471,72 @@ void BattleEngine::drawOpponentHP() {
     maxHealth = static_cast<int>(maxHealth * scale);
 
     SpritesU::fillRect(20, 38, curHealth, 2, WHITE);
+}
+
+void BattleEngine::applyEffects() {
+    for (uint8_t i = 0; i < 2; i++) {
+        applyEffect(playerCur, playerCur->status.effects[i]);
+        applyEffect(opponentCur, opponentCur->status.effects[i]);
+    }
+}
+
+void BattleEngine::applyEffect(Creature *target, Effect effect) {
+    bool applied = target->status.applyEffect(effect);
+    if (!applied)
+        return;
+}
+
+// TODO: apply the effects
+void BattleEngine::applyBattleEffect(Creature *target, Effect effect) {
+    DialogType dt = DialogType::PLAYER_EFFECT;
+    StatModifer *statMods = &playerModifiers;
+    if (target == opponentCur) {
+        dt = DialogType::ENEMY_EFFECT;
+        statMods = &opponentModifiers;
+    }
+
+    switch (effect) {
+    case Effect::EGOED:
+        statMods->setModifier(StatType::ATTACK_M, 1);
+        break;
+    case Effect::DRENCHED:
+        break;
+    case Effect::BUFFETED:
+        statMods->setModifier(StatType::SPEED_M, -1);
+        break;
+    case Effect::STUMBLED:
+        statMods->setModifier(StatType::ATTACK_M, -1);
+        break;
+    case Effect::BURNED:
+        statMods->setModifier(StatType::DEFENSE_M, -1);
+        break;
+    case Effect::SHOCKED:
+        statMods->setModifier(StatType::SPECIAL_ATTACK_M, -1);
+        break;
+    case Effect::ENTANGLED:
+        statMods->setModifier(StatType::SPEED_M, -1);
+        break;
+    case Effect::CURSED:
+        statMods->setModifier(StatType::SPECIAL_DEFENSE_M, -1);
+        break;
+    default:
+        return;
+    }
+
+    menu2->dialogMenu.pushMenu(newDialogBox(dt, target->id, uint24_t(effect)));
+}
+
+void BattleEngine::runEffect(Creature *commiter, Creature *other, Effect effect) {
+    if (effect == Effect::NONE) {
+        return;
+    }
+    uint8_t rate = getEffectRate(effect);
+    uint8_t roll = random(1, 100);
+    if (roll > rate) {
+        return;
+    }
+
+    bool selfTarget = selfEffect(effect);
+    Creature *target = selfTarget ? commiter : other;
+    applyEffect(target, effect);
 }

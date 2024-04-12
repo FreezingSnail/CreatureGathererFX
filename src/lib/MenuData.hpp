@@ -22,4 +22,6 @@ enum DialogType {
     EFFECTIVENESS,
     GATHERING,
     TEAM_CHANGE,
+    PLAYER_EFFECT,
+    ENEMY_EFFECT,
 };

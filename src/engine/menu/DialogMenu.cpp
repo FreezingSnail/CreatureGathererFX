@@ -96,6 +96,17 @@ void DialogMenu::drawPopMenu() {
         }
         SpritesU::drawOverwriteFX(curMenu.x + 3, curMenu.y + 10, damageText, FRAME(WHITETEXT));
         break;
+    case PLAYER_EFFECT:
+        addr = FX::readIndexedUInt24(CreatureNames::CreatureNames, curMenu.textAddress);
+        SpritesU::drawOverwriteFX(curMenu.x + 3, curMenu.y, addr, FRAME(WHITETEXT));
+        addr = FX::readIndexedUInt24(EffectStrings::EffectStrings, curMenu.textAddress);
+        SpritesU::drawOverwriteFX(curMenu.x + 3, curMenu.y + 10, addr, FRAME(WHITETEXT));
+        break;
+    case ENEMY_EFFECT:
+        addr = FX::readIndexedUInt24(CreatureNames::CreatureNames, curMenu.textAddress);
+        SpritesU::drawOverwriteFX(curMenu.x + 3, curMenu.y, addr, FRAME(WHITETEXT));
+        addr = FX::readIndexedUInt24(EffectStrings::EffectStrings, curMenu.textAddress);
+        SpritesU::drawOverwriteFX(curMenu.x + 3, curMenu.y + 10, addr, FRAME(WHITETEXT));
     }
 }
 

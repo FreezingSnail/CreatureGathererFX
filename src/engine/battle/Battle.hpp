@@ -87,4 +87,8 @@ class BattleEngine {
     void drawOpponent();
     void drawPlayerHP();
     void drawOpponentHP();
+    void applyEffects();
+    void applyEffect(Creature *target, Effect effect);
+    void applyBattleEffect(Creature *target, Effect effect);
+    void runEffect(Creature *commiter, Creature *other, Effect effect);
 };

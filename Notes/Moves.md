@@ -3,7 +3,7 @@
 - power - 0-15
 - physical flag 
 
-### effects?
+### [[Effects]]
 
 8 effects: 1 per type? -> 3 bits
 

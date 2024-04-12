@@ -14,7 +14,7 @@ class BattleEngine;
 
 class MenuV2 {
   public:
-    MenuEnum stack[4];
+    MenuEnum stack[6];
     int8_t menuPointer = -1;
     int8_t cursorIndex;
     uint8_t *moveList;
