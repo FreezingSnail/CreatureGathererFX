@@ -4,15 +4,6 @@
 
 #include "../../fxdata.h"
 
-Encounter::Encounter() {
-    this->arduboy = nullptr;
-}
-
-Encounter::Encounter(Arduboy2Base *arduboy) {
-    this->arduboy = arduboy;
-    // this->loadEncounterTable(0);
-}
-
 void __attribute__((optimize("-O0"))) Encounter::loadEncounterTable(uint8_t areaIndex) {
     EncounterTable_t table;
     uint24_t rowAddress = encounterRates + (sizeof(EncounterTable_t) * areaIndex);

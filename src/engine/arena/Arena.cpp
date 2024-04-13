@@ -5,7 +5,7 @@
 #include "../menu/MenuV2.hpp"
 #include <ArduboyFX.h>
 #include "../../common.hpp"
-#include "../../lib/readFX.hpp"
+#include "../../lib/ReadData.hpp"
 
 void Arena::arenaLoop(MenuV2 &menu2, Player &player, BattleEngine &engine) {
     if (this->moveIndex == 12) {
@@ -123,7 +123,7 @@ uint8_t Arena::selectOpponent() {
 }
 
 void Arena::startBattle(BattleEngine &engine, Player &player) {
-    engine.startArena(player, 4);
+    engine.startArena(4);
 }
 
 void Arena::displayRegisteredCount() {

@@ -19,8 +19,6 @@ class WorldEngine {
   private:
     Direction playerDirection;
     Encounter encounterTable;
-    BattleEngine *battleEngine;
-    MenuV2 *menu2;
     int mapx, mapy;
     uint8_t height, width;
     int8_t up, side;
@@ -30,7 +28,6 @@ class WorldEngine {
 
     bool moving;
     uint8_t stepTicker;
-    GameState_t *state;
     uint8_t nextTile;
     int curx, cury;
 
@@ -44,16 +41,16 @@ class WorldEngine {
 
   public:
     WorldEngine();
-    void init(Arduboy2Base *arduboy, GameState_t *state, BattleEngine *battleEngine, MenuV2 *menu2);
+    void init();
     void input();
-    void runMap(Player *player);
+    void runMap();
     void draw();
     void drawMap();
     void drawEvents();
     void drawPlayer();
-    void moveChar(Player *player);
+    void moveChar();
     uint8_t getTile();
-    void encounter(Arduboy2Base *arduboy, Player *player);
+    void encounter();
     bool moveable();
     void interact();
 

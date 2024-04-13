@@ -22,6 +22,10 @@ void MenuV2::push(MenuEnum type) {
 void MenuV2::pop() {
     this->menuPointer--;
 }
+void MenuV2::clear() {
+    this->menuPointer = -1;
+    this->dialogMenu.dialogPointer = -1;
+}
 
 void MenuV2::transverse() {
     switch (CURRENT_MENU) {

@@ -5,12 +5,10 @@
 #include "../data/Creatures.hpp"
 #include "../fxdata.h"
 #include "../lib/Move.hpp"
-#include "../opponent/OpponentSeed.hpp"
+#include "../lib/DataTypes.hpp"
 #include "../common.hpp"
 #include "../engine/draw.h"
-#include "../lib/readFX.hpp"
-
-#define dbf __attribute__((optimize("-O0")))
+#include "../lib/ReadData.hpp"
 
 // This will need to load the creature seed from the progmemstore
 

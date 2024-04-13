@@ -17,6 +17,15 @@ extern ArduboyGBase_Config<ABG_Mode::L4_Triplane> arduboy;
 #include "Animator.hpp"
 extern Animator animator;
 
+#include "engine/menu/MenuV2.hpp"
+extern MenuV2 menu;
+#include "GameState.hpp"
+extern GameState gameState;
+#include "engine/battle/Battle.hpp"
+extern BattleEngine engine;
+#include "player/Player.hpp"
+extern Player player;
+
 #define FRAME(x) x * 3 + arduboy.currentPlane()
 
 #define DGF __attribute__((optimize("-O0")))

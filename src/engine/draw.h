@@ -3,7 +3,7 @@
 #include "../lib/Move.hpp"
 // #include "../external/Font4x6.h"
 #include "../common.hpp"
-#include "../lib/readFX.hpp"
+#include "../lib/ReadData.hpp"
 
 #include <ArduboyFX.h>
 

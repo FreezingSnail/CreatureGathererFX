@@ -26,6 +26,7 @@ class MenuV2 {
     void run(BattleEngine &engine);
     void push(MenuEnum type);
     void pop();
+    void clear();
     void transverse();
     void action(BattleEngine &engine);
     void printMenu(BattleEngine &engine);

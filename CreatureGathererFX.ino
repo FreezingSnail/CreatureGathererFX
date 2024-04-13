@@ -15,16 +15,17 @@
 decltype(arduboy) arduboy;
 
 uint8_t debug;
-
-//ARDUBOY_NO_USB
-PlantGameState plants;
-Player player = Player();
-GameState_t state;
+GameState gameState;
+MenuV2 menu = MenuV2();
 BattleEngine engine;
+Player player = Player();
+
+// ARDUBOY_NO_USB
+
 Arena arena = Arena();
 WorldEngine world;
-MenuV2 menu2 = MenuV2();
 Animator animator = Animator();
+PlantGameState plants;
 
 void setup() {
     // arduboy.begin();
@@ -39,18 +40,18 @@ void setup() {
     FX::setFont(Font, dcmNormal);   // select default font
     FX::setCursorRange(0, 32767);
 
-    world.init(&arduboy, &state, &engine, &menu2);
-    state = GameState_t::WORLD;
-    engine.init(&state, &menu2);
+    world.init();
+    gameState.state = GameState_t::WORLD;
+    engine.init();
     player.basic();
-    engine.startArena(player, 0);
+    engine.startArena(0);
     //     engine.startArena(arduboy, player, 6);
 }
 
 void run() {
 
-    if (menu2.dialogMenu.peek()) {
-        menu2.run(engine);
+    if (menu.dialogMenu.peek()) {
+        menu.run(engine);
         return;
     }
 
@@ -58,41 +59,41 @@ void run() {
         return;
     }
 
-    switch (state) {
+    switch (gameState.state) {
     case GameState_t::BATTLE:
-        engine.encounter(player);
+        engine.encounter();
         break;
     case GameState_t::WORLD:
-        world.runMap(&player);
+        world.runMap();
         uint8_t index;
         // index = rand() % 18;
         // engine.startArena(player, index);
         break;
     case GameState_t::ARENA:
-        arena.arenaLoop(menu2, player, engine);
+        arena.arenaLoop(menu, player, engine);
         break;
     }
-    menu2.run(engine);
+    menu.run(engine);
 }
 
 void render() {
-    switch (state) {
+    switch (gameState.state) {
     case GameState_t::BATTLE:
         engine.drawScene();
-        if (menu2.dialogMenu.peek()) {
-            menu2.dialogMenu.drawPopMenu();
-        } else {
-            menu2.printMenu(engine);
-        }
         break;
     case GameState_t::WORLD:
         world.draw();
         break;
     case GameState_t::ARENA:
-        arena.arenaLoop(menu2, player, engine);
+        arena.arenaLoop(menu, player, engine);
         break;
     }
     animator.play();
+    if (menu.dialogMenu.peek()) {
+        menu.dialogMenu.drawPopMenu();
+    } else {
+        menu.printMenu(engine);
+    }
 }
 
 void loop() {
