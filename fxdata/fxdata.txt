@@ -8,12 +8,14 @@ include "data/mapData.txt"
 include "data/movelists.txt"
 include "data/menu.txt"
 include "data/teams.txt"
-include "data/movedata.txt"
+
 
 include "data/chunks.txt"
 
 include "Sprites.txt"
 include "generated/Sprites.txt"
 include "battleEffects/Sprites.txt"
+
+include "generated/movedata.txt"
 
 

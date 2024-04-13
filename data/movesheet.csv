@@ -1,5 +1,4 @@
 id	name	type	power	physical	accuracy	effect
-32	 	none	0	0	0	NONE
 0	smite	spirit	10	0	100	NONE
 1	thought	spirit	5	1	100	NONE
 2	wisper	spirit	7	1	100	NONE
@@ -8,7 +7,7 @@ id	name	type	power	physical	accuracy	effect
 5	squirt	water	7	0	100	NONE
 6	soak	water	10	0	100	NONE
 7	current	water	7	1	100	NONE
-8	breeze	wind	5	0	100	NONE
+8	breeze	wind	5	0	100	EGOED
 9	bellow	wind	10	0	100	NONE
 10	torrent	wind	10	1	100	NONE
 11	blow	wind	7	1	100	NONE
@@ -32,3 +31,4 @@ id	name	type	power	physical	accuracy	effect
 29	elderBurst	elder	12	0	100	NONE
 30	slam	elder	10	1	100	NONE
 31	elderSlam	elder	14	1	100	NONE
+32	 	none	0	0	0	NONE

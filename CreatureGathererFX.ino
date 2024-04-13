@@ -12,6 +12,8 @@
 #include "src/player/Player.hpp"
 #include "src/plants/PlantGamestate.hpp"
 
+// #include <HardwareSerial.h>
+
 decltype(arduboy) arduboy;
 
 uint8_t debug;
@@ -28,8 +30,9 @@ Animator animator = Animator();
 PlantGameState plants;
 
 void setup() {
-    // arduboy.begin();
-    // arduboy.setFrameRate(45);
+    // Serial.begin(9600);
+    //  arduboy.begin();
+    //  arduboy.setFrameRate(45);
 
     arduboy.boot();
     arduboy.startGray();

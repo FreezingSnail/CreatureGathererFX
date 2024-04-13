@@ -480,6 +480,7 @@ void BattleEngine::applyEffect(Creature *target, Effect effect) {
     bool applied = target->status.applyEffect(effect);
     if (!applied)
         return;
+    applyBattleEffect(target, effect);
 }
 
 // TODO: apply the effects
@@ -518,7 +519,6 @@ void BattleEngine::applyBattleEffect(Creature *target, Effect effect) {
     default:
         return;
     }
-
     menu.dialogMenu.pushMenu(newDialogBox(dt, target->id, uint24_t(effect)));
 }
 
@@ -531,7 +531,6 @@ void BattleEngine::runEffect(Creature *commiter, Creature *other, Effect effect)
     if (roll > rate) {
         return;
     }
-
     bool selfTarget = selfEffect(effect);
     Creature *target = selfTarget ? commiter : other;
     applyEffect(target, effect);
