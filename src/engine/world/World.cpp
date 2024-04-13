@@ -7,6 +7,7 @@
 #include "../game/Gamestate.hpp"
 #include "Encounter.hpp"
 #include "Map.hpp"
+#include "../../common.hpp"
 
 #define TILE_SIZE 16
 #define MAPYADJUST -3
@@ -26,11 +27,7 @@ bool warpTile(uint8_t x, uint8_t y) {
 
 WorldEngine::WorldEngine() {
 }
-void WorldEngine::init(Arduboy2Base *arduboy, GameState_t *state, BattleEngine *battleEngine, MenuV2 *menu2) {
-    this->encounterTable = Encounter(arduboy);
-    this->battleEngine = battleEngine;
-    this->state = state;
-    this->menu2 = menu2;
+void WorldEngine::init() {
     this->mapx = 0;
     this->mapy = 0;
     this->curx = 4;
@@ -114,17 +111,17 @@ void WorldEngine::drawPlayer() {
     SpritesU::drawOverwriteFX(3 * 16, 2 * 16, characterSheet, frame * 3 + arduboy.currentPlane());
 }
 
-void WorldEngine::runMap(Player *player) {
+void WorldEngine::runMap() {
     // this->drawMap();
 
     if (this->moving && this->moveable()) {
-        this->moveChar(player);
-    } else if (!this->menu2->dialogMenu.peek()) {
+        this->moveChar();
+    } else if (!menu.dialogMenu.peek()) {
         this->interact();
         this->input();
     } else {
         if (arduboy.justPressed(A_BUTTON)) {
-            // this->menu2->dialogMenu.popMenu();
+            // menu.dialogMenu.popMenu();
         }
     }
 
@@ -162,7 +159,7 @@ void WorldEngine::draw() {
     // drawEvents();
 }
 
-void WorldEngine::moveChar(Player *player) {
+void WorldEngine::moveChar() {
     switch (this->playerDirection) {
     case Direction::UP:
         this->mapy++;
@@ -214,7 +211,7 @@ uint8_t WorldEngine::getTile() {
     return (TileType)0;
 }
 
-void WorldEngine::encounter(Arduboy2Base *arduboy, Player *player) {
+void WorldEngine::encounter() {
     // TODO use tile map
     uint8_t t = 0;
     if (t == 0) {
@@ -222,8 +219,8 @@ void WorldEngine::encounter(Arduboy2Base *arduboy, Player *player) {
         if (chance <= 10) {
             uint8_t creatureID = this->encounterTable.rollEncounter();
             uint8_t level = this->encounterTable.rollLevel();
-            this->battleEngine->startEncounter(*player, creatureID, level);
-            *this->state = GameState_t::BATTLE;
+            engine.startEncounter(creatureID, level);
+            gameState.state = GameState_t::BATTLE;
         }
     }
 }
@@ -288,7 +285,7 @@ void WorldEngine::interact() {
         for (uint8_t i = 0; i < EVENTCOUNT; i++) {
             Event e = this->events[i];
             if (e.cords.x == tilex && e.cords.y == tiley) {
-                this->menu2->dialogMenu.pushEvent(e);
+                menu.dialogMenu.pushEvent(e);
                 return;
             }
         }

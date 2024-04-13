@@ -2,12 +2,10 @@
 #include "Opponent.hpp"
 #include "../data/Creatures.hpp"
 #include "../fxdata.h"
-#include "OpponentSeed.hpp"
 #include <ArduboyFX.h>
 
 Opponent::Opponent() {
 }
-#define dbf __attribute__((optimize("-O0")))
 
 void Opponent::load(OpponentSeed_t *seed) {
     this->levels[0] = 5;   // parseOpponentCreatureSeedlvl(seed->firstCreature);

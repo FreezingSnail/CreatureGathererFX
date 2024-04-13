@@ -12,10 +12,8 @@ class BattleEngine {
   public:
     uint8_t debug;
     Creature *playerParty[3];
-    GameState_t *state;
     Creature *playerCur;
     Creature *opponentCur;
-    MenuV2 *menu2;
 
     Opponent opponent;
     uint16_t playerHealths[3];
@@ -36,15 +34,15 @@ class BattleEngine {
     Action queuedAction;
 
     BattleEngine();
-    void init(GameState_t *state, MenuV2 *menu);
+    void init();
 
     // entry points
-    void startFight(Player &player, uint8_t optID);
-    void startArena(Player &player, uint8_t optID);
-    void startEncounter(Player &player, uint8_t creatureID, uint8_t level);
+    void startFight(uint8_t optID);
+    void startArena(uint8_t optID);
+    void startEncounter(uint8_t creatureID, uint8_t level);
 
     // flow control
-    void encounter(Player &player);
+    void encounter();
 
     // menu interface
     void queueAction(ActionType type, uint8_t index);
@@ -54,13 +52,13 @@ class BattleEngine {
     Creature *getCreature(uint8_t index);
 
     // flow control
-    void turnTick(Player &player);
+    void turnTick();
     bool checkLoss();
     bool checkWin();
     bool checkPlayerFaint();
     bool checkOpponentFaint();
-    void playerActionFirst(Player &player);
-    void opponentActionFirst(Player &player);
+    void playerActionFirst();
+    void opponentActionFirst();
     void setMoveList(uint8_t **pointer);
     void changeCurMon(uint8_t index);
     void changeOptMon(uint8_t index);
@@ -72,11 +70,11 @@ class BattleEngine {
     void opponentInput();
 
     // event execution
-    void commitAction(Player &player, Action *action, Creature *commiter, Creature *receiver, bool isPlayer);
+    void commitAction(Action *action, Creature *commiter, Creature *receiver, bool isPlayer);
     void applyDamage(uint16_t damage, Creature *receiver);
 
     // data loading
-    void loadPlayer(Player &player);
+    void loadPlayer();
     void loadOpponent(uint8_t optID);
     void LoadCreature(uint8_t creatureID, uint8_t level);
     void resetOpponent();
