@@ -2,7 +2,7 @@
 #include <stdint.h>
 
 #include "../creature/Creature.hpp"
-#include "../data/Creatures.hpp"
+#include "../lib/DataTypes.hpp"
 #include "../item/Item.hpp"
 
 class Player {

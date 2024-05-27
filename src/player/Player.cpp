@@ -1,8 +1,7 @@
 
 #include "Player.hpp"
 
-#include "../data/Creatures.hpp"
-#include "../fxdata.h"
+#include "../lib/ReadData.hpp"
 
 Player::Player() {
     // CreatureData_t cseed;
@@ -27,10 +26,7 @@ void Player::basic() {
 }
 
 void Player::loadCreature(uint8_t index, uint8_t creatureIndex) {
-    CreatureData_t cseed;
-    uint24_t rowAddress = CreatureData::creatureData + (sizeof(CreatureData_t) * creatureIndex);
-    FX::readDataObject(rowAddress, cseed);
-    this->setCreature(index, cseed);
+    this->setCreature(index, getCreatureFromStore(creatureIndex));
 }
 
 void Player::setCreature(uint8_t index, CreatureData_t seed) {
