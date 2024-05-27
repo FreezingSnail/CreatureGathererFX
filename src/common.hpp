@@ -44,3 +44,29 @@ static void drawNumbersBlack(uint8_t x, uint8_t y, uint8_t number) {
     SpritesU::drawPlusMaskFX(x, y, singlenumbersblack, FRAME(upper));
     SpritesU::drawPlusMaskFX(x + 4, y, numbersblack, FRAME(lower));
 }
+
+#include "lib/BattleEventStack.hpp"
+extern BattleEvent battleEventStack[10];
+
+#include "lib/BattleEventPlayer.hpp"
+extern BattleEventPlayer battleEventPlayer;
+
+#include "lib/MenuStack.hpp"
+extern MenuStack menuStack;
+
+static PopUpDialog newDialogBox(DialogType type, uint24_t number, uint16_t damage, uint24_t animation = 0) {
+    PopUpDialog dialog;
+    dialog.height = MHEIGHT;
+    dialog.width = MWIDTH;
+    dialog.x = XSTART;
+    dialog.y = YSTART;
+    dialog.type = type;
+    dialog.textAddress = number;
+    dialog.damage = damage;
+    dialog.animation = animation;
+
+    return dialog;
+}
+
+#include "engine/menu/DialogMenu.hpp"
+extern DialogMenu dialogMenu;

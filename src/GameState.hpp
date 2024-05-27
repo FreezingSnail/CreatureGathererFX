@@ -11,6 +11,8 @@
 #include "Animator.hpp"
 #include "plants/PlantGamestate.hpp"
 
+using uint24_t = __uint24;
+
 class GameState {
   public:
     // PlantGameState plants;

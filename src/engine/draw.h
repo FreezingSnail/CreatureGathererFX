@@ -119,10 +119,39 @@ static void printMoveMenu(int8_t index, uint8_t *moveList) {
     printMoveInfo(moveList[index], 38, 4);
 }
 
+// TODO deal with drawing numbers
+static void printCreature(Creature *creature) {
+    SpritesU::drawOverwriteFX(35, 0, hpText, FRAME(0));
+    SpritesU::drawOverwriteFX(35, 10, atkText, FRAME(0));
+    SpritesU::drawOverwriteFX(35, 20, defText, FRAME(0));
+    SpritesU::drawOverwriteFX(72, 0, satkText, FRAME(0));
+    SpritesU::drawOverwriteFX(72, 10, sdefText, FRAME(0));
+    SpritesU::drawOverwriteFX(72, 20, spdText, FRAME(0));
+
+    drawStatNumbers(60, 0, creature->statlist.hp);
+    drawStatNumbers(60, 10, creature->statlist.attack);
+    drawStatNumbers(60, 20, creature->statlist.defense);
+    drawStatNumbers(103, 0, creature->statlist.spcAtk);
+    drawStatNumbers(103, 10, creature->statlist.spcDef);
+    drawStatNumbers(103, 20, creature->statlist.speed);
+
+    for (uint8_t i = 0; i < 4; i++) {
+        if (creature->moves[i] == 32) {
+            continue;
+        }
+        uint8_t offset = i % 2;
+        uint8_t x = 4 + (60 * offset);
+        uint8_t y = 34 + (8 * (i / 2));
+
+        uint24_t rowAddress = FX::readIndexedUInt24(MoveNames::MoveNames, creature->moves[i]);
+        SpritesU::drawOverwriteFX(x, y, rowAddress, FRAME(1));
+    }
+}
+
 static void printCreatureMenu(uint8_t c1, uint8_t c2, Creature *cpointer, uint8_t index) {
     SpritesU::fillRect(0, 33, 128, 31, WHITE);
     SpritesU::fillRect(0, 0, 128, 32, BLACK);
-    cpointer->printCreature();
+    printCreature(cpointer);
     uint24_t c1addr = FX::readIndexedUInt24(CreatureNames::CreatureNames, c1);
     uint24_t c2addr = FX::readIndexedUInt24(CreatureNames::CreatureNames, c2);
     if (index == 0) {

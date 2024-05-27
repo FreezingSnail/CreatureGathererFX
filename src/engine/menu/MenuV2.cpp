@@ -24,7 +24,7 @@ void MenuV2::pop() {
 }
 void MenuV2::clear() {
     this->menuPointer = -1;
-    this->dialogMenu.dialogPointer = -1;
+    dialogMenu.dialogPointer = -1;
 }
 
 void MenuV2::transverse() {

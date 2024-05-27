@@ -8,6 +8,35 @@ struct Animation {
     uint24_t data;
 };
 
+enum class AnimationType {
+    ATTACK,
+    DAMAGE,
+    HEAL,
+    STATUS,
+    STAT,
+    EVOLVE,
+    LEVELUP,
+    FAINT,
+    WIN,
+    LOSE,
+    RUN,
+    CATCH,
+    ESCAPE,
+    ITEM,
+    SWITCH,
+    FLEE,
+    WAIT,
+    NONE
+};
+
+struct AnimationEvent {
+    AnimationType type;
+    // used for name index, committer, move, etc
+    uint8_t index;
+    // used for numerical data like damage
+    uint8_t data;
+};
+
 class Animator {
   public:
     Animation animationStack[3];

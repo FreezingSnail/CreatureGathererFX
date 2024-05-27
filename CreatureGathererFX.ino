@@ -29,6 +29,11 @@ WorldEngine world;
 Animator animator = Animator();
 PlantGameState plants;
 
+BattleEvent battleEventStack[10];
+BattleEventPlayer battleEventPlayer;
+MenuStack menuStack;
+DialogMenu dialogMenu;
+
 void setup() {
     // Serial.begin(9600);
     //  arduboy.begin();
@@ -53,7 +58,7 @@ void setup() {
 
 void run() {
 
-    if (menu.dialogMenu.peek()) {
+    if (dialogMenu.peek()) {
         menu.run(engine);
         return;
     }
@@ -92,8 +97,8 @@ void render() {
         break;
     }
     animator.play();
-    if (menu.dialogMenu.peek()) {
-        menu.dialogMenu.drawPopMenu();
+    if (dialogMenu.peek()) {
+        dialogMenu.drawPopMenu();
     } else {
         menu.printMenu(engine);
     }
