@@ -1,8 +1,7 @@
 #pragma once
-
 #include "test.hpp"
-#include "../src/lib/ReadData.hpp"
 
+#include "../src/lib/ReadData.hpp"
 #include "../src/player/Player.hpp"
 
 void PlayerTest() {
