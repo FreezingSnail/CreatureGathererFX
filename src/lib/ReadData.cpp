@@ -25,7 +25,7 @@ bool selfEffect(Effect effect) {
     return effectTargets >> uint8_t(effect) & 1 == 1;
 }
 
-inline OpponentSeed_t reeadOpponentSeed(uint8_t index) {
+inline OpponentSeed_t readOpponentSeed(uint8_t index) {
     OpponentSeed_t seed = OpponentSeed_t{0, 0, 1};
     uint24_t rowAddress = FX::readIndexedUInt24(opts, index);
     FX::readDataObject(rowAddress, seed);
