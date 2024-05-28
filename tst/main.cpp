@@ -4,8 +4,10 @@
 #include "statModifier_test.hpp"
 #include "creature_test.hpp"
 #include "player_test.hpp"
+#include "engine_test.hpp"
 
 #include "../src/globals.hpp"
+
 Player player = Player();
 BattleEvent battleEventStack[10];
 BattleEventPlayer battleEventPlayer;
@@ -19,5 +21,6 @@ int main() {
     ModifierSuite();
     CreatureSuite();
     PlayerSuite();
+    EngineSuite();
     return 0;
 }
