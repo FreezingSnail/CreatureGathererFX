@@ -7,7 +7,7 @@
 #include "../game/Gamestate.hpp"
 #include "Encounter.hpp"
 #include "Map.hpp"
-#include "../../common.hpp"
+#include "../../globals.hpp"
 
 #define TILE_SIZE 16
 #define MAPYADJUST -3

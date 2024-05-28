@@ -10,8 +10,7 @@
 #include "player/Player.hpp"
 #include "Animator.hpp"
 #include "plants/PlantGamestate.hpp"
-
-using uint24_t = __uint24;
+#include "lib/uint24.h"
 
 class GameState {
   public:

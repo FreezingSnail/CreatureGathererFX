@@ -1,7 +1,6 @@
 
 #include "Opponent.hpp"
 #include "../lib/DataTypes.hpp"
-#include "../fxdata.h"
 #include "../lib/ReadData.hpp"
 
 Opponent::Opponent() {

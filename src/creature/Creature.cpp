@@ -2,12 +2,9 @@
 
 #include "../lib/Move.hpp"
 #include "../lib/DataTypes.hpp"
-#include "../common.hpp"
-#include "../engine/draw.h"
 #include "../lib/ReadData.hpp"
 
 // This will need to load the creature seed from the progmemstore
-
 Creature::Creature() {
     this->statlist.attack = 0;
     this->statlist.defense = 0;

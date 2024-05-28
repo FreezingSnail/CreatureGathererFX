@@ -26,8 +26,3 @@ class MenuV2 {
     void updateMoveList(BattleEngine &engine);
     void creatureRental();
 };
-
-#define XSTART 0
-#define YSTART 43
-#define MWIDTH 128
-#define MHEIGHT 32

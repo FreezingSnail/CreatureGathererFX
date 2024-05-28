@@ -1,5 +1,5 @@
 #pragma once
-#include <ArduboyFX.h>
+#include "uint24.h"
 
 struct MenuData {
     uint8_t horizontal;

@@ -1,6 +1,4 @@
 #pragma once
-#include "../../creature/Creature.hpp"
-#include "../../item/Item.hpp"
 
 typedef enum State { WORLD, BATTLE, ARENA } GameState_t;
 

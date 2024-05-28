@@ -3,8 +3,7 @@
 #include "DataTypes.hpp"
 #include "../creature/Creature.hpp"
 #include "../opponent/Opponent.hpp"
-
-using uint24_t = __uint24;
+#include "uint24.h"
 
 MoveBitSet getMovePack(uint8_t index);
 

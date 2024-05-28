@@ -3,7 +3,6 @@
 #include "../../creature/Creature.hpp"
 #include "../../opponent/Opponent.hpp"
 #include "../../player/Player.hpp"
-#include "../game/Gamestate.hpp"
 #include "../../lib/StatModifier.hpp"
 
 class MenuV2;
@@ -79,12 +78,6 @@ class BattleEngine {
     void LoadCreature(uint8_t creatureID, uint8_t level);
     void resetOpponent();
 
-    // drawing
-    void drawScene();
-    void drawPlayer();
-    void drawOpponent();
-    void drawPlayerHP();
-    void drawOpponentHP();
     void applyEffects();
     void applyEffect(Creature *target, Effect effect);
     void applyBattleEffect(Creature *target, Effect effect);

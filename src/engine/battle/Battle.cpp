@@ -1,5 +1,5 @@
 #include "Battle.hpp"
-#include "../../common.hpp"
+#include "../../globals.hpp"
 
 #include "../../creature/Creature.hpp"
 #include "../../lib/Move.hpp"
@@ -81,7 +81,7 @@ Creature *BattleEngine::getCreature(uint8_t index) {
 void BattleEngine::startFight(uint8_t optID) {
     this->loadOpponent(optID);
     this->loadPlayer();
-    gameState.state = GameState_t::BATTLE;
+    // gameState.state = GameState_t::BATTLE;
     this->activeBattle = true;
     playerAction.actionIndex = -1;
     menuStack.push(MenuEnum::BATTLE_OPTIONS);
@@ -90,7 +90,7 @@ void BattleEngine::startArena(uint8_t optID) {
     ReadOpt(&this->opponent, optID);
     resetOpponent();
     loadPlayer();
-    gameState.state = GameState_t::BATTLE;
+    // gameState.state = GameState_t::BATTLE;
     activeBattle = true;
     playerAction.actionIndex = -1;
     menuStack.push(MenuEnum::BATTLE_OPTIONS);
@@ -99,7 +99,7 @@ void BattleEngine::startArena(uint8_t optID) {
 void BattleEngine::startEncounter(uint8_t creatureID, uint8_t level) {
     this->LoadCreature(creatureID, level);
     this->loadPlayer();
-    gameState.state = GameState_t::BATTLE;
+    // gameState.state = GameState_t::BATTLE;
     this->activeBattle = true;
     playerAction.actionIndex = -1;
     menuStack.push(MenuEnum::BATTLE_OPTIONS);
@@ -133,7 +133,7 @@ void BattleEngine::encounter() {
     this->turnTick();
 }
 
-void DGF BattleEngine::turnTick() {
+void BattleEngine::turnTick() {
 
     if (!queued) {
         return;
@@ -184,7 +184,7 @@ bool BattleEngine::checkPlayerFaint() {
 }
 
 // TODO: Need to move this change action out to the normal loop so creature doesnt change mid turn
-bool DGF BattleEngine::checkOpponentFaint() {
+bool BattleEngine::checkOpponentFaint() {
     if (this->opponentHealths[this->opponentIndex] <= 0) {
         battleEventPlayer.push({BattleEventType::OPPONENT_FAINT, opponentCur->id, 0});
         if (!checkWin()) {
@@ -236,7 +236,7 @@ void BattleEngine::setMoveList(uint8_t **pointer) {
     *pointer = this->playerCur->moves;
 }
 
-void DGF BattleEngine::changeCurMon(uint8_t index) {
+void BattleEngine::changeCurMon(uint8_t index) {
 
     uint8_t j = 0;
     for (uint8_t i = 0; i < 3; i++) {
@@ -252,20 +252,21 @@ void DGF BattleEngine::changeCurMon(uint8_t index) {
     }
 }
 
-void DGF BattleEngine::changeOptMon(uint8_t index) {
+void BattleEngine::changeOptMon(uint8_t index) {
     this->opponentCur = &opponent.party[index];
     opponentIndex = index;
 }
 
 bool BattleEngine::tryCapture() {
-    uint8_t roll = random(1, 10);
+    uint8_t roll = 0;
+    // random(1, 10);
     return roll < 5;
 }
 
 void BattleEngine::endEncounter() {
     this->activeBattle = false;
-    gameState.state = GameState_t::WORLD;
-    menu.clear();
+    // gameState.state = GameState_t::WORLD;
+    //  menu.clear();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -410,59 +411,6 @@ void BattleEngine::resetOpponent() {
     opponentAction.actionIndex = -1;
 }
 
-//////////////////////////////////////////////////////////////////////////////
-//
-//        Draw Functions
-//
-//////////////////////////////////////////////////////////////////////////////
-
-void BattleEngine::drawScene() {
-    SpritesU::drawPlusMaskFX(0, 15, fieldBacground, FRAME(0));
-    this->drawPlayer();
-    this->drawOpponent();
-}
-
-void BattleEngine::drawOpponent() {
-    SpritesU::drawPlusMaskFX(0, 0, ecreatureSprites, FRAME(opponentCur->id));
-
-    this->drawOpponentHP();
-}
-
-void BattleEngine::drawPlayer() {
-    SpritesU::drawPlusMaskFX(96, 0, creatureSprites, FRAME(playerCur->id));
-    // uint24_t rowAddress = FX::readIndexedUInt24(CreatureNames::CreatureNames, playerCur->id);
-    // SpritesU::drawOverwriteFX(60, 32, rowAddress, FRAME(0));
-
-    this->drawPlayerHP();
-}
-
-void BattleEngine::drawPlayerHP() {
-    uint8_t curHealth = this->playerHealths[this->playerIndex];
-    uint8_t maxHealth = this->playerCur->statlist.hp;
-    double total = curHealth + maxHealth;
-    double scale = 40 / total;
-
-    curHealth = static_cast<int>(curHealth * scale);
-    maxHealth = static_cast<int>(maxHealth * scale);
-    uint8_t x2 = 110;
-    uint8_t x1 = x2 - curHealth;
-
-    SpritesU::fillRect(x1, 38, curHealth, 2, WHITE);
-}
-
-// TODO breaks on opponent change
-void BattleEngine::drawOpponentHP() {
-    uint8_t curHealth = this->opponentHealths[this->playerIndex];
-    uint8_t maxHealth = this->opponentCur->statlist.hp;
-    double total = curHealth + maxHealth;
-    double scale = 40 / total;
-
-    curHealth = static_cast<int>(curHealth * scale);
-    maxHealth = static_cast<int>(maxHealth * scale);
-
-    SpritesU::fillRect(20, 38, curHealth, 2, WHITE);
-}
-
 void BattleEngine::applyEffects() {
     for (uint8_t i = 0; i < 2; i++) {
         applyEffect(playerCur, playerCur->status.effects[i]);
@@ -521,7 +469,7 @@ void BattleEngine::runEffect(Creature *commiter, Creature *other, Effect effect)
         return;
     }
     uint8_t rate = getEffectRate(effect);
-    uint8_t roll = random(1, 100);
+    uint8_t roll = 0;   // random(1, 100);
     if (roll > rate) {
         return;
     }
