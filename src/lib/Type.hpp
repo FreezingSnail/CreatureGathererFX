@@ -1,5 +1,4 @@
 #pragma once
-#include <avr/pgmspace.h>
 #include <stdint.h>
 
 #define dbf __attribute__((optimize("-O0")))
@@ -75,7 +74,7 @@ static uint16_t applyMod(uint16_t value, Modifier modifier) {
 }
 
 // TODO: FXdata
-const Modifier typeTable[TypeCount][TypeCount] PROGMEM = {
+const Modifier typeTable[TypeCount][TypeCount] = {
     // Spirit
     {
         Modifier::Same,   // Spirit
@@ -178,7 +177,7 @@ static Modifier getModifier(Type attackType, Type defendingType) {
     }
     return (attackType == Type::NONE)
                ? Modifier::None
-               : static_cast<Modifier>(pgm_read_byte(&typeTable[static_cast<uint8_t>(attackType)][static_cast<uint8_t>(defendingType)]));
+               : static_cast<Modifier>((typeTable[static_cast<uint8_t>(attackType)][static_cast<uint8_t>(defendingType)]));
 }
 
 static Modifier combineModifier(Modifier a, Modifier b) {

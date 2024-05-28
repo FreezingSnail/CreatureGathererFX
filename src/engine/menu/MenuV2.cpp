@@ -2,6 +2,7 @@
 #include "../battle/Battle.hpp"
 #include "../draw.h"
 #include "../../common.hpp"
+#include "../../globals.hpp"
 
 #define dbf __attribute__((optimize("-O0"))
 #define CURRENT_MENU this->stack[this->menuPointer]

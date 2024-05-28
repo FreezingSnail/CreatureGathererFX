@@ -1,6 +1,6 @@
 #pragma once
-#include <ArduboyFX.h>
 #include <stdint.h>
+#include "../../lib/uint24.h"
 
 struct EventPack {
     uint24_t cordAddress;

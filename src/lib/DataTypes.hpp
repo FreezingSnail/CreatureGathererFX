@@ -1,5 +1,6 @@
 #pragma once
 #include <stdint.h>
+#include "MenuData.hpp"
 
 typedef struct OpponentSeed {
 
@@ -41,3 +42,11 @@ typedef struct CreatureD {
     unsigned char move3;
     unsigned char move4;
 } CreatureData_t;
+
+struct PopUpDialog {
+    uint8_t x, y, width, height;
+    uint24_t textAddress;
+    uint16_t damage;
+    DialogType type;
+    uint24_t animation;
+};

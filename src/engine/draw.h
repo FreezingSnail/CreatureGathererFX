@@ -162,3 +162,50 @@ static void printCreatureMenu(uint8_t c1, uint8_t c2, Creature *cpointer, uint8_
         SpritesU::drawOverwriteFX(6, 56, c2addr, FRAME(0));
     }
 }
+
+static void drawPlayerHP(BattleEngine *engine) {
+    uint8_t curHealth = engine->playerHealths[engine->playerIndex];
+    uint8_t maxHealth = engine->playerCur->statlist.hp;
+    double total = curHealth + maxHealth;
+    double scale = 40 / total;
+
+    curHealth = static_cast<int>(curHealth * scale);
+    maxHealth = static_cast<int>(maxHealth * scale);
+    uint8_t x2 = 110;
+    uint8_t x1 = x2 - curHealth;
+
+    SpritesU::fillRect(x1, 38, curHealth, 2, WHITE);
+}
+
+// TODO breaks on opponent change
+static void drawOpponentHP(BattleEngine *engine) {
+    uint8_t curHealth = engine->opponentHealths[engine->playerIndex];
+    uint8_t maxHealth = engine->opponentCur->statlist.hp;
+    double total = curHealth + maxHealth;
+    double scale = 40 / total;
+
+    curHealth = static_cast<int>(curHealth * scale);
+    maxHealth = static_cast<int>(maxHealth * scale);
+
+    SpritesU::fillRect(20, 38, curHealth, 2, WHITE);
+}
+
+static void drawOpponent(BattleEngine *engine) {
+    SpritesU::drawPlusMaskFX(0, 0, ecreatureSprites, FRAME(engine->opponentCur->id));
+
+    drawOpponentHP(engine);
+}
+
+static void drawPlayer(BattleEngine *engine) {
+    SpritesU::drawPlusMaskFX(96, 0, creatureSprites, FRAME(engine->playerCur->id));
+    // uint24_t rowAddress = FX::readIndexedUInt24(CreatureNames::CreatureNames, playerCur->id);
+    // SpritesU::drawOverwriteFX(60, 32, rowAddress, FRAME(0));
+
+    drawPlayerHP(engine);
+}
+
+static void drawScene(BattleEngine *engine) {
+    SpritesU::drawPlusMaskFX(0, 15, fieldBacground, FRAME(0));
+    drawPlayer(engine);
+    drawOpponent(engine);
+}

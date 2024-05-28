@@ -1,4 +1,4 @@
-#include "../common.hpp"
+#include "../globals.hpp"
 #include "BattleEventPlayer.hpp"
 
 void BattleEventPlayer::push(BattleEvent event) {

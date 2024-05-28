@@ -1,15 +1,7 @@
 #pragma once
 #include "../../lib/MenuData.hpp"
 #include "../world/Event.hpp"
-#include <ArduboyFX.h>
-
-struct PopUpDialog {
-    uint8_t x, y, width, height;
-    uint24_t textAddress;
-    uint16_t damage;
-    DialogType type;
-    uint24_t animation;
-};
+#include "../../lib/DataTypes.hpp"
 
 class DialogMenu {
   public:

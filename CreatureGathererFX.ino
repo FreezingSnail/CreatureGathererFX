@@ -1,6 +1,7 @@
 #define ABG_IMPLEMENTATION
 #define SPRITESU_IMPLEMENTATION
 #include "src/common.hpp"
+#include "src/globals.hpp"
 
 #include "src/engine/arena/Arena.hpp"
 #include "src/engine/battle/Battle.hpp"
@@ -45,7 +46,7 @@ void setup() {
     plants.tick();
 
     FX::begin(FX_DATA_PAGE);
-    FX::setFont(Font, dcmNormal);   // select default font
+    // FX::setFont(ArduFont, dcmNormal);   // select default font
     FX::setCursorRange(0, 32767);
 
     world.init();
@@ -87,7 +88,7 @@ void run() {
 void render() {
     switch (gameState.state) {
     case GameState_t::BATTLE:
-        engine.drawScene();
+        (&engine);
         break;
     case GameState_t::WORLD:
         world.draw();
