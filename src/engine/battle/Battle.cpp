@@ -286,7 +286,8 @@ void ::BattleEngine::queueAction(ActionType type, uint8_t index) {
     case ActionType::ESCAPE:
         p = Priority::FAST;
     }
-    this->playerAction.setActionType(type, p);
+    this->playerAction.actionType = type;
+    this->playerAction.priority = p;
     this->playerAction.actionIndex = index;
 }
 
@@ -323,11 +324,11 @@ void dbf BattleEngine::commitAction(Action *action, Creature *commiter, Creature
         runEffect(commiter, reciever, move.getMoveEffect());
         if (isPlayer) {
             battleEventPlayer.push({BattleEventType::ATTACK, commiter->id, commiter->moves[action->actionIndex]});
-            battleEventPlayer.push({BattleEventType::DAMAGE, damage, 0});
+            battleEventPlayer.push({BattleEventType::DAMAGE, 0, damage});
 
         } else {
             battleEventPlayer.push({BattleEventType::OPPONENT_ATTACK, commiter->id, commiter->moves[action->actionIndex]});
-            battleEventPlayer.push({BattleEventType::OPPONENT_DAMAGE, damage, 0});
+            battleEventPlayer.push({BattleEventType::OPPONENT_DAMAGE, 0, damage});
         }
         if (mod != Modifier::Same)
             dialogMenu.pushMenu(newDialogBox(EFFECTIVENESS, uint24_t(mod), 0));

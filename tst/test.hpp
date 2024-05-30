@@ -23,7 +23,8 @@ class Test {
     template <typename T> void assert(T a, T b, std::string message) {
         if (a != b) {
             ++failCount;
-            failedComparisons.push_back(message + " Assertion failed: " + std::to_string(a) + " != " + std::to_string(b));
+            failedComparisons.push_back(message + " Assertion failed: " + std::to_string(static_cast<int>(a)) +
+                                        " != " + std::to_string(static_cast<int>(b)));
         } else {
             ++passCount;
         }
@@ -32,9 +33,49 @@ class Test {
     template <typename T1, typename T2> void assert(T1 a, T2 b, std::string message) {
         int tempA = static_cast<int>(a);
         int tempB = static_cast<int>(b);
-        if (static_cast<int>(tempA) != static_cast<int>(tempB)) {
+        if (tempA != tempB) {
             ++failCount;
             failedComparisons.push_back(message + " Assertion failed: " + std::to_string(tempA) + " != " + std::to_string(tempB));
+        } else {
+            ++passCount;
+        }
+    }
+
+    template <typename T> void assertLessThan(T a, T b, std::string message) {
+        if (a >= b) {
+            ++failCount;
+            failedComparisons.push_back(message + " Assertion failed: " + std::to_string(a) + " >= " + std::to_string(b));
+        } else {
+            ++passCount;
+        }
+    }
+
+    template <typename T> void assertGreaterThan(T a, T b, std::string message) {
+        if (a <= b) {
+            ++failCount;
+            failedComparisons.push_back(message + " Assertion failed: " + std::to_string(a) + " <= " + std::to_string(b));
+        } else {
+            ++passCount;
+        }
+    }
+
+    template <typename T1, typename T2> void assertLessThan(T1 a, T2 b, std::string message) {
+        int tempA = static_cast<int>(a);
+        int tempB = static_cast<int>(b);
+        if (tempA >= tempB) {
+            ++failCount;
+            failedComparisons.push_back(message + " Assertion failed: " + std::to_string(tempA) + " >= " + std::to_string(tempB));
+        } else {
+            ++passCount;
+        }
+    }
+
+    template <typename T1, typename T2> void assertGreaterThan(T1 a, T2 b, std::string message) {
+        int tempA = static_cast<int>(a);
+        int tempB = static_cast<int>(b);
+        if (tempA <= tempB) {
+            ++failCount;
+            failedComparisons.push_back(message + " Assertion failed: " + std::to_string(tempA) + " <= " + std::to_string(tempB));
         } else {
             ++passCount;
         }
