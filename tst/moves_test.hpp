@@ -15,15 +15,15 @@ void powerTest(TestSuite &t) {
 void moveTypeTest(TestSuite &t) {
     Test test = Test(__func__);
     Move move = Move({1, 2, 1});
-    test.assert(int(move.getMoveType()), 1, "getMoveType");
+    test.assert(move.getMoveType(), 1, "getMoveType");
     move = Move({2, 2, 1});
-    test.assert(int(move.getMoveType()), 2, "getMoveType");
+    test.assert(move.getMoveType(), 2, "getMoveType");
     move = Move({3, 2, 0});
-    test.assert(int(move.getMoveType()), 3, "getMoveType");
+    test.assert(move.getMoveType(), 3, "getMoveType");
     move = Move({4, 2, 1});
-    test.assert(int(move.getMoveType()), 4, "getMoveType");
+    test.assert(move.getMoveType(), 4, "getMoveType");
     move = Move({7, 2, 0});
-    test.assert(int(move.getMoveType()), 7, "getMoveType");
+    test.assert(move.getMoveType(), 7, "getMoveType");
     t.addTest(test);
 }
 
@@ -37,30 +37,30 @@ void physicalTest(TestSuite &t) {
 void effectTest(TestSuite &t) {
     Test test = Test(__func__);
     Move move = Move({1, 2, 1, uint8_t(Accuracy::HUNDRED), uint8_t(Effect::NONE)});
-    test.assert(int(move.getMoveEffect()), int(Effect::NONE), "getMoveEffect");
+    test.assert((move.getMoveEffect()), int(Effect::NONE), "getMoveEffect");
     move = Move({1, 2, 1, uint8_t(Accuracy::HUNDRED), uint8_t(Effect::EGOED)});
-    test.assert(int(move.getMoveEffect()), int(Effect::EGOED), "getMoveEffect");
+    test.assert((move.getMoveEffect()), int(Effect::EGOED), "getMoveEffect");
     move = Move({1, 2, 1, uint8_t(Accuracy::HUNDRED), uint8_t(Effect::DRENCHED)});
-    test.assert(int(move.getMoveEffect()), int(Effect::DRENCHED), "getMoveEffect");
+    test.assert((move.getMoveEffect()), int(Effect::DRENCHED), "getMoveEffect");
     move = Move({1, 2, 1, uint8_t(Accuracy::HUNDRED), uint8_t(Effect::BUFFETED)});
-    test.assert(int(move.getMoveEffect()), int(Effect::BUFFETED), "getMoveEffect");
+    test.assert((move.getMoveEffect()), int(Effect::BUFFETED), "getMoveEffect");
     move = Move({1, 2, 1, uint8_t(Accuracy::HUNDRED), uint8_t(Effect::STUMBLED)});
-    test.assert(int(move.getMoveEffect()), int(Effect::STUMBLED), "getMoveEffect");
+    test.assert((move.getMoveEffect()), int(Effect::STUMBLED), "getMoveEffect");
     move = Move({1, 2, 1, uint8_t(Accuracy::HUNDRED), uint8_t(Effect::BURNED)});
-    test.assert(int(move.getMoveEffect()), int(Effect::BURNED), "getMoveEffect");
+    test.assert((move.getMoveEffect()), int(Effect::BURNED), "getMoveEffect");
     t.addTest(test);
 }
 
 void accuracyTest(TestSuite &t) {
     Test test = Test(__func__);
     Move move = Move({1, 2, 1, uint8_t(Accuracy::HUNDRED), uint8_t(Effect::NONE)});
-    test.assert(int(move.getMoveAccuracy()), int(Accuracy::HUNDRED), "getMoveAccuracy");
+    test.assert((move.getMoveAccuracy()), int(Accuracy::HUNDRED), "getMoveAccuracy");
     move = Move({1, 2, 1, uint8_t(Accuracy::NINETY), uint8_t(Effect::NONE)});
-    test.assert(int(move.getMoveAccuracy()), int(Accuracy::NINETY), "getMoveAccuracy");
+    test.assert((move.getMoveAccuracy()), int(Accuracy::NINETY), "getMoveAccuracy");
     move = Move({1, 2, 1, uint8_t(Accuracy::EIGHTY), uint8_t(Effect::NONE)});
-    test.assert(int(move.getMoveAccuracy()), int(Accuracy::EIGHTY), "getMoveAccuracy");
+    test.assert((move.getMoveAccuracy()), int(Accuracy::EIGHTY), "getMoveAccuracy");
     move = Move({1, 2, 1, uint8_t(Accuracy::SEVENTY), uint8_t(Effect::NONE)});
-    test.assert(int(move.getMoveAccuracy()), int(Accuracy::SEVENTY), "getMoveAccuracy");
+    test.assert((move.getMoveAccuracy()), int(Accuracy::SEVENTY), "getMoveAccuracy");
     t.addTest(test);
 }
 

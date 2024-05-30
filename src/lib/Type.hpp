@@ -73,7 +73,7 @@ static uint16_t applyMod(uint16_t value, Modifier modifier) {
     }
 }
 
-// TODO: FXdata
+// TODO: Move to FX data
 const Modifier typeTable[TypeCount][TypeCount] = {
     // Spirit
     {
