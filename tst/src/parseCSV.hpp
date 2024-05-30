@@ -150,8 +150,12 @@ uint32_t convertToUInt32(const OpponentCreature &creature) {
 
     uint32_t result = 0;
     result |= ((creature.id & 0x1111) << 25);   // Shift id to the left by 25 bits and bitwise OR with result
+    // std::cout << "level id bf " << std::bitset<8>((creature.id)) << "\n";
+    // std::cout << "level id af " << std::bitset<8>((creature.id & 0x1111)) << "\n";
     // std::cout << "Result after id: " << std::bitset<32>(result) << "\n";
-    result |= ((creature.level & 0x1111) << 20);   // Shift level to the left by 20 bits and bitwise OR with result
+    result |= ((creature.level) << 20);   // Shift level to the left by 20 bits and bitwise OR with result
+    // std::cout << "level bin bf " << std::bitset<8>((creature.level)) << "\n";
+    // std::cout << "level bin af " << std::bitset<8>((creature.level & 0x1111)) << "\n";
     // std::cout << "Result after level: " << std::bitset<32>(result) << "\n";
     result |= ((creature.moves[3] & 0x1111) << 15);   // Shift move4 to the left by 15 bits and bitwise OR with result
     // std::cout << "Result after move4: " << std::bitset<32>(result) << "\n";

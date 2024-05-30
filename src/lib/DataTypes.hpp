@@ -21,7 +21,8 @@ inline uint8_t parseOpponentCreatureSeedID(uint32_t seed) {
 }
 
 inline uint8_t parseOpponentCreatureSeedMove(uint32_t seed, uint8_t move) {
-    return ((seed & (0b00011111 << (5 * move))) >> 25);
+    uint8_t shift = 5 * move;
+    return ((seed & (0b11111 << (shift))) >> shift);
 }
 
 // todo research huffman encoding to squash these in mem
