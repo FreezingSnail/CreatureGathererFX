@@ -2,8 +2,8 @@
 #include "test.hpp"
 #include "../src/plants/PlantStage.hpp"
 
-void plantStageTest() {
-    Test test;
+void plantStageTest(TestSuite &t) {
+    Test test = Test(__func__);
     PlantStage stage = PlantStage();
     test.assert(int(stage.getStage(0)), 0, "getStage");
     stage.increment(0);
@@ -14,10 +14,11 @@ void plantStageTest() {
     for (uint8_t i = 1; i < 32; i++) {
         test.assert(int(stage.getStage(i)), 1, "getStage");
     }
-    test.printSummary("plantStageTest");
+    t.addTest(test);
 }
 
-void PlantStageSuite() {
-    printHeader("PlantStage Suite");
-    plantStageTest();
+void PlantStageSuite(TestRunner &r) {
+    TestSuite t = TestSuite("PlantStage Suite");
+    plantStageTest(t);
+    r.addTestSuite(t);
 }

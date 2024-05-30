@@ -5,6 +5,7 @@
 #include "creature_test.hpp"
 #include "player_test.hpp"
 #include "engine_test.hpp"
+#include "opponent_test.hpp"
 
 #include "../src/globals.hpp"
 
@@ -15,12 +16,19 @@ MenuStack menuStack;
 DialogMenu dialogMenu;
 
 int main() {
-    MoveSuite();
-    PlantPairSuite();
-    PlantStageSuite();
-    ModifierSuite();
-    CreatureSuite();
-    PlayerSuite();
-    EngineSuite();
+    TestRunner tests;
+    MoveSuite(tests);
+    PlantPairSuite(tests);
+    PlantStageSuite(tests);
+    ModifierSuite(tests);
+    CreatureSuite(tests);
+    PlayerSuite(tests);
+    EngineSuite(tests);
+    OpponentSuite(tests);
+
+    tests.printSummary();
+    if (tests.fail()) {
+        return 1;
+    }
     return 0;
 }

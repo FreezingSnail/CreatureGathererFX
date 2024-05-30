@@ -27,8 +27,8 @@ void Creature::load(CreatureData_t seed) {
 
 // 00,id1,lvl1,move11,move12,move13,move14,
 void Creature::loadFromOpponentSeed(uint32_t seed) {
-    CreatureData_t cSeed = getCreatureFromStore(seed);
-    id = static_cast<uint8_t>((cSeed.id));
+    id = parseOpponentCreatureSeedID(seed);
+    CreatureData_t cSeed = getCreatureFromStore(id);
     loadTypes(cSeed);
     level = parseOpponentCreatureSeedlvl(seed);
     setStats(cSeed);

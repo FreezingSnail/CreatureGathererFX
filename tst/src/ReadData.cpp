@@ -1,142 +1,5 @@
 #include "../../src/lib/ReadData.hpp"
-
-#include <fstream>
-#include <vector>
-#include <string>
-#include <sstream>
-#include <map>
-
-#define CREATURECSV "data/Creaturesheet.csv"
-
-struct CSVCreature {
-    std::string name;
-    int id;
-    std::string type1;
-    std::string type2;
-    int evelevel;
-    int atk;
-    int deff;
-    int spcatk;
-    int spcdef;
-    int hp;
-    int spd;
-    int move1;
-    int move2;
-    int move3;
-    int move4;
-};
-
-#include <iostream>
-
-void printCSVCreature(const CSVCreature &creature) {
-    std::string blue = "\033[1;34m";
-    std::string reset = "\033[0m";
-
-    std::cout << blue << "Name: " << creature.name << reset << "\n";
-    std::cout << blue << "ID: " << creature.id << reset << "\n";
-    std::cout << blue << "Type 1: " << creature.type1 << reset << "\n";
-    std::cout << blue << "Type 2: " << creature.type2 << reset << "\n";
-    std::cout << blue << "Evo Level: " << creature.evelevel << reset << "\n";
-    std::cout << blue << "Atk Seed: " << creature.atk << reset << "\n";
-    std::cout << blue << "Def Seed: " << creature.deff << reset << "\n";
-    std::cout << blue << "Spc Atk Seed: " << creature.spcatk << reset << "\n";
-    std::cout << blue << "Spc Def Seed: " << creature.spcdef << reset << "\n";
-    std::cout << blue << "HP Seed: " << creature.hp << reset << "\n";
-    std::cout << blue << "Spd Seed: " << creature.spd << reset << "\n";
-    std::cout << blue << "Move 1: " << creature.move1 << reset << "\n";
-    std::cout << blue << "Move 2: " << creature.move2 << reset << "\n";
-    std::cout << blue << "Move 3: " << creature.move3 << reset << "\n";
-    std::cout << blue << "Move 4: " << creature.move4 << reset << "\n";
-}
-
-std::map<std::string, int> typeMap = {
-    {"spirit", static_cast<int>(Type::SPIRIT)}, {"water", static_cast<int>(Type::WATER)}, {"wind", static_cast<int>(Type::WIND)},
-    {"earth", static_cast<int>(Type::EARTH)},   {"fire", static_cast<int>(Type::FIRE)},   {"lightning", static_cast<int>(Type::LIGHTNING)},
-    {"plant", static_cast<int>(Type::PLANT)},   {"elder", static_cast<int>(Type::ELDER)}, {"none", static_cast<int>(Type::NONE)},
-};
-
-int getTypeValue(const std::string &type) {
-    return typeMap[type];
-}
-
-std::string readLineFromCSV(const std::string &filename, int lineIndex) {
-    std::ifstream file(filename);
-    if (!file.is_open()) {
-        std::cerr << "Failed to open file: " << filename << "\n";
-        exit(1);
-    }
-    std::string line;
-    for (int i = 0; i <= lineIndex + 1; ++i) {
-        if (!std::getline(file, line)) {
-            std::cout << "Line " << lineIndex << " does not exist in the file\n";
-            exit(1);   // Return an empty string if the line doesn't exist
-        }
-    }
-    return line;
-}
-
-CSVCreature parseCSVLineToCreature(const std::string &line) {
-    std::stringstream ss(line);
-    std::string field;
-    CSVCreature creature;
-
-    std::getline(ss, creature.name, '\t');
-    std::getline(ss, field, '\t');
-    creature.id = std::stoi(field);
-    std::getline(ss, creature.type1, '\t');
-    std::getline(ss, creature.type2, '\t');
-    std::getline(ss, field, '\t');
-    creature.evelevel = std::stoi(field);
-    std::getline(ss, field, '\t');
-    creature.atk = std::stoi(field);
-    std::getline(ss, field, '\t');
-    creature.deff = std::stoi(field);
-    std::getline(ss, field, '\t');
-    creature.spcatk = std::stoi(field);
-    std::getline(ss, field, '\t');
-    creature.spcdef = std::stoi(field);
-    std::getline(ss, field, '\t');
-    creature.hp = std::stoi(field);
-    std::getline(ss, field, '\t');
-    creature.spd = std::stoi(field);
-    std::getline(ss, field, '\t');
-    creature.move1 = std::stoi(field);
-    std::getline(ss, field, '\t');
-    creature.move2 = std::stoi(field);
-    std::getline(ss, field, '\t');
-    creature.move3 = std::stoi(field);
-    std::getline(ss, field, '\t');
-    creature.move4 = std::stoi(field);
-
-    return creature;
-}
-
-CreatureData_t CSVCreatureConvert(const CSVCreature &csvCreature) {
-    CreatureData_t creature;
-    creature.id = csvCreature.id;
-    creature.type1 = getTypeValue(csvCreature.type1);
-    creature.type2 = getTypeValue(csvCreature.type2);
-    creature.evoLevel = csvCreature.evelevel;
-    creature.atkSeed = csvCreature.atk;
-    creature.defSeed = csvCreature.deff;
-    creature.spcAtkSeed = csvCreature.spcatk;
-    creature.spcDefSeed = csvCreature.spcdef;
-    creature.hpSeed = csvCreature.hp;
-    creature.spdSeed = csvCreature.spd;
-    creature.move1 = csvCreature.move1;
-    creature.move2 = csvCreature.move2;
-    creature.move3 = csvCreature.move3;
-    creature.move4 = csvCreature.move4;
-
-    return creature;
-}
-
-////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////
-//            IMPLENTATIONS FOR TESTS
-////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////
+#include "parseCSV.hpp"
 
 MoveBitSet getMovePack(uint8_t index) {
     MoveBitSet move;
@@ -162,9 +25,10 @@ bool selfEffect(Effect effect) {
 }
 
 OpponentSeed_t readOpponentSeed(uint8_t index) {
-    OpponentSeed_t seed = OpponentSeed_t{0, 0, 1};
-    // uint24_t rowAddress = FX::readIndexedUInt24(opts, index);
-    // FX::readDataObject(rowAddress, seed);
+    OpponentSeed_t seed;
+    std::string line = readLineFromCSV(OPTCSV, index);
+    auto opponent = parseOpponentCSVLine(line);
+    seed = convertToOpponentSeed(opponent);
     return seed;
 }
 

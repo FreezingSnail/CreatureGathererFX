@@ -2,10 +2,9 @@
 #include <stdint.h>
 #include "MenuData.hpp"
 
+// id,lvl,move4,move3,move2,move1
+// 00000 00000 00000 00000 00000 00000
 typedef struct OpponentSeed {
-
-    // id,lvl,move4,move3,move2,move1
-    // 00000 00000 00000 00000 00000 00000
     uint32_t firstCreature;
     uint32_t secondCreature;
     uint32_t thirdCreature;

@@ -4,8 +4,8 @@
 #include "../src/lib/ReadData.hpp"
 #include "../src/player/Player.hpp"
 
-void PlayerTest() {
-    Test test;
+void PlayerTest(TestSuite &t) {
+    Test test = Test(__func__);
     Player player = Player();
     player.basic();
     test.assert(static_cast<int>(player.party[0].id), 0, "Player Creature 1 ID");
@@ -13,10 +13,11 @@ void PlayerTest() {
     test.assert(static_cast<int>(player.party[2].id), 2, "Player Creature 3 ID");
     test.assert(static_cast<int>(player.party[0].level), 31, "Player Creature 1 Level");
 
-    test.printSummary("Player Load Test");
+    t.addTest(test);
 }
 
-void PlayerSuite() {
-    printHeader("Player Suite");
-    PlayerTest();
+void PlayerSuite(TestRunner &r) {
+    TestSuite t = TestSuite("Player Suite");
+    PlayerTest(t);
+    r.addTestSuite(t);
 }
