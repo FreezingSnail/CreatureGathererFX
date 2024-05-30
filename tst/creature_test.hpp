@@ -25,8 +25,25 @@ void CreatureLoadTest(TestSuite &t) {
     t.addTest(test);
 }
 
+void CreatureLoadFromOpponnetSeed(TestSuite &t) {
+    Test test = Test(__func__);
+    Creature creature = Creature();
+    creature.loadFromOpponentSeed(uint32_t(0b00000010000100001000010000100001));
+    test.assert(static_cast<int>(creature.id), 1, "Creature ID");
+    test.assert(static_cast<int>(creature.level), 1, "Creature Level");
+    test.assert(static_cast<int>(creature.types.getType1()), static_cast<int>(Type::WIND), "Creature Type 1");
+    test.assert(static_cast<int>(creature.types.getType2()), static_cast<int>(Type::NONE), "Creature Type 2");
+    test.assert(static_cast<int>(creature.moves[0]), 1, "Creature Move 1");
+    test.assert(static_cast<int>(creature.moves[1]), 1, "Creature Move 2");
+    test.assert(static_cast<int>(creature.moves[2]), 1, "Creature Move 3");
+    test.assert(static_cast<int>(creature.moves[3]), 1, "Creature Move 4");
+
+    t.addTest(test);
+}
+
 void CreatureSuite(TestRunner &r) {
     TestSuite t = TestSuite("Creature Suite");
     CreatureLoadTest(t);
+    CreatureLoadFromOpponnetSeed(t);
     r.addTestSuite(t);
 }

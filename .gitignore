@@ -6,7 +6,7 @@ build/*
 *.eep
 *.elf
 *.bin
-.*
+.DS_Store
 1.8.6
 libraries
 tools/image-converter.py 
@@ -21,3 +21,4 @@ fxdata/Sprites.txt
 media/*
 imgui.ini
 *.o
+Notes/.obsidian
