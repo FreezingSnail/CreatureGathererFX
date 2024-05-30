@@ -20,6 +20,15 @@ class Test {
     Test(std::string description) : passCount(0), failCount(0), description(description) {
     }
 
+    template <typename T> void assertNotNull(T *ptr, std::string message) {
+        if (ptr == nullptr) {
+            ++failCount;
+            failedComparisons.push_back(message + " Assertion failed: pointer is nullptr");
+        } else {
+            ++passCount;
+        }
+    }
+
     template <typename T> void assert(T a, T b, std::string message) {
         if (a != b) {
             ++failCount;
