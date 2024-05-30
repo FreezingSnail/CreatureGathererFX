@@ -30,7 +30,7 @@ class BattleEngine {
     bool activeBattle;
 
     bool queued;
-    Action queuedAction;
+    // Action queuedAction;
 
     BattleEngine();
     void init();
