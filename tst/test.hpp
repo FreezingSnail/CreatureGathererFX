@@ -12,7 +12,12 @@
 
 class Test {
   public:
+    int failCount;
+    int passCount;
     Test() : passCount(0), failCount(0) {
+    }
+
+    Test(std::string description) : passCount(0), failCount(0), description(description) {
     }
 
     template <typename T> void assert(T a, T b, std::string message) {
@@ -24,10 +29,9 @@ class Test {
         }
     }
 
-    void printSummary(std::string message) {
+    void printSummary() {
         std::string color = (failCount > 0) ? RED : GREEN;
-        std::cout << color << "---------- " << message << " ----------" << RESET << std::endl;
-        std::cout << "Test: " << message << std::endl;
+        std::cout << color << "---------- " << description << " ----------" << RESET << std::endl;
         std::cout << "Passed: " << passCount << "\nFailed: " << failCount << std::endl;
         if (failCount > 0) {
             std::cout << "Failed comparisons: " << std::endl;
@@ -38,11 +42,95 @@ class Test {
     }
 
   private:
-    int passCount;
-    int failCount;
+    std::string description;
     std::vector<std::string> failedComparisons;
 };
+;
 
 void printHeader(std::string message) {
     std::cout << YELLOW << "++++++++++ " << message << " ++++++++++" << RESET << std::endl;
 }
+
+class TestSuite {
+  public:
+    TestSuite(std::string description) : description(description) {
+    }
+    void addTest(const Test &test) {
+        tests.push_back(test);
+    }
+
+    void printSummary() {
+        std::cout << YELLOW << "++++++++++ " << description << " ++++++++++" << RESET << std::endl;
+        for (Test &test : tests) {
+            test.printSummary();
+        }
+    }
+
+    bool fail() {
+        for (Test &test : tests) {
+            if (test.failCount > 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    int failCount() {
+        int totalFailCount = 0;
+        for (Test &test : tests) {
+            totalFailCount += test.failCount;
+        }
+        return totalFailCount;
+    }
+
+    int passCount() {
+        int totalPassCount = 0;
+        for (Test &test : tests) {
+            totalPassCount += test.passCount;
+        }
+        return totalPassCount;
+    }
+
+  private:
+    std::string description;
+    std::vector<Test> tests;
+};
+
+class TestRunner {
+  public:
+    void addTestSuite(const TestSuite &testSuite) {
+        testSuites.push_back(testSuite);
+    }
+
+    void printSummary() {
+        for (auto &testSuite : testSuites) {
+            // Print the summary of the tests in the test suite
+            testSuite.printSummary();
+        }
+
+        int totalPassCount = 0;
+        int totalFailCount = 0;
+
+        for (auto &testSuite : testSuites) {
+
+            totalFailCount += testSuite.failCount();
+            totalPassCount += testSuite.passCount();
+        }
+        std::cout << YELLOW << "========== " << "Total Counts" << " ==========" << RESET << std::endl;
+
+        std::cout << "Total Passed: " << totalPassCount << "\nTotal Failed: " << totalFailCount << std::endl;
+    }
+
+    bool fail() {
+        for (auto &testSuite : testSuites) {
+            // If any test suite fails, return true
+            if (testSuite.fail()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+  private:
+    std::vector<TestSuite> testSuites;
+};

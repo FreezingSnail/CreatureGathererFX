@@ -3,8 +3,8 @@
 #include "../src/creature/Creature.hpp"
 #include "../src/lib/ReadData.hpp"
 
-void CreatureLoadTest() {
-    Test test;
+void CreatureLoadTest(TestSuite &t) {
+    Test test = Test(__func__);
     Creature creature = Creature();
     creature.load(getCreatureFromStore(0));
     test.assert(static_cast<int>(creature.id), 0, "Creature ID");
@@ -22,10 +22,11 @@ void CreatureLoadTest() {
     test.assert(static_cast<int>(creature.statlist.spcAtk), static_cast<int>(creature.seedToStat(2)), "Creature Special Attack");
     test.assert(static_cast<int>(creature.statlist.spcDef), static_cast<int>(creature.seedToStat(2)), "Creature Special Defense");
 
-    test.printSummary("Creature Load Test");
+    t.addTest(test);
 }
 
-void CreatureSuite() {
-    printHeader("Creature Suite");
-    CreatureLoadTest();
+void CreatureSuite(TestRunner &r) {
+    TestSuite t = TestSuite("Creature Suite");
+    CreatureLoadTest(t);
+    r.addTestSuite(t);
 }
