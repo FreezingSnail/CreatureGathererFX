@@ -31,7 +31,7 @@ void EngineQueueActionTest(TestSuite &t) {
     eng.queueAction(ActionType::ATTACK, 0);
     player.basic();
     eng.opponentCur->level = 31;
-    eng.opponentHealths[0] = 100;
+    eng.opponentHealths[0] = 1000;
     test.assert(eng.queued, true, "Action Queued");
     test.assert(eng.playerAction.actionIndex, 0, "Action Index set");
     test.assert(eng.playerAction.actionType, ActionType::ATTACK, "Action Type set");
@@ -52,7 +52,8 @@ void EngineTickTest(TestSuite &t) {
     std::cout << "Healths: " << eng.playerHealths[0] << " " << eng.opponentHealths[0] << std::endl;
     // TODO: shoudnt need to bump opponent for this test
     eng.opponentCur->level = 31;
-    eng.opponentHealths[0] = 100;
+    eng.opponentHealths[0] = 1000;
+    std::cout << "Healths: " << eng.playerHealths[0] << " " << eng.opponentHealths[0] << std::endl;
 
     auto playerHP = eng.playerHealths[0];
     auto opponentHP = eng.opponentHealths[0];
