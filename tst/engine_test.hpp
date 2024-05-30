@@ -8,6 +8,8 @@ void EngineTest(TestSuite &t) {
     Test test = Test(__func__);
     BattleEngine eng = BattleEngine();
     eng.startFight(0);
+    test.assert(eng.activeBattle, true, "Active Battle");
+    test.assert(eng.playerAction.actionIndex, -1, "Player Action Index not set");
 
     t.addTest(test);
 }

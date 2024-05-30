@@ -7,20 +7,20 @@ void CreatureLoadTest(TestSuite &t) {
     Test test = Test(__func__);
     Creature creature = Creature();
     creature.load(getCreatureFromStore(0));
-    test.assert(static_cast<int>(creature.id), 0, "Creature ID");
-    test.assert(static_cast<int>(creature.level), 31, "Creature Level");
-    test.assert(static_cast<int>(creature.types.getType1()), static_cast<int>(Type::WIND), "Creature Type 1");
-    test.assert(static_cast<int>(creature.types.getType2()), static_cast<int>(Type::NONE), "Creature Type 2");
-    test.assert(static_cast<int>(creature.moves[0]), 8, "Creature Move 1");
-    test.assert(static_cast<int>(creature.moves[1]), 32, "Creature Move 2");
-    test.assert(static_cast<int>(creature.moves[2]), 32, "Creature Move 3");
-    test.assert(static_cast<int>(creature.moves[3]), 32, "Creature Move 4");
-    test.assert(static_cast<int>(creature.statlist.attack), static_cast<int>(creature.seedToStat(3)), "Creature Attack");
-    test.assert(static_cast<int>(creature.statlist.defense), static_cast<int>(creature.seedToStat(3)), "Creature Defense");
-    test.assert(static_cast<int>(creature.statlist.speed), static_cast<int>(creature.seedToStat(3)), "Creature Speed");
-    test.assert(static_cast<int>(creature.statlist.hp), static_cast<int>(creature.seedToStat(3) + 30), "Creature HP");
-    test.assert(static_cast<int>(creature.statlist.spcAtk), static_cast<int>(creature.seedToStat(2)), "Creature Special Attack");
-    test.assert(static_cast<int>(creature.statlist.spcDef), static_cast<int>(creature.seedToStat(2)), "Creature Special Defense");
+    test.assert(creature.id, 0, "Creature ID");
+    test.assert(creature.level, 31, "Creature Level");
+    test.assert(creature.types.getType1(), static_cast<int>(Type::WIND), "Creature Type 1");
+    test.assert(creature.types.getType2(), static_cast<int>(Type::NONE), "Creature Type 2");
+    test.assert(creature.moves[0], 8, "Creature Move 1");
+    test.assert(creature.moves[1], 32, "Creature Move 2");
+    test.assert(creature.moves[2], 32, "Creature Move 3");
+    test.assert(creature.moves[3], 32, "Creature Move 4");
+    test.assert(creature.statlist.attack, creature.seedToStat(3), "Creature Attack");
+    test.assert(creature.statlist.defense, creature.seedToStat(3), "Creature Defense");
+    test.assert(creature.statlist.speed, creature.seedToStat(3), "Creature Speed");
+    test.assert(creature.statlist.hp, creature.seedToStat(3) + 30, "Creature HP");
+    test.assert(creature.statlist.spcAtk, creature.seedToStat(2), "Creature Special Attack");
+    test.assert(creature.statlist.spcDef, creature.seedToStat(2), "Creature Special Defense");
 
     t.addTest(test);
 }
@@ -29,14 +29,14 @@ void CreatureLoadFromOpponnetSeed(TestSuite &t) {
     Test test = Test(__func__);
     Creature creature = Creature();
     creature.loadFromOpponentSeed(uint32_t(0b00000010000100001000010000100001));
-    test.assert(static_cast<int>(creature.id), 1, "Creature ID");
-    test.assert(static_cast<int>(creature.level), 1, "Creature Level");
-    test.assert(static_cast<int>(creature.types.getType1()), static_cast<int>(Type::WIND), "Creature Type 1");
-    test.assert(static_cast<int>(creature.types.getType2()), static_cast<int>(Type::NONE), "Creature Type 2");
-    test.assert(static_cast<int>(creature.moves[0]), 1, "Creature Move 1");
-    test.assert(static_cast<int>(creature.moves[1]), 1, "Creature Move 2");
-    test.assert(static_cast<int>(creature.moves[2]), 1, "Creature Move 3");
-    test.assert(static_cast<int>(creature.moves[3]), 1, "Creature Move 4");
+    test.assert(creature.id, 1, "Creature ID");
+    test.assert(creature.level, 1, "Creature Level");
+    test.assert(creature.types.getType1(), static_cast<int>(Type::WIND), "Creature Type 1");
+    test.assert(creature.types.getType2(), static_cast<int>(Type::NONE), "Creature Type 2");
+    test.assert(creature.moves[0], 1, "Creature Move 1");
+    test.assert(creature.moves[1], 1, "Creature Move 2");
+    test.assert(creature.moves[2], 1, "Creature Move 3");
+    test.assert(creature.moves[3], 1, "Creature Move 4");
 
     t.addTest(test);
 }

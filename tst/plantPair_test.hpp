@@ -16,11 +16,11 @@ void isActiveTest(TestSuite &t) {
 void plantPairTypeTest(TestSuite &t) {
     Test test = Test(__func__);
     PlantPair pair = PlantPair();
-    test.assert(int(pair.type(0)), int(PlantType::BERRY), "type");
+    test.assert((pair.type(0)), int(PlantType::BERRY), "type");
     pair.setType(0, PlantType::FLOWER);
-    test.assert(int(pair.type(0)), int(PlantType::FLOWER), "type");
+    test.assert((pair.type(0)), int(PlantType::FLOWER), "type");
     pair.setType(0, PlantType::APPLE);
-    test.assert(int(pair.type(0)), int(PlantType::APPLE), "type");
+    test.assert((pair.type(0)), int(PlantType::APPLE), "type");
     t.addTest(test);
 }
 

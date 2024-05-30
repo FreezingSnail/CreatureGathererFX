@@ -29,6 +29,17 @@ class Test {
         }
     }
 
+    template <typename T1, typename T2> void assert(T1 a, T2 b, std::string message) {
+        int tempA = static_cast<int>(a);
+        int tempB = static_cast<int>(b);
+        if (static_cast<int>(tempA) != static_cast<int>(tempB)) {
+            ++failCount;
+            failedComparisons.push_back(message + " Assertion failed: " + std::to_string(tempA) + " != " + std::to_string(tempB));
+        } else {
+            ++passCount;
+        }
+    }
+
     void printSummary() {
         std::string color = (failCount > 0) ? RED : GREEN;
         std::cout << color << "---------- " << description << " ----------" << RESET << std::endl;
