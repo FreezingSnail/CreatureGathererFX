@@ -29,4 +29,5 @@ test:
 		src/engine/battle/Battle.cpp \
 		tst/main.cpp \
 		-w \
+		-O0 -g3 \
 		-o tst/test.o && ./tst/test.o && rm tst/test.o

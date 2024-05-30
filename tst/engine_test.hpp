@@ -24,9 +24,14 @@ void EngineStartTest(TestSuite &t) {
 }
 
 void EngineQueueActionTest(TestSuite &t) {
+    reset();
     Test test = Test(__func__);
     BattleEngine eng = BattleEngine();
+    eng.startFight(0);
     eng.queueAction(ActionType::ATTACK, 0);
+    player.basic();
+    eng.opponentCur->level = 31;
+    eng.opponentHealths[0] = 100;
     test.assert(eng.queued, true, "Action Queued");
     test.assert(eng.playerAction.actionIndex, 0, "Action Index set");
     test.assert(eng.playerAction.actionType, ActionType::ATTACK, "Action Type set");
