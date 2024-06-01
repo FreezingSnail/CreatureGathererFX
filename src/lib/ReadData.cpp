@@ -25,8 +25,8 @@ bool selfEffect(Effect effect) {
     return effectTargets >> uint8_t(effect) & 1 == 1;
 }
 
-inline OpponentSeed_t readOpponentSeed(uint8_t index) {
-    OpponentSeed_t seed = OpponentSeed_t{0, 0, 1};
+OpponentSeed readOpponentSeed(uint8_t index) {
+    OpponentSeed seed = OpponentSeed{0, 0, 1};
     uint24_t rowAddress = FX::readIndexedUInt24(opts, index);
     FX::readDataObject(rowAddress, seed);
     return seed;
@@ -53,16 +53,16 @@ void load(Creature *creature, CreatureData_t seed) {
 }
 
 // 00,id1,lvl1,move11,move12,move13,move14,
-void loadFromOpponentSeed(Creature *creature, uint32_t seed) {
+void loadFromOpponentSeed(Creature *creature, CreatureSeed seed) {
     CreatureData_t cSeed = getCreatureFromStore(seed);
     creature->id = static_cast<uint8_t>((cSeed.id));
     creature->loadTypes(cSeed);
-    creature->level = parseOpponentCreatureSeedlvl(seed);
+    creature->level = seed.lvl;
     creature->setStats(cSeed);
-    creature->setMove(parseOpponentCreatureSeedMove(seed, 0), 0);
-    creature->setMove(parseOpponentCreatureSeedMove(seed, 1), 1);
-    creature->setMove(parseOpponentCreatureSeedMove(seed, 2), 2);
-    creature->setMove(parseOpponentCreatureSeedMove(seed, 3), 3);
+    creature->setMove(seed.move1, 0);
+    creature->setMove(seed.move2, 1);
+    creature->setMove(seed.move3, 2);
+    creature->setMove(seed.move4, 3);
     // creature->loadSprite(cSeed);
 }
 

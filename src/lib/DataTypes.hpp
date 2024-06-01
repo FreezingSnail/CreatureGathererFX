@@ -4,25 +4,22 @@
 
 // id,lvl,move4,move3,move2,move1
 // 00000 00000 00000 00000 00000 00000
-typedef struct OpponentSeed {
-    uint32_t firstCreature;
-    uint32_t secondCreature;
-    uint32_t thirdCreature;
 
-} OpponentSeed_t;
+struct CreatureSeed {
+    uint8_t id;
+    uint8_t lvl;
+    uint32_t moves;
+};
 
-// id1,lvl1,move11,move12,move13,move14,
-inline uint8_t parseOpponentCreatureSeedlvl(uint32_t seed) {
-    return (seed & 0b00000001111100000000000000000000) >> 20;
-}
-
-inline uint8_t parseOpponentCreatureSeedID(uint32_t seed) {
-    return (seed & 0b00111110000000000000000000000000) >> 25;
-}
+struct OpponentSeed {
+    CreatureSeed firstCreature;
+    CreatureSeed secondCreature;
+    CreatureSeed thirdCreature;
+};
 
 inline uint8_t parseOpponentCreatureSeedMove(uint32_t seed, uint8_t move) {
-    uint8_t shift = 5 * move;
-    return ((seed & (0b11111 << (shift))) >> shift);
+    uint8_t shift = 8 * move;
+    return ((seed & (0b11111111 << (shift))) >> shift);
 }
 
 // todo research huffman encoding to squash these in mem

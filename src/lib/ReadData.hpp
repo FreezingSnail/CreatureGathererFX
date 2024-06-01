@@ -13,7 +13,7 @@ uint8_t getEffectRate(Effect effect);
 // TODO: add a bitarray for the effect targets
 bool selfEffect(Effect effect);
 
-OpponentSeed_t readOpponentSeed(uint8_t index);
+OpponentSeed readOpponentSeed(uint8_t index);
 
 CreatureData_t getCreatureFromStore(uint8_t id);
 

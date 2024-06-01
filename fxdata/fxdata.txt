@@ -18,4 +18,6 @@ include "battleEffects/Sprites.txt"
 
 include "generated/movedata.txt"
 
+raw_t opponent_seeds = "data/opponents.bin"
+
 
