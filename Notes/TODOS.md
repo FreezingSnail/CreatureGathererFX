@@ -1,0 +1,5 @@
+- change datatypes to use byte widths instead of partial bytes
+- rewrite data generators to write binary files and switch to use raw format imports
+- update test readers
+- switch to toml ???
+- write tests to run in hardware for data reading code

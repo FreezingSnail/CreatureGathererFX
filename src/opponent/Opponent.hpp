@@ -15,7 +15,7 @@ class Opponent {
 
     // This should load information from PROGMEM
     Opponent();
-    void loadOpt(OpponentSeed_t *seed);
+    void loadOpt(OpponentSeed *seed);
 
-    void loadCreature(OpponentSeed_t *seed);
+    void loadCreature(OpponentSeed *seed);
 };

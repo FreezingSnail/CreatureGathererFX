@@ -378,7 +378,7 @@ void BattleEngine::applyDamage(uint16_t damage, Creature *reciever) {
 //////////////////////////////////////////////////////////////////////////////
 
 void BattleEngine::loadOpponent(uint8_t optID) {
-    OpponentSeed_t seed = readOpponentSeed(optID);
+    OpponentSeed seed = readOpponentSeed(optID);
     this->opponent.loadOpt(&seed);
     this->resetOpponent();
 }
