@@ -52,13 +52,13 @@ def serialize_creature_seed(creature_seed):
     binary_data = struct.pack('<BBI', creature_seed.id, creature_seed.lvl, creature_seed.moves)
     # Convert binary data to a binary string
     binary_string = ''.join(format(byte, '08b') for byte in binary_data)
-    return binary_string
+    return binary_data
 
 def serialize_opponent_seed(opponent_seed):
     serialized_first_creature = serialize_creature_seed(opponent_seed.firstCreature)
     serialized_second_creature = serialize_creature_seed(opponent_seed.secondCreature)
     serialized_third_creature = serialize_creature_seed(opponent_seed.thirdCreature)
-    return serialized_first_creature + serialized_second_creature + serialized_third_creature
+    return [serialized_first_creature, serialized_second_creature, serialized_third_creature]
 
 class Opponent:
     def __init__(self):
@@ -146,7 +146,7 @@ def seeds_to_serialized_opponent_seeds(opponent_seeds):
 def output_opponent_seeds_as_single_c_struct(opponent_seeds):
     c_structs = []
 
-    for i, opponent_seed in enumerate(opponent_seeds):
+    for i, opponent_seed in enumerate(opponent_seeds[:2]):
         c_struct = f"""
         {{
         {{ {opponent_seed.firstCreature.id}, {opponent_seed.firstCreature.lvl}, {opponent_seed.firstCreature.moves} }},
@@ -168,8 +168,10 @@ def output_opponent_seeds_as_single_c_struct(opponent_seeds):
 def write_fx_data(seeds):
     serialized_seeds = seeds_to_serialized_opponent_seeds(seeds)
     output_file_path = "fxdata/data/opponents.bin"
-    with open(output_file_path, 'w') as file:
-        file.write(''.join(serialized_seeds))
+    with open(output_file_path, 'wb') as file:
+        for serialized_seed in serialized_seeds:
+            for seed in serialized_seed:
+                file.write(seed)
     print("Serialized seeds written to:", output_file_path)
 
 def write_fx_data_c_structs(seeds):

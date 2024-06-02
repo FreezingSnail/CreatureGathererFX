@@ -74,19 +74,10 @@ void arenaLoad(Creature *creature, uint24_t addr, uint8_t lvl) {
 }
 
 void ReadOpt(Opponent *opt, uint8_t index) {
-    uint24_t creatures[3];
-    uint24_t addr = Teams::teamList + sizeof(uint24_t) * 7 * index;
-    creatures[0] = FX::readIndexedUInt24(addr, 0);
-    creatures[1] = FX::readIndexedUInt24(addr, 1);
-    creatures[2] = FX::readIndexedUInt24(addr, 2);
-    opt->levels[0] = uint8_t(FX::readIndexedUInt24(addr, 3));
-    opt->levels[1] = uint8_t(FX::readIndexedUInt24(addr, 4));
-    opt->levels[2] = uint8_t(FX::readIndexedUInt24(addr, 5));
-    arenaLoad(&opt->party[0], creatures[0], opt->levels[0]);
-    arenaLoad(&opt->party[0], creatures[1], opt->levels[1]);
-    arenaLoad(&opt->party[0], creatures[2], opt->levels[2]);
-
-    opt->nameptr = FX::readIndexedUInt24(addr, 6);
+    uint24_t addr = opponent_seeds + sizeof(OpponentSeed) * index;
+    OpponentSeed seed;
+    FX::readDataObject(addr, seed);
+    opt->loadOpt(&seed);
 }
 
 void loadEncounterOpt(Opponent *opt, uint8_t id, uint8_t level) {

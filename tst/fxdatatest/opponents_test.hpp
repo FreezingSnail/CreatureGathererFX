@@ -1,14 +1,18 @@
 #pragma once
 #include "src/lib/DataTypes.hpp"
 #include "src/opponent/Opponent.hpp"
+#include "src/common.hpp"
 #include "src/fxdata.h"
 #include "opponent_data.hpp"
 #include "src/lib/ReadData.hpp"
 
-void test_opponents() {
+void DGF test_opponents() {
     Opponent optFX;
     OpponentSeed seed_base = opponentSeeds[0];
     Opponent control;
+    uint24_t addr = opponent_seeds + sizeof(OpponentSeed) * 0;
+    CreatureSeed test;
+    FX::readDataObject(opponent_seeds, test);
     control.loadOpt(&seed_base);
 
     ReadOpt(&optFX, 0);
