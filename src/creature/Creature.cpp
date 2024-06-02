@@ -26,16 +26,16 @@ void Creature::load(CreatureData_t seed) {
 }
 
 // 00,id1,lvl1,move11,move12,move13,move14,
-void Creature::loadFromOpponentSeed(uint32_t seed) {
-    id = parseOpponentCreatureSeedID(seed);
+void Creature::loadFromOpponentSeed(CreatureSeed seed) {
+    id = seed.id;
     CreatureData_t cSeed = getCreatureFromStore(id);
     loadTypes(cSeed);
-    level = parseOpponentCreatureSeedlvl(seed);
+    level = seed.lvl;
     setStats(cSeed);
-    setMove(parseOpponentCreatureSeedMove(seed, 0), 0);
-    setMove(parseOpponentCreatureSeedMove(seed, 1), 1);
-    setMove(parseOpponentCreatureSeedMove(seed, 2), 2);
-    setMove(parseOpponentCreatureSeedMove(seed, 3), 3);
+    setMove(parseOpponentCreatureSeedMove(seed.moves, 0), 0);
+    setMove(parseOpponentCreatureSeedMove(seed.moves, 1), 1);
+    setMove(parseOpponentCreatureSeedMove(seed.moves, 2), 2);
+    setMove(parseOpponentCreatureSeedMove(seed.moves, 3), 3);
     // loadSprite(cSeed);
 }
 
