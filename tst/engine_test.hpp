@@ -49,11 +49,11 @@ void EngineTickTest(TestSuite &t) {
     player.basic();
     eng.startFight(0);
     test.assert(battleEventPlayer.stackPointer, -1, "battleEventPlayer.stackPointer Pointer empty");
-    std::cout << "Healths: " << eng.playerHealths[0] << " " << eng.opponentHealths[0] << std::endl;
+    test.addToLog("Healths: " + std::to_string(eng.playerHealths[0]) + " " + std::to_string(eng.opponentHealths[0]));
     // TODO: shoudnt need to bump opponent for this test
     eng.opponentCur->level = 31;
     eng.opponentHealths[0] = 1000;
-    std::cout << "Healths: " << eng.playerHealths[0] << " " << eng.opponentHealths[0] << std::endl;
+    test.addToLog("Healths: " + std::to_string(eng.playerHealths[0]) + " " + std::to_string(eng.opponentHealths[0]));
 
     auto playerHP = eng.playerHealths[0];
     auto opponentHP = eng.opponentHealths[0];
@@ -62,19 +62,19 @@ void EngineTickTest(TestSuite &t) {
     test.assert(eng.playerAction.actionIndex, -1, "Player Action Index not set");
     eng.queueAction(ActionType::ATTACK, 0);
     eng.turnTick();
-    std::cout << "Healths: " << eng.playerHealths[0] << " " << eng.opponentHealths[0] << std::endl;
+    test.addToLog("Healths: " + std::to_string(eng.playerHealths[0]) + " " + std::to_string(eng.opponentHealths[0]));
 
-    std::cout << "battleEventPlayer.stackPointer: " << battleEventPlayer.stackPointer << std::endl;
+    test.addToLog("battleEventPlayer.stackPointer: " + std::to_string(battleEventPlayer.stackPointer));
     for (int i = 0; i <= battleEventPlayer.stackPointer; i++) {
-        std::cout << "battleEventStack " << i << " Type: " << BattleEventTypeToString(battleEventStack[i].type) << std::endl;
-        std::cout << "battleEventStack " << i << " Index: " << static_cast<int>(battleEventStack[i].index) << std::endl;
-        std::cout << "battleEventStack " << i << " Data: " << static_cast<int>(battleEventStack[i].data) << std::endl;
+        test.addToLog("battleEventStack " + std::to_string(i) + " Type: " + BattleEventTypeToString(battleEventStack[i].type));
+        test.addToLog("battleEventStack " + std::to_string(i) + " Index: " + std::to_string(static_cast<int>(battleEventStack[i].index)));
+        test.addToLog("battleEventStack " + std::to_string(i) + " Data: " + std::to_string(static_cast<int>(battleEventStack[i].data)));
     }
     test.assert(battleEventPlayer.stackPointer, 3, "battleEventPlayer.stackPointer Pointer set");
     test.assert(battleEventStack[0].type, BattleEventType::ATTACK, "battleEventStack 0 Type set");
     test.assert(battleEventStack[0].index, eng.playerCur->id, "battleEventStack 0 index set");
     test.assert(battleEventStack[1].type, BattleEventType::DAMAGE, "battleEventStack 1 Type set");
-    test.assert(battleEventStack[1].index, 0, "DibattleEventStackalog 1 index set");
+    test.assert(battleEventStack[1].index, 0, "DibattleEventStackaaddToLog 1 index set");
     test.assertGreaterThan(battleEventStack[1].data, 0, "battleEventStack 1 data set");
     test.assert(battleEventStack[2].type, BattleEventType::OPPONENT_ATTACK, "battleEventStack 2 Type set");
     test.assert(battleEventStack[2].index, eng.opponentCur->id, "battleEventStack 2 index set");

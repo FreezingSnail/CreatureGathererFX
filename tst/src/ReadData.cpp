@@ -24,8 +24,8 @@ bool selfEffect(Effect effect) {
     return effectTargets >> uint8_t(effect) & 1 == 1;
 }
 
-OpponentSeed_t readOpponentSeed(uint8_t index) {
-    OpponentSeed_t seed;
+OpponentSeed readOpponentSeed(uint8_t index) {
+    OpponentSeed seed;
     std::string line = readLineFromCSV(OPTCSV, index);
     auto opponent = parseOpponentCSVLine(line);
     seed = convertToOpponentSeed(opponent);

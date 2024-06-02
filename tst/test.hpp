@@ -14,10 +14,16 @@ class Test {
   public:
     int failCount;
     int passCount;
+    std::vector<std::string> log;
+
     Test() : passCount(0), failCount(0) {
     }
 
     Test(std::string description) : passCount(0), failCount(0), description(description) {
+    }
+
+    void addToLog(std::string message) {
+        log.push_back(message);
     }
 
     template <typename T> void assertNotNull(T *ptr, std::string message) {
@@ -98,6 +104,12 @@ class Test {
             std::cout << "Failed comparisons: " << std::endl;
             for (const auto &comparison : failedComparisons) {
                 std::cout << RED << comparison << RESET << std::endl;
+            }
+            if (log.size() > 0) {
+                std::cout << YELLOW << "---------- " << "LOGS" << " ----------" << RESET << std::endl;
+                for (int i = 0; i < log.size(); i++) {
+                    std::cout << log[i] << std::endl;
+                }
             }
         }
     }

@@ -28,15 +28,15 @@ void CreatureLoadTest(TestSuite &t) {
 void CreatureLoadFromOpponnetSeed(TestSuite &t) {
     Test test = Test(__func__);
     Creature creature = Creature();
-    creature.loadFromOpponentSeed(uint32_t(0b00000010000100001000010000100001));
-    test.assert(creature.id, 1, "Creature ID");
-    test.assert(creature.level, 1, "Creature Level");
+    creature.loadFromOpponentSeed({0, 31, 4294967040});
+    test.assert(creature.id, 0, "Creature ID");
+    test.assert(creature.level, 31, "Creature Level");
     test.assert(creature.types.getType1(), static_cast<int>(Type::WIND), "Creature Type 1");
     test.assert(creature.types.getType2(), static_cast<int>(Type::NONE), "Creature Type 2");
-    test.assert(creature.moves[0], 1, "Creature Move 1");
-    test.assert(creature.moves[1], 1, "Creature Move 2");
-    test.assert(creature.moves[2], 1, "Creature Move 3");
-    test.assert(creature.moves[3], 1, "Creature Move 4");
+    test.assert(creature.moves[0], 0, "Creature Move 1");
+    test.assert(creature.moves[1], 255, "Creature Move 2");
+    test.assert(creature.moves[2], 255, "Creature Move 3");
+    test.assert(creature.moves[3], 255, "Creature Move 4");
 
     t.addTest(test);
 }
