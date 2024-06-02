@@ -53,18 +53,6 @@ void load(Creature *creature, CreatureData_t seed) {
 }
 
 // 00,id1,lvl1,move11,move12,move13,move14,
-void loadFromOpponentSeed(Creature *creature, CreatureSeed seed) {
-    CreatureData_t cSeed = getCreatureFromStore(seed);
-    creature->id = static_cast<uint8_t>((cSeed.id));
-    creature->loadTypes(cSeed);
-    creature->level = seed.lvl;
-    creature->setStats(cSeed);
-    creature->setMove(seed.move1, 0);
-    creature->setMove(seed.move2, 1);
-    creature->setMove(seed.move3, 2);
-    creature->setMove(seed.move4, 3);
-    // creature->loadSprite(cSeed);
-}
 
 void arenaLoad(Creature *creature, uint24_t addr, uint8_t lvl) {
     uint8_t data[4];

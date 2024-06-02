@@ -31,3 +31,9 @@ test:
 		-w \
 		-O0 -g3 \
 		-o tst/test.o && ./tst/test.o && rm tst/test.o
+
+fxtest:
+	cp -r src tst/fxdatatest
+	cd tst/fxdatatest && arduino-cli compile --fqbn "arduboy-homemade:avr:arduboy-fx" --optimize-for-debug --output-dir .
+#	rm -r tst/fxdatatest/src
+#	open bin/Ardens.app  file="tst/fxdatatest/fxdatatest.ino.elf" file="dist/fxdata.bin"

@@ -3,6 +3,7 @@ import struct
 import base64
 
 from helper import *
+import argparse
 
 
 
@@ -142,15 +143,54 @@ def seeds_to_serialized_opponent_seeds(opponent_seeds):
         serialized_opponent_seeds.append(serialized_opponent_seed)
     return serialized_opponent_seeds
 
-def main():
-    file_path = "data/opponents.csv"
-    opponents = parse_opponent_data(file_path)
-    seeds = opponets_to_opponent_seeds(opponents)
+def output_opponent_seeds_as_single_c_struct(opponent_seeds):
+    c_structs = []
+
+    for i, opponent_seed in enumerate(opponent_seeds):
+        c_struct = f"""
+        {{
+        {{ {opponent_seed.firstCreature.id}, {opponent_seed.firstCreature.lvl}, {opponent_seed.firstCreature.moves} }},
+        {{ {opponent_seed.secondCreature.id}, {opponent_seed.secondCreature.lvl}, {opponent_seed.secondCreature.moves} }},
+        {{ {opponent_seed.thirdCreature.id}, {opponent_seed.thirdCreature.lvl}, {opponent_seed.thirdCreature.moves} }},
+        }},
+        """
+        c_structs.append(c_struct)
+
+    c_structs_string = '\n'.join(c_structs)
+    c_structs_output = f"OpponentSeed opponentSeeds[] = {{\n{c_structs_string}\n}};"
+    with open("tst/fxdatatest/opponent_data.hpp", 'w') as file:
+        file.write("#pragma once\n")
+        file.write("#include \"src/lib/DataTypes.hpp\"\n")
+        file.write(c_structs_output)
+
+
+
+def write_fx_data(seeds):
     serialized_seeds = seeds_to_serialized_opponent_seeds(seeds)
     output_file_path = "fxdata/data/opponents.bin"
     with open(output_file_path, 'w') as file:
         file.write(''.join(serialized_seeds))
     print("Serialized seeds written to:", output_file_path)
+
+def write_fx_data_c_structs(seeds):
+    output_opponent_seeds_as_c_structs(seeds)
+
+
+def main():
+    parser = argparse.ArgumentParser(description='Creature Gatherer FX Data Converter')
+    parser.add_argument('--format', choices=['fx', 'c'], default='fx', help='Output format (fx or c)')
+    args = parser.parse_args()
+
+    file_path = "data/opponents.csv"
+    opponents = parse_opponent_data(file_path)
+    seeds = opponets_to_opponent_seeds(opponents)
+
+    if args.format == 'fx':
+        write_fx_data(seeds)
+    elif args.format == 'c':
+        output_opponent_seeds_as_single_c_struct(seeds)
+
+    
 
 if __name__ == "__main__":
     main()

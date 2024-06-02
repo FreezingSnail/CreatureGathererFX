@@ -1,4 +1,5 @@
 - change datatypes to use byte widths instead of partial bytes
+	- change opponent loading code to use new type
 - rewrite data generators to write binary files and switch to use raw format imports
 - update test readers
 - switch to toml ???

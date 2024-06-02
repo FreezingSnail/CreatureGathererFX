@@ -11,7 +11,10 @@ cat fxdata/generated/images/string_images.txt >>fxdata/generated/Sprites.txt
 # Genreate FX data 
 python3 tools/moveGenerator.py --csv_path data/movesheet.csv > fxdata/generated/movedata.txt
 
-python3 tools/data_converters/opponent_data.py  
+echo "Generating opponent data"
+python3 tools/data_converters/opponent_data.py --format c
+python3 tools/data_converters/opponent_data.py --format fx
+
 
 #cp -r images fxdata/
 python3 Arduboy-Python-Utilities/fxdata-build.py fxdata/fxdata.txt
