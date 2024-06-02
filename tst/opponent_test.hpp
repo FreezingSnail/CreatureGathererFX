@@ -1,4 +1,5 @@
 #pragma once
+#include <iostream>
 #include "test.hpp"
 
 #include "../src/lib/ReadData.hpp"
@@ -7,17 +8,21 @@
 void OpponentTest(TestSuite &t) {
     Test test = Test(__func__);
     Opponent opponent = Opponent();
-    OpponentSeed_t seed = readOpponentSeed(0);
+    OpponentSeed seed = readOpponentSeed(0);
+    test.addToLog("creature 1 id: " + std::to_string(seed.firstCreature.id) + " lvl " + std::to_string(seed.firstCreature.lvl) + " moves " +
+                  std::to_string(seed.firstCreature.moves));
+    test.addToLog("creature 2 id: " + std::to_string(seed.secondCreature.id) + " lvl " + std::to_string(seed.secondCreature.lvl) +
+                  " moves " + std::to_string(seed.secondCreature.moves));
     opponent.loadOpt(&seed);
-    test.assert(opponent.party[0].id, 1, "Opponent Creature 1 ID");
-    test.assert(opponent.party[1].id, 1, "Opponent Creature 2 ID");
-    test.assert(opponent.party[2].id, 1, "Opponent Creature 3 ID");
-    test.assert(opponent.levels[0], 2, "Opponent Creature 1 Level");
-    test.assert(opponent.levels[1], 1, "Opponent Creature 2 Level");
-    test.assert(opponent.levels[2], 1, "Opponent Creature 3 Level");
-    test.assert(opponent.party[0].level, 2, "Opponent Creature 1 Creature Level");
-    test.assert(opponent.party[1].level, 1, "Opponent Creature 2 Creature Level");
-    test.assert(opponent.party[2].level, 1, "Opponent Creature 3 Creature Level");
+    test.assert(opponent.party[0].id, 0, "Opponent Creature 1 ID");
+    test.assert(opponent.party[1].id, 3, "Opponent Creature 2 ID");
+    test.assert(opponent.party[2].id, 6, "Opponent Creature 3 ID");
+    test.assert(opponent.levels[0], 31, "Opponent Creature 1 Level");
+    test.assert(opponent.levels[1], 31, "Opponent Creature 2 Level");
+    test.assert(opponent.levels[2], 31, "Opponent Creature 3 Level");
+    test.assert(opponent.party[0].level, 31, "Opponent Creature 1 Creature Level");
+    test.assert(opponent.party[1].level, 31, "Opponent Creature 2 Creature Level");
+    test.assert(opponent.party[2].level, 31, "Opponent Creature 3 Creature Level");
 
     t.addTest(test);
 }

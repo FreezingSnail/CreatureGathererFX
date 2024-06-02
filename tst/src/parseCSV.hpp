@@ -1,5 +1,6 @@
 #pragma once
 #include "../../src/lib/ReadData.hpp"
+#include "maps.hpp"
 
 #include <fstream>
 #include <vector>
@@ -140,66 +141,62 @@ struct OpponentCreature {
     int moves[4];
 };
 
-uint32_t convertToUInt32(const OpponentCreature &creature) {
-
-    // std::cout << "Creature ID: " << creature.id << "\n";
-    // std::cout << "Creature Level: " << creature.level << "\n";
-    // std::cout << "Creature Moves: " << creature.moves[0] << " " << creature.moves[1] << " " << creature.moves[2] << " " <<
-    // creature.moves[3]
-    //           << "\n";
-
-    uint32_t result = 0;
-    result |= ((creature.id & 0x1111) << 25);   // Shift id to the left by 25 bits and bitwise OR with result
-    // std::cout << "level id bf " << std::bitset<8>((creature.id)) << "\n";
-    // std::cout << "level id af " << std::bitset<8>((creature.id & 0x1111)) << "\n";
-    // std::cout << "Result after id: " << std::bitset<32>(result) << "\n";
-    result |= ((creature.level) << 20);   // Shift level to the left by 20 bits and bitwise OR with result
-    // std::cout << "level bin bf " << std::bitset<8>((creature.level)) << "\n";
-    // std::cout << "level bin af " << std::bitset<8>((creature.level & 0x1111)) << "\n";
-    // std::cout << "Result after level: " << std::bitset<32>(result) << "\n";
-    result |= ((creature.moves[3] & 0x1111) << 15);   // Shift move4 to the left by 15 bits and bitwise OR with result
-    // std::cout << "Result after move4: " << std::bitset<32>(result) << "\n";
-    result |= ((creature.moves[2] & 0x1111) << 10);   // Shift move3 to the left by 10 bits and bitwise OR with result
-    // std::cout << "Result after move3: " << std::bitset<32>(result) << "\n";
-    result |= ((creature.moves[1] & 0x1111) << 5);   // Shift move2 to the left by 5 bits and bitwise OR with result
-    // std::cout << "Result after move2: " << std::bitset<32>(result) << "\n";
-    result |= (creature.moves[0] & 0x1111);   // No need to shift move1 and bitwise OR with result
-    // std::cout << "Result after move1: " << std::bitset<32>(result) << "\n";
-    return result;
-}
-
 struct OpponentCSV {
-    int opID;
     OpponentCreature creatures[3];
 };
 
-OpponentSeed_t convertToOpponentSeed(const OpponentCSV &opponent) {
-    OpponentSeed_t opponentSeed;
-    opponentSeed.firstCreature = convertToUInt32(opponent.creatures[0]);
-    opponentSeed.secondCreature = convertToUInt32(opponent.creatures[1]);
-    opponentSeed.thirdCreature = convertToUInt32(opponent.creatures[2]);
+CreatureSeed creaturecsvToSeed(const OpponentCreature &creature) {
+    CreatureSeed seed;
+    seed.id = creature.id;
+    seed.lvl = creature.level;
+    seed.moves = 0;
+    seed.moves |= ((creature.moves[3] & 0x1111) << 15);   // Shift move4 to the left by 15 bits and bitwise OR with result
+    // std::cout << "Result after move4: " << std::bitset<32>(result) << "\n";
+    seed.moves |= ((creature.moves[2] & 0x1111) << 10);   // Shift move3 to the left by 10 bits and bitwise OR with result
+    // std::cout << "Result after move3: " << std::bitset<32>(result) << "\n";
+    seed.moves |= ((creature.moves[1] & 0x1111) << 5);   // Shift move2 to the left by 5 bits and bitwise OR with result
+    // std::cout << "Result after move2: " << std::bitset<32>(result) << "\n";
+    seed.moves |= (creature.moves[0] & 0x1111);
+    return seed;
+}
+
+OpponentSeed convertToOpponentSeed(const OpponentCSV &opponent) {
+    OpponentSeed opponentSeed;
+    opponentSeed.firstCreature = creaturecsvToSeed(opponent.creatures[0]);
+    opponentSeed.secondCreature = creaturecsvToSeed(opponent.creatures[1]);
+    opponentSeed.thirdCreature = creaturecsvToSeed(opponent.creatures[2]);
     return opponentSeed;
 }
 
 OpponentCSV parseOpponentCSVLine(const std::string &line) {
     std::stringstream ss(line);
     OpponentCSV opponent;
+    std::string token;
 
-    ss >> opponent.opID;
-    ss.ignore();   // Ignore the comma
-
+    // Parse creature names and convert to IDs
     for (int i = 0; i < 3; ++i) {
-        ss >> opponent.creatures[i].id;
-        ss.ignore();   // Ignore the comma
+        std::getline(ss, token, ',');
+        std::cout << "Token: " << token << "\n";
+        opponent.creatures[i].id = creature_string_to_number[token];
+        std::cout << "ID: " << opponent.creatures[i].id << "\n";
+    }
 
-        ss >> opponent.creatures[i].level;
-        ss.ignore();   // Ignore the comma
+    // Parse levels
+    for (int i = 0; i < 3; ++i) {
+        std::getline(ss, token, ',');
+        opponent.creatures[i].level = std::stoi(token);
+    }
 
+    // Skip name
+    std::getline(ss, token, ',');
+
+    // Parse moves and convert to IDs
+    for (int i = 0; i < 3; ++i) {
         for (int j = 0; j < 4; ++j) {
-            ss >> opponent.creatures[i].moves[j];
-            ss.ignore();   // Ignore the comma
+            std::getline(ss, token, ',');
+            opponent.creatures[i].moves[j] = move_string_to_number[token];
         }
     }
 
-    return opponent;   // Return the Opponent struct
+    return opponent;
 }
