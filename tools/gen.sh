@@ -15,6 +15,8 @@ echo "Generating opponent data"
 python3 tools/data_converters/opponent_data.py --format c
 python3 tools/data_converters/opponent_data.py --format fx
 
+python3 tools/data_converters/type_table_data.py --format fx
+
 
 #cp -r images fxdata/
 python3 Arduboy-Python-Utilities/fxdata-build.py fxdata/fxdata.txt

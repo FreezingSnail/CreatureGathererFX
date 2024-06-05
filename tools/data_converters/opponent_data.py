@@ -167,7 +167,7 @@ def output_opponent_seeds_as_single_c_struct(opponent_seeds):
 
 def write_fx_data(seeds):
     serialized_seeds = seeds_to_serialized_opponent_seeds(seeds)
-    output_file_path = "fxdata/data/opponents.bin"
+    output_file_path = "fxdata/generated/opponents.bin"
     with open(output_file_path, 'wb') as file:
         for serialized_seed in serialized_seeds:
             for seed in serialized_seed:
