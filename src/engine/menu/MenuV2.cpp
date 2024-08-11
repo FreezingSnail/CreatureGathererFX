@@ -13,42 +13,32 @@ void updateFightState() {
         // handled automatically
     } break;
     case BattleState::PLAYER_ATTACK:
-        Serial.println("PA");
         engine.turnState = BattleState::OPPONENT_RECEIVE_DAMAGE;
         break;
     case BattleState::OPPONENT_RECEIVE_DAMAGE:
-        Serial.println("ORD");
         engine.turnState = BattleState::OPPONENT_RECEIVE_EFFECT_APPLICATION;
         break;
     case BattleState::OPPONENT_ATTACK:
-        Serial.println("OA");
         engine.turnState = BattleState::PLAYER_RECEIVE_DAMAGE;
         break;
     case BattleState::PLAYER_RECEIVE_DAMAGE:
-        Serial.println("PRD");
         engine.turnState = BattleState::PLAYER_RECEIVE_EFFECT_APPLICATION;
         break;
     case BattleState::PLAYER_RECEIVE_EFFECT_APPLICATION:
         if (engine.PlayerActionReady()) {
-            Serial.println("PRE");
             engine.turnState = BattleState::PLAYER_ATTACK;
         } else {
-            Serial.println("PLAYER_EFFECT_APPLICATIONEND_TURN");
             engine.turnState = BattleState::END_TURN;
         }
         break;
     case BattleState::OPPONENT_RECEIVE_EFFECT_APPLICATION:
         if (engine.OpponentActionReady()) {
-            Serial.println("ORE");
             engine.turnState = BattleState::OPPONENT_ATTACK;
         } else {
-            Serial.println("OPPONENT_EFFECT_APPLICATIONEND_TURN");
             engine.turnState = BattleState::END_TURN;
         }
         break;
     case BattleState::END_TURN:
-        Serial.println("E");
-        Serial.println();
         engine.turnState = BattleState::TURN_INPUT;
         break;
     }

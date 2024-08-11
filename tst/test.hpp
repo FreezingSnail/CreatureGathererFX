@@ -38,8 +38,7 @@ class Test {
     template <typename T> void assert(T a, T b, std::string message) {
         if (a != b) {
             ++failCount;
-            failedComparisons.push_back(message + " Assertion failed: " + std::to_string(static_cast<int>(a)) +
-                                        " != " + std::to_string(static_cast<int>(b)));
+            logError(message, std::to_string(static_cast<int>(a)), std::to_string(static_cast<int>(b)), "==");
         } else {
             ++passCount;
         }
@@ -50,7 +49,8 @@ class Test {
         int tempB = static_cast<int>(b);
         if (tempA != tempB) {
             ++failCount;
-            failedComparisons.push_back(message + " Assertion failed: " + std::to_string(tempA) + " != " + std::to_string(tempB));
+            logError(message, std::to_string(static_cast<int>(tempA)), std::to_string(static_cast<int>(tempB)), "==");
+
         } else {
             ++passCount;
         }
@@ -59,7 +59,7 @@ class Test {
     template <typename T> void assertLessThan(T a, T b, std::string message) {
         if (a >= b) {
             ++failCount;
-            failedComparisons.push_back(message + " Assertion failed: " + std::to_string(a) + " >= " + std::to_string(b));
+            logError(message, std::to_string(static_cast<int>(a)), std::to_string(static_cast<int>(b)), ">=");
         } else {
             ++passCount;
         }
@@ -68,7 +68,7 @@ class Test {
     template <typename T> void assertGreaterThan(T a, T b, std::string message) {
         if (a <= b) {
             ++failCount;
-            failedComparisons.push_back(message + " Assertion failed: " + std::to_string(a) + " <= " + std::to_string(b));
+            logError(message, std::to_string(static_cast<int>(a)), std::to_string(static_cast<int>(b)), "<=");
         } else {
             ++passCount;
         }
@@ -79,7 +79,7 @@ class Test {
         int tempB = static_cast<int>(b);
         if (tempA >= tempB) {
             ++failCount;
-            failedComparisons.push_back(message + " Assertion failed: " + std::to_string(tempA) + " >= " + std::to_string(tempB));
+            logError(message, std::to_string(static_cast<int>(tempA)), std::to_string(static_cast<int>(tempB)), ">=");
         } else {
             ++passCount;
         }
@@ -90,7 +90,7 @@ class Test {
         int tempB = static_cast<int>(b);
         if (tempA <= tempB) {
             ++failCount;
-            failedComparisons.push_back(message + " Assertion failed: " + std::to_string(tempA) + " <= " + std::to_string(tempB));
+            logError(message, std::to_string(static_cast<int>(tempA)), std::to_string(static_cast<int>(tempB)), "<=");
         } else {
             ++passCount;
         }
@@ -117,6 +117,10 @@ class Test {
   private:
     std::string description;
     std::vector<std::string> failedComparisons;
+    void logError(std::string message, std::string have, std::string expected, std::string comparison) {
+        failedComparisons.push_back(message + " Assertion failed\nfor comparison: " + comparison + "\n\tHave: " + have +
+                                    "\n\tExpected: " + expected);
+    }
 };
 ;
 
