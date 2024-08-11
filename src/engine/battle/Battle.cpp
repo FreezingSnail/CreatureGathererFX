@@ -4,7 +4,7 @@
 #include "../../creature/Creature.hpp"
 #include "../../lib/Move.hpp"
 #include "../../lib/ReadData.hpp"
-#include <ArduboyFX.h>
+// #include <ArduboyFX.h>
 
 BattleEngine::BattleEngine() {
 }
@@ -95,6 +95,7 @@ void BattleEngine::startArena(uint8_t optID) {
     // gameState.state = GameState_t::BATTLE;
     activeBattle = true;
     playerAction.actionIndex = -1;
+    opponentAction.actionIndex = -1;
     menuStack.push(MenuEnum::BATTLE_OPTIONS);
 }
 
@@ -104,6 +105,7 @@ void BattleEngine::startEncounter(uint8_t creatureID, uint8_t level) {
     // gameState.state = GameState_t::BATTLE;
     this->activeBattle = true;
     playerAction.actionIndex = -1;
+    opponentAction.actionIndex = -1;
     menuStack.push(MenuEnum::BATTLE_OPTIONS);
 }
 
@@ -182,6 +184,7 @@ void BattleEngine::turnTick() {
         opponentAction.actionIndex = -1;
         break;
     case BattleState::END_TURN:
+        updateState = true;
         break;
 
     default:
@@ -339,17 +342,12 @@ void BattleEngine::commitAction(Action *action, Creature *commiter, Creature *re
         Modifier m2 = getModifier(Type(move.getMoveType()), receiver->types.getType2());
         Modifier mod = combineModifier(m1, m2);
 
-        Serial.println(int(turnState));
-
         if (turnState == BattleState::PLAYER_ATTACK || turnState == BattleState::OPPONENT_ATTACK) {
-            Serial.println("attack state");
             if (isPlayer) {
-                Serial.println("psuhin");
                 battleEventPlayer.push({BattleEventType::ATTACK, commiter->id, commiter->moves[action->actionIndex]});
                 dialogMenu.pushMenu(newDialogBox(NAME, commiter->id, commiter->moves[action->actionIndex]));
 
             } else {
-                Serial.println("psuhi 0");
                 battleEventPlayer.push({BattleEventType::OPPONENT_ATTACK, commiter->id, commiter->moves[action->actionIndex]});
                 dialogMenu.pushMenu(newDialogBox(ENEMY_NAME, commiter->id, commiter->moves[action->actionIndex]));
             }
@@ -358,22 +356,17 @@ void BattleEngine::commitAction(Action *action, Creature *commiter, Creature *re
             }
 
         } else if (turnState == BattleState::PLAYER_RECEIVE_DAMAGE || turnState == BattleState::OPPONENT_RECEIVE_DAMAGE) {
-            Serial.println("applying damage");
-            Serial.println(damage);
             applyDamage(damage, receiver);
 
             if (isPlayer) {
-                Serial.println("ppd");
                 dialogMenu.pushMenu(newDialogBox(ENEMY_DAMAGE, receiver->id, damage));
-                // battleEventPlayer.push({BattleEventType::OPPONENT_DAMAGE, 0, damage});
+                battleEventPlayer.push({BattleEventType::OPPONENT_DAMAGE, 0, damage});
 
             } else {
-                Serial.println("pod");
-                // battleEventPlayer.push({BattleEventType::DAMAGE, 0, damage});
+                battleEventPlayer.push({BattleEventType::DAMAGE, 0, damage});
                 dialogMenu.pushMenu(newDialogBox(DAMAGE, receiver->id, damage));
             }
         } else {
-            Serial.println("eff");
             runEffect(commiter, receiver, move.getMoveEffect());
         }
 

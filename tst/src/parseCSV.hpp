@@ -176,9 +176,9 @@ OpponentCSV parseOpponentCSVLine(const std::string &line) {
     // Parse creature names and convert to IDs
     for (int i = 0; i < 3; ++i) {
         std::getline(ss, token, ',');
-        std::cout << "Token: " << token << "\n";
+        // std::cout << "Token: " << token << "\n";
         opponent.creatures[i].id = creature_string_to_number[token];
-        std::cout << "ID: " << opponent.creatures[i].id << "\n";
+        //  std::cout << "ID: " << opponent.creatures[i].id << "\n";
     }
 
     // Parse levels
