@@ -29,8 +29,9 @@ class BattleEngine {
 
     bool activeBattle;
 
-    bool queued;
     // Action queuedAction;
+
+    BattleState turnState;
 
     BattleEngine();
     void init();
@@ -56,7 +57,9 @@ class BattleEngine {
     bool checkWin();
     bool checkPlayerFaint();
     bool checkOpponentFaint();
+    // deprecated
     void playerActionFirst();
+    // deprecated
     void opponentActionFirst();
     void setMoveList(uint8_t **pointer);
     void changeCurMon(uint8_t index);
@@ -82,4 +85,10 @@ class BattleEngine {
     void applyEffect(Creature *target, Effect effect);
     void applyBattleEffect(Creature *target, Effect effect);
     void runEffect(Creature *commiter, Creature *other, Effect effect);
+
+    bool PlayerActionReady();
+    bool OpponentActionReady();
+    bool TurnReady();
+    void commitPlayerAction();
+    void commitOpponentAction();
 };
