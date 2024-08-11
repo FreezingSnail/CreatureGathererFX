@@ -1,0 +1,9 @@
+type	spirit	water	wind	earth	fire	lightning	plant	elder
+spirit	1	1	1	1	1	1	1	0
+water	1	1	2	0.5	2	1	0.5	0.5
+wind	1	1	1	2	0.5	0.5	2	0.5
+earth	1	2	0.5	1	1	2	0.5	0.5
+fire	1	0	2	0.5	1	2	2	1
+lightning	1	2	2	0	2	1	0.5	1
+plant	1	2	2	2	0	0.5	1	1
+elder	2	1	1	1	1	1	1	2

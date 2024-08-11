@@ -1,6 +1,7 @@
 #define ABG_IMPLEMENTATION
 #define SPRITESU_IMPLEMENTATION
 #include "src/common.hpp"
+#include "src/globals.hpp"
 
 #include "src/engine/arena/Arena.hpp"
 #include "src/engine/battle/Battle.hpp"
@@ -11,6 +12,7 @@
 #include "src/fxdata.h"
 #include "src/player/Player.hpp"
 #include "src/plants/PlantGamestate.hpp"
+#include "src/engine/draw.h"
 
 // #include <HardwareSerial.h>
 
@@ -29,6 +31,11 @@ WorldEngine world;
 Animator animator = Animator();
 PlantGameState plants;
 
+BattleEvent battleEventStack[10];
+BattleEventPlayer battleEventPlayer;
+MenuStack menuStack;
+DialogMenu dialogMenu;
+
 void setup() {
     // Serial.begin(9600);
     //  arduboy.begin();
@@ -40,20 +47,21 @@ void setup() {
     plants.tick();
 
     FX::begin(FX_DATA_PAGE);
-    FX::setFont(Font, dcmNormal);   // select default font
+    // FX::setFont(ArduFont, dcmNormal);   // select default font
     FX::setCursorRange(0, 32767);
 
     world.init();
-    gameState.state = GameState_t::WORLD;
+    gameState.state = GameState_t::BATTLE;
     engine.init();
     player.basic();
     engine.startArena(0);
+    menu.push(MenuEnum::BATTLE_OPTIONS);
     //     engine.startArena(arduboy, player, 6);
 }
 
 void run() {
 
-    if (menu.dialogMenu.peek()) {
+    if (dialogMenu.peek()) {
         menu.run(engine);
         return;
     }
@@ -82,7 +90,7 @@ void run() {
 void render() {
     switch (gameState.state) {
     case GameState_t::BATTLE:
-        engine.drawScene();
+        drawScene(engine);
         break;
     case GameState_t::WORLD:
         world.draw();
@@ -92,8 +100,8 @@ void render() {
         break;
     }
     animator.play();
-    if (menu.dialogMenu.peek()) {
-        menu.dialogMenu.drawPopMenu();
+    if (dialogMenu.peek()) {
+        dialogMenu.drawPopMenu();
     } else {
         menu.printMenu(engine);
     }

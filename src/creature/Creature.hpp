@@ -1,7 +1,6 @@
 #pragma once
-#include <ArduboyFX.h>
 
-#include "../data/Creatures.hpp"
+#include "../lib/DataTypes.hpp"
 #include "../lib/Move.hpp"
 #include "../lib/Type.hpp"
 #include "../lib/Stats.hpp"
@@ -29,15 +28,13 @@ class Creature {
     uint8_t moves[4];
     Move moveList[4];
     stats_t statlist;
-    uint24_t debugg = 0;
     StatusEffect status;
 
     // const unsigned char *sprite;
 
     Creature();
     void load(CreatureData_t seed);
-    void loadFromOpponentSeed(uint32_t seed);
-    void arenaLoad(uint24_t addr, uint8_t lvl);
+    void loadFromOpponentSeed(CreatureSeed seed);
 
     void setStats(CreatureData_t seed);
     void loadMoves(CreatureData_t seed);
@@ -51,11 +48,4 @@ class Creature {
 
     uint8_t seedToStat(uint8_t seed);
     bool moveTypeBonus(uint8_t index);
-
-    void printCreature();
-
-#ifdef CLI
-    void printMoves();
-    void printStats();
-#endif
 };

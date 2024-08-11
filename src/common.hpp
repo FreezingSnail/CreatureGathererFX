@@ -19,17 +19,16 @@ extern Animator animator;
 
 #include "engine/menu/MenuV2.hpp"
 extern MenuV2 menu;
-#include "GameState.hpp"
-extern GameState gameState;
+
 #include "engine/battle/Battle.hpp"
 extern BattleEngine engine;
-#include "player/Player.hpp"
-extern Player player;
 
-#define FRAME(x) x * 3 + arduboy.currentPlane()
+#include "GameState.hpp"
+extern GameState gameState;
 
 #define DGF __attribute__((optimize("-O0")))
 
+#define FRAME(x) x * 3 + arduboy.currentPlane()
 #include "fxdata.h"
 static void drawStatNumbers(uint8_t x, uint8_t y, uint8_t number) {
     uint8_t upper = number / 100;

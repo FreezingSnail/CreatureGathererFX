@@ -3,7 +3,6 @@
 #include "../../creature/Creature.hpp"
 #include "../../opponent/Opponent.hpp"
 #include "../../player/Player.hpp"
-#include "../game/Gamestate.hpp"
 #include "../../lib/StatModifier.hpp"
 
 class MenuV2;
@@ -30,8 +29,10 @@ class BattleEngine {
 
     bool activeBattle;
 
-    bool queued;
-    Action queuedAction;
+    // Action queuedAction;
+
+    BattleState turnState;
+    bool updateState;
 
     BattleEngine();
     void init();
@@ -57,7 +58,9 @@ class BattleEngine {
     bool checkWin();
     bool checkPlayerFaint();
     bool checkOpponentFaint();
+    // deprecated
     void playerActionFirst();
+    // deprecated
     void opponentActionFirst();
     void setMoveList(uint8_t **pointer);
     void changeCurMon(uint8_t index);
@@ -79,14 +82,14 @@ class BattleEngine {
     void LoadCreature(uint8_t creatureID, uint8_t level);
     void resetOpponent();
 
-    // drawing
-    void drawScene();
-    void drawPlayer();
-    void drawOpponent();
-    void drawPlayerHP();
-    void drawOpponentHP();
     void applyEffects();
     void applyEffect(Creature *target, Effect effect);
     void applyBattleEffect(Creature *target, Effect effect);
     void runEffect(Creature *commiter, Creature *other, Effect effect);
+
+    bool PlayerActionReady();
+    bool OpponentActionReady();
+    bool TurnReady();
+    void commitPlayerAction();
+    void commitOpponentAction();
 };
