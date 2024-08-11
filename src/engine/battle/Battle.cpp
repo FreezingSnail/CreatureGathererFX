@@ -4,7 +4,7 @@
 #include "../../creature/Creature.hpp"
 #include "../../lib/Move.hpp"
 #include "../../lib/ReadData.hpp"
-// #include <ArduboyFX.h>
+#include <ArduboyFX.h>
 
 BattleEngine::BattleEngine() {
 }
@@ -212,6 +212,7 @@ bool BattleEngine::checkWin() {
 bool BattleEngine::checkPlayerFaint() {
     if (this->playerHealths[this->playerIndex] <= 0) {
         // TODO(BUG): can bacout out of change menu if creature is down
+        dialogMenu.pushMenu(newDialogBox(FAINT, playerCur->id, 0));
         battleEventPlayer.push({BattleEventType::FAINT, playerCur->id, 0});
         if (!checkLoss()) {
             menuStack.push(MenuEnum::BATTLE_CREATURE_SELECT);
@@ -224,11 +225,11 @@ bool BattleEngine::checkPlayerFaint() {
 // TODO: Need to move this change action out to the normal loop so creature doesnt change mid turn
 bool BattleEngine::checkOpponentFaint() {
     if (this->opponentHealths[this->opponentIndex] <= 0) {
+        dialogMenu.pushMenu(newDialogBox(FAINT, opponentCur->id, 0));
         battleEventPlayer.push({BattleEventType::OPPONENT_FAINT, opponentCur->id, 0});
         if (!checkWin()) {
             this->opponentAction.setActionType(ActionType::CHNGE, Priority::FAST);
-            this->opponentIndex++;
-            this->opponentAction.actionIndex = int8_t(this->opponentIndex);
+            this->opponentAction.actionIndex = int8_t(this->opponentIndex + 1);
         }
         return true;
     }
@@ -240,7 +241,7 @@ void BattleEngine::commitPlayerAction() {
         return;
     }
     this->commitAction(&this->playerAction, this->playerCur, this->opponentCur, true);
-    if (this->checkOpponentFaint() || !this->activeBattle) {
+    if (turnState == BattleState::OPPONENT_RECEIVE_DAMAGE && checkOpponentFaint() || !this->activeBattle) {
         playerAction.setActionType(ActionType::SKIP, Priority::NORMAL);
         return;
     }
@@ -251,7 +252,7 @@ void BattleEngine::commitOpponentAction() {
         return;
     }
     this->commitAction(&this->opponentAction, this->opponentCur, this->playerCur, false);
-    if (this->checkPlayerFaint() || !this->activeBattle) {
+    if (turnState == BattleState::PLAYER_RECEIVE_DAMAGE && checkPlayerFaint() || !this->activeBattle) {
         opponentAction.setActionType(ActionType::SKIP, Priority::NORMAL);
         return;
     }
@@ -270,6 +271,7 @@ void BattleEngine::changeCurMon(uint8_t index) {
         }
         if (j == index) {
             this->playerCur = this->playerParty[i];
+            Serial.println(i);
             playerIndex = i;
             return;
         }
@@ -351,11 +353,12 @@ void BattleEngine::commitAction(Action *action, Creature *commiter, Creature *re
                 battleEventPlayer.push({BattleEventType::OPPONENT_ATTACK, commiter->id, commiter->moves[action->actionIndex]});
                 dialogMenu.pushMenu(newDialogBox(ENEMY_NAME, commiter->id, commiter->moves[action->actionIndex]));
             }
-            if (mod != Modifier::Same) {
-                dialogMenu.pushMenu(newDialogBox(EFFECTIVENESS, uint24_t(mod), 0));
-            }
 
         } else if (turnState == BattleState::PLAYER_RECEIVE_DAMAGE || turnState == BattleState::OPPONENT_RECEIVE_DAMAGE) {
+            if (mod != Modifier::Same) {
+                Serial.println("effective");
+                dialogMenu.pushMenu(newDialogBox(EFFECTIVENESS, uint24_t(mod), 0));
+            }
             applyDamage(damage, receiver);
 
             if (isPlayer) {
@@ -387,9 +390,10 @@ void BattleEngine::commitAction(Action *action, Creature *commiter, Creature *re
                 dialogMenu.pushMenu(newDialogBox(SWITCH, opponent.party[action->actionIndex].id, 0));
             }
 
-        } else {
+        } else if (turnState == BattleState::PLAYER_RECEIVE_DAMAGE || turnState == BattleState::OPPONENT_RECEIVE_DAMAGE) {
             if (isPlayer) {
                 this->changeCurMon(action->actionIndex);
+
             } else {
                 this->changeOptMon(action->actionIndex);
             }

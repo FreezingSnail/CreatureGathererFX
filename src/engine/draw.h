@@ -190,13 +190,14 @@ static void DGF drawOpponentHP(BattleEngine &engine) {
 }
 
 static void drawOpponent(BattleEngine &engine) {
-    SpritesU::drawPlusMaskFX(0, 0, ecreatureSprites, FRAME(engine.opponentCur->id));
+    SpritesU::drawPlusMaskFX(0, 0, NewecreatureSprites, FRAME((engine.opponentCur->id * 2)));
 
     drawOpponentHP(engine);
 }
 
 static void drawPlayer(BattleEngine &engine) {
-    SpritesU::drawPlusMaskFX(96, 0, creatureSprites, FRAME(engine.playerCur->id));
+    // Serial.println(FRAME((engine.playerCur->id * 2) + 1));
+    SpritesU::drawPlusMaskFX(96, 0, NewecreatureSprites, FRAME(((engine.playerCur->id * 2) + 1)));
     // uint24_t rowAddress = FX::readIndexedUInt24(CreatureNames::CreatureNames, playerCur->id);
     // SpritesU::drawOverwriteFX(60, 32, rowAddress, FRAME(0));
 
@@ -204,7 +205,7 @@ static void drawPlayer(BattleEngine &engine) {
 }
 
 static void drawScene(BattleEngine &engine) {
-    SpritesU::drawPlusMaskFX(0, 15, fieldBacground, FRAME(0));
+    // SpritesU::drawPlusMaskFX(0, 15, fieldBacground, FRAME(0));
     drawPlayer(engine);
     drawOpponent(engine);
 }
