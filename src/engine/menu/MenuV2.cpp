@@ -213,7 +213,7 @@ void MenuV2::printMenu(BattleEngine &engine) {
             cIndex = this->creatures[0];
         }
         printCreatureMenu(this->creatures[0], this->creatures[1], engine.getCreature(cIndex), this->cursorIndex);
-        SpritesU::drawPlusMaskFX(0, 0, ecreatureSprites, FRAME(engine.getCreature(cIndex)->id));
+        SpritesU::drawPlusMaskFX(0, 0, NewecreatureSprites, FRAME((engine.getCreature(cIndex)->id * 2)));
         break;
     }
     printCursor(this->cursorIndex);
@@ -227,7 +227,7 @@ void MenuV2::creatureRental() {
     this->cursorIndex = this->cursorIndex % 31;
 
     SpritesU::drawOverwriteFX(0, 55, CreatureNames::CreatureNames, this->cursorIndex * 3 + arduboy.currentPlane());
-    FX::drawBitmap(0, 0, creatureSprites, this->cursorIndex, dbmWhite);
+    // FX::drawBitmap(0, 0, NewecreatureSprites, FRAME((this->cursorIndex * 2)), dbmWhite);
     CreatureData_t cseed;
     uint24_t rowAddress = CreatureData::creatureData + (sizeof(CreatureData_t) * this->cursorIndex);
     FX::readDataObject(rowAddress, cseed);
