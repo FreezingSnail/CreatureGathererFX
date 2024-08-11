@@ -32,6 +32,7 @@ class BattleEngine {
     // Action queuedAction;
 
     BattleState turnState;
+    bool updateState;
 
     BattleEngine();
     void init();

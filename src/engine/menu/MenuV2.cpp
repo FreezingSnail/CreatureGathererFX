@@ -13,41 +13,41 @@ void updateFightState() {
         // handled automatically
     } break;
     case BattleState::PLAYER_ATTACK:
-        Serial.println("PLAYER_ATTACK to OPPONENT_RECEIVE_DAMAGE");
+        Serial.println("PA");
         engine.turnState = BattleState::OPPONENT_RECEIVE_DAMAGE;
         break;
     case BattleState::OPPONENT_RECEIVE_DAMAGE:
-        Serial.println("OPPONENT_RECEIVE_DAMAGE to OPPONENT_RECEIVE_EFFECT_APPLICATION");
+        Serial.println("ORD");
         engine.turnState = BattleState::OPPONENT_RECEIVE_EFFECT_APPLICATION;
         break;
     case BattleState::OPPONENT_ATTACK:
-        Serial.println("OPPONENT_ATTACK to PLAYER_RECEIVE_DAMAGE");
+        Serial.println("OA");
         engine.turnState = BattleState::PLAYER_RECEIVE_DAMAGE;
         break;
     case BattleState::PLAYER_RECEIVE_DAMAGE:
-        Serial.println("PLAYER_RECEIVE_DAMAGE to PLAYER_RECIVE_EFFECT_APPLICATION");
+        Serial.println("PRD");
         engine.turnState = BattleState::PLAYER_RECEIVE_EFFECT_APPLICATION;
         break;
     case BattleState::PLAYER_RECEIVE_EFFECT_APPLICATION:
         if (engine.PlayerActionReady()) {
-            Serial.println("OPPONENT_EFFECT_APPLICATION to PLAYER_ATTACK");
+            Serial.println("PRE");
             engine.turnState = BattleState::PLAYER_ATTACK;
         } else {
-            Serial.println("PLAYER_EFFECT_APPLICATION to END_TURN");
+            Serial.println("PLAYER_EFFECT_APPLICATIONEND_TURN");
             engine.turnState = BattleState::END_TURN;
         }
         break;
     case BattleState::OPPONENT_RECEIVE_EFFECT_APPLICATION:
         if (engine.OpponentActionReady()) {
-            Serial.println("PLAYER_EFFECT_APPLICATION to OPPONENT_ATTACK");
+            Serial.println("ORE");
             engine.turnState = BattleState::OPPONENT_ATTACK;
         } else {
-            Serial.println("OPPONENT_EFFECT_APPLICATION to END_TURN");
+            Serial.println("OPPONENT_EFFECT_APPLICATIONEND_TURN");
             engine.turnState = BattleState::END_TURN;
         }
         break;
     case BattleState::END_TURN:
-        Serial.println("END_TURN to TURN_INPUT");
+        Serial.println("E");
         Serial.println();
         engine.turnState = BattleState::TURN_INPUT;
         break;
@@ -137,7 +137,7 @@ void MenuV2::action(BattleEngine &engine) {
                 this->push(BATTLE_CREATURE_SELECT);
                 break;
             case 3:
-                engine.queueAction(ActionType::ESCAPE, 0);   // need to redeisgn how an action is qued
+                engine.queueAction(ActionType::ESCAPE, 0);   // needredeisgn how an action is qued
                 break;
             }
             this->cursorIndex = 0;
@@ -187,14 +187,20 @@ void DGF MenuV2::run(BattleEngine &engine) {
         if (arduboy.justPressed(A_BUTTON)) {
             dialogMenu.popMenu();
         }
+
     } else {
         // TODO very inefficient
-        updateFightState();
+
         updateMoveList(engine);
         engine.updateInactiveCreatures(this->creatures);
 
         transverse();
         action(engine);
+    }
+
+    if (engine.updateState) {
+        updateFightState();
+        engine.updateState = false;
     }
 }
 
@@ -224,7 +230,7 @@ void MenuV2::printMenu(BattleEngine &engine) {
     // arduboy.drawRect(1, 44, 126, 19, BLACK);
 }
 
-// TODO move text to drawing
+// TODO move textdrawing
 void MenuV2::creatureRental() {
     // printString(font, MenuFXData::pointerText, 0, 55);
     FX::setCursor(10, 55);
