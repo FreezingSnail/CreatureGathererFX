@@ -12,6 +12,7 @@
 #include "src/fxdata.h"
 #include "src/player/Player.hpp"
 #include "src/plants/PlantGamestate.hpp"
+#include "src/engine/draw.h"
 
 // #include <HardwareSerial.h>
 
@@ -50,10 +51,11 @@ void setup() {
     FX::setCursorRange(0, 32767);
 
     world.init();
-    gameState.state = GameState_t::WORLD;
+    gameState.state = GameState_t::BATTLE;
     engine.init();
     player.basic();
     engine.startArena(0);
+    menu.push(MenuEnum::BATTLE_OPTIONS);
     //     engine.startArena(arduboy, player, 6);
 }
 
@@ -88,7 +90,7 @@ void run() {
 void render() {
     switch (gameState.state) {
     case GameState_t::BATTLE:
-        (&engine);
+        drawScene(engine);
         break;
     case GameState_t::WORLD:
         world.draw();

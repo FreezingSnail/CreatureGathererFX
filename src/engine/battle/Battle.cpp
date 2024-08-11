@@ -4,22 +4,23 @@
 #include "../../creature/Creature.hpp"
 #include "../../lib/Move.hpp"
 #include "../../lib/ReadData.hpp"
+#include <ArduboyFX.h>
 
 BattleEngine::BattleEngine() {
 }
 
-uint8_t static calculateDamage(Action *action, Creature *committer, Creature *reciever) {
+uint8_t static calculateDamage(Action *action, Creature *committer, Creature *RECEIVEr) {
     // need to do something here with atk def stats
     Move move = committer->moveList[action->actionIndex];
     // float mod = getMatchupModifier(getMoveType(move),
-    // uint8_t(reciever->type1))*getMatchupModifier(getMoveType(move),
-    // uint8_t(reciever->type2))/2;
+    // uint8_t(RECEIVEr->type1))*getMatchupModifier(getMoveType(move),
+    // uint8_t(RECEIVEr->type2))/2;
     uint8_t power = move.getMovePower();
     bool bonus = committer->moveTypeBonus(move.getMoveType());
     // TODO: this daamage formula is bad
     // TODO: apply stat modifiers, Maybe need to refactor this entirely
-    uint16_t damage = (power * committer->statlist.attack) / (reciever->statlist.defense / 2);
-    damage = applyModifier(damage, (Type)move.getMoveType(), reciever->types);
+    uint16_t damage = (power * committer->statlist.attack) / (RECEIVEr->statlist.defense / 2);
+    damage = applyModifier(damage, (Type)move.getMoveType(), RECEIVEr->types);
     damage = damage == 0 ? 1 : damage;
     // TODO (Snail) need to move this modifiers location in the formula
 
@@ -27,17 +28,17 @@ uint8_t static calculateDamage(Action *action, Creature *committer, Creature *re
     return damage;
 }
 
-static uint8_t chooseMove(Creature *commiter, Creature *reciever) {
+static uint8_t aiChooseStrongestMove(Creature *commiter, Creature *RECEIVEr) {
     uint8_t selected = 0;
     uint16_t maxDamage = 0;
 
-    DualType type = reciever->types;
+    DualType type = RECEIVEr->types;
     // TODO have multiple ai levels?
     // always choose the highest damage (hardest ai)
     for (uint8_t i = 0; i < 4; i++) {
         Action a;
         a.actionIndex = i;
-        uint16_t damage = calculateDamage(&a, commiter, reciever);
+        uint16_t damage = calculateDamage(&a, commiter, RECEIVEr);
         if (damage > maxDamage) {
             maxDamage = damage;
             selected = i;
@@ -84,6 +85,7 @@ void BattleEngine::startFight(uint8_t optID) {
     // gameState.state = GameState_t::BATTLE;
     this->activeBattle = true;
     playerAction.actionIndex = -1;
+    opponentAction.actionIndex != -1;
     menuStack.push(MenuEnum::BATTLE_OPTIONS);
 }
 void BattleEngine::startArena(uint8_t optID) {
@@ -126,31 +128,61 @@ void BattleEngine::encounter() {
         this->activeBattle = false;
         return;
     }
-    if (!this->queued) {
-        return;
-    }
 
     this->turnTick();
 }
 
 void BattleEngine::turnTick() {
 
-    if (!queued) {
-        return;
-    }
-    this->opponentInput();
-    int8_t order = (int8_t)this->playerAction.priority - (int8_t)this->opponentAction.priority;
-    if (order > 0) {
-        this->playerActionFirst();
-    } else if (order < 0) {
-        this->opponentActionFirst();
-    } else {
-        order = this->playerCur->statlist.speed - this->opponentCur->statlist.speed;
-        if (order > 0 || order == 0) {
-            this->playerActionFirst();
-        } else if (order < 0) {
-            this->opponentActionFirst();
+    switch (turnState) {
+    case BattleState::TURN_INPUT: {
+        if (!OpponentActionReady()) {
+            this->opponentInput();
         }
+        if (!PlayerActionReady()) {
+            return;
+        }
+
+        int8_t order = (int8_t)this->playerAction.priority - (int8_t)this->opponentAction.priority;
+        if (order > 0) {
+            turnState = BattleState::PLAYER_ATTACK;
+
+        } else if (order < 0) {
+            turnState = BattleState::OPPONENT_ATTACK;
+
+        } else {
+            order = this->playerCur->statlist.speed - this->opponentCur->statlist.speed;
+            if (order > 0 || order == 0) {
+                turnState = BattleState::PLAYER_ATTACK;
+            } else if (order < 0) {
+                turnState = BattleState::OPPONENT_ATTACK;
+            }
+        }
+
+    } break;
+    case BattleState::PLAYER_ATTACK:
+        this->commitPlayerAction();
+        break;
+    case BattleState::OPPONENT_RECEIVE_DAMAGE:
+        this->commitPlayerAction();
+        playerAction.actionIndex = -1;
+        break;
+    case BattleState::OPPONENT_ATTACK:
+        this->commitOpponentAction();
+        break;
+    case BattleState::PLAYER_RECEIVE_DAMAGE:
+        this->commitPlayerAction();
+        opponentAction.actionIndex = -1;
+        break;
+    case BattleState::PLAYER_RECEIVE_EFFECT_APPLICATION:
+        break;
+    case BattleState::OPPONENT_RECEIVE_EFFECT_APPLICATION:
+        break;
+    case BattleState::END_TURN:
+        break;
+
+    default:
+        break;
     }
 }
 
@@ -197,39 +229,20 @@ bool BattleEngine::checkOpponentFaint() {
     return false;
 }
 
-// Need to add a win/loss check ejection
-void BattleEngine::playerActionFirst() {
+void BattleEngine::commitPlayerAction() {
     this->commitAction(&this->playerAction, this->playerCur, this->opponentCur, true);
-    playerAction.actionIndex = -1;
     if (this->checkOpponentFaint() || !this->activeBattle) {
         playerAction.setActionType(ActionType::SKIP, Priority::NORMAL);
-        return;
-    }
-    queued = false;
-    this->commitAction(&this->opponentAction, this->opponentCur, this->playerCur, false);
-    opponentAction.actionIndex = -1;
-    this->checkPlayerFaint();
-    if (this->checkPlayerFaint() || !this->activeBattle) {
-        opponentAction.setActionType(ActionType::SKIP, Priority::NORMAL);
         return;
     }
 }
 
-void BattleEngine::opponentActionFirst() {
-    this->commitAction(&this->opponentAction, this->opponentCur, this->playerCur, false);
-    opponentAction.actionIndex = -1;
+void BattleEngine::commitOpponentAction() {
+    this->commitAction(&this->opponentAction, this->opponentCur, this->playerCur, true);
     if (this->checkPlayerFaint() || !this->activeBattle) {
-        queued = false;
         opponentAction.setActionType(ActionType::SKIP, Priority::NORMAL);
         return;
     }
-    this->commitAction(&this->playerAction, this->playerCur, this->opponentCur, true);
-    playerAction.actionIndex = -1;
-    if (this->checkOpponentFaint() || !this->activeBattle) {
-        playerAction.setActionType(ActionType::SKIP, Priority::NORMAL);
-        return;
-    }
-    queued = false;
 }
 
 void BattleEngine::setMoveList(uint8_t **pointer) {
@@ -278,7 +291,6 @@ void BattleEngine::endEncounter() {
 // TODO: prob can delete all this
 void ::BattleEngine::queueAction(ActionType type, uint8_t index) {
 
-    this->queued = true;
     Priority p = Priority::NORMAL;
     switch (type) {
     case ActionType::CHNGE:
@@ -298,7 +310,7 @@ void BattleEngine::opponentInput() {
     }
     // ai to select best move
     this->opponentAction.setActionType(ActionType::ATTACK, Priority::NORMAL);
-    this->opponentAction.actionIndex = chooseMove(opponentCur, playerCur);
+    this->opponentAction.actionIndex = aiChooseStrongestMove(opponentCur, playerCur);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -307,31 +319,36 @@ void BattleEngine::opponentInput() {
 //
 //////////////////////////////////////////////////////////////////////////////
 
-void dbf BattleEngine::commitAction(Action *action, Creature *commiter, Creature *reciever, bool isPlayer) {
+void BattleEngine::commitAction(Action *action, Creature *commiter, Creature *RECEIVEr, bool isPlayer) {
     switch (action->actionType) {
     case ActionType::ATTACK: {
-        uint8_t damage = calculateDamage(action, commiter, reciever);
+        uint8_t damage = calculateDamage(action, commiter, RECEIVEr);
         Move move = commiter->moveList[action->actionIndex];
         debug = move.getMoveType();
-        Modifier m1 = getModifier(Type(move.getMoveType()), reciever->types.getType1());
-        // debug = uint8_t(reciever->types.getType1());
+        Modifier m1 = getModifier(Type(move.getMoveType()), RECEIVEr->types.getType1());
 
-        Modifier m2 = getModifier(Type(move.getMoveType()), reciever->types.getType2());
+        Modifier m2 = getModifier(Type(move.getMoveType()), RECEIVEr->types.getType2());
         Modifier mod = combineModifier(m1, m2);
-        // debug = uint8_t(reciever->types.getType2());
 
-        applyDamage(damage, reciever);
-        runEffect(commiter, reciever, move.getMoveEffect());
-        if (isPlayer) {
-            battleEventPlayer.push({BattleEventType::ATTACK, commiter->id, commiter->moves[action->actionIndex]});
-            battleEventPlayer.push({BattleEventType::DAMAGE, 0, damage});
+        if (turnState == BattleState::PLAYER_ATTACK || turnState == BattleState::OPPONENT_ATTACK) {
+            if (isPlayer) {
+                battleEventPlayer.push({BattleEventType::ATTACK, commiter->id, commiter->moves[action->actionIndex]});
+                battleEventPlayer.push({BattleEventType::DAMAGE, 0, damage});
 
+            } else {
+                battleEventPlayer.push({BattleEventType::OPPONENT_ATTACK, commiter->id, commiter->moves[action->actionIndex]});
+                battleEventPlayer.push({BattleEventType::OPPONENT_DAMAGE, 0, damage});
+            }
+            if (mod != Modifier::Same)
+                dialogMenu.pushMenu(newDialogBox(EFFECTIVENESS, uint24_t(mod), 0));
+            break;
         } else {
-            battleEventPlayer.push({BattleEventType::OPPONENT_ATTACK, commiter->id, commiter->moves[action->actionIndex]});
-            battleEventPlayer.push({BattleEventType::OPPONENT_DAMAGE, 0, damage});
+            Serial.println("applying damage");
+            Serial.println(damage);
+            applyDamage(damage, RECEIVEr);
+            runEffect(commiter, RECEIVEr, move.getMoveEffect());
         }
-        if (mod != Modifier::Same)
-            dialogMenu.pushMenu(newDialogBox(EFFECTIVENESS, uint24_t(mod), 0));
+
         break;
     }
     case ActionType::GATHER:
@@ -340,20 +357,33 @@ void dbf BattleEngine::commitAction(Action *action, Creature *commiter, Creature
         // dialogMenu.pushMenu(newDialogBox(GATHERING, 0, 0));
         break;
     case ActionType::CHNGE:
-        if (isPlayer) {
-            dialogMenu.pushMenu(newDialogBox(TEAM_CHANGE, 0, 0));
-            dialogMenu.pushMenu(newDialogBox(SWITCH, playerParty[action->actionIndex]->id, 0));
-            this->changeCurMon(action->actionIndex);
+
+        if (turnState == BattleState::PLAYER_ATTACK || turnState == BattleState::OPPONENT_ATTACK) {
+            if (isPlayer) {
+                dialogMenu.pushMenu(newDialogBox(TEAM_CHANGE, 0, 0));
+                dialogMenu.pushMenu(newDialogBox(SWITCH, playerParty[action->actionIndex]->id, 0));
+            } else {
+                dialogMenu.pushMenu(newDialogBox(SWITCH, opponent.party[action->actionIndex].id, 0));
+            }
+
         } else {
-            dialogMenu.pushMenu(newDialogBox(SWITCH, opponent.party[action->actionIndex].id, 0));
-            this->changeOptMon(action->actionIndex);
+            if (isPlayer) {
+                this->changeCurMon(action->actionIndex);
+            } else {
+                this->changeOptMon(action->actionIndex);
+            }
         }
 
         break;
     case ActionType::ESCAPE:
         // should add a check in here for opponent vs random encounter
-        dialogMenu.pushMenu(newDialogBox(ESCAPE_ENCOUNTER, 0, 0));
-        this->endEncounter();
+        if (turnState == BattleState::PLAYER_ATTACK || turnState == BattleState::OPPONENT_ATTACK) {
+
+            dialogMenu.pushMenu(newDialogBox(ESCAPE_ENCOUNTER, 0, 0));
+        } else {
+            this->endEncounter();
+        }
+
         break;
 
     default:
@@ -361,8 +391,8 @@ void dbf BattleEngine::commitAction(Action *action, Creature *commiter, Creature
     }
 }
 
-void BattleEngine::applyDamage(uint16_t damage, Creature *reciever) {
-    if (reciever == this->playerCur) {
+void BattleEngine::applyDamage(uint16_t damage, Creature *RECEIVEr) {
+    if (RECEIVEr == this->playerCur) {
         uint8_t hp = this->playerHealths[this->playerIndex];
         this->playerHealths[this->playerIndex] -= damage >= hp ? hp : damage;
     } else {
@@ -477,4 +507,16 @@ void BattleEngine::runEffect(Creature *commiter, Creature *other, Effect effect)
     bool selfTarget = selfEffect(effect);
     Creature *target = selfTarget ? commiter : other;
     applyEffect(target, effect);
+}
+
+bool BattleEngine::TurnReady() {
+    return playerAction.actionIndex != -1 && opponentAction.actionIndex != -1;
+}
+
+bool BattleEngine::PlayerActionReady() {
+    return playerAction.actionIndex != -1;
+}
+
+bool BattleEngine::OpponentActionReady() {
+    return opponentAction.actionIndex != -1;
 }

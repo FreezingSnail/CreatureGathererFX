@@ -7,6 +7,53 @@
 #define dbf __attribute__((optimize("-O0"))
 #define CURRENT_MENU this->stack[this->menuPointer]
 
+void updateFightState() {
+    switch (engine.turnState) {
+    case BattleState::TURN_INPUT: {
+        // handled automatically
+    } break;
+    case BattleState::PLAYER_ATTACK:
+        Serial.println("PLAYER_ATTACK to OPPONENT_RECEIVE_DAMAGE");
+        engine.turnState = BattleState::OPPONENT_RECEIVE_DAMAGE;
+        break;
+    case BattleState::OPPONENT_RECEIVE_DAMAGE:
+        Serial.println("OPPONENT_RECEIVE_DAMAGE to OPPONENT_RECEIVE_EFFECT_APPLICATION");
+        engine.turnState = BattleState::OPPONENT_RECEIVE_EFFECT_APPLICATION;
+        break;
+    case BattleState::OPPONENT_ATTACK:
+        Serial.println("OPPONENT_ATTACK to PLAYER_RECEIVE_DAMAGE");
+        engine.turnState = BattleState::PLAYER_RECEIVE_DAMAGE;
+        break;
+    case BattleState::PLAYER_RECEIVE_DAMAGE:
+        Serial.println("PLAYER_RECEIVE_DAMAGE to PLAYER_RECIVE_EFFECT_APPLICATION");
+        engine.turnState = BattleState::PLAYER_RECEIVE_EFFECT_APPLICATION;
+        break;
+    case BattleState::PLAYER_RECEIVE_EFFECT_APPLICATION:
+        if (engine.PlayerActionReady()) {
+            Serial.println("OPPONENT_EFFECT_APPLICATION to PLAYER_ATTACK");
+            engine.turnState = BattleState::PLAYER_ATTACK;
+        } else {
+            Serial.println("PLAYER_EFFECT_APPLICATION to END_TURN");
+            engine.turnState = BattleState::END_TURN;
+        }
+        break;
+    case BattleState::OPPONENT_RECEIVE_EFFECT_APPLICATION:
+        if (engine.OpponentActionReady()) {
+            Serial.println("PLAYER_EFFECT_APPLICATION to OPPONENT_ATTACK");
+            engine.turnState = BattleState::OPPONENT_ATTACK;
+        } else {
+            Serial.println("OPPONENT_EFFECT_APPLICATION to END_TURN");
+            engine.turnState = BattleState::END_TURN;
+        }
+        break;
+    case BattleState::END_TURN:
+        Serial.println("END_TURN to TURN_INPUT");
+        Serial.println();
+        engine.turnState = BattleState::TURN_INPUT;
+        break;
+    }
+}
+
 MenuV2::MenuV2() {
     this->menuPointer = -1;
 }
@@ -142,6 +189,7 @@ void DGF MenuV2::run(BattleEngine &engine) {
         }
     } else {
         // TODO very inefficient
+        updateFightState();
         updateMoveList(engine);
         engine.updateInactiveCreatures(this->creatures);
 
