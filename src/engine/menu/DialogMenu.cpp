@@ -25,6 +25,8 @@ void DialogMenu::drawPopMenu() {
         break;
     }
     case DAMAGE: {
+        SpritesU::drawOverwriteFX(curMenu.x + 12, curMenu.y + 2, damageText, FRAME(WHITETEXT));
+        drawNumbersBlack(curMenu.x + 4, curMenu.y + 3, curMenu.damage);
     }
     case ENEMY_DAMAGE: {
         // font.setCursor(curMenu.x + 3, curMenu.y + 3);
@@ -143,18 +145,15 @@ void DialogMenu::pushEvent(Event event) {
 }
 
 void DialogMenu::popMenu() {
-    if (dialogPointer <= 0) {
+    if (dialogPointer >= 0) {
+        popDialogStack[dialogPointer] = PopUpDialog{0, 0, 0, 0, 0, 0};
+
         dialogPointer--;
         return;
     }
     if (popDialogStack[0].animation != 0) {
         pushAnimation();
     }
-
-    for (uint8_t i = 0; i < dialogPointer; i++) {
-        popDialogStack[i] = popDialogStack[i + 1];
-    }
-    dialogPointer--;
 }
 
 void DialogMenu::pushAnimation() {

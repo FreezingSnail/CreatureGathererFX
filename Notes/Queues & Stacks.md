@@ -1,0 +1,1 @@
+Various states need some kind of history in the form of a queue or stack

@@ -2,9 +2,47 @@
 #include "../battle/Battle.hpp"
 #include "../draw.h"
 #include "../../common.hpp"
+#include "../../globals.hpp"
 
 #define dbf __attribute__((optimize("-O0"))
 #define CURRENT_MENU this->stack[this->menuPointer]
+
+void updateFightState() {
+    switch (engine.turnState) {
+    case BattleState::TURN_INPUT: {
+        // handled automatically
+    } break;
+    case BattleState::PLAYER_ATTACK:
+        engine.turnState = BattleState::OPPONENT_RECEIVE_DAMAGE;
+        break;
+    case BattleState::OPPONENT_RECEIVE_DAMAGE:
+        engine.turnState = BattleState::OPPONENT_RECEIVE_EFFECT_APPLICATION;
+        break;
+    case BattleState::OPPONENT_ATTACK:
+        engine.turnState = BattleState::PLAYER_RECEIVE_DAMAGE;
+        break;
+    case BattleState::PLAYER_RECEIVE_DAMAGE:
+        engine.turnState = BattleState::PLAYER_RECEIVE_EFFECT_APPLICATION;
+        break;
+    case BattleState::PLAYER_RECEIVE_EFFECT_APPLICATION:
+        if (engine.PlayerActionReady()) {
+            engine.turnState = BattleState::PLAYER_ATTACK;
+        } else {
+            engine.turnState = BattleState::END_TURN;
+        }
+        break;
+    case BattleState::OPPONENT_RECEIVE_EFFECT_APPLICATION:
+        if (engine.OpponentActionReady()) {
+            engine.turnState = BattleState::OPPONENT_ATTACK;
+        } else {
+            engine.turnState = BattleState::END_TURN;
+        }
+        break;
+    case BattleState::END_TURN:
+        engine.turnState = BattleState::TURN_INPUT;
+        break;
+    }
+}
 
 MenuV2::MenuV2() {
     this->menuPointer = -1;
@@ -24,7 +62,7 @@ void MenuV2::pop() {
 }
 void MenuV2::clear() {
     this->menuPointer = -1;
-    this->dialogMenu.dialogPointer = -1;
+    dialogMenu.dialogPointer = -1;
 }
 
 void MenuV2::transverse() {
@@ -89,7 +127,7 @@ void MenuV2::action(BattleEngine &engine) {
                 this->push(BATTLE_CREATURE_SELECT);
                 break;
             case 3:
-                engine.queueAction(ActionType::ESCAPE, 0);   // need to redeisgn how an action is qued
+                engine.queueAction(ActionType::ESCAPE, 0);   // needredeisgn how an action is qued
                 break;
             }
             this->cursorIndex = 0;
@@ -139,13 +177,20 @@ void DGF MenuV2::run(BattleEngine &engine) {
         if (arduboy.justPressed(A_BUTTON)) {
             dialogMenu.popMenu();
         }
+
     } else {
         // TODO very inefficient
+
         updateMoveList(engine);
         engine.updateInactiveCreatures(this->creatures);
 
         transverse();
         action(engine);
+    }
+
+    if (engine.updateState) {
+        updateFightState();
+        engine.updateState = false;
     }
 }
 
@@ -175,7 +220,7 @@ void MenuV2::printMenu(BattleEngine &engine) {
     // arduboy.drawRect(1, 44, 126, 19, BLACK);
 }
 
-// TODO move text to drawing
+// TODO move textdrawing
 void MenuV2::creatureRental() {
     // printString(font, MenuFXData::pointerText, 0, 55);
     FX::setCursor(10, 55);

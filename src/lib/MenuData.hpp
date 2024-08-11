@@ -1,5 +1,5 @@
 #pragma once
-#include <ArduboyFX.h>
+#include "uint24.h"
 
 struct MenuData {
     uint8_t horizontal;
@@ -24,4 +24,15 @@ enum DialogType {
     TEAM_CHANGE,
     PLAYER_EFFECT,
     ENEMY_EFFECT,
+};
+
+enum class BattleState {
+    TURN_INPUT,
+    PLAYER_ATTACK,
+    OPPONENT_ATTACK,
+    PLAYER_RECEIVE_DAMAGE,
+    OPPONENT_RECEIVE_DAMAGE,
+    PLAYER_RECEIVE_EFFECT_APPLICATION,
+    OPPONENT_RECEIVE_EFFECT_APPLICATION,
+    END_TURN,
 };

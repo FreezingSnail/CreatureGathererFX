@@ -7,7 +7,7 @@
 #include "../game/Gamestate.hpp"
 #include "Encounter.hpp"
 #include "Map.hpp"
-#include "../../common.hpp"
+#include "../../globals.hpp"
 
 #define TILE_SIZE 16
 #define MAPYADJUST -3
@@ -116,12 +116,12 @@ void WorldEngine::runMap() {
 
     if (this->moving && this->moveable()) {
         this->moveChar();
-    } else if (!menu.dialogMenu.peek()) {
+    } else if (!dialogMenu.peek()) {
         this->interact();
         this->input();
     } else {
         if (arduboy.justPressed(A_BUTTON)) {
-            // menu.dialogMenu.popMenu();
+            // dialogMenu.popMenu();
         }
     }
 
@@ -285,7 +285,7 @@ void WorldEngine::interact() {
         for (uint8_t i = 0; i < EVENTCOUNT; i++) {
             Event e = this->events[i];
             if (e.cords.x == tilex && e.cords.y == tiley) {
-                menu.dialogMenu.pushEvent(e);
+                dialogMenu.pushEvent(e);
                 return;
             }
         }

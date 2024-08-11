@@ -1,0 +1,14 @@
+name: Unit Tests
+on:
+  push:
+    branches: [ '*' ]
+
+jobs:
+  Unit_Tests:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+  
+    - name: test
+      run: make test
