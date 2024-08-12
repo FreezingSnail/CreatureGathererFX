@@ -209,7 +209,7 @@ bool BattleEngine::checkPlayerFaint() {
     if (this->playerHealths[this->playerIndex] <= 0) {
         // TODO(BUG): can bacout out of change menu if creature is down
         dialogMenu.pushMenu(newDialogBox(FAINT, playerCur->id, 0));
-        battleEventPlayer.push({BattleEventType::FAINT, playerCur->id, 0});
+        // battleEventPlayer.push({BattleEventType::FAINT, playerCur->id, 0});
         if (!checkLoss()) {
             menuStack.push(MenuEnum::BATTLE_CREATURE_SELECT);
         }
@@ -222,7 +222,7 @@ bool BattleEngine::checkPlayerFaint() {
 bool BattleEngine::checkOpponentFaint() {
     if (this->opponentHealths[this->opponentIndex] <= 0) {
         dialogMenu.pushMenu(newDialogBox(FAINT, opponentCur->id, 0));
-        battleEventPlayer.push({BattleEventType::OPPONENT_FAINT, opponentCur->id, 0});
+        // battleEventPlayer.push({BattleEventType::OPPONENT_FAINT, opponentCur->id, 0});
         if (!checkWin()) {
             this->opponentAction.setActionType(ActionType::CHNGE, Priority::FAST);
             this->opponentAction.actionIndex = int8_t(this->opponentIndex + 1);
@@ -341,11 +341,11 @@ void BattleEngine::commitAction(Action *action, Creature *commiter, Creature *re
 
         if (turnState == BattleState::PLAYER_ATTACK || turnState == BattleState::OPPONENT_ATTACK) {
             if (isPlayer) {
-                battleEventPlayer.push({BattleEventType::ATTACK, commiter->id, commiter->moves[action->actionIndex]});
+                // battleEventPlayer.push({BattleEventType::ATTACK, commiter->id, commiter->moves[action->actionIndex]});
                 dialogMenu.pushMenu(newDialogBox(NAME, commiter->id, commiter->moves[action->actionIndex]));
 
             } else {
-                battleEventPlayer.push({BattleEventType::OPPONENT_ATTACK, commiter->id, commiter->moves[action->actionIndex]});
+                // battleEventPlayer.push({BattleEventType::OPPONENT_ATTACK, commiter->id, commiter->moves[action->actionIndex]});
                 dialogMenu.pushMenu(newDialogBox(ENEMY_NAME, commiter->id, commiter->moves[action->actionIndex]));
             }
 
@@ -357,10 +357,10 @@ void BattleEngine::commitAction(Action *action, Creature *commiter, Creature *re
 
             if (isPlayer) {
                 dialogMenu.pushMenu(newDialogBox(ENEMY_DAMAGE, receiver->id, damage));
-                battleEventPlayer.push({BattleEventType::OPPONENT_DAMAGE, 0, damage});
+                //  battleEventPlayer.push({BattleEventType::OPPONENT_DAMAGE, 0, damage});
 
             } else {
-                battleEventPlayer.push({BattleEventType::DAMAGE, 0, damage});
+                //    battleEventPlayer.push({BattleEventType::DAMAGE, 0, damage});
                 dialogMenu.pushMenu(newDialogBox(DAMAGE, receiver->id, damage));
             }
         } else {

@@ -7,7 +7,7 @@
 #include "../../common.hpp"
 #include "../../lib/ReadData.hpp"
 
-void DGF Arena::arenaLoop(MenuV2 &menu2, Player &player, BattleEngine &engine) {
+void Arena::arenaLoop(MenuV2 &menu2, Player &player, BattleEngine &engine) {
     // This seems wrong
     if (this->moveIndex == 11) {
         this->cursor = 0;
@@ -25,9 +25,17 @@ void DGF Arena::arenaLoop(MenuV2 &menu2, Player &player, BattleEngine &engine) {
         }
         menu2.creatureRental();
         this->registerRentals(player, menu2);
-        this->displayRegisteredCount();
     } else if (this->moveIndex < 12) {
         this->registerMoves(player);
+    }
+}
+
+void DGF Arena::drawarenaLoop(MenuV2 &menu2, Player &player, BattleEngine &engine) {
+
+    if (this->registerIndex < 3) {
+        menu2.creatureRental();
+    } else if (this->moveIndex < 12) {
+        this->drawregisterMoves(player);
     }
 }
 
@@ -66,8 +74,31 @@ static void validMoves(uint32_t movePool, int8_t *moves) {
     }
 }
 
+void Arena::drawregisterMoves(Player &player) {
+    // load creature move pool
+    uint8_t curMonID = player.party[this->moveCreature].id;
+    uint24_t addr = MoveLists::moveList + sizeof(uint32_t) * curMonID;
+    uint8_t v4[4];
+    FX::readDataBytes(addr, v4, sizeof(uint32_t));
+    uint32_t movePool = uint32_t(v4[3]) | (uint32_t(v4[2]) << 8) | (uint32_t(v4[1]) << 16) | (uint32_t(v4[0]) << 24);
+    // this->debug = movePool;
+    int8_t moves[16];
+    validMoves(movePool, moves);
+    // font.setCursor(0, 0);
+    // font.print(this->moveIndex);
+    //  SpritesU::drawOverwriteFX(0, 10, CreatureNames::CreatureNames, curMonID * 3 + arduboy.currentPlane());
+
+    for (uint8_t i = 0; i < 4; i++) {
+        int8_t move = moves[this->movePointer + i];
+        if (move != -1) {
+            uint24_t moveAddress = FX::readIndexedUInt24(MoveNames::MoveNames, move);
+            SpritesU::drawOverwriteFX(10, 20 + (i * 10), moveAddress, FRAME(0));
+            // printString(font, moveAddress, 10, 20 + (i * 10));
+        }
+    }
+}
+
 void Arena::registerMoves(Player &player) {
-    setTextColorWhite();
     if (this->moveIndex > 7) {
         this->moveCreature = 3;
     } else if (this->moveIndex > 3) {
