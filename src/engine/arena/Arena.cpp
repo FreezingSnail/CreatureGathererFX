@@ -23,23 +23,35 @@ void Arena::arenaLoop(MenuV2 &menu2, Player &player, BattleEngine &engine) {
             menu2.cursorIndex -= 1;
         }
         menu2.creatureRental();
-        this->registerRentals(player);
-        this->displayRegisteredCount();
+        this->registerRentals(player, menu2);
+
     } else if (this->moveIndex < 12) {
         this->registerMoves(player);
     }
 }
 
-void Arena::registerRentals(Player &player) {
+void Arena::drawarenaLoop(MenuV2 &menu2, Player &player, BattleEngine &engine) {
+
+    if (this->registerIndex < 3) {
+
+        menu2.creatureRental();
+        this->displayRegisteredCount();
+    } else if (this->moveIndex < 12) {
+        this->drawregisterMoves(player);
+    }
+}
+
+void Arena::registerRentals(Player &player, MenuV2 &menu2) {
     int8_t creatureID = -1;
     if (Arduboy2::justPressed(A_BUTTON)) {
-        creatureID = cursor;
-    }
-    if (creatureID >= 0) {
-        player.loadCreature(this->registerIndex, creatureID);
-        this->registerIndex++;
-        if (this->registerIndex == 3) {
-            this->cursor = 0;
+        creatureID = menu2.cursorIndex;
+
+        if (creatureID >= 0) {
+            player.loadCreature(this->registerIndex, creatureID);
+            this->registerIndex++;
+            if (this->registerIndex == 3) {
+                menu2.cursorIndex = 0;
+            }
         }
     }
 }
@@ -78,7 +90,7 @@ void Arena::registerMoves(Player &player) {
     uint8_t v4[4];
     FX::readDataBytes(addr, v4, sizeof(uint32_t));
     uint32_t movePool = uint32_t(v4[3]) | (uint32_t(v4[2]) << 8) | (uint32_t(v4[1]) << 16) | (uint32_t(v4[0]) << 24);
-    this->debug = movePool;
+    // this->debug = movePool;
     int8_t moves[16];
     validMoves(movePool, moves);
     // font.setCursor(0, 0);
@@ -92,9 +104,6 @@ void Arena::registerMoves(Player &player) {
             // printString(font, moveAddress, 10, 20 + (i * 10));
         }
     }
-
-    FX::setCursor(0, 20);
-    FX::drawString(MenuFXData::pointerText);
 
     if (Arduboy2::justPressed(A_BUTTON)) {
         this->cursor = moves[this->movePointer];
@@ -118,12 +127,49 @@ void Arena::registerMoves(Player &player) {
     printMoveInfo(this->cursor, 70, 20);
 }
 
+void Arena::drawregisterMoves(Player &player) {
+    setTextColorWhite();
+    if (this->moveIndex > 7) {
+        this->moveCreature = 3;
+    } else if (this->moveIndex > 3) {
+        this->moveCreature = 2;
+    }
+
+    // load creature move pool
+    uint8_t curMonID = player.party[this->moveCreature].id;
+    uint24_t addr = MoveLists::moveList + sizeof(uint32_t) * curMonID;
+    uint8_t v4[4];
+    FX::readDataBytes(addr, v4, sizeof(uint32_t));
+    uint32_t movePool = uint32_t(v4[3]) | (uint32_t(v4[2]) << 8) | (uint32_t(v4[1]) << 16) | (uint32_t(v4[0]) << 24);
+    // this->debug = movePool;
+    int8_t moves[16];
+    validMoves(movePool, moves);
+    // font.setCursor(0, 0);
+    // font.print(this->moveIndex);
+    //  SpritesU::drawOverwriteFX(0, 10, CreatureNames::CreatureNames, curMonID * 3 + arduboy.currentPlane());
+    Arduboy2::drawCircle(5, 22, 3, WHITE);
+
+    for (uint8_t i = 0; i < 4; i++) {
+        int8_t move = moves[this->movePointer + i];
+        if (move != -1) {
+            Serial.println(move);
+            uint24_t moveAddress = FX::readIndexedUInt24(MoveNames::MoveNames, move);
+            SpritesU::drawOverwriteFX(10, 20 + (i * 10), moveAddress, FRAME(0));
+        }
+    }
+
+    printMoveInfo(this->cursor, 70, 20);
+}
+
 uint8_t Arena::selectOpponent() {
     return 0;
 }
 
 void Arena::startBattle(BattleEngine &engine, Player &player) {
-    engine.startArena(4);
+    gameState.state = GameState_t::BATTLE;
+    menu.pop();
+    menu.push(MenuEnum::BATTLE_OPTIONS);
+    engine.startArena(0);
 }
 
 void Arena::displayRegisteredCount() {

@@ -17,7 +17,6 @@ class BattleEngine {
     Opponent opponent;
     uint16_t playerHealths[3];
     uint16_t opponentHealths[3];
-    uint8_t awakeMons;   // 11100111 player and opponet bit array
 
     StatModifer playerModifiers;
     StatModifer opponentModifiers;

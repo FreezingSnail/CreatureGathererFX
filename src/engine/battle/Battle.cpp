@@ -89,7 +89,7 @@ void BattleEngine::startFight(uint8_t optID) {
     menuStack.push(MenuEnum::BATTLE_OPTIONS);
 }
 void BattleEngine::startArena(uint8_t optID) {
-    ReadOpt(&this->opponent, optID);
+    this->loadOpponent(optID);
     resetOpponent();
     loadPlayer();
     // gameState.state = GameState_t::BATTLE;
@@ -97,6 +97,7 @@ void BattleEngine::startArena(uint8_t optID) {
     playerAction.actionIndex = -1;
     opponentAction.actionIndex = -1;
     menuStack.push(MenuEnum::BATTLE_OPTIONS);
+    Serial.println("start arena");
 }
 
 void BattleEngine::startEncounter(uint8_t creatureID, uint8_t level) {
@@ -193,7 +194,6 @@ void BattleEngine::turnTick() {
 }
 
 bool BattleEngine::checkLoss() {
-    // return uint8_t(this->awakeMons & 0b11100000) == uint8_t(0) ;
     if (this->playerHealths[0] <= 0 && this->playerHealths[1] <= 0 && this->playerHealths[2] <= 0) {
         return true;
     }
@@ -201,7 +201,6 @@ bool BattleEngine::checkLoss() {
 }
 
 bool BattleEngine::checkWin() {
-    // return uint8_t(this->awakeMons & 0b00000111) == uint8_t(0) ;
     if (this->opponentHealths[0] <= 0 && this->opponentHealths[1] <= 0 && this->opponentHealths[2] <= 0) {
         return true;
     }
@@ -271,7 +270,6 @@ void BattleEngine::changeCurMon(uint8_t index) {
         }
         if (j == index) {
             this->playerCur = this->playerParty[i];
-            Serial.println(i);
             playerIndex = i;
             return;
         }
