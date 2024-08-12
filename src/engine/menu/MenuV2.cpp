@@ -58,6 +58,9 @@ void MenuV2::push(MenuEnum type) {
 }
 
 void MenuV2::pop() {
+    if (this->menuPointer < 0) {
+        return;
+    }
     this->menuPointer--;
 }
 void MenuV2::clear() {
