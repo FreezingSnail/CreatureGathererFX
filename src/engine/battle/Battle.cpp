@@ -4,7 +4,6 @@
 #include "../../creature/Creature.hpp"
 #include "../../lib/Move.hpp"
 #include "../../lib/ReadData.hpp"
-#include <ArduboyFX.h>
 
 BattleEngine::BattleEngine() {
 }
@@ -81,29 +80,27 @@ Creature *BattleEngine::getCreature(uint8_t index) {
 // TODO: make these one to get rid of repeated code
 void BattleEngine::startFight(uint8_t optID) {
     this->loadOpponent(optID);
+    // ReadOpt(&opponent, optID);
+    // resetOpponent();
     this->loadPlayer();
-    // gameState.state = GameState_t::BATTLE;
     this->activeBattle = true;
     playerAction.actionIndex = -1;
     opponentAction.actionIndex = -1;
     menuStack.push(MenuEnum::BATTLE_OPTIONS);
 }
 void BattleEngine::startArena(uint8_t optID) {
-    this->loadOpponent(optID);
+    ReadOpt(&this->opponent, optID);
     resetOpponent();
     loadPlayer();
-    // gameState.state = GameState_t::BATTLE;
     activeBattle = true;
     playerAction.actionIndex = -1;
     opponentAction.actionIndex = -1;
     menuStack.push(MenuEnum::BATTLE_OPTIONS);
-    Serial.println("start arena");
 }
 
 void BattleEngine::startEncounter(uint8_t creatureID, uint8_t level) {
     this->LoadCreature(creatureID, level);
     this->loadPlayer();
-    // gameState.state = GameState_t::BATTLE;
     this->activeBattle = true;
     playerAction.actionIndex = -1;
     opponentAction.actionIndex = -1;
@@ -354,7 +351,6 @@ void BattleEngine::commitAction(Action *action, Creature *commiter, Creature *re
 
         } else if (turnState == BattleState::PLAYER_RECEIVE_DAMAGE || turnState == BattleState::OPPONENT_RECEIVE_DAMAGE) {
             if (mod != Modifier::Same) {
-                Serial.println("effective");
                 dialogMenu.pushMenu(newDialogBox(EFFECTIVENESS, uint24_t(mod), 0));
             }
             applyDamage(damage, receiver);
@@ -460,9 +456,15 @@ void BattleEngine::loadPlayer() {
 void BattleEngine::resetOpponent() {
     this->opponentIndex = 0;
     this->opponentCur = &(this->opponent.party[0]);
+    opponent.levels[0] = 31;
+    opponent.levels[1] = 31;
+    opponent.levels[2] = 31;
+
+    this->opponent.party[0];
     this->opponentHealths[0] = this->opponent.party[0].statlist.hp;
     this->opponentHealths[1] = this->opponent.party[1].statlist.hp;
     this->opponentHealths[2] = this->opponent.party[2].statlist.hp;
+
     opponentAction.actionIndex = -1;
 }
 

@@ -135,8 +135,6 @@ bool DialogMenu::peek() {
 }
 
 void DialogMenu::pushMenu(PopUpDialog info) {
-    Serial.println("Pushing menu");
-    Serial.println(info.type);
     dialogPointer++;
     popDialogStack[dialogPointer] = info;
 }

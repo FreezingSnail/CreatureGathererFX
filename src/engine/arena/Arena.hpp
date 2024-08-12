@@ -20,7 +20,7 @@ class Arena {
     void registerMoves(Player &player);
     void drawregisterMoves(Player &player);
     uint8_t selectOpponent();
-    void startBattle(BattleEngine &engine, Player &player);
+    void startBattle(BattleEngine &engine, Player &player, MenuV2 &menu2);
     void displayRegisteredCount();
     void drawarenaLoop(MenuV2 &menu2, Player &player, BattleEngine &engine);
 };
