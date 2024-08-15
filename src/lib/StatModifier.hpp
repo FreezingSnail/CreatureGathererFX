@@ -5,12 +5,13 @@
 class StatModifer {
   public:
     // 1 bit wasted (most significant bit is always 0)
-    uint16_t modifiers;
+    uint16_t modifiers = 0;
 
+    // TODO: Add increment/ decrement functions, maybe remove setModifier
     void setModifier(StatType stat, int8_t amount) {
         uint8_t modifier = amount;
         if (amount < 0) {
-            modifier = 0b00000100 | ((~amount+1) & 0b11);
+            modifier = 0b00000100 | ((~amount + 1) & 0b11);
         }
         switch (stat) {
         case StatType::ATTACK_M:
@@ -51,8 +52,12 @@ class StatModifer {
             break;
         }
         if (ret & 0b00000100) {
-            return ~((ret & 0b11) -1);
+            return ~((ret & 0b11) - 1);
         }
         return ret;
+    }
+
+    void clearModifiers() {
+        modifiers = 0;
     }
 };

@@ -44,7 +44,11 @@ class DualType {
     }
 
     constexpr Type getType2(void) const {
-        return static_cast<Type>(this->value & Type2Mask);
+        return static_cast<Type>((this->value & Type2Mask) >> Type2Shift);
+    }
+
+    constexpr bool hasType(Type type) const {
+        return ((this->getType1() == type) || (this->getType2() == type));
     }
 };
 
@@ -176,7 +180,8 @@ static Modifier getModifier(Type attackType, Type defendingType) {
     if (defendingType == Type::NONE) {
         return Modifier::Same;
     }
-    return (attackType == Type::NONE) ? Modifier::None : static_cast<Modifier>((typeTable[static_cast<uint8_t>(attackType)][static_cast<uint8_t>(defendingType)]));
+    return (attackType == Type::NONE) ? Modifier::None
+                                      : static_cast<Modifier>((typeTable[static_cast<uint8_t>(attackType)][static_cast<uint8_t>(defendingType)]));
 }
 
 static Modifier combineModifier(Modifier a, Modifier b) {
@@ -293,17 +298,14 @@ static Modifier typeEffectModifier(Effect effect, DualType type) {
         break;
     }
 
-    Modifier committerMod = Modifier::Same;
-    if (increase) {
-        if (type.getType1() == modType.getType1() || type.getType2() == modType.getType1()) {
-            committerMod = Modifier::Double;
-        }
-    } else {
-        if (type.getType1() == modType.getType1() || type.getType2() == modType.getType1()) {
-            committerMod = Modifier::Half;
-        }
+    if (!type.hasType(modType.getType1())) {
+        return Modifier::Same;
     }
-    return committerMod;
+    if (increase) {
+        return Modifier::Double;
+    } else {
+        return Modifier::Half;
+    }
 }
 
 static Modifier inverseModifier(Modifier mod) {

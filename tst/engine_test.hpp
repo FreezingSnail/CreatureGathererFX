@@ -135,17 +135,24 @@ void EngineTypeStatusMod(TestSuite &t) {
     Modifier receiverEffectMod = combineModifier(receiverEffectMod1, receiverEffectMod2);
     test.assert(receiverEffectMod, Modifier::Same, "combined effect mod receiver");
 
-    Modifier finalMod = combineModifier(committerEffectMod, receiverEffectMod);
     Modifier mod = eng.getTypeStatusModifier(&c1, &c2);
     test.assert(mod, Modifier::Same, "no type effects");
 
+    committerEffectMod1 = typeEffectModifier(Effect::AIRSWPT, DualType(Type::WIND, Type::NONE));
+    test.assert(committerEffectMod1, Modifier::Double, "AIRSWPT DUALTYPE raw effect mod");
+
     c1.status.effects[0] = Effect::AIRSWPT;
-    finalMod = combineModifier(committerEffectMod, receiverEffectMod);
+    committerEffectMod1 = typeEffectModifier(c1.status.effects[0], c1.types);
+    test.assert(committerEffectMod1, Modifier::Double, "AIRSWPT type 1 effect mod");
+    committerEffectMod2 = typeEffectModifier(c1.status.effects[1], c1.types);
+    test.assert(committerEffectMod2, Modifier::Same, "AIRSWPT type 2 effect mod");
+    committerEffectMod = combineModifier(committerEffectMod1, committerEffectMod2);
+    test.assert(committerEffectMod, Modifier::Double, "AIRSWPT combined effect mod");
+
     mod = eng.getTypeStatusModifier(&c1, &c2);
     test.assert(mod, Modifier::Double, "Double type effects committer");
 
     c1.status.effects[0] = Effect::BUFTD;
-    finalMod = combineModifier(committerEffectMod, receiverEffectMod);
     mod = eng.getTypeStatusModifier(&c1, &c2);
     test.assert(mod, Modifier::Half, "Halved type effects committer");
 
@@ -231,7 +238,7 @@ void EngineDamageCalcTypeEffect(TestSuite &t) {
     t.addTest(test);
 }
 
-void EngineDamageCalcStatusEffect(TestSuite &t) {
+void EngineDamageCalcStatStatusEffect(TestSuite &t) {
     reset();
     Test test = Test(__func__);
     BattleEngine eng = BattleEngine();
@@ -267,7 +274,6 @@ void EngineDamageCalcStatusEffect(TestSuite &t) {
     test.assert(Effect::ATKUP, eng.playerCur->status.effects[0], "stat Status effect set");
     uint16_t damage2 = eng.calculateDamage(&action, eng.playerCur, eng.opponentCur);
     test.addToLog("calculated damage atk up: " + std::to_string(damage2));
-    test.assertGreaterThan(damage2, damage, "Damage increased with stat status effect");
     test.assert(damage2, damage * 2, "Damage doubled with stat status effect");
 
     eng.playerCur->status.clearEffects();
@@ -276,7 +282,6 @@ void EngineDamageCalcStatusEffect(TestSuite &t) {
     test.assert(Effect::ATKDWN, eng.playerCur->status.effects[0], "Status effect set");
     damage2 = eng.calculateDamage(&action, eng.playerCur, eng.opponentCur);
     test.addToLog("calculated damage atk down: " + std::to_string(damage2));
-    test.assertLessThan(damage2, damage, "Damage decreased with stat status effect");
     test.assert(damage2, damage / 2, "Damage halved with stat status effect");
 
     eng.playerCur->status.clearEffects();
@@ -296,7 +301,7 @@ void EngineSuite(TestRunner &r) {
     EngineQueueActionTest(t);
     EngineTickTest(t);
     EngineTypeStatusMod(t);
-    EngineDamageCalcStatusEffect(t);
+    EngineDamageCalcStatStatusEffect(t);
     EngineDamageCalcTypeEffect(t);
     r.addTestSuite(t);
     reset();

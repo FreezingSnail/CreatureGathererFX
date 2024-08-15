@@ -18,7 +18,7 @@ void SetModifierTest(TestSuite &t) {
     t.addTest(test);
 }
 
-void SetModifierNegaticeTest(TestSuite &t) {
+void SetModifierNegativeTest(TestSuite &t) {
     Test test = Test(__func__);
     StatModifer sm;
     sm.setModifier(StatType::ATTACK_M, -1);
@@ -34,9 +34,21 @@ void SetModifierNegaticeTest(TestSuite &t) {
     t.addTest(test);
 }
 
+void NoModifierTest(TestSuite &t) {
+    Test test = Test(__func__);
+    StatModifer sm;
+    test.assert((sm.getModifier(StatType::ATTACK_M)), 0, "Attack modifier set correctly");
+    test.assert((sm.getModifier(StatType::DEFENSE_M)), 0, "Defense modifier set correctly");
+    test.assert((sm.getModifier(StatType::SPEED_M)), 0, "Speed modifier set correctly");
+    test.assert((sm.getModifier(StatType::SPECIAL_ATTACK_M)), 0, "Special Attack modifier set correctly");
+    test.assert((sm.getModifier(StatType::SPECIAL_DEFENSE_M)), 0, "Special Defense modifier set correctly");
+    t.addTest(test);
+}
+
 void ModifierSuite(TestRunner &r) {
     TestSuite t = TestSuite("Modifier Suite");
     SetModifierTest(t);
-    SetModifierNegaticeTest(t);
+    SetModifierNegativeTest(t);
+    NoModifierTest(t);
     r.addTestSuite(t);
 }

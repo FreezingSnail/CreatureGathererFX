@@ -4,11 +4,7 @@
 
 class StatusEffect {
   public:
-    Effect effects[2];
-    StatusEffect() {
-        effects[0] = Effect::NONE;
-        effects[1] = Effect::NONE;
-    }
+    Effect effects[2] = {Effect::NONE, Effect::NONE};
 
     bool applyEffect(Effect effect) {
         if (effects[0] == Effect::NONE) {
