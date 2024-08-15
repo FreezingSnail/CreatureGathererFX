@@ -51,12 +51,12 @@ void setup() {
     FX::setCursorRange(0, 32767);
 
     world.init();
-    gameState.state = GameState_t::BATTLE;
+    gameState.state = GameState_t::ARENA;
     engine.init();
     player.basic();
-    engine.startFight(0);
+    engine.startArena(0);
     // engine.startArena(3);
-    menu.push(MenuEnum::BATTLE_OPTIONS);
+    menu.push(MenuEnum::ARENA_MENU);
     //     engine.startArena(arduboy, player, 6);
 }
 
@@ -97,7 +97,7 @@ void render() {
         world.draw();
         break;
     case GameState_t::ARENA:
-        // arena.drawarenaLoop(menu, player, engine);
+        arena.drawarenaLoop(menu, player, engine);
         //  return;
         break;
     }

@@ -8,36 +8,52 @@
 BattleEngine::BattleEngine() {
 }
 
-uint8_t static calculateDamage(Action *action, Creature *committer, Creature *receiver) {
+Modifier BattleEngine::getTypeStatusModifier(Creature *committer, Creature *receiver) {
+    Modifier committerEffectMod1 = typeEffectModifier(committer->status.effects[0], committer->types);
+    Modifier committerEffectMod2 = typeEffectModifier(committer->status.effects[1], committer->types);
+    Modifier committerEffectMod = combineModifier(committerEffectMod1, committerEffectMod2);
+
+    Modifier receiverEffectMod1 = typeEffectModifier(receiver->status.effects[0], receiver->types);
+    Modifier receiverEffectMod2 = typeEffectModifier(receiver->status.effects[1], receiver->types);
+    Modifier receiverEffectMod = inverseModifier(combineModifier(receiverEffectMod1, receiverEffectMod2));
+
+    return combineModifier(committerEffectMod, receiverEffectMod);
+}
+
+uint16_t BattleEngine::calculateDamage(Action *action, Creature *committer, Creature *receiver) {
     // need to do something here with atk def stats
     Move move = committer->moveList[action->actionIndex];
     // float mod = getMatchupModifier(getMoveType(move),
     // uint8_t(receiver->type1))*getMatchupModifier(getMoveType(move),
     // uint8_t(receiver->type2))/2;
     uint8_t power = move.getMovePower();
+
+    Modifier typeEffectModifier = getTypeStatusModifier(committer, receiver);
+
     bool bonus = committer->moveTypeBonus(move.getMoveType());
     // TODO: this daamage formula is bad
     // TODO: apply stat modifiers, Maybe need to refactor this entirely
     uint16_t damage = (power * committer->statlist.attack) / (receiver->statlist.defense / 2);
-    damage = applyModifier(damage, (Type)move.getMoveType(), receiver->types);
-    damage = damage == 0 ? 1 : damage;
+    damage = applyModifier(damage, (Type)move.getMoveType(), receiver->types, typeEffectModifier);
+
+    damage = damage == 0 ? 0 : damage;
     // TODO (Snail) need to move this modifiers location in the formula
 
     // going too need to balance this eventually
     return damage;
 }
 
-static uint8_t aiChooseStrongestMove(Creature *commiter, Creature *receiver) {
+uint8_t BattleEngine::aiChooseStrongestMove() {
     uint8_t selected = 0;
     uint16_t maxDamage = 0;
 
-    DualType type = receiver->types;
+    DualType type = opponentCur->types;
     // TODO have multiple ai levels?
     // always choose the highest damage (hardest ai)
     for (uint8_t i = 0; i < 4; i++) {
         Action a;
         a.actionIndex = i;
-        uint16_t damage = calculateDamage(&a, commiter, receiver);
+        uint16_t damage = calculateDamage(&a, playerCur, opponentCur);
         if (damage > maxDamage) {
             maxDamage = damage;
             selected = i;
@@ -319,7 +335,7 @@ void BattleEngine::opponentInput() {
     }
     // ai to select best move
     this->opponentAction.setActionType(ActionType::ATTACK, Priority::NORMAL);
-    this->opponentAction.actionIndex = aiChooseStrongestMove(opponentCur, playerCur);
+    this->opponentAction.actionIndex = aiChooseStrongestMove();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -492,29 +508,14 @@ void BattleEngine::applyBattleEffect(Creature *target, Effect effect) {
     }
 
     switch (effect) {
-    case Effect::EGOED:
+    case Effect::ATKUP:
         statMods->setModifier(StatType::ATTACK_M, 1);
         break;
-    case Effect::DRENCHED:
-        break;
-    case Effect::BUFFETED:
+
+    case Effect::ATKDWN:
         statMods->setModifier(StatType::SPEED_M, -1);
         break;
-    case Effect::STUMBLED:
-        statMods->setModifier(StatType::ATTACK_M, -1);
-        break;
-    case Effect::BURNED:
-        statMods->setModifier(StatType::DEFENSE_M, -1);
-        break;
-    case Effect::SHOCKED:
-        statMods->setModifier(StatType::SPECIAL_ATTACK_M, -1);
-        break;
-    case Effect::ENTANGLED:
-        statMods->setModifier(StatType::SPEED_M, -1);
-        break;
-    case Effect::CURSED:
-        statMods->setModifier(StatType::SPECIAL_DEFENSE_M, -1);
-        break;
+
     default:
         return;
     }
@@ -523,6 +524,11 @@ void BattleEngine::applyBattleEffect(Creature *target, Effect effect) {
 
 void BattleEngine::runEffect(Creature *commiter, Creature *other, Effect effect) {
     if (effect == Effect::NONE) {
+        return;
+    }
+
+    if (!isTickEffect(effect)) {
+        applyEffect(other, effect);
         return;
     }
     uint8_t rate = getEffectRate(effect);

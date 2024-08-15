@@ -61,6 +61,9 @@ class BattleEngine {
     void playerActionFirst();
     // deprecated
     void opponentActionFirst();
+    uint16_t calculateDamage(Action *action, Creature *committer, Creature *receiver);
+    Modifier getTypeStatusModifier(Creature *committer, Creature *receiver);
+    uint8_t aiChooseStrongestMove();
     void setMoveList(uint8_t **pointer);
     void changeCurMon(uint8_t index);
     void changeOptMon(uint8_t index);

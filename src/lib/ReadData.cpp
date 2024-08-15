@@ -29,7 +29,6 @@ OpponentSeed readOpponentSeed(uint8_t index) {
     OpponentSeed seed = OpponentSeed{0, 0, 1};
     uint24_t rowAddress = FX::readIndexedUInt24(opts, index);
     FX::readDataObject(rowAddress, seed);
-    Serial.println(seed.firstCreature.id);
     return seed;
 }
 

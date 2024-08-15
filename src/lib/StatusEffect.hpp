@@ -31,4 +31,9 @@ class StatusEffect {
         }
         return Effect::NONE;
     }
+
+    void clearEffects() {
+        effects[0] = Effect::NONE;
+        effects[1] = Effect::NONE;
+    }
 };
