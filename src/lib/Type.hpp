@@ -1,5 +1,6 @@
 #pragma once
 #include <stdint.h>
+#include "Effect.hpp"
 
 #define dbf __attribute__((optimize("-O0")))
 
@@ -175,9 +176,7 @@ static Modifier getModifier(Type attackType, Type defendingType) {
     if (defendingType == Type::NONE) {
         return Modifier::Same;
     }
-    return (attackType == Type::NONE)
-               ? Modifier::None
-               : static_cast<Modifier>((typeTable[static_cast<uint8_t>(attackType)][static_cast<uint8_t>(defendingType)]));
+    return (attackType == Type::NONE) ? Modifier::None : static_cast<Modifier>((typeTable[static_cast<uint8_t>(attackType)][static_cast<uint8_t>(defendingType)]));
 }
 
 static Modifier combineModifier(Modifier a, Modifier b) {
@@ -216,8 +215,110 @@ static Modifier getModifier(Type attackType, DualType defendingType) {
     return combineModifier(m1, m2);
 }
 
-static uint16_t applyModifier(uint16_t baseValue, Type attackType, DualType defendingType) {
+static uint16_t applyModifier(uint16_t baseValue, Type attackType, DualType defendingType, Modifier effectMod) {
     const Modifier mod = getModifier(attackType, defendingType);
-    baseValue = applyMod(baseValue, mod);
+    baseValue = applyMod(baseValue, combineModifier(mod, effectMod));
     return baseValue;
+}
+
+static Modifier typeEffectModifier(Effect effect, DualType type) {
+    DualType modType = DualType(Type::NONE, Type::NONE);
+    bool increase;
+    switch (effect) {
+    case Effect::NONE:
+        return Modifier::Same;
+    case Effect::DPRSD:
+        increase = false;
+        modType = DualType(Type::SPIRIT, Type::NONE);
+        break;
+    case Effect::SOAKED:
+        increase = false;
+        modType = DualType(Type::WATER, Type::NONE);
+        break;
+    case Effect::BUFTD:
+        increase = false;
+        modType = DualType(Type::WIND, Type::NONE);
+        break;
+    case Effect::SOILED:
+        increase = false;
+        modType = DualType(Type::EARTH, Type::NONE);
+        break;
+    case Effect::SCRCHD:
+        increase = false;
+        modType = DualType(Type::FIRE, Type::NONE);
+        break;
+    case Effect::ZAPPED:
+        increase = false;
+        modType = DualType(Type::LIGHTNING, Type::NONE);
+        break;
+    case Effect::TANGLD:
+        increase = false;
+        modType = DualType(Type::PLANT, Type::NONE);
+        break;
+    case Effect::REDCD:
+        increase = false;
+        modType = DualType(Type::ELDER, Type::NONE);
+        break;
+    case Effect::ENLTND:
+        increase = true;
+        modType = DualType(Type::SPIRIT, Type::NONE);
+        break;
+    case Effect::DRNCHD:
+        increase = true;
+        modType = DualType(Type::WATER, Type::NONE);
+        break;
+    case Effect::AIRSWPT:
+        increase = true;
+        modType = DualType(Type::WIND, Type::NONE);
+        break;
+    case Effect::GRNDED:
+        increase = true;
+        modType = DualType(Type::EARTH, Type::NONE);
+        break;
+    case Effect::KINDLD:
+        increase = true;
+        modType = DualType(Type::FIRE, Type::NONE);
+        break;
+    case Effect::CHRGD:
+        increase = true;
+        modType = DualType(Type::LIGHTNING, Type::NONE);
+        break;
+    case Effect::ENRCHD:
+        increase = true;
+        modType = DualType(Type::PLANT, Type::NONE);
+        break;
+    case Effect::EVOLVD:
+        increase = true;
+        modType = DualType(Type::ELDER, Type::NONE);
+        break;
+    }
+
+    Modifier committerMod = Modifier::Same;
+    if (increase) {
+        if (type.getType1() == modType.getType1() || type.getType2() == modType.getType1()) {
+            committerMod = Modifier::Double;
+        }
+    } else {
+        if (type.getType1() == modType.getType1() || type.getType2() == modType.getType1()) {
+            committerMod = Modifier::Half;
+        }
+    }
+    return committerMod;
+}
+
+static Modifier inverseModifier(Modifier mod) {
+    switch (mod) {
+    case Modifier::Same:
+        return Modifier::Same;
+    case Modifier::Half:
+        return Modifier::Double;
+    case Modifier::Double:
+        return Modifier::Half;
+    case Modifier::Quarter:
+        return Modifier::Quadruple;
+    case Modifier::Quadruple:
+        return Modifier::Quarter;
+    default:
+        return Modifier::None;
+    }
 }

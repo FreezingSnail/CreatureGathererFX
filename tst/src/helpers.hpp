@@ -54,3 +54,9 @@ std::string BattleEventTypeToString(BattleEventType e) {
         return "UNKNOWN";
     }
 }
+
+static Creature basicCreatureSquibbleSnail() {
+    Creature creature = Creature();
+    creature.load(getCreatureFromStore(0));
+    return creature;
+}
