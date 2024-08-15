@@ -8,6 +8,15 @@
 BattleEngine::BattleEngine() {
 }
 
+inline uint16_t applyIntMod(uint16_t value, int8_t mod) {
+    if (mod == 0) {
+        return value;
+    } else if (mod < 0) {
+        return value / (mod * -1);
+    }
+    return value * mod;
+}
+
 Modifier BattleEngine::getTypeStatusModifier(Creature *committer, Creature *receiver) {
     Modifier committerEffectMod1 = typeEffectModifier(committer->status.effects[0], committer->types);
     Modifier committerEffectMod2 = typeEffectModifier(committer->status.effects[1], committer->types);
@@ -21,25 +30,25 @@ Modifier BattleEngine::getTypeStatusModifier(Creature *committer, Creature *rece
 }
 
 uint16_t BattleEngine::calculateDamage(Action *action, Creature *committer, Creature *receiver) {
-    // need to do something here with atk def stats
     Move move = committer->moveList[action->actionIndex];
-    // float mod = getMatchupModifier(getMoveType(move),
-    // uint8_t(receiver->type1))*getMatchupModifier(getMoveType(move),
-    // uint8_t(receiver->type2))/2;
     uint8_t power = move.getMovePower();
+    bool phys = move.isPhysical();
 
     Modifier typeEffectModifier = getTypeStatusModifier(committer, receiver);
-
     bool bonus = committer->moveTypeBonus(move.getMoveType());
-    // TODO: this daamage formula is bad
+
+    StatType committerBonus = phys ? StatType::ATTACK_M : StatType::SPECIAL_ATTACK_M;
+    StatType receiverBonus = phys ? StatType::DEFENSE_M : StatType::SPECIAL_DEFENSE_M;
+
+    int8_t commiterAtkMod = committer->statMods.getModifier(committerBonus);
+    int8_t receiverDefMod = receiver->statMods.getModifier(receiverBonus);
+
+    // TODO: this damage formula is bad
     // TODO: apply stat modifiers, Maybe need to refactor this entirely
-    uint16_t damage = (power * committer->statlist.attack) / (receiver->statlist.defense / 2);
+    uint16_t damage = applyIntMod((power * committer->statlist.attack), commiterAtkMod) / applyIntMod((receiver->statlist.defense / 2), receiverDefMod);
     damage = applyModifier(damage, (Type)move.getMoveType(), receiver->types, typeEffectModifier);
 
     damage = damage == 0 ? 0 : damage;
-    // TODO (Snail) need to move this modifiers location in the formula
-
-    // going too need to balance this eventually
     return damage;
 }
 

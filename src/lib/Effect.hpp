@@ -1,4 +1,5 @@
 #pragma once
+#include <stdint.h>
 
 enum class Effect {
     NONE = 0xff,

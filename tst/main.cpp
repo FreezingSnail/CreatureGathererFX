@@ -6,6 +6,7 @@
 #include "player_test.hpp"
 #include "engine_test.hpp"
 #include "opponent_test.hpp"
+#include "type_test.hpp"
 
 #include "../src/globals.hpp"
 
@@ -23,6 +24,8 @@ int main() {
     // Run test suites
     MoveSuite(tests);
     std::cout << "MoveSuite finished" << std::endl;
+    TypeSuite(tests);
+    std::cout << "TypeSuite finished" << std::endl;
     PlantPairSuite(tests);
     std::cout << "PlantPairSuite finished" << std::endl;
     PlantStageSuite(tests);
