@@ -9,6 +9,7 @@ BattleEngine::BattleEngine() {
 }
 
 inline uint16_t applyIntMod(uint16_t value, int8_t mod) {
+    mod = mod * 2;
     if (mod == 0) {
         return value;
     } else if (mod < 0) {
@@ -510,19 +511,17 @@ void BattleEngine::applyEffect(Creature *target, Effect effect) {
 // TODO: apply the effects
 void BattleEngine::applyBattleEffect(Creature *target, Effect effect) {
     DialogType dt = DialogType::PLAYER_EFFECT;
-    StatModifer *statMods = &playerModifiers;
     if (target == opponentCur) {
         dt = DialogType::ENEMY_EFFECT;
-        statMods = &opponentModifiers;
     }
 
     switch (effect) {
     case Effect::ATKUP:
-        statMods->setModifier(StatType::ATTACK_M, 1);
+        //  statMods->setModifier(StatType::ATTACK_M, 1);
         break;
 
     case Effect::ATKDWN:
-        statMods->setModifier(StatType::SPEED_M, -1);
+        //  statMods->setModifier(StatType::SPEED_M, -1);
         break;
 
     default:

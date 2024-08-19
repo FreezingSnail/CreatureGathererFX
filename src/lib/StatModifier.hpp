@@ -57,6 +57,14 @@ class StatModifer {
         return ret;
     }
 
+    void incrementModifier(StatType stat) {
+        setModifier(stat, getModifier(stat) + 1);
+    }
+
+    void decrementModifier(StatType stat) {
+        setModifier(stat, getModifier(stat) - 1);
+    }
+
     void clearModifiers() {
         modifiers = 0;
     }
