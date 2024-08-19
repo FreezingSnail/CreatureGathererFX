@@ -2,6 +2,7 @@
 #include "../creature/Creature.hpp"
 #include "../lib/DataTypes.hpp"
 #include "../lib/uint24.h"
+#include "../values.hpp"
 
 // This class is a non-functional datapack to load into the battle engine on an
 // encounter Opponets should be stored in PROGMEM as a list of 3 pointers
@@ -9,8 +10,8 @@
 
 class Opponent {
   public:
-    Creature party[3];
-    uint8_t levels[3];
+    Creature party[PARTY_SIZE];
+    uint8_t levels[PARTY_SIZE];
     uint24_t nameptr;
 
     // This should load information from PROGMEM

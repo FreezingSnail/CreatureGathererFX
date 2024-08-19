@@ -7,6 +7,7 @@
 #include "engine_test.hpp"
 #include "opponent_test.hpp"
 #include "type_test.hpp"
+#include "effect_test.hpp"
 
 #include "../src/globals.hpp"
 
@@ -40,8 +41,10 @@ int main() {
     std::cout << "EngineSuite finished" << std::endl;
     OpponentSuite(tests);
     std::cout << "OpponentSuite finished" << std::endl;
-    std::cout << "Tests Finished" << std::endl;
+    EffectSuite(tests);
+    std::cout << "EffectSuite finished" << std::endl;
 
+    std::cout << "Tests Finished" << std::endl;
     tests.printSummary();
     if (tests.fail()) {
         std::cout << "Tests failed!" << std::endl;

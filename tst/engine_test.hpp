@@ -261,6 +261,8 @@ void EngineDamageCalcStatStatusEffect(TestSuite &t) {
     test.addToLog("move used isPhysical: " + std::to_string(move.isPhysical()));
 
     test.assert(move.getMovePower(), 10, "Move Power set");
+    test.assert(move.getMoveType(), Type::WIND, "Move Type set");
+    test.assert(move.isPhysical(), true, "Move isPhysical set");
 
     Action action = Action();
     action.actionType = ActionType::ATTACK;
@@ -269,28 +271,40 @@ void EngineDamageCalcStatStatusEffect(TestSuite &t) {
 
     uint16_t damage = eng.calculateDamage(&action, eng.playerCur, eng.opponentCur);
     test.addToLog("calculated damage: " + std::to_string(damage));
-    bool applied = eng.playerCur->status.applyEffect(Effect::ATKUP);
-    test.assert(applied, true, "Status effect applied");
-    test.assert(Effect::ATKUP, eng.playerCur->status.effects[0], "stat Status effect set");
+    eng.playerCur->statMods.setModifier(StatType::ATTACK_M, 1);
+    test.assert(eng.playerCur->statMods.getModifier(StatType::ATTACK_M), 1, "stat ATTACK_M effect +1");
     uint16_t damage2 = eng.calculateDamage(&action, eng.playerCur, eng.opponentCur);
     test.addToLog("calculated damage atk up: " + std::to_string(damage2));
-    test.assert(damage2, damage * 2, "Damage doubled with stat status effect");
+    test.assert(damage2, damage * 2, "Damage doubled with stat atk up effect");
+    eng.playerCur->statMods.clearModifiers();
+    eng.opponentCur->statMods.clearModifiers();
 
-    eng.playerCur->status.clearEffects();
-    applied = eng.playerCur->status.applyEffect(Effect::ATKDWN);
-    test.assert(applied, true, "Status effect applied");
-    test.assert(Effect::ATKDWN, eng.playerCur->status.effects[0], "Status effect set");
+    test.addToLog("calculated damage: " + std::to_string(damage));
+    eng.playerCur->statMods.setModifier(StatType::ATTACK_M, -1);
+    test.assert(eng.playerCur->statMods.getModifier(StatType::ATTACK_M), -1, "stat ATTACK_M effect -1");
     damage2 = eng.calculateDamage(&action, eng.playerCur, eng.opponentCur);
-    test.addToLog("calculated damage atk down: " + std::to_string(damage2));
-    test.assert(damage2, damage / 2, "Damage halved with stat status effect");
+    test.addToLog("calculated damage atk up: " + std::to_string(damage2));
+    test.assert(damage2, damage / 2, "Damage halved with stat attk down effect");
+    eng.playerCur->statMods.clearModifiers();
+    eng.opponentCur->statMods.clearModifiers();
 
-    eng.playerCur->status.clearEffects();
-    applied = eng.playerCur->status.applyEffect(Effect::AIRSWPT);
-    test.assert(applied, true, "Status effect applied");
-    test.assert(Effect::AIRSWPT, eng.playerCur->status.effects[0], "type Status effect set");
+    test.addToLog("calculated damage: " + std::to_string(damage));
+    eng.opponentCur->statMods.setModifier(StatType::DEFENSE_M, -1);
+    test.assert(eng.opponentCur->statMods.getModifier(StatType::DEFENSE_M), -1, "stat DEFENSE_M effect -1");
     damage2 = eng.calculateDamage(&action, eng.playerCur, eng.opponentCur);
-    test.addToLog("calculated damage atk down: " + std::to_string(damage2));
-    test.assert(damage2, damage * 2, "Damage Doubled with type status effect");
+    test.addToLog("calculated damage atk up: " + std::to_string(damage2));
+    test.assert(damage2, damage * 2, "Damage doubled with stat def down effect");
+    eng.playerCur->statMods.clearModifiers();
+    eng.opponentCur->statMods.clearModifiers();
+
+    test.addToLog("calculated damage: " + std::to_string(damage));
+    eng.opponentCur->statMods.setModifier(StatType::DEFENSE_M, 1);
+    test.assert(eng.opponentCur->statMods.getModifier(StatType::DEFENSE_M), 1, "stat DEFENSE_M effect +1");
+    damage2 = eng.calculateDamage(&action, eng.playerCur, eng.opponentCur);
+    test.addToLog("calculated damage atk up: " + std::to_string(damage2));
+    test.assert(damage2, damage / 2, "Damage halfed with stat def up effect");
+    eng.playerCur->statMods.clearModifiers();
+    eng.opponentCur->statMods.clearModifiers();
 
     t.addTest(test);
 }
