@@ -3,6 +3,7 @@
 
 enum class Effect {
     NONE = 0xff,
+    // type down
     DPRSD = 0x00,
     SOAKED = 0x01,
     BUFTD = 0x02,
@@ -11,6 +12,8 @@ enum class Effect {
     ZAPPED = 0x05,
     TANGLD = 0x06,
     REDCD = 0x07,
+
+    // type up
     ENLTND = 0x10,
     DRNCHD = 0x11,
     AIRSWPT = 0x12,
@@ -19,6 +22,7 @@ enum class Effect {
     CHRGD = 0x15,
     ENRCHD = 0x16,
     EVOLVD = 0x17,
+
     ATKDWN = 0x21,
     DEFDWN = 0x22,
     SPCADWN = 0x23,
@@ -29,7 +33,11 @@ enum class Effect {
     SPCAUP = 0x33,
     SPCDUP = 0x34,
     SPDUP = 0x35,
+
+    // tick down
     SAPPD = 0x40,
+
+    // tick up
     INFSED = 0x50
 };
 

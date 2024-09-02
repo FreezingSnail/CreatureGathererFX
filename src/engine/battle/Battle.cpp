@@ -494,6 +494,7 @@ void BattleEngine::resetOpponent() {
     opponentAction.actionIndex = -1;
 }
 
+// TODO: prob should get rig of this
 void BattleEngine::applyEffects() {
     for (uint8_t i = 0; i < 2; i++) {
         applyEffect(playerCur, playerCur->status.effects[i]);
@@ -502,9 +503,11 @@ void BattleEngine::applyEffects() {
 }
 
 void BattleEngine::applyEffect(Creature *target, Effect effect) {
-    bool applied = target->status.applyEffect(effect);
-    if (!applied)
-        return;
+    if (!(effect >= Effect::ATKDWN && effect <= Effect::SPDUP)) {
+        bool applied = target->status.applyEffect(effect);
+        if (!applied)
+            return;
+    }
     applyBattleEffect(target, effect);
 }
 
@@ -515,19 +518,96 @@ void BattleEngine::applyBattleEffect(Creature *target, Effect effect) {
         dt = DialogType::ENEMY_EFFECT;
     }
 
+    int8_t amount = 0;
+    StatType targetStat = StatType::NONE;
+
     switch (effect) {
-    case Effect::ATKUP:
-        //  statMods->setModifier(StatType::ATTACK_M, 1);
+    case Effect::NONE:
+        break;
+    case Effect::DPRSD:
+        break;
+    case Effect::SOAKED:
+        break;
+    case Effect::BUFTD:
+        break;
+    case Effect::SOILED:
+        break;
+    case Effect::SCRCHD:
+        break;
+    case Effect::ZAPPED:
+        break;
+    case Effect::TANGLD:
+        break;
+    case Effect::REDCD:
+        break;
+    case Effect::ENLTND:
+        break;
+    case Effect::DRNCHD:
+        break;
+    case Effect::AIRSWPT:
+        break;
+    case Effect::GRNDED:
+        break;
+    case Effect::KINDLD:
+        break;
+    case Effect::CHRGD:
+        break;
+    case Effect::ENRCHD:
+        break;
+    case Effect::EVOLVD:
         break;
 
     case Effect::ATKDWN:
-        //  statMods->setModifier(StatType::SPEED_M, -1);
+        targetStat = StatType::ATTACK_M;
+        amount = -1;
+        break;
+    case Effect::DEFDWN:
+        targetStat = StatType::DEFENSE_M;
+        amount = -1;
+        break;
+    case Effect::SPCADWN:
+        targetStat = StatType::SPECIAL_ATTACK_M;
+        amount = -1;
+        break;
+    case Effect::SPCDDWN:
+        targetStat = StatType::SPECIAL_DEFENSE_M;
+        amount = -1;
+        break;
+    case Effect::SPDDWN:
+        targetStat = StatType::SPEED_M;
+        amount = -1;
         break;
 
-    default:
-        return;
+    case Effect::ATKUP:
+        targetStat = StatType::ATTACK_M;
+        amount = 1;
+        break;
+    case Effect::DEFUP:
+        targetStat = StatType::DEFENSE_M;
+        amount = 1;
+        break;
+    case Effect::SPCAUP:
+        targetStat = StatType::SPECIAL_ATTACK_M;
+        amount = 1;
+        break;
+    case Effect::SPCDUP:
+        targetStat = StatType::SPECIAL_DEFENSE_M;
+        amount = 1;
+        break;
+    case Effect::SPDUP:
+        targetStat = StatType::SPEED_M;
+        amount = 1;
+        break;
+
+    case Effect::SAPPD:
+        break;
+    case Effect::INFSED:
+        break;
     }
-    // dialogMenu.pushMenu(newDialogBox(dt, target->id, uint24_t(effect)));
+
+    target->statMods.incrementModifier(targetStat, amount);
+
+    dialogMenu.pushMenu(newDialogBox(dt, target->id, uint24_t(effect)));
 }
 
 void BattleEngine::runEffect(Creature *commiter, Creature *other, Effect effect) {
@@ -535,15 +615,18 @@ void BattleEngine::runEffect(Creature *commiter, Creature *other, Effect effect)
         return;
     }
 
-    if (!isTickEffect(effect)) {
-        applyEffect(other, effect);
-        return;
-    }
+    // TODO: not sure if this is right
+    // if (!isTickEffect(effect)) {
+    //     applyEffect(other, effect);
+    //     return;
+    // }
+
     uint8_t rate = getEffectRate(effect);
     uint8_t roll = 0;   // random(1, 100);
     if (roll > rate) {
         return;
     }
+    // TODO: need to base this off the move or mabye handle elsewhere
     bool selfTarget = selfEffect(effect);
     Creature *target = selfTarget ? commiter : other;
     applyEffect(target, effect);
