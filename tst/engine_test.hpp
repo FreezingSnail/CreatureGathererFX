@@ -309,6 +309,43 @@ void EngineDamageCalcStatStatusEffect(TestSuite &t) {
     t.addTest(test);
 }
 
+void ApplyStatModEffects(TestSuite &t) {
+    reset();
+    Test test = Test(__func__);
+    BattleEngine eng = BattleEngine();
+    player.basic();
+    eng.startFight(0);
+
+    eng.applyEffect(eng.playerCur, Effect::ATKUP);
+    test.assert(eng.playerCur->statMods.getModifier(StatType::ATTACK_M), 1, "stat ATTACK_M effect +1");
+
+    eng.applyEffect(eng.playerCur, Effect::ATKUP);
+    test.assert(eng.playerCur->statMods.getModifier(StatType::ATTACK_M), 2, "stat ATTACK_M effect +2");
+
+    eng.applyEffect(eng.playerCur, Effect::ATKDWN);
+    test.assert(eng.playerCur->statMods.getModifier(StatType::ATTACK_M), 1, "stat ATTACK_M effect lowered to +1");
+
+    eng.applyEffect(eng.playerCur, Effect::SPCADWN);
+    test.assert(eng.playerCur->statMods.getModifier(StatType::SPECIAL_ATTACK_M), -1, "stat SPECIAL_ATTACK_M effect set to -1");
+
+    eng.applyEffect(eng.playerCur, Effect::SPCADWN);
+    test.assert(eng.playerCur->statMods.getModifier(StatType::SPECIAL_ATTACK_M), -2, "stat SPECIAL_ATTACK_M effect lowered to -2");
+    eng.applyEffect(eng.playerCur, Effect::SPCAUP);
+    test.assert(eng.playerCur->statMods.getModifier(StatType::SPECIAL_ATTACK_M), -1, "stat SPECIAL_ATTACK_M effect raised to -1");
+    eng.applyEffect(eng.playerCur, Effect::SPCAUP);
+    test.assert(eng.playerCur->statMods.getModifier(StatType::SPECIAL_ATTACK_M), 0, "stat SPECIAL_ATTACK_M effect raised to 0");
+    eng.applyEffect(eng.playerCur, Effect::SPCAUP);
+    test.assert(eng.playerCur->statMods.getModifier(StatType::SPECIAL_ATTACK_M), 1, "stat SPECIAL_ATTACK_M effect raised to +1");
+    eng.applyEffect(eng.playerCur, Effect::SPCAUP);
+    test.assert(eng.playerCur->statMods.getModifier(StatType::SPECIAL_ATTACK_M), 2, "stat SPECIAL_ATTACK_M effect raised to +2");
+    eng.applyEffect(eng.playerCur, Effect::SPCAUP);
+    test.assert(eng.playerCur->statMods.getModifier(StatType::SPECIAL_ATTACK_M), 3, "stat SPECIAL_ATTACK_M effect raised to +3");
+    eng.applyEffect(eng.playerCur, Effect::SPCAUP);
+    test.assert(eng.playerCur->statMods.getModifier(StatType::SPECIAL_ATTACK_M), 3, "stat SPECIAL_ATTACK_M effect raised to +4");
+
+    t.addTest(test);
+}
+
 void EngineSuite(TestRunner &r) {
     TestSuite t = TestSuite("Engine Suite");
     EngineStartTest(t);
@@ -317,6 +354,7 @@ void EngineSuite(TestRunner &r) {
     EngineTypeStatusMod(t);
     EngineDamageCalcStatStatusEffect(t);
     EngineDamageCalcTypeEffect(t);
+    ApplyStatModEffects(t);
     r.addTestSuite(t);
     reset();
 }
