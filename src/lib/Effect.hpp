@@ -23,6 +23,7 @@ enum class Effect {
     ENRCHD = 0x16,
     EVOLVD = 0x17,
 
+    // stats
     ATKDWN = 0x21,
     DEFDWN = 0x22,
     SPCADWN = 0x23,

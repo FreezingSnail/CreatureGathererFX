@@ -208,6 +208,7 @@ void BattleEngine::turnTick() {
         opponentAction.actionIndex = -1;
         break;
     case BattleState::END_TURN:
+        runtTickEffects();
         updateState = true;
         break;
 
@@ -389,8 +390,6 @@ void BattleEngine::commitAction(Action *action, Creature *commiter, Creature *re
                 //    battleEventPlayer.push({BattleEventType::DAMAGE, 0, damage});
                 dialogMenu.pushMenu(newDialogBox(DAMAGE, receiver->id, damage));
             }
-        } else {
-            runEffect(commiter, receiver, move.getMoveEffect());
         }
 
         break;
@@ -494,25 +493,24 @@ void BattleEngine::resetOpponent() {
     opponentAction.actionIndex = -1;
 }
 
-// TODO: prob should get rig of this
-void BattleEngine::applyEffects() {
-    for (uint8_t i = 0; i < 2; i++) {
-        applyEffect(playerCur, playerCur->status.effects[i]);
-        applyEffect(opponentCur, opponentCur->status.effects[i]);
-    }
-}
-
 void BattleEngine::applyEffect(Creature *target, Effect effect) {
     if (!(effect >= Effect::ATKDWN && effect <= Effect::SPDUP)) {
         bool applied = target->status.applyEffect(effect);
+
         if (!applied)
             return;
+        DialogType dt = DialogType::PLAYER_EFFECT;
+        if (target == opponentCur) {
+            dt = DialogType::ENEMY_EFFECT;
+        }
+        dialogMenu.pushMenu(newDialogBox(dt, target->id, uint24_t(effect)));
+        return;
     }
     applyBattleEffect(target, effect);
 }
 
 // TODO: apply the effects
-void BattleEngine::applyBattleEffect(Creature *target, Effect effect) {
+void BattleEngine::applyBattleEffect(Creature *target, Effect &effect) {
     DialogType dt = DialogType::PLAYER_EFFECT;
     if (target == opponentCur) {
         dt = DialogType::ENEMY_EFFECT;
@@ -522,40 +520,28 @@ void BattleEngine::applyBattleEffect(Creature *target, Effect effect) {
     StatType targetStat = StatType::NONE;
 
     switch (effect) {
-    case Effect::NONE:
-        break;
-    case Effect::DPRSD:
-        break;
-    case Effect::SOAKED:
-        break;
-    case Effect::BUFTD:
-        break;
-    case Effect::SOILED:
-        break;
-    case Effect::SCRCHD:
-        break;
-    case Effect::ZAPPED:
-        break;
-    case Effect::TANGLD:
-        break;
-    case Effect::REDCD:
-        break;
-    case Effect::ENLTND:
-        break;
-    case Effect::DRNCHD:
-        break;
-    case Effect::AIRSWPT:
-        break;
-    case Effect::GRNDED:
-        break;
-    case Effect::KINDLD:
-        break;
-    case Effect::CHRGD:
-        break;
-    case Effect::ENRCHD:
-        break;
-    case Effect::EVOLVD:
-        break;
+        // case Effect::NONE:
+        //     return;
+        // case Effect::DPRSD:
+        // case Effect::SOAKED:
+        // case Effect::BUFTD:
+        // case Effect::SOILED:
+        // case Effect::SCRCHD:
+        // case Effect::ZAPPED:
+        // case Effect::TANGLD:
+        // case Effect::REDCD:
+        // case Effect::ENLTND:
+        // case Effect::DRNCHD:
+        // case Effect::AIRSWPT:
+        // case Effect::GRNDED:
+        // case Effect::KINDLD:
+        // case Effect::CHRGD:
+        // case Effect::ENRCHD:
+        // case Effect::EVOLVD:
+        // case Effect::SAPPD:
+        // case Effect::INFSED:
+        //     target->status.applyEffect(effect);
+        //     break;
 
     case Effect::ATKDWN:
         targetStat = StatType::ATTACK_M;
@@ -598,11 +584,6 @@ void BattleEngine::applyBattleEffect(Creature *target, Effect effect) {
         targetStat = StatType::SPEED_M;
         amount = 1;
         break;
-
-    case Effect::SAPPD:
-        break;
-    case Effect::INFSED:
-        break;
     }
 
     target->statMods.incrementModifier(targetStat, amount);
@@ -610,7 +591,7 @@ void BattleEngine::applyBattleEffect(Creature *target, Effect effect) {
     dialogMenu.pushMenu(newDialogBox(dt, target->id, uint24_t(effect)));
 }
 
-void BattleEngine::runEffect(Creature *commiter, Creature *other, Effect effect) {
+void BattleEngine::runEffect(Creature *commiter, Creature *other, Effect &effect) {
     if (effect == Effect::NONE) {
         return;
     }
@@ -632,6 +613,40 @@ void BattleEngine::runEffect(Creature *commiter, Creature *other, Effect effect)
     applyEffect(target, effect);
 }
 
+void BattleEngine::runtTickEffects() {
+    for (uint8_t i = 0; i < 2; i++) {
+        tickEffects(playerCur, playerCur->status.effects[i]);
+        tickEffects(opponentCur, opponentCur->status.effects[i]);
+    }
+}
+
+void BattleEngine::tickEffects(Creature *target, Effect &effect) {
+    if (effect == Effect::NONE) {
+        return;
+    }
+    if (effect == Effect::SAPPD || effect == Effect::INFSED) {
+        int16_t hp16th = target->statlist.hp >> 4;
+        if (effect == Effect::SAPPD) {
+            hp16th *= -1;
+        }
+        bool player = target == playerCur;
+        if (player) {
+            playerHealths[playerIndex] += hp16th;
+            if (playerHealths[playerIndex] > playerCur->statlist.hp) {
+                playerHealths[playerIndex] = playerCur->statlist.hp;
+            } else if (playerHealths[playerIndex] < 0) {
+                playerHealths[playerIndex] = 0;
+            }
+        } else {
+            opponentHealths[opponentIndex] += hp16th;
+            if (opponentHealths[opponentIndex] > opponentCur->statlist.hp) {
+                opponentHealths[opponentIndex] = opponentCur->statlist.hp;
+            } else if (opponentHealths[opponentIndex] < 0) {
+                opponentHealths[opponentIndex] = 0;
+            }
+        }
+    }
+}
 bool BattleEngine::TurnReady() {
     return playerAction.actionIndex != -1 && opponentAction.actionIndex != -1;
 }
