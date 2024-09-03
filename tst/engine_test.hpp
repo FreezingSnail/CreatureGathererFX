@@ -346,6 +346,33 @@ void ApplyStatModEffects(TestSuite &t) {
     t.addTest(test);
 }
 
+void ApplyHPTickEffects(TestSuite &t) {
+    reset();
+    Test test = Test(__func__);
+    BattleEngine eng = BattleEngine();
+    player.basic();
+    eng.startFight(0);
+    eng.playerHealths[eng.playerIndex] = 100;
+
+    eng.applyEffect(eng.playerCur, Effect::SAPPD);
+    eng.runtTickEffects();
+    int16_t targetHP = 100 - (eng.playerCur->statlist.hp / 16);
+    test.assert(eng.playerHealths[eng.playerIndex], targetHP, "HP ticked down");
+
+    eng.playerCur->status.clearEffects();
+
+    eng.playerHealths[eng.playerIndex] = 10;
+
+    eng.applyEffect(eng.playerCur, Effect::INFSED);
+    targetHP = 10 + (eng.playerCur->statlist.hp / 16);
+    test.addToLog(("targetHP for tick up: " + std::to_string(targetHP)));
+    test.addToLog("playerHP for tick up: " + std::to_string(eng.playerHealths[eng.playerIndex]));
+    eng.runtTickEffects();
+    test.assert(eng.playerHealths[eng.playerIndex], targetHP, "HP ticked up");
+
+    t.addTest(test);
+}
+
 void EngineSuite(TestRunner &r) {
     TestSuite t = TestSuite("Engine Suite");
     EngineStartTest(t);
@@ -355,6 +382,7 @@ void EngineSuite(TestRunner &r) {
     EngineDamageCalcStatStatusEffect(t);
     EngineDamageCalcTypeEffect(t);
     ApplyStatModEffects(t);
+    ApplyHPTickEffects(t);
     r.addTestSuite(t);
     reset();
 }
