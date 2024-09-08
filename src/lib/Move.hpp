@@ -1,16 +1,20 @@
 #pragma once
 #include <stdint.h>
+#include "Effect.hpp"
 
-enum class Accuracy { HUNDRED, NINETY, EIGHTY, SEVENTY };
-
-enum class Effect { NONE, EGOED, DRENCHED, BUFFETED, STUMBLED, BURNED, SHOCKED, ENTANGLED, CURSED };
+enum class Accuracy {
+    HUNDRED,
+    NINETY,
+    EIGHTY,
+    SEVENTY
+};
 
 struct MoveBitSet {
     uint8_t type;       // 3 bit
     uint8_t power;      // 5 bit
     uint8_t physical;   // 1 bit
     uint8_t accuracy;   // 2 bit
-    uint8_t effect;     // 5 bit (32 potential effects)
+    uint8_t effects;    // 5 bit (32 potential effects)
 };
 
 class Move {
@@ -28,16 +32,16 @@ class Move {
 
   public:
     uint16_t move;
+    uint8_t effects;
 
     constexpr uint16_t packMove(MoveBitSet move) {
-        return (move.type << TypeShift) | (move.power << PowerShift) | (move.physical << PhysShift) | (move.accuracy << AccShift) |
-               (move.effect);
+        return (move.type << TypeShift) | (move.power << PowerShift) | (move.physical << PhysShift) | (move.accuracy << AccShift);
     }
 
-    constexpr Move() : move(0) {
+    constexpr Move() : move(0), effects(0xffff) {
     }
 
-    constexpr Move(MoveBitSet movePack) : move(packMove(movePack)) {
+    constexpr Move(MoveBitSet movePack) : move(packMove(movePack)), effects(movePack.effects) {
     }
 
     constexpr uint8_t getMovePower() {
@@ -57,6 +61,6 @@ class Move {
     }
 
     constexpr Effect getMoveEffect() {
-        return Effect((this->move & EffectMask));
+        return Effect((this->effects));
     }
 };

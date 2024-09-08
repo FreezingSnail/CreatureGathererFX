@@ -30,7 +30,7 @@ void Creature::loadFromOpponentSeed(CreatureSeed seed) {
     id = seed.id;
     CreatureData_t cSeed = getCreatureFromStore(id);
     loadTypes(cSeed);
-    level = seed.lvl;
+    level = 31;   // seed.lvl;
     setStats(cSeed);
     setMove(parseOpponentCreatureSeedMove(seed.moves, 0), 0);
     setMove(parseOpponentCreatureSeedMove(seed.moves, 1), 1);

@@ -6,6 +6,7 @@ enum MenuEnum {
     BATTLE_CREATURE_SELECT,
     BATTLE_OPTIONS,
     WORLD_OPTIONS,
+    ARENA_MENU,
 };
 
 struct MenuStack {

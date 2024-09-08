@@ -5,6 +5,7 @@
 #include "../lib/Type.hpp"
 #include "../lib/Stats.hpp"
 #include "../lib/StatusEffect.hpp"
+#include "../lib/StatModifier.hpp"
 
 class Creature {
 
@@ -29,6 +30,7 @@ class Creature {
     Move moveList[4];
     stats_t statlist;
     StatusEffect status;
+    StatModifer statMods;
 
     // const unsigned char *sprite;
 

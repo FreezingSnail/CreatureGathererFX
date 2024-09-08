@@ -58,6 +58,9 @@ void MenuV2::push(MenuEnum type) {
 }
 
 void MenuV2::pop() {
+    if (this->menuPointer < 0) {
+        return;
+    }
     this->menuPointer--;
 }
 void MenuV2::clear() {
@@ -102,6 +105,13 @@ void MenuV2::transverse() {
             this->cursorIndex -= 2;
         }
         break;
+    case ARENA_MENU:
+        if (arduboy.justPressed(LEFT_BUTTON)) {
+            this->cursorIndex--;
+        } else if (arduboy.justPressed(RIGHT_BUTTON)) {
+            this->cursorIndex++;
+        }
+        return;
     }
     if (this->cursorIndex > 3) {
         this->cursorIndex = 0;
@@ -162,6 +172,8 @@ void MenuV2::action(BattleEngine &engine) {
                 this->cursorIndex = 0;
             }
             break;
+        case ARENA_MENU:
+            return;
         }
     } else if (arduboy.justPressed(B_BUTTON)) {
         if (CURRENT_MENU == BATTLE_MOVE_SELECT || CURRENT_MENU == BATTLE_CREATURE_SELECT) {
@@ -180,7 +192,6 @@ void DGF MenuV2::run(BattleEngine &engine) {
 
     } else {
         // TODO very inefficient
-
         updateMoveList(engine);
         engine.updateInactiveCreatures(this->creatures);
 
@@ -213,7 +224,7 @@ void MenuV2::printMenu(BattleEngine &engine) {
             cIndex = this->creatures[0];
         }
         printCreatureMenu(this->creatures[0], this->creatures[1], engine.getCreature(cIndex), this->cursorIndex);
-        SpritesU::drawPlusMaskFX(0, 0, ecreatureSprites, FRAME(engine.getCreature(cIndex)->id));
+        SpritesU::drawPlusMaskFX(0, 0, NewecreatureSprites, FRAME((engine.getCreature(cIndex)->id * 2)));
         break;
     }
     printCursor(this->cursorIndex);
@@ -224,31 +235,37 @@ void MenuV2::printMenu(BattleEngine &engine) {
 void MenuV2::creatureRental() {
     // printString(font, MenuFXData::pointerText, 0, 55);
     FX::setCursor(10, 55);
-    this->cursorIndex = this->cursorIndex % 31;
+    if (cursorIndex > 30) {
+        cursorIndex = 0;
+    } else if (cursorIndex < 0) {
+        cursorIndex = 30;
+    }
+    uint24_t addr = FX::readIndexedUInt24(CreatureNames::CreatureNames, this->cursorIndex);
+    SpritesU::drawOverwriteFX(0, 55, addr, FRAME(0));
+    SpritesU::drawPlusMaskFX(0, 0, NewecreatureSprites, FRAME((this->cursorIndex * 2)));
 
-    SpritesU::drawOverwriteFX(0, 55, CreatureNames::CreatureNames, this->cursorIndex * 3 + arduboy.currentPlane());
-    FX::drawBitmap(0, 0, creatureSprites, this->cursorIndex, dbmWhite);
+    // FX::drawBitmap(0, 0, NewecreatureSprites, FRAME((this->cursorIndex * 2)), dbmWhite);
     CreatureData_t cseed;
     uint24_t rowAddress = CreatureData::creatureData + (sizeof(CreatureData_t) * this->cursorIndex);
     FX::readDataObject(rowAddress, cseed);
 
     SpritesU::drawOverwriteFX(35, 0, hpText, FRAME(0));
-    SpritesU::drawPlusMaskFX(53, 0, cseed.hpSeed, FRAME(0));
+    drawStatNumbers(60, 0, cseed.hpSeed);
 
     SpritesU::drawOverwriteFX(35, 10, atkText, FRAME(0));
-    SpritesU::drawPlusMaskFX(53, 10, cseed.atkSeed, FRAME(0));
+    drawStatNumbers(60, 10, cseed.atkSeed);
 
     SpritesU::drawOverwriteFX(35, 20, defText, FRAME(0));
-    SpritesU::drawPlusMaskFX(53, 20, cseed.defSeed, FRAME(0));
+    drawStatNumbers(60, 20, cseed.defSeed);
 
     SpritesU::drawOverwriteFX(72, 0, satkText, FRAME(0));
-    SpritesU::drawPlusMaskFX(72 + 18, 0, cseed.spcAtkSeed, FRAME(0));
+    drawStatNumbers(103, 0, cseed.spcAtkSeed);
 
     SpritesU::drawOverwriteFX(72, 10, sdefText, FRAME(0));
-    SpritesU::drawPlusMaskFX(72 + 18, 10, cseed.spcDefSeed, FRAME(0));
+    drawStatNumbers(103, 10, cseed.spcDefSeed);
 
     SpritesU::drawOverwriteFX(72, 20, spdText, FRAME(0));
-    SpritesU::drawPlusMaskFX(72 + 18, 20, cseed.spdSeed, FRAME(0));
+    drawStatNumbers(103, 20, cseed.spdSeed);
 
     printType(Type(cseed.type1), 0, 35);
     printType(Type(cseed.type2), 0, 45);

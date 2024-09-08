@@ -16,9 +16,11 @@ class Arena {
   public:
     Arena() = default;
     void arenaLoop(MenuV2 &menu2, Player &player, BattleEngine &engine);
-    void registerRentals(Player &player);
+    void registerRentals(Player &player, MenuV2 &menu2);
     void registerMoves(Player &player);
+    void drawregisterMoves(Player &player);
     uint8_t selectOpponent();
-    void startBattle(BattleEngine &engine, Player &player);
+    void startBattle(BattleEngine &engine, Player &player, MenuV2 &menu2);
     void displayRegisteredCount();
+    void drawarenaLoop(MenuV2 &menu2, Player &player, BattleEngine &engine);
 };
