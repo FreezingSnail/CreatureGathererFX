@@ -1,6 +1,5 @@
 #pragma once
-#include <stdint.h>
-#include "Move.hpp"
+#include "Effect.hpp"
 
 class StatusEffect {
   public:

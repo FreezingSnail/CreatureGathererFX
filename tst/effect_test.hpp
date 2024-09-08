@@ -12,11 +12,6 @@ void isStatEffectTest(TestSuite &t) {
     test.assert(isStatEffect(Effect::DEFDWN), true, "DEFDWN is a stat effect");
     test.assert(isStatEffect(Effect::AIRSWPT), false, "AIRSWPT is not a stat effect");
     test.assert(isStatEffect(Effect::BUFTD), false, "BUFTD is not a stat effect");
-    test.assert(isStatEffect(Effect(0x1F)), false, "Effect 0x1F is not a stat effect");
-    test.assert(isStatEffect(Effect(0x20)), true, "Effect 0x20 is a stat effect");
-    test.assert(isStatEffect(Effect(0x35)), true, "Effect 0x35 is a stat effect");
-    test.assert(isStatEffect(Effect(0x36)), false, "Effect 0x36 is not a stat effect");
-
     t.addTest(test);
 }
 

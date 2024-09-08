@@ -4,6 +4,7 @@
 #include "../../creature/Creature.hpp"
 #include "../../lib/Move.hpp"
 #include "../../lib/ReadData.hpp"
+#include "../../lib/random.hpp"
 
 BattleEngine::BattleEngine() {
 }
@@ -91,11 +92,13 @@ void BattleEngine::updateInactiveCreatures(uint8_t *list) {
 }
 
 Creature *BattleEngine::getCreature(uint8_t index) {
-    for (uint8_t i = 0; i < 3; i++) {
+    uint8_t i = 0;
+    for (; i < 3; i++) {
         if (this->playerParty[i]->id == index) {
-            return this->playerParty[i];
+            break;
         }
     }
+    return this->playerParty[i];
 }
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -260,10 +263,21 @@ bool BattleEngine::checkOpponentFaint() {
 }
 
 void BattleEngine::commitPlayerAction() {
-    if (!PlayerActionReady()) {
-        return;
+    EffectResults effectRes = runTurnEffect(playerCur);
+
+    Creature *target = opponentCur;
+    bool skip = false;
+    switch (effectRes) {
+    case EffectResults::TARGET_SELF:
+        target = playerCur;
+        // TODO: add move specific for self damage
+        break;
+    case EffectResults::SKIP_TURN:
+        skip = true;
     }
-    this->commitAction(&this->playerAction, this->playerCur, this->opponentCur, true);
+    if (!skip) {
+        this->commitAction(&this->opponentAction, this->opponentCur, target, false);
+    }
     if (turnState == BattleState::OPPONENT_RECEIVE_DAMAGE && checkOpponentFaint() || !this->activeBattle) {
         playerAction.setActionType(ActionType::SKIP, Priority::NORMAL);
         return;
@@ -271,10 +285,22 @@ void BattleEngine::commitPlayerAction() {
 }
 
 void BattleEngine::commitOpponentAction() {
-    if (!OpponentActionReady()) {
-        return;
+
+    EffectResults effectRes = runTurnEffect(playerCur);
+
+    Creature *target = playerCur;
+    bool skip = false;
+    switch (effectRes) {
+    case EffectResults::TARGET_SELF:
+        target = opponentCur;
+        // TODO: add move specific for self damage
+        break;
+    case EffectResults::SKIP_TURN:
+        skip = true;
     }
-    this->commitAction(&this->opponentAction, this->opponentCur, this->playerCur, false);
+    if (!skip) {
+        this->commitAction(&this->opponentAction, this->opponentCur, target, false);
+    }
     if (turnState == BattleState::PLAYER_RECEIVE_DAMAGE && checkPlayerFaint() || !this->activeBattle) {
         opponentAction.setActionType(ActionType::SKIP, Priority::NORMAL);
         return;
@@ -600,7 +626,7 @@ void BattleEngine::runEffect(Creature *commiter, Creature *other, Effect &effect
     // if (!isTickEffect(effect)) {
     //     applyEffect(other, effect);
     //     return;
-    // }
+    //
 
     uint8_t rate = getEffectRate(effect);
     uint8_t roll = 0;   // random(1, 100);
@@ -647,6 +673,31 @@ void BattleEngine::tickEffects(Creature *target, Effect &effect) {
         }
     }
 }
+
+EffectResults BattleEngine::runTurnEffect(Creature *committer) {
+    for (auto e : committer->status.effects) {
+        switch (e) {
+        case Effect::CONCUSED: {
+            if (randomRoll(0, 4, 1)) {
+                return EffectResults::TARGET_SELF;
+            }
+            break;
+        }
+        case Effect::PINNED: {
+            if (randomRoll(0, 3, 1)) {
+                return EffectResults::SKIP_TURN;
+            }
+            break;
+        }
+
+        default:
+            break;
+        }
+    }
+
+    return EffectResults::NO_EFFECT;
+}
+
 bool BattleEngine::TurnReady() {
     return playerAction.actionIndex != -1 && opponentAction.actionIndex != -1;
 }
