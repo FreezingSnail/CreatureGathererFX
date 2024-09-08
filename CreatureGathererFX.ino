@@ -51,11 +51,12 @@ void setup() {
     FX::setCursorRange(0, 32767);
 
     world.init();
-    gameState.state = GameState_t::BATTLE;
+    gameState.state = GameState_t::ARENA;
     engine.init();
     player.basic();
     engine.startArena(0);
-    menu.push(MenuEnum::BATTLE_OPTIONS);
+    // engine.startArena(3);
+    menu.push(MenuEnum::ARENA_MENU);
     //     engine.startArena(arduboy, player, 6);
 }
 
@@ -96,7 +97,8 @@ void render() {
         world.draw();
         break;
     case GameState_t::ARENA:
-        arena.arenaLoop(menu, player, engine);
+        arena.drawarenaLoop(menu, player, engine);
+        //  return;
         break;
     }
     animator.play();
@@ -111,7 +113,6 @@ void loop() {
     FX::enableOLED();
     arduboy.waitForNextPlane();
     FX::disableOLED();
-
     if (arduboy.needsUpdate()) {
         arduboy.pollButtons();
         run();

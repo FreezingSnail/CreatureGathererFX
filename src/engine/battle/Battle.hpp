@@ -4,23 +4,20 @@
 #include "../../opponent/Opponent.hpp"
 #include "../../player/Player.hpp"
 #include "../../lib/StatModifier.hpp"
+#include "../../values.hpp"
 
 class MenuV2;
 
 class BattleEngine {
   public:
     uint8_t debug;
-    Creature *playerParty[3];
+    Creature *playerParty[PARTY_SIZE];
     Creature *playerCur;
     Creature *opponentCur;
 
     Opponent opponent;
-    uint16_t playerHealths[3];
-    uint16_t opponentHealths[3];
-    uint8_t awakeMons;   // 11100111 player and opponet bit array
-
-    StatModifer playerModifiers;
-    StatModifer opponentModifiers;
+    uint16_t playerHealths[PARTY_SIZE];
+    uint16_t opponentHealths[PARTY_SIZE];
 
     uint8_t playerIndex;
     uint8_t opponentIndex;
@@ -62,6 +59,9 @@ class BattleEngine {
     void playerActionFirst();
     // deprecated
     void opponentActionFirst();
+    uint16_t calculateDamage(Action *action, Creature *committer, Creature *receiver);
+    Modifier getTypeStatusModifier(Creature *committer, Creature *receiver);
+    uint8_t aiChooseStrongestMove();
     void setMoveList(uint8_t **pointer);
     void changeCurMon(uint8_t index);
     void changeOptMon(uint8_t index);
@@ -84,8 +84,10 @@ class BattleEngine {
 
     void applyEffects();
     void applyEffect(Creature *target, Effect effect);
-    void applyBattleEffect(Creature *target, Effect effect);
-    void runEffect(Creature *commiter, Creature *other, Effect effect);
+    void applyBattleEffect(Creature *target, Effect &effect);
+    void runEffect(Creature *commiter, Creature *other, Effect &effect);
+    void runtTickEffects();
+    void tickEffects(Creature *target, Effect &effect);
 
     bool PlayerActionReady();
     bool OpponentActionReady();

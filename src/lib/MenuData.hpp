@@ -9,22 +9,23 @@ struct MenuData {
 };
 
 enum DialogType {
-    TEXT,
-    DAMAGE,
-    NAME,
-    ENEMY_DAMAGE,
-    ENEMY_NAME,
-    FAINT,
-    SWITCH,
-    WIN,
-    LOSS,
-    ESCAPE_ENCOUNTER,
-    EFFECTIVENESS,
-    GATHERING,
-    TEAM_CHANGE,
-    PLAYER_EFFECT,
-    ENEMY_EFFECT,
+    TEXT,               // 0
+    DAMAGE,             // 1
+    NAME,               // 2
+    ENEMY_DAMAGE,       // 3
+    ENEMY_NAME,         // 4
+    FAINT,              // 5
+    SWITCH,             // 6
+    WIN,                // 7
+    LOSS,               // 8
+    ESCAPE_ENCOUNTER,   // 9
+    EFFECTIVENESS,      // 10
+    GATHERING,          // 11
+    TEAM_CHANGE,        // 12
+    PLAYER_EFFECT,      // 13
+    ENEMY_EFFECT,       // 14
 };
+;
 
 enum class BattleState {
     TURN_INPUT,

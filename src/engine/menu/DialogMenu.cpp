@@ -145,12 +145,16 @@ void DialogMenu::pushEvent(Event event) {
 }
 
 void DialogMenu::popMenu() {
-    if (dialogPointer >= 0) {
-        popDialogStack[dialogPointer] = PopUpDialog{0, 0, 0, 0, 0, 0};
-
-        dialogPointer--;
+    if (dialogPointer < 0) {
         return;
     }
+    for (uint8_t i = 0; i < dialogPointer; i++) {
+        popDialogStack[i] = popDialogStack[i + 1];
+    }
+
+    popDialogStack[dialogPointer] = PopUpDialog{0, 0, 0, 0, 0, 0};
+    dialogPointer--;
+
     if (popDialogStack[0].animation != 0) {
         pushAnimation();
     }
