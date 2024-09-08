@@ -18,6 +18,7 @@ test:
 	g++ -std=c++17 -I/src \
 		tst/src/ReadData.cpp \
 		tst/src/DialogMenu.cpp \
+		tst/src/random.cpp \
 		src/plants/PlantStage.cpp \
 		src/plants/PlantPair.cpp \
 		src/creature/Creature.cpp \

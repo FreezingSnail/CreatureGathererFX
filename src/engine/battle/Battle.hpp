@@ -87,6 +87,7 @@ class BattleEngine {
     void applyBattleEffect(Creature *target, Effect &effect);
     void runEffect(Creature *commiter, Creature *other, Effect &effect);
     void runtTickEffects();
+    EffectResults runTurnEffect(Creature *commiter);
     void tickEffects(Creature *target, Effect &effect);
 
     bool PlayerActionReady();

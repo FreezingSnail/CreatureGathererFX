@@ -1,55 +1,66 @@
 #pragma once
 #include <stdint.h>
 
+enum class EffectResults {
+    NO_EFFECT,
+    TARGET_SELF,
+    SKIP_TURN
+};
+
 enum class Effect {
-    NONE = 0xff,
+    NONE,
     // type down
-    DPRSD = 0x00,
-    SOAKED = 0x01,
-    BUFTD = 0x02,
-    SOILED = 0x03,
-    SCRCHD = 0x04,
-    ZAPPED = 0x05,
-    TANGLD = 0x06,
-    REDCD = 0x07,
+    DPRSD,
+    SOAKED,
+    BUFTD,
+    SOILED,
+    SCRCHD,
+    ZAPPED,
+    TANGLD,
+    REDCD,
 
     // type up
-    ENLTND = 0x10,
-    DRNCHD = 0x11,
-    AIRSWPT = 0x12,
-    GRNDED = 0x13,
-    KINDLD = 0x14,
-    CHRGD = 0x15,
-    ENRCHD = 0x16,
-    EVOLVD = 0x17,
+    ENLTND,
+    DRNCHD,
+    AIRSWPT,
+    GRNDED,
+    KINDLD,
+    CHRGD,
+    ENRCHD,
+    EVOLVD,
 
     // stats
-    ATKDWN = 0x21,
-    DEFDWN = 0x22,
-    SPCADWN = 0x23,
-    SPCDDWN = 0x24,
-    SPDDWN = 0x25,
-    ATKUP = 0x31,
-    DEFUP = 0x32,
-    SPCAUP = 0x33,
-    SPCDUP = 0x34,
-    SPDUP = 0x35,
+    ATKDWN,
+    DEFDWN,
+    SPCADWN,
+    SPCDDWN,
+    SPDDWN,
+    ATKUP,
+    DEFUP,
+    SPCAUP,
+    SPCDUP,
+    SPDUP,
 
     // tick down
-    SAPPD = 0x40,
+    SAPPD,
 
     // tick up
-    INFSED = 0x50
+    INFSED,
+
+    // 1/3 wont take turn
+    PINNED,
+    // 1/4 hurt self
+    CONCUSED
 };
 
 inline bool isStatEffect(Effect effect) {
-    return uint8_t(effect) >= 0x20 && uint8_t(effect) <= 0x35;
+    return effect >= Effect::ATKDWN && effect <= Effect::SPDUP;
 }
 
 inline bool isTypeStatusEffect(Effect effect) {
-    return uint8_t(effect) >= 0x00 && uint8_t(effect) <= 0x17;
+    return effect >= Effect::DPRSD && effect <= Effect::EVOLVD;
 }
 
 inline bool isTickEffect(Effect effect) {
-    return uint8_t(effect) >= 0x40 && uint8_t(effect) <= 0x57;
+    return effect >= Effect::SAPPD && effect <= Effect::INFSED;
 }
