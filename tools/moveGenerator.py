@@ -113,6 +113,7 @@ def serialize_move(move):
     serialized += serialize_to_n_bytes(0, 4)
     serialized += serialize_to_n_bytes(move.effect, 8)
     serialized += serialize_to_n_bytes(255, 8)
+    # reverse the byte string
     byte_array = bytes(int(serialized[i:i+8], 2) for i in range(0, len(serialized), 8))
     return byte_array
 

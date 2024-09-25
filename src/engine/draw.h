@@ -7,6 +7,7 @@
 
 #include <ArduboyFX.h>
 
+// TODO: Refactor to only 1 func call
 static void printType(Type t, uint8_t x, uint8_t y) {
     switch (t) {
     case Type::SPIRIT:
@@ -33,6 +34,9 @@ static void printType(Type t, uint8_t x, uint8_t y) {
     case Type::ELDER:
         SpritesU::drawOverwriteFX(x, y, elder, FRAME(0));
         break;
+    case Type::STATUS:
+        SpritesU::drawOverwriteFX(x, y, status, FRAME(0));
+        break;
     }
 }
 
@@ -58,10 +62,10 @@ static void DGF printMoveInfo(uint8_t index, uint8_t x, uint8_t y) {
     }
     setTextColorBlack();
     drawInfoRec(x, y);
-    MoveBitSet m = getMovePack(index);
+    Move m = readMoveFX(index);
 
-    printType(Type(m.type), x, y);
-    if (m.physical) {
+    printType(Type(m.getMoveType()), x, y);
+    if (m.isPhysical()) {
         SpritesU::drawOverwriteFX(x, y + 8, physical, FRAME(0));
         // printString(font, MenuFXData::physical, x, y + 8);
     } else {
@@ -72,7 +76,7 @@ static void DGF printMoveInfo(uint8_t index, uint8_t x, uint8_t y) {
     // printString(font, MenuFXData::power, x, y + 16);
     // font.setCursor(x + 30, y + 16);
     // font.print(m.power);
-    drawStatNumbers(x + 33, y + 17, m.power);
+    drawStatNumbers(x + 33, y + 17, m.getMovePower());
 }
 
 static void printBattleMenu(int8_t index) {

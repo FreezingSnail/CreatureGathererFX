@@ -1,5 +1,4 @@
 id	name	type	power	physical	accuracy	effect
-255	none	none	0	0	0	NONE
 0	smite	spirit	10	0	100	NONE
 1	thought	spirit	5	1	100	NONE
 2	wisper	spirit	7	1	100	NONE
@@ -43,3 +42,4 @@ id	name	type	power	physical	accuracy	effect
 41	Ironbody	status	0	1	100	DEFUP
 42	deepthought	status	0	0	100	SPCAUP
 43	rejuvinate	status	0	1	100	INFSED
+255	none	none	0	0	0	NONE

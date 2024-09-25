@@ -24,11 +24,11 @@ class Move {
   private:
     static const uint16_t TypeMask = 0b1111000000000000;
     static const uint16_t PowerMask = 0b0000111110000000;
-    static const uint16_t PhysMask = 0b00000000010000000;
+    static const uint16_t PhysMask = 0b00000000001000000;
     static const uint16_t AccMask = 0b0000000000110000;
     static const uint8_t TypeShift = 12;
-    static const uint8_t PowerShift = 8;
-    static const uint8_t PhysShift = 7;
+    static const uint8_t PowerShift = 7;
+    static const uint8_t PhysShift = 6;
     static const uint8_t AccShift = 4;
 
   public:
@@ -46,6 +46,8 @@ class Move {
     constexpr Move(MoveBitSet movePack) : move(packMove(movePack)), effect1(Effect::NONE), effect2(Effect::NONE) {
     }
 
+    constexpr Move(uint32_t buffer) : move(buffer >> 16), effect1(Effect((buffer >> 8) & 0b11111111)), effect2(Effect(buffer & 0b11111111)) {
+    }
     constexpr uint8_t getMovePower() {
         return (this->move & PowerMask) >> PowerShift;
     }

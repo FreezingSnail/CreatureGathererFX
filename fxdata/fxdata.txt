@@ -16,7 +16,6 @@ include "Sprites.txt"
 include "generated/Sprites.txt"
 include "battleEffects/Sprites.txt"
 
-include "generated/movedata.txt"
 
 raw_t opponent_seeds = "generated/opponents.bin"
 raw_t type_table = "generated/typetable.bin"

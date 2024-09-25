@@ -67,6 +67,17 @@ void accuracyTest(TestSuite &t) {
     t.addTest(test);
 }
 
+void loadTest(TestSuite &t) {
+    Test test = Test(__func__);
+    uint32_t m = 46202879;
+    Move move = Move(m);
+    test.assert((move.getMoveAccuracy()), int(Accuracy::HUNDRED), "getMoveAccuracy");
+    test.assert((move.getMovePower()), 5, "getMovePower");
+    test.assert((move.getMoveType()), 0, "getMoveType");
+    test.assert((move.getMoveEffect()), int(Effect::NONE), "getMoveEffect");
+
+    t.addTest(test);
+};
 static void MoveSuite(TestRunner &r) {
     TestSuite t = TestSuite("Move Tests");
     moveTypeTest(t);
