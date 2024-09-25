@@ -2,6 +2,7 @@
 #include <ArduboyFX.h>
 #include "../fxdata.h"
 
+// TODO: refactor away from dto
 MoveBitSet getMovePack(uint8_t index) {
     MoveBitSet move;
     uint24_t rowAddress = MoveData::movePack + sizeof(MoveBitSet) * index;
