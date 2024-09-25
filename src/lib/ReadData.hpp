@@ -5,10 +5,10 @@
 #include "../opponent/Opponent.hpp"
 #include "uint24.h"
 
-MoveBitSet getMovePack(uint8_t index);
+Move readMoveFX(uint8_t index);
 
 // TODO: The rates dont exist yet in flash data
-uint8_t getEffectRate(Effect effect);
+uint8_t getEffectRateFX(uint8_t id);
 
 // TODO: add a bitarray for the effect targets
 bool selfEffect(Effect effect);

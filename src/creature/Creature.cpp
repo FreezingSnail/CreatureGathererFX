@@ -57,7 +57,7 @@ void dbf Creature::loadTypes(CreatureData_t seed) {
 // should prob have error checking but w/e
 void Creature::setMove(uint8_t move, uint8_t slot) {
     this->moves[slot] = move;
-    this->moveList[slot] = Move(getMovePack(move));
+    this->moveList[slot] = readMoveFX(move);
 }
 
 void Creature::setStats(CreatureData_t seed) {
@@ -81,8 +81,7 @@ uint8_t Creature::getMove(uint8_t slot) {
 }
 
 bool Creature::moveTypeBonus(uint8_t index) {
-    return this->types.getType1() == (Type)this->moveList[index].getMoveType() ||
-           this->types.getType2() == (Type)this->moveList[index].getMoveType();
+    return this->types.getType1() == (Type)this->moveList[index].getMoveType() || this->types.getType2() == (Type)this->moveList[index].getMoveType();
 }
 
 uint8_t Creature::seedToStat(uint8_t seed) {

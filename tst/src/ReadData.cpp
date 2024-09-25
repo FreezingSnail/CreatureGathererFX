@@ -1,11 +1,15 @@
 #include "../../src/lib/ReadData.hpp"
 #include "parseCSV.hpp"
 
-MoveBitSet getMovePack(uint8_t index) {
-    MoveBitSet move;
+Move readMoveFX(uint8_t index) {
+    Move move;
     // uint24_t rowAddress = MoveData::movePack + sizeof(MoveBitSet) * index;
     // FX::readDataObject(rowAddress, move);
     return move;
+}
+
+uint8_t getEffectRateFX(uint8_t id) {
+    return 100;
 }
 
 // TODO: The rates dont exist yet in flash data

@@ -5,6 +5,7 @@
 #include "../../lib/Move.hpp"
 #include "../../lib/ReadData.hpp"
 #include "../../lib/random.hpp"
+#include "../../lib/Effect.hpp"
 
 BattleEngine::BattleEngine() {
 }
@@ -87,6 +88,9 @@ void BattleEngine::updateInactiveCreatures(uint8_t *list) {
         if (this->playerCur != this->playerParty[i]) {
             list[index] = this->playerParty[i]->id;
             index++;
+            if (index > 1) {
+                return;
+            }
         }
     }
 }
@@ -630,13 +634,13 @@ void BattleEngine::runEffect(Creature *commiter, Creature *other, Effect &effect
     //     return;
     //
 
-    uint8_t rate = getEffectRate(effect);
+    uint8_t rate = getEffectRateFX(uint8_t(effect));
     uint8_t roll = randomRoll(1, 100);   // random(1, 100);
     if (roll > rate) {
         return;
     }
     // TODO: need to base this off the move or mabye handle elsewhere
-    bool selfTarget = selfEffect(effect);
+    bool selfTarget = isSelfEffect(effect);
     Creature *target = selfTarget ? commiter : other;
     applyEffect(target, effect);
 }

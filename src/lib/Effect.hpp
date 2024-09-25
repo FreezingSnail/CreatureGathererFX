@@ -7,9 +7,9 @@ enum class EffectResults {
 };
 
 enum class Effect {
-    NONE,
+    NONE = 255,
     // type down
-    DPRSD,
+    DPRSD = 0,
     SOAKED,
     BUFTD,
     SOILED,
