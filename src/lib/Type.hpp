@@ -4,6 +4,7 @@
 
 #define dbf __attribute__((optimize("-O0")))
 
+// represented as a nibble 0-15 range
 enum class Type {
     SPIRIT,
     WATER,
@@ -13,7 +14,10 @@ enum class Type {
     LIGHTNING,
     PLANT,
     ELDER,
-    NONE,
+
+    STATUS,
+
+    NONE = 15,
 };
 
 constexpr const uint8_t TypeCount = 9;
@@ -180,8 +184,7 @@ static Modifier getModifier(Type attackType, Type defendingType) {
     if (defendingType == Type::NONE) {
         return Modifier::Same;
     }
-    return (attackType == Type::NONE) ? Modifier::None
-                                      : static_cast<Modifier>((typeTable[static_cast<uint8_t>(attackType)][static_cast<uint8_t>(defendingType)]));
+    return (attackType == Type::NONE) ? Modifier::None : static_cast<Modifier>((typeTable[static_cast<uint8_t>(attackType)][static_cast<uint8_t>(defendingType)]));
 }
 
 static Modifier combineModifier(Modifier a, Modifier b) {

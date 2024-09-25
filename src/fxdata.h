@@ -6,8 +6,8 @@ using uint24_t = __uint24;
 
 // Initialize FX hardware using  FX::begin(FX_DATA_PAGE); in the setup() function.
 
-constexpr uint16_t FX_DATA_PAGE  = 0xfbe3;
-constexpr uint24_t FX_DATA_BYTES = 269540;
+constexpr uint16_t FX_DATA_PAGE  = 0xfbe2;
+constexpr uint24_t FX_DATA_BYTES = 269771;
 
 constexpr uint24_t encounterRates = 0x000000;
 constexpr uint24_t op1 = 0x000048;
@@ -330,5 +330,6 @@ namespace MoveData
   constexpr uint24_t movePack = 0x041AA9;
 }
 
-constexpr uint24_t opponent_seeds = 0x041B4E;
-constexpr uint24_t type_table = 0x041CA4;
+constexpr uint24_t opponent_seeds = 0x041B85;
+constexpr uint24_t type_table = 0x041CDB;
+constexpr uint24_t move_table = 0x041D1B;

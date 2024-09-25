@@ -20,5 +20,6 @@ include "generated/movedata.txt"
 
 raw_t opponent_seeds = "generated/opponents.bin"
 raw_t type_table = "generated/typetable.bin"
+raw_t move_table = "generated/moves.bin"
 
 

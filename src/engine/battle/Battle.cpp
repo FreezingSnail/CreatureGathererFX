@@ -237,7 +237,7 @@ bool BattleEngine::checkWin() {
 // These are just place holders until menu & ai written for proper swapping
 bool BattleEngine::checkPlayerFaint() {
     if (this->playerHealths[this->playerIndex] <= 0) {
-        // TODO(BUG): can bacout out of change menu if creature is down
+        // BUG: can backout out of change menu if creature is down
         dialogMenu.pushMenu(newDialogBox(FAINT, playerCur->id, 0));
         // battleEventPlayer.push({BattleEventType::FAINT, playerCur->id, 0});
         if (!checkLoss()) {
@@ -298,6 +298,7 @@ void BattleEngine::commitOpponentAction() {
     case EffectResults::SKIP_TURN:
         skip = true;
     }
+
     if (!skip) {
         this->commitAction(&this->opponentAction, this->opponentCur, target, false);
     }
@@ -393,6 +394,8 @@ void BattleEngine::commitAction(Action *action, Creature *commiter, Creature *re
         Modifier mod = combineModifier(m1, m2);
 
         if (turnState == BattleState::PLAYER_ATTACK || turnState == BattleState::OPPONENT_ATTACK) {
+            Effect moveEffect = move.getMoveEffect();
+            runEffect(commiter, receiver, moveEffect);
             if (isPlayer) {
                 // battleEventPlayer.push({BattleEventType::ATTACK, commiter->id, commiter->moves[action->actionIndex]});
                 dialogMenu.pushMenu(newDialogBox(NAME, commiter->id, commiter->moves[action->actionIndex]));
@@ -511,7 +514,6 @@ void BattleEngine::resetOpponent() {
     opponent.levels[1] = 31;
     opponent.levels[2] = 31;
 
-    this->opponent.party[0];
     this->opponentHealths[0] = this->opponent.party[0].statlist.hp;
     this->opponentHealths[1] = this->opponent.party[1].statlist.hp;
     this->opponentHealths[2] = this->opponent.party[2].statlist.hp;
@@ -629,7 +631,7 @@ void BattleEngine::runEffect(Creature *commiter, Creature *other, Effect &effect
     //
 
     uint8_t rate = getEffectRate(effect);
-    uint8_t roll = 0;   // random(1, 100);
+    uint8_t roll = randomRoll(1, 100);   // random(1, 100);
     if (roll > rate) {
         return;
     }

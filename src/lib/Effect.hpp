@@ -1,5 +1,4 @@
 #pragma once
-#include <stdint.h>
 
 enum class EffectResults {
     NO_EFFECT,
@@ -53,14 +52,18 @@ enum class Effect {
     CONCUSED
 };
 
-inline bool isStatEffect(Effect effect) {
+constexpr bool isStatEffect(Effect effect) {
     return effect >= Effect::ATKDWN && effect <= Effect::SPDUP;
 }
 
-inline bool isTypeStatusEffect(Effect effect) {
+constexpr bool isTypeStatusEffect(Effect effect) {
     return effect >= Effect::DPRSD && effect <= Effect::EVOLVD;
 }
 
-inline bool isTickEffect(Effect effect) {
+constexpr bool isTickEffect(Effect effect) {
     return effect >= Effect::SAPPD && effect <= Effect::INFSED;
+}
+
+constexpr bool isSelfEffect(Effect effect) {
+    return effect >= Effect::ENLTND && effect <= Effect::EVOLVD && effect >= Effect::ATKUP && effect <= Effect::SPDUP;
 }

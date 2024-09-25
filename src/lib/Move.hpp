@@ -3,45 +3,47 @@
 #include "Effect.hpp"
 
 enum class Accuracy {
-    HUNDRED,
-    NINETY,
-    EIGHTY,
-    SEVENTY
+    HUNDRED = 0,
+    NINETY = 1,
+    EIGHTY = 2,
+    SEVENTY = 3
 };
 
+// TODO: redsign to get rid of this entirely
 struct MoveBitSet {
-    uint8_t type;       // 3 bit
+    uint8_t type;       // 4 bit
     uint8_t power;      // 5 bit
     uint8_t physical;   // 1 bit
     uint8_t accuracy;   // 2 bit
-    uint8_t effects;    // 5 bit (32 potential effects)
+
+    // TODO: mabye make this 2 effects per move
+    uint8_t effects;   // 5 bit (32 potential effects)
 };
 
 class Move {
   private:
-    // 000 0000 0
-    static const uint16_t TypeMask = 0b1110000000000000;
-    static const uint16_t PowerMask = 0b0001111100000000;
-    static const uint16_t PhysMask = 0b0000000010000000;
-    static const uint16_t AccMask = 0b0000000001100000;
-    static const uint16_t EffectMask = 0b0000000000011111;
-    static const uint8_t TypeShift = 13;
+    static const uint16_t TypeMask = 0b1111000000000000;
+    static const uint16_t PowerMask = 0b0000111110000000;
+    static const uint16_t PhysMask = 0b00000000010000000;
+    static const uint16_t AccMask = 0b0000000000110000;
+    static const uint8_t TypeShift = 12;
     static const uint8_t PowerShift = 8;
     static const uint8_t PhysShift = 7;
-    static const uint8_t AccShift = 5;
+    static const uint8_t AccShift = 4;
 
   public:
     uint16_t move;
-    uint8_t effects;
+    Effect effect1;
+    Effect effect2;
 
     constexpr uint16_t packMove(MoveBitSet move) {
         return (move.type << TypeShift) | (move.power << PowerShift) | (move.physical << PhysShift) | (move.accuracy << AccShift);
     }
 
-    constexpr Move() : move(0), effects(0xffff) {
+    constexpr Move() : move(0), effect1(Effect::NONE), effect2(Effect::NONE) {
     }
 
-    constexpr Move(MoveBitSet movePack) : move(packMove(movePack)), effects(movePack.effects) {
+    constexpr Move(MoveBitSet movePack) : move(packMove(movePack)), effect1(Effect::NONE), effect2(Effect::NONE) {
     }
 
     constexpr uint8_t getMovePower() {
@@ -61,6 +63,6 @@ class Move {
     }
 
     constexpr Effect getMoveEffect() {
-        return Effect((this->effects));
+        return Effect((this->effect1));
     }
 };

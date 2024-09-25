@@ -24,6 +24,8 @@ void moveTypeTest(TestSuite &t) {
     test.assert(move.getMoveType(), 4, "getMoveType");
     move = Move({7, 2, 0});
     test.assert(move.getMoveType(), 7, "getMoveType");
+    move = Move({8, 2, 0});
+    test.assert(move.getMoveType(), 8, "getMoveType STATUS");
     t.addTest(test);
 }
 
