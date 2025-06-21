@@ -7,43 +7,6 @@
 #define dbf __attribute__((optimize("-O0"))
 #define CURRENT_MENU this->stack[this->menuPointer]
 
-void updateFightState() {
-    switch (engine.turnState) {
-    case BattleState::TURN_INPUT: {
-        // handled automatically
-    } break;
-    case BattleState::PLAYER_ATTACK:
-        engine.turnState = BattleState::OPPONENT_RECEIVE_DAMAGE;
-        break;
-    case BattleState::OPPONENT_RECEIVE_DAMAGE:
-        engine.turnState = BattleState::OPPONENT_RECEIVE_EFFECT_APPLICATION;
-        break;
-    case BattleState::OPPONENT_ATTACK:
-        engine.turnState = BattleState::PLAYER_RECEIVE_DAMAGE;
-        break;
-    case BattleState::PLAYER_RECEIVE_DAMAGE:
-        engine.turnState = BattleState::PLAYER_RECEIVE_EFFECT_APPLICATION;
-        break;
-    case BattleState::PLAYER_RECEIVE_EFFECT_APPLICATION:
-        if (engine.PlayerActionReady()) {
-            engine.turnState = BattleState::PLAYER_ATTACK;
-        } else {
-            engine.turnState = BattleState::END_TURN;
-        }
-        break;
-    case BattleState::OPPONENT_RECEIVE_EFFECT_APPLICATION:
-        if (engine.OpponentActionReady()) {
-            engine.turnState = BattleState::OPPONENT_ATTACK;
-        } else {
-            engine.turnState = BattleState::END_TURN;
-        }
-        break;
-    case BattleState::END_TURN:
-        engine.turnState = BattleState::TURN_INPUT;
-        break;
-    }
-}
-
 MenuV2::MenuV2() {
     this->menuPointer = -1;
 }
@@ -198,14 +161,13 @@ void DGF MenuV2::run(BattleEngine &engine) {
         transverse();
         action(engine);
     }
-
-    if (engine.updateState) {
-        updateFightState();
-        engine.updateState = false;
-    }
 }
 
 void MenuV2::printMenu(BattleEngine &engine) {
+    if (!this->drawMenu) {
+        SpritesU::drawOverwriteFX(0, 40, battleMenu, FRAME(0));
+        return;
+    }
     // arduboy.fillRect(0, 43, 128, 32, WHITE);
     switch (CURRENT_MENU) {
     case BATTLE_OPTIONS:

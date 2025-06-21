@@ -10,6 +10,43 @@
 BattleEngine::BattleEngine() {
 }
 
+void BattleEngine::updateFightState() {
+    switch (turnState) {
+    case BattleState::TURN_INPUT: {
+        // handled automatically
+    } break;
+    case BattleState::PLAYER_ATTACK:
+        turnState = BattleState::OPPONENT_RECEIVE_DAMAGE;
+        break;
+    case BattleState::OPPONENT_RECEIVE_DAMAGE:
+        turnState = BattleState::OPPONENT_RECEIVE_EFFECT_APPLICATION;
+        break;
+    case BattleState::OPPONENT_ATTACK:
+        turnState = BattleState::OPPONENT_RECEIVE_EFFECT_APPLICATION;
+        break;
+    case BattleState::PLAYER_RECEIVE_DAMAGE:
+        turnState = BattleState::PLAYER_RECEIVE_EFFECT_APPLICATION;
+        break;
+    case BattleState::PLAYER_RECEIVE_EFFECT_APPLICATION:
+        if (PlayerActionReady()) {
+            turnState = BattleState::PLAYER_ATTACK;
+        } else {
+            turnState = BattleState::END_TURN;
+        }
+        break;
+    case BattleState::OPPONENT_RECEIVE_EFFECT_APPLICATION:
+        if (OpponentActionReady()) {
+            turnState = BattleState::OPPONENT_ATTACK;
+        } else {
+            turnState = BattleState::END_TURN;
+        }
+        break;
+    case BattleState::END_TURN:
+        turnState = BattleState::TURN_INPUT;
+        break;
+    }
+}
+
 inline uint16_t applyIntMod(uint16_t value, int8_t mod) {
     mod = mod * 2;
     if (mod == 0) {
@@ -120,6 +157,7 @@ void BattleEngine::startFight(uint8_t optID) {
     playerAction.actionIndex = -1;
     opponentAction.actionIndex = -1;
     menuStack.push(MenuEnum::BATTLE_OPTIONS);
+    turnState = BattleState::TURN_INPUT;
 }
 void BattleEngine::startArena(uint8_t optID) {
     ReadOpt(&this->opponent, optID);
@@ -222,6 +260,10 @@ void BattleEngine::turnTick() {
     default:
         break;
     }
+    if (updateState) {
+        updateFightState();
+        updateState = false;
+    }
 }
 
 bool BattleEngine::checkLoss() {
@@ -267,6 +309,7 @@ bool BattleEngine::checkOpponentFaint() {
 }
 
 void BattleEngine::commitPlayerAction() {
+    // TODO: If changing creature should skip all this
     EffectResults effectRes = runTurnEffect(playerCur);
 
     Creature *target = opponentCur;
@@ -280,7 +323,7 @@ void BattleEngine::commitPlayerAction() {
         skip = true;
     }
     if (!skip) {
-        this->commitAction(&this->opponentAction, this->opponentCur, target, false);
+        this->commitAction(&this->playerAction, this->opponentCur, target, true);
     }
     if (turnState == BattleState::OPPONENT_RECEIVE_DAMAGE && checkOpponentFaint() || !this->activeBattle) {
         playerAction.setActionType(ActionType::SKIP, Priority::NORMAL);

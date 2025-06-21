@@ -95,4 +95,5 @@ class BattleEngine {
     bool TurnReady();
     void commitPlayerAction();
     void commitOpponentAction();
+    void updateFightState();
 };

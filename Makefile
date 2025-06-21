@@ -33,6 +33,15 @@ test:
 		-O0 -g3 \
 		-o tst/test.o && ./tst/test.o && rm tst/test.o
 
+testvm:
+	g++ -std=c++17 -I/src \
+		src/vm/ScriptVM.cpp \
+		src/GameState.cpp \
+		tst/script_tests/main.cpp \
+		-w \
+		-O0 -g3 \
+		-o tst/test.o && ./tst/test.o && rm tst/test.o
+
 fxtest:
 	cp -r src tst/fxdatatest
 	cd tst/fxdatatest && arduino-cli compile --fqbn "arduboy-homemade:avr:arduboy-fx" --optimize-for-debug --output-dir .
