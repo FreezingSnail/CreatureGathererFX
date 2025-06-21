@@ -373,6 +373,24 @@ void ApplyHPTickEffects(TestSuite &t) {
     t.addTest(test);
 }
 
+void ChangeCreatureTest(TestSuite &t) {
+    reset();
+    Test test = Test(__func__);
+    BattleEngine eng = BattleEngine();
+    player.basic();
+    eng.startFight(0);
+    eng.queueAction(ActionType::CHNGE, 0);
+    eng.playerParty[0]->statlist.speed = 255;
+    eng.turnTick();
+    eng.turnTick();
+    eng.turnTick();
+    eng.turnTick();
+    eng.turnTick();
+    test.assert(eng.playerIndex, 1, "Creature changed");
+
+    t.addTest(test);
+}
+
 void EngineSuite(TestRunner &r) {
     TestSuite t = TestSuite("Engine Suite");
     EngineStartTest(t);
@@ -383,6 +401,7 @@ void EngineSuite(TestRunner &r) {
     EngineDamageCalcTypeEffect(t);
     ApplyStatModEffects(t);
     ApplyHPTickEffects(t);
+    ChangeCreatureTest(t);
     r.addTestSuite(t);
     reset();
 }

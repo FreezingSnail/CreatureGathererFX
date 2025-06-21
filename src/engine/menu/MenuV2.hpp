@@ -13,6 +13,7 @@ class MenuV2 {
     int8_t cursorIndex;
     uint8_t *moveList;
     uint8_t creatures[2];
+    bool drawMenu = true;
 
     MenuV2();
     void setMoveList(uint8_t *pointer);

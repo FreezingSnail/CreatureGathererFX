@@ -25,3 +25,4 @@ imgui.ini
 Notes/.obsidian
 tst/fxdatatest/src/*
 *__pycache__
+*tiled-*

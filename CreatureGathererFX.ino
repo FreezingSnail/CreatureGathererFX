@@ -13,6 +13,7 @@
 #include "src/player/Player.hpp"
 #include "src/plants/PlantGamestate.hpp"
 #include "src/engine/draw.h"
+#include "src/vm/ScriptVm.hpp"
 
 // #include <HardwareSerial.h>
 
@@ -35,12 +36,12 @@ BattleEvent battleEventStack[10];
 BattleEventPlayer battleEventPlayer;
 MenuStack menuStack;
 DialogMenu dialogMenu;
+ScriptVm vm;
 
 void setup() {
     // Serial.begin(9600);
     //  arduboy.begin();
     //  arduboy.setFrameRate(45);
-
     arduboy.boot();
     arduboy.startGray();
     arduboy.initRandomSeed();
@@ -57,6 +58,7 @@ void setup() {
     engine.startArena(0);
     // engine.startArena(3);
     menu.push(MenuEnum::BATTLE_OPTIONS);
+    vm.initVM(arduboy.sBuffer, &gameState);
     //     engine.startArena(arduboy, player, 6);
 }
 
