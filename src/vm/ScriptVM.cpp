@@ -1,5 +1,6 @@
 #include "ScriptVM.hpp"
 #include "opcodes.hpp"
+#include "../macros.hpp"
 #include <stdint.h>
 #include <string.h>
 #include <stdio.h>
@@ -9,7 +10,7 @@ void ScriptVm::run() {
     VmOpcode byte = static_cast<VmOpcode>(*this->ptr);
     for (auto i = 0; i < 30; i++) {
         this->ptr++;
-        printf("running command %d at pointer %d\n", byte, this->ptr - this->buffer);
+        printd("running command %d at pointer %d\n", byte, this->ptr - this->buffer);
         switch (byte) {
         case VmOpcode::Msg: {
             break;
@@ -21,7 +22,7 @@ void ScriptVm::run() {
             uint16_t x = readUInt16();
             uint16_t y = readUInt16();
             uint16_t end = To1D(x, y);
-            printf("tp from %hu to %hu, player loc %d\n", this->state->playerLocation, end, this->state->playerLocation);
+            printd("tp from %hu to %hu, player loc %d\n", this->state->playerLocation, end, this->state->playerLocation);
             this->state->playerLocation = end;
             break;
         }
@@ -32,16 +33,16 @@ void ScriptVm::run() {
             x = readUInt16();
             y = readUInt16();
             uint16_t end = To1D(x, y);
-            printf("tp from %hu to %hu, player loc %d\n", start, end, this->state->playerLocation);
+            printd("tp from %hu to %hu, player loc %d\n", start, end, this->state->playerLocation);
 
             if (this->state->playerLocation == start) {
-                printf("teleportin\n");
+                printd("teleportin\n");
                 this->state->playerLocation = end;
             }
             break;
         }
         case VmOpcode::If: {
-            printf("if\n");
+            printd("if\n");
             uint8_t condType = readUInt8();
             switch (condType) {
             case 0:
@@ -49,14 +50,14 @@ void ScriptVm::run() {
                 uint16_t flag = readUInt16();
                 uint8_t ifType = readUInt8();
                 uint8_t jump = readUInt8();
-                printf("if type: %d\n", ifType);
-                printf("flag check, flag %d, jump %d\n", flag, jump);
+                printd("if type: %d\n", ifType);
+                printd("flag check, flag %d, jump %d\n", flag, jump);
                 bool set = this->state->getFlag(flag);
-                printf("flag set: %d\n", set);
+                printd("flag set: %d\n", set);
                 if ((condType == 0 && !set) || (condType == 1 && set)) {
-                    printf("jumping %d\n", jump);
+                    printd("jumping %d\n", jump);
                     this->ptr += jump;
-                    printf("pointer at %d\n", this->ptr - this->buffer);
+                    printd("pointer at %d\n", this->ptr - this->buffer);
                 }
             }
             }
@@ -66,7 +67,7 @@ void ScriptVm::run() {
         case VmOpcode::End: {
             // reset the pointer to the start of the buffer
             this->ptr = this->buffer;
-            printf("\n");
+            printd("\n");
             return;
         }
         }
@@ -76,14 +77,14 @@ void ScriptVm::run() {
 
 uint16_t ScriptVm::readUInt16() {
     uint16_t val = (static_cast<uint16_t>(this->ptr[0]) << 8 | this->ptr[1]);
-    printf("readInt16: %d: from values %hu, %hu\n", int(val), this->ptr[0], this->ptr[1]);
+    printd("readInt16: %d: from values %hu, %hu\n", int(val), this->ptr[0], this->ptr[1]);
     this->ptr += 2;
     return val;
 }
 
 uint8_t ScriptVm::readUInt8() {
     uint8_t val = this->ptr[0];
-    printf("readUInt8: %d: from value %hu\n", int(val), this->ptr[0]);
+    printd("readUInt8: %d: from value %hu\n", int(val), this->ptr[0]);
     this->ptr += 1;
     return val;
 }
