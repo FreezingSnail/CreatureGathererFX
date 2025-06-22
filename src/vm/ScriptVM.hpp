@@ -32,15 +32,6 @@
 
 */
 
-enum class SciptCommands {
-    cmd_msg,    // msg {text} - display text
-    cmd_tmsg,   // tmsg <tile> {text} - display text when on tile
-
-    cmd_tp,   // tp <tile> <tile> - transport from tile a to b
-
-    cmd_end = 255,   // end - ends script
-};
-
 class ScriptVm {
   public:
     int8_t memory[8];
@@ -60,5 +51,6 @@ class ScriptVm {
     };
 
     void run();
-    uint16_t readInt16();
+    uint16_t readUInt16();
+    uint8_t readUInt8();
 };

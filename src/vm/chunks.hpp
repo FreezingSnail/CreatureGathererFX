@@ -2,5 +2,5 @@
 #include <stdint.h>
 
 struct Chunk {
-    uint8_ etntityCount;
-}
+    uint8_t etntityCount;
+};

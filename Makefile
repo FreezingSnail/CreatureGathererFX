@@ -28,6 +28,8 @@ test:
 		src/lib/MenuStack.cpp \
 		src/lib/BattleEventPlayer.cpp \
 		src/engine/battle/Battle.cpp \
+		src/GameState.cpp \
+		src/flags/flag_bit_array.cpp \
 		tst/main.cpp \
 		-w \
 		-O0 -g3 \
@@ -37,6 +39,7 @@ testvm:
 	g++ -std=c++17 -I/src \
 		src/vm/ScriptVM.cpp \
 		src/GameState.cpp \
+		src/flags/flag_bit_array.cpp \
 		tst/script_tests/main.cpp \
 		-w \
 		-O0 -g3 \
