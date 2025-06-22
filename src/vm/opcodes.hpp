@@ -1,5 +1,5 @@
 #pragma once
-#include <cstdint>
+#include <stdint.h>
 // Auto-generated – DO NOT EDIT
 
 enum class VmOpcode : uint8_t {
