@@ -8,6 +8,7 @@
 #include "opponent_test.hpp"
 #include "type_test.hpp"
 #include "effect_test.hpp"
+#include "gamestate_test.hpp"
 
 #include "../src/globals.hpp"
 
@@ -43,6 +44,8 @@ int main() {
     std::cout << "OpponentSuite finished" << std::endl;
     EffectSuite(tests);
     std::cout << "EffectSuite finished" << std::endl;
+    GameStateSuite(tests);
+    std::cout << "GameStateSuite finished" << std::endl;
 
     std::cout << "Tests Finished" << std::endl;
     tests.printSummary();

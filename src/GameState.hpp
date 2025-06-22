@@ -1,6 +1,7 @@
 #pragma once
 #include <stdint.h>
 #include "engine/game/Gamestate.hpp"
+#include "flags/flag_bit_array.hpp"
 
 // #include "engine/arena/Arena.hpp"
 // #include "engine/battle/Battle.hpp"
@@ -24,6 +25,10 @@ class GameState {
     // Animator animator;
     // tile index on 1d flattened map
     uint16_t playerLocation;
+    uint8_t *flags;
 
     GameState();
+    void setFlag(uint16_t index);
+    bool getFlag(uint16_t index);
+    void clearFlag(uint16_t index);
 };

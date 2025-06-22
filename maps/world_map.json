@@ -272,7 +272,7 @@
         {
          "draworder":"topdown",
          "id":3,
-         "name":"scrips",
+         "name":"scripts",
          "objects":[
                 {
                  "height":0,
@@ -289,8 +289,8 @@
                  "type":"",
                  "visible":true,
                  "width":0,
-                 "x":7.8261,
-                 "y":75.3462
+                 "x":7.16146,
+                 "y":75.6717
                 }, 
                 {
                  "height":0,
@@ -309,6 +309,24 @@
                  "width":0,
                  "x":135.686,
                  "y":75.0188
+                }, 
+                {
+                 "height":0,
+                 "id":11,
+                 "name":"",
+                 "point":true,
+                 "properties":[
+                        {
+                         "name":"script",
+                         "type":"string",
+                         "value":"if flag_test1 then tp 1 1 else tp 2 2;"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":38.4114583333333,
+                 "y":39.0625
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -353,7 +371,7 @@
          "y":0
         }],
  "nextlayerid":5,
- "nextobjectid":11,
+ "nextobjectid":13,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.11.2",
