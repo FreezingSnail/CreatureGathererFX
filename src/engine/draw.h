@@ -221,15 +221,7 @@ static void drawChunk(uint8_t chunkIdx, uint8_t xOffset, uint8_t yOffset) {
 }
 
 static void drawChunkAtOffset(uint16_t chunkIndex, int8_t offsetX, int8_t offsetY) {
-    uint16_t chunk[32];
     uint24_t chunkAddress = map_data + ((32 * 2) * chunkIndex);
-    FX::seekData(chunkAddress);
-    for (uint8_t i = 0; i < 32; i++) {
-        chunk[i] = FX::readPendingUInt16();
-    }
-    FX::readEnd();
-
-    // Draw each tile in the chunk (8x4 = 32 tiles)
     for (uint8_t i = 0; i < 32; i++) {
         uint8_t tileX = i % 8;   // 0-7 within chunk
         uint8_t tileY = i / 8;   // 0-3 within chunk
@@ -245,8 +237,9 @@ static void drawChunkAtOffset(uint16_t chunkIndex, int8_t offsetX, int8_t offset
             int8_t screenX = viewportTileX * 16;
             int8_t screenY = viewportTileY * 16;
 
+            uint16_t tile = FX::readIndexedUInt16(chunkAddress, i);
             // Draw the tile
-            SpritesU::drawOverwriteFX(screenX, screenY, tiles, FRAME((chunk[i] - 1)));
+            SpritesU::drawOverwriteFX(screenX, screenY, tiles, FRAME((tile - 1)));
         }
     }
 }
