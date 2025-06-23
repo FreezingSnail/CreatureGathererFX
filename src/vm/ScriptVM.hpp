@@ -51,6 +51,7 @@ class ScriptVm {
     };
 
     void run();
+    void end();
     uint16_t readUInt16();
     uint8_t readUInt8();
 };

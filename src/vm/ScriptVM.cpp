@@ -22,9 +22,10 @@ void ScriptVm::run() {
             uint16_t x = readUInt16();
             uint16_t y = readUInt16();
             uint16_t end = To1D(x, y);
-            printd("tp from %hu to %hu, player loc %d\n", this->state->playerLocation, end, this->state->playerLocation);
+            printd("tp to %hu, player loc %d\n", end, this->state->playerLocation);
             this->state->playerLocation = end;
-            break;
+            this->end();
+            return;
         }
         case VmOpcode::TpIf: {
             uint16_t x = readUInt16();
@@ -38,6 +39,8 @@ void ScriptVm::run() {
             if (this->state->playerLocation == start) {
                 printd("teleportin\n");
                 this->state->playerLocation = end;
+                this->end();
+                return;
             }
             break;
         }
@@ -65,9 +68,7 @@ void ScriptVm::run() {
         }
 
         case VmOpcode::End: {
-            // reset the pointer to the start of the buffer
-            this->ptr = this->buffer;
-            printd("\n");
+            end();
             return;
         }
         }
@@ -87,4 +88,10 @@ uint8_t ScriptVm::readUInt8() {
     printd("readUInt8: %d: from value %hu\n", int(val), this->ptr[0]);
     this->ptr += 1;
     return val;
+}
+
+void ScriptVm::end() {
+    // reset the pointer to the start of the buffer
+    this->ptr = this->buffer;
+    printd("\n");
 }

@@ -6,6 +6,11 @@
 #include "../../src/GameState.hpp"
 #include <cstdint>
 
+void clearFlags() {
+    for (int i = 0; i < sizeof(FLAG_BIT_ARRAY); i++) {
+        FLAG_BIT_ARRAY[0] = 0;
+    }
+}
 void tpCommandTest(TestSuite &t) {
     Test test = Test(__func__);
     ScriptVm vm = ScriptVm();
@@ -101,6 +106,7 @@ void ifThenTpTest(TestSuite &t) {
     vm.run();
     test.assert(state.playerLocation, To1D(1, 1), "did not teleport to 1, 1");
 
+    clearFlags();
     t.addTest(test);
 }
 
@@ -126,10 +132,9 @@ void ifThenelseTpTest(TestSuite &t) {
 
     state.playerLocation = 128;
     vm.run();
-    test.assert(state.playerLocation, 0, "teleported");
-    vm.run();
-    test.assert(state.playerLocation, To1D(0, 0), "did not teleport to 1, 1");
+    test.assert(state.playerLocation, 0, "did not teleport to 0,0");
 
+    clearFlags();
     t.addTest(test);
 }
 void ScriptVmTest(TestRunner &r) {

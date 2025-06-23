@@ -36,3 +36,5 @@ extern DialogMenu dialogMenu;
 
 #include "vm/ScriptVM.hpp"
 extern ScriptVm vm;
+
+extern uint8_t *buffer;
