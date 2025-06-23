@@ -28,7 +28,7 @@ Player player = Player();
 // ARDUBOY_NO_USB
 
 Arena arena = Arena();
-WorldEngine world;
+// WorldEngine world;
 Animator animator = Animator();
 PlantGameState plants;
 
@@ -37,6 +37,7 @@ BattleEventPlayer battleEventPlayer;
 MenuStack menuStack;
 DialogMenu dialogMenu;
 ScriptVm vm;
+uint8_t *buffer;
 
 void setup() {
     // Serial.begin(9600);
@@ -45,70 +46,84 @@ void setup() {
     arduboy.boot();
     arduboy.startGray();
     arduboy.initRandomSeed();
-    plants.tick();
+    //  plants.tick();
 
     FX::begin(FX_DATA_PAGE);
     // FX::setFont(ArduFont, dcmNormal);   // select default font
     FX::setCursorRange(0, 32767);
+    gameState.playerLocation = 3 + (256 * 2);
 
-    world.init();
-    gameState.state = GameState_t::BATTLE;
-    engine.init();
-    player.basic();
-    engine.startArena(0);
-    // engine.startArena(3);
-    menu.push(MenuEnum::BATTLE_OPTIONS);
-    vm.initVM(arduboy.sBuffer, &gameState);
-    //     engine.startArena(arduboy, player, 6);
+    //  world.init();
+    // gameState.state = GameState_t::BATTLE;
+    // engine.init();
+    // player.basic();
+    // engine.startArena(0);
+    // // engine.startArena(3);
+    // menu.push(MenuEnum::BATTLE_OPTIONS);
+    // vm.initVM(arduboy.sBuffer, &gameState);
+    //      engine.startArena(arduboy, player, 6);
+
+    // buffer = arduboy.sBuffer;
 }
 
 void run() {
 
-    if (dialogMenu.peek()) {
-        menu.run(engine);
-        return;
+    if (arduboy.justPressed(LEFT_BUTTON)) {
+        gameState.playerLocation -= 1;
+    } else if (arduboy.justPressed(RIGHT_BUTTON)) {
+        gameState.playerLocation += 1;
+    } else if (arduboy.justPressed(UP_BUTTON)) {
+        gameState.playerLocation -= 256;
+    } else if (arduboy.justPressed(DOWN_BUTTON)) {
+        gameState.playerLocation += 256;
     }
 
-    if (animator.playing) {
-        return;
-    }
+    // if (dialogMenu.peek()) {
+    //     menu.run(engine);
+    //     return;
+    // }
 
-    switch (gameState.state) {
-    case GameState_t::BATTLE:
-        engine.encounter();
-        break;
-    case GameState_t::WORLD:
-        world.runMap();
-        uint8_t index;
-        // index = rand() % 18;
-        // engine.startArena(player, index);
-        break;
-    case GameState_t::ARENA:
-        arena.arenaLoop(menu, player, engine);
-        break;
-    }
-    menu.run(engine);
+    // if (animator.playing) {
+    //     return;
+    // }
+
+    // switch (gameState.state) {
+    // case GameState_t::BATTLE:
+    //     engine.encounter();
+    //     break;
+    // case GameState_t::WORLD:
+    //     //  world.runMap();
+    //     // uint8_t index;
+    //     // index = rand() % 18;
+    //     // engine.startArena(player, index);
+    //     break;
+    // case GameState_t::ARENA:
+    //     arena.arenaLoop(menu, player, engine);
+    //     break;
+    // }
+    // menu.run(engine);
 }
 
 void render() {
-    switch (gameState.state) {
-    case GameState_t::BATTLE:
-        drawScene(engine);
-        break;
-    case GameState_t::WORLD:
-        world.draw();
-        break;
-    case GameState_t::ARENA:
-        arena.drawarenaLoop(menu, player, engine);
-        //  return;
-        break;
-    }
-    animator.play();
-    if (dialogMenu.peek()) {
-        dialogMenu.drawPopMenu();
-    } else {
-        menu.printMenu(engine);
-    }
+    drawMap();
+    // switch (gameState.state) {
+    //  case GameState_t::BATTLE:
+    //      drawScene(engine);
+    //      break;
+    //  case GameState_t::WORLD:
+    //      //   world.draw();
+    //      break;
+    //  case GameState_t::ARENA:
+    //      arena.drawarenaLoop(menu, player, engine);
+    //      //  return;
+    //      break;
+    //  }
+    //  animator.play();
+    //  if (dialogMenu.peek()) {
+    //      dialogMenu.drawPopMenu();
+    //  } else {
+    //      menu.printMenu(engine);
+    //  }
 }
 
 void loop() {

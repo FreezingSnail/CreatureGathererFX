@@ -17,6 +17,8 @@ BattleEvent battleEventStack[10];
 BattleEventPlayer battleEventPlayer;
 MenuStack menuStack;
 DialogMenu dialogMenu;
+uint8_t screenBuffer[128 * 64];
+uint8_t *buffer = screenBuffer;
 
 int main() {
     std::cout << "Starting Runner" << std::endl;
