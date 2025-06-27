@@ -29,6 +29,7 @@ extern GameState gameState;
 #define DGF __attribute__((optimize("-O0")))
 
 #define FRAME(x) x * 3 + arduboy.currentPlane()
+#define FRAMESHIFT(x) x + (2097152 * arduboy.currentPlane())
 #include "fxdata.h"
 static void drawStatNumbers(uint8_t x, uint8_t y, uint8_t number) {
     uint8_t upper = number / 100;

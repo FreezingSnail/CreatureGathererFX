@@ -16,15 +16,6 @@
 constexpr uint8_t tileswide = (128 / TILE_SIZE) + 4;
 constexpr uint8_t tilestall = (64 / TILE_SIZE) + 2;
 
-bool warpTile(uint8_t x, uint8_t y) {
-    // TODO need to redo room change totally
-    uint8_t tile = 0;
-    if (tile == 26 || tile == 28)
-        return true;
-
-    return false;
-}
-
 WorldEngine::WorldEngine() {
 }
 void WorldEngine::init() {
@@ -32,45 +23,11 @@ void WorldEngine::init() {
     this->mapy = 0;
     this->curx = 4;
     this->cury = 2;
-    // this->loadMap(0, 1);
-    tMap.loadMap(0, 0);
 
     up = 2;
     side = 3;
     chunkX = 4;
     chunkY = 3;
-}
-
-constexpr int8_t EVENT_X_OFFSET = WIDTH / 2;
-constexpr int8_t EVENT_Y_OFFSET = HEIGHT / 2;
-
-void WorldEngine::drawEvents() {
-    // mapx -> 0 @ 4 -> n*-16 + 64 offset
-    // mapy 0 @ 2 -> n*-16 + 32 offset
-    for (uint8_t i = 0; i < 6; i++) {
-        Event *e = &this->events[i];
-        if (e->cords.x < (this->curx + 6) && e->cords.x > (this->curx - 6) && e->cords.y < (this->cury + 3) &&
-            e->cords.y > (this->cury - 3)) {
-            // draw event
-            int16_t xOffset = e->cords.x - this->curx;
-            int16_t yOffset = e->cords.y - this->cury;
-            int xMod = 0;
-            int yMod = 0;
-            if (this->playerDirection == Direction::UP) {
-                yMod = 1;
-            } else if (this->playerDirection == Direction::DOWN) {
-                yMod = -1;
-            } else if (this->playerDirection == Direction::LEFT) {
-                xMod = 1;
-            } else if (this->playerDirection == Direction::RIGHT) {
-                xMod = -1;
-            }
-
-            uint16_t x = EVENT_X_OFFSET - 9 + (xOffset * TILE_SIZE) + (this->stepTicker % TILE_SIZE) * xMod;
-            uint16_t y = EVENT_Y_OFFSET - 8 + (yOffset * TILE_SIZE) + (this->stepTicker % TILE_SIZE) * yMod;
-            e->draw(x, y);
-        }
-    }
 }
 
 void WorldEngine::input() {
@@ -106,10 +63,6 @@ void WorldEngine::input() {
 #define PLAYER_SIZE 16
 #define PLAYER_X_OFFSET WIDTH / 2 - PLAYER_SIZE / 2
 #define PLAYER_Y_OFFSET HEIGHT / 2 - PLAYER_SIZE / 2
-void WorldEngine::drawPlayer() {
-    uint8_t frame = ((int)(this->playerDirection) * 3) + ((this->stepTicker - 1) / 5);
-    SpritesU::drawOverwriteFX(3 * 16, 2 * 16, characterSheet, frame * 3 + arduboy.currentPlane());
-}
 
 void WorldEngine::runMap() {
     // this->drawMap();
@@ -137,28 +90,6 @@ void WorldEngine::runMap() {
     }
 }
 
-void WorldEngine::draw() {
-    int8_t xTick = 0;
-    int8_t yTick = 0;
-    switch (this->playerDirection) {
-    case Direction::UP:
-        yTick = stepTicker;
-        break;
-    case Direction::DOWN:
-        yTick = stepTicker * -1;
-        break;
-    case Direction::LEFT:
-        xTick = stepTicker;
-        break;
-    case Direction::RIGHT:
-        xTick = stepTicker * -1;
-        break;
-    }
-    tMap.draw(0, 0, xTick, yTick);
-    drawPlayer();
-    // drawEvents();
-}
-
 void WorldEngine::moveChar() {
     switch (this->playerDirection) {
     case Direction::UP:
@@ -181,52 +112,30 @@ void WorldEngine::moveChar() {
         case Direction::UP:
             this->cury--;
             chunkY -= 1;
-            tMap.shiftDown();
             break;
         case Direction::DOWN:
             this->cury++;
             chunkY += 1;
-            tMap.shiftUp();
             break;
         case Direction::LEFT:
             this->curx--;
             chunkX -= 1;
-            tMap.shiftRight();
             break;
         case Direction::RIGHT:
             this->curx++;
             chunkX += 1;
-            tMap.shiftLeft();
             break;
         }
         this->moving = false;
-        if (warpTile(this->curx, this->cury)) {
-            this->warp();
-        }
         // this->encounter(arduboy, player);
     }
 }
 
-uint8_t WorldEngine::getTile() {
-    return (TileType)0;
-}
-
 void WorldEngine::encounter() {
-    // TODO use tile map
-    uint8_t t = 0;
-    if (t == 0) {
-        uint8_t chance = random(1, 101);
-        if (chance <= 10) {
-            uint8_t creatureID = this->encounterTable.rollEncounter();
-            uint8_t level = this->encounterTable.rollLevel();
-            engine.startEncounter(creatureID, level);
-            gameState.state = GameState_t::BATTLE;
-        }
-    }
+    // TODO: redesign this
 }
 
 bool WorldEngine::moveable() {
-    return true;
     uint8_t tilex = this->curx;
     uint8_t tiley = this->cury;
     switch (this->playerDirection) {
@@ -248,65 +157,11 @@ bool WorldEngine::moveable() {
         return false;
     }
 
-    for (uint8_t i = 0; i < EVENTCOUNT; i++) {
-        Event e = this->events[i];
-        if (e.cords.x == tilex && e.cords.y == tiley)
-            return false;
-    }
-    this->nextTile = tMap.lines[tiley].tiles[tilex];
-    switch (this->nextTile) {
-    case TREES:
-    case GRASS:
-        return true;
+    // TODO: need to do a tile lookup
 
-    default:
-        return true;
-    }
+    return true;
 }
 
 void WorldEngine::interact() {
-    if (arduboy.justPressed(B_BUTTON)) {
-        uint8_t tilex = this->curx;
-        uint8_t tiley = this->cury;
-        switch (this->playerDirection) {
-        case Direction::UP:
-            tiley--;
-            break;
-        case Direction::DOWN:
-            tiley++;
-            break;
-        case Direction::LEFT:
-            tilex--;
-            break;
-        case Direction::RIGHT:
-            tilex++;
-            break;
-        }
-        for (uint8_t i = 0; i < EVENTCOUNT; i++) {
-            Event e = this->events[i];
-            if (e.cords.x == tilex && e.cords.y == tiley) {
-                dialogMenu.pushEvent(e);
-                return;
-            }
-        }
-    }
-}
-
-void WorldEngine::warp() {
-    for (uint8_t i = 0; i < 6; i++) {
-        if (this->curx == this->warps[i][1] && this->cury == this->warps[i][0]) {
-            // this->loadMap(this->warps[i][2], this->warps[i][3]);
-            this->setPos(warps[i][1], warps[i][0]);
-            return;
-        }
-    }
-}
-
-void WorldEngine::setPos(uint8_t x, uint8_t y) {
-    this->curx = x;
-    this->cury = y;
-    int8_t xdif = 4 - x;
-    int8_t ydif = 2 - y;
-    this->mapx = xdif * 16;
-    this->mapy = ydif * 16;
+    // TODO: move to vm
 }

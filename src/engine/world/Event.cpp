@@ -4,7 +4,7 @@
 
 #include "../../fxdata.h"
 
-void __attribute__((optimize("-O0"))) Event::loadEvent(uint8_t mapIndex, uint8_t subIndex, uint8_t eventIndex) {
+void Event::loadEvent(uint8_t mapIndex, uint8_t subIndex, uint8_t eventIndex) {
     EventCords event;
     // map table adress
     uint24_t address = FX::readIndexedUInt24(EventData::eventTable, mapIndex);
