@@ -53,15 +53,15 @@ void setup() {
     FX::setCursorRange(0, 32767);
     gameState.playerLocation = 3 + (256 * 2);
 
-    //  world.init();
-    // gameState.state = GameState_t::BATTLE;
-    // engine.init();
-    // player.basic();
-    // engine.startArena(0);
-    // // engine.startArena(3);
-    // menu.push(MenuEnum::BATTLE_OPTIONS);
-    // vm.initVM(arduboy.sBuffer, &gameState);
-    //      engine.startArena(arduboy, player, 6);
+     world.init();
+    gameState.state = GameState_t::BATTLE;
+    engine.init();
+    player.basic();
+    engine.startArena(0);
+    // engine.startArena(3);
+    menu.push(MenuEnum::BATTLE_OPTIONS);
+    vm.initVM(arduboy.sBuffer, &gameState);
+         engine.startArena(arduboy, player, 6);
 
     // buffer = arduboy.sBuffer;
 }
@@ -78,52 +78,52 @@ void run() {
         gameState.playerLocation += 256;
     }
 
-    // if (dialogMenu.peek()) {
-    //     menu.run(engine);
-    //     return;
-    // }
+     if (dialogMenu.peek()) {
+         menu.run(engine);
+         return;
+     }
 
-    // if (animator.playing) {
-    //     return;
-    // }
+     if (animator.playing) {
+         return;
+     }
 
-    // switch (gameState.state) {
-    // case GameState_t::BATTLE:
-    //     engine.encounter();
-    //     break;
-    // case GameState_t::WORLD:
-    //     //  world.runMap();
-    //     // uint8_t index;
-    //     // index = rand() % 18;
-    //     // engine.startArena(player, index);
-    //     break;
-    // case GameState_t::ARENA:
-    //     arena.arenaLoop(menu, player, engine);
-    //     break;
-    // }
-    // menu.run(engine);
+     switch (gameState.state) {
+     case GameState_t::BATTLE:
+         engine.encounter();
+         break;
+     case GameState_t::WORLD:
+         //  world.runMap();
+         // uint8_t index;
+         // index = rand() % 18;
+         // engine.startArena(player, index);
+         break;
+     case GameState_t::ARENA:
+         arena.arenaLoop(menu, player, engine);
+         break;
+     }
+     menu.run(engine);
 }
 
 void render() {
-    drawMap();
-    // switch (gameState.state) {
-    //  case GameState_t::BATTLE:
-    //      drawScene(engine);
-    //      break;
-    //  case GameState_t::WORLD:
-    //      //   world.draw();
-    //      break;
-    //  case GameState_t::ARENA:
-    //      arena.drawarenaLoop(menu, player, engine);
-    //      //  return;
-    //      break;
-    //  }
-    //  animator.play();
-    //  if (dialogMenu.peek()) {
-    //      dialogMenu.drawPopMenu();
-    //  } else {
-    //      menu.printMenu(engine);
-    //  }
+     directDrawMap();
+      switch (gameState.state) {
+       case GameState_t::BATTLE:
+           drawScene(engine);
+           break;
+       case GameState_t::WORLD:
+           drawMap();
+           break;
+       case GameState_t::ARENA:
+           arena.drawarenaLoop(menu, player, engine);
+           //  return;
+           break;
+       }
+       animator.play();
+       if (dialogMenu.peek()) {
+           dialogMenu.drawPopMenu();
+       } else {
+           menu.printMenu(engine);
+       }
 }
 
 void loop() {

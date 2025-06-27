@@ -46,7 +46,13 @@ def convert(fname, shades, sw=None, sh=None, num=None):
         print('%s: Invalid sprite dimensions' % fname)
         return None
 
-    bytes = bytearray([sw, sh])
+    bytes = []
+    # if sw > 255 or sh > 255:
+    #     bytes = bytearray([])
+    # else:
+    #     bytes = bytearray([sw, sh])
+
+    
 
     for n in range(num):
         bx = (n % nw) * sw

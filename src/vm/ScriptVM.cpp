@@ -2,11 +2,11 @@
 #include "opcodes.hpp"
 #include "../macros.hpp"
 #include <stdint.h>
-#include <string.h>
-#include <stdio.h>
 
 void ScriptVm::run() {
-    // get the current command
+    // TODO: check for player input
+    // prob put it into a "register"
+    //  get the current command
     VmOpcode byte = static_cast<VmOpcode>(*this->ptr);
     for (auto i = 0; i < 30; i++) {
         this->ptr++;

@@ -5,6 +5,7 @@
 #include "../common.hpp"
 #include "../globals.hpp"
 #include "../lib/ReadData.hpp"
+#include "../external/SpritesABC.hpp"
 
 #include <ArduboyFX.h>
 
@@ -206,21 +207,9 @@ static void drawScene(BattleEngine &engine) {
     drawOpponentHP(engine);
     drawPlayerHP(engine);
 }
-static void drawChunk(uint8_t chunkIdx, uint8_t xOffset, uint8_t yOffset) {
-    uint8_t chunk[32];
-    uint24_t chunkAdder = map_data + (12 * chunkIdx);
-    FX::seekData(chunkAdder);
-    for (uint8_t i = 0; i < 32; i++) {
-        chunk[i] = FX::readPendingUInt8();
-    }
-    FX::readEnd();
-
-    for (uint8_t i = 0; i < 32; i++) {
-        SpritesU::drawOverwriteFX(((i % 8) * 16) + xOffset, ((i / 8) * 16) + yOffset, tiles, FRAME((chunk[i] - 1)));
-    }
-}
 
 static void drawChunkAtOffset(uint16_t chunkIndex, int8_t offsetX, int8_t offsetY) {
+    // TODO: extract tile lookup into stand alone func
     uint24_t chunkAddress = map_data + ((32 * 2) * chunkIndex);
     for (uint8_t i = 0; i < 32; i++) {
         uint8_t tileX = i % 8;   // 0-7 within chunk
@@ -230,22 +219,17 @@ static void drawChunkAtOffset(uint16_t chunkIndex, int8_t offsetX, int8_t offset
         int8_t viewportTileX = offsetX + tileX;
         int8_t viewportTileY = offsetY + tileY;
 
-        // Only draw tiles that are within the 8x4 viewport
         if (viewportTileX >= 0 && viewportTileX < 8 && viewportTileY >= 0 && viewportTileY < 4) {
-
-            // Convert to screen pixel coordinates (16x16 pixel tiles)
             int8_t screenX = viewportTileX * 16;
             int8_t screenY = viewportTileY * 16;
 
             uint16_t tile = FX::readIndexedUInt16(chunkAddress, i);
-            // Draw the tile
-            SpritesU::drawOverwriteFX(screenX, screenY, tiles, FRAME((tile - 1)));
+            SpritesABC::drawSizedFX(screenX, screenY, 16, 16, tiles, SpritesABC::MODE_OVERWRITE, FRAME((tile - 1)));
         }
     }
 }
 
 static void drawMap() {
-    // find the player location
     uint16_t loc = gameState.playerLocation;
 
     // Convert 1D location to 2D coordinates
@@ -256,16 +240,6 @@ static void drawMap() {
     // Player is at tile 3,2 of the viewport
     int16_t viewportStartX = playerX - 3;   // 3 tiles left of player
     int16_t viewportStartY = playerY - 2;   // 2 tiles above player
-
-    // Clamp viewport to world boundaries
-    if (viewportStartX < 0)
-        viewportStartX = 0;
-    if (viewportStartY < 0)
-        viewportStartY = 0;
-    if (viewportStartX > 256 - 8)
-        viewportStartX = 256 - 8;
-    if (viewportStartY > 256 - 4)
-        viewportStartY = 256 - 4;
 
     // Calculate which 4 chunks we need (2x2 chunk grid for 8x4 viewport)
     uint8_t topLeftChunkX = viewportStartX / 8;
@@ -312,8 +286,26 @@ static void drawMap() {
         uint8_t chunkX = chunks[i].index % 32;
         uint8_t chunkY = chunks[i].index / 32;
 
-        if (chunkX < 32 && chunkY < 64) {   // Valid chunk coordinates
+        if (chunkX < 32 && chunkY < 64) {
             drawChunkAtOffset(chunks[i].index, chunks[i].offsetX, chunks[i].offsetY);
         }
     }
 }
+
+// DGF static void directDrawMap() {
+//     uint8_t playerX = gameState.playerLocation % 256;   // X coordinate (0-255)
+//     uint8_t playerY = gameState.playerLocation / 256;   // Y coordinate (0-255)
+//     uint32_t x = playerX;
+//     uint32_t y = playerY;
+
+//     uint32_t xSize = 4096;
+//     uint32_t ySize = 4096 / 8;
+//     FX::readDataBytes(FRAMESHIFT((worldmap + (xSize * y) + x)), arduboy.sBuffer, 128);
+//     FX::readDataBytes(FRAMESHIFT((worldmap + (xSize * (y + 1)) + x)), arduboy.sBuffer + (1 * 128), 128);
+//     FX::readDataBytes(FRAMESHIFT((worldmap + (xSize * (y + 2)) + x)), arduboy.sBuffer + (2 * 128), 128);
+//     FX::readDataBytes(FRAMESHIFT((worldmap + (xSize * (y + 3)) + x)), arduboy.sBuffer + (3 * 128), 128);
+//     FX::readDataBytes(FRAMESHIFT((worldmap + (xSize * (y + 4)) + x)), arduboy.sBuffer + (4 * 128), 128);
+//     FX::readDataBytes(FRAMESHIFT((worldmap + (xSize * (y + 5)) + x)), arduboy.sBuffer + (5 * 128), 128);
+//     FX::readDataBytes(FRAMESHIFT((worldmap + (xSize * (y + 6)) + x)), arduboy.sBuffer + (6 * 128), 128);
+//     FX::readDataBytes(FRAMESHIFT((worldmap + (xSize * (y + 7)) + x)), arduboy.sBuffer + (7 * 128), 128);
+// }
