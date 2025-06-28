@@ -8,6 +8,77 @@
 #include "../external/SpritesABC.hpp"
 
 #include <ArduboyFX.h>
+#include <stdint.h>
+
+[[gnu::naked, gnu::noinline]]
+static void fx_read_data_bytes(uint24_t addr, void *dst, size_t num) {
+    // addr: r22,r23,r24
+    // dst:  r20,r21
+    // num:  r18,r19
+    asm volatile(R"ASM(
+            cbi   %[fxport], %[fxbit]
+            ldi   r25, %[sfc_read]
+            out   %[spdr], r25
+            in    r25, %[sreg]          ;  1
+            lds   r0, %[page]+0         ;  2
+            add   r23, r0               ;  1
+            lds   r0, %[page]+1         ;  2
+            adc   r24, r0               ;  1
+            rcall L%=_delay_10          ; 10
+            out   %[spdr], r24
+            rcall L%=_delay_17          ; 17
+            out   %[spdr], r23
+            rcall L%=_delay_17          ; 17
+            out   %[spdr], r22
+            rcall L%=_delay_16          ; 16
+            out   %[spdr], r1
+
+            ; skip straight to final read if num == 1
+            movw  r26, r20              ;  1
+            subi  r18, 1                ;  1
+            sbci  r19, 0                ;  1
+            rjmp .+0                    ;  2
+            breq  2f                    ;  1 (2)
+            rjmp .+0                    ;  2
+
+            ; intermediate reads
+        1:  rcall L%=_delay_7           ;  7
+            cli                         ;  1
+            out   %[spdr], r1           ;  1
+            in    r0, %[spdr]           ;  1
+            out   %[sreg], r25          ;  1
+            st    X+, r0                ;  2
+            subi  r18, 1                ;  1
+            sbci  r19, 0                ;  1
+            brne  1b                    ;  2 (1)
+
+            ; final read
+        2:  rcall L%=_delay_9           ;  9
+            in    r0, %[spdr]
+            st    X, r0
+            sbi   %[fxport], %[fxbit]
+            in    r0, %[spsr]
+            ret
+
+        L%=_delay_17:
+            nop
+        L%=_delay_16:
+            rjmp .+0
+        L%=_delay_14:
+            lpm
+        L%=_delay_11:
+            nop
+        L%=_delay_10:
+            nop
+        L%=_delay_9:
+            rjmp .+0
+        L%=_delay_7:
+            ret       ; rcall is 3, ret is 4 cycles
+        )ASM"
+                 :
+                 : [page] ""(&FX::programDataPage), [sfc_read] "I"(SFC_READ), [spdr] "I"(_SFR_IO_ADDR(SPDR)), [spsr] "I"(_SFR_IO_ADDR(SPSR)), [sreg] "I"(_SFR_IO_ADDR(SREG)),
+                   [fxport] "I"(_SFR_IO_ADDR(FX_PORT)), [fxbit] "I"(FX_BIT));
+}
 
 // TODO: Refactor to only 1 func call
 static void printType(Type t, uint8_t x, uint8_t y) {
@@ -208,28 +279,7 @@ static void drawScene(BattleEngine &engine) {
     drawPlayerHP(engine);
 }
 
-static void drawChunkAtOffset(uint16_t chunkIndex, int8_t offsetX, int8_t offsetY) {
-    // TODO: extract tile lookup into stand alone func
-    uint24_t chunkAddress = map_data + ((32 * 2) * chunkIndex);
-    for (uint8_t i = 0; i < 32; i++) {
-        uint8_t tileX = i % 8;   // 0-7 within chunk
-        uint8_t tileY = i / 8;   // 0-3 within chunk
-
-        // Calculate viewport tile position
-        int8_t viewportTileX = offsetX + tileX;
-        int8_t viewportTileY = offsetY + tileY;
-
-        if (viewportTileX >= 0 && viewportTileX < 8 && viewportTileY >= 0 && viewportTileY < 4) {
-            int8_t screenX = viewportTileX * 16;
-            int8_t screenY = viewportTileY * 16;
-
-            uint16_t tile = FX::readIndexedUInt16(chunkAddress, i);
-            SpritesABC::drawSizedFX(screenX, screenY, 16, 16, tiles, SpritesABC::MODE_OVERWRITE, FRAME((tile - 1)));
-        }
-    }
-}
-
-static void drawMap() {
+static void drawMapFast() {
     uint16_t loc = gameState.playerLocation;
 
     // Convert 1D location to 2D coordinates
@@ -238,74 +288,22 @@ static void drawMap() {
 
     // Calculate the top-left corner of the 8x4 viewport in world coordinates
     // Player is at tile 3,2 of the viewport
-    int16_t viewportStartX = playerX - 3;   // 3 tiles left of player
-    int16_t viewportStartY = playerY - 2;   // 2 tiles above player
+    uint16_t viewportStartX = playerX - 3;   // 3 tiles left of player
+    uint16_t viewportStartY = playerY - 2;   // 2 tiles above player
 
-    // Calculate which 4 chunks we need (2x2 chunk grid for 8x4 viewport)
-    uint8_t topLeftChunkX = viewportStartX / 8;
-    uint8_t topLeftChunkY = viewportStartY / 4;
+    uint16_t startTile = (viewportStartX + (256 * viewportStartY));
 
-    // The 4 chunks we need
-    struct ChunkInfo {
-        uint16_t index;
-        int8_t offsetX;   // Where this chunk's top-left appears in viewport tile coordinates
-        int8_t offsetY;
-    };
-
-    ChunkInfo chunks[4];
-
-    // Calculate the world coordinates of each chunk's top-left corner
-    int16_t topLeftChunkWorldX = topLeftChunkX * 8;
-    int16_t topLeftChunkWorldY = topLeftChunkY * 4;
-    int16_t topRightChunkWorldX = (topLeftChunkX + 1) * 8;
-    int16_t bottomLeftChunkWorldY = (topLeftChunkY + 1) * 4;
-
-    // Top-left chunk
-    chunks[0].index = topLeftChunkY * 32 + topLeftChunkX;
-    chunks[0].offsetX = topLeftChunkWorldX - viewportStartX;
-    chunks[0].offsetY = topLeftChunkWorldY - viewportStartY;
-
-    // Top-right chunk
-    chunks[1].index = topLeftChunkY * 32 + (topLeftChunkX + 1);
-    chunks[1].offsetX = topRightChunkWorldX - viewportStartX;
-    chunks[1].offsetY = topLeftChunkWorldY - viewportStartY;
-
-    // Bottom-left chunk
-    chunks[2].index = (topLeftChunkY + 1) * 32 + topLeftChunkX;
-    chunks[2].offsetX = topLeftChunkWorldX - viewportStartX;
-    chunks[2].offsetY = bottomLeftChunkWorldY - viewportStartY;
-
-    // Bottom-right chunk
-    chunks[3].index = (topLeftChunkY + 1) * 32 + (topLeftChunkX + 1);
-    chunks[3].offsetX = topRightChunkWorldX - viewportStartX;
-    chunks[3].offsetY = bottomLeftChunkWorldY - viewportStartY;
-
-    // Draw all 4 chunks
+    // need to double the tile since uint16_t
+    uint24_t intialAdder = raw_map_data + (startTile * 2);
     for (uint8_t i = 0; i < 4; i++) {
-        // Bounds check for chunk indices
-        uint8_t chunkX = chunks[i].index % 32;
-        uint8_t chunkY = chunks[i].index / 32;
-
-        if (chunkX < 32 && chunkY < 64) {
-            drawChunkAtOffset(chunks[i].index, chunks[i].offsetX, chunks[i].offsetY);
+        uint16_t rowbuf[9];
+        uint24_t addr = intialAdder + (i * 512);
+        fx_read_data_bytes(addr, rowbuf, sizeof(rowbuf));
+        for (uint8_t j = 0; j < 9; j++) {
+            uint8_t screenX = viewportStartX + (16 * j);
+            uint8_t screenY = viewportStartY + (16 * i);
+            uint16_t tile = rowbuf[j] - 1;
+            SpritesABC::drawSizedFX(screenX, screenY, 16, 16, tiles, SpritesABC::MODE_OVERWRITE, FRAME(tile));
         }
     }
 }
-
-// DGF static void directDrawMap() {
-//     uint8_t playerX = gameState.playerLocation % 256;   // X coordinate (0-255)
-//     uint8_t playerY = gameState.playerLocation / 256;   // Y coordinate (0-255)
-//     uint32_t x = playerX;
-//     uint32_t y = playerY;
-
-//     uint32_t xSize = 4096;
-//     uint32_t ySize = 4096 / 8;
-//     FX::readDataBytes(FRAMESHIFT((worldmap + (xSize * y) + x)), arduboy.sBuffer, 128);
-//     FX::readDataBytes(FRAMESHIFT((worldmap + (xSize * (y + 1)) + x)), arduboy.sBuffer + (1 * 128), 128);
-//     FX::readDataBytes(FRAMESHIFT((worldmap + (xSize * (y + 2)) + x)), arduboy.sBuffer + (2 * 128), 128);
-//     FX::readDataBytes(FRAMESHIFT((worldmap + (xSize * (y + 3)) + x)), arduboy.sBuffer + (3 * 128), 128);
-//     FX::readDataBytes(FRAMESHIFT((worldmap + (xSize * (y + 4)) + x)), arduboy.sBuffer + (4 * 128), 128);
-//     FX::readDataBytes(FRAMESHIFT((worldmap + (xSize * (y + 5)) + x)), arduboy.sBuffer + (5 * 128), 128);
-//     FX::readDataBytes(FRAMESHIFT((worldmap + (xSize * (y + 6)) + x)), arduboy.sBuffer + (6 * 128), 128);
-//     FX::readDataBytes(FRAMESHIFT((worldmap + (xSize * (y + 7)) + x)), arduboy.sBuffer + (7 * 128), 128);
-// }

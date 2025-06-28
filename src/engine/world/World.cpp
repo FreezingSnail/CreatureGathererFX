@@ -1,12 +1,7 @@
 #include "World.hpp"
 
-#include "../../fxdata.h"
 #include "../../common.hpp"
-// #include "../../sprites/characterSheet.h"
-#include "../battle/Battle.hpp"
-#include "../game/Gamestate.hpp"
-#include "Encounter.hpp"
-#include "Map.hpp"
+
 #include "../../globals.hpp"
 
 #define TILE_SIZE 16

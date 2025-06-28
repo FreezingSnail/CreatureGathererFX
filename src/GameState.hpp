@@ -26,6 +26,7 @@ class GameState {
     // tile index on 1d flattened map
     uint16_t playerLocation;
     uint8_t *flags;
+    uint8_t debug;
 
     GameState();
     void setFlag(uint16_t index);
