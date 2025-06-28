@@ -1,14 +1,6 @@
 #pragma once
 #include <stdint.h>
 
-#include "../battle/Battle.hpp"
-#include "../game/Gamestate.hpp"
-#include "../menu/MenuV2.hpp"
-
-#include "Encounter.hpp"
-#include "Event.hpp"
-#include "Map.hpp"
-#include "TileMap.hpp"
 #include <ArduboyFX.h>
 
 #define EVENTCOUNT 6
