@@ -293,17 +293,51 @@ static void drawMapFast() {
 
     uint16_t startTile = (viewportStartX + (256 * viewportStartY));
 
+    uint8_t xOffset = xStepOffset;
+    uint8_t yOffset = yStepOffset;
+    uint8_t rows = 4;
+    int16_t startMod = 0;
+    int8_t xShift = 0;
+    int8_t yShift = 0;
+    if (walkingMask != 0) {
+        switch (walkingMask) {
+        case 0b10000000:
+            startMod = -1 * 2;
+            xShift = 1;
+            break;
+        case 0b01000000:
+            // do nothing
+            break;
+        case 0b00100000:
+            rows = 5;
+            startMod = -256 * 2;
+            yShift = -1;
+            break;
+        case 0b00001000:
+            rows = 5;
+            break;
+        }
+    }
+
     // need to double the tile since uint16_t
     uint24_t intialAdder = raw_map_data + (startTile * 2);
-    for (uint8_t i = 0; i < 4; i++) {
-        uint16_t rowbuf[9];
-        uint24_t addr = intialAdder + (i * 512);
+    for (uint8_t i = 0; i < rows; i++) {
+        // uint16_t rowbuf[9];
+        uint24_t addr = intialAdder + (i * 512) + startMod;
         fx_read_data_bytes(addr, rowbuf, sizeof(rowbuf));
         for (uint8_t j = 0; j < 9; j++) {
-            uint8_t screenX = viewportStartX + (16 * j);
-            uint8_t screenY = viewportStartY + (16 * i);
+            uint8_t screenX = (16 * j);
+            uint8_t screenY = (16 * i);
             uint16_t tile = rowbuf[j] - 1;
-            SpritesABC::drawSizedFX(screenX, screenY, 16, 16, tiles, SpritesABC::MODE_OVERWRITE, FRAME(tile));
+            int8_t x = screenX + xOffset;
+            int8_t y = screenY + yOffset;
+
+            if (xShift == 1) {
+                x -= 16;
+            } else if (yShift == -1) {
+                y -= 16;
+            }
+            SpritesABC ::drawSizedFX(x, y, 16, 16, tiles, SpritesABC::MODE_OVERWRITE, FRAME(tile));
         }
     }
 }

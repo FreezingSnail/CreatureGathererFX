@@ -38,6 +38,13 @@ MenuStack menuStack;
 DialogMenu dialogMenu;
 ScriptVm vm;
 uint8_t *buffer;
+// TODO: these can be condesed to 1 byte since its 0-16
+int8_t xStepOffset = 0;
+int8_t yStepOffset = 0;
+uint8_t walkingMask = 0;
+uint8_t stepTicker = 0;
+uint8_t ticker = 0;
+uint16_t rowbuf[9];
 
 void setup() {
     // Serial.begin(9600);
@@ -65,23 +72,63 @@ void setup() {
 }
 
 void run() {
-
-    if (arduboy.justPressed(LEFT_BUTTON)) {
-        gameState.playerLocation -= 1;
-    } else if (arduboy.justPressed(RIGHT_BUTTON)) {
-        gameState.playerLocation += 1;
-    } else if (arduboy.justPressed(UP_BUTTON)) {
-        gameState.playerLocation -= 256;
-    } else if (arduboy.justPressed(DOWN_BUTTON)) {
-        gameState.playerLocation += 256;
+    ticker++;
+    if (walkingMask == 0) {
+        if (arduboy.pressed(LEFT_BUTTON)) {
+            walkingMask |= 0b10000000;
+        } else if (arduboy.pressed(RIGHT_BUTTON)) {
+            walkingMask |= 0b01000000;
+        } else if (arduboy.pressed(UP_BUTTON)) {
+            walkingMask |= 0b00100000;
+        } else if (arduboy.pressed(DOWN_BUTTON)) {
+            walkingMask |= 0b00001000;
+        }
     }
 
-    
+    if (walkingMask != 0) {
+        stepTicker += 1;
+        switch (walkingMask) {
+        case 0b10000000:
+            xStepOffset += 1;
+            break;
+        case 0b01000000:
+            xStepOffset -= 1;
+            break;
+        case 0b00100000:
+            yStepOffset += 1;
+            break;
+        case 0b00001000:
+            yStepOffset -= 1;
+            break;
+        }
+    }
+
+    if (stepTicker > 15) {
+        stepTicker = 0;
+        switch (walkingMask) {
+        case 0b10000000:
+            gameState.playerLocation -= 1;
+            break;
+        case 0b01000000:
+            gameState.playerLocation += 1;
+            break;
+        case 0b00100000:
+            gameState.playerLocation -= 256;
+            break;
+        case 0b00001000:
+            gameState.playerLocation += 256;
+            break;
+        }
+        walkingMask = 0;
+        xStepOffset = 0;
+        yStepOffset = 0;
+    }
 }
 
 void render() {
 
-           drawMapFast();
+    drawMapFast();
+
     //  switch (gameState.state) {
     //   case GameState_t::BATTLE:
     //       drawScene(engine);
