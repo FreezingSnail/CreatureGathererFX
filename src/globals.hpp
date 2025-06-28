@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdint.h>
 #include "player/Player.hpp"
 extern Player player;
 
@@ -38,3 +39,9 @@ extern DialogMenu dialogMenu;
 extern ScriptVm vm;
 
 extern uint8_t *buffer;
+
+extern int8_t xStepOffset;
+extern int8_t yStepOffset;
+
+extern uint8_t walkingMask;
+extern uint16_t rowbuf[9];
