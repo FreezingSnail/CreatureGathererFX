@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="256" height="256" tilewidth="16" tileheight="16" infinite="0" nextlayerid="5" nextobjectid="13">
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="256" height="256" tilewidth="16" tileheight="16" infinite="0" nextlayerid="5" nextobjectid="17">
  <editorsettings>
-  <export target="world_map.json" format="json"/>
+  <export target="../../pokervm-rust/testdata/world_map.json" format="json"/>
  </editorsettings>
  <tileset firstgid="1" source="tiles.tsx"/>
  <layer id="1" name="map" width="256" height="256">
@@ -264,31 +264,43 @@
 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
 </data>
  </layer>
- <objectgroup id="3" name="scripts" visible="0">
+ <objectgroup id="3" name="scripts">
   <object id="5" x="7.16146" y="75.6717">
    <properties>
-    <property name="script" value="tp @test_teleport @test_house;"/>
+    <property name="script" value="tpif @test_teleport @test_house;"/>
    </properties>
    <point/>
   </object>
   <object id="6" x="135.686" y="75.0188">
    <properties>
-    <property name="script" value="tp @test_house @test_teleport;"/>
+    <property name="script" value="tpif @test_house @test_teleport;"/>
    </properties>
    <point/>
   </object>
   <object id="11" x="38.4115" y="39.0625">
    <properties>
-    <property name="script" value="if flag_test1 then tp 1 1 0 0 endif;"/>
+    <property name="script" value="if flag_test1 then tp 0 0 endif;"/>
+   </properties>
+   <point/>
+  </object>
+  <object id="13" x="73.9414" y="40.3909">
+   <properties>
+    <property name="script" value="tmsg 1 1 {test message};"/>
+   </properties>
+   <point/>
+  </object>
+  <object id="16" x="39.4137" y="54.0717">
+   <properties>
+    <property name="script" value="tmsg 1 2 {who art thee};"/>
    </properties>
    <point/>
   </object>
  </objectgroup>
- <objectgroup color="#c5c21c" id="4" name="locations" visible="0">
+ <objectgroup color="#c5c21c" id="4" name="locations">
   <object id="7" name="@test_house" x="198.893" y="120.768">
    <point/>
   </object>
-  <object id="9" name="@test_teleport" x="74.2188" y="72.9167">
+  <object id="9" name="@test_teleport" x="70.6357" y="75.1968">
    <point/>
   </object>
  </objectgroup>

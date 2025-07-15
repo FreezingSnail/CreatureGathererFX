@@ -21,3 +21,4 @@ void arenaLoad(Creature *creature, uint24_t addr, uint8_t lvl);
 
 void ReadOpt(Opponent *opt, uint8_t index);
 void loadEncounterOpt(Opponent *opt, uint8_t creatureID, uint8_t level);
+uint16_t ReadFXu16(uint24_t addr);

@@ -2,6 +2,7 @@
 #include "test.hpp"
 
 #include "../src/GameState.hpp"
+#include "../src/macros.hpp"
 
 void GameStateFlagTest(TestSuite &t) {
     Test test = Test(__func__);
@@ -93,9 +94,20 @@ void GameStateBitManipulationTest(TestSuite &t) {
     t.addTest(test);
 }
 
+void GameControlFlagTest(TestSuite &t) {
+    Test test = Test(__func__);
+    GameState gs = GameState();
+    test.assert(IS_SET_FLAG(WALKINGFLAG, gs.gameControlFlags), 0, "walking flag shouldn't be set");
+    SET_FLAG(WALKINGFLAG, gs.gameControlFlags);
+    test.assert(IS_SET_FLAG(WALKINGFLAG, gs.gameControlFlags), 1, "walking flag should be set");
+    CLEAR_FLAG(WALKINGFLAG, gs.gameControlFlags);
+    test.assert(IS_SET_FLAG(WALKINGFLAG, gs.gameControlFlags), 0, "walking flag shouldn't be set");
+}
+
 void GameStateSuite(TestRunner &r) {
     TestSuite t = TestSuite("GameState Suite");
     GameStateFlagTest(t);
     GameStateBitManipulationTest(t);
+    GameControlFlagTest(t);
     r.addTestSuite(t);
 }
