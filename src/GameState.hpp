@@ -1,18 +1,6 @@
 #pragma once
 #include <stdint.h>
 #include "engine/game/Gamestate.hpp"
-#include "flags/flag_bit_array.hpp"
-
-// #include "engine/arena/Arena.hpp"
-// #include "engine/battle/Battle.hpp"
-// #include "engine/menu/MenuV2.hpp"
-// #include "engine/world/Event.hpp"
-// #include "engine/world/World.hpp"
-// #include "fxdata.h"
-// #include "player/Player.hpp"
-// #include "Animator.hpp"
-// #include "plants/PlantGamestate.hpp"
-// #include "lib/uint24.h"
 
 class GameState {
   public:
@@ -27,6 +15,12 @@ class GameState {
     uint16_t playerLocation;
     uint8_t *flags;
     uint8_t debug;
+    uint8_t gameControlFlags;
+    // TODO: these can be condesed to 1 byte since its 0-16
+    int8_t xStepOffset = 0;
+    int8_t yStepOffset = 0;
+    // TODO: only needs 4 bits
+    uint8_t walkingMask = 0;
 
     GameState();
     void setFlag(uint16_t index);

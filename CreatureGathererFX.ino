@@ -38,13 +38,11 @@ MenuStack menuStack;
 DialogMenu dialogMenu;
 ScriptVm vm;
 uint8_t *buffer;
-// TODO: these can be condesed to 1 byte since its 0-16
-int8_t xStepOffset = 0;
-int8_t yStepOffset = 0;
-uint8_t walkingMask = 0;
+
+// TODO: only needs 4 bits
 uint8_t stepTicker = 0;
+// TODO: unsure if need
 uint8_t ticker = 0;
-uint16_t rowbuf[9];
 
 void setup() {
     // Serial.begin(9600);
@@ -73,39 +71,39 @@ void setup() {
 
 void run() {
     ticker++;
-    if (walkingMask == 0) {
+    if (gameState.walkingMask == 0) {
         if (arduboy.pressed(LEFT_BUTTON)) {
-            walkingMask |= 0b10000000;
+            gameState.walkingMask |= 0b10000000;
         } else if (arduboy.pressed(RIGHT_BUTTON)) {
-            walkingMask |= 0b01000000;
+            gameState.walkingMask |= 0b01000000;
         } else if (arduboy.pressed(UP_BUTTON)) {
-            walkingMask |= 0b00100000;
+            gameState.walkingMask |= 0b00100000;
         } else if (arduboy.pressed(DOWN_BUTTON)) {
-            walkingMask |= 0b00001000;
+            gameState.walkingMask |= 0b00001000;
         }
     }
 
-    if (walkingMask != 0) {
+    if (gameState.walkingMask != 0) {
         stepTicker += 1;
-        switch (walkingMask) {
+        switch (gameState.walkingMask) {
         case 0b10000000:
-            xStepOffset += 1;
+            gameState.xStepOffset += 1;
             break;
         case 0b01000000:
-            xStepOffset -= 1;
+            gameState.xStepOffset -= 1;
             break;
         case 0b00100000:
-            yStepOffset += 1;
+            gameState.yStepOffset += 1;
             break;
         case 0b00001000:
-            yStepOffset -= 1;
+            gameState.yStepOffset -= 1;
             break;
         }
     }
 
     if (stepTicker > 15) {
         stepTicker = 0;
-        switch (walkingMask) {
+        switch (gameState.walkingMask) {
         case 0b10000000:
             gameState.playerLocation -= 1;
             break;
@@ -119,15 +117,15 @@ void run() {
             gameState.playerLocation += 256;
             break;
         }
-        walkingMask = 0;
-        xStepOffset = 0;
-        yStepOffset = 0;
+        gameState.walkingMask = 0;
+        gameState.xStepOffset = 0;
+        gameState.yStepOffset = 0;
     }
 }
 
 void render() {
-
-    drawMapFast();
+    drawScriptText(1);
+    // drawMapFast();
 
     //  switch (gameState.state) {
     //   case GameState_t::BATTLE:
@@ -137,7 +135,6 @@ void render() {
     //       break;
     //   case GameState_t::ARENA:
     //       arena.drawarenaLoop(menu, player, engine);
-    //       //  return;
     //       break;
     //   }
     //   animator.play();

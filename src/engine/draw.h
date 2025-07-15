@@ -129,7 +129,7 @@ static void drawInfoRec(uint8_t x, uint8_t y) {
     FX::drawBitmap(x - 3, y - 3, moveInfo, 0, dbmNormal);
 }
 
-static void DGF printMoveInfo(uint8_t index, uint8_t x, uint8_t y) {
+static void printMoveInfo(uint8_t index, uint8_t x, uint8_t y) {
     if (index == 32) {
         return;
     }
@@ -293,14 +293,14 @@ static void drawMapFast() {
 
     uint16_t startTile = (viewportStartX + (256 * viewportStartY));
 
-    uint8_t xOffset = xStepOffset;
-    uint8_t yOffset = yStepOffset;
+    uint8_t xOffset = gameState.xStepOffset;
+    uint8_t yOffset = gameState.yStepOffset;
     uint8_t rows = 4;
     int16_t startMod = 0;
     int8_t xShift = 0;
     int8_t yShift = 0;
-    if (walkingMask != 0) {
-        switch (walkingMask) {
+    if (gameState.walkingMask != 0) {
+        switch (gameState.walkingMask) {
         case 0b10000000:
             startMod = -1 * 2;
             xShift = 1;
@@ -321,8 +321,9 @@ static void drawMapFast() {
 
     // need to double the tile since uint16_t
     uint24_t intialAdder = raw_map_data + (startTile * 2);
+    // TODO: need to lock rows to 2 when text is drawn
     for (uint8_t i = 0; i < rows; i++) {
-        // uint16_t rowbuf[9];
+        uint16_t rowbuf[9];
         uint24_t addr = intialAdder + (i * 512) + startMod;
         fx_read_data_bytes(addr, rowbuf, sizeof(rowbuf));
         for (uint8_t j = 0; j < 9; j++) {
@@ -339,5 +340,131 @@ static void drawMapFast() {
             }
             SpritesABC ::drawSizedFX(x, y, 16, 16, tiles, SpritesABC::MODE_OVERWRITE, FRAME(tile));
         }
+    }
+}
+
+// NOTE: chunk based drawing can allow for map modification
+static void DGF drawChunkAtOffset(uint16_t chunkIndex, int8_t offsetX, int8_t offsetY) {
+    // TODO: extract tile lookup into stand alone func
+    // TODO: load chunk into the screenbuffer?
+    uint24_t chunkAddress = map_data + ((32 * 2) * chunkIndex);
+    // for (uint8_t i = 0; i < 32; i++) {
+    //     FX::seekData(chunkAddress);
+    //     uint8_t tile[2];
+    //     FX::readBytes(tile, 2);
+    //     // ech tile is 16x16 or 32 bytes off the buffer
+    //     // the buffer is flat though, so tile 0,0 it's located at
+    //     // indicies 0-16, 128-144
+    //     // we are reading the tiles in order, so tile 0 is 0,0 tile 1 is 1,0
+    //     // we can store each tile in the leading 2 bytes of its location for simplicity
+    //     arduboy.sBuffer;
+    // }
+    for (uint8_t i = 0; i < 32; i++) {
+        uint8_t tileX = i % 8;   // 0-7 within chunk
+        uint8_t tileY = i / 8;   // 0-3 within chunk
+
+        // Calculate viewport tile position
+        int8_t viewportTileX = offsetX + tileX;
+        int8_t viewportTileY = offsetY + tileY;
+
+        if (viewportTileX >= 0 && viewportTileX < 8 && viewportTileY >= 0 && viewportTileY < 4) {
+            int8_t screenX = viewportTileX * 16;
+            int8_t screenY = viewportTileY * 16;
+
+            uint16_t tile = FX::readIndexedUInt16(chunkAddress, i);
+            SpritesABC::drawSizedFX(screenX, screenY, 16, 16, tiles, SpritesABC::MODE_OVERWRITE, FRAME((tile - 1)));
+        }
+    }
+}
+
+static void drawMap() {
+    uint16_t loc = gameState.playerLocation;
+
+    // Convert 1D location to 2D coordinates
+    uint8_t playerX = loc % 256;   // X coordinate (0-255)
+    uint8_t playerY = loc / 256;   // Y coordinate (0-255)
+
+    // Calculate the top-left corner of the 8x4 viewport in world coordinates
+    // Player is at tile 3,2 of the viewport
+    int16_t viewportStartX = playerX - 3;   // 3 tiles left of player
+    int16_t viewportStartY = playerY - 2;   // 2 tiles above player
+
+    // Calculate which 4 chunks we need (2x2 chunk grid for 8x4 viewport)
+    uint8_t topLeftChunkX = viewportStartX / 8;
+    uint8_t topLeftChunkY = viewportStartY / 4;
+
+    // The 4 chunks we need
+    struct ChunkInfo {
+        uint16_t index;
+        int8_t offsetX;   // Where this chunk's top-left appears in viewport tile coordinates
+        int8_t offsetY;
+    };
+
+    ChunkInfo chunks[4];
+
+    // Calculate the world coordinates of each chunk's top-left corner
+    int16_t topLeftChunkWorldX = topLeftChunkX * 8;
+    int16_t topLeftChunkWorldY = topLeftChunkY * 4;
+    int16_t topRightChunkWorldX = (topLeftChunkX + 1) * 8;
+    int16_t bottomLeftChunkWorldY = (topLeftChunkY + 1) * 4;
+
+    // Top-left chunk
+    chunks[0].index = topLeftChunkY * 32 + topLeftChunkX;
+    chunks[0].offsetX = topLeftChunkWorldX - viewportStartX;
+    chunks[0].offsetY = topLeftChunkWorldY - viewportStartY;
+
+    // Top-right chunk
+    chunks[1].index = topLeftChunkY * 32 + (topLeftChunkX + 1);
+    chunks[1].offsetX = topRightChunkWorldX - viewportStartX;
+    chunks[1].offsetY = topLeftChunkWorldY - viewportStartY;
+
+    // Bottom-left chunk
+    chunks[2].index = (topLeftChunkY + 1) * 32 + topLeftChunkX;
+    chunks[2].offsetX = topLeftChunkWorldX - viewportStartX;
+    chunks[2].offsetY = bottomLeftChunkWorldY - viewportStartY;
+
+    // Bottom-right chunk
+    chunks[3].index = (topLeftChunkY + 1) * 32 + (topLeftChunkX + 1);
+    chunks[3].offsetX = topRightChunkWorldX - viewportStartX;
+    chunks[3].offsetY = bottomLeftChunkWorldY - viewportStartY;
+
+    // Draw all 4 chunks
+    for (uint8_t i = 0; i < 4; i++) {
+        // Bounds check for chunk indices
+        uint8_t chunkX = chunks[i].index % 32;
+        uint8_t chunkY = chunks[i].index / 32;
+
+        if (chunkX < 32 && chunkY < 64) {
+            drawChunkAtOffset(chunks[i].index, chunks[i].offsetX, chunks[i].offsetY);
+        }
+    }
+}
+
+#define FONTSIZE 379
+
+// Uses the front half of the screenbuffer as scratch, needs to be called top of drawing
+static void DGF drawScriptText(uint16_t index) {
+    FX::seekData(fontTrimmed + 4);
+    FX::readBytes(arduboy.sBuffer, FONTSIZE);
+    FX::readEnd();
+
+    uint16_t offsetCount = ReadFXu16(raw_map_text);
+    uint24_t addr = raw_map_text + 2 + (2 * index);
+    uint16_t textOffset = ReadFXu16(addr);
+    uint24_t textStart = raw_map_text + 2 + (offsetCount * 2);
+    uint16_t len = ReadFXu16(textStart);
+    FX::seekData(textStart + textOffset + 2);
+    FX::readBytes(&arduboy.sBuffer[FONTSIZE], len);
+    FX::readEnd();
+
+    uint8_t *txtptr = &arduboy.sBuffer[FONTSIZE];
+    uint8_t *ptr = &arduboy.sBuffer[512];
+    for (uint8_t i = 0; i < len; i++) {
+        // fonter.write(*ptr);
+        uint8_t letter = (*txtptr) - 48;
+        uint16_t index = letter * 5;
+        memccpy(ptr, &arduboy.sBuffer[index], 0, sizeof(uint8_t) * 5);
+        ptr += 6;
+        txtptr++;
     }
 }

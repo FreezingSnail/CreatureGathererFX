@@ -81,3 +81,11 @@ void loadEncounterOpt(Opponent *opt, uint8_t id, uint8_t level) {
     //  this->party[1].load(eseed);
     //  this->party[2].load(eseed);
 }
+
+uint16_t ReadFXu16(uint24_t addr) {
+    FX::seekData(addr);
+    uint8_t bytes[2];
+    FX::readBytes(bytes, 2);
+    FX::readEnd();
+    return static_cast<uint16_t>(bytes[1]) << 8 | bytes[0];
+}
