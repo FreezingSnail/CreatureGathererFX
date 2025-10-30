@@ -468,3 +468,10 @@ static void DGF drawScriptText(uint16_t index) {
         txtptr++;
     }
 }
+
+#define PLAYER_SIZE 16
+#define PLAYER_X_OFFSET WIDTH / 2 - PLAYER_SIZE / 2
+#define PLAYER_Y_OFFSET HEIGHT / 2 - PLAYER_SIZE / 2
+static void drawPlayer() {
+    SpritesABC::drawSizedFX(PLAYER_X_OFFSET, PLAYER_Y_OFFSET, 16, 16, characterSheet, SpritesABC::MODE_OVERWRITE, FRAME(0));
+}

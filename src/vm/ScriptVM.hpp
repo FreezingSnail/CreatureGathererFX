@@ -37,18 +37,11 @@ class ScriptVm {
     int8_t memory[8];
     uint8_t stack[8];
     uint16_t currentTile;
-    // TODO: looses 16bits of mem over global but allowes testing injection?
-    GameState *state;
 
     // buffer to load the script
-    uint8_t *buffer;
     uint8_t *ptr;
 
-    void initVM(uint8_t *buffer, GameState *state) {
-        this->buffer = buffer;
-        this->ptr = buffer;
-        this->state = state;
-    };
+    void initVM();
 
     void run();
     void end();

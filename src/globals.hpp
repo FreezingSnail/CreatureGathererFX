@@ -13,6 +13,9 @@ extern BattleEventPlayer battleEventPlayer;
 #include "lib/MenuStack.hpp"
 extern MenuStack menuStack;
 
+#include "GameState.hpp"
+extern GameState gameState;
+
 #define XSTART 0
 #define YSTART 43
 #define MWIDTH 128
@@ -39,3 +42,7 @@ extern DialogMenu dialogMenu;
 extern ScriptVm vm;
 
 extern uint8_t *buffer;
+
+#ifdef TEST
+extern uint8_t sBuffer[1024];
+#endif
