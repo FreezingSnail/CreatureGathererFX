@@ -20,7 +20,7 @@ void GameState::setFlag(uint16_t index) {
 
 void GameState::clearFlag(uint16_t index) {
     uint8_t byteIdx = index / 8;
-    uint8_t bitIdx = index % 8;  
+    uint8_t bitIdx = index % 8;
     uint8_t &byte = flags[byteIdx];
     byte &= ~(1 << bitIdx);
 }

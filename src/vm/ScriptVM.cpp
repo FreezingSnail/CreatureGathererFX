@@ -1,8 +1,17 @@
 #include "ScriptVM.hpp"
 #include "opcodes.hpp"
 #include "../macros.hpp"
+#include "../globals.hpp"
 #include <stdint.h>
 
+#ifndef TEST
+#include "../common.hpp"
+#define sBuffer arduboy.sBuffer
+#endif
+
+void ScriptVm::initVM() {
+    this->ptr = sBuffer;
+}
 void ScriptVm::run() {
     // TODO: check for player input
     // prob put it into a "register"
@@ -22,8 +31,8 @@ void ScriptVm::run() {
             uint16_t x = readUInt16();
             uint16_t y = readUInt16();
             uint16_t end = To1D(x, y);
-            printd("tp to %hu, player loc %d\n", end, this->state->playerLocation);
-            this->state->playerLocation = end;
+            printd("tp to %hu, player loc %d\n", end, gameState.playerLocation);
+            gameState.playerLocation = end;
             this->end();
             return;
         }
@@ -34,11 +43,11 @@ void ScriptVm::run() {
             x = readUInt16();
             y = readUInt16();
             uint16_t end = To1D(x, y);
-            printd("tp from %hu to %hu, player loc %d\n", start, end, this->state->playerLocation);
+            printd("tp from %hu to %hu, player loc %d\n", start, end, gameState.playerLocation);
 
-            if (this->state->playerLocation == start) {
+            if (gameState.playerLocation == start) {
                 printd("teleportin\n");
-                this->state->playerLocation = end;
+                gameState.playerLocation = end;
                 this->end();
                 return;
             }
@@ -55,7 +64,7 @@ void ScriptVm::run() {
                 uint8_t jump = readUInt8();
                 printd("if type: %d\n", ifType);
                 printd("flag check, flag %d, jump %d\n", flag, jump);
-                bool set = this->state->getFlag(flag);
+                bool set = gameState.getFlag(flag);
                 printd("flag set: %d\n", set);
                 if ((condType == 0 && !set) || (condType == 1 && set)) {
                     printd("jumping %d\n", jump);
@@ -92,6 +101,6 @@ uint8_t ScriptVm::readUInt8() {
 
 void ScriptVm::end() {
     // reset the pointer to the start of the buffer
-    this->ptr = this->buffer;
+    this->ptr = sBuffer;
     printd("\n");
 }

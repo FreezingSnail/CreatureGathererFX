@@ -1,5 +1,11 @@
 #include "../test.hpp"
+#include "../../src/GameState.hpp"
+#include "../../src/globals.hpp"
+
 #include "action_test.hpp"
+
+GameState gameState;
+uint8_t sBuffer[1024];
 
 int main() {
     std::cout << "Starting Runner" << std::endl;

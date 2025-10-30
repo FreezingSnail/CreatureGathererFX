@@ -118,13 +118,11 @@ class Test {
     std::string description;
     std::vector<std::string> failedComparisons;
     void logError(std::string message, std::string have, std::string expected, std::string comparison) {
-        failedComparisons.push_back(message + " Assertion failed\nfor comparison: " + comparison + "\n\tHave: " + have +
-                                    "\n\tExpected: " + expected);
+        failedComparisons.push_back(message + " Assertion failed\nfor comparison: " + comparison + "\n\tHave: " + have + "\n\tExpected: " + expected);
     }
 };
 ;
-
-void printHeader(std::string message) {
+static void printHeader(std::string message) {
     std::cout << YELLOW << "++++++++++ " << message << " ++++++++++" << RESET << std::endl;
 }
 

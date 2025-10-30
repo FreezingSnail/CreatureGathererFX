@@ -23,9 +23,6 @@ extern MenuV2 menu;
 #include "engine/battle/Battle.hpp"
 extern BattleEngine engine;
 
-#include "GameState.hpp"
-extern GameState gameState;
-
 #define DGF __attribute__((optimize("-O0")))
 
 #define FRAME(x) x * 3 + arduboy.currentPlane()
