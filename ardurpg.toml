@@ -1,0 +1,3 @@
+tileset_path = "images/tiles.png"
+output_dir   = "fxdata"
+map_file     = "maps/world_map.ardurpg"

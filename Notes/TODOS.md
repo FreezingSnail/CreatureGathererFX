@@ -4,3 +4,8 @@
 - write tests to run in hardware for data reading code
 - the health bar will show 0 at low health 
 - fix the menu flicker during popups
+
+- add memory (registers) to the vm
+- add encounter tigger to script
+- add means to mark flag after scripted encounters
+- make testing functions instead of always rewriting main
