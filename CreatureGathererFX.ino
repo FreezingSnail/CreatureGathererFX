@@ -69,59 +69,6 @@ void setup() {
     // buffer = arduboy.sBuffer;
 }
 
-void run() {
-    switch (gameState.state) {
-    case GameState_t::BATTLE:
-        drawScene(engine);
-        break;
-    case GameState_t::WORLD:
-        handleMovement();
-        break;
-    case GameState_t::ARENA:
-        arena.drawarenaLoop(menu, player, engine);
-        break;
-    }
-    animator.play();
-    if (dialogMenu.peek()) {
-        dialogMenu.drawPopMenu();
-    } else {
-        menu.printMenu(engine);
-    }
-}
-
-void render() {
-    // drawScriptText(1);
-
-    switch (gameState.state) {
-    case GameState_t::BATTLE:
-        drawScene(engine);
-        break;
-    case GameState_t::WORLD:
-        drawMapFast();
-        drawPlayer();
-        break;
-    case GameState_t::ARENA:
-        arena.drawarenaLoop(menu, player, engine);
-        break;
-    }
-    // animator.play();
-    // if (dialogMenu.peek()) {
-    //     dialogMenu.drawPopMenu();
-    // } else {
-    //     menu.printMenu(engine);
-    // }
-}
-
-void loop() {
-    FX::enableOLED();
-    arduboy.waitForNextPlane();
-    FX::disableOLED();
-    if (arduboy.needsUpdate()) {
-        arduboy.pollButtons();
-        run();
-    }
-    render();
-}
 
 void handleMovement() {
     ticker++;
@@ -176,3 +123,58 @@ void handleMovement() {
         gameState.yStepOffset = 0;
     }
 }
+
+void run() {
+    switch (gameState.state) {
+    case GameState_t::BATTLE:
+        drawScene(engine);
+        break;
+    case GameState_t::WORLD:
+        handleMovement();
+        break;
+    case GameState_t::ARENA:
+        arena.drawarenaLoop(menu, player, engine);
+        break;
+    }
+    animator.play();
+    if (dialogMenu.peek()) {
+        dialogMenu.drawPopMenu();
+    } else {
+        menu.printMenu(engine);
+    }
+}
+
+void render() {
+    // drawScriptText(1);
+
+    switch (gameState.state) {
+    case GameState_t::BATTLE:
+        drawScene(engine);
+        break;
+    case GameState_t::WORLD:
+        drawMapFast();
+        drawPlayer();
+        break;
+    case GameState_t::ARENA:
+        arena.drawarenaLoop(menu, player, engine);
+        break;
+    }
+    // animator.play();
+    // if (dialogMenu.peek()) {
+    //     dialogMenu.drawPopMenu();
+    // } else {
+    //     menu.printMenu(engine);
+    // }
+}
+
+void loop() {
+    FX::enableOLED();
+    arduboy.waitForNextPlane();
+    FX::disableOLED();
+    if (arduboy.needsUpdate()) {
+        arduboy.pollButtons();
+        run();
+    }
+    render();
+}
+
