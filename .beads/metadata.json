@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "embedded",
+  "dolt_database": "CreatureGathererFX",
+  "project_id": "787bd133-80de-41b9-870e-f34ff5cc033c"
+}

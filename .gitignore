@@ -28,3 +28,9 @@ tst/fxdatatest/test_*/
 *__pycache__
 *tiled-*
 creaturevm-rust/*
+
+# Beads / Dolt files (added by bd init)
+.dolt/
+*.db
+.beads-credential-key
+.beads/proxieddb/
