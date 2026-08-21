@@ -1,5 +1,5 @@
 include "data/encounters.txt"
-include "data/opponents.txt"
+include "generated/opponents.txt"
 include "data/creatureData.txt"
 
 include "data/moves.txt"
@@ -19,7 +19,6 @@ include "battleEffects/Sprites.txt"
 image_t fontTrimmed = "../images/ArduFontTrimmed_5x6.png"
 
 
-raw_t opponent_seeds = "generated/opponents.bin"
 raw_t type_table = "generated/typetable.bin"
 raw_t move_table = "generated/moves.bin"
 raw_t map_data = "generated/map.bin"

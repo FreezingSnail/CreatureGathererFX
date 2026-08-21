@@ -1,7 +1,7 @@
 #pragma once
 #include "src/lib/DataTypes.hpp"
 
-// PROGMEM fixture; copy rows with memcpy_P (or read fields with pgm_read_byte).
+// Generated from the canonical FX creature serialization; read with memcpy_P.
 const CreatureData_t creatureFixtures[] PROGMEM = {
     { 0, 2, 15, 8, 3, 3, 2, 2, 3, 3, 8, 32, 32, 32 },
     { 1, 2, 15, 16, 8, 8, 7, 7, 8, 8, 8, 9, 32, 32 },

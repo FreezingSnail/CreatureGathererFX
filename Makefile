@@ -60,38 +60,61 @@ testvm:
 testvm-debug:
 	$(call run_test,$(DEBUG_FLAGS),$(TEST_FLAGS),$(TESTVM_SOURCES))
 
-FXDATA_BIN        = dist/fxdata.bin
-ARDENS            = /Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
-FXTEST_MS         = 3000
+FXDATA_BIN        ?= dist/fxdata.bin
+ARDENS            ?= /Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+FXTEST_MS         ?= 3000
 FXTEST_INOS       = $(wildcard tst/fxdatatest/test_*.ino)
 FXTEST_NAMES      = $(basename $(notdir $(FXTEST_INOS)))
 
-.PHONY: fxtest fxtest-build fxtest-run
+.PHONY: fxtest fxtest-preflight fxtest-build fxtest-run
 
-fxtest: fxtest-build fxtest-run
+fxtest: fxtest-preflight fxtest-build fxtest-run
+
+fxtest-preflight:
+	@test -x "$(ARDENS)" || { echo "fxtest: Ardens executable not found at $(ARDENS); build Ardens or set ARDENS=/path/to/Ardens" >&2; exit 1; }
+	@test -f "$(FXDATA_BIN)" || { echo "fxtest: FX data image missing at $(FXDATA_BIN); run make gen or set FXDATA_BIN=/path/to/fxdata.bin" >&2; exit 1; }
 
 fxtest-build:
+	@set -e; \
 	for ino in $(FXTEST_NAMES); do \
-		rm -rf tst/fxdatatest/$$ino && mkdir tst/fxdatatest/$$ino ; \
-		cp -r src tst/fxdatatest/$$ino/src ; \
-		cp tst/fxdatatest/$$ino.ino tst/fxdatatest/$$ino/ ; \
-		cp tst/fxdatatest/*.hpp tst/fxdatatest/$$ino/ ; \
-		cp tst/fxdatatest/generated/*.hpp tst/fxdatatest/$$ino/ ; \
-		echo $$ino ; \
+		rm -rf tst/fxdatatest/$$ino; \
+		mkdir tst/fxdatatest/$$ino; \
+		cp -r src tst/fxdatatest/$$ino/src; \
+		cp tst/fxdatatest/$$ino.ino tst/fxdatatest/$$ino/; \
+		cp tst/fxdatatest/*.hpp tst/fxdatatest/$$ino/; \
+		cp -r tst/fxdatatest/generated tst/fxdatatest/$$ino/generated; \
+		cp tst/fxdatatest/generated/*.hpp tst/fxdatatest/$$ino/; \
+		echo $$ino; \
 		arduino-cli compile --fqbn "arduboy-homemade:avr:arduboy-fx" \
 		    --optimize-for-debug --output-dir tst/fxdatatest \
-		    tst/fxdatatest/$$ino/$$ino.ino ; \
+		    tst/fxdatatest/$$ino/$$ino.ino; \
 	done
 
 fxtest-run:
-	@for name in $(FXTEST_NAMES); do \
+	@failed=0; \
+	for name in $(FXTEST_NAMES); do \
 		echo "=== $$name ==="; \
-		out="$$($(ARDENS) captureserial=$(FXTEST_MS) fxport=d1 display=ssd1306 file=tst/fxdatatest/$$name.ino.hex file=$(FXDATA_BIN) 2>&1)"; \
+		if out="$$($(ARDENS) captureserial=$(FXTEST_MS) fxport=d1 display=ssd1306 file=tst/fxdatatest/$$name.ino.hex file=$(FXDATA_BIN) 2>&1)"; then \
+			runner_status=0; \
+		else \
+			runner_status=$$?; \
+		fi; \
 		printf '%s\n' "$$out"; \
-		if printf '%s' "$$out" | grep -q "P"; then \
+		normalized_out="$$(printf '%s\n' "$$out" | tr -d '\r')"; \
+		if [ -z "$$out" ]; then \
+			echo "$$name: FAIL (no serial: crash, hang, or ROM not loaded)"; \
+			failed=1; \
+		elif printf '%s\n' "$$normalized_out" | grep -qx 'F'; then \
+			echo "$$name: FAIL"; \
+			failed=1; \
+		elif [ "$$runner_status" -ne 0 ]; then \
+			echo "$$name: FAIL (Ardens exited $$runner_status)"; \
+			failed=1; \
+		elif printf '%s\n' "$$normalized_out" | grep -qx 'P'; then \
 			echo "$$name: PASS"; \
 		else \
-			echo "$$name: FAIL (missing 'P' marker)"; \
-			exit 1; \
+			echo "$$name: FAIL (missing P/F marker; capture may be truncated, raise FXTEST_MS)"; \
+			failed=1; \
 		fi; \
-	done
+	done; \
+	test "$$failed" -eq 0

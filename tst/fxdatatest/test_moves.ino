@@ -30,17 +30,19 @@ BattleEventPlayer battleEventPlayer;
 MenuStack menuStack;
 DialogMenu dialogMenu;
 
-#include "opponents_test.hpp"
+#include "moves_test.hpp"
 
 void setup() {
     Serial.begin(9600);
     arduboy.begin();
+
     FX::begin(FX_DATA_PAGE);
     FX::setCursorRange(0, 32767);
 
-    FxTest t;
-    test_opponents(t);
-    t.report(F("test_opponents"));
+    Serial.println(F("test_moves"));
+    FxTest test;
+    test_moves(test);
+    test.report(F("test_moves"));
 }
 
 void loop() {
