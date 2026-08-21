@@ -27,7 +27,7 @@ tst/fxdatatest/src/*
 tst/fxdatatest/test_*/
 *__pycache__
 *tiled-*
-creaturevm-rust/*
+.cache/
 
 # Beads / Dolt files (added by bd init)
 .dolt/
