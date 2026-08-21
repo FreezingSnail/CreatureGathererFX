@@ -126,3 +126,9 @@ bd prime                # Refresh Beads context
 
 **Architecture in one line:** issues live in a local Dolt DB; sync uses `refs/dolt/data` on your git remote; `.beads/issues.jsonl` is a passive export. See https://github.com/gastownhall/beads/blob/main/docs/SYNC_CONCEPTS.md for details and anti-patterns.
 <!-- END BEADS CODEX SETUP -->
+
+## Generation and Validation
+
+`make gen` generates game data with `cgfx-tools`, then generates the retained Python sprite and string-image assets into `fxdata/generated`. `make check` runs generation, host tests, and FX tests when Ardens is available.
+
+Resolve the data tool through `tools/cgfx-tools.sh`; it honors `CGFX_TOOLS_BIN`, builds a sibling `../CreatureGathererTools` checkout when present, or downloads the locked, checksummed release. Run `./tools/cgfx-tools.sh` to inspect the resolved executable. Python remains only for `tools/text2bmp.py` and `tools/convert-sprite.py`; do not restore retired Python data converters.

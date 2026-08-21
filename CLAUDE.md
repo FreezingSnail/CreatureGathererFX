@@ -60,17 +60,16 @@ This protocol applies when ending a Beads implementation workflow. It is subordi
 
 ## Build & Test
 
-_Add your build and test commands here_
-
 ```bash
-# Example:
-# npm install
-# npm test
+make gen    # Generate cgfx data, retained sprite/string-image assets, package FX image
+make check  # Generate, run host tests, then FX tests when ARDENS is configured
 ```
+
+Game data comes from `cgfx-tools`. Resolve it with `tools/cgfx-tools.sh`: `CGFX_TOOLS_BIN` overrides resolution; otherwise it builds sibling `../CreatureGathererTools`, then falls back to the locked/checksummed release. Python is retained only for `tools/text2bmp.py` and `tools/convert-sprite.py` sprite/string-image generation.
 
 ## Architecture Overview
 
-_Add a brief overview of your project architecture_
+Game data and fixtures are emitted by `cgfx-tools`; sprites and text images are emitted by the retained Python asset tools into `fxdata/generated`.
 
 ## Conventions & Patterns
 
