@@ -1,0 +1,83 @@
+name: FX Device Tests
+
+on:
+  workflow_dispatch:
+
+jobs:
+  fxtest:
+    runs-on: ubuntu-latest
+    # Manual-only initially: Ardens builds from source and the real `make fxtest`
+    # result gates this run; no absent-emulator path can report a green test.
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Arduino CLI
+        uses: arduino/setup-arduino-cli@v1
+
+      - name: Install Arduino dependencies
+        run: |
+          arduino-cli config init --additional-urls https://arduboy.github.io/board-support/package_arduboy_index.json
+          arduino-cli config add board_manager.additional_urls https://raw.githubusercontent.com/MrBlinky/Arduboy-homemade-package/master/package_arduboy_homemade_index.json
+          arduino-cli core update-index
+          arduino-cli core install arduino:avr
+          arduino-cli core install arduboy-homemade:avr
+          arduino-cli lib install Arduboy2
+          arduino-cli lib install ArdBitmap
+
+      - name: Install Ardens build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes cmake ninja-build libasound2-dev libgl1-mesa-dev libx11-dev libxcursor-dev libxi-dev
+
+      - name: Restore pinned Ardens build cache
+        id: ardens-cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            .ci/Ardens
+            .ci/ardens-build
+          key: ardens-ubuntu-661a7dd4febc8d00e790a4ecde44b936295adf97
+
+      - name: Fetch pinned Ardens source
+        if: steps.ardens-cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p .ci
+          git init .ci/Ardens
+          git -C .ci/Ardens remote add origin https://github.com/tiberiusbrown/Ardens.git
+          git -C .ci/Ardens fetch --depth=1 origin 661a7dd4febc8d00e790a4ecde44b936295adf97
+          git -C .ci/Ardens checkout --detach FETCH_HEAD
+          git -C .ci/Ardens submodule update --init --recursive
+
+      - name: Build Ardens
+        id: ardens
+        run: |
+          cmake -S .ci/Ardens -B .ci/ardens-build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DARDENS_LLVM=OFF \
+            -DARDENS_SDL=OFF \
+            -DARDENS_PLAYER=OFF \
+            -DARDENS_FLASHCART=OFF
+          cmake --build .ci/ardens-build --target Ardens --parallel
+          test -x "$GITHUB_WORKSPACE/.ci/ardens-build/Ardens"
+          echo "path=$GITHUB_WORKSPACE/.ci/ardens-build/Ardens" >> "$GITHUB_OUTPUT"
+
+      - name: Generate FX data
+        run: make gen
+
+      - name: Run FX device tests
+        env:
+          ARDENS: ${{ steps.ardens.outputs.path }}
+        run: |
+          set -o pipefail
+          make fxtest 2>&1 | tee fxtest-serial.log
+
+      - name: Upload FX serial logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fxtest-serial-logs
+          path: fxtest-serial.log
+          if-no-files-found: warn
