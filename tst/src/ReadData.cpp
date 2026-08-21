@@ -81,13 +81,13 @@ void ReadOpt(Opponent *opt, uint8_t index) {
 }
 
 void loadEncounterOpt(Opponent *opt, uint8_t id, uint8_t level) {
-    CreatureData_t cseed;
-    // uint24_t rowAddress = CreatureData::creatureData + (sizeof(CreatureData_t) * id);
-    // FX::readDataObject(rowAddress, cseed);
-    // opt->levels[0] = 2;
-    // opt->levels[1] = 0;
-    // opt->levels[2] = 0;
-    // load(&opt->party[0], cseed);
-    //  this->party[1].load(eseed);
-    //  this->party[2].load(eseed);
+    CreatureData_t cseed = getCreatureFromStore(id);
+    opt->levels[0] = level;
+    opt->levels[1] = 0;
+    opt->levels[2] = 0;
+    opt->party[0].id = static_cast<uint8_t>(cseed.id);
+    opt->party[0].level = level;
+    opt->party[0].loadTypes(cseed);
+    opt->party[0].setStats(cseed);
+    opt->party[0].loadMoves(cseed);
 }

@@ -35,6 +35,7 @@ void test_creatures(FxTest &test) {
         test_creatureData(test, actual, expected, index);
     }
 
+    constexpr uint8_t encounterLevel = 5;
     const uint8_t encounterIds[] = {0, static_cast<uint8_t>(creatureFixtureCount - 1)};
     for (uint8_t fixtureIndex = 0; fixtureIndex < sizeof(encounterIds); ++fixtureIndex) {
         const uint8_t id = encounterIds[fixtureIndex];
@@ -42,7 +43,7 @@ void test_creatures(FxTest &test) {
         memcpy_P(&expected, creatureFixtures + id, sizeof(expected));
 
         Opponent encounter;
-        loadEncounterOpt(&encounter, id, 5);
+        loadEncounterOpt(&encounter, id, encounterLevel);
 
         test.expectEqIdx(encounter.party[0].id, expected.id, F("encounter.id"), id);
         test.expectEqIdx(static_cast<uint8_t>(encounter.party[0].types.getType1()), expected.type1,
@@ -54,11 +55,10 @@ void test_creatures(FxTest &test) {
         test.expectEqIdx(encounter.party[0].moves[2], expected.move3, F("encounter.move3"), id);
         test.expectEqIdx(encounter.party[0].moves[3], expected.move4, F("encounter.move4"), id);
 
-        // Document current source behavior: `level` is ignored, loadEncounterOpt forces
-        // levels[0] to 2, and load() forces party[0].level to 31. Do not mask either hardcode.
-        test.expectEqIdx(encounter.levels[0], 2, F("encounter.level0"), id);
+        // The requested level initializes both encounter metadata and creature stats.
+        test.expectEqIdx(encounter.levels[0], encounterLevel, F("encounter.level0"), id);
         test.expectEqIdx(encounter.levels[1], 0, F("encounter.level1"), id);
         test.expectEqIdx(encounter.levels[2], 0, F("encounter.level2"), id);
-        test.expectEqIdx(encounter.party[0].level, 31, F("encounter.party0.level"), id);
+        test.expectEqIdx(encounter.party[0].level, encounterLevel, F("encounter.party0.level"), id);
     }
 }

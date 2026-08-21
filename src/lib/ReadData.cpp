@@ -31,10 +31,9 @@ CreatureData_t getCreatureFromStore(uint8_t id) {
 
 // todo(snail)
 //  maybe I should move creature out into an abstraction so its easier to change
-void load(Creature *creature, CreatureData_t seed) {
+void load(Creature *creature, CreatureData_t seed, uint8_t level) {
     creature->id = static_cast<uint8_t>((seed.id));
-    // TODO: for testing
-    creature->level = 31;
+    creature->level = level;
     creature->loadTypes(seed);
     creature->setStats(seed);
     // Need some kind of default setting for moves ?
@@ -74,10 +73,10 @@ void loadEncounterOpt(Opponent *opt, uint8_t id, uint8_t level) {
     CreatureData_t cseed;
     uint24_t rowAddress = CreatureData::creatureData + (sizeof(CreatureData_t) * id);
     FX::readDataObject(rowAddress, cseed);
-    opt->levels[0] = 2;
+    opt->levels[0] = level;
     opt->levels[1] = 0;
     opt->levels[2] = 0;
-    load(&opt->party[0], cseed);
+    load(&opt->party[0], cseed, level);
     //  this->party[1].load(eseed);
     //  this->party[2].load(eseed);
 }

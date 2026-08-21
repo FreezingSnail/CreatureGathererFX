@@ -6,6 +6,7 @@
 #include "opponent_data.hpp"
 #include "src/common.hpp"
 #include "src/lib/ReadData.hpp"
+#include "src/engine/battle/Battle.hpp"
 #include "src/opponent/Opponent.hpp"
 
 void DGF test_opponents(FxTest &t) {
@@ -44,4 +45,19 @@ void DGF test_opponents(FxTest &t) {
         t.expectEqIdx(seed.thirdCreature.lvl, fixture.thirdCreature.lvl, F("readOpponentSeed.p2.lvl"), index);
         t.expectEqIdx(seed.thirdCreature.moves, fixture.thirdCreature.moves, F("readOpponentSeed.p2.moves"), index);
     }
+
+    constexpr uint8_t encounterCreature = 4;
+    constexpr uint8_t encounterLevel = 17;
+    BattleEngine encounter;
+    encounter.startEncounter(encounterCreature, encounterLevel);
+    CreatureData_t encounterSeed = getCreatureFromStore(encounterCreature);
+
+    t.expectEq(encounter.opponent.party[0].id, encounterCreature, F("encounter.id"));
+    t.expectEq(encounter.opponent.party[0].level, encounterLevel, F("encounter.party.level"));
+    t.expectEq(encounter.opponent.levels[0], encounterLevel, F("encounter.level"));
+    t.expectEq(encounter.opponent.levels[1], 0, F("encounter.empty.level1"));
+    t.expectEq(encounter.opponent.levels[2], 0, F("encounter.empty.level2"));
+    t.expectEq(encounter.opponent.party[0].statlist.attack,
+               2 * encounterLevel + encounterSeed.atkSeed * (encounterLevel / 3),
+               F("encounter.attack"));
 }
