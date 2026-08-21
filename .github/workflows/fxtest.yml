@@ -65,13 +65,19 @@ jobs:
           echo "path=$GITHUB_WORKSPACE/.ci/ardens-build/Ardens" >> "$GITHUB_OUTPUT"
 
       - name: Generate FX data
-        run: make gen
+        run: |
+          CGFX_TOOLS_BIN="$(./tools/cgfx-tools.sh)" make gen
+          test -s dist/fxdata.bin
+          test -s fxdata/generated/manifest.json
 
       - name: Run FX device tests
         env:
           ARDENS: ${{ steps.ardens.outputs.path }}
+          FXDATA_BIN: ${{ github.workspace }}/dist/fxdata.bin
         run: |
           set -o pipefail
+          test -s "$FXDATA_BIN"
+          test -s fxdata/generated/manifest.json
           make fxtest 2>&1 | tee fxtest-serial.log
 
       - name: Upload FX serial logs
