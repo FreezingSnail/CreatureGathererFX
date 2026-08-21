@@ -2,12 +2,12 @@ include "data/encounters.txt"
 include "generated/opponents.txt"
 include "data/creatureData.txt"
 
-include "data/moves.txt"
+include "generated/moves.txt"
 include "data/event.txt"
 include "data/mapData.txt"
 include "data/movelists.txt"
 include "data/menu.txt"
-include "data/teams.txt"
+include "generated/teams.txt"
 
 
 include "data/chunks.txt"
@@ -24,4 +24,5 @@ raw_t move_table = "generated/moves.bin"
 raw_t map_data = "generated/map.bin"
 raw_t raw_map_data = "raw_map.bin"
 raw_t raw_map_text = "text.bin"
+raw_t generator_version = "generated/tool_version.bin"
 

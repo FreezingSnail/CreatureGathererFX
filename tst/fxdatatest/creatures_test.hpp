@@ -4,7 +4,7 @@
 #include <string.h>
 
 #include "fxtest.hpp"
-#include "creature_data.hpp"
+#include "generated/creature_data.hpp"
 #include "src/lib/ReadData.hpp"
 #include "src/opponent/Opponent.hpp"
 

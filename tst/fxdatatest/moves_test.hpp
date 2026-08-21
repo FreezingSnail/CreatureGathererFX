@@ -4,7 +4,7 @@
 #include <string.h>
 
 #include "fxtest.hpp"
-#include "move_data.hpp"
+#include "generated/move_data.hpp"
 #include "src/lib/ReadData.hpp"
 
 /*

@@ -40,6 +40,33 @@ struct FxTest {
         Serial.println(expected);
     }
 
+    void expectVersion(const char *actual, const char *expected, uint8_t bytes) {
+        bool matches = true;
+        for (uint8_t index = 0; index < bytes; ++index) {
+            if (actual[index] != static_cast<char>(pgm_read_byte(expected + index))) {
+                matches = false;
+                break;
+            }
+        }
+        if (matches) {
+            ++passCount;
+            return;
+        }
+
+        ++failCount;
+        Serial.print(F("FAIL tool_version image=\""));
+        for (uint8_t index = 0; index < bytes && actual[index] != '\0'; ++index) {
+            Serial.print(actual[index]);
+        }
+        Serial.print(F("\" fixture=\""));
+        for (uint8_t index = 0; index < bytes; ++index) {
+            const char value = static_cast<char>(pgm_read_byte(expected + index));
+            if (value == '\0') break;
+            Serial.print(value);
+        }
+        Serial.println(F("\""));
+    }
+
     bool ok() const { return failCount == 0; }
 
     void report(const __FlashStringHelper *suite) {
