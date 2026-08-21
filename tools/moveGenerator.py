@@ -140,13 +140,38 @@ def write_bytes_to_file(file_path, serialized_table):
         for _, serialized_values in serialized_table.items():
             file.write(serialized_values)
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Process a CSV file.')
-    parser.add_argument('--csv_path', type=str, help='The path to the CSV file.')
 
+def write_c_fixture(moves, output_path):
+    with open(output_path, "w") as output:
+        output.write("#pragma once\n")
+        output.write("#include \"src/lib/Move.hpp\"\n\n")
+        output.write("// PROGMEM fixture; read words with pgm_read_dword and expectations with pgm_read_byte.\n")
+        output.write("const uint32_t moveFixtures[] PROGMEM = {\n")
+        for move in moves:
+            packed = int.from_bytes(serialize_move(move), byteorder="big")
+            output.write(f"    0x{packed:08X}UL,\n")
+        output.write("};\n\n")
+        output.write("struct MoveFixtureExpectation {\n")
+        output.write("    uint8_t type, power, physical, accuracy, effect1, effect2;\n")
+        output.write("};\n")
+        output.write("const MoveFixtureExpectation moveFixtureExpectations[] PROGMEM = {\n")
+        for move in moves:
+            output.write(
+                f"    {{ {move.type}, {move.power}, {move.phys}, {move.accuracy}, {move.effect}, 255 }},\n"
+            )
+        output.write("};\n")
+        output.write(f"constexpr uint8_t moveFixtureCount = {len(moves)};\n")
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Process move data into FX or C fixtures.")
+    parser.add_argument("--csv_path", default="data/movesheet.csv", help="Path to the move sheet.")
+    parser.add_argument("--format", choices=["fx", "c"], default="fx")
+    parser.add_argument("--output", default="tst/fxdatatest/generated/move_data.hpp")
     args = parser.parse_args()
 
     moves = toInt(args.csv_path)
-    data = serialize_moves(moves)
-
-    write_bytes_to_file('fxdata/generated/moves.bin', data)
+    if args.format == "fx":
+        write_bytes_to_file("fxdata/generated/moves.bin", serialize_moves(moves))
+    else:
+        write_c_fixture(moves, args.output)

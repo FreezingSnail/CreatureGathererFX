@@ -1,6 +1,7 @@
 import csv
 import struct
 import base64
+import os
 
 from helper import *
 import argparse
@@ -144,26 +145,26 @@ def seeds_to_serialized_opponent_seeds(opponent_seeds):
     return serialized_opponent_seeds
 
 def output_opponent_seeds_as_single_c_struct(opponent_seeds):
-    c_structs = []
-
-    for i, opponent_seed in enumerate(opponent_seeds[:2]):
-        c_struct = f"""
-        {{
-        {{ {opponent_seed.firstCreature.id}, {opponent_seed.firstCreature.lvl}, {opponent_seed.firstCreature.moves} }},
-        {{ {opponent_seed.secondCreature.id}, {opponent_seed.secondCreature.lvl}, {opponent_seed.secondCreature.moves} }},
-        {{ {opponent_seed.thirdCreature.id}, {opponent_seed.thirdCreature.lvl}, {opponent_seed.thirdCreature.moves} }},
-        }},
-        """
-        c_structs.append(c_struct)
-
-    c_structs_string = '\n'.join(c_structs)
-    c_structs_output = f"OpponentSeed opponentSeeds[] = {{\n{c_structs_string}\n}};"
-    with open("tst/fxdatatest/opponent_data.hpp", 'w') as file:
-        file.write("#pragma once\n")
-        file.write("#include \"src/lib/DataTypes.hpp\"\n")
-        file.write(c_structs_output)
-
-
+    output_file_path = "tst/fxdatatest/generated/opponent_data.hpp"
+    os.makedirs(os.path.dirname(output_file_path), exist_ok=True)
+    with open(output_file_path, "w") as output:
+        output.write("#pragma once\n")
+        output.write("#include \"src/lib/DataTypes.hpp\"\n\n")
+        output.write("// PROGMEM fixture; copy each OpponentSeed with memcpy_P before comparing.\n")
+        output.write("const OpponentSeed opponentSeeds[] PROGMEM = {\n")
+        for opponent_seed in opponent_seeds:
+            output.write("    {\n")
+            for creature in (
+                opponent_seed.firstCreature,
+                opponent_seed.secondCreature,
+                opponent_seed.thirdCreature,
+            ):
+                output.write(
+                    f"        {{ {creature.id}, {creature.lvl}, 0x{creature.moves:08X}UL }},\n"
+                )
+            output.write("    },\n")
+        output.write("};\n")
+        output.write(f"constexpr uint8_t opponentSeedCount = {len(opponent_seeds)};\n")
 
 def write_fx_data(seeds):
     serialized_seeds = seeds_to_serialized_opponent_seeds(seeds)

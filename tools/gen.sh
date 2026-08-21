@@ -12,11 +12,14 @@ cat fxdata/generated/images/string_images.txt >>fxdata/generated/Sprites.txt
 
 
 echo "Generating opponent data"
-#python3 tools/data_converters/opponent_data.py --format c
 python3 tools/data_converters/opponent_data.py --format fx
+python3 tools/data_converters/opponent_data.py --format c
+python3 tools/data_converters/creature_data.py
+python3 tools/moveGenerator.py --csv_path data/movesheet.csv --format c
+python3 tools/arena.py --format c
 
 python3 tools/data_converters/type_table_data.py --format fx
-python3 tools/moveGenerator.py --csv_path data/movesheet.csv  
+python3 tools/moveGenerator.py --csv_path data/movesheet.csv
 
 
 #cp -r images fxdata/
