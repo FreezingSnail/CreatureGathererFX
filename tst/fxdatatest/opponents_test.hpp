@@ -4,6 +4,9 @@
 #include "src/common.hpp"
 #include "src/fxdata.h"
 #include "opponent_data.hpp"
+#include "creature_data.hpp"
+#include "move_data.hpp"
+#include "arena_data.hpp"
 #include "src/lib/ReadData.hpp"
 
 bool DGF test_opponents() {

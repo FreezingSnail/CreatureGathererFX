@@ -76,6 +76,7 @@ fxtest-build:
 		cp -r src tst/fxdatatest/$$ino/src ; \
 		cp tst/fxdatatest/$$ino.ino tst/fxdatatest/$$ino/ ; \
 		cp tst/fxdatatest/*.hpp tst/fxdatatest/$$ino/ ; \
+		cp tst/fxdatatest/generated/*.hpp tst/fxdatatest/$$ino/ ; \
 		echo $$ino ; \
 		arduino-cli compile --fqbn "arduboy-homemade:avr:arduboy-fx" \
 		    --optimize-for-debug --output-dir tst/fxdatatest \
