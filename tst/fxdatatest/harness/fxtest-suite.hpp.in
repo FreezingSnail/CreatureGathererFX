@@ -1,0 +1,7 @@
+#pragma once
+
+#include "fxtest.hpp"
+
+inline void test_@NAME@(FxTest &test) {
+    test.expectEq(1, 1, F("new fxtest"));
+}
