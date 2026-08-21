@@ -63,10 +63,11 @@ testvm-debug:
 FXDATA_BIN        ?= dist/fxdata.bin
 ARDENS            ?= /Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
 FXTEST_MS         ?= 3000
+FXTEST_BUILD_DIR  ?= build/fxtest
 FXTEST_INOS       = $(wildcard tst/fxdatatest/test_*.ino)
 FXTEST_NAMES      = $(basename $(notdir $(FXTEST_INOS)))
 
-.PHONY: fxtest fxtest-preflight fxtest-build fxtest-run
+.PHONY: fxtest fxtest-preflight fxtest-build fxtest-run new-fxtest
 
 fxtest: fxtest-preflight fxtest-build fxtest-run
 
@@ -77,24 +78,26 @@ fxtest-preflight:
 fxtest-build:
 	@set -e; \
 	for ino in $(FXTEST_NAMES); do \
-		rm -rf tst/fxdatatest/$$ino; \
-		mkdir tst/fxdatatest/$$ino; \
-		cp -r src tst/fxdatatest/$$ino/src; \
-		cp tst/fxdatatest/$$ino.ino tst/fxdatatest/$$ino/; \
-		cp tst/fxdatatest/*.hpp tst/fxdatatest/$$ino/; \
-		cp -r tst/fxdatatest/generated tst/fxdatatest/$$ino/generated; \
-		cp tst/fxdatatest/generated/*.hpp tst/fxdatatest/$$ino/; \
+		stage="$(FXTEST_BUILD_DIR)/$$ino"; \
+		rm -rf "$$stage"; \
+		mkdir -p "$$stage"; \
+		cp -R src "$$stage/src"; \
+		cp "tst/fxdatatest/$$ino.ino" "$$stage/"; \
+		cp tst/fxdatatest/*.hpp "$$stage/"; \
+		cp -R tst/fxdatatest/harness "$$stage/harness"; \
+		cp -R tst/fxdatatest/generated "$$stage/generated"; \
+		cp tst/fxdatatest/generated/*.hpp "$$stage/"; \
 		echo $$ino; \
 		arduino-cli compile --fqbn "arduboy-homemade:avr:arduboy-fx" \
-		    --optimize-for-debug --output-dir tst/fxdatatest \
-		    tst/fxdatatest/$$ino/$$ino.ino; \
+		    --optimize-for-debug --output-dir "$$stage/output" \
+		    "$$stage/$$ino.ino"; \
 	done
 
 fxtest-run:
 	@failed=0; \
 	for name in $(FXTEST_NAMES); do \
 		echo "=== $$name ==="; \
-		if out="$$($(ARDENS) captureserial=$(FXTEST_MS) fxport=d1 display=ssd1306 file=tst/fxdatatest/$$name.ino.hex file=$(FXDATA_BIN) 2>&1)"; then \
+		if out="$$($(ARDENS) captureserial=$(FXTEST_MS) fxport=d1 display=ssd1306 file=$(FXTEST_BUILD_DIR)/$$name/output/$$name.ino.hex file=$(FXDATA_BIN) 2>&1)"; then \
 			runner_status=0; \
 		else \
 			runner_status=$$?; \
@@ -118,3 +121,15 @@ fxtest-run:
 		fi; \
 	done; \
 	test "$$failed" -eq 0
+
+new-fxtest:
+	@set -e; \
+	name="$(NAME)"; \
+	test -n "$$name" || { echo "new-fxtest: NAME is required" >&2; exit 1; }; \
+	case "$$name" in *[!A-Za-z0-9_]* ) echo "new-fxtest: NAME must use only letters, digits, and underscores" >&2; exit 1;; esac; \
+	header="tst/fxdatatest/$${name}_test.hpp"; \
+	sketch="tst/fxdatatest/test_$${name}.ino"; \
+	test ! -e "$$header" && test ! -e "$$sketch" || { echo "new-fxtest: $$name already exists" >&2; exit 1; }; \
+	sed "s/@NAME@/$$name/g" tst/fxdatatest/harness/fxtest-suite.hpp.in > "$$header"; \
+	sed "s/@NAME@/$$name/g" tst/fxdatatest/harness/test_fxtest.ino.in > "$$sketch"; \
+	echo "new-fxtest: created $$header and $$sketch"

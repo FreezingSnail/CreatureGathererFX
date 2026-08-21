@@ -1,0 +1,5 @@
+#include "harness/fx_globals.hpp"
+#include "@NAME@_test.hpp"
+
+void setup() { fxTestSetup(); FxTest test; test_@NAME@(test); test.report(F("test_@NAME@")); }
+void loop() { exit(0); }
