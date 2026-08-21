@@ -168,12 +168,31 @@ def output_opponent_seeds_as_single_c_struct(opponent_seeds):
 
 def write_fx_data(seeds):
     serialized_seeds = seeds_to_serialized_opponent_seeds(seeds)
-    output_file_path = "fxdata/generated/opponents.bin"
-    with open(output_file_path, 'wb') as file:
+    binary_output_path = "fxdata/generated/opponents.bin"
+    with open(binary_output_path, 'wb') as file:
         for serialized_seed in serialized_seeds:
             for seed in serialized_seed:
                 file.write(seed)
-    print("Serialized seeds written to:", output_file_path)
+
+    source_output_path = "fxdata/generated/opponents.txt"
+    with open(source_output_path, 'w') as output:
+        for index, serialized_seed in enumerate(serialized_seeds):
+            label = "opponent_seeds" if index == 0 else f"opponent_seed_{index}"
+            row = b"".join(serialized_seed)
+            output.write(f"uint8_t {label}[] = {{\n")
+            for offset in range(0, len(row), 6):
+                values = ", ".join(f"0x{byte:02X}" for byte in row[offset:offset + 6])
+                output.write(f"    {values},\n")
+            output.write("};\n\n")
+
+        output.write("uint24_t opts[] = {\n")
+        output.write("    opponent_seeds,\n")
+        for index in range(1, len(serialized_seeds)):
+            output.write(f"    opponent_seed_{index},\n")
+        output.write("};\n")
+
+    print("Serialized seeds written to:", binary_output_path)
+    print("FX opponent rows written to:", source_output_path)
 
 def write_fx_data_c_structs(seeds):
     output_opponent_seeds_as_c_structs(seeds)

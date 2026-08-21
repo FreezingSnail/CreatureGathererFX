@@ -13,8 +13,6 @@
 #include "src/player/Player.hpp"
 #include "src/plants/PlantGamestate.hpp"
 
-// #include <HardwareSerial.h>
-
 decltype(arduboy) arduboy;
 
 uint8_t debug;
@@ -22,9 +20,6 @@ GameState gameState;
 MenuV2 menu = MenuV2();
 BattleEngine engine;
 Player player = Player();
-
-// ARDUBOY_NO_USB
-
 Arena arena = Arena();
 WorldEngine world;
 Animator animator = Animator();
@@ -40,17 +35,12 @@ DialogMenu dialogMenu;
 void setup() {
     Serial.begin(9600);
     arduboy.begin();
-
     FX::begin(FX_DATA_PAGE);
-    // FX::setFont(ArduFont, dcmNormal);   // select default font
     FX::setCursorRange(0, 32767);
 
-    Serial.println(F("test_opponents"));
-    bool ok = test_opponents();
-    if (!ok)
-        print_opponents_failures();
-    Serial.println(ok ? F("P") : F("F"));
-    Serial.flush();
+    FxTest t;
+    test_opponents(t);
+    t.report(F("test_opponents"));
 }
 
 void loop() {

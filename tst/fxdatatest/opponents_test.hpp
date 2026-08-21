@@ -1,105 +1,47 @@
 #pragma once
-#include "src/lib/DataTypes.hpp"
-#include "src/opponent/Opponent.hpp"
-#include "src/common.hpp"
-#include "src/fxdata.h"
+
+#include <avr/pgmspace.h>
+
+#include "fxtest.hpp"
 #include "opponent_data.hpp"
-#include "creature_data.hpp"
-#include "move_data.hpp"
-#include "arena_data.hpp"
+#include "src/common.hpp"
 #include "src/lib/ReadData.hpp"
+#include "src/opponent/Opponent.hpp"
 
-bool DGF test_opponents() {
-    bool ok = true;
-    Opponent optFX;
-    OpponentSeed seed_base = opponentSeeds[0];
-    Opponent control;
-    CreatureSeed test;
-    FX::readDataObject(opponent_seeds, test);
-    control.loadOpt(&seed_base);
+void DGF test_opponents(FxTest &t) {
+    for (uint8_t index = 0; index < opponentSeedCount; ++index) {
+        OpponentSeed fixture;
+        memcpy_P(&fixture, opponentSeeds + index, sizeof(fixture));
 
-    ReadOpt(&optFX, 0);
+        Opponent control;
+        control.loadOpt(&fixture);
+        Opponent fx;
+        ReadOpt(&fx, index);
 
-    if (control.party[0].id != optFX.party[0].id)
-        ok = false;
-    if (control.party[1].id != optFX.party[1].id)
-        ok = false;
-    if (control.party[2].id != optFX.party[2].id)
-        ok = false;
-    if (control.levels[0] != optFX.levels[0])
-        ok = false;
-    if (control.levels[1] != optFX.levels[1])
-        ok = false;
-    if (control.levels[2] != optFX.levels[2])
-        ok = false;
-    if (control.party[0].level != optFX.party[0].level)
-        ok = false;
-    if (control.party[1].level != optFX.party[1].level)
-        ok = false;
-    if (control.party[2].level != optFX.party[2].level)
-        ok = false;
-    return ok;
-}
+        t.expectEqIdx(fx.party[0].id, control.party[0].id, F("ReadOpt.p0.id"), index);
+        t.expectEqIdx(fx.party[1].id, control.party[1].id, F("ReadOpt.p1.id"), index);
+        t.expectEqIdx(fx.party[2].id, control.party[2].id, F("ReadOpt.p2.id"), index);
+        t.expectEqIdx(fx.party[0].level, control.party[0].level, F("ReadOpt.p0.level"), index);
+        t.expectEqIdx(fx.party[1].level, control.party[1].level, F("ReadOpt.p1.level"), index);
+        t.expectEqIdx(fx.party[2].level, control.party[2].level, F("ReadOpt.p2.level"), index);
+        t.expectEqIdx(fx.levels[0], control.levels[0], F("ReadOpt.level0"), index);
+        t.expectEqIdx(fx.levels[1], control.levels[1], F("ReadOpt.level1"), index);
+        t.expectEqIdx(fx.levels[2], control.levels[2], F("ReadOpt.level2"), index);
+        for (uint8_t move = 0; move < 4; ++move) {
+            t.expectEqIdx(fx.party[0].moves[move], control.party[0].moves[move], F("ReadOpt.p0.move"), index);
+            t.expectEqIdx(fx.party[1].moves[move], control.party[1].moves[move], F("ReadOpt.p1.move"), index);
+            t.expectEqIdx(fx.party[2].moves[move], control.party[2].moves[move], F("ReadOpt.p2.move"), index);
+        }
 
-void DGF print_opponents_failures() {
-    Opponent optFX;
-    OpponentSeed seed_base = opponentSeeds[0];
-    Opponent control;
-    control.loadOpt(&seed_base);
-    ReadOpt(&optFX, 0);
-
-    if (control.party[0].id != optFX.party[0].id) {
-        Serial.print(F("Opponent 0 id failed; "));
-        Serial.print(control.party[0].id);
-        Serial.print(F(" "));
-        Serial.println(optFX.party[0].id);
-    }
-    if (control.party[1].id != optFX.party[1].id) {
-        Serial.print(F("Opponent 1 id failed; "));
-        Serial.print(control.party[1].id);
-        Serial.print(F(" "));
-        Serial.println(optFX.party[1].id);
-    }
-    if (control.party[2].id != optFX.party[2].id) {
-        Serial.print(F("Opponent 2 id failed: "));
-        Serial.print(control.party[2].id);
-        Serial.print(F(" "));
-        Serial.println(optFX.party[2].id);
-    }
-    if (control.levels[0] != optFX.levels[0]) {
-        Serial.print(F("Opponent 0 level failed: "));
-        Serial.print(control.levels[0]);
-        Serial.print(F(" "));
-        Serial.println(optFX.levels[0]);
-    }
-    if (control.levels[1] != optFX.levels[1]) {
-        Serial.print(F("Opponent 1 level failed: "));
-        Serial.print(control.levels[1]);
-        Serial.print(F(" "));
-        Serial.println(optFX.levels[1]);
-    }
-    if (control.levels[2] != optFX.levels[2]) {
-        Serial.print(F("Opponent 2 level failed: "));
-        Serial.print(control.levels[2]);
-        Serial.print(F(" "));
-        Serial.println(optFX.levels[2]);
-    }
-    if (control.party[0].level != optFX.party[0].level) {
-        Serial.print(F("Opponent 0 party level failed: "));
-        Serial.print(control.party[0].level);
-        Serial.print(F(" "));
-        Serial.println(optFX.party[0].level);
-    }
-    if (control.party[1].level != optFX.party[1].level) {
-        Serial.print(F("Opponent 1 party level failed: "));
-        Serial.print(control.party[1].level);
-        Serial.print(F(" "));
-        Serial.println(optFX.party[1].level);
-    }
-    if (control.party[2].level != optFX.party[2].level) {
-        Serial.print(F("Opponent 2 party level failed: "));
-        Serial.print(control.party[2].level);
-        Serial.print(F(" "));
-        Serial.println(optFX.party[2].level);
+        OpponentSeed seed = readOpponentSeed(index);
+        t.expectEqIdx(seed.firstCreature.id, fixture.firstCreature.id, F("readOpponentSeed.p0.id"), index);
+        t.expectEqIdx(seed.firstCreature.lvl, fixture.firstCreature.lvl, F("readOpponentSeed.p0.lvl"), index);
+        t.expectEqIdx(seed.firstCreature.moves, fixture.firstCreature.moves, F("readOpponentSeed.p0.moves"), index);
+        t.expectEqIdx(seed.secondCreature.id, fixture.secondCreature.id, F("readOpponentSeed.p1.id"), index);
+        t.expectEqIdx(seed.secondCreature.lvl, fixture.secondCreature.lvl, F("readOpponentSeed.p1.lvl"), index);
+        t.expectEqIdx(seed.secondCreature.moves, fixture.secondCreature.moves, F("readOpponentSeed.p1.moves"), index);
+        t.expectEqIdx(seed.thirdCreature.id, fixture.thirdCreature.id, F("readOpponentSeed.p2.id"), index);
+        t.expectEqIdx(seed.thirdCreature.lvl, fixture.thirdCreature.lvl, F("readOpponentSeed.p2.lvl"), index);
+        t.expectEqIdx(seed.thirdCreature.moves, fixture.thirdCreature.moves, F("readOpponentSeed.p2.moves"), index);
     }
 }
