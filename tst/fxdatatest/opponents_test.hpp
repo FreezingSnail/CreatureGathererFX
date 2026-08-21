@@ -3,7 +3,7 @@
 #include <avr/pgmspace.h>
 
 #include "fxtest.hpp"
-#include "opponent_data.hpp"
+#include "generated/opponent_data.hpp"
 #include "src/common.hpp"
 #include "src/lib/ReadData.hpp"
 #include "src/engine/battle/Battle.hpp"

@@ -85,8 +85,12 @@ fxtest-build:
 		cp "tst/fxdatatest/$$ino.ino" "$$stage/"; \
 		cp tst/fxdatatest/*.hpp "$$stage/"; \
 		cp -R tst/fxdatatest/harness "$$stage/harness"; \
-		cp -R tst/fxdatatest/generated "$$stage/generated"; \
 		cp tst/fxdatatest/generated/*.hpp "$$stage/"; \
+		mkdir "$$stage/generated"; \
+		for fixture in tst/fxdatatest/generated/*.hpp; do \
+			name="$$(basename "$$fixture")"; \
+			printf '#include "../%s"\n' "$$name" > "$$stage/generated/$$name"; \
+		done; \
 		echo $$ino; \
 		arduino-cli compile --fqbn "arduboy-homemade:avr:arduboy-fx" \
 		    --optimize-for-debug --output-dir "$$stage/output" \
