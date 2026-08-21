@@ -3,9 +3,9 @@
 #include <string.h>
 
 #include "fxtest.hpp"
-#include "rawread_data.hpp"
 #include "src/fxdata.h"
 #include "src/lib/ReadData.hpp"
+#include "generated/rawread_data.hpp"
 
 // Lean sketch linker globals: `arduboy` and `dialogMenu` only. DialogMenu is
 // retained because its source is compiled; no game-state, menu, world, or
