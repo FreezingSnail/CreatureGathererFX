@@ -557,9 +557,6 @@ void BattleEngine::loadPlayer() {
 void BattleEngine::resetOpponent() {
     this->opponentIndex = 0;
     this->opponentCur = &(this->opponent.party[0]);
-    opponent.levels[0] = 31;
-    opponent.levels[1] = 31;
-    opponent.levels[2] = 31;
 
     this->opponentHealths[0] = this->opponent.party[0].statlist.hp;
     this->opponentHealths[1] = this->opponent.party[1].statlist.hp;
