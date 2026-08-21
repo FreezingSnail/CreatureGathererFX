@@ -1,4 +1,4 @@
-.PHONY : plant test test-debug testvm testvm-debug fxtest
+.PHONY : plant test test-debug testvm testvm-debug gen gen-data gen-sprites gen-fixtures pack full check fxtest fxtest-preflight fxtest-build fxtest-run new-fxtest
 
 # Common compiler flags
 CXX_FLAGS = -std=c++17 -I/src -w -O0 -g3
@@ -37,13 +37,49 @@ endef
 full: gen build
 
 build:
-	arduino-cli compile --fqbn "arduboy-homemade:avr:arduboy-fx" --optimize-for-debug  --output-dir dist
+	arduino-cli compile --fqbn "arduboy-homemade:avr:arduboy-fx" --optimize-for-debug --output-dir dist
 
 mini:
-	arduino-cli compile --fqbn "arduboy-homemade:avr:arduboy-mini" --optimize-for-debug  --output-dir dist
+	arduino-cli compile --fqbn "arduboy-homemade:avr:arduboy-mini" --optimize-for-debug --output-dir dist
 
-gen:
-	./tools/gen.sh
+gen: gen-data gen-fixtures gen-sprites pack
+
+gen-data:
+	@set -e; \
+	tool="$$(./tools/cgfx-tools.sh)"; \
+	"$$tool" --project cgfx-project.json; \
+	"$$tool" --arena-csv data/arena.csv --arena-output fxdata/generated; \
+	"$$tool" --type-table-csv data/typetable.csv --type-table-output fxdata/generated; \
+	sed '$$s/^}$$/} namespace_end/' fxdata/generated/moves.hpp > fxdata/generated/moves.txt
+
+gen-fixtures:
+	@set -e; \
+	tool="$$(./tools/cgfx-tools.sh)"; \
+	"$$tool" --project cgfx-project.json --emit-fixtures; \
+	./tools/emit-rust-teams.sh; \
+	./tools/emit-tool-version-stamp.sh
+
+gen-sprites:
+	@set -e; \
+	mkdir -p fxdata/generated/images; \
+	python3 tools/text2bmp.py --font ArduboyFXFonts/Fontbitmaps/Font4x6/Font_5x6.png --input data/text/strings.txt --output_dir fxdata/generated/images --mode joined --greyscale; \
+	python3 tools/convert-sprite.py ../images -s 4 -o ../fxdata/; \
+	python3 tools/convert-sprite.py ../images/battleEffects -s 4 -o ../fxdata/battleEffects/; \
+	python3 tools/convert-sprite.py ../fxdata/generated/images -s 4 -o ../fxdata/generated/; \
+	cat fxdata/generated/images/string_images.txt >> fxdata/generated/Sprites.txt; \
+	rm -rf fxdata/generated/images
+
+pack:
+	@set -e; \
+	./tools/record-fxdata-manifest.sh fxdata/fxdata.txt fxdata/generated/manifest.json; \
+	./tools/assert-fxdata-manifest.sh fxdata/fxdata.txt fxdata/generated/manifest.json; \
+	python3 Arduboy-Python-Utilities/fxdata-build.py fxdata/fxdata.txt; \
+	mkdir -p dist; \
+	mv -f fxdata/fxdata.h src/fxdata.h; \
+	mv -f fxdata/fxdata.bin dist; \
+	mv -f fxdata/fxdata-data.bin dist
+
+check: gen test fxtest
 
 sim:
 	g++  -g -std=c++17 simulator/creature/Creature.cpp simulator/opponent/Opponent.cpp simulator/player/Player.cpp src/action/Action.cpp simulator/Battle.cpp simulator/main.cpp  -o simulator/simu.o
@@ -61,15 +97,18 @@ testvm-debug:
 	$(call run_test,$(DEBUG_FLAGS),$(TEST_FLAGS),$(TESTVM_SOURCES))
 
 FXDATA_BIN        ?= dist/fxdata.bin
-ARDENS            ?= /Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+ARDENS            ?=
 FXTEST_MS         ?= 3000
 FXTEST_BUILD_DIR  ?= build/fxtest
 FXTEST_INOS       = $(wildcard tst/fxdatatest/test_*.ino)
 FXTEST_NAMES      = $(basename $(notdir $(FXTEST_INOS)))
 
-.PHONY: fxtest fxtest-preflight fxtest-build fxtest-run new-fxtest
-
-fxtest: fxtest-preflight fxtest-build fxtest-run
+fxtest:
+	@if [ -z "$(ARDENS)" ] || [ ! -x "$(ARDENS)" ]; then \
+		echo "fxtest: SKIPPED (Ardens unavailable; set ARDENS=/path/to/Ardens to run device tests)"; \
+	else \
+		$(MAKE) fxtest-preflight fxtest-build fxtest-run; \
+	fi
 
 fxtest-preflight:
 	@test -x "$(ARDENS)" || { echo "fxtest: Ardens executable not found at $(ARDENS); build Ardens or set ARDENS=/path/to/Ardens" >&2; exit 1; }
