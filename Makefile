@@ -1,4 +1,4 @@
-.PHONY : plant test test-debug testvm testvm-debug gen gen-data gen-sprites gen-fixtures pack full check fxtest fxtest-preflight fxtest-build fxtest-run new-fxtest
+.PHONY : plant test test-debug testvm testvm-debug gen gen-data gen-sprites gen-fixtures pack full check verify-generated test-manifest fxtest fxtest-preflight fxtest-build fxtest-run new-fxtest
 
 # Common compiler flags
 CXX_FLAGS = -std=c++17 -I/src -w -O0 -g3
@@ -89,7 +89,13 @@ pack:
 	mv -f fxdata/fxdata.bin dist; \
 	mv -f fxdata/fxdata-data.bin dist
 
-check: gen test fxtest
+check: gen test test-manifest verify-generated fxtest
+
+verify-generated:
+	./tools/assert-fxdata-manifest.sh fxdata/fxdata.txt fxdata/generated/manifest.json
+
+test-manifest:
+	./tools/tests/fxdata-manifest_test.sh
 
 sim:
 	g++  -g -std=c++17 simulator/creature/Creature.cpp simulator/opponent/Opponent.cpp simulator/player/Player.cpp src/action/Action.cpp simulator/Battle.cpp simulator/main.cpp  -o simulator/simu.o

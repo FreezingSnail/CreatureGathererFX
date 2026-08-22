@@ -1,0 +1,15 @@
+{
+  "schema_version":1,
+  "generator":{"name":"cgfx-tools","version":"1.2.3"},
+  "target":"fxdata/fxdata.txt",
+  "inputs":[
+    {"path":"cgfx-project.json","sha256":"218589323cbe80b7ed077e3ee36f1663e7cb5f8f4e4ad02c938ad8a5c2c5a6b9"},
+    {"path":"data/source.json","sha256":"94e5c924e95943b5e0e9864d317ce4c60a19a7fcde49853435b7444c8920bfa7"},
+    {"path":"fxdata/fxdata.txt","sha256":"404b760620e4cff5ef2abbc8dafca3a5ad6e18d7ba3e42f1d513278b15542685"}
+  ],
+  "outputs":[
+    {"path":"fxdata/data.txt","sha256":"305b2ffdc3a6097beb7469e1c7a9ce7f1c06b15b8c500b4b5914e7f0de50ee92"},
+    {"path":"fxdata/generated/data.bin","sha256":"d903942996b3b1f429d6a2620c7faef7c3d68b487fbbe2c085639ddec2b3b393"},
+    {"path":"fxdata/generated/out.txt","sha256":"0793d4eeee0af4f4ce9e90e6d5e0eae1ddcf15fae2d19ed2bb731ea3602e3394"}
+  ]
+}
