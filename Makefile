@@ -1,9 +1,48 @@
-.PHONY : plant test test-debug testvm testvm-debug gen gen-data gen-sprites gen-fixtures pack full check fxtest fxtest-preflight fxtest-build fxtest-run new-fxtest
+.PHONY: help setup doctor plant test test-debug testvm testvm-debug gen gen-data gen-sprites gen-fixtures pack full build mini check fxtest fxtest-preflight fxtest-build fxtest-run new-fxtest
 
-# Common compiler flags
-CXX_FLAGS = -std=c++17 -I/src -w -O0 -g3
+# Public command API. Override tool, board, and output variables per workspace/CI.
+CXX ?= g++
+ARDUINO_CLI ?= arduino-cli
+FQBN ?= arduboy-homemade:avr:arduboy-fx
+MINI_FQBN ?= arduboy-homemade:avr:arduboy-mini
+BUILD_DIR ?= build
+DIST_DIR ?= dist
+FXDATA_BIN ?= $(DIST_DIR)/fxdata.bin
+ARDENS ?=
+FXTEST_MS ?= 3000
+FXTEST_BUILD_DIR ?= $(BUILD_DIR)/fxtest
+HOST_TEST_BIN ?= $(BUILD_DIR)/tests/host
+VM_TEST_BIN ?= $(BUILD_DIR)/tests/vm
+
+CPPFLAGS ?= -I.
+CXXFLAGS ?= -std=c++17 -w -O0 -g3
 TEST_FLAGS = -DTEST
 DEBUG_FLAGS = -DDEBUG
+
+help:
+	@printf '%s\n' \
+		'CreatureGathererFX Make targets:' \
+		'  setup    print non-mutating first-run guidance; prerequisite: make' \
+		'  doctor   report local tool readiness; prerequisite: tools/doctor.sh (when available)' \
+		'  gen      generate FX data/assets; prerequisites: python3, cgfx-tools; output: $(DIST_DIR)/fxdata.bin' \
+		'  test     run fast host C++ tests; prerequisite: $(CXX); output: $(HOST_TEST_BIN)' \
+		'  testvm   run fast ScriptVM C++ tests; prerequisite: $(CXX); output: $(VM_TEST_BIN)' \
+		'  build    compile Arduboy FX sketch; prerequisite: $(ARDUINO_CLI); output: $(BUILD_DIR)' \
+		'  check    run generation, host tests, VM tests, then optional FX runtime tests' \
+		'  fxtest   run FX device tests; optional: ARDENS=/path/to/Ardens; skips when unavailable' \
+		'' \
+		'Overrides: CXX, ARDUINO_CLI, FQBN, BUILD_DIR, DIST_DIR, FXDATA_BIN, ARDENS, FXTEST_MS.'
+
+setup:
+	@printf '%s\n' 'setup: no automatic install or global configuration changes.' 'Run make doctor for readiness checks and remediation.'
+
+doctor:
+	@if [ -x tools/doctor.sh ]; then \
+		exec ./tools/doctor.sh; \
+	else \
+		printf '%s\n' 'doctor: diagnostics are not installed; see make help.' >&2; \
+		exit 2; \
+	fi
 
 # Common source files for main tests
 TEST_SOURCES = tst/src/ReadData.cpp \
@@ -29,18 +68,21 @@ TESTVM_SOURCES = src/vm/ScriptVM.cpp \
 	tst/script_tests/action_test.cpp \
 	tst/script_tests/main.cpp
 
-# Function to run tests
+# Function to run tests in target-owned output directories.
 define run_test
-	g++ $(1) $(CXX_FLAGS) $(2) $(3) -o tst/test.o && ./tst/test.o && rm tst/test.o
+	@mkdir -p "$(dir $(4))"
+	$(CXX) $(1) $(CPPFLAGS) $(CXXFLAGS) $(2) $(3) -o "$(4)" && "$(4)"
 endef
 
 full: gen build
 
 build:
-	arduino-cli compile --fqbn "arduboy-homemade:avr:arduboy-fx" --optimize-for-debug --output-dir dist
+	@mkdir -p "$(BUILD_DIR)"
+	$(ARDUINO_CLI) compile --fqbn "$(FQBN)" --optimize-for-debug --output-dir "$(BUILD_DIR)" .
 
 mini:
-	arduino-cli compile --fqbn "arduboy-homemade:avr:arduboy-mini" --optimize-for-debug --output-dir dist
+	@mkdir -p "$(BUILD_DIR)"
+	$(ARDUINO_CLI) compile --fqbn "$(MINI_FQBN)" --optimize-for-debug --output-dir "$(BUILD_DIR)" .
 
 gen: gen-data gen-fixtures gen-sprites pack
 
@@ -73,9 +115,9 @@ gen-sprites:
 	@set -e; \
 	mkdir -p fxdata/generated/images; \
 	python3 tools/text2bmp.py --font ArduboyFXFonts/Fontbitmaps/Font4x6/Font_5x6.png --input data/text/strings.txt --output_dir fxdata/generated/images --mode joined --greyscale; \
-	python3 tools/convert-sprite.py ../images -s 4 -o ../fxdata/; \
-	python3 tools/convert-sprite.py ../images/battleEffects -s 4 -o ../fxdata/battleEffects/; \
-	python3 tools/convert-sprite.py ../fxdata/generated/images -s 4 -o ../fxdata/generated/; \
+	python3 tools/convert-sprite.py images -s 4 -o fxdata/; \
+	python3 tools/convert-sprite.py images/battleEffects -s 4 -o fxdata/battleEffects/; \
+	python3 tools/convert-sprite.py fxdata/generated/images -s 4 -o fxdata/generated/; \
 	cat fxdata/generated/images/string_images.txt >> fxdata/generated/Sprites.txt; \
 	rm -rf fxdata/generated/images
 
@@ -84,40 +126,36 @@ pack:
 	./tools/record-fxdata-manifest.sh fxdata/fxdata.txt fxdata/generated/manifest.json; \
 	./tools/assert-fxdata-manifest.sh fxdata/fxdata.txt fxdata/generated/manifest.json; \
 	python3 Arduboy-Python-Utilities/fxdata-build.py fxdata/fxdata.txt; \
-	mkdir -p dist; \
+	mkdir -p "$(DIST_DIR)"; \
 	mv -f fxdata/fxdata.h src/fxdata.h; \
-	mv -f fxdata/fxdata.bin dist; \
-	mv -f fxdata/fxdata-data.bin dist
+	mv -f fxdata/fxdata.bin "$(DIST_DIR)"; \
+	mv -f fxdata/fxdata-data.bin "$(DIST_DIR)"
 
-check: gen test fxtest
+check: gen test testvm fxtest
 
 sim:
 	g++  -g -std=c++17 simulator/creature/Creature.cpp simulator/opponent/Opponent.cpp simulator/player/Player.cpp src/action/Action.cpp simulator/Battle.cpp simulator/main.cpp  -o simulator/simu.o
 
 test:
-	$(call run_test,,$(TEST_FLAGS),$(TEST_SOURCES))
+	$(call run_test,,$(TEST_FLAGS),$(TEST_SOURCES),$(HOST_TEST_BIN))
 
 test-debug:
-	$(call run_test,$(DEBUG_FLAGS),$(TEST_FLAGS),$(TEST_SOURCES))
+	$(call run_test,$(DEBUG_FLAGS),$(TEST_FLAGS),$(TEST_SOURCES),$(HOST_TEST_BIN))
 
 testvm:
-	$(call run_test,,$(TEST_FLAGS),$(TESTVM_SOURCES))
+	$(call run_test,,$(TEST_FLAGS),$(TESTVM_SOURCES),$(VM_TEST_BIN))
 
 testvm-debug:
-	$(call run_test,$(DEBUG_FLAGS),$(TEST_FLAGS),$(TESTVM_SOURCES))
+	$(call run_test,$(DEBUG_FLAGS),$(TEST_FLAGS),$(TESTVM_SOURCES),$(VM_TEST_BIN))
 
-FXDATA_BIN        ?= dist/fxdata.bin
-ARDENS            ?=
-FXTEST_MS         ?= 3000
-FXTEST_BUILD_DIR  ?= build/fxtest
-FXTEST_INOS       = $(wildcard tst/fxdatatest/test_*.ino)
-FXTEST_NAMES      = $(basename $(notdir $(FXTEST_INOS)))
+FXTEST_INOS ?= $(wildcard tst/fxdatatest/test_*.ino)
+FXTEST_NAMES = $(basename $(notdir $(FXTEST_INOS)))
 
 fxtest:
 	@if [ -z "$(ARDENS)" ] || [ ! -x "$(ARDENS)" ]; then \
 		echo "fxtest: SKIPPED (Ardens unavailable; set ARDENS=/path/to/Ardens to run device tests)"; \
 	else \
-		$(MAKE) fxtest-preflight fxtest-build fxtest-run; \
+		$(MAKE) --no-print-directory fxtest-preflight fxtest-build fxtest-run; \
 	fi
 
 fxtest-preflight:
@@ -141,7 +179,7 @@ fxtest-build:
 			printf '#include "../%s"\n' "$$name" > "$$stage/generated/$$name"; \
 		done; \
 		echo $$ino; \
-		arduino-cli compile --fqbn "arduboy-homemade:avr:arduboy-fx" \
+		$(ARDUINO_CLI) compile --fqbn "$(FQBN)" \
 		    --optimize-for-debug --output-dir "$$stage/output" \
 		    "$$stage/$$ino.ino"; \
 	done

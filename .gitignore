@@ -34,3 +34,6 @@ tst/fxdatatest/test_*/
 *.db
 .beads-credential-key
 .beads/proxieddb/
+
+# Make target-owned outputs
+dist/
