@@ -78,6 +78,10 @@ fxdata_tool_version() {
         version=$(awk -F '"' '/^[[:space:]]*"generator"[[:space:]]*:/ { if ($6 == "cgfx-tools" && $8 == "version") { print $10; exit } }' "$manifest")
     fi
     test -n "$version" || fxdata_manifest_fail "manifest has no cgfx-tools version: $manifest"
+    # cgfx-tools emits "cgfx-tools <version>"; record only its version token.
+    case $version in
+        'cgfx-tools '*) version=${version#'cgfx-tools '} ;;
+    esac
     case $version in
         *[!A-Za-z0-9._+-]*) fxdata_manifest_fail "unsupported cgfx-tools version: $version" ;;
     esac
