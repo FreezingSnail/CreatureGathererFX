@@ -1,80 +1,85 @@
 #!/usr/bin/env bash
-# Verify cgfx-tools artifacts and every fxdata.txt input before packing.
+# Verify deterministic cgfx-tools provenance before consuming FX artifacts.
 set -euo pipefail
+
+script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
+# shellcheck source=fxdata-manifest-lib.sh
+source "$script_dir/fxdata-manifest-lib.sh"
 
 fxdata_file=${1:-fxdata/fxdata.txt}
 manifest=${2:-fxdata/generated/manifest.json}
+test -f "$fxdata_file" || fxdata_manifest_fail "missing FX definition: $fxdata_file"
+test -f "$manifest" || fxdata_manifest_fail "missing generated manifest: $manifest"
+root=$(fxdata_manifest_root "$fxdata_file")
+parsed="$manifest.parsed.$$"
+expected="$manifest.expected.$$"
+trap 'rm -f "$parsed" "$expected"' EXIT
 
-fail() {
-    printf 'pack: %s\n' "$1" >&2
-    exit 1
-}
-
-manifest_has_input() {
-    printf '%s\n' "$manifest_inputs" | grep -Fqx "$1"
-}
-
-test -f "$fxdata_file" || fail "missing FX definition: $fxdata_file"
-test -f "$manifest" || fail "missing generated manifest: $manifest"
-
-manifest_paths=$(awk -F '"' '
-    /"artifacts"/ { in_artifacts = 1; next }
-    in_artifacts && /^[[:space:]]*\]/ { exit }
-    in_artifacts && /^[[:space:]]*"path"[[:space:]]*:/ { print $4 }
-' "$manifest")
-test -n "$manifest_paths" || fail "manifest has no artifacts: $manifest"
-manifest_inputs=$(awk -F '"' '
-    /"fxdata_inputs"/ { in_inputs = 1; next }
-    in_inputs && /^[[:space:]]*\]/ { exit }
-    in_inputs && /^[[:space:]]*"/ { print $2 }
-' "$manifest")
-test -n "$manifest_inputs" || fail "manifest has no FX inputs: $manifest"
-
-raw_entries=$(awk '
-    /^[[:space:]]*raw_t[[:space:]]+/ {
-        symbol = $0
-        sub(/^[[:space:]]*raw_t[[:space:]]+/, "", symbol)
-        sub(/[[:space:]]*=.*/, "", symbol)
-        path = $0
-        sub(/^[^"]*"/, "", path)
-        sub(/".*/, "", path)
-        print symbol "\t" path
+awk '
+function bad(message) { print message > "/dev/stderr"; exit 1 }
+function trim(value) { sub(/^[[:space:]]+/, "", value); sub(/[[:space:]]+$/, "", value); return value }
+BEGIN { state = 0; count["inputs"] = 0; count["outputs"] = 0 }
+{
+    line = trim($0)
+    if (state == 0) { if (line != "{") bad("expected opening object"); state = 1; next }
+    if (state == 1) { if (line != "\"schema_version\":1,") bad("expected schema_version 1"); state = 2; next }
+    if (state == 2) {
+        if (line !~ /^"generator":\{"name":"cgfx-tools","version":"[A-Za-z0-9._+-]+"\},$/) bad("invalid generator")
+        state = 3; next
     }
-' "$fxdata_file")
-
-while IFS= read -r artifact; do
-    test -n "$artifact" || continue
-    if [[ $artifact = /* ]]; then
-        payload=$artifact
-    else
-        payload="fxdata/generated/$artifact"
-    fi
-    if [[ ! -f $payload ]]; then
-        symbol=$(printf '%s\n' "$raw_entries" | awk -F '\t' -v artifact="$artifact" '
-            $2 == "generated/" artifact || $2 == artifact { print $1; exit }
-        ')
-        if [[ -n $symbol ]]; then
-            fail "missing fxdata symbol '$symbol': $payload (listed by $manifest)"
-        fi
-        fail "missing manifest artifact: $payload (listed by $manifest)"
-    fi
-done <<< "$manifest_paths"
-
-while IFS= read -r include; do
-    test -n "$include" || continue
-    manifest_has_input "$include" || fail "missing fxdata include '$include' in manifest: $manifest"
-    test -f "fxdata/$include" || fail "missing fxdata include '$include': fxdata/$include"
-done < <(awk '
-    /^[[:space:]]*include[[:space:]]+"/ {
-        include = $0
-        sub(/^[^"]*"/, "", include)
-        sub(/".*/, "", include)
-        print include
+    if (state == 3) { if (line != "\"target\":\"fxdata/fxdata.txt\",") bad("invalid target"); state = 4; next }
+    if (state == 4) { if (line != "\"inputs\":[") bad("expected inputs"); section = "inputs"; state = 5; next }
+    if (state == 6) { if (line != "\"outputs\":[") bad("expected outputs"); section = "outputs"; state = 5; next }
+    if (state == 5) {
+        if (line == "]" || line == "],") {
+            if (count[section] == 0 || trailing_comma) bad("invalid " section)
+            if (section == "inputs" && line != "],") bad("inputs missing separator")
+            if (section == "outputs" && line != "]") bad("outputs has separator")
+            state = section == "inputs" ? 6 : 7
+            next
+        }
+        trailing_comma = $0 ~ /,$/
+        entry = $0
+        if (trailing_comma) sub(/,$/, "", entry)
+        pattern = "^    \\{\\\"path\\\":\\\"[^\\\"]+\\\",\\\"sha256\\\":\\\"[a-f0-9]+\\\"\\}$"
+        if (entry !~ pattern) bad("invalid " section " entry")
+        if (count[section] > 0 && !previous_comma) bad("missing " section " separator")
+        path = entry; sub(/^    \{"path":"/, "", path); sub(/","sha256".*/, "", path)
+        sha = entry; sub(/^.*"sha256":"/, "", sha); sub(/".*/, "", sha)
+        if (length(sha) != 64) bad("invalid " section " checksum")
+        print section "\t" path "\t" sha
+        count[section]++; previous_comma = trailing_comma; next
     }
-' "$fxdata_file")
+    if (state == 7) { if (line != "}") bad("expected closing object"); state = 8; next }
+    bad("unexpected content")
+}
+END { if (state != 8) exit 1 }
+' "$manifest" > "$parsed" || fxdata_manifest_fail "malformed manifest: $manifest"
 
-while IFS=$'\t' read -r symbol payload; do
-    test -n "$symbol" || continue
-    manifest_has_input "$payload" || fail "missing fxdata symbol '$symbol' in manifest: $manifest"
-    test -f "fxdata/$payload" || fail "missing fxdata symbol '$symbol': fxdata/$payload"
-done <<< "$raw_entries"
+while IFS=$'\t' read -r section path hash; do
+    test -n "$path" || continue
+    test -f "$root/$path" || fxdata_manifest_fail "missing $section output: $path (expected sha256 $hash)"
+    observed=$(fxdata_sha256 "$root/$path")
+    test "$observed" = "$hash" || fxdata_manifest_fail "changed $section: $path (expected $hash, observed $observed)"
+done < "$parsed"
+
+{
+    while IFS= read -r path; do
+        printf 'inputs\t%s\t%s\n' "$path" "$(fxdata_sha256 "$root/$path")"
+    done < <(fxdata_collect_inputs "$root" | fxdata_sorted_unique)
+    while IFS= read -r path; do
+        printf 'outputs\t%s\t%s\n' "$path" "$(fxdata_sha256 "$root/$path")"
+    done < <(fxdata_collect_outputs "$root" "$fxdata_file" | fxdata_sorted_unique)
+} | LC_ALL=C sort > "$expected"
+LC_ALL=C sort "$parsed" > "$parsed.sorted"
+mv -f "$parsed.sorted" "$parsed"
+if ! cmp -s "$parsed" "$expected"; then
+    missing=$(comm -23 "$expected" "$parsed" | head -n 1 || true)
+    extra=$(comm -13 "$expected" "$parsed" | head -n 1 || true)
+    if test -n "$missing"; then
+        IFS=$'\t' read -r section path hash <<< "$missing"
+        fxdata_manifest_fail "unexpected $section artifact: $path (observed sha256 $hash; missing manifest entry)"
+    fi
+    IFS=$'\t' read -r section path hash <<< "$extra"
+    fxdata_manifest_fail "unexpected manifest $section entry: $path (expected sha256 $hash; no matching artifact)"
+fi
