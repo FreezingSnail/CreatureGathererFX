@@ -1,0 +1,2 @@
+#!/bin/sh
+printf '%s\n' 'g++ (fixture) 13.0.0'

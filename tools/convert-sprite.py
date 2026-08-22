@@ -22,7 +22,8 @@ def convert(fname, shades, sw=None, sh=None, num=None):
         return None
 
     im = Image.open(fname).convert('RGBA')
-    pixels = list(im.getdata())
+    pixel_data = getattr(im, 'get_flattened_data', im.getdata)
+    pixels = list(pixel_data())
 
     masked = False
     for i in pixels:
@@ -134,10 +135,10 @@ def main():
 
     pattern = re.compile(r'^.*_\d+x\d+\.png$')
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    dir_path = os.path.join(script_dir, args.dirpath)
+    dir_path = os.path.abspath(args.dirpath)
 
     for filename in os.listdir(dir_path):
-        filepath = os.path.join(script_dir, args.dirpath, filename)
+        filepath = os.path.join(dir_path, filename)
         if os.path.isfile(filepath) and pattern.match(filename):
             file_details = parse_filename(filename)
             out = convert_header(filepath,  file_details[0], args.shades, file_details[1],
@@ -145,8 +146,9 @@ def main():
             all_buffers += out
             # print(filename, len(out), len(all_buffers))
 
-    out_dir = os.path.join(script_dir, args.out)
-    with open(out_dir+"Sprites.txt", 'w') as f:
+    out_dir = os.path.abspath(args.out)
+    os.makedirs(out_dir, exist_ok=True)
+    with open(os.path.join(out_dir, "Sprites.txt"), 'w') as f:
         f.write(all_buffers)
 
 

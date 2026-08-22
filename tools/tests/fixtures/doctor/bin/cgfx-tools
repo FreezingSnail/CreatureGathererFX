@@ -1,0 +1,2 @@
+#!/bin/sh
+printf '%s\n' 'cgfx-tools 0.1.0'

@@ -37,3 +37,10 @@ tst/fxdatatest/test_*/
 
 # Make target-owned outputs
 dist/
+
+# bd worktrees
+harness/workspaces/ifrit/
+harness/workspaces/shiva/
+
+# Committed binary inputs for provenance contract tests
+!tools/tests/fixtures/fxdata-manifest/**/fxdata/generated/data.bin

@@ -1,4 +1,4 @@
-.PHONY: help setup doctor plant test test-debug testvm testvm-debug gen gen-data gen-sprites gen-fixtures pack full build mini check verify-generated test-manifest fxtest fxtest-preflight fxtest-build fxtest-run new-fxtest
+.PHONY: help setup doctor plant test test-debug testvm testvm-debug gen gen-data gen-sprites gen-fixtures pack full build mini check verify-generated test-manifest test-doctor fxtest fxtest-preflight fxtest-build fxtest-run new-fxtest
 
 # Public command API. Override tool, board, and output variables per workspace/CI.
 CXX ?= g++
@@ -23,26 +23,28 @@ help:
 	@printf '%s\n' \
 		'CreatureGathererFX Make targets:' \
 		'  setup    print non-mutating first-run guidance; prerequisite: make' \
-		'  doctor   report local tool readiness; prerequisite: tools/doctor.sh (when available)' \
+		'  doctor   report local tool readiness; prerequisite: tools/doctor.sh' \
 		'  gen      generate FX data/assets; prerequisites: python3, cgfx-tools; output: $(DIST_DIR)/fxdata.bin' \
 		'  test     run fast host C++ tests; prerequisite: $(CXX); output: $(HOST_TEST_BIN)' \
 		'  testvm   run fast ScriptVM C++ tests; prerequisite: $(CXX); output: $(VM_TEST_BIN)' \
 		'  build    compile Arduboy FX sketch; prerequisite: $(ARDUINO_CLI); output: $(BUILD_DIR)' \
 		'  check    run generation, host tests, VM tests, then optional FX runtime tests' \
+		'  test-manifest run permanent generated-artifact tests' \
+		'  test-doctor run permanent setup-diagnostic tests' \
 		'  fxtest   run FX device tests; optional: ARDENS=/path/to/Ardens; skips when unavailable' \
 		'' \
 		'Overrides: CXX, ARDUINO_CLI, FQBN, BUILD_DIR, DIST_DIR, FXDATA_BIN, ARDENS, FXTEST_MS.'
 
 setup:
-	@printf '%s\n' 'setup: no automatic install or global configuration changes.' 'Run make doctor for readiness checks and remediation.'
+	@printf '%s\n' \
+		'setup: guidance only; no installs or Arduino configuration changes.' \
+		'1. Install python3, g++, make, and arduino-cli with your platform package manager.' \
+		'2. Review and run: SETUP_APPLY=1 tools/setup.sh' \
+		'3. Verify readiness: make doctor' \
+		'For manual setup, see each remedy printed by make doctor.'
 
 doctor:
-	@if [ -x tools/doctor.sh ]; then \
-		exec ./tools/doctor.sh; \
-	else \
-		printf '%s\n' 'doctor: diagnostics are not installed; see make help.' >&2; \
-		exit 2; \
-	fi
+	@CXX="$(CXX)" ARDUINO_CLI="$(ARDUINO_CLI)" ARDENS="$(ARDENS)" ./tools/doctor.sh
 
 # Common source files for main tests
 TEST_SOURCES = tst/src/ReadData.cpp \
@@ -113,11 +115,13 @@ gen-fixtures:
 
 gen-sprites:
 	@set -e; \
+	rm -f fxdataSprites.txt fxdata/battleEffectsSprites.txt fxdata/generatedSprites.txt; \
 	mkdir -p fxdata/generated/images; \
 	python3 tools/text2bmp.py --font ArduboyFXFonts/Fontbitmaps/Font4x6/Font_5x6.png --input data/text/strings.txt --output_dir fxdata/generated/images --mode joined --greyscale; \
 	python3 tools/convert-sprite.py images -s 4 -o fxdata/; \
 	python3 tools/convert-sprite.py images/battleEffects -s 4 -o fxdata/battleEffects/; \
 	python3 tools/convert-sprite.py fxdata/generated/images -s 4 -o fxdata/generated/; \
+	printf '\n' >> fxdata/generated/Sprites.txt; \
 	cat fxdata/generated/images/string_images.txt >> fxdata/generated/Sprites.txt; \
 	rm -rf fxdata/generated/images
 
@@ -139,6 +143,9 @@ verify-generated:
 test-manifest:
 	./tools/tests/fxdata-manifest_test.sh
 
+test-doctor:
+	./tools/tests/doctor_test.sh
+
 sim:
 	g++  -g -std=c++17 simulator/creature/Creature.cpp simulator/opponent/Opponent.cpp simulator/player/Player.cpp src/action/Action.cpp simulator/Battle.cpp simulator/main.cpp  -o simulator/simu.o
 
@@ -158,7 +165,7 @@ FXTEST_INOS ?= $(wildcard tst/fxdatatest/test_*.ino)
 FXTEST_NAMES = $(basename $(notdir $(FXTEST_INOS)))
 
 fxtest:
-	@if [ -z "$(ARDENS)" ] || [ ! -x "$(ARDENS)" ]; then \
+	@if [ -z "$(ARDENS)" ]; then \
 		echo "fxtest: SKIPPED (Ardens unavailable; set ARDENS=/path/to/Ardens to run device tests)"; \
 	else \
 		$(MAKE) --no-print-directory fxtest-preflight fxtest-build fxtest-run; \
