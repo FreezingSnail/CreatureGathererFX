@@ -1,4 +1,4 @@
-.PHONY: help setup doctor plant test test-debug testvm testvm-debug gen gen-data gen-sprites gen-fixtures pack full build mini check fxtest fxtest-preflight fxtest-build fxtest-run new-fxtest
+.PHONY: help setup doctor plant test test-debug testvm testvm-debug gen gen-data gen-sprites gen-fixtures pack full build mini check verify-generated test-manifest fxtest fxtest-preflight fxtest-build fxtest-run new-fxtest
 
 # Public command API. Override tool, board, and output variables per workspace/CI.
 CXX ?= g++
@@ -131,7 +131,13 @@ pack:
 	mv -f fxdata/fxdata.bin "$(DIST_DIR)"; \
 	mv -f fxdata/fxdata-data.bin "$(DIST_DIR)"
 
-check: gen test testvm fxtest
+check: gen test testvm test-manifest verify-generated fxtest
+
+verify-generated:
+	./tools/assert-fxdata-manifest.sh fxdata/fxdata.txt fxdata/generated/manifest.json
+
+test-manifest:
+	./tools/tests/fxdata-manifest_test.sh
 
 sim:
 	g++  -g -std=c++17 simulator/creature/Creature.cpp simulator/opponent/Opponent.cpp simulator/player/Player.cpp src/action/Action.cpp simulator/Battle.cpp simulator/main.cpp  -o simulator/simu.o
