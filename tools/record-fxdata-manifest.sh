@@ -1,46 +1,45 @@
 #!/usr/bin/env bash
-# Add the complete fxdata.txt input set to the cgfx-tools manifest.
+# Record deterministic cgfx-tools provenance for all FX inputs and outputs.
 set -euo pipefail
+
+script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
+# shellcheck source=fxdata-manifest-lib.sh
+source "$script_dir/fxdata-manifest-lib.sh"
 
 fxdata_file=${1:-fxdata/fxdata.txt}
 manifest=${2:-fxdata/generated/manifest.json}
+test -f "$fxdata_file" || fxdata_manifest_fail "missing FX definition: $fxdata_file"
+test -f "$manifest" || fxdata_manifest_fail "missing cgfx-tools manifest: $manifest"
 
-test -f "$fxdata_file" || { echo "manifest: missing FX definition: $fxdata_file" >&2; exit 1; }
-test -f "$manifest" || { echo "manifest: missing generated manifest: $manifest" >&2; exit 1; }
-
-inputs=$(awk '
-    /^[[:space:]]*include[[:space:]]+"/ {
-        path = $0
-        sub(/^[^"]*"/, "", path)
-        sub(/".*/, "", path)
-        print path
-    }
-    /^[[:space:]]*raw_t[[:space:]]+/ {
-        path = $0
-        sub(/^[^"]*"/, "", path)
-        sub(/".*/, "", path)
-        print path
-    }
-' "$fxdata_file" | awk '!seen[$0]++')
-test -n "$inputs" || { echo "manifest: no FX inputs found in $fxdata_file" >&2; exit 1; }
-
+root=$(fxdata_manifest_root "$fxdata_file")
+version=$(fxdata_tool_version "$manifest")
 tmp="$manifest.tmp.$$"
 trap 'rm -f "$tmp"' EXIT
-if grep -q '"fxdata_inputs"' "$manifest"; then
-    awk '/^[[:space:]]*"fxdata_inputs"[[:space:]]*:/ { exit } { print }' "$manifest" |
-        sed '$ s/,$//' > "$tmp"
-else
-    sed '$d' "$manifest" > "$tmp"
-fi
-printf ',\n  "fxdata_inputs": [\n' >> "$tmp"
-first=1
-while IFS= read -r input; do
-    if [[ $first -eq 0 ]]; then
-        printf ',\n' >> "$tmp"
-    fi
-    printf '    "%s"' "$input" >> "$tmp"
-    first=0
-done <<< "$inputs"
-printf '\n  ]\n}\n' >> "$tmp"
+
+write_entries() {
+    local label=$1 collector=$2 first=1 path hash
+    printf '  "%s":[\n' "$label"
+    while IFS= read -r path; do
+        test -n "$path" || continue
+        test -f "$root/$path" || fxdata_manifest_fail "missing $label path: $path"
+        hash=$(fxdata_sha256 "$root/$path")
+        if test "$first" -eq 0; then printf ',\n'; fi
+        printf '    {"path":"%s","sha256":"%s"}' "$path" "$hash"
+        first=0
+    done < <("$collector" "$root" "$fxdata_file" | fxdata_sorted_unique)
+    test "$first" -eq 0 || fxdata_manifest_fail "no $label discovered"
+    printf '\n  ]'
+}
+
+{
+    printf '{\n'
+    printf '  "schema_version":1,\n'
+    printf '  "generator":{"name":"cgfx-tools","version":"%s"},\n' "$version"
+    printf '  "target":"fxdata/fxdata.txt",\n'
+    write_entries inputs fxdata_collect_inputs
+    printf ',\n'
+    write_entries outputs fxdata_collect_outputs
+    printf '\n}\n'
+} > "$tmp"
 mv -f "$tmp" "$manifest"
 trap - EXIT
