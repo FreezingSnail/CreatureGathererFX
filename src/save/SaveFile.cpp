@@ -36,8 +36,8 @@ bool saveFileLoad(SaveFile &out)
     while (addr + 2 <= SAVE_SECTOR_BYTES) {
         uint8_t header[2];
         flash.readBytes(addr, header, sizeof(header));
-        const uint16_t size = static_cast<uint16_t>(header[0]) |
-                              static_cast<uint16_t>(header[1] << 8);
+        const uint16_t size = static_cast<uint16_t>(header[0] << 8) |
+                              static_cast<uint16_t>(header[1]);
         if (size != sizeof(SaveFile) || addr + 2 + size > SAVE_SECTOR_BYTES) {
             break;
         }
