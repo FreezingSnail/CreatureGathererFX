@@ -1,0 +1,1363 @@
+# Generated from fxdata/fxdata.txt and src/fxdata.h declaration order.
+
+[[entry]]
+name = "encounterRates"
+source = { carray = { path = "fxdata/data/encounters.txt", symbol = "encounterRates" } }
+
+[[entry]]
+name = "opponent_seeds"
+source = { carray = { path = "fxdata/generated/opponents.txt", symbol = "opponent_seeds" } }
+
+[[entry]]
+name = "opponent_seed_1"
+source = { carray = { path = "fxdata/generated/opponents.txt", symbol = "opponent_seed_1" } }
+
+[[entry]]
+name = "opponent_seed_2"
+source = { carray = { path = "fxdata/generated/opponents.txt", symbol = "opponent_seed_2" } }
+
+[[entry]]
+name = "opponent_seed_3"
+source = { carray = { path = "fxdata/generated/opponents.txt", symbol = "opponent_seed_3" } }
+
+[[entry]]
+name = "opponent_seed_4"
+source = { carray = { path = "fxdata/generated/opponents.txt", symbol = "opponent_seed_4" } }
+
+[[entry]]
+name = "opponent_seed_5"
+source = { carray = { path = "fxdata/generated/opponents.txt", symbol = "opponent_seed_5" } }
+
+[[entry]]
+name = "opponent_seed_6"
+source = { carray = { path = "fxdata/generated/opponents.txt", symbol = "opponent_seed_6" } }
+
+[[entry]]
+name = "opponent_seed_7"
+source = { carray = { path = "fxdata/generated/opponents.txt", symbol = "opponent_seed_7" } }
+
+[[entry]]
+name = "opponent_seed_8"
+source = { carray = { path = "fxdata/generated/opponents.txt", symbol = "opponent_seed_8" } }
+
+[[entry]]
+name = "opponent_seed_9"
+source = { carray = { path = "fxdata/generated/opponents.txt", symbol = "opponent_seed_9" } }
+
+[[entry]]
+name = "opponent_seed_10"
+source = { carray = { path = "fxdata/generated/opponents.txt", symbol = "opponent_seed_10" } }
+
+[[entry]]
+name = "opponent_seed_11"
+source = { carray = { path = "fxdata/generated/opponents.txt", symbol = "opponent_seed_11" } }
+
+[[entry]]
+name = "opponent_seed_12"
+source = { carray = { path = "fxdata/generated/opponents.txt", symbol = "opponent_seed_12" } }
+
+[[entry]]
+name = "opponent_seed_13"
+source = { carray = { path = "fxdata/generated/opponents.txt", symbol = "opponent_seed_13" } }
+
+[[entry]]
+name = "opponent_seed_14"
+source = { carray = { path = "fxdata/generated/opponents.txt", symbol = "opponent_seed_14" } }
+
+[[entry]]
+name = "opponent_seed_15"
+source = { carray = { path = "fxdata/generated/opponents.txt", symbol = "opponent_seed_15" } }
+
+[[entry]]
+name = "opponent_seed_16"
+source = { carray = { path = "fxdata/generated/opponents.txt", symbol = "opponent_seed_16" } }
+
+[[entry]]
+name = "opponent_seed_17"
+source = { carray = { path = "fxdata/generated/opponents.txt", symbol = "opponent_seed_17" } }
+
+[[entry]]
+name = "opponent_seed_18"
+source = { carray = { path = "fxdata/generated/opponents.txt", symbol = "opponent_seed_18" } }
+
+[[entry]]
+name = "opts"
+source = { legacy = "opts" }
+
+[[entry]]
+name = "creatureData"
+namespace = "CreatureData"
+source = { carray = { path = "fxdata/data/creatureData.txt", symbol = "creatureData" } }
+
+[[entry]]
+name = "move0"
+namespace = "MoveData"
+source = { carray = { path = "fxdata/generated/moves.txt", symbol = "move0" } }
+
+[[entry]]
+name = "move1"
+namespace = "MoveData"
+source = { carray = { path = "fxdata/generated/moves.txt", symbol = "move1" } }
+
+[[entry]]
+name = "move2"
+namespace = "MoveData"
+source = { carray = { path = "fxdata/generated/moves.txt", symbol = "move2" } }
+
+[[entry]]
+name = "move3"
+namespace = "MoveData"
+source = { carray = { path = "fxdata/generated/moves.txt", symbol = "move3" } }
+
+[[entry]]
+name = "move4"
+namespace = "MoveData"
+source = { carray = { path = "fxdata/generated/moves.txt", symbol = "move4" } }
+
+[[entry]]
+name = "move5"
+namespace = "MoveData"
+source = { carray = { path = "fxdata/generated/moves.txt", symbol = "move5" } }
+
+[[entry]]
+name = "move6"
+namespace = "MoveData"
+source = { carray = { path = "fxdata/generated/moves.txt", symbol = "move6" } }
+
+[[entry]]
+name = "move7"
+namespace = "MoveData"
+source = { carray = { path = "fxdata/generated/moves.txt", symbol = "move7" } }
+
+[[entry]]
+name = "move8"
+namespace = "MoveData"
+source = { carray = { path = "fxdata/generated/moves.txt", symbol = "move8" } }
+
+[[entry]]
+name = "move9"
+namespace = "MoveData"
+source = { carray = { path = "fxdata/generated/moves.txt", symbol = "move9" } }
+
+[[entry]]
+name = "move10"
+namespace = "MoveData"
+source = { carray = { path = "fxdata/generated/moves.txt", symbol = "move10" } }
+
+[[entry]]
+name = "move11"
+namespace = "MoveData"
+source = { carray = { path = "fxdata/generated/moves.txt", symbol = "move11" } }
+
+[[entry]]
+name = "move12"
+namespace = "MoveData"
+source = { carray = { path = "fxdata/generated/moves.txt", symbol = "move12" } }
+
+[[entry]]
+name = "move13"
+namespace = "MoveData"
+source = { carray = { path = "fxdata/generated/moves.txt", symbol = "move13" } }
+
+[[entry]]
+name = "move14"
+namespace = "MoveData"
+source = { carray = { path = "fxdata/generated/moves.txt", symbol = "move14" } }
+
+[[entry]]
+name = "move15"
+namespace = "MoveData"
+source = { carray = { path = "fxdata/generated/moves.txt", symbol = "move15" } }
+
+[[entry]]
+name = "move16"
+namespace = "MoveData"
+source = { carray = { path = "fxdata/generated/moves.txt", symbol = "move16" } }
+
+[[entry]]
+name = "move17"
+namespace = "MoveData"
+source = { carray = { path = "fxdata/generated/moves.txt", symbol = "move17" } }
+
+[[entry]]
+name = "move18"
+namespace = "MoveData"
+source = { carray = { path = "fxdata/generated/moves.txt", symbol = "move18" } }
+
+[[entry]]
+name = "move19"
+namespace = "MoveData"
+source = { carray = { path = "fxdata/generated/moves.txt", symbol = "move19" } }
+
+[[entry]]
+name = "move20"
+namespace = "MoveData"
+source = { carray = { path = "fxdata/generated/moves.txt", symbol = "move20" } }
+
+[[entry]]
+name = "move21"
+namespace = "MoveData"
+source = { carray = { path = "fxdata/generated/moves.txt", symbol = "move21" } }
+
+[[entry]]
+name = "move22"
+namespace = "MoveData"
+source = { carray = { path = "fxdata/generated/moves.txt", symbol = "move22" } }
+
+[[entry]]
+name = "move23"
+namespace = "MoveData"
+source = { carray = { path = "fxdata/generated/moves.txt", symbol = "move23" } }
+
+[[entry]]
+name = "move24"
+namespace = "MoveData"
+source = { carray = { path = "fxdata/generated/moves.txt", symbol = "move24" } }
+
+[[entry]]
+name = "move25"
+namespace = "MoveData"
+source = { carray = { path = "fxdata/generated/moves.txt", symbol = "move25" } }
+
+[[entry]]
+name = "move26"
+namespace = "MoveData"
+source = { carray = { path = "fxdata/generated/moves.txt", symbol = "move26" } }
+
+[[entry]]
+name = "move27"
+namespace = "MoveData"
+source = { carray = { path = "fxdata/generated/moves.txt", symbol = "move27" } }
+
+[[entry]]
+name = "move28"
+namespace = "MoveData"
+source = { carray = { path = "fxdata/generated/moves.txt", symbol = "move28" } }
+
+[[entry]]
+name = "move29"
+namespace = "MoveData"
+source = { carray = { path = "fxdata/generated/moves.txt", symbol = "move29" } }
+
+[[entry]]
+name = "move30"
+namespace = "MoveData"
+source = { carray = { path = "fxdata/generated/moves.txt", symbol = "move30" } }
+
+[[entry]]
+name = "move31"
+namespace = "MoveData"
+source = { carray = { path = "fxdata/generated/moves.txt", symbol = "move31" } }
+
+[[entry]]
+name = "move32"
+namespace = "MoveData"
+source = { carray = { path = "fxdata/generated/moves.txt", symbol = "move32" } }
+
+[[entry]]
+name = "move33"
+namespace = "MoveData"
+source = { carray = { path = "fxdata/generated/moves.txt", symbol = "move33" } }
+
+[[entry]]
+name = "move34"
+namespace = "MoveData"
+source = { carray = { path = "fxdata/generated/moves.txt", symbol = "move34" } }
+
+[[entry]]
+name = "move36"
+namespace = "MoveData"
+source = { carray = { path = "fxdata/generated/moves.txt", symbol = "move36" } }
+
+[[entry]]
+name = "move37"
+namespace = "MoveData"
+source = { carray = { path = "fxdata/generated/moves.txt", symbol = "move37" } }
+
+[[entry]]
+name = "move38"
+namespace = "MoveData"
+source = { carray = { path = "fxdata/generated/moves.txt", symbol = "move38" } }
+
+[[entry]]
+name = "move39"
+namespace = "MoveData"
+source = { carray = { path = "fxdata/generated/moves.txt", symbol = "move39" } }
+
+[[entry]]
+name = "move40"
+namespace = "MoveData"
+source = { carray = { path = "fxdata/generated/moves.txt", symbol = "move40" } }
+
+[[entry]]
+name = "move41"
+namespace = "MoveData"
+source = { carray = { path = "fxdata/generated/moves.txt", symbol = "move41" } }
+
+[[entry]]
+name = "move42"
+namespace = "MoveData"
+source = { carray = { path = "fxdata/generated/moves.txt", symbol = "move42" } }
+
+[[entry]]
+name = "move43"
+namespace = "MoveData"
+source = { carray = { path = "fxdata/generated/moves.txt", symbol = "move43" } }
+
+[[entry]]
+name = "move255"
+namespace = "MoveData"
+source = { carray = { path = "fxdata/generated/moves.txt", symbol = "move255" } }
+
+[[entry]]
+name = "moveNames"
+namespace = "MoveData"
+source = { legacy = "MoveData::moveNames" }
+
+[[entry]]
+name = "m1e1Text"
+namespace = "EventData"
+source = { carray = { path = "fxdata/data/event.txt", symbol = "m1e1Text" } }
+
+[[entry]]
+name = "m1e1"
+namespace = "EventData"
+source = { carray = { path = "fxdata/data/event.txt", symbol = "m1e1" } }
+
+[[entry]]
+name = "m1eTable"
+namespace = "EventData"
+source = { legacy = "EventData::m1eTable" }
+
+[[entry]]
+name = "m1s1e1Text"
+namespace = "EventData"
+source = { carray = { path = "fxdata/data/event.txt", symbol = "m1s1e1Text" } }
+
+[[entry]]
+name = "m1s1e1"
+namespace = "EventData"
+source = { carray = { path = "fxdata/data/event.txt", symbol = "m1s1e1" } }
+
+[[entry]]
+name = "m1s1e21Text"
+namespace = "EventData"
+source = { carray = { path = "fxdata/data/event.txt", symbol = "m1s1e21Text" } }
+
+[[entry]]
+name = "m1s1e2"
+namespace = "EventData"
+source = { carray = { path = "fxdata/data/event.txt", symbol = "m1s1e2" } }
+
+[[entry]]
+name = "m1s1eTable"
+namespace = "EventData"
+source = { legacy = "EventData::m1s1eTable" }
+
+[[entry]]
+name = "m1Table"
+namespace = "EventData"
+source = { legacy = "EventData::m1Table" }
+
+[[entry]]
+name = "eventTable"
+namespace = "EventData"
+source = { legacy = "EventData::eventTable" }
+
+[[entry]]
+name = "map1"
+namespace = "MapData"
+source = { carray = { path = "fxdata/data/mapData.txt", symbol = "map1" } }
+
+[[entry]]
+name = "house1"
+namespace = "MapData"
+source = { carray = { path = "fxdata/data/mapData.txt", symbol = "house1" } }
+
+[[entry]]
+name = "m1submaps"
+namespace = "MapData"
+source = { legacy = "MapData::m1submaps" }
+
+[[entry]]
+name = "m1submapcount"
+namespace = "MapData"
+source = { legacy = "MapData::m1submapcount" }
+
+[[entry]]
+name = "m1widths"
+namespace = "MapData"
+source = { carray = { path = "fxdata/data/mapData.txt", symbol = "m1widths" } }
+
+[[entry]]
+name = "m1heights"
+namespace = "MapData"
+source = { carray = { path = "fxdata/data/mapData.txt", symbol = "m1heights" } }
+
+[[entry]]
+name = "map1Warps"
+namespace = "MapData"
+source = { carray = { path = "fxdata/data/mapData.txt", symbol = "map1Warps" } }
+
+[[entry]]
+name = "house1Warps"
+namespace = "MapData"
+source = { carray = { path = "fxdata/data/mapData.txt", symbol = "house1Warps" } }
+
+[[entry]]
+name = "m1warpCounts"
+namespace = "MapData"
+source = { carray = { path = "fxdata/data/mapData.txt", symbol = "m1warpCounts" } }
+
+[[entry]]
+name = "m1warps"
+namespace = "MapData"
+source = { legacy = "MapData::m1warps" }
+
+[[entry]]
+name = "warps"
+namespace = "MapData"
+source = { legacy = "MapData::warps" }
+
+[[entry]]
+name = "maps"
+namespace = "MapData"
+source = { legacy = "MapData::maps" }
+
+[[entry]]
+name = "moveList"
+namespace = "MoveLists"
+source = { legacy = "MoveLists::moveList" }
+
+[[entry]]
+name = "attackText"
+namespace = "MenuFXData"
+source = { carray = { path = "fxdata/data/menu.txt", symbol = "attackText" } }
+
+[[entry]]
+name = "enemyAttackText"
+namespace = "MenuFXData"
+source = { carray = { path = "fxdata/data/menu.txt", symbol = "enemyAttackText" } }
+
+[[entry]]
+name = "damageText"
+namespace = "MenuFXData"
+source = { carray = { path = "fxdata/data/menu.txt", symbol = "damageText" } }
+
+[[entry]]
+name = "hpText"
+namespace = "MenuFXData"
+source = { carray = { path = "fxdata/data/menu.txt", symbol = "hpText" } }
+
+[[entry]]
+name = "atkText"
+namespace = "MenuFXData"
+source = { carray = { path = "fxdata/data/menu.txt", symbol = "atkText" } }
+
+[[entry]]
+name = "defText"
+namespace = "MenuFXData"
+source = { carray = { path = "fxdata/data/menu.txt", symbol = "defText" } }
+
+[[entry]]
+name = "spdText"
+namespace = "MenuFXData"
+source = { carray = { path = "fxdata/data/menu.txt", symbol = "spdText" } }
+
+[[entry]]
+name = "satkText"
+namespace = "MenuFXData"
+source = { carray = { path = "fxdata/data/menu.txt", symbol = "satkText" } }
+
+[[entry]]
+name = "sdefText"
+namespace = "MenuFXData"
+source = { carray = { path = "fxdata/data/menu.txt", symbol = "sdefText" } }
+
+[[entry]]
+name = "pointerText"
+namespace = "MenuFXData"
+source = { carray = { path = "fxdata/data/menu.txt", symbol = "pointerText" } }
+
+[[entry]]
+name = "SPIRIT"
+namespace = "MenuFXData"
+source = { carray = { path = "fxdata/data/menu.txt", symbol = "SPIRIT" } }
+
+[[entry]]
+name = "WATER"
+namespace = "MenuFXData"
+source = { carray = { path = "fxdata/data/menu.txt", symbol = "WATER" } }
+
+[[entry]]
+name = "WIND"
+namespace = "MenuFXData"
+source = { carray = { path = "fxdata/data/menu.txt", symbol = "WIND" } }
+
+[[entry]]
+name = "EARTH"
+namespace = "MenuFXData"
+source = { carray = { path = "fxdata/data/menu.txt", symbol = "EARTH" } }
+
+[[entry]]
+name = "FIRE"
+namespace = "MenuFXData"
+source = { carray = { path = "fxdata/data/menu.txt", symbol = "FIRE" } }
+
+[[entry]]
+name = "LIGHTNING"
+namespace = "MenuFXData"
+source = { carray = { path = "fxdata/data/menu.txt", symbol = "LIGHTNING" } }
+
+[[entry]]
+name = "PLANT"
+namespace = "MenuFXData"
+source = { carray = { path = "fxdata/data/menu.txt", symbol = "PLANT" } }
+
+[[entry]]
+name = "ELDER"
+namespace = "MenuFXData"
+source = { carray = { path = "fxdata/data/menu.txt", symbol = "ELDER" } }
+
+[[entry]]
+name = "NONE"
+namespace = "MenuFXData"
+source = { carray = { path = "fxdata/data/menu.txt", symbol = "NONE" } }
+
+[[entry]]
+name = "Fainted"
+namespace = "MenuFXData"
+source = { carray = { path = "fxdata/data/menu.txt", symbol = "Fainted" } }
+
+[[entry]]
+name = "SwitchIn"
+namespace = "MenuFXData"
+source = { carray = { path = "fxdata/data/menu.txt", symbol = "SwitchIn" } }
+
+[[entry]]
+name = "win"
+namespace = "MenuFXData"
+source = { carray = { path = "fxdata/data/menu.txt", symbol = "win" } }
+
+[[entry]]
+name = "lose"
+namespace = "MenuFXData"
+source = { carray = { path = "fxdata/data/menu.txt", symbol = "lose" } }
+
+[[entry]]
+name = "escaped"
+namespace = "MenuFXData"
+source = { carray = { path = "fxdata/data/menu.txt", symbol = "escaped" } }
+
+[[entry]]
+name = "changedIn"
+namespace = "MenuFXData"
+source = { carray = { path = "fxdata/data/menu.txt", symbol = "changedIn" } }
+
+[[entry]]
+name = "quarter"
+namespace = "MenuFXData"
+source = { carray = { path = "fxdata/data/menu.txt", symbol = "quarter" } }
+
+[[entry]]
+name = "half"
+namespace = "MenuFXData"
+source = { carray = { path = "fxdata/data/menu.txt", symbol = "half" } }
+
+[[entry]]
+name = "doubled"
+namespace = "MenuFXData"
+source = { carray = { path = "fxdata/data/menu.txt", symbol = "doubled" } }
+
+[[entry]]
+name = "quad"
+namespace = "MenuFXData"
+source = { carray = { path = "fxdata/data/menu.txt", symbol = "quad" } }
+
+[[entry]]
+name = "damage"
+namespace = "MenuFXData"
+source = { carray = { path = "fxdata/data/menu.txt", symbol = "damage" } }
+
+[[entry]]
+name = "physical"
+namespace = "MenuFXData"
+source = { carray = { path = "fxdata/data/menu.txt", symbol = "physical" } }
+
+[[entry]]
+name = "special"
+namespace = "MenuFXData"
+source = { carray = { path = "fxdata/data/menu.txt", symbol = "special" } }
+
+[[entry]]
+name = "power"
+namespace = "MenuFXData"
+source = { carray = { path = "fxdata/data/menu.txt", symbol = "power" } }
+
+[[entry]]
+name = "move"
+namespace = "MenuFXData"
+source = { carray = { path = "fxdata/data/menu.txt", symbol = "move" } }
+
+[[entry]]
+name = "change"
+namespace = "MenuFXData"
+source = { carray = { path = "fxdata/data/menu.txt", symbol = "change" } }
+
+[[entry]]
+name = "escape"
+namespace = "MenuFXData"
+source = { carray = { path = "fxdata/data/menu.txt", symbol = "escape" } }
+
+[[entry]]
+name = "gather"
+namespace = "MenuFXData"
+source = { carray = { path = "fxdata/data/menu.txt", symbol = "gather" } }
+
+[[entry]]
+name = "null"
+namespace = "Teams::StockCreatures"
+source = { carray = { path = "fxdata/generated/teams.txt", symbol = "null" } }
+
+[[entry]]
+name = "SquibbleSnail"
+namespace = "Teams::StockCreatures"
+source = { carray = { path = "fxdata/generated/teams.txt", symbol = "SquibbleSnail" } }
+
+[[entry]]
+name = "SquableSnail"
+namespace = "Teams::StockCreatures"
+source = { carray = { path = "fxdata/generated/teams.txt", symbol = "SquableSnail" } }
+
+[[entry]]
+name = "ScrambleSnail"
+namespace = "Teams::StockCreatures"
+source = { carray = { path = "fxdata/generated/teams.txt", symbol = "ScrambleSnail" } }
+
+[[entry]]
+name = "SkitterCrab"
+namespace = "Teams::StockCreatures"
+source = { carray = { path = "fxdata/generated/teams.txt", symbol = "SkitterCrab" } }
+
+[[entry]]
+name = "ScatterCrab"
+namespace = "Teams::StockCreatures"
+source = { carray = { path = "fxdata/generated/teams.txt", symbol = "ScatterCrab" } }
+
+[[entry]]
+name = "ShatterCrab"
+namespace = "Teams::StockCreatures"
+source = { carray = { path = "fxdata/generated/teams.txt", symbol = "ShatterCrab" } }
+
+[[entry]]
+name = "squid"
+namespace = "Teams::StockCreatures"
+source = { carray = { path = "fxdata/generated/teams.txt", symbol = "squid" } }
+
+[[entry]]
+name = "bigsquid"
+namespace = "Teams::StockCreatures"
+source = { carray = { path = "fxdata/generated/teams.txt", symbol = "bigsquid" } }
+
+[[entry]]
+name = "BiggestSquid"
+namespace = "Teams::StockCreatures"
+source = { carray = { path = "fxdata/generated/teams.txt", symbol = "BiggestSquid" } }
+
+[[entry]]
+name = "bell"
+namespace = "Teams::StockCreatures"
+source = { carray = { path = "fxdata/generated/teams.txt", symbol = "bell" } }
+
+[[entry]]
+name = "ember"
+namespace = "Teams::StockCreatures"
+source = { carray = { path = "fxdata/generated/teams.txt", symbol = "ember" } }
+
+[[entry]]
+name = "cuircuit"
+namespace = "Teams::StockCreatures"
+source = { carray = { path = "fxdata/generated/teams.txt", symbol = "cuircuit" } }
+
+[[entry]]
+name = "hedge"
+namespace = "Teams::StockCreatures"
+source = { carray = { path = "fxdata/generated/teams.txt", symbol = "hedge" } }
+
+[[entry]]
+name = "cloud"
+namespace = "Teams::StockCreatures"
+source = { carray = { path = "fxdata/generated/teams.txt", symbol = "cloud" } }
+
+[[entry]]
+name = "rock"
+namespace = "Teams::StockCreatures"
+source = { carray = { path = "fxdata/generated/teams.txt", symbol = "rock" } }
+
+[[entry]]
+name = "wiggleworm"
+namespace = "Teams::StockCreatures"
+source = { carray = { path = "fxdata/generated/teams.txt", symbol = "wiggleworm" } }
+
+[[entry]]
+name = "waggleworm"
+namespace = "Teams::StockCreatures"
+source = { carray = { path = "fxdata/generated/teams.txt", symbol = "waggleworm" } }
+
+[[entry]]
+name = "skimskate"
+namespace = "Teams::StockCreatures"
+source = { carray = { path = "fxdata/generated/teams.txt", symbol = "skimskate" } }
+
+[[entry]]
+name = "skimray"
+namespace = "Teams::StockCreatures"
+source = { carray = { path = "fxdata/generated/teams.txt", symbol = "skimray" } }
+
+[[entry]]
+name = "billow"
+namespace = "Teams::StockCreatures"
+source = { carray = { path = "fxdata/generated/teams.txt", symbol = "billow" } }
+
+[[entry]]
+name = "howl"
+namespace = "Teams::StockCreatures"
+source = { carray = { path = "fxdata/generated/teams.txt", symbol = "howl" } }
+
+[[entry]]
+name = "item"
+namespace = "Teams::StockCreatures"
+source = { carray = { path = "fxdata/generated/teams.txt", symbol = "item" } }
+
+[[entry]]
+name = "item2"
+namespace = "Teams::StockCreatures"
+source = { carray = { path = "fxdata/generated/teams.txt", symbol = "item2" } }
+
+[[entry]]
+name = "zip"
+namespace = "Teams::StockCreatures"
+source = { carray = { path = "fxdata/generated/teams.txt", symbol = "zip" } }
+
+[[entry]]
+name = "zap"
+namespace = "Teams::StockCreatures"
+source = { carray = { path = "fxdata/generated/teams.txt", symbol = "zap" } }
+
+[[entry]]
+name = "suculent"
+namespace = "Teams::StockCreatures"
+source = { carray = { path = "fxdata/generated/teams.txt", symbol = "suculent" } }
+
+[[entry]]
+name = "cactus"
+namespace = "Teams::StockCreatures"
+source = { carray = { path = "fxdata/generated/teams.txt", symbol = "cactus" } }
+
+[[entry]]
+name = "flickerfly"
+namespace = "Teams::StockCreatures"
+source = { carray = { path = "fxdata/generated/teams.txt", symbol = "flickerfly" } }
+
+[[entry]]
+name = "flitfly"
+namespace = "Teams::StockCreatures"
+source = { carray = { path = "fxdata/generated/teams.txt", symbol = "flitfly" } }
+
+[[entry]]
+name = "dragon"
+namespace = "Teams::StockCreatures"
+source = { carray = { path = "fxdata/generated/teams.txt", symbol = "dragon" } }
+
+[[entry]]
+name = "skull"
+namespace = "Teams::StockCreatures"
+source = { carray = { path = "fxdata/generated/teams.txt", symbol = "skull" } }
+
+[[entry]]
+name = "ardu"
+namespace = "Teams::StockCreatures"
+source = { carray = { path = "fxdata/generated/teams.txt", symbol = "ardu" } }
+
+[[entry]]
+name = "jimbo"
+namespace = "Teams::Names"
+source = { carray = { path = "fxdata/generated/teams.txt", symbol = "jimbo" } }
+
+[[entry]]
+name = "teamList"
+namespace = "Teams"
+source = { legacy = "Teams::teamList" }
+
+[[entry]]
+name = "testmap"
+source = { carray = { path = "fxdata/data/chunks.txt", symbol = "testmap" } }
+
+[[entry]]
+name = "numbersblack"
+source = { carray = { path = "fxdata/Sprites.txt", symbol = "numbersblack" } }
+
+[[entry]]
+name = "creatureSprites"
+source = { carray = { path = "fxdata/Sprites.txt", symbol = "creatureSprites" } }
+
+[[entry]]
+name = "fieldBacground"
+source = { carray = { path = "fxdata/Sprites.txt", symbol = "fieldBacground" } }
+
+[[entry]]
+name = "characterSheet"
+source = { carray = { path = "fxdata/Sprites.txt", symbol = "characterSheet" } }
+
+[[entry]]
+name = "NewecreatureSprites"
+source = { carray = { path = "fxdata/Sprites.txt", symbol = "NewecreatureSprites" } }
+
+[[entry]]
+name = "numberswhite"
+source = { carray = { path = "fxdata/Sprites.txt", symbol = "numberswhite" } }
+
+[[entry]]
+name = "singlenumberswhite"
+source = { carray = { path = "fxdata/Sprites.txt", symbol = "singlenumberswhite" } }
+
+[[entry]]
+name = "fightMenu"
+source = { carray = { path = "fxdata/Sprites.txt", symbol = "fightMenu" } }
+
+[[entry]]
+name = "singlenumbersblack"
+source = { carray = { path = "fxdata/Sprites.txt", symbol = "singlenumbersblack" } }
+
+[[entry]]
+name = "ArduFont"
+source = { carray = { path = "fxdata/Sprites.txt", symbol = "ArduFont" } }
+
+[[entry]]
+name = "moveInfo"
+source = { carray = { path = "fxdata/Sprites.txt", symbol = "moveInfo" } }
+
+[[entry]]
+name = "worldTiles"
+source = { carray = { path = "fxdata/Sprites.txt", symbol = "worldTiles" } }
+
+[[entry]]
+name = "tiles"
+source = { carray = { path = "fxdata/Sprites.txt", symbol = "tiles" } }
+
+[[entry]]
+name = "maskedFont"
+source = { carray = { path = "fxdata/Sprites.txt", symbol = "maskedFont" } }
+
+[[entry]]
+name = "npc"
+source = { carray = { path = "fxdata/Sprites.txt", symbol = "npc" } }
+
+[[entry]]
+name = "ecreatureSprites"
+source = { carray = { path = "fxdata/Sprites.txt", symbol = "ecreatureSprites" } }
+
+[[entry]]
+name = "arduboyFont"
+source = { carray = { path = "fxdata/Sprites.txt", symbol = "arduboyFont" } }
+
+[[entry]]
+name = "battleMenu"
+source = { carray = { path = "fxdata/Sprites.txt", symbol = "battleMenu" } }
+
+[[entry]]
+name = "blankMenu"
+source = { carray = { path = "fxdata/Sprites.txt", symbol = "blankMenu" } }
+
+[[entry]]
+name = "ArduFontTrimmed"
+source = { carray = { path = "fxdata/Sprites.txt", symbol = "ArduFontTrimmed" } }
+
+[[entry]]
+name = "tilesheet"
+source = { carray = { path = "fxdata/Sprites.txt", symbol = "tilesheet" } }
+
+[[entry]]
+name = "letters"
+source = { carray = { path = "fxdata/Sprites.txt", symbol = "letters" } }
+
+[[entry]]
+name = "amove20"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "amove20" } }
+
+[[entry]]
+name = "amove3"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "amove3" } }
+
+[[entry]]
+name = "creature24"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "creature24" } }
+
+[[entry]]
+name = "special"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "special" } }
+
+[[entry]]
+name = "creature30"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "creature30" } }
+
+[[entry]]
+name = "damage"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "damage" } }
+
+[[entry]]
+name = "amove29"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "amove29" } }
+
+[[entry]]
+name = "amove4"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "amove4" } }
+
+[[entry]]
+name = "amove5"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "amove5" } }
+
+[[entry]]
+name = "status"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "status" } }
+
+[[entry]]
+name = "creature6"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "creature6" } }
+
+[[entry]]
+name = "amove7"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "amove7" } }
+
+[[entry]]
+name = "amove25"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "amove25" } }
+
+[[entry]]
+name = "creature27"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "creature27" } }
+
+[[entry]]
+name = "wind"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "wind" } }
+
+[[entry]]
+name = "lightning"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "lightning" } }
+
+[[entry]]
+name = "creature0"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "creature0" } }
+
+[[entry]]
+name = "creature9"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "creature9" } }
+
+[[entry]]
+name = "amove12"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "amove12" } }
+
+[[entry]]
+name = "amove13"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "amove13" } }
+
+[[entry]]
+name = "sdefText"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "sdefText" } }
+
+[[entry]]
+name = "amove6"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "amove6" } }
+
+[[entry]]
+name = "amove15"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "amove15" } }
+
+[[entry]]
+name = "satkText"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "satkText" } }
+
+[[entry]]
+name = "creature29"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "creature29" } }
+
+[[entry]]
+name = "creature28"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "creature28" } }
+
+[[entry]]
+name = "creature11"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "creature11" } }
+
+[[entry]]
+name = "creature12"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "creature12" } }
+
+[[entry]]
+name = "creature13"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "creature13" } }
+
+[[entry]]
+name = "creature25"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "creature25" } }
+
+[[entry]]
+name = "creature3"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "creature3" } }
+
+[[entry]]
+name = "amove26"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "amove26" } }
+
+[[entry]]
+name = "spdText"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "spdText" } }
+
+[[entry]]
+name = "creature26"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "creature26" } }
+
+[[entry]]
+name = "amove14"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "amove14" } }
+
+[[entry]]
+name = "gather"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "gather" } }
+
+[[entry]]
+name = "amove30"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "amove30" } }
+
+[[entry]]
+name = "amove24"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "amove24" } }
+
+[[entry]]
+name = "fire"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "fire" } }
+
+[[entry]]
+name = "creature19"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "creature19" } }
+
+[[entry]]
+name = "lose"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "lose" } }
+
+[[entry]]
+name = "creature8"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "creature8" } }
+
+[[entry]]
+name = "creature5"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "creature5" } }
+
+[[entry]]
+name = "creature4"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "creature4" } }
+
+[[entry]]
+name = "Fainted"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "Fainted" } }
+
+[[entry]]
+name = "amove27"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "amove27" } }
+
+[[entry]]
+name = "creature15"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "creature15" } }
+
+[[entry]]
+name = "half"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "half" } }
+
+[[entry]]
+name = "creature23"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "creature23" } }
+
+[[entry]]
+name = "hpText"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "hpText" } }
+
+[[entry]]
+name = "amove2"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "amove2" } }
+
+[[entry]]
+name = "elder"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "elder" } }
+
+[[entry]]
+name = "plant"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "plant" } }
+
+[[entry]]
+name = "amove1"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "amove1" } }
+
+[[entry]]
+name = "water"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "water" } }
+
+[[entry]]
+name = "enemyAttackText"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "enemyAttackText" } }
+
+[[entry]]
+name = "atkText"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "atkText" } }
+
+[[entry]]
+name = "amove9"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "amove9" } }
+
+[[entry]]
+name = "amove8"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "amove8" } }
+
+[[entry]]
+name = "defText"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "defText" } }
+
+[[entry]]
+name = "none"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "none" } }
+
+[[entry]]
+name = "earth"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "earth" } }
+
+[[entry]]
+name = "creature10"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "creature10" } }
+
+[[entry]]
+name = "amove32"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "amove32" } }
+
+[[entry]]
+name = "damageText"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "damageText" } }
+
+[[entry]]
+name = "physical"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "physical" } }
+
+[[entry]]
+name = "win"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "win" } }
+
+[[entry]]
+name = "amove21"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "amove21" } }
+
+[[entry]]
+name = "amove19"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "amove19" } }
+
+[[entry]]
+name = "amove18"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "amove18" } }
+
+[[entry]]
+name = "creature14"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "creature14" } }
+
+[[entry]]
+name = "amove28"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "amove28" } }
+
+[[entry]]
+name = "changedIn"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "changedIn" } }
+
+[[entry]]
+name = "amove16"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "amove16" } }
+
+[[entry]]
+name = "creature2"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "creature2" } }
+
+[[entry]]
+name = "amove17"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "amove17" } }
+
+[[entry]]
+name = "amove22"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "amove22" } }
+
+[[entry]]
+name = "amove0"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "amove0" } }
+
+[[entry]]
+name = "escaped"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "escaped" } }
+
+[[entry]]
+name = "creature17"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "creature17" } }
+
+[[entry]]
+name = "creature20"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "creature20" } }
+
+[[entry]]
+name = "creature21"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "creature21" } }
+
+[[entry]]
+name = "quad"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "quad" } }
+
+[[entry]]
+name = "creature7"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "creature7" } }
+
+[[entry]]
+name = "SwitchIn"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "SwitchIn" } }
+
+[[entry]]
+name = "amove11"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "amove11" } }
+
+[[entry]]
+name = "creature16"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "creature16" } }
+
+[[entry]]
+name = "power"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "power" } }
+
+[[entry]]
+name = "spirit"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "spirit" } }
+
+[[entry]]
+name = "doubled"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "doubled" } }
+
+[[entry]]
+name = "amove23"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "amove23" } }
+
+[[entry]]
+name = "pointerText"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "pointerText" } }
+
+[[entry]]
+name = "attackText"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "attackText" } }
+
+[[entry]]
+name = "move"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "move" } }
+
+[[entry]]
+name = "creature18"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "creature18" } }
+
+[[entry]]
+name = "amove31"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "amove31" } }
+
+[[entry]]
+name = "escape"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "escape" } }
+
+[[entry]]
+name = "creature1"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "creature1" } }
+
+[[entry]]
+name = "applied"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "applied" } }
+
+[[entry]]
+name = "amove10"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "amove10" } }
+
+[[entry]]
+name = "quarter"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "quarter" } }
+
+[[entry]]
+name = "creature22"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "creature22" } }
+
+[[entry]]
+name = "change"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "change" } }
+
+[[entry]]
+name = "creature31"
+source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "creature31" } }
+
+[[entry]]
+name = "CreatureNames"
+namespace = "CreatureNames"
+source = { legacy = "CreatureNames::CreatureNames" }
+
+[[entry]]
+name = "MoveNames"
+namespace = "MoveNames"
+source = { legacy = "MoveNames::MoveNames" }
+
+[[entry]]
+name = "MenuStrings"
+namespace = "MenuStrings"
+source = { legacy = "MenuStrings::MenuStrings" }
+
+[[entry]]
+name = "EffectStrings"
+namespace = "EffectStrings"
+source = { legacy = "EffectStrings::EffectStrings" }
+
+[[entry]]
+name = "basicBeamR"
+source = { carray = { path = "fxdata/battleEffects/Sprites.txt", symbol = "basicBeamR" } }
+
+[[entry]]
+name = "basicBeamL"
+source = { carray = { path = "fxdata/battleEffects/Sprites.txt", symbol = "basicBeamL" } }
+
+[[entry]]
+name = "BasicWaveR"
+source = { carray = { path = "fxdata/battleEffects/Sprites.txt", symbol = "BasicWaveR" } }
+
+[[entry]]
+name = "BasicWaveL"
+source = { carray = { path = "fxdata/battleEffects/Sprites.txt", symbol = "BasicWaveL" } }
+
+[[entry]]
+name = "fontTrimmed"
+source = { image = { path = "images/ArduFontTrimmed_5x6.png", width = 5, height = 6, shades = 2, spacing = 0 } }
+
+[[entry]]
+name = "type_table"
+source = { raw = "fxdata/generated/typetable.bin" }
+
+[[entry]]
+name = "move_table"
+source = { raw = "fxdata/generated/moves.bin" }
+
+[[entry]]
+name = "map_data"
+source = { raw = "fxdata/generated/map.bin" }
+
+[[entry]]
+name = "raw_map_data"
+source = { raw = "fxdata/raw_map.bin" }
+
+[[entry]]
+name = "raw_map_text"
+source = { raw = "fxdata/text.bin" }
+
+[[entry]]
+name = "generator_version"
+source = { raw = "fxdata/generated/tool_version.bin" }
+
