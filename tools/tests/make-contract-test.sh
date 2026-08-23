@@ -49,6 +49,11 @@ if printf '%s\n' "$headless_run" | grep -Eq '(^|[;&|[:space:]])open([[:space:];]
 fi
 
 host=$(make --no-print-directory -n test BUILD_DIR=build/contract)
+gen=$(make --no-print-directory -n gen BUILD_DIR=build/contract DIST_DIR=dist/contract)
+if printf '%s\n' "$gen" | grep -Fq 'python3 '; then
+    printf 'gen retains Python dependency\n' >&2
+    exit 1
+fi
 
 pack=$(make --no-print-directory -n pack BUILD_DIR=build/contract DIST_DIR=dist/contract)
 printf '%s\n' "$pack" | grep -Fq 'cgfx-tools.sh'

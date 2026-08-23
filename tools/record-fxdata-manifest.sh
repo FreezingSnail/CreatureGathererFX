@@ -6,12 +6,14 @@ script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 # shellcheck source=fxdata-manifest-lib.sh
 source "$script_dir/fxdata-manifest-lib.sh"
 
-fxdata_file=${1:-fxdata/fxdata.txt}
+fxdata_file=${1:-fxlayout.toml}
 manifest=${2:-fxdata/generated/manifest.json}
+fxdata_file=$(CDPATH= cd -- "$(dirname -- "$fxdata_file")" && printf '%s/%s\n' "$PWD" "$(basename -- "$fxdata_file")")
 test -f "$fxdata_file" || fxdata_manifest_fail "missing FX definition: $fxdata_file"
 test -f "$manifest" || fxdata_manifest_fail "missing cgfx-tools manifest: $manifest"
 
 root=$(fxdata_manifest_root "$fxdata_file")
+target=$(fxdata_relative_path "$root" "$fxdata_file")
 version=$(fxdata_tool_version "$manifest")
 tmp="$manifest.tmp.$$"
 trap 'rm -f "$tmp"' EXIT
@@ -37,7 +39,7 @@ write_entries() {
     printf '{\n'
     printf '  "schema_version":1,\n'
     printf '  "generator":{"name":"cgfx-tools","version":"%s"},\n' "$version"
-    printf '  "target":"fxdata/fxdata.txt",\n'
+    printf '  "target":"%s",\n' "$target"
     write_entries inputs fxdata_collect_inputs
     printf ',\n'
     write_entries outputs fxdata_collect_outputs

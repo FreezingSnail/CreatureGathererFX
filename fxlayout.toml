@@ -1,4 +1,4 @@
-# Generated from fxdata/fxdata.txt and src/fxdata.h declaration order.
+# Native cgfx-tools declaration order mirrored by src/fxdata.h.
 
 [[entry]]
 name = "encounterRates"
@@ -82,7 +82,7 @@ source = { carray = { path = "fxdata/generated/opponents.txt", symbol = "opponen
 
 [[entry]]
 name = "opts"
-source = { legacy = "opts" }
+source = { symbol = { path = "fxdata/generated/opponents.txt", symbol = "opts" } }
 
 [[entry]]
 name = "creatureData"
@@ -312,7 +312,7 @@ source = { carray = { path = "fxdata/generated/moves.txt", symbol = "move255" } 
 [[entry]]
 name = "moveNames"
 namespace = "MoveData"
-source = { legacy = "MoveData::moveNames" }
+source = { symbol = { path = "fxdata/generated/moves.txt", symbol = "moveNames" } }
 
 [[entry]]
 name = "m1e1Text"
@@ -327,7 +327,7 @@ source = { carray = { path = "fxdata/data/event.txt", symbol = "m1e1" } }
 [[entry]]
 name = "m1eTable"
 namespace = "EventData"
-source = { legacy = "EventData::m1eTable" }
+source = { symbol = { path = "fxdata/data/event.txt", symbol = "m1eTable" } }
 
 [[entry]]
 name = "m1s1e1Text"
@@ -352,17 +352,17 @@ source = { carray = { path = "fxdata/data/event.txt", symbol = "m1s1e2" } }
 [[entry]]
 name = "m1s1eTable"
 namespace = "EventData"
-source = { legacy = "EventData::m1s1eTable" }
+source = { symbol = { path = "fxdata/data/event.txt", symbol = "m1s1eTable" } }
 
 [[entry]]
 name = "m1Table"
 namespace = "EventData"
-source = { legacy = "EventData::m1Table" }
+source = { symbol = { path = "fxdata/data/event.txt", symbol = "m1Table" } }
 
 [[entry]]
 name = "eventTable"
 namespace = "EventData"
-source = { legacy = "EventData::eventTable" }
+source = { symbol = { path = "fxdata/data/event.txt", symbol = "eventTable" } }
 
 [[entry]]
 name = "map1"
@@ -377,12 +377,12 @@ source = { carray = { path = "fxdata/data/mapData.txt", symbol = "house1" } }
 [[entry]]
 name = "m1submaps"
 namespace = "MapData"
-source = { legacy = "MapData::m1submaps" }
+source = { symbol = { path = "fxdata/data/mapData.txt", symbol = "m1submaps" } }
 
 [[entry]]
 name = "m1submapcount"
 namespace = "MapData"
-source = { legacy = "MapData::m1submapcount" }
+source = { symbol = { path = "fxdata/data/mapData.txt", symbol = "m1submapcount" } }
 
 [[entry]]
 name = "m1widths"
@@ -412,22 +412,22 @@ source = { carray = { path = "fxdata/data/mapData.txt", symbol = "m1warpCounts" 
 [[entry]]
 name = "m1warps"
 namespace = "MapData"
-source = { legacy = "MapData::m1warps" }
+source = { symbol = { path = "fxdata/data/mapData.txt", symbol = "m1warps" } }
 
 [[entry]]
 name = "warps"
 namespace = "MapData"
-source = { legacy = "MapData::warps" }
+source = { symbol = { path = "fxdata/data/mapData.txt", symbol = "warps" } }
 
 [[entry]]
 name = "maps"
 namespace = "MapData"
-source = { legacy = "MapData::maps" }
+source = { symbol = { path = "fxdata/data/mapData.txt", symbol = "maps" } }
 
 [[entry]]
 name = "moveList"
 namespace = "MoveLists"
-source = { legacy = "MoveLists::moveList" }
+source = { symbol = { path = "fxdata/data/movelists.txt", symbol = "moveList" } }
 
 [[entry]]
 name = "attackText"
@@ -787,7 +787,7 @@ source = { carray = { path = "fxdata/generated/teams.txt", symbol = "jimbo" } }
 [[entry]]
 name = "teamList"
 namespace = "Teams"
-source = { legacy = "Teams::teamList" }
+source = { symbol = { path = "fxdata/generated/teams.txt", symbol = "teamList" } }
 
 [[entry]]
 name = "testmap"
@@ -1300,22 +1300,22 @@ source = { carray = { path = "fxdata/generated/Sprites.txt", symbol = "creature3
 [[entry]]
 name = "CreatureNames"
 namespace = "CreatureNames"
-source = { legacy = "CreatureNames::CreatureNames" }
+source = { symbol = { path = "fxdata/generated/Sprites.txt", symbol = "CreatureNames" } }
 
 [[entry]]
 name = "MoveNames"
 namespace = "MoveNames"
-source = { legacy = "MoveNames::MoveNames" }
+source = { symbol = { path = "fxdata/generated/Sprites.txt", symbol = "MoveNames" } }
 
 [[entry]]
 name = "MenuStrings"
 namespace = "MenuStrings"
-source = { legacy = "MenuStrings::MenuStrings" }
+source = { symbol = { path = "fxdata/generated/Sprites.txt", symbol = "MenuStrings" } }
 
 [[entry]]
 name = "EffectStrings"
 namespace = "EffectStrings"
-source = { legacy = "EffectStrings::EffectStrings" }
+source = { symbol = { path = "fxdata/generated/Sprites.txt", symbol = "EffectStrings" } }
 
 [[entry]]
 name = "basicBeamR"

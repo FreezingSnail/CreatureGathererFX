@@ -17,23 +17,33 @@ fxdata_sha256() {
 }
 
 fxdata_manifest_root() {
-    (CDPATH= cd -- "$(dirname -- "$1")/.." && pwd -P)
+    if test "$(basename "$1")" = fxlayout.toml; then
+        (CDPATH= cd -- "$(dirname -- "$1")" && pwd -P)
+    else
+        (CDPATH= cd -- "$(dirname -- "$1")/.." && pwd -P)
+    fi
 }
 
 fxdata_relative_path() {
     local root=$1 path=$2
     case $path in
         "$root"/*) printf '%s\n' "${path#"$root"/}" ;;
-        *) fxdata_manifest_fail "path outside project root: $path" ;;
+        *) test -f "$root/$path" || fxdata_manifest_fail "path outside project root: $path"; printf '%s\n' "$path" ;;
     esac
 }
 
 fxdata_collect_inputs() {
-    local root=$1 path
-    for path in cgfx-project.json fxdata/fxdata.txt tools/cgfx-tools.sh tools/toolchain.lock \
-        tools/convert-sprite.py tools/text2bmp.py Arduboy-Python-Utilities/fxdata-build.py; do
-        test -f "$root/$path" && printf '%s\n' "$path"
-    done
+    local root=$1 definition=${2:-fxlayout.toml} path
+    if test "$(basename "$definition")" = fxlayout.toml; then
+        for path in cgfx-project.json fxlayout.toml tools/cgfx-tools.sh tools/toolchain.lock; do
+            test -f "$root/$path" && printf '%s\n' "$path"
+        done
+    else
+        for path in cgfx-project.json fxdata/fxdata.txt tools/cgfx-tools.sh tools/toolchain.lock \
+            tools/convert-sprite.py tools/text2bmp.py Arduboy-Python-Utilities/fxdata-build.py; do
+            test -f "$root/$path" && printf '%s\n' "$path"
+        done
+    fi
     for path in data maps images Font4x6 ArduboyFXFonts; do
         test -d "$root/$path" || continue
         (cd "$root" && find "$path" -type f -print | LC_ALL=C sort)
@@ -53,7 +63,16 @@ fxdata_fxdata_payloads() {
 }
 
 fxdata_collect_outputs() {
-    local root=$1 fxdata_file=$2 path
+    local root=$1 definition=$2 path
+    if test "$(basename "$definition")" = fxlayout.toml; then
+        test -d "$root/fxdata" && (
+            cd "$root" && find fxdata -type f ! -name 'manifest.json*' -print | LC_ALL=C sort
+        )
+        test -d "$root/tst/fxdatatest/generated" && (
+            cd "$root" && find tst/fxdatatest/generated -type f -print | LC_ALL=C sort
+        )
+        return
+    fi
     test -d "$root/fxdata/generated" && (
         cd "$root" && find fxdata/generated -type f ! -name 'manifest.json*' -print | LC_ALL=C sort
     )
@@ -61,7 +80,7 @@ fxdata_collect_outputs() {
         test -n "$path" || continue
         test -f "$root/fxdata/$path" || fxdata_manifest_fail "missing packaged FX output: fxdata/$path"
         printf 'fxdata/%s\n' "$path"
-    done < <(fxdata_fxdata_payloads "$fxdata_file")
+    done < <(fxdata_fxdata_payloads "$definition")
     test -d "$root/tst/fxdatatest/generated" && (
         cd "$root" && find tst/fxdatatest/generated -type f -print | LC_ALL=C sort
     )

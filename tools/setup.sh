@@ -2,9 +2,6 @@
 # Optional, explicit Arduino setup. Default invocation is deliberately non-mutating.
 set -eu
 
-# Python 3 remains required by cgfx-tools' transitional legacy bridge until all
-# source = { legacy = ... } layout entries gain native builders.
-
 if [ "${SETUP_APPLY:-}" != 1 ]; then
     printf '%s\n' \
         'tools/setup.sh: no changes made.' \

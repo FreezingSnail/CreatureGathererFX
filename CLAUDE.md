@@ -65,7 +65,7 @@ make gen    # Generate cgfx data and package the FX image
 make check  # Generate, run host tests, then FX tests when ARDENS is configured
 ```
 
-Game data and the FX image come from `cgfx-tools`; the layout still has `source = { legacy = ... }` entries. cgfx-tools 0.2.0 resolves those through its transitional Python `fxdata-build.py` bridge, so Python 3 and the vendored bridge input remain required until native symbol builders replace those entries. Do not delete `Arduboy-Python-Utilities/fxdata-build.py` or `fxdata/fxdata.txt` until that bridge is retired.
+Game data and the FX image come from native `cgfx-tools` layout sources; `make gen` needs no Python bridge. `make gen-sprites` is the explicit Python-backed asset regeneration target.
 
 ## Architecture Overview
 
