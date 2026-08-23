@@ -39,6 +39,8 @@ headless_run=$(make --no-print-directory -n fxtest-run \
     ARDENS=fixture-ardens FXDATA_BIN=dist/fixture-fxdata.bin \
     BUILD_DIR=build/contract)
 printf '%s\n' "$headless_run" | grep -Fq 'fixture-ardens captureserial=3000 fxport=d1 display=ssd1306'
+printf '%s\n' "$headless_run" | grep -Fq 'cp -f "dist/fixture-fxdata.bin" "$stage/fxdata.bin"'
+printf '%s\n' "$headless_run" | grep -Fq 'file=$stage/fxdata.bin'
 printf '%s\n' "$headless_run" | grep -Fq "grep -qx 'F'"
 printf '%s\n' "$headless_run" | grep -Fq "grep -qx 'P'"
 if printf '%s\n' "$headless_run" | grep -Eq '(^|[;&|[:space:]])open([[:space:];]|$)'; then
