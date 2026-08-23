@@ -9,7 +9,6 @@ build/*
 .DS_Store
 1.8.6
 libraries
-tools/image-converter.py 
 CreatureGathererFX.ino.with_bootloader.bin
 tools/creature_builder/*
 imgui.ini
