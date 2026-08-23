@@ -1,4 +1,4 @@
-.PHONY: help setup doctor plant test test-debug testvm testvm-debug gen gen-data gen-sprites gen-fixtures pack full build mini check verify-generated test-manifest test-doctor fxtest fxtest-headless fxtest-preflight fxtest-headless-preflight fxtest-build fxtest-run new-fxtest
+.PHONY: help setup doctor plant test test-debug testvm testvm-debug gen gen-data gen-sprites gen-fixtures pack full build mini run check verify-generated test-manifest test-doctor fxtest fxtest-headless fxtest-preflight fxtest-headless-preflight fxtest-build fxtest-run new-fxtest
 
 # Public command API. Override tool, board, and output variables per workspace/CI.
 CXX ?= g++
@@ -8,6 +8,11 @@ MINI_FQBN ?= arduboy-homemade:avr:arduboy-mini
 BUILD_DIR ?= build
 DIST_DIR ?= dist
 FXDATA_BIN ?= $(DIST_DIR)/fxdata.bin
+FXDATA_DATA_BIN ?= $(DIST_DIR)/fxdata-data.bin
+FXDATA_SAVE_BIN ?= $(DIST_DIR)/fxdata-save.bin
+RUN_HEX ?= $(BUILD_DIR)/CreatureGathererFX.ino.hex
+RUN_FXPORT ?= d1
+RUN_DISPLAY ?= ssd1306
 FX_LAYOUT ?= fxlayout.toml
 FXDATA_MANIFEST ?= fxdata/generated/manifest.json
 FXDATA_DIST_DIR ?= $(DIST_DIR)
@@ -31,6 +36,7 @@ help:
 		'  test     run fast host C++ tests; prerequisite: $(CXX); output: $(HOST_TEST_BIN)' \
 		'  testvm   run fast ScriptVM C++ tests; prerequisite: $(CXX); output: $(VM_TEST_BIN)' \
 		'  build    compile Arduboy FX sketch; prerequisite: $(ARDUINO_CLI); output: $(BUILD_DIR)' \
+		'  run      launch Ardens with the sketch, FX data, and FX save images; prerequisite: ARDENS' \
 		'  check    run generation, host tests, VM tests, then optional FX runtime tests' \
 		'  test-manifest run permanent generated-artifact tests' \
 		'  test-pack-parity verify native packed-image SHA-256 baseline' \
@@ -94,6 +100,23 @@ build:
 mini:
 	@mkdir -p "$(BUILD_DIR)"
 	$(ARDUINO_CLI) compile --fqbn "$(MINI_FQBN)" --optimize-for-debug --output-dir "$(BUILD_DIR)" .
+
+# Interactive development run, not a test path: FX suites still execute only
+# through fxtest-headless. Data and save images load separately because Ardens
+# routes `save=` into its FX save region and a plain `file=` .bin into FX data.
+# Every path is passed as `key=value`; a bare path parses as an empty value and
+# Ardens reports `Could not open file: ""`.
+run: build
+	@test -n "$(ARDENS)" || { echo "run: ARDENS is unset; set ARDENS=/path/to/Ardens" >&2; exit 1; }
+	@test -x "$(ARDENS)" || { echo "run: Ardens executable not found at $(ARDENS)" >&2; exit 1; }
+	@test -f "$(RUN_HEX)" || { echo "run: sketch hex missing at $(RUN_HEX); run make build" >&2; exit 1; }
+	@test -f "$(FXDATA_DATA_BIN)" || { echo "run: FX data image missing at $(FXDATA_DATA_BIN); run make gen" >&2; exit 1; }
+	@test -f "$(FXDATA_SAVE_BIN)" || { echo "run: FX save image missing at $(FXDATA_SAVE_BIN); run make gen" >&2; exit 1; }
+	"$(ARDENS)" \
+	    fxport=$(RUN_FXPORT) display=$(RUN_DISPLAY) \
+	    file="$(RUN_HEX)" \
+	    file="$(FXDATA_DATA_BIN)" \
+	    save="$(FXDATA_SAVE_BIN)"
 
 gen: gen-data gen-sprites gen-fixtures pack
 
