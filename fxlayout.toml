@@ -1361,3 +1361,13 @@ source = { raw = "fxdata/text.bin" }
 name = "generator_version"
 source = { raw = "fxdata/generated/tool_version.bin" }
 
+[save]
+sectors = 2
+
+[[save.entry]]
+name = "save_main"
+offset = 0
+
+[[save.entry]]
+name = "save_log"
+offset = 4096

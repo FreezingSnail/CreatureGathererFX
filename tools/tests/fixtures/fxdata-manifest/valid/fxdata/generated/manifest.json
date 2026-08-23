@@ -11,5 +11,11 @@
     {"path":"fxdata/data.txt","sha256":"305b2ffdc3a6097beb7469e1c7a9ce7f1c06b15b8c500b4b5914e7f0de50ee92"},
     {"path":"fxdata/generated/data.bin","sha256":"d903942996b3b1f429d6a2620c7faef7c3d68b487fbbe2c085639ddec2b3b393"},
     {"path":"fxdata/generated/out.txt","sha256":"0793d4eeee0af4f4ce9e90e6d5e0eae1ddcf15fae2d19ed2bb731ea3602e3394"}
+  ],
+  "image":[
+    {"path":"dist/fxdata-data.bin","sha256":"7c7218e1feeb42fc02a0408bb815d9d2ab038657313349d775e585389e026b6f"},
+    {"path":"dist/fxdata-save.bin","sha256":"744048adc9ec688ff2163060526c223df155b8d36469fd2ab52994d3bf22986c"},
+    {"path":"dist/fxdata.bin","sha256":"5f0ba3b7be5e5fb9e05078d25d53a017ae295dc7c9bd458298b8c51dedbe7aa7"},
+    {"path":"src/fxdata.h","sha256":"355fc1fdbf4cf8926200e30a03177a39cf7bb1032b60c4dd2b46a2b56295664a"}
   ]
 }

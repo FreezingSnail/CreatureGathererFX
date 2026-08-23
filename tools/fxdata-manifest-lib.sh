@@ -67,6 +67,13 @@ fxdata_collect_outputs() {
     )
 }
 
+fxdata_collect_image_outputs() {
+    local root=$1 path
+    for path in src/fxdata.h dist/fxdata-data.bin dist/fxdata.bin dist/fxdata-save.bin; do
+        test -f "$root/$path" && printf '%s\n' "$path"
+    done
+}
+
 fxdata_sorted_unique() {
     LC_ALL=C sort -u
 }

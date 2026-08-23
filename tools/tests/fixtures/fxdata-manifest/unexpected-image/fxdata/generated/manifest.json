@@ -14,7 +14,6 @@
   ],
   "image":[
     {"path":"dist/fxdata-data.bin","sha256":"7c7218e1feeb42fc02a0408bb815d9d2ab038657313349d775e585389e026b6f"},
-    {"path":"dist/fxdata-save.bin","sha256":"744048adc9ec688ff2163060526c223df155b8d36469fd2ab52994d3bf22986c"},
     {"path":"dist/fxdata.bin","sha256":"5f0ba3b7be5e5fb9e05078d25d53a017ae295dc7c9bd458298b8c51dedbe7aa7"},
     {"path":"src/fxdata.h","sha256":"355fc1fdbf4cf8926200e30a03177a39cf7bb1032b60c4dd2b46a2b56295664a"}
   ]

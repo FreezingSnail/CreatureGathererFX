@@ -17,7 +17,7 @@ tmp="$manifest.tmp.$$"
 trap 'rm -f "$tmp"' EXIT
 
 write_entries() {
-    local label=$1 collector=$2 first=1 path hash
+    local label=$1 collector=$2 required=${3:-true} first=1 path hash
     printf '  "%s":[\n' "$label"
     while IFS= read -r path; do
         test -n "$path" || continue
@@ -27,7 +27,9 @@ write_entries() {
         printf '    {"path":"%s","sha256":"%s"}' "$path" "$hash"
         first=0
     done < <("$collector" "$root" "$fxdata_file" | fxdata_sorted_unique)
-    test "$first" -eq 0 || fxdata_manifest_fail "no $label discovered"
+    if test "$first" -eq 1 && test "$required" != false; then
+        fxdata_manifest_fail "no $label discovered"
+    fi
     printf '\n  ]'
 }
 
@@ -39,6 +41,8 @@ write_entries() {
     write_entries inputs fxdata_collect_inputs
     printf ',\n'
     write_entries outputs fxdata_collect_outputs
+    printf ',\n'
+    write_entries image fxdata_collect_image_outputs false
     printf '\n}\n'
 } > "$tmp"
 mv -f "$tmp" "$manifest"
