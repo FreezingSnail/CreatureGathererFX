@@ -1,0 +1,3 @@
+include "data.txt"
+include "generated/out.txt"
+raw_t blob = "generated/data.bin"

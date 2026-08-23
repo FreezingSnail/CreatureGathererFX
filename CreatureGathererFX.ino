@@ -53,7 +53,7 @@ void setup() {
     arduboy.initRandomSeed();
     //  plants.tick();
 
-    FX::begin(FX_DATA_PAGE);
+    FX::begin(FX_DATA_PAGE, FX_SAVE_PAGE);
     // FX::setFont(ArduFont, dcmNormal);   // select default font
     FX::setCursorRange(0, 32767);
     gameState.playerLocation = 3 + (256 * 2);

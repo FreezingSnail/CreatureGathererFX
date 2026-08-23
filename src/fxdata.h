@@ -6,8 +6,15 @@ using uint24_t = __uint24;
 
 // Initialize FX hardware using  FX::begin(FX_DATA_PAGE); in the setup() function.
 
-constexpr uint16_t FX_DATA_PAGE  = 0xf6b2;
+constexpr uint16_t FX_DATA_PAGE  = 0xf692;
 constexpr uint24_t FX_DATA_BYTES = 609704;
+
+constexpr uint16_t FX_SAVE_PAGE  = 0xFFE0;
+constexpr uint24_t FX_SAVE_BYTES = 8192;
+
+// FX save section offsets
+constexpr uint24_t save_main = 0x000000;
+constexpr uint24_t save_log = 0x001000;
 
 constexpr uint24_t encounterRates = 0x000000;
 constexpr uint24_t opponent_seeds = 0x000048;

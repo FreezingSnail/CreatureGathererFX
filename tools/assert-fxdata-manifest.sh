@@ -6,6 +6,12 @@ script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 # shellcheck source=fxdata-manifest-lib.sh
 source "$script_dir/fxdata-manifest-lib.sh"
 
+skip_image=false
+if test "${1:-}" = '--skip-image'; then
+    skip_image=true
+    shift
+fi
+
 fxdata_file=${1:-fxdata/fxdata.txt}
 manifest=${2:-fxdata/generated/manifest.json}
 test -f "$fxdata_file" || fxdata_manifest_fail "missing FX definition: $fxdata_file"
@@ -18,7 +24,7 @@ trap 'rm -f "$parsed" "$expected"' EXIT
 awk '
 function bad(message) { print message > "/dev/stderr"; exit 1 }
 function trim(value) { sub(/^[[:space:]]+/, "", value); sub(/[[:space:]]+$/, "", value); return value }
-BEGIN { state = 0; count["inputs"] = 0; count["outputs"] = 0 }
+BEGIN { state = 0; count["inputs"] = 0; count["outputs"] = 0; count["image"] = 0 }
 {
     line = trim($0)
     if (state == 0) { if (line != "{") bad("expected opening object"); state = 1; next }
@@ -30,12 +36,13 @@ BEGIN { state = 0; count["inputs"] = 0; count["outputs"] = 0 }
     if (state == 3) { if (line != "\"target\":\"fxdata/fxdata.txt\",") bad("invalid target"); state = 4; next }
     if (state == 4) { if (line != "\"inputs\":[") bad("expected inputs"); section = "inputs"; state = 5; next }
     if (state == 6) { if (line != "\"outputs\":[") bad("expected outputs"); section = "outputs"; state = 5; next }
+    if (state == 7) { if (line != "\"image\":[") bad("expected image"); section = "image"; state = 5; next }
     if (state == 5) {
         if (line == "]" || line == "],") {
-            if (count[section] == 0 || trailing_comma) bad("invalid " section)
-            if (section == "inputs" && line != "],") bad("inputs missing separator")
-            if (section == "outputs" && line != "]") bad("outputs has separator")
-            state = section == "inputs" ? 6 : 7
+            if ((section != "image" && count[section] == 0) || trailing_comma) bad("invalid " section)
+            if ((section == "inputs" || section == "outputs") && line != "],") bad(section " missing separator")
+            if (section == "image" && line != "]") bad("image has separator")
+            state = section == "inputs" ? 6 : (section == "outputs" ? 7 : 8)
             next
         }
         trailing_comma = $0 ~ /,$/
@@ -50,11 +57,16 @@ BEGIN { state = 0; count["inputs"] = 0; count["outputs"] = 0 }
         print section "\t" path "\t" sha
         count[section]++; previous_comma = trailing_comma; next
     }
-    if (state == 7) { if (line != "}") bad("expected closing object"); state = 8; next }
+    if (state == 8) { if (line != "}") bad("expected closing object"); state = 9; next }
     bad("unexpected content")
 }
-END { if (state != 8) exit 1 }
+END { if (state != 9) exit 1 }
 ' "$manifest" > "$parsed" || fxdata_manifest_fail "malformed manifest: $manifest"
+
+if "$skip_image"; then
+    awk -F '\t' '$1 != "image"' "$parsed" > "$parsed.filtered"
+    mv -f "$parsed.filtered" "$parsed"
+fi
 
 while IFS=$'\t' read -r section path hash; do
     test -n "$path" || continue
@@ -70,6 +82,11 @@ done < "$parsed"
     while IFS= read -r path; do
         printf 'outputs\t%s\t%s\n' "$path" "$(fxdata_sha256 "$root/$path")"
     done < <(fxdata_collect_outputs "$root" "$fxdata_file" | fxdata_sorted_unique)
+    if ! "$skip_image"; then
+        while IFS= read -r path; do
+            printf 'image\t%s\t%s\n' "$path" "$(fxdata_sha256 "$root/$path")"
+        done < <(fxdata_collect_image_outputs "$root" | fxdata_sorted_unique)
+    fi
 } | LC_ALL=C sort > "$expected"
 LC_ALL=C sort "$parsed" > "$parsed.sorted"
 mv -f "$parsed.sorted" "$parsed"

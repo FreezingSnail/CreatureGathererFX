@@ -8,6 +8,9 @@ MINI_FQBN ?= arduboy-homemade:avr:arduboy-mini
 BUILD_DIR ?= build
 DIST_DIR ?= dist
 FXDATA_BIN ?= $(DIST_DIR)/fxdata.bin
+FXDATA_FILE ?= fxdata/fxdata.txt
+FXDATA_MANIFEST ?= fxdata/generated/manifest.json
+FXDATA_DIST_DIR ?= $(DIST_DIR)
 ARDENS ?=
 FXTEST_MS ?= 3000
 FXTEST_BUILD_DIR ?= $(BUILD_DIR)/fxtest
@@ -128,8 +131,6 @@ gen-sprites:
 
 pack:
 	@set -e; \
-	./tools/record-fxdata-manifest.sh fxdata/fxdata.txt fxdata/generated/manifest.json; \
-	./tools/assert-fxdata-manifest.sh fxdata/fxdata.txt fxdata/generated/manifest.json; \
 	mkdir -p "$(BUILD_DIR)" "$(DIST_DIR)"; \
 	stage="$$(cd "$$(mktemp -d "$(BUILD_DIR)/cgfx-pack.XXXXXX")" && pwd -P)"; \
 	tar -cf - --exclude './.git' --exclude './build' --exclude './dist' . | tar -xf - -C "$$stage"; \
@@ -137,12 +138,20 @@ pack:
 	"$$tool" --project "$$stage/cgfx-project.json" --pack --layout "$$stage/fxlayout.toml"; \
 	mv -f "$$stage/src/fxdata.h" src/fxdata.h; \
 	mv -f "$$stage/dist/fxdata.bin" "$(DIST_DIR)/fxdata.bin"; \
-	mv -f "$$stage/dist/fxdata-data.bin" "$(DIST_DIR)/fxdata-data.bin"
+	mv -f "$$stage/dist/fxdata-data.bin" "$(DIST_DIR)/fxdata-data.bin"; \
+	mv -f "$$stage/dist/fxdata-save.bin" "$(DIST_DIR)/fxdata-save.bin"; \
+	./tools/record-fxdata-manifest.sh fxdata/fxdata.txt fxdata/generated/manifest.json; \
+	./tools/assert-fxdata-manifest.sh fxdata/fxdata.txt fxdata/generated/manifest.json
 
 check: gen test testvm test-manifest verify-generated fxtest
 
 verify-generated:
-	./tools/assert-fxdata-manifest.sh fxdata/fxdata.txt fxdata/generated/manifest.json
+	@if test ! -e "$(FXDATA_DIST_DIR)/fxdata-data.bin" && test ! -e "$(FXDATA_DIST_DIR)/fxdata.bin"; then \
+		echo 'verify-generated: image not built; run make gen to build packed FX artifacts'; \
+		./tools/assert-fxdata-manifest.sh --skip-image "$(FXDATA_FILE)" "$(FXDATA_MANIFEST)"; \
+	else \
+		./tools/assert-fxdata-manifest.sh "$(FXDATA_FILE)" "$(FXDATA_MANIFEST)"; \
+	fi
 
 test-manifest:
 	./tools/tests/fxdata-manifest_test.sh
