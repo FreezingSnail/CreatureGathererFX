@@ -5,6 +5,7 @@
 #include "fxtest.hpp"
 #include "generated/rawread_data.hpp"
 #include "src/fxdata.h"
+#include "src/lib/ReadData.hpp"
 #include "src/save/Compaction.hpp"
 #include "src/save/Journal.hpp"
 #include "src/save/SaveFile.hpp"
@@ -34,7 +35,7 @@ inline uint16_t saveWord(uint16_t address)
 {
     uint8_t bytes[2];
     FX::readSaveBytes(address, bytes, sizeof(bytes));
-    return static_cast<uint16_t>(bytes[0]) | static_cast<uint16_t>(bytes[1] << 8);
+    return static_cast<uint16_t>(bytes[0] << 8) | static_cast<uint16_t>(bytes[1]);
 }
 
 inline SaveFile state(uint16_t location, uint8_t fill)
@@ -92,6 +93,7 @@ inline void test_save(FxTest &test)
     SaveStep step = SaveStep::Idle;
     for (uint8_t attempts = 0; attempts < 32 && saveInProgress(); ++attempts) {
         step = saveStepAdvance(compacted);
+        FX::waitWhileBusy();
     }
     test.expectEq(static_cast<uint8_t>(step), static_cast<uint8_t>(SaveStep::Done),
                   F("commit sequence reaches Done"));
@@ -101,6 +103,6 @@ inline void test_save(FxTest &test)
                   F("compacted record preserved"));
 
     FX::waitWhileBusy();
-    test.expectEq(FX::readIndexedUInt16(move_table, 0), rawReadMoveTableFirst,
+    test.expectEq(ReadFXu16(move_table), rawReadMoveTableFirst,
                   F("FX data read after wait"));
 }

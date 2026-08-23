@@ -70,8 +70,8 @@ bool busy()
 
 uint16_t read16(uint16_t addr)
 {
-    return static_cast<uint16_t>(storage[addr]) |
-           static_cast<uint16_t>(storage[addr + 1] << 8);
+    return static_cast<uint16_t>(storage[addr] << 8) |
+           static_cast<uint16_t>(storage[addr + 1]);
 }
 } // namespace
 
@@ -145,8 +145,8 @@ void saveGameState(const uint8_t *gameState, uint16_t size)
     }
 
     const uint8_t header[2] = {
-        static_cast<uint8_t>(size),
         static_cast<uint8_t>(size >> 8),
+        static_cast<uint8_t>(size),
     };
     writeBytes(addr, header, sizeof(header));
     writeBytes(addr + 2, gameState, size);
