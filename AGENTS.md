@@ -129,6 +129,6 @@ bd prime                # Refresh Beads context
 
 ## Generation and Validation
 
-`make gen` generates game data with `cgfx-tools`, then generates the retained Python sprite and string-image assets into `fxdata/generated`. `make check` runs generation, host tests, and FX tests when Ardens is available.
+`make gen` generates game data and packages the FX image with `cgfx-tools`. The layout still has `source = { legacy = ... }` entries, so cgfx-tools 0.2.0 invokes its transitional Python `fxdata-build.py` bridge; Python 3 and the vendored bridge input remain required until native symbol builders replace those entries. `make check` runs generation, host tests, and FX tests when Ardens is available.
 
-Resolve the data tool through `tools/cgfx-tools.sh`; it honors `CGFX_TOOLS_BIN`, builds a sibling `../CreatureGathererTools` checkout when present, or downloads the locked, checksummed release. Run `./tools/cgfx-tools.sh` to inspect the resolved executable. Python remains only for `tools/text2bmp.py` and `tools/convert-sprite.py`; do not restore retired Python data converters.
+Resolve the data tool through `tools/cgfx-tools.sh`; it honors `CGFX_TOOLS_BIN`, builds a sibling `../CreatureGathererTools` checkout when present, or downloads the locked, checksummed release. Run `./tools/cgfx-tools.sh` to inspect the resolved executable. Do not delete `Arduboy-Python-Utilities/fxdata-build.py` or `fxdata/fxdata.txt` until the transitional bridge is retired; do not restore the retired standalone data converters.
