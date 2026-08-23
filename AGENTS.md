@@ -129,6 +129,6 @@ bd prime                # Refresh Beads context
 
 ## Generation and Validation
 
-`make gen` generates native game data and packages the FX image with `cgfx-tools`; no Python bridge is required. `make gen-sprites` remains explicit for Python-based sprite asset regeneration. `make check` runs generation, host tests, and FX tests when Ardens is available.
+`make gen` generates native game data, sprite/font sources, and packages the FX image with `cgfx-tools`; no Python bridge is required. `make gen-sprites` remains explicit for native sprite/font source regeneration through `cgfx-tools`. `make check` runs generation, host tests, and FX tests when Ardens is available.
 
 Resolve the data tool through `tools/cgfx-tools.sh`; it honors `CGFX_TOOLS_BIN`, builds a sibling `../CreatureGathererTools` checkout when present, or downloads the locked, checksummed release. Run `./tools/cgfx-tools.sh` to inspect the resolved executable. Do not restore the retired standalone data converters.
