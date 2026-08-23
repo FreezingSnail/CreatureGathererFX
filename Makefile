@@ -216,8 +216,10 @@ fxtest-build:
 fxtest-run:
 	@failed=0; \
 	for name in $(FXTEST_NAMES); do \
+		stage="$(FXTEST_BUILD_DIR)/$$name"; \
 		echo "=== $$name ==="; \
-		if out="$$($(ARDENS) captureserial=$(FXTEST_MS) fxport=d1 display=ssd1306 file=$(FXTEST_BUILD_DIR)/$$name/output/$$name.ino.hex file=$(FXDATA_BIN) 2>&1)"; then \
+		cp -f "$(FXDATA_BIN)" "$$stage/fxdata.bin"; \
+		if out="$$($(ARDENS) captureserial=$(FXTEST_MS) fxport=d1 display=ssd1306 file=$$stage/output/$$name.ino.hex file=$$stage/fxdata.bin 2>&1)"; then \
 			runner_status=0; \
 		else \
 			runner_status=$$?; \

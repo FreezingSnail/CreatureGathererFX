@@ -43,6 +43,6 @@ DialogMenu dialogMenu;
 inline void fxTestSetup(uint24_t firstPage = 0, uint24_t lastPage = 32767) {
     Serial.begin(9600);
     arduboy.begin();
-    FX::begin(FX_DATA_PAGE);
+    FX::begin(FX_DATA_PAGE, FX_SAVE_PAGE);
     FX::setCursorRange(firstPage, lastPage);
 }
