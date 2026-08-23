@@ -16,6 +16,9 @@ extern MenuStack menuStack;
 #include "GameState.hpp"
 extern GameState gameState;
 
+#include "plants/PlantGamestate.hpp"
+extern PlantGameState plants;
+
 #define XSTART 0
 #define YSTART 43
 #define MWIDTH 128
