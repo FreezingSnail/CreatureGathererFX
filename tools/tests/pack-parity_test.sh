@@ -4,7 +4,7 @@ set -eu
 
 root=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd -P)
 cd "$root"
-expected=d8af838ee9fa759fbdc14cb8eeceb7df06f246857cf92d58f33e000cf4d0ac01
+expected=d9946b91aae1371e59f22bcb91b19e036a6a61f36c5316948e3c82b8b7274352
 
 make --no-print-directory pack
 actual=$(shasum -a 256 dist/fxdata.bin | awk '{print $1}')

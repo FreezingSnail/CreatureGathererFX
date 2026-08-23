@@ -39,12 +39,11 @@ fxdata_collect_inputs() {
             test -f "$root/$path" && printf '%s\n' "$path"
         done
     else
-        for path in cgfx-project.json fxdata/fxdata.txt tools/cgfx-tools.sh tools/toolchain.lock \
-            Arduboy-Python-Utilities/fxdata-build.py; do
+        for path in cgfx-project.json fxdata/fxdata.txt tools/cgfx-tools.sh tools/toolchain.lock; do
             test -f "$root/$path" && printf '%s\n' "$path"
         done
     fi
-    for path in data maps images Font4x6 ArduboyFXFonts; do
+    for path in data maps images; do
         test -d "$root/$path" || continue
         (cd "$root" && find "$path" -type f -print | LC_ALL=C sort)
     done

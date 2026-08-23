@@ -24,7 +24,7 @@ images = [
 
 [strings]
 output = "fxdata/generated/Sprites.txt"
-font = "ArduboyFXFonts/Fontbitmaps/Font4x6/Font_5x6.png"
+font = "images/ArduFont_5x6.png"
 input = "data/text/strings.txt"
 glyph_width = 5
 glyph_height = 6
