@@ -29,7 +29,7 @@ Player player = Player();
 // ARDUBOY_NO_USB
 
 Arena arena = Arena();
-// WorldEngine world;
+WorldEngine world;
 Animator animator = Animator();
 PlantGameState plants;
 
@@ -141,14 +141,13 @@ void setup() {
     FX::begin(FX_DATA_PAGE, FX_SAVE_PAGE);
     // FX::setFont(ArduFont, dcmNormal);   // select default font
     FX::setCursorRange(0, 32767);
-    gameState.playerLocation = 3 + (256 * 2);
+    world.init();
+    world.loadMap(0, 0);
+    world.setPos(3, 2);
 
     gameState.state = GameState_t::WORLD;
     engine.init();
     player.basic();
-    engine.startArena(0);
-    // engine.startArena(3);
-    menu.push(MenuEnum::BATTLE_OPTIONS);
     vm.initVM();
 
     // buffer = arduboy.sBuffer;
