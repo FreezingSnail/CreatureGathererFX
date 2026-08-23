@@ -10,8 +10,8 @@ source "$root/tools/fxdata-manifest-lib.sh"
 
 prefixed_version_manifest=$(mktemp)
 trap 'rm -f "$prefixed_version_manifest"' EXIT
-printf '%s\n' '  "tool_version": "cgfx-tools 0.1.0",' > "$prefixed_version_manifest"
-test "$(fxdata_tool_version "$prefixed_version_manifest")" = '0.1.0'
+printf '%s\n' '  "tool_version": "cgfx-tools 0.2.0",' > "$prefixed_version_manifest"
+test "$(fxdata_tool_version "$prefixed_version_manifest")" = '0.2.0'
 
 verify() {
     "$assert" "$1/fxdata/fxdata.txt" "$1/fxdata/generated/manifest.json"

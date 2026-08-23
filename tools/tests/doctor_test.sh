@@ -22,7 +22,7 @@ run_doctor() {
 output=$(run_doctor "$valid")
 printf '%s\n' "$output" | grep -Fq "host: $(uname -s) $(uname -m)"
 printf '%s\n' "$output" | grep -Fq 'PASS cgfx-tools: path='
-printf '%s\n' "$output" | grep -Fq 'version=0.1.0'
+printf '%s\n' "$output" | grep -Fq 'version=0.2.0'
 printf '%s\n' "$output" | grep -Fq 'PASS manifest: fresh (generator=cgfx-tools:1.2.3)'
 printf '%s\n' "$output" | grep -Fq 'SKIP Ardens: not requested'
 printf '%s\n' "$output" | grep -Fq 'doctor: READY'
