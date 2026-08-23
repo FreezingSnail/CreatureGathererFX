@@ -28,12 +28,14 @@ void saveFileCommit(const SaveFile &in)
 
 bool saveFileLoad(SaveFile &out)
 {
-    memset(&out, 0, sizeof(out));
-    if (!FX::loadGameState(reinterpret_cast<uint8_t *>(&out), sizeof(out)) ||
-        out.version != SAVE_VERSION ||
-        out.checksum != saveFileChecksum(out)) {
-        memset(&out, 0, sizeof(out));
+    SaveFile candidate = {};
+    if (!FX::loadGameState(reinterpret_cast<uint8_t *>(&candidate), sizeof(candidate)) ||
+        candidate.version != SAVE_VERSION ||
+        candidate.checksum != saveFileChecksum(candidate)) {
         return false;
     }
+
+    // A failed load must not erase a caller's live/new-game RAM state.
+    out = candidate;
     return true;
 }

@@ -51,7 +51,7 @@ jobs:
           git -C .ci/Ardens checkout --detach FETCH_HEAD
           git -C .ci/Ardens submodule update --init --recursive
 
-      - name: Build Ardens
+      - name: Build headless Ardens serial runner
         id: ardens
         run: |
           cmake -S .ci/Ardens -B .ci/ardens-build -G Ninja \
@@ -78,7 +78,7 @@ jobs:
           set -o pipefail
           test -s "$FXDATA_BIN"
           test -s fxdata/generated/manifest.json
-          make fxtest 2>&1 | tee fxtest-serial.log
+          make fxtest-headless 2>&1 | tee fxtest-serial.log
 
       - name: Upload FX serial logs
         if: failure()

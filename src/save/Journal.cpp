@@ -122,9 +122,5 @@ bool journalFull()
 
 void journalErase()
 {
-    while (flash.busy()) {
-    }
     flash.eraseSector(JOURNAL_SECTOR_PAGE);
-    while (flash.busy()) {
-    }
 }
