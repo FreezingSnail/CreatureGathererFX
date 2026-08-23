@@ -21,6 +21,10 @@ extern FlashBackend flash;
 void flashFakeReset();
 const uint8_t *flashFakeData();
 void flashFakeSetBytes(uint32_t addr, const uint8_t *data, uint16_t len);
+void flashFakeSetWriteLimit(int32_t bytes);
+void flashFakeSetBusy(bool value);
+uint32_t flashFakeReadCount();
+void flashFakeResetReadCount();
 #else
 #include <ArduboyFX.h>
 

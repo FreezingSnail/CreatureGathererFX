@@ -6,6 +6,9 @@ namespace {
 constexpr uint16_t FLASH_FAKE_BYTES = 8192;
 constexpr uint16_t SAVE_SECTOR_BYTES = 4096;
 uint8_t storage[FLASH_FAKE_BYTES];
+int32_t writeLimit = -1;
+bool busyFlag = false;
+uint32_t readCount = 0;
 
 bool rangeValid(uint32_t addr, uint16_t len)
 {
@@ -15,8 +18,17 @@ bool rangeValid(uint32_t addr, uint16_t len)
 void eraseSector(uint16_t page)
 {
     const uint32_t addr = static_cast<uint32_t>(page) * 256;
-    if (rangeValid(addr, SAVE_SECTOR_BYTES)) {
-        memset(storage + addr, 0xff, SAVE_SECTOR_BYTES);
+    if (!rangeValid(addr, SAVE_SECTOR_BYTES)) {
+        return;
+    }
+    for (uint16_t i = 0; i < SAVE_SECTOR_BYTES; ++i) {
+        if (writeLimit == 0) {
+            return;
+        }
+        storage[addr + i] = 0xff;
+        if (writeLimit > 0) {
+            --writeLimit;
+        }
     }
 }
 
@@ -26,7 +38,13 @@ void writeBytes(uint32_t addr, const uint8_t *data, uint16_t len)
         return;
     }
     for (uint16_t i = 0; i < len; ++i) {
+        if (writeLimit == 0) {
+            return;
+        }
         storage[addr + i] &= data[i];
+        if (writeLimit > 0) {
+            --writeLimit;
+        }
     }
 }
 
@@ -37,6 +55,7 @@ void writePage(uint16_t page, const uint8_t *data)
 
 void readBytes(uint32_t addr, uint8_t *data, uint16_t len)
 {
+    ++readCount;
     if (!rangeValid(addr, len)) {
         memset(data, 0xff, len);
         return;
@@ -46,7 +65,7 @@ void readBytes(uint32_t addr, uint8_t *data, uint16_t len)
 
 bool busy()
 {
-    return false;
+    return busyFlag;
 }
 
 uint16_t read16(uint16_t addr)
@@ -61,6 +80,9 @@ FlashBackend flash = {eraseSector, writePage, writeBytes, readBytes, busy};
 void flashFakeReset()
 {
     memset(storage, 0xff, sizeof(storage));
+    writeLimit = -1;
+    busyFlag = false;
+    readCount = 0;
 }
 
 const uint8_t *flashFakeData()
@@ -73,6 +95,26 @@ void flashFakeSetBytes(uint32_t addr, const uint8_t *data, uint16_t len)
     if (rangeValid(addr, len)) {
         memcpy(storage + addr, data, len);
     }
+}
+
+void flashFakeSetWriteLimit(int32_t bytes)
+{
+    writeLimit = bytes;
+}
+
+void flashFakeSetBusy(bool value)
+{
+    busyFlag = value;
+}
+
+uint32_t flashFakeReadCount()
+{
+    return readCount;
+}
+
+void flashFakeResetReadCount()
+{
+    readCount = 0;
 }
 
 namespace FX {
