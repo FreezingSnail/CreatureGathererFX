@@ -1,3 +1,12 @@
 CompileFlags:
   Compiler: /Users/connorfranc/Library/Arduino15/packages/arduino/tools/avr-gcc/7.3.0-atmel3.6.1-arduino7/bin/avr-g++
   Add: [-D__AVR__, -D__AVR_ATmega32U4__, "-D__uint24=uint32_t", -mmcu=atmega32u4, -I/Users/connorfranc/Library/Arduino15/packages/arduboy-homemade/hardware/avr/1.4.0/libraries/EEPROM/src, -I/Users/connorfranc/Library/Arduino15/packages/arduino/hardware/avr/1.8.6/cores/arduino, -I/Users/connorfranc/Library/Arduino15/packages/arduboy-homemade/hardware/avr/1.4.0/libraries/ArduboyFX/src, -I/Users/connorfranc/Library/Arduino15/packages/arduboy-homemade/hardware/avr/1.4.0/cores/arduboy, -I/Users/connorfranc/Library/Arduino15/packages/arduboy-homemade/hardware/avr/1.4.0/libraries/Arduboy2/src, -I/Users/connorfranc/Library/Arduino15/packages/arduino/tools/avr-gcc/7.3.0-atmel3.6.1-arduino7/avr/include, -I/Users/connorfranc/Library/Arduino15/packages/arduboy-homemade/hardware/avr/1.4.0/variants/arduboy-leonardo]
+
+---
+# Sketches: clangd cannot infer a language from the .ino extension, and the
+# Arduino build injects Arduino.h implicitly. Supply both so sketch buffers
+# get the same diagnostics as .cpp translation units.
+If:
+  PathMatch: [.*\.ino, .*\.pde]
+CompileFlags:
+  Add: [-xc++, -include, Arduino.h]

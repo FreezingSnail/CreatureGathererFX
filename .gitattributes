@@ -1,0 +1,28 @@
+# Source and text assets are stored and checked out with LF endings. Arduino IDE
+# and Windows editors otherwise reintroduce CRLF, which shows up as ^M in
+# editors that decode the file as unix and produces whole-file diffs.
+*.ino text eol=lf
+*.pde text eol=lf
+*.cpp text eol=lf
+*.hpp text eol=lf
+*.h   text eol=lf
+*.c   text eol=lf
+*.toml text eol=lf
+*.json text eol=lf
+*.md  text eol=lf
+*.sh  text eol=lf
+Makefile text eol=lf
+
+# Tiled rewrites these with CRLF on every save, and data/opponents.csv is a
+# byte-compared generation input. Keep them untouched so normalization does not
+# fight the editor or shift pack parity.
+*.tmj  -text
+*.tmx  -text
+*.tsx  -text
+*.world -text
+*.tiled-project -text
+data/opponents.csv -text
+
+# Packed FX artifacts and binaries are never line-normalized.
+*.bin binary
+*.png binary
