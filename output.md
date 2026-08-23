@@ -11,4 +11,4 @@ Added deterministic `schema_version: 1` FX provenance manifests. Each manifest r
 
 `tools/assert-fxdata-manifest.sh` strictly validates schema and rejects malformed, missing, changed, and unrecorded files with path, hash state, and `make gen` remediation. Use `make verify-generated` for non-mutating verification; `make test-manifest` runs permanent fixture-backed shell coverage.
 
-Python remains required only for the transitional `source = { legacy = ... }` bridge invoked by cgfx-tools 0.2.0; native game data and FX packing are cgfx-tools responsibilities. Retire the bridge inputs when native symbol builders replace those entries.
+FX packing is native `cgfx-tools`; `fxlayout.toml` uses raw, image, C-array, builder, and typed-symbol sources without the Python bridge.

@@ -8,7 +8,7 @@ MINI_FQBN ?= arduboy-homemade:avr:arduboy-mini
 BUILD_DIR ?= build
 DIST_DIR ?= dist
 FXDATA_BIN ?= $(DIST_DIR)/fxdata.bin
-FXDATA_FILE ?= fxdata/fxdata.txt
+FX_LAYOUT ?= fxlayout.toml
 FXDATA_MANIFEST ?= fxdata/generated/manifest.json
 FXDATA_DIST_DIR ?= $(DIST_DIR)
 ARDENS ?=
@@ -27,13 +27,13 @@ help:
 		'CreatureGathererFX Make targets:' \
 		'  setup    print non-mutating first-run guidance; prerequisite: make' \
 		'  doctor   report local tool readiness; prerequisite: tools/doctor.sh' \
-		'  gen      generate FX data/assets; prerequisites: cgfx-tools, python3 for the transitional legacy bridge; output: $(DIST_DIR)/fxdata.bin' \
+		'  gen      package committed/generated FX inputs; prerequisite: cgfx-tools; output: $(DIST_DIR)/fxdata.bin' \
 		'  test     run fast host C++ tests; prerequisite: $(CXX); output: $(HOST_TEST_BIN)' \
 		'  testvm   run fast ScriptVM C++ tests; prerequisite: $(CXX); output: $(VM_TEST_BIN)' \
 		'  build    compile Arduboy FX sketch; prerequisite: $(ARDUINO_CLI); output: $(BUILD_DIR)' \
 		'  check    run generation, host tests, VM tests, then optional FX runtime tests' \
 		'  test-manifest run permanent generated-artifact tests' \
-		'  test-pack-parity compare cgfx-tools packing with fxdata-build.py' \
+		'  test-pack-parity verify native packed-image SHA-256 baseline' \
 		'  test-doctor run permanent setup-diagnostic tests' \
 		'  fxtest   alias for fxtest-headless; skips only when ARDENS is unset' \
 		'  fxtest-headless  run every FX device sketch through Ardens serial capture; blocks unsupported Ardens' \
@@ -43,7 +43,7 @@ help:
 setup:
 	@printf '%s\n' \
 		'setup: guidance only; no installs or Arduino configuration changes.' \
-		'1. Install Python 3 for the transitional cgfx-tools legacy bridge, plus g++, make, and arduino-cli with your platform package manager.' \
+		'1. Install g++, make, and arduino-cli with your platform package manager.' \
 		'2. Review and run: SETUP_APPLY=1 tools/setup.sh' \
 		'3. Verify readiness: make doctor' \
 		'For manual setup, see each remedy printed by make doctor.'
@@ -95,7 +95,7 @@ mini:
 	@mkdir -p "$(BUILD_DIR)"
 	$(ARDUINO_CLI) compile --fqbn "$(MINI_FQBN)" --optimize-for-debug --output-dir "$(BUILD_DIR)" .
 
-gen: gen-data gen-fixtures gen-sprites pack
+gen: gen-data gen-fixtures pack
 
 gen-data:
 	@set -e; \
@@ -134,17 +134,17 @@ pack:
 	mv -f "$$stage/dist/fxdata.bin" "$(DIST_DIR)/fxdata.bin"; \
 	mv -f "$$stage/dist/fxdata-data.bin" "$(DIST_DIR)/fxdata-data.bin"; \
 	mv -f "$$stage/dist/fxdata-save.bin" "$(DIST_DIR)/fxdata-save.bin"; \
-	./tools/record-fxdata-manifest.sh fxdata/fxdata.txt fxdata/generated/manifest.json; \
-	./tools/assert-fxdata-manifest.sh fxdata/fxdata.txt fxdata/generated/manifest.json
+	./tools/record-fxdata-manifest.sh "$(FX_LAYOUT)" "$(FXDATA_MANIFEST)"; \
+	./tools/assert-fxdata-manifest.sh "$(FX_LAYOUT)" "$(FXDATA_MANIFEST)"
 
 check: gen test testvm test-manifest verify-generated fxtest
 
 verify-generated:
 	@if test ! -e "$(FXDATA_DIST_DIR)/fxdata-data.bin" && test ! -e "$(FXDATA_DIST_DIR)/fxdata.bin"; then \
 		echo 'verify-generated: image not built; run make gen to build packed FX artifacts'; \
-		./tools/assert-fxdata-manifest.sh --skip-image "$(FXDATA_FILE)" "$(FXDATA_MANIFEST)"; \
+		./tools/assert-fxdata-manifest.sh --skip-image "$(FX_LAYOUT)" "$(FXDATA_MANIFEST)"; \
 	else \
-		./tools/assert-fxdata-manifest.sh "$(FXDATA_FILE)" "$(FXDATA_MANIFEST)"; \
+		./tools/assert-fxdata-manifest.sh "$(FX_LAYOUT)" "$(FXDATA_MANIFEST)"; \
 	fi
 
 test-manifest:

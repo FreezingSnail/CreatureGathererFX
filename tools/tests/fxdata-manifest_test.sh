@@ -47,7 +47,7 @@ must_fail_with "$fixtures/unexpected-image" 'unexpected image artifact: dist/fxd
 must_fail_with "$fixtures/orphan-image" 'missing image output: dist/fxdata-save.bin'
 
 skip_output=$(make --no-print-directory -C "$root" verify-generated \
-    FXDATA_FILE="tools/tests/fixtures/fxdata-manifest/no-image/fxdata/fxdata.txt" \
+    FX_LAYOUT="tools/tests/fixtures/fxdata-manifest/no-image/fxdata/fxdata.txt" \
     FXDATA_MANIFEST="tools/tests/fixtures/fxdata-manifest/no-image/fxdata/generated/manifest.json" \
     FXDATA_DIST_DIR="tools/tests/fixtures/fxdata-manifest/no-image/dist")
 printf '%s\n' "$skip_output" | grep -F 'verify-generated: image not built; run make gen to build packed FX artifacts' >/dev/null

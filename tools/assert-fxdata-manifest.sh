@@ -12,16 +12,18 @@ if test "${1:-}" = '--skip-image'; then
     shift
 fi
 
-fxdata_file=${1:-fxdata/fxdata.txt}
+fxdata_file=${1:-fxlayout.toml}
 manifest=${2:-fxdata/generated/manifest.json}
+fxdata_file=$(CDPATH= cd -- "$(dirname -- "$fxdata_file")" && printf '%s/%s\n' "$PWD" "$(basename -- "$fxdata_file")")
 test -f "$fxdata_file" || fxdata_manifest_fail "missing FX definition: $fxdata_file"
 test -f "$manifest" || fxdata_manifest_fail "missing generated manifest: $manifest"
 root=$(fxdata_manifest_root "$fxdata_file")
+target=$(fxdata_relative_path "$root" "$fxdata_file")
 parsed="$manifest.parsed.$$"
 expected="$manifest.expected.$$"
 trap 'rm -f "$parsed" "$expected"' EXIT
 
-awk '
+awk -v target="$target" '
 function bad(message) { print message > "/dev/stderr"; exit 1 }
 function trim(value) { sub(/^[[:space:]]+/, "", value); sub(/[[:space:]]+$/, "", value); return value }
 BEGIN { state = 0; count["inputs"] = 0; count["outputs"] = 0; count["image"] = 0 }
@@ -33,7 +35,7 @@ BEGIN { state = 0; count["inputs"] = 0; count["outputs"] = 0; count["image"] = 0
         if (line !~ /^"generator":\{"name":"cgfx-tools","version":"[A-Za-z0-9._+-]+"\},$/) bad("invalid generator")
         state = 3; next
     }
-    if (state == 3) { if (line != "\"target\":\"fxdata/fxdata.txt\",") bad("invalid target"); state = 4; next }
+    if (state == 3) { if (line != "\"target\":\"" target "\",") bad("invalid target"); state = 4; next }
     if (state == 4) { if (line != "\"inputs\":[") bad("expected inputs"); section = "inputs"; state = 5; next }
     if (state == 6) { if (line != "\"outputs\":[") bad("expected outputs"); section = "outputs"; state = 5; next }
     if (state == 7) { if (line != "\"image\":[") bad("expected image"); section = "image"; state = 5; next }
@@ -78,7 +80,7 @@ done < "$parsed"
 {
     while IFS= read -r path; do
         printf 'inputs\t%s\t%s\n' "$path" "$(fxdata_sha256 "$root/$path")"
-    done < <(fxdata_collect_inputs "$root" | fxdata_sorted_unique)
+    done < <(fxdata_collect_inputs "$root" "$fxdata_file" | fxdata_sorted_unique)
     while IFS= read -r path; do
         printf 'outputs\t%s\t%s\n' "$path" "$(fxdata_sha256 "$root/$path")"
     done < <(fxdata_collect_outputs "$root" "$fxdata_file" | fxdata_sorted_unique)

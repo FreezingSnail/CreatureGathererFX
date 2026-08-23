@@ -1,31 +1,15 @@
 #!/bin/sh
-# Compare cgfx-tools output with an independently generated fxdata-build.py baseline.
+# Verify native cgfx-tools packing preserves the committed FX image baseline.
 set -eu
 
 root=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd -P)
 cd "$root"
-mkdir -p build
-stage=$(cd "$(mktemp -d "build/pack-parity.XXXXXX")" && pwd -P)
-tar -cf - --exclude './.git' --exclude './build' --exclude './dist' . | tar -xf - -C "$stage"
+expected=d8af838ee9fa759fbdc14cb8eeceb7df06f246857cf92d58f33e000cf4d0ac01
 
-(
-    cd "$stage/fxdata"
-    python3 "$stage/Arduboy-Python-Utilities/fxdata-build.py" "$stage/fxdata/fxdata.txt"
-)
-mkdir -p "$stage/python"
-mv -f "$stage/fxdata/fxdata.bin" "$stage/python/fxdata.bin"
-mv -f "$stage/fxdata/fxdata-data.bin" "$stage/python/fxdata-data.bin"
-mv -f "$stage/fxdata/fxdata.h" "$stage/python/fxdata.h"
-
-tool=$(./tools/cgfx-tools.sh)
-"$tool" --project "$stage/cgfx-project.json" --pack --layout "$stage/fxlayout.toml"
-
-cmp "$stage/python/fxdata.bin" "$stage/dist/fxdata.bin"
-cmp "$stage/python/fxdata-data.bin" "$stage/dist/fxdata-data.bin"
-normalize_header() {
-    sed '/^\/\*\*\*\*/d' "$1"
+make --no-print-directory pack
+actual=$(shasum -a 256 dist/fxdata.bin | awk '{print $1}')
+test "$actual" = "$expected" || {
+    printf 'pack parity: expected %s, observed %s\n' "$expected" "$actual" >&2
+    exit 1
 }
-normalize_header "$stage/python/fxdata.h" > "$stage/python/header.normalized"
-normalize_header "$stage/src/fxdata.h" > "$stage/cgfx-header.normalized"
-cmp "$stage/python/header.normalized" "$stage/cgfx-header.normalized"
 printf '%s\n' 'pack parity: PASS'
