@@ -54,6 +54,26 @@ inline void applyRecord(const JournalRecord &record)
 }
 } // namespace save_test_detail
 
+inline void SaveRecordEncodeDecodeTest(TestSuite &suite)
+{
+    Test test = Test(__func__);
+    flashFakeReset();
+    JournalRecord source = save_test_detail::record(7, 2, 1);
+    uint8_t encoded[JOURNAL_RECORD_BYTES] = {};
+    JournalRecord decoded = {};
+    test.assert(journalEncode(source, encoded), true, "Record encode succeeds");
+    test.assert(journalDecode(encoded, decoded), true, "Record decode succeeds");
+    test.assert(memcmp(&source, &decoded, sizeof(source) - 1) == 0, true,
+                "Record round-trips fields");
+    const uint8_t blank[JOURNAL_RECORD_BYTES] = {
+        0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
+    test.assert(journalDecode(blank, decoded), false, "All-FF record is blank");
+    encoded[3] ^= 1;
+    test.assert(journalDecode(encoded, decoded), false,
+                "Flipped payload fails record check");
+    suite.addTest(test);
+}
+
 inline void SaveFileRoundTripAndValidationTest(TestSuite &suite)
 {
     Test test = Test(__func__);
@@ -127,12 +147,13 @@ inline void JournalFullSectorRefusalTest(TestSuite &suite)
         test.assert(journalAppend(save_test_detail::record(static_cast<uint8_t>(i))), true,
                     "Journal accepts each slot through capacity");
     }
-    const uint8_t finalByte = flashFakeData()[8191];
+    static uint8_t before[JOURNAL_RECORD_BYTES * JOURNAL_CAPACITY];
+    memcpy(before, flashFakeData() + 4096, sizeof(before));
     test.assert(journalFull(), true, "Journal reports a full sector");
     test.assert(journalAppend(save_test_detail::record(99)), false,
                 "Journal rejects record 513 without erase");
-    test.assert(journalCount(), JOURNAL_CAPACITY, "Refusal leaves full journal intact");
-    test.assert(flashFakeData()[8191], finalByte, "Refusal leaves flash unchanged");
+    test.assert(memcmp(flashFakeData() + 4096, before, sizeof(before)), 0,
+                "Refusal leaves the entire journal sector unchanged");
 
     suite.addTest(test);
 }
@@ -197,18 +218,74 @@ inline void CompactionSequenceAndInterruptionsTest(TestSuite &suite)
     suite.addTest(test);
 }
 
+inline void VerifyMismatchPreservesJournalTest(TestSuite &suite)
+{
+    Test test = Test(__func__);
+    flashFakeReset();
+    journalAppend(save_test_detail::record(0x77));
+    SaveFile state = save_test_detail::state(0x2021, 0x44);
+    saveBegin();
+    saveStepAdvance(state);
+    saveStepAdvance(state);
+    uint8_t corrupt = static_cast<uint8_t>(
+        flashFakeData()[2 + offsetof(SaveFile, inventory)] ^ 1);
+    flashFakeSetBytes(2 + offsetof(SaveFile, inventory), &corrupt, 1);
+    test.assert(saveStepAdvance(state), SaveStep::Failed,
+                "Verify mismatch ends in Failed");
+    test.assert(journalCount(), static_cast<uint16_t>(1),
+                "Verify mismatch preserves journal");
+    test.assert(flashFakeData()[4096] == 0xff, false,
+                "Verify mismatch does not erase journal start");
+    suite.addTest(test);
+}
+
 inline void CompactionBusyGateTest(TestSuite &suite)
 {
     Test test = Test(__func__);
     flashFakeReset();
+    journalAppend(save_test_detail::record(1));
     SaveFile state = save_test_detail::state(0x9999, 0xaa);
     saveBegin();
+
     flashFakeSetBusy(true);
     flashFakeResetReadCount();
-    test.assert(saveStepAdvance(state), SaveStep::Replay, "Busy save retains current step");
+    test.assert(saveStepAdvance(state), SaveStep::Replay,
+                "Busy Replay retains current step");
     test.assert(flashFakeReadCount(), static_cast<uint32_t>(0),
-                "Busy save performs no flash read");
+                "Busy Replay performs no flash read");
     flashFakeSetBusy(false);
+    test.assert(saveStepAdvance(state), SaveStep::Commit, "Replay advances");
+
+    flashFakeSetBusy(true);
+    flashFakeResetReadCount();
+    test.assert(saveStepAdvance(state), SaveStep::Commit,
+                "Busy Commit retains current step");
+    test.assert(flashFakeReadCount(), static_cast<uint32_t>(0),
+                "Busy Commit performs no flash read");
+    flashFakeSetBusy(false);
+    test.assert(saveStepAdvance(state), SaveStep::Verify, "Commit advances");
+
+    flashFakeSetBusy(true);
+    flashFakeResetReadCount();
+    test.assert(saveStepAdvance(state), SaveStep::Verify,
+                "Busy Verify retains current step");
+    test.assert(flashFakeReadCount(), static_cast<uint32_t>(0),
+                "Busy Verify performs no flash read");
+    flashFakeSetBusy(false);
+    test.assert(saveStepAdvance(state), SaveStep::EraseJournal,
+                "Verify advances");
+
+    flashFakeSetBusy(true);
+    flashFakeResetReadCount();
+    test.assert(saveStepAdvance(state), SaveStep::EraseJournal,
+                "Busy EraseJournal retains current step");
+    test.assert(flashFakeReadCount(), static_cast<uint32_t>(0),
+                "Busy EraseJournal performs no flash read");
+    flashFakeSetBusy(false);
+    test.assert(saveStepAdvance(state), SaveStep::EraseJournal,
+                "EraseJournal issues erase before completion");
+    test.assert(saveStepAdvance(state), SaveStep::Done,
+                "EraseJournal completes after erase");
 
     suite.addTest(test);
 }
@@ -216,10 +293,12 @@ inline void CompactionBusyGateTest(TestSuite &suite)
 inline void SaveSuite(TestRunner &runner)
 {
     TestSuite suite = TestSuite("Save Suite");
+    SaveRecordEncodeDecodeTest(suite);
     SaveFileRoundTripAndValidationTest(suite);
     JournalAppendReplayAndEraseTest(suite);
     JournalFullSectorRefusalTest(suite);
     CompactionSequenceAndInterruptionsTest(suite);
+    VerifyMismatchPreservesJournalTest(suite);
     CompactionBusyGateTest(suite);
     runner.addTestSuite(suite);
 }
