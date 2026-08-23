@@ -11,7 +11,7 @@ class MenuV2 {
     MenuEnum stack[6];
     int8_t menuPointer = -1;
     int8_t cursorIndex;
-    uint8_t *moveList;
+    uint8_t *moveList = nullptr;
     uint8_t creatures[2];
     bool drawMenu = true;
 

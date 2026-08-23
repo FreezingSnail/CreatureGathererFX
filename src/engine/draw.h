@@ -176,6 +176,9 @@ static void printCursor(int8_t index) {
 }
 
 static void printMoveMenu(int8_t index, uint8_t *moveList) {
+    if (moveList == nullptr) {
+        return;
+    }
 
     uint8_t color[4] = {1, 1, 1, 1};
     if (moveList[index] != 32) {
