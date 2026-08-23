@@ -31,6 +31,15 @@ printf '%s\n' "$fxtest" | grep -Fq 'stage="build/contract/fxtest/'
 printf '%s\n' "$fxtest" | grep -Fq -- '--fqbn "fixture:fx"'
 
 host=$(make --no-print-directory -n test BUILD_DIR=build/contract)
+
+pack=$(make --no-print-directory -n pack BUILD_DIR=build/contract DIST_DIR=dist/contract)
+printf '%s\n' "$pack" | grep -Fq 'cgfx-tools.sh'
+printf '%s\n' "$pack" | grep -Fq -- '--pack --layout "$stage/fxlayout.toml"'
+printf '%s\n' "$pack" | grep -Fq '"dist/contract/fxdata.bin"'
+if printf '%s\n' "$pack" | grep -Fq 'fxdata-build.py fxdata/fxdata.txt'; then
+    printf 'pack retains direct legacy Python generation\n' >&2
+    exit 1
+fi
 printf '%s\n' "$host" | grep -Fq -- '-o "build/contract/tests/host"'
 if printf '%s\n' "$host" | grep -Fq -- '-I/src'; then
     printf 'host build retains machine-root include path\n' >&2

@@ -30,6 +30,7 @@ help:
 		'  build    compile Arduboy FX sketch; prerequisite: $(ARDUINO_CLI); output: $(BUILD_DIR)' \
 		'  check    run generation, host tests, VM tests, then optional FX runtime tests' \
 		'  test-manifest run permanent generated-artifact tests' \
+		'  test-pack-parity compare cgfx-tools packing with fxdata-build.py' \
 		'  test-doctor run permanent setup-diagnostic tests' \
 		'  fxtest   run FX device tests; optional: ARDENS=/path/to/Ardens; skips when unavailable' \
 		'' \
@@ -129,11 +130,14 @@ pack:
 	@set -e; \
 	./tools/record-fxdata-manifest.sh fxdata/fxdata.txt fxdata/generated/manifest.json; \
 	./tools/assert-fxdata-manifest.sh fxdata/fxdata.txt fxdata/generated/manifest.json; \
-	python3 Arduboy-Python-Utilities/fxdata-build.py fxdata/fxdata.txt; \
-	mkdir -p "$(DIST_DIR)"; \
-	mv -f fxdata/fxdata.h src/fxdata.h; \
-	mv -f fxdata/fxdata.bin "$(DIST_DIR)"; \
-	mv -f fxdata/fxdata-data.bin "$(DIST_DIR)"
+	mkdir -p "$(BUILD_DIR)" "$(DIST_DIR)"; \
+	stage="$$(cd "$$(mktemp -d "$(BUILD_DIR)/cgfx-pack.XXXXXX")" && pwd -P)"; \
+	tar -cf - --exclude './.git' --exclude './build' --exclude './dist' . | tar -xf - -C "$$stage"; \
+	tool="$$(./tools/cgfx-tools.sh)"; \
+	"$$tool" --project "$$stage/cgfx-project.json" --pack --layout "$$stage/fxlayout.toml"; \
+	mv -f "$$stage/src/fxdata.h" src/fxdata.h; \
+	mv -f "$$stage/dist/fxdata.bin" "$(DIST_DIR)/fxdata.bin"; \
+	mv -f "$$stage/dist/fxdata-data.bin" "$(DIST_DIR)/fxdata-data.bin"
 
 check: gen test testvm test-manifest verify-generated fxtest
 
@@ -148,6 +152,9 @@ test-doctor:
 
 sim:
 	g++  -g -std=c++17 simulator/creature/Creature.cpp simulator/opponent/Opponent.cpp simulator/player/Player.cpp src/action/Action.cpp simulator/Battle.cpp simulator/main.cpp  -o simulator/simu.o
+
+test-pack-parity:
+	./tools/tests/pack-parity_test.sh
 
 test:
 	$(call run_test,,$(TEST_FLAGS),$(TEST_SOURCES),$(HOST_TEST_BIN))
