@@ -56,6 +56,7 @@ TEST_SOURCES = tst/src/ReadData.cpp \
 	tst/src/random.cpp \
 	tst/src/FlashBackendFake.cpp \
 	src/save/SaveFile.cpp \
+	src/save/Journal.cpp \
 	src/plants/PlantStage.cpp \
 	src/plants/PlantPair.cpp \
 	src/creature/Creature.cpp \
