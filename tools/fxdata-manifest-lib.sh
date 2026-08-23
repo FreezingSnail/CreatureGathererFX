@@ -35,12 +35,12 @@ fxdata_relative_path() {
 fxdata_collect_inputs() {
     local root=$1 definition=${2:-fxlayout.toml} path
     if test "$(basename "$definition")" = fxlayout.toml; then
-        for path in cgfx-project.json fxlayout.toml tools/cgfx-tools.sh tools/toolchain.lock; do
+        for path in cgfx-project.json fxlayout.toml fxsprites.toml tools/cgfx-tools.sh tools/toolchain.lock; do
             test -f "$root/$path" && printf '%s\n' "$path"
         done
     else
         for path in cgfx-project.json fxdata/fxdata.txt tools/cgfx-tools.sh tools/toolchain.lock \
-            tools/convert-sprite.py tools/text2bmp.py Arduboy-Python-Utilities/fxdata-build.py; do
+            Arduboy-Python-Utilities/fxdata-build.py; do
             test -f "$root/$path" && printf '%s\n' "$path"
         done
     fi

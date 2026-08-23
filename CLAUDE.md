@@ -65,7 +65,7 @@ make gen    # Generate cgfx data and package the FX image
 make check  # Generate, run host tests, then FX tests when ARDENS is configured
 ```
 
-Game data and the FX image come from native `cgfx-tools` layout sources; `make gen` needs no Python bridge. `make gen-sprites` is the explicit Python-backed asset regeneration target.
+Game data and the FX image come from native `cgfx-tools` layout sources; `make gen` needs no Python bridge. `make gen-sprites` explicitly regenerates native sprite/font sources through `cgfx-tools`.
 
 ## Architecture Overview
 

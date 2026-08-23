@@ -1,0 +1,45 @@
+# Native cgfx-tools source order. This preserves committed legacy Sprite.txt declarations.
+
+[[set]]
+output = "fxdata/Sprites.txt"
+images = [
+  "images/numbersblack_7x8.png", "images/creatureSprites_32x32.png",
+  "images/fieldBacground_128x32.png", "images/characterSheet_16x16.png",
+  "images/NewecreatureSprites_32x32.png", "images/numberswhite_7x8.png",
+  "images/singlenumberswhite_3x8.png", "images/fightMenu_128x24.png",
+  "images/singlenumbersblack_3x8.png", "images/ArduFont_5x6.png",
+  "images/moveInfo_60x30.png", "images/worldTiles_16x16.png", "images/tiles_16x16.png",
+  "images/maskedFont_16x24.png", "images/npc_16x16.png",
+  "images/ecreatureSprites_32x32.png", "images/arduboyFont_6x8.png",
+  "images/battleMenu_128x24.png", "images/blankMenu_128x24.png",
+  "images/ArduFontTrimmed_5x6.png", "images/tilesheet_16x16.png", "images/letters_16x16.png",
+]
+
+[[set]]
+output = "fxdata/battleEffects/Sprites.txt"
+images = [
+  "images/battleEffects/basicBeamR_32x32.png", "images/battleEffects/basicBeamL_32x32.png",
+  "images/battleEffects/BasicWaveR_32x32.png", "images/battleEffects/BasicWaveL_32x32.png",
+]
+
+[strings]
+output = "fxdata/generated/Sprites.txt"
+font = "ArduboyFXFonts/Fontbitmaps/Font4x6/Font_5x6.png"
+input = "data/text/strings.txt"
+glyph_width = 5
+glyph_height = 6
+shades = 4
+order = [
+  "amove20", "amove3", "creature24", "special", "creature30", "damage", "amove29", "amove4",
+  "amove5", "status", "creature6", "amove7", "amove25", "creature27", "wind", "lightning",
+  "creature0", "creature9", "amove12", "amove13", "sdefText", "amove6", "amove15", "satkText",
+  "creature29", "creature28", "creature11", "creature12", "creature13", "creature25", "creature3", "amove26",
+  "spdText", "creature26", "amove14", "gather", "amove30", "amove24", "fire", "creature19", "lose",
+  "creature8", "creature5", "creature4", "Fainted", "amove27", "creature15", "half", "creature23", "hpText",
+  "amove2", "elder", "plant", "amove1", "water", "enemyAttackText", "atkText", "amove9", "amove8", "defText",
+  "none", "earth", "creature10", "amove32", "damageText", "physical", "win", "amove21", "amove19", "amove18",
+  "creature14", "amove28", "changedIn", "amove16", "creature2", "amove17", "amove22", "amove0", "escaped",
+  "creature17", "creature20", "creature21", "quad", "creature7", "SwitchIn", "amove11", "creature16", "power",
+  "spirit", "doubled", "amove23", "pointerText", "attackText", "move", "creature18", "amove31", "escape", "creature1",
+  "applied", "amove10", "quarter", "creature22", "change", "creature31",
+]

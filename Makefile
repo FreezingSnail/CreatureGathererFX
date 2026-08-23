@@ -95,7 +95,7 @@ mini:
 	@mkdir -p "$(BUILD_DIR)"
 	$(ARDUINO_CLI) compile --fqbn "$(MINI_FQBN)" --optimize-for-debug --output-dir "$(BUILD_DIR)" .
 
-gen: gen-data gen-fixtures pack
+gen: gen-data gen-sprites gen-fixtures pack
 
 gen-data:
 	@set -e; \
@@ -113,15 +113,8 @@ gen-fixtures:
 
 gen-sprites:
 	@set -e; \
-	rm -f fxdataSprites.txt fxdata/battleEffectsSprites.txt fxdata/generatedSprites.txt; \
-	mkdir -p fxdata/generated/images; \
-	python3 tools/text2bmp.py --font ArduboyFXFonts/Fontbitmaps/Font4x6/Font_5x6.png --input data/text/strings.txt --output_dir fxdata/generated/images --mode joined --greyscale; \
-	python3 tools/convert-sprite.py images -s 4 -o fxdata/; \
-	python3 tools/convert-sprite.py images/battleEffects -s 4 -o fxdata/battleEffects/; \
-	python3 tools/convert-sprite.py fxdata/generated/images -s 4 -o fxdata/generated/; \
-	printf '\n' >> fxdata/generated/Sprites.txt; \
-	cat fxdata/generated/images/string_images.txt >> fxdata/generated/Sprites.txt; \
-	rm -rf fxdata/generated/images
+	tool="$$(./tools/cgfx-tools.sh)"; \
+	"$$tool" --sprite-config fxsprites.toml
 
 pack:
 	@set -e; \
