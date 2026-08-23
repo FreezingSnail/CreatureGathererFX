@@ -1,7 +1,7 @@
 {
   "creatures_json": "data/json/creatures.json",
   "moves_json": "data/json/moves.json",
-  "map_json": "maps/tools_dev_map.json",
+  "map_json": "maps/tools_world_test_map.json",
   "tileset_png": "images/tiles.png",
   "map_tileset_png": "images/tiles.png",
   "npc_tileset_png": "images/npc_16x16.png",

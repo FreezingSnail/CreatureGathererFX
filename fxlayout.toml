@@ -1351,11 +1351,11 @@ source = { raw = "fxdata/generated/map.bin" }
 
 [[entry]]
 name = "raw_map_data"
-source = { raw = "fxdata/raw_map.bin" }
+source = { raw = "fxdata/generated/raw_map.bin" }
 
 [[entry]]
 name = "raw_map_text"
-source = { raw = "fxdata/text.bin" }
+source = { raw = "fxdata/generated/text.bin" }
 
 [[entry]]
 name = "generator_version"

@@ -25,6 +25,20 @@ void WorldEngine::init() {
     chunkY = 3;
 }
 
+void WorldEngine::loadMap(uint8_t mapIndex, uint8_t submapIndex) {
+    // The FX image contains one canonical map; it occupies map/submap 0/0.
+    (void)mapIndex;
+    (void)submapIndex;
+    this->width = 32;
+    this->height = 16;
+}
+
+void WorldEngine::setPos(uint8_t x, uint8_t y) {
+    this->curx = x;
+    this->cury = y;
+    gameState.playerLocation = x + (256 * y);
+}
+
 void WorldEngine::input() {
     if (arduboy.pressed(UP_BUTTON)) {
         this->playerDirection = Direction::UP;
