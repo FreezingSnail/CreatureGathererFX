@@ -168,6 +168,10 @@ void MenuV2::printMenu(BattleEngine &engine) {
         SpritesU::drawOverwriteFX(0, 40, battleMenu, FRAME(0));
         return;
     }
+    if (this->menuPointer < 0) {
+        SpritesU::drawOverwriteFX(0, 40, battleMenu, FRAME(0));
+        return;
+    }
     // arduboy.fillRect(0, 43, 128, 32, WHITE);
     switch (CURRENT_MENU) {
     case BATTLE_OPTIONS:
