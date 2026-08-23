@@ -35,6 +35,7 @@ BattleEventPlayer battleEventPlayer;
 MenuStack menuStack;
 DialogMenu dialogMenu;
 
+#include "fxtest.hpp"
 #include "opponents_test.hpp"
 
 void setup() {
@@ -42,12 +43,13 @@ void setup() {
     arduboy.begin();
 
     FX::begin(FX_DATA_PAGE);
-    // FX::setFont(ArduFont, dcmNormal);   // select default font
     FX::setCursorRange(0, 32767);
+
+    FxTest test;
+    test_opponents(test);
+    test.report(F("fxdatatest"));
 }
 
 void loop() {
-    Serial.println("Hello, world!");
-    test_opponents();
     exit(0);
 }

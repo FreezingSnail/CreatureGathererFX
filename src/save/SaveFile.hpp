@@ -33,6 +33,7 @@ struct SaveFile {
 static_assert(sizeof(SaveFile) + 2 <= 4094,
               "SaveFile must fit sector 0 with room to append");
 
+// On failure, leaves out unchanged so callers retain their live/new-game state.
 bool saveFileLoad(SaveFile &out);
 void saveFileCommit(const SaveFile &in);
 uint16_t saveFileChecksum(const SaveFile &in);

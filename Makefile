@@ -1,4 +1,4 @@
-.PHONY: help setup doctor plant test test-debug testvm testvm-debug gen gen-data gen-sprites gen-fixtures pack full build mini check verify-generated test-manifest test-doctor fxtest fxtest-preflight fxtest-build fxtest-run new-fxtest
+.PHONY: help setup doctor plant test test-debug testvm testvm-debug gen gen-data gen-sprites gen-fixtures pack full build mini check verify-generated test-manifest test-doctor fxtest fxtest-headless fxtest-preflight fxtest-headless-preflight fxtest-build fxtest-run new-fxtest
 
 # Public command API. Override tool, board, and output variables per workspace/CI.
 CXX ?= g++
@@ -35,7 +35,8 @@ help:
 		'  test-manifest run permanent generated-artifact tests' \
 		'  test-pack-parity compare cgfx-tools packing with fxdata-build.py' \
 		'  test-doctor run permanent setup-diagnostic tests' \
-		'  fxtest   run FX device tests; optional: ARDENS=/path/to/Ardens; skips when unavailable' \
+		'  fxtest   alias for fxtest-headless; skips only when ARDENS is unset' \
+		'  fxtest-headless  run every FX device sketch through Ardens serial capture; blocks unsupported Ardens' \
 		'' \
 		'Overrides: CXX, ARDUINO_CLI, FQBN, BUILD_DIR, DIST_DIR, FXDATA_BIN, ARDENS, FXTEST_MS.'
 
@@ -57,6 +58,7 @@ TEST_SOURCES = tst/src/ReadData.cpp \
 	tst/src/FlashBackendFake.cpp \
 	src/save/SaveFile.cpp \
 	src/save/Journal.cpp \
+	src/save/Compaction.cpp \
 	src/plants/PlantStage.cpp \
 	src/plants/PlantPair.cpp \
 	src/creature/Creature.cpp \
@@ -169,19 +171,25 @@ testvm:
 testvm-debug:
 	$(call run_test,$(DEBUG_FLAGS),$(TEST_FLAGS),$(TESTVM_SOURCES),$(VM_TEST_BIN))
 
-FXTEST_INOS ?= $(wildcard tst/fxdatatest/test_*.ino)
+FXTEST_INOS ?= $(wildcard tst/fxdatatest/*.ino)
 FXTEST_NAMES = $(basename $(notdir $(FXTEST_INOS)))
 
-fxtest:
+fxtest: fxtest-headless
+
+fxtest-headless:
 	@if [ -z "$(ARDENS)" ]; then \
-		echo "fxtest: SKIPPED (Ardens unavailable; set ARDENS=/path/to/Ardens to run device tests)"; \
+		echo "fxtest-headless: SKIPPED (Ardens unavailable; set ARDENS=/path/to/Ardens to run serial device tests)"; \
 	else \
-		$(MAKE) --no-print-directory fxtest-preflight fxtest-build fxtest-run; \
+		$(MAKE) --no-print-directory fxtest-headless-preflight fxtest-build fxtest-run; \
 	fi
 
-fxtest-preflight:
-	@test -x "$(ARDENS)" || { echo "fxtest: Ardens executable not found at $(ARDENS); build Ardens or set ARDENS=/path/to/Ardens" >&2; exit 1; }
-	@test -f "$(FXDATA_BIN)" || { echo "fxtest: FX data image missing at $(FXDATA_BIN); run make gen or set FXDATA_BIN=/path/to/fxdata.bin" >&2; exit 1; }
+# Retained as an alias for callers that used the previous preflight target.
+fxtest-preflight: fxtest-headless-preflight
+
+fxtest-headless-preflight:
+	@test -x "$(ARDENS)" || { echo "fxtest-headless: Ardens executable not found at $(ARDENS); build headless Ardens or set ARDENS=/path/to/Ardens" >&2; exit 1; }
+	@test -f "$(FXDATA_BIN)" || { echo "fxtest-headless: FX data image missing at $(FXDATA_BIN); run make gen or set FXDATA_BIN=/path/to/fxdata.bin" >&2; exit 1; }
+	@strings "$(ARDENS)" | grep -Fxq captureserial || { echo "fxtest-headless: BLOCKED (Ardens at $(ARDENS) lacks captureserial; install or build a headless-capable Ardens; the installed 0.24.4 bundle is incompatible)" >&2; exit 2; }
 
 fxtest-build:
 	@set -e; \
