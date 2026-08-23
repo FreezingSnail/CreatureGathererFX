@@ -42,7 +42,7 @@ check_command() {
     fi
 }
 
-check_command python3 python3 'install Python 3 and put python3 on PATH'
+check_command python3 python3 'install Python 3 for the transitional cgfx-tools legacy bridge and put python3 on PATH'
 check_command g++ "$cxx" 'install a C++17 compiler and put g++ on PATH'
 check_command make make 'install make and put it on PATH'
 

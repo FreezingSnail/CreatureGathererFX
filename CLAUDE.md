@@ -61,11 +61,11 @@ This protocol applies when ending a Beads implementation workflow. It is subordi
 ## Build & Test
 
 ```bash
-make gen    # Generate cgfx data, retained sprite/string-image assets, package FX image
+make gen    # Generate cgfx data and package the FX image
 make check  # Generate, run host tests, then FX tests when ARDENS is configured
 ```
 
-Game data comes from `cgfx-tools`. Resolve it with `tools/cgfx-tools.sh`: `CGFX_TOOLS_BIN` overrides resolution; otherwise it builds sibling `../CreatureGathererTools`, then falls back to the locked/checksummed release. Python is retained only for `tools/text2bmp.py` and `tools/convert-sprite.py` sprite/string-image generation.
+Game data and the FX image come from `cgfx-tools`; the layout still has `source = { legacy = ... }` entries. cgfx-tools 0.2.0 resolves those through its transitional Python `fxdata-build.py` bridge, so Python 3 and the vendored bridge input remain required until native symbol builders replace those entries. Do not delete `Arduboy-Python-Utilities/fxdata-build.py` or `fxdata/fxdata.txt` until that bridge is retired.
 
 ## Architecture Overview
 
