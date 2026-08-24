@@ -80,36 +80,59 @@ JSON/CSV/PNG/TOML source and run the appropriate target. `make gen` includes `ge
 ### `fxlayout.toml`
 
 `fxlayout.toml` is an ordered flash layout, not a general-purpose build script. Paths resolve
-relative to the layout file. It contains:
+relative to the layout file. The current layout has 20 `[[entry]]` tables: 13 file-level expansion
+entries followed by the image and raw artifacts, plus a `[save]` table and two `[[save.entry]]`
+tables. Save offsets must be sector-aligned and remain within the reserved region.
 
-- Repeated `[[entry]]` tables. Each entry has a `name`, optional `namespace`, optional `align`, and
-  one `source`. Declaration order is significant: later typed symbols can refer to offsets of
-  earlier entries, and the resulting order is mirrored in `src/fxdata.h`.
-- A `[save]` table with the reserved save-sector count.
-- Repeated `[[save.entry]]` tables naming save-region offsets. Save offsets must be sector-aligned
-  and remain within the reserved region.
+Most C-style data files use file-level expansion:
 
-Supported native entry sources:
+```toml
+[[entry]]
+source = { expand = { path = "fxdata/data/menu.txt" } }
+```
+
+`expand` restores the pre-migration include behavior: it reads every supported declaration from the
+source file and makes each declaration an FX field. Its declaration/source order is the within-file
+ordering ABI; fields are emitted in exact source order, so do not reorder declarations merely for
+formatting. Later declarations can resolve offsets of earlier fields, and the final order is
+mirrored in `src/fxdata.h`. Names and namespaces come from the C source (for example,
+`namespace MenuFXData { ... }`), rather than from the TOML entry. Expansion accepts mixed
+`uint8_t`, `uint24_t`, and `uint32_t` declarations: `uint8_t` byte initializers are packed directly,
+while typed `uint24_t`/`uint32_t` initializers resolve symbolic offsets in declaration order.
+
+An `expand` entry must have only its `source`: `name`, `namespace`, and `align` are forbidden because
+the source declarations own those properties and their placement. Use `exclude` when one declaration
+requires deliberate hand placement, then add a normal named entry for it; for example,
+`source = { expand = { path = "fxdata/data/menu.txt", exclude = ["attackText"] } }` excludes the
+real `MenuFXData::attackText` declaration from that file's expansion. The loader rejects unknown
+keys or source kinds, sources with zero declarations, unterminated declarations or namespaces,
+exclusions that do not name a source declaration, and duplicate qualified field names.
+
+Unqualified symbolic initializers retain the legacy compatibility rule: they resolve to the **first**
+declaration with that name, even when it is namespaced. Thus `MenuStrings`'s `attackText` refers to
+`MenuFXData::attackText`. This is a permanent ABI rule, guarded by
+`tst/generated/generated_libs_test.cpp`; do not replace it with last-declaration or scope-dependent
+resolution.
+
+Supported native sources, including the concrete entries that remain in the 20-entry layout:
 
 - `raw = "path"` copies a binary file byte-for-byte.
-- `carray = { path = "..." }` extracts all compatible C-array bytes; adding `symbol = "..."`
-  selects one named `uint8_t` array from a legacy-compatible generated source such as `Sprites.txt`.
-- `symbol = { path = "...", symbol = "..." }` parses a typed C declaration (`uint8_t`,
-  `uint24_t`, or `uint32_t`) and resolves symbolic initializers against earlier layout fields.
-  Namespaces become qualified header names while preserving the first unqualified alias behavior
-  required by the game.
-- `image = { path = "...", width = ..., height = ..., shades = ..., spacing = ... }` uses
-  the native sprite encoder for a PNG sheet and emits its image dimensions, frame data, and field
-  metadata. This is how the `fontTrimmed` image is packed.
-- `builder = "key"` is available to `cgfx-core` for bytes supplied by a project builder; the
-  current project layout uses generated files, C arrays, typed symbols, and images instead.
+- `carray = { path = "..." }` extracts compatible C-array bytes; adding `symbol = "..."` selects
+  one named `uint8_t` array from a legacy-compatible source such as `fxdata/Sprites.txt`.
+- `symbol = { path = "...", symbol = "..." }` packs one typed `uint8_t`, `uint24_t`, or `uint32_t`
+  C declaration and resolves its symbolic initializers against earlier layout fields. It remains for
+  explicit, hand-placed declarations; its optional TOML `namespace` becomes a qualified header name.
+- `image = { path = "...", width = ..., height = ..., shades = ..., spacing = ... }` uses the
+  native sprite encoder for a PNG sheet and emits image dimensions, frame data, and field metadata.
+  The current layout uses it for `images/ArduFontTrimmed_5x6.png` as `fontTrimmed`.
+- `builder = "key"` is available to `cgfx-core` for bytes supplied by a project builder; the current
+  layout does not use it.
 
 Sprite and font conversion is native too. `fxsprites.toml` lists ordered PNG sprite sets and writes
 legacy-compatible `fxdata/Sprites.txt` C arrays. Its `[strings]` section reads
 `data/text/strings.txt`, renders strings from the configured font atlas, and writes
-`fxdata/generated/Sprites.txt`; this preserves existing symbols while removing the Python
-conversion step. `fxlayout.toml` then selects those sprite/font symbols through `carray` or packs
-a PNG font sheet through `image`.
+`fxdata/generated/Sprites.txt`; the corresponding `expand` entries preserve their pre-migration
+include behavior while removing the Python conversion step.
 
 ### Packed artifacts and provenance
 
