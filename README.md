@@ -61,7 +61,10 @@ A failed resolution is an error, not a fallback to an old converter. For a local
    `fxdata/generated/` (plus device-test fixtures under `tst/fxdatatest/generated/`).
 2. Native CSV modes build the remaining generated inputs:
    `--arena-csv data/arena.csv --arena-output fxdata/generated` and
-   `--type-table-csv data/typetable.csv --type-table-output fxdata/generated`.
+   `--type-table-csv data/typetable.csv --type-table-output fxdata/generated`. The step then copies
+   the generated headers the firmware compiles into place: `opcodes.hpp` → `src/vm/`, and
+   `flags.hpp` / `flag_bit_array.{hpp,cpp}` → `src/flags/`. These were hand copies before, which is
+   how a stale opcode table (missing `SMsg = 2`) and stale flag ids once shipped unnoticed.
 3. `cgfx-tools --project cgfx-project.json --emit-fixtures` and the version-stamp helper refresh
    generated device fixtures and `tool_version.bin`.
 4. `make gen-sprites` runs `cgfx-tools --sprite-config fxsprites.toml` to regenerate
@@ -133,6 +136,36 @@ changed, missing, unexpected, or unrecorded artifacts with a `make gen` remedy. 
 runs permanent provenance fixtures. `make test-pack-parity` repacks with native `cgfx-tools` and
 compares `dist/fxdata.bin` with the committed SHA-256 baseline.
 
+### Generated-library tests
+
+`make test-generated-libs` asserts that the generated libraries, the published header, and the
+packed image agree. Two parts:
+
+- `tst/generated/generated_libs_test.cpp` walks every `fxlayout.toml` entry and checks that its
+  source bytes sit in `dist/fxdata-data.bin` at exactly the address `src/fxdata.h` publishes:
+  `carray` initializers literally, typed `symbol` tables big-endian (the order
+  `FX::readIndexedUInt24` reassembles), `raw` entries byte-for-byte. It decodes the sources with its
+  own parser rather than reusing the packer's encoders, so a codegen or packer regression shows up
+  as a mismatch instead of two implementations agreeing on the same mistake. It also mirrors the
+  packer's legacy rule that an unqualified reference resolves to the **first** declaration of that
+  name even when that declaration is namespaced — which is why the `MenuStrings` table's
+  `attackText` means `MenuFXData::attackText`. Image entries are covered by the pack-parity SHA
+  baseline instead.
+- `tools/tests/generated-libs_test.sh` gates generated headers against their committed `src/`
+  copies and checks the script text block's little-endian count/offset/length framing inside the
+  packed image.
+
+On the device side, `tst/fxdatatest/test_tables.ino` pins the FX read path itself: `uint24_t`
+address tables read back as the addresses `fxdata.h` publishes (covering entries above `0x010000`),
+indexed byte reads agreeing with `readDataBytes`, the text block decoding little-endian through
+`ReadFXu16`, and the ArduboyFX `readIndexedUInt32` three-byte-stride defect
+(`seekDataArray(address, index, 0, sizeof(uint24_t))`), so a library upgrade that changes it fails
+loudly.
+
+When writing new FX device assertions, never pass a `__uint24` through `uint32_t`: AVR-GCC leaves
+the fourth byte undefined and the garbage looks exactly like a byte-order bug. Compare at 24 bits,
+or `memcpy` the three bytes out of the object.
+
 ### Command reference
 
 ```sh
@@ -140,10 +173,11 @@ make gen                 # data + native sprites/fonts + fixtures + packed FX im
 make gen-sprites         # native sprite/font C sources only
 make verify-generated    # verify generated artifacts and provenance; no regeneration
 make test-manifest       # manifest/provenance contract fixtures
+make test-generated-libs # generated libs vs published header vs packed image
 make test-pack-parity   # native pack byte-parity against the committed baseline
 make test                # host C++ tests
 make testvm              # ScriptVM host tests
-make check               # gen, host tests, VM tests, manifest check, optional fxtest
+make check               # gen, host tests, VM tests, manifest, generated libs, optional fxtest
 ```
 
 `make gen` and `make pack` resolve `cgfx-tools` through `tools/cgfx-tools.sh`. To force a known
