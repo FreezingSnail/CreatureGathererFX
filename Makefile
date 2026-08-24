@@ -1,4 +1,4 @@
-.PHONY: help setup doctor plant test test-debug testvm testvm-debug gen gen-data gen-sprites gen-fixtures pack full build mini run check verify-generated test-manifest test-doctor fxtest fxtest-headless fxtest-preflight fxtest-headless-preflight fxtest-build fxtest-run new-fxtest
+.PHONY: help setup doctor plant test test-debug testvm testvm-debug gen gen-data gen-sprites gen-fixtures pack full build mini run check verify-generated test-manifest test-generated-libs test-doctor fxtest fxtest-headless fxtest-preflight fxtest-headless-preflight fxtest-build fxtest-run new-fxtest
 
 # Public command API. Override tool, board, and output variables per workspace/CI.
 CXX ?= g++
@@ -21,6 +21,7 @@ FXTEST_MS ?= 3000
 FXTEST_BUILD_DIR ?= $(BUILD_DIR)/fxtest
 HOST_TEST_BIN ?= $(BUILD_DIR)/tests/host
 VM_TEST_BIN ?= $(BUILD_DIR)/tests/vm
+GENERATED_TEST_BIN ?= $(BUILD_DIR)/tests/generated
 
 CPPFLAGS ?= -I.
 CXXFLAGS ?= -std=c++17 -w -O0 -g3
@@ -39,6 +40,7 @@ help:
 		'  run      launch Ardens with the sketch, FX data, and FX save images; prerequisite: ARDENS' \
 		'  check    run generation, host tests, VM tests, then optional FX runtime tests' \
 		'  test-manifest run permanent generated-artifact tests' \
+		'  test-generated-libs check generated libs against the packed image; prerequisite: $(CXX)' \
 		'  test-pack-parity verify native packed-image SHA-256 baseline' \
 		'  test-doctor run permanent setup-diagnostic tests' \
 		'  fxtest   alias for fxtest-headless; skips only when ARDENS is unset' \
@@ -124,6 +126,11 @@ gen-data:
 	@set -e; \
 	tool="$$(./tools/cgfx-tools.sh)"; \
 	"$$tool" --project cgfx-project.json; \
+	# Firmware includes these generated headers from src/, so refresh copies atomically with generation. \
+	cp -f fxdata/generated/opcodes.hpp src/vm/opcodes.hpp; \
+	cp -f fxdata/generated/flags.hpp src/flags/flags.hpp; \
+	cp -f fxdata/generated/flag_bit_array.hpp src/flags/flag_bit_array.hpp; \
+	cp -f fxdata/generated/flag_bit_array.cpp src/flags/flag_bit_array.cpp; \
 	"$$tool" --arena-csv data/arena.csv --arena-output fxdata/generated; \
 	"$$tool" --type-table-csv data/typetable.csv --type-table-output fxdata/generated; \
 
@@ -153,7 +160,7 @@ pack:
 	./tools/record-fxdata-manifest.sh "$(FX_LAYOUT)" "$(FXDATA_MANIFEST)"; \
 	./tools/assert-fxdata-manifest.sh "$(FX_LAYOUT)" "$(FXDATA_MANIFEST)"
 
-check: gen test testvm test-manifest verify-generated fxtest
+check: gen test testvm test-manifest test-generated-libs verify-generated fxtest
 
 verify-generated:
 	@if test ! -e "$(FXDATA_DIST_DIR)/fxdata-data.bin" && test ! -e "$(FXDATA_DIST_DIR)/fxdata.bin"; then \
@@ -165,6 +172,14 @@ verify-generated:
 
 test-manifest:
 	./tools/tests/fxdata-manifest_test.sh
+
+# Generated-library integration tests: packed image <-> src/fxdata.h <-> the
+# generated sources, plus generated-header drift and text-block framing.
+test-generated-libs:
+	@mkdir -p "$(dir $(GENERATED_TEST_BIN))"
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) tst/generated/generated_libs_test.cpp -o "$(GENERATED_TEST_BIN)"
+	"$(GENERATED_TEST_BIN)" . "$(FX_LAYOUT)" src/fxdata.h "$(FXDATA_DIST_DIR)/fxdata-data.bin"
+	./tools/tests/generated-libs_test.sh
 
 test-doctor:
 	./tools/tests/doctor_test.sh

@@ -65552,7 +65552,7 @@
     {
       "x": 2,
       "y": 2,
-      "script": "if flag_test1 then tp 1 1 0 0 endif;"
+      "script": "if flag_door then tp 1 1 0 0 endif;"
     }
   ]
 }

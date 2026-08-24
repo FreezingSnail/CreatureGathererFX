@@ -38,7 +38,7 @@ void parsedBlobTest(TestSuite &t) {
     ScriptVm vm = ScriptVm();
     gameState = GameState();
     uint8_t buffer[] = {
-        3,              // tp
+        4,              // tp if
         0,  4,  0, 4,   // 4,4
         0,  12, 0, 7,   // 12,7
         255             // end
@@ -61,10 +61,10 @@ void parsedBlob2ScriptsTest(TestSuite &t) {
     ScriptVm vm = ScriptVm();
     gameState = GameState();
     uint8_t buffer[] = {
-        3,              // tp
+        4,              // tp if
         0,  4,  0, 4,   // 4,4
         0,  12, 0, 7,   // 12,7
-        3,              // tp
+        4,              // tp if
         0,  12, 0, 8,   // 12,7
         0,  4,  0, 4,   // 4,4
         255             // end
@@ -90,14 +90,14 @@ void ifThenTpTest(TestSuite &t) {
     ScriptVm vm = ScriptVm();
     gameState = GameState();
 
-    // if flag_test1 then tp 1 1 endif;
+    // if flag_door then tp 1 1 endif;
     uint8_t buffer[] = {
-        4,             // if
+        5,             // if
         0,             // flag set
         0,  0,         // flag
         1,             // then
         5,             // len
-        2,             // tp
+        3,             // tp
         0,  1, 0, 1,   // 1,1
         255            // end
     };
@@ -120,16 +120,16 @@ void ifThenelseTpTest(TestSuite &t) {
     ScriptVm vm = ScriptVm();
     gameState = GameState();
 
-    // if flag_test1 then tp 1 1 else tp 0 0 endif;
+    // if flag_door then tp 1 1 else tp 0 0 endif;
     uint8_t buffer[] = {
-        4,             // if
+        5,             // if
         0,             // flag set
         0,  0,         // flag
         0,             // else
         5,             // len
-        2,             // tp
+        3,             // tp
         0,  1, 0, 1,   // 1,1
-        2,             // tp
+        3,             // tp
         0,  0, 0, 0,   // 0,0
         255            // end
     };

@@ -27,6 +27,9 @@ void ScriptVm::run() {
         case VmOpcode::TMsg: {
             break;
         }
+        case VmOpcode::SMsg: {
+            break;
+        }
         case VmOpcode::Tp: {
             uint16_t x = readUInt16();
             uint16_t y = readUInt16();
