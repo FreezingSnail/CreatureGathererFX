@@ -5,11 +5,12 @@
 enum class VmOpcode : uint8_t {
     Msg = 0,
     TMsg = 1,
-    Tp = 2,
-    TpIf = 3,
-    If = 4,
-    SetFlag = 5,
-    UnsetFlag = 6,
-    ReadFlag = 7,
+    SMsg = 2,
+    Tp = 3,
+    TpIf = 4,
+    If = 5,
+    SetFlag = 6,
+    UnsetFlag = 7,
+    ReadFlag = 8,
     End = 255,
 };

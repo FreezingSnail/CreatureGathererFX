@@ -319,7 +319,7 @@
                         {
                          "name":"script",
                          "type":"string",
-                         "value":"if flag_test1 then tp 1 1 0 0 endif;"
+                         "value":"if flag_door then tp 1 1 0 0 endif;"
                         }],
                  "rotation":0,
                  "type":"",

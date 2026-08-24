@@ -455,7 +455,7 @@ static void DGF drawScriptText(uint16_t index) {
     uint24_t addr = raw_map_text + 2 + (2 * index);
     uint16_t textOffset = ReadFXu16(addr);
     uint24_t textStart = raw_map_text + 2 + (offsetCount * 2);
-    uint16_t len = ReadFXu16(textStart);
+    uint16_t len = ReadFXu16(textStart + textOffset);
     FX::seekData(textStart + textOffset + 2);
     FX::readBytes(&arduboy.sBuffer[FONTSIZE], len);
     FX::readEnd();

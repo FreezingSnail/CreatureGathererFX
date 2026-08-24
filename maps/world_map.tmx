@@ -279,7 +279,7 @@
   </object>
   <object id="11" x="38.4115" y="39.0625">
    <properties>
-    <property name="script" value="if flag_test1 then tp 0 0 endif;"/>
+    <property name="script" value="if flag_door then tp 0 0 endif;"/>
    </properties>
    <point/>
   </object>
