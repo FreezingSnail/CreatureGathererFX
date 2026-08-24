@@ -1,0 +1,32 @@
+# index	leaf	expected_target	expected_address	competing_target	competing_address
+# These constants intentionally do not derive from src/fxdata.h. MenuStrings
+# must resolve every leaf to its first declaration in MenuFXData, not its later
+# global declaration.
+0	attackText	MenuFXData::attackText	0x0008FB	::attackText	0x04DB4A
+1	enemyAttackText	MenuFXData::enemyAttackText	0x00090C	::enemyAttackText	0x04B750
+2	damageText	MenuFXData::damageText	0x000919	::damageText	0x04BE58
+3	hpText	MenuFXData::hpText	0x000926	::hpText	0x04B282
+4	atkText	MenuFXData::atkText	0x00092B	::atkText	0x04B8F4
+5	defText	MenuFXData::defText	0x000931	::defText	0x04BB4C
+6	spdText	MenuFXData::spdText	0x000937	::spdText	0x04A166
+7	satkText	MenuFXData::satkText	0x00093D	::satkText	0x0498BA
+8	sdefText	MenuFXData::sdefText	0x000944	::sdefText	0x049662
+9	pointerText	MenuFXData::pointerText	0x00094B	::pointerText	0x04DAF0
+20	Fainted	MenuFXData::Fainted	0x000981	::Fainted	0x04AD78
+21	SwitchIn	MenuFXData::SwitchIn	0x000989	::SwitchIn	0x04D2DA
+22	win	MenuFXData::win	0x00099A	::win	0x04C0B0
+23	lose	MenuFXData::lose	0x0009A2	::lose	0x04A7BA
+24	escaped	MenuFXData::escaped	0x0009AD	::escaped	0x04CBB4
+25	changedIn	MenuFXData::changedIn	0x0009B9	::changedIn	0x04C524
+26	quarter	MenuFXData::quarter	0x0009CD	::quarter	0x04E55E
+27	half	MenuFXData::half	0x0009DF	::half	0x04B066
+28	doubled	MenuFXData::doubled	0x0009EC	::doubled	0x04D8B6
+29	quad	MenuFXData::quad	0x0009FA	::quad	0x04CF92
+30	damage	MenuFXData::damage	0x000A0C	::damage	0x048744
+31	physical	MenuFXData::physical	0x000A13	::physical	0x04BFFC
+32	special	MenuFXData::special	0x000A18	::special	0x0485DC
+33	power	MenuFXData::power	0x000A1D	::power	0x04D6D6
+34	move	MenuFXData::move	0x000A24	::move	0x04DD66
+35	change	MenuFXData::change	0x000A29	::change	0x04E84C
+36	escape	MenuFXData::escape	0x000A30	::escape	0x04E036
+37	gather	MenuFXData::gather	0x000A37	::gather	0x04A3FA
