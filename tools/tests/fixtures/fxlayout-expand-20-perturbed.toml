@@ -1,0 +1,79 @@
+# Permanent migration-equivalence fixture. Paths are relative to this file.
+
+[[entry]]
+source = { expand = { path = "../../../fxdata/data/encounters.txt", exclude = ["encounterRates"] } }
+
+[[entry]]
+source = { expand = { path = "../../../fxdata/generated/opponents.txt" } }
+
+[[entry]]
+source = { expand = { path = "../../../fxdata/data/creatureData.txt" } }
+
+[[entry]]
+source = { expand = { path = "../../../fxdata/generated/moves.txt" } }
+
+[[entry]]
+source = { expand = { path = "../../../fxdata/data/event.txt" } }
+
+[[entry]]
+source = { expand = { path = "../../../fxdata/data/mapData.txt" } }
+
+[[entry]]
+source = { expand = { path = "../../../fxdata/data/movelists.txt" } }
+
+[[entry]]
+source = { expand = { path = "../../../fxdata/data/menu.txt" } }
+
+[[entry]]
+source = { expand = { path = "../../../fxdata/generated/teams.txt" } }
+
+[[entry]]
+source = { expand = { path = "../../../fxdata/data/chunks.txt" } }
+
+[[entry]]
+source = { expand = { path = "../../../fxdata/Sprites.txt" } }
+
+[[entry]]
+source = { expand = { path = "../../../fxdata/generated/Sprites.txt" } }
+
+[[entry]]
+source = { expand = { path = "../../../fxdata/battleEffects/Sprites.txt" } }
+
+[[entry]]
+name = "fontTrimmed"
+source = { image = { path = "../../../images/ArduFontTrimmed_5x6.png", width = 5, height = 6, shades = 2, spacing = 0 } }
+
+[[entry]]
+name = "type_table"
+source = { raw = "../../../fxdata/generated/typetable.bin" }
+
+[[entry]]
+name = "move_table"
+source = { raw = "../../../fxdata/generated/moves.bin" }
+
+[[entry]]
+name = "map_data"
+source = { raw = "../../../fxdata/generated/map.bin" }
+
+[[entry]]
+name = "raw_map_data"
+source = { raw = "../../../fxdata/generated/raw_map.bin" }
+
+[[entry]]
+name = "raw_map_text"
+source = { raw = "../../../fxdata/generated/text.bin" }
+
+[[entry]]
+name = "generator_version"
+source = { raw = "../../../fxdata/generated/tool_version.bin" }
+
+[save]
+sectors = 2
+
+[[save.entry]]
+name = "save_main"
+offset = 0
+
+[[save.entry]]
+name = "save_log"
+offset = 4096
