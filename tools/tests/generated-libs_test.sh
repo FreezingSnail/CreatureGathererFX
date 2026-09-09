@@ -114,7 +114,20 @@ assert_text_block() {
 
     local count
     count=$(read_le16 "$base")
-    if [ "$count" -eq 0 ] || [ "$count" -gt 4096 ]; then
+    if [ "$count" -eq 0 ]; then
+        # A map containing only teleports/flags has no message strings; the
+        # generator still emits its canonical little-endian zero count.
+        local text_size text_bytes
+        text_size=$(wc -c < "$root/fxdata/generated/text.bin")
+        text_bytes=$(od -An -tx1 "$root/fxdata/generated/text.bin" | tr -d ' \n')
+        if [ "$text_size" -eq 2 ] && [ "$text_bytes" = '0000' ]; then
+            pass
+        else
+            fail 'text block' 'zero count requires a two-byte little-endian zero framing'
+        fi
+        return
+    fi
+    if [ "$count" -gt 4096 ]; then
         fail 'text block' "implausible string count $count at raw_map_text" \
             'a byte-swapped count is the usual cause'
         return
