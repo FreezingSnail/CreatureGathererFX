@@ -145,10 +145,16 @@ inline void test_text_block(FxTest &test) {
     const uint16_t count = composeLittleEndian16(&header[0]);
 
     test.expectEq(ReadFXu16(raw_map_text), count, F("text count little endian"));
-    test.expectEq(count > 0 && count <= 4096, true, F("text count plausible"));
+    test.expectEq(count <= 4096, true, F("text count plausible"));
     test.expectEq(FX::readIndexedUInt16(raw_map_text, 0),
                   static_cast<uint16_t>(count << 8 | count >> 8),
                   F("indexed u16 byte swaps the count"));
+
+    // A map with only teleports/flags has a canonical zero count and no
+    // offsets. Non-empty blocks use the framing checks below.
+    if (count == 0) {
+        return;
+    }
 
     // First offset is always zero, and every offset ascends.
     test.expectEq(ReadFXu16(raw_map_text + 2), 0, F("first text offset"));

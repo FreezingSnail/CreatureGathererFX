@@ -126,7 +126,7 @@ gen-data:
 	@set -e; \
 	tool="$$(./tools/cgfx-tools.sh)"; \
 	"$$tool" --project cgfx-project.json; \
-	# Firmware includes these generated headers from src/, so refresh copies atomically with generation. \
+	: 'Firmware includes generated headers from src; refresh copies atomically with generation.'; \
 	cp -f fxdata/generated/opcodes.hpp src/vm/opcodes.hpp; \
 	cp -f fxdata/generated/flags.hpp src/flags/flags.hpp; \
 	cp -f fxdata/generated/flag_bit_array.hpp src/flags/flag_bit_array.hpp; \
