@@ -124,35 +124,31 @@ gen: gen-data gen-sprites gen-fixtures pack
 
 gen-data:
 	@set -e; \
-	tool="$$(./tools/cgfx-tools.sh)"; \
-	"$$tool" --project cgfx-project.json; \
+	cgfx-tools --project cgfx-project.json; \
 	: 'Firmware includes generated headers from src; refresh copies atomically with generation.'; \
 	cp -f fxdata/generated/opcodes.hpp src/vm/opcodes.hpp; \
 	cp -f fxdata/generated/flags.hpp src/flags/flags.hpp; \
 	cp -f fxdata/generated/flag_bit_array.hpp src/flags/flag_bit_array.hpp; \
 	cp -f fxdata/generated/flag_bit_array.cpp src/flags/flag_bit_array.cpp; \
-	"$$tool" --arena-csv data/arena.csv --arena-output fxdata/generated; \
-	"$$tool" --type-table-csv data/typetable.csv --type-table-output fxdata/generated; \
+	cgfx-tools --arena-csv data/arena.csv --arena-output fxdata/generated; \
+	cgfx-tools --type-table-csv data/typetable.csv --type-table-output fxdata/generated; \
 
 gen-fixtures:
 	@set -e; \
-	tool="$$(./tools/cgfx-tools.sh)"; \
-	"$$tool" --project cgfx-project.json --emit-fixtures; \
+	cgfx-tools --project cgfx-project.json --emit-fixtures; \
 	./tools/emit-rust-teams.sh; \
 	./tools/emit-tool-version-stamp.sh
 
 gen-sprites:
 	@set -e; \
-	tool="$$(./tools/cgfx-tools.sh)"; \
-	"$$tool" --sprite-config fxsprites.toml
+	cgfx-tools --sprite-config fxsprites.toml
 
 pack:
 	@set -e; \
 	mkdir -p "$(BUILD_DIR)" "$(DIST_DIR)"; \
 	stage="$$(cd "$$(mktemp -d "$(BUILD_DIR)/cgfx-pack.XXXXXX")" && pwd -P)"; \
 	tar -cf - --exclude './.git' --exclude './build' --exclude './dist' . | tar -xf - -C "$$stage"; \
-	tool="$$(./tools/cgfx-tools.sh)"; \
-	"$$tool" --project "$$stage/cgfx-project.json" --pack --layout "$$stage/fxlayout.toml"; \
+	cgfx-tools --project "$$stage/cgfx-project.json" --pack --layout "$$stage/fxlayout.toml"; \
 	mv -f "$$stage/src/fxdata.h" src/fxdata.h; \
 	mv -f "$$stage/dist/fxdata.bin" "$(DIST_DIR)/fxdata.bin"; \
 	mv -f "$$stage/dist/fxdata-data.bin" "$(DIST_DIR)/fxdata-data.bin"; \
