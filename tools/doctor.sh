@@ -24,7 +24,7 @@ case "$host_os:$host_arch" in
     Darwin:arm64|Darwin:aarch64|Linux:x86_64|Linux:amd64) pass "supported host ($host_os $host_arch)" ;;
     *)
         fail "unsupported host ($host_os $host_arch)"
-        remedy 'use macOS arm64 or Linux x86_64, or provide a compatible CGFX_TOOLS_BIN'
+        remedy 'use a supported host or install a compatible cgfx-tools executable on PATH'
         ;;
 esac
 
@@ -83,64 +83,19 @@ else
     remedy 'install arduino-cli and put it on PATH; then run SETUP_APPLY=1 tools/setup.sh'
 fi
 
-sha256_file() {
-    if command -v shasum >/dev/null 2>&1; then
-        shasum -a 256 "$1" | awk '{print $1}'
-    elif command -v sha256sum >/dev/null 2>&1; then
-        sha256sum "$1" | awk '{print $1}'
+if cgfx_tool=$(command -v cgfx-tools 2>/dev/null); then
+    cgfx_version=$($cgfx_tool --version 2>&1 | sed -n '1p')
+    cgfx_status=$?
+    if test "$cgfx_status" -ne 0 || test -z "$cgfx_version"; then
+        fail "cgfx-tools version unavailable: $cgfx_tool"
+        remedy 'install a compatible cgfx-tools executable on PATH'
     else
-        return 1
-    fi
-}
-
-lock_value() {
-    key=$1
-    awk -F= -v key="$key" '$1 == key { print $2; exit }' "$root/tools/toolchain.lock"
-}
-
-cgfx_tool=
-if test -n "${CGFX_TOOLS_BIN:-}"; then
-    cgfx_tool=$CGFX_TOOLS_BIN
-elif test -x "$root/../CreatureGathererTools/target/release/cgfx-tools"; then
-    cgfx_tool=$root/../CreatureGathererTools/target/release/cgfx-tools
-else
-    release_tag=$(lock_value RELEASE_TAG)
-    repository=$(lock_value RELEASE_REPOSITORY)
-    case "$host_os:$host_arch" in
-        Darwin:arm64|Darwin:aarch64) asset=cgfx-tools-macos-arm64; expected=$(lock_value SHA256_CGFX_TOOLS_MACOS_ARM64) ;;
-        Linux:x86_64|Linux:amd64) asset=cgfx-tools-linux-x64; expected=$(lock_value SHA256_CGFX_TOOLS_LINUX_X64) ;;
-        *) asset=; expected= ;;
-    esac
-    cache="$root/.cache/cgfx-tools/$release_tag/$asset"
-    if test -n "$asset" && test -f "$cache" && test -x "$cache"; then
-        actual=$(sha256_file "$cache" 2>/dev/null || printf invalid)
-        if test "$actual" = "$expected"; then
-            cgfx_tool=$cache
-        else
-            fail "cgfx-tools cache checksum mismatch: $cache"
-            remedy 'remove the bad cache entry, set CGFX_TOOLS_BIN to a verified executable, or rebuild the pinned release'
-        fi
-    fi
-fi
-
-if test -n "$cgfx_tool"; then
-    if test ! -f "$cgfx_tool" || test ! -x "$cgfx_tool"; then
-        fail "cgfx-tools is not executable: $cgfx_tool"
-        remedy 'set CGFX_TOOLS_BIN to an executable cgfx-tools path, or build ../CreatureGathererTools/target/release/cgfx-tools'
-    else
-        cgfx_version=$($cgfx_tool --version 2>&1 | sed -n '1p')
-        cgfx_status=$?
-        if test "$cgfx_status" -ne 0 || test -z "$cgfx_version"; then
-            fail "cgfx-tools version unavailable: $cgfx_tool"
-            remedy 'run cgfx-tools --version successfully, or set CGFX_TOOLS_BIN to a compatible release'
-        else
-            cgfx_version=$(printf '%s\n' "$cgfx_version" | awk '{print $NF}')
-            pass "cgfx-tools: path=$cgfx_tool version=$cgfx_version"
-        fi
+        cgfx_version=$(printf '%s\n' "$cgfx_version" | awk '{print $NF}')
+        pass "cgfx-tools: path=$cgfx_tool version=$cgfx_version"
     fi
 else
-    fail 'cgfx-tools: no non-mutating local resolution found'
-    remedy 'set CGFX_TOOLS_BIN=/absolute/path/to/cgfx-tools, or clone/build ../CreatureGathererTools; doctor never downloads or builds it'
+    fail 'cgfx-tools: not found on PATH'
+    remedy 'install cgfx-tools and add its bin directory to PATH'
 fi
 
 if test ! -f "$fxdata_file"; then

@@ -10,7 +10,6 @@ mock_bin="$root/tools/tests/fixtures/doctor/bin"
 
 run_doctor() {
     PATH="$mock_bin:$PATH" \
-    CGFX_TOOLS_BIN="$mock_bin/cgfx-tools" \
     DOCTOR_FXDATA="$1/fxdata.txt" \
     DOCTOR_MANIFEST="$1/generated/manifest.json" \
     CXX="${CXX:-g++}" \

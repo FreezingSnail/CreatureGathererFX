@@ -23,6 +23,34 @@ bd close <id>         # Complete work
 bd dolt push          # Push beads data to remote
 ```
 
+## Human-Only Beads
+
+Beads labeled **`human`** are implemented by hand by the repository owner. The plan in the bead is
+the deliverable; human authorship of the code is the point.
+
+Agents MUST NOT implement, claim, dispatch a worker for, or close a bead labeled `human`. This
+includes Maduin and any other background worker.
+
+Use the exclusion when looking for work:
+
+```bash
+bd ready --exclude-label human     # available agent work
+bd ready --label human             # the owner's queue
+```
+
+`human` is the only gating label; `human-only` is retired. Domain labels (`m0`, `save`, `ram`,
+`test`, `data`, `build`, `design`, `roadmap`, `difficulty:*`) carry no gating meaning.
+
+Agents MAY read these beads, answer questions about them, and review the resulting diff once the
+owner reports the work done. Review checks the diff against the bead's `acceptance` field, not
+against the agent's preferred implementation; a better human approach is a plan correction, not a
+defect. File follow-up beads for leftovers.
+
+When authoring a `human` bead, populate `description` (why now, current state with concrete
+evidence), `design` (ordered `STEPS`, then `PITFALLS`), and `acceptance` (observable conditions
+plus the exact commands). An empty `design` leaves the owner flying blind. See the `human-beads`
+skill for the full contract.
+
 ## Non-Interactive Shell Commands
 
 **ALWAYS use non-interactive flags** with file operations to avoid hanging on confirmation prompts.
@@ -131,4 +159,4 @@ bd prime                # Refresh Beads context
 
 `make gen` generates native game data, sprite/font sources, and packages the FX image with `cgfx-tools`; no Python bridge is required. `make gen-sprites` remains explicit for native sprite/font source regeneration through `cgfx-tools`. `make check` runs generation, host tests, and FX tests when Ardens is available.
 
-Resolve the data tool through `tools/cgfx-tools.sh`; it honors `CGFX_TOOLS_BIN`, builds a sibling `../CreatureGathererTools` checkout when present, or downloads the locked, checksummed release. Run `./tools/cgfx-tools.sh` to inspect the resolved executable. Do not restore the retired standalone data converters.
+`cgfx-tools` must be installed on `PATH`; `make doctor` verifies the selected executable. Do not restore the retired standalone data converters or a local tool resolver.

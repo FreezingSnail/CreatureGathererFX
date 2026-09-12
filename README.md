@@ -17,40 +17,28 @@ installed 0.24.4 bundle is incompatible). CI builds the pinned headless Ardens s
 `captureserial`; use that runner for device-suite execution rather than a graphical/manual Ardens
 path.
 
-`tools/cgfx-tools.sh` resolves the data generator. It uses an executable set through
-`CGFX_TOOLS_BIN`, otherwise builds a sibling `../CreatureGathererTools` checkout, otherwise
-downloads the locked and checksummed release. Run `./tools/cgfx-tools.sh` to inspect the selected
-executable.
+`cgfx-tools` must be available on `PATH`. Run `make doctor` to verify the selected executable.
 
 ## Tooling
 
-CreatureGathererFX uses the native Rust `cgfx-tools` binary from the sibling
-[CreatureGathererTools](../CreatureGathererTools) repository. Its reusable core is
+CreatureGathererFX uses the native Rust `cgfx-tools` binary from
+[CreatureGathererTools](../CreatureGathererTools). Its reusable core is
 `CreatureGathererTools/crates/core` (package `cgfx-core`); the `cgfx-tools` binary runs the same
 core without the desktop UI. The native pipeline replaces the retired standalone data converters
 and Python FX-data bridge. A Python installation is not required for generation or packing.
 
-### Tool resolution
+### Tool installation
 
-Always invoke the resolver instead of assuming a binary location:
+Install `cgfx-tools`, then expose its bin directory through `PATH`:
 
 ```sh
-./tools/cgfx-tools.sh
+(cd ../CreatureGathererTools && ./install.sh)
+export PATH="$HOME/Applications/CreatureGathererTools/bin:$PATH"
+make doctor
 ```
 
-Resolution order:
-
-1. If `CGFX_TOOLS_BIN` is set, it must name an executable file; the resolver returns its absolute path.
-2. If `../CreatureGathererTools` exists, the resolver builds
-   `cargo build --release -p cgfx-core --bin cgfx-tools` there and uses `target/release/cgfx-tools`.
-   This local checkout is intentionally unpinned and is useful during tool development.
-3. Otherwise, the resolver downloads the host asset for the locked release in `tools/toolchain.lock`,
-   verifies its SHA-256 checksum, caches it under `.cache/cgfx-tools/`, and returns the cache path.
-   The lock currently defines macOS arm64 and Linux x64 assets; unsupported hosts fail.
-
-A failed resolution is an error, not a fallback to an old converter. For a local tool, either export
-`CGFX_TOOLS_BIN=/absolute/path/to/cgfx-tools` or keep the sibling checkout at
-`../CreatureGathererTools`. CI sets the locked tool explicitly where reproducibility matters.
+`make` invokes `cgfx-tools` directly. A missing or incompatible executable is an error, not a
+fallback to an old converter. CI downloads the locked release and adds it to `PATH` before generation.
 
 ### Native generation and pack pipeline
 
@@ -203,11 +191,11 @@ make testvm              # ScriptVM host tests
 make check               # gen, host tests, VM tests, manifest, generated libs, optional fxtest
 ```
 
-`make gen` and `make pack` resolve `cgfx-tools` through `tools/cgfx-tools.sh`. To force a known
-executable in a reproducible invocation:
+`make gen` and `make pack` invoke `cgfx-tools` from `PATH`. To use a specific installation,
+place its bin directory first in `PATH`:
 
 ```sh
-CGFX_TOOLS_BIN=/absolute/path/to/cgfx-tools make gen
+PATH=/absolute/path/to/bin:$PATH make gen
 ```
 
 ### Strict headless FX tests
@@ -223,6 +211,6 @@ The harness compiles every `tst/fxdatatest/*.ino` suite, runs each through
 failure. This applies to existing and future suites, including save tests.
 
 The CI workflow builds the pinned Ardens source with SDL/player/flashcart disabled, verifies the
-resulting headless binary, runs `CGFX_TOOLS_BIN="$(./tools/cgfx-tools.sh)" make gen`, then gates the
-job on `make fxtest-headless`. Use that headless serial runner for device-suite execution; do not
-substitute a graphical/manual Ardens path.
+resulting headless binary, runs `make gen` with its pinned `cgfx-tools` installed on `PATH`, then
+gates the job on `make fxtest-headless`. Use that headless serial runner for device-suite execution;
+do not substitute a graphical/manual Ardens path.

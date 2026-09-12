@@ -30,7 +30,7 @@ test "$(grep -c '^\[\[entry\]\]' "$new_layout")" -eq 20 || {
 # Rebuild pack inputs before comparison; both plans below execute in this exact
 # cgfx-core binary, directly over the project-relative permanent fixtures.
 make --no-print-directory pack
-tool=$(./tools/cgfx-tools.sh)
+tool=cgfx-tools
 "$tool" --assert-layout-equivalent "$old_layout" "$new_layout"
 
 # Permanent negative proof: removing one early declaration must name the first

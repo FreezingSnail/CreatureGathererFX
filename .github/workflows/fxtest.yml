@@ -64,9 +64,21 @@ jobs:
           test -x "$GITHUB_WORKSPACE/.ci/ardens-build/Ardens"
           echo "path=$GITHUB_WORKSPACE/.ci/ardens-build/Ardens" >> "$GITHUB_OUTPUT"
 
+      - name: Install cgfx-tools
+        run: |
+          . tools/toolchain.lock
+          install_dir="$HOME/.local/bin"
+          mkdir -p "$install_dir"
+          curl --fail --location --retry 3 --connect-timeout 15 \
+            --output "$install_dir/cgfx-tools" \
+            "https://github.com/$RELEASE_REPOSITORY/releases/download/$RELEASE_TAG/cgfx-tools-linux-x64"
+          printf '%s  %s\n' "$SHA256_CGFX_TOOLS_LINUX_X64" "$install_dir/cgfx-tools" | sha256sum --check --status
+          chmod +x "$install_dir/cgfx-tools"
+          printf '%s\n' "$install_dir" >> "$GITHUB_PATH"
+
       - name: Generate FX data
         run: |
-          CGFX_TOOLS_BIN="$(./tools/cgfx-tools.sh)" make gen
+          make gen
           test -s dist/fxdata.bin
           test -s fxdata/generated/manifest.json
 
