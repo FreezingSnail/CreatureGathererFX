@@ -2,6 +2,9 @@
 
 Creature collecting demake game for the Arduboy.
 
+Workflow conventions distilled from past waves live in `docs/dev-flow.md`; agent instructions live
+in `AGENTS.md`.
+
 ## Generate and validate
 
 Run `make gen` to generate game data, native sprite/font sources, and package the FX image with

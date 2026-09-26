@@ -1,6 +1,79 @@
 # Agent Instructions
 
+Creature collecting demake for the **Arduboy FX** (ATmega32u4, 4-shade grayscale via ArduboyG
+`L4_Triplane`). Read `README.md` for architecture/status and `docs/dev-flow.md` for the workflow
+conventions distilled from past waves.
+
 This project uses **bd** (beads) for issue tracking. Run `bd prime` for full workflow context.
+
+## Commands
+
+```sh
+make test                  # host C++ suites (tst/)
+make testvm                # ScriptVM suites (tst/script_tests/)
+make fxtest-headless       # every tst/fxdatatest/*.ino suite through Ardens serial;
+                           #   ARDENS=/path/to/Ardens required, else skip
+make gen                   # generate data/sprites + pack the FX image (cgfx-tools on PATH)
+make verify-generated      # non-mutating manifest check of generated artifacts
+make test-manifest         # permanent generated-artifact tests
+make test-generated-libs   # packed image <-> src/fxdata.h <-> generated sources
+make test-pack-parity      # native packed-image SHA-256 baseline
+make test-doctor           # setup-diagnostic tests
+make build | mini | run    # shipping FX / Mini / interactive Ardens run
+make doctor                # tool readiness (cgfx-tools, arduino-cli, Ardens)
+make check                 # gen + host + VM + manifest + generated-libs + verify-generated + fxtest
+```
+
+Full gate before any commit: `make gen` with an empty diff, `make test`, `make testvm`,
+`make test-manifest`, `make test-generated-libs`, `make verify-generated`, full
+`make fxtest-headless`, plus `make test-pack-parity` when packed bytes can change. Iterate device
+work with `make fxtest-headless FXTEST_INOS=tst/fxdatatest/test_<name>.ino`; only the final run is
+the full gate.
+
+## Hard rules
+
+- **Testing**: use each language's native framework; tests are permanent and co-located (`tst/`,
+  `tst/script_tests/`, `tst/fxdatatest/`, `tools/tests/`); never write test code to `/tmp`; never
+  use Python/perl/ruby as a harness to drive C++ tests.
+- **Fixed point**: no `float`/`double` in device code; integer math only.
+- **Generated artifacts**: `make gen` is the only generation entry. Never hand-edit
+  `fxdata/generated/`, `tst/fxdatatest/generated/`, `src/vm/opcodes.hpp`, `src/flags/*`,
+  `src/fxdata.h`, or `fxdata/Sprites.txt` — change the JSON/CSV/PNG/TOML source and regenerate.
+  Stage generated sets together after a regen; a half-staged set once shipped a stale opcode table.
+  Tests read generated symbolic constants, never literal record indices. `fxlayout.toml`
+  declaration order is a permanent ABI.
+- **Single FX image**: `dist/fxdata.bin` is the only flashable cart image; `src/fxdata.h` mirrors it.
+- **SRAM is the binding constraint** (flash 61% used; globals were 2018/2560 B with a save path
+  that overflows by ~262 B). Budget rules live in `docs/dev-flow.md`.
+- **FX/OLED share SPI**: cart reads happen only on transitions, never per-step or per-frame. The
+  per-frame read counter (jp8.1.7) keeps this enforceable.
+
+## Dev-cycle speed rules (from past waves)
+
+- **Spike before any budget-touching bead.** Implement the thinnest end-to-end slice and report
+  whole-image flash/RAM deltas; LTO makes per-symbol arithmetic meaningless.
+- **Small beads, checkpoints inside.** One measured item per bead (qu9 pattern: measure each item
+  separately so savings stay attributable). Stop for a trim when the budget is blown — do not finish
+  the feature first.
+- **Headroom reserve.** Plan against measured headroom minus a reserve; never land below ~150 B free.
+- **Freeze interaction details before dispatch.** Formats, offsets, caps, labels and row models are
+  pinned in the bead's `design`; workers may not reinterpret them.
+- **One full gate per bead.** The worker runs host/VM suites, touched device suites, and generation
+  checks; the orchestrator runs the full gate once before committing — not twice.
+- **Parallelize non-overlapping beads.** Docs/tooling beads can run alongside code beads; only
+  same-file work serializes. Split oversized beads before dispatch (2–3 logical layers each).
+- **Log wall time per bead** (worker / gate / orchestrator) in `output.md` so the next retro is data.
+
+## Worker protocol (agents spawned for bd tasks)
+
+- One bead = one implement-verify loop. Read `bd show <id>`, implement, run the bead's exact
+  verification commands, write the report to `output.md` (exact commands, tails, numbers, wall
+  time, documented deviations), then `bd close <id>`.
+- **Do not commit or push** — the orchestrator commits between bead waves and runs the full gate.
+- If the build cannot fit or a gate fails, report BLOCKED with the deficit and options; never fake a
+  pass.
+- Never implement, claim, dispatch a worker for, or close a bead labeled `human` (see Human-Only
+  Beads below).
 
 > **Architecture in one line:** Issues live in a local Dolt database
 > (`.beads/dolt/`); cross-machine sync uses `bd dolt push/pull` (a
