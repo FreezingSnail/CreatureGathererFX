@@ -50,7 +50,7 @@ void setup() {
     //  arduboy.begin();
     //  arduboy.setFrameRate(45);
     arduboy.boot();
-    arduboy.startGray();
+    arduboy.setFrameRate(52);
     arduboy.initRandomSeed();
     //  plants.tick();
 
@@ -174,13 +174,10 @@ void render() {
 }
 
 void loop() {
-    FX::enableOLED();
-    arduboy.waitForNextPlane();
-    FX::disableOLED();
-    if (arduboy.needsUpdate()) {
-        arduboy.pollButtons();
-        run();
-    }
+    if (!arduboy.nextFrame()) return;
+    arduboy.pollButtons();
+    run();
     render();
+    FX::display(CLEAR_BUFFER);
 }
 
