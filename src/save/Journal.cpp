@@ -12,9 +12,9 @@ constexpr uint24_t JOURNAL_SAVE_LOG = save_log;
 #endif
 
 namespace {
-constexpr uint16_t JOURNAL_PAGE_BYTES = 256;
-constexpr uint16_t JOURNAL_RECORDS_PER_PAGE =
-    JOURNAL_PAGE_BYTES / JOURNAL_RECORD_BYTES;
+constexpr uint16_t JOURNAL_WINDOW_BYTES = 32;
+constexpr uint8_t JOURNAL_RECORDS_PER_WINDOW =
+    JOURNAL_WINDOW_BYTES / JOURNAL_RECORD_BYTES;
 constexpr uint16_t JOURNAL_SECTOR_PAGE = 16;
 
 uint8_t journalCheck(const uint8_t bytes[JOURNAL_RECORD_BYTES - 1])
@@ -63,15 +63,15 @@ bool journalDecode(const uint8_t in[JOURNAL_RECORD_BYTES], JournalRecord &out)
 
 uint16_t journalCount()
 {
-    uint8_t page[JOURNAL_PAGE_BYTES];
+    uint8_t window[JOURNAL_WINDOW_BYTES];
     uint16_t count = 0;
 
     for (uint16_t offset = 0; offset < JOURNAL_CAPACITY * JOURNAL_RECORD_BYTES;
-         offset += JOURNAL_PAGE_BYTES) {
-        flash.readBytes(JOURNAL_SAVE_LOG + offset, page, sizeof(page));
-        for (uint8_t record = 0; record < JOURNAL_RECORDS_PER_PAGE; ++record) {
+         offset += JOURNAL_WINDOW_BYTES) {
+        flash.readBytes(JOURNAL_SAVE_LOG + offset, window, sizeof(window));
+        for (uint8_t record = 0; record < JOURNAL_RECORDS_PER_WINDOW; ++record) {
             JournalRecord decoded;
-            if (!journalDecode(page + record * JOURNAL_RECORD_BYTES, decoded)) {
+            if (!journalDecode(window + record * JOURNAL_RECORD_BYTES, decoded)) {
                 return count;
             }
             ++count;
@@ -97,15 +97,15 @@ bool journalAppend(const JournalRecord &in)
 
 uint16_t journalReplay(void (*apply)(const JournalRecord &))
 {
-    uint8_t page[JOURNAL_PAGE_BYTES];
+    uint8_t window[JOURNAL_WINDOW_BYTES];
     uint16_t count = 0;
 
     for (uint16_t offset = 0; offset < JOURNAL_CAPACITY * JOURNAL_RECORD_BYTES;
-         offset += JOURNAL_PAGE_BYTES) {
-        flash.readBytes(JOURNAL_SAVE_LOG + offset, page, sizeof(page));
-        for (uint8_t record = 0; record < JOURNAL_RECORDS_PER_PAGE; ++record) {
+         offset += JOURNAL_WINDOW_BYTES) {
+        flash.readBytes(JOURNAL_SAVE_LOG + offset, window, sizeof(window));
+        for (uint8_t record = 0; record < JOURNAL_RECORDS_PER_WINDOW; ++record) {
             JournalRecord decoded;
-            if (!journalDecode(page + record * JOURNAL_RECORD_BYTES, decoded)) {
+            if (!journalDecode(window + record * JOURNAL_RECORD_BYTES, decoded)) {
                 return count;
             }
             apply(decoded);

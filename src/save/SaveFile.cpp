@@ -46,7 +46,7 @@ bool saveFileLoad(SaveFile &out)
     constexpr uint16_t SAVE_SECTOR_BYTES = 4096;
     uint16_t addr = 0;
     bool found = false;
-    SaveFile latest = {};
+    uint16_t latestAddr = 0;
 
     while (addr + 2 <= SAVE_SECTOR_BYTES) {
         uint8_t header[2];
@@ -74,7 +74,7 @@ bool saveFileLoad(SaveFile &out)
         flash.readBytes(addr + 2, reinterpret_cast<uint8_t *>(&candidate), size);
         if (candidate.version == SAVE_VERSION &&
             candidate.checksum == saveFileChecksum(candidate)) {
-            latest = candidate;
+            latestAddr = static_cast<uint16_t>(addr + 2);
             found = true;
         }
         addr = static_cast<uint16_t>(addr + 2 + size);
@@ -83,6 +83,6 @@ bool saveFileLoad(SaveFile &out)
     if (!found) {
         return false;
     }
-    out = latest;
+    flash.readBytes(latestAddr, reinterpret_cast<uint8_t *>(&out), sizeof(out));
     return true;
 }
