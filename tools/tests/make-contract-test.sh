@@ -6,7 +6,7 @@ ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd -P)
 cd "$ROOT"
 
 help=$(make --no-print-directory help)
-for target in setup doctor gen test testvm build check fxtest fxtest-headless; do
+for target in setup doctor gen test testvm build run dev check fxtest fxtest-headless; do
     printf '%s\n' "$help" | grep -Fq "  $target " || {
         printf 'missing help entry: %s\n' "$target" >&2
         exit 1
@@ -31,6 +31,15 @@ printf '%s\n' "$fxtest" | grep -Fq 'stage="build/contract/fxtest/'
 printf '%s\n' "$fxtest" | grep -Fq -- '--fqbn "fixture:fx"'
 
 grep -Fxq 'fxtest: fxtest-headless' Makefile
+
+# dev = gen, then the interactive Ardens run, sequenced through a sub-make.
+grep -Fxq 'dev: gen' Makefile
+dev=$(make --no-print-directory -n dev \
+    ARDENS=fixture-ardens ARDUINO_CLI=fixture-arduino BUILD_DIR=build/contract)
+printf '%s\n' "$dev" | grep -Fq 'cgfx-tools --project cgfx-project.json'
+printf '%s\n' "$dev" | grep -Fq 'fixture-arduino compile'
+printf '%s\n' "$dev" | grep -Fq 'file="build/contract/CreatureGathererFX.ino.hex"'
+printf '%s\n' "$dev" | grep -Fq 'save="dist/fxdata-save.bin"'
 grep -Fxq 'FXTEST_INOS ?= $(wildcard tst/fxdatatest/*.ino)' Makefile
 grep -Fxq 'fxtest-headless:' Makefile
 grep -Fq 'strings "$(ARDENS)" | grep -Fxq captureserial' Makefile

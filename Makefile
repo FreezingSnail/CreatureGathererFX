@@ -1,4 +1,4 @@
-.PHONY: help setup doctor plant test test-debug testvm testvm-debug gen gen-data gen-sprites gen-fixtures pack full build mini run check verify-generated test-manifest test-generated-libs test-doctor fxtest fxtest-headless fxtest-preflight fxtest-headless-preflight fxtest-build fxtest-run new-fxtest
+.PHONY: help setup doctor plant test test-debug testvm testvm-debug gen gen-data gen-sprites gen-fixtures pack full build mini run dev check verify-generated test-manifest test-generated-libs test-doctor fxtest fxtest-headless fxtest-preflight fxtest-headless-preflight fxtest-build fxtest-run new-fxtest
 
 # Public command API. Override tool, board, and output variables per workspace/CI.
 CXX ?= g++
@@ -38,6 +38,7 @@ help:
 		'  testvm   run fast ScriptVM C++ tests; prerequisite: $(CXX); output: $(VM_TEST_BIN)' \
 		'  build    compile Arduboy FX sketch; prerequisite: $(ARDUINO_CLI); output: $(BUILD_DIR)' \
 		'  run      launch Ardens with the sketch, FX data, and FX save images; prerequisite: ARDENS' \
+		'  dev      regenerate FX data, rebuild, then launch Ardens (gen + run); prerequisite: cgfx-tools, ARDENS' \
 		'  check    run generation, host tests, VM tests, then optional FX runtime tests' \
 		'  test-manifest run permanent generated-artifact tests' \
 		'  test-generated-libs check generated libs against the packed image; prerequisite: $(CXX)' \
@@ -122,6 +123,11 @@ run: build
 	    file="$(RUN_HEX)" \
 	    file="$(FXDATA_DATA_BIN)" \
 	    save="$(FXDATA_SAVE_BIN)"
+
+# Full interactive loop: fresh FX data, fresh sketch, then Ardens. Sequenced
+# through a sub-make so `make -j dev` cannot launch before generation finishes.
+dev: gen
+	@$(MAKE) --no-print-directory run
 
 gen: gen-data gen-sprites gen-fixtures pack
 
