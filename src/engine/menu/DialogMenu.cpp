@@ -7,79 +7,83 @@
 #include "../world/Event.hpp"
 #include <ArduboyFX.h>
 #include "../../common.hpp"
-#include "../../lib/ReadData.hpp"
 
 #define WHITETEXT 1
 #define BLACKTEXT 0
 
+namespace {
+// Static widths include spaces retained by the legacy strings parser in
+// data/text/strings.txt; generated bitmaps have no dimension prefix.
+void drawDialogString(int16_t x, int16_t y, uint24_t address, uint8_t width) {
+    if (width != 0) {
+        // String sprite symbols point at raw bitmap bytes. The explicit-size
+        // overload advances two bytes, so compensate just as drawNumbersBlack does.
+        SpritesU::drawOverwriteFX(x, y, width, 8, address - 2, FRAME(WHITETEXT));
+    }
+}
+} // namespace
+
 void DialogMenu::drawPopMenu() {
     PopUpDialog curMenu = head();
-    SpritesU::drawOverwriteFX(0, 40, battleMenu, FRAME(0));
+    SpritesU::drawOverwriteFX(0, 40, 128, 24, battleMenu - 2, FRAME(0));
 
-    uint24_t addr;
     setTextColorBlack();
 
     switch (curMenu.type) {
     case TEXT: {
+        // Event::load supplies a direct address in the separate raw ASCII event format.
         SpritesU::drawOverwriteFX(curMenu.x + 8, curMenu.y + 2, curMenu.textAddress, FRAME(WHITETEXT));
         break;
     }
     case DAMAGE: {
-        SpritesU::drawOverwriteFX(curMenu.x + 12, curMenu.y + 2, damageText, FRAME(WHITETEXT));
+        drawDialogString(curMenu.x + 12, curMenu.y + 2, damageText, 70);
         drawNumbersBlack(curMenu.x + 4, curMenu.y + 3, curMenu.damage);
         break;
     }
     case ENEMY_DAMAGE: {
         // font.setCursor(curMenu.x + 3, curMenu.y + 3);
         // font.println(curMenu.damage);
-        SpritesU::drawOverwriteFX(curMenu.x + 12, curMenu.y + 2, damageText, FRAME(WHITETEXT));
+        drawDialogString(curMenu.x + 12, curMenu.y + 2, damageText, 70);
         drawNumbersBlack(curMenu.x + 4, curMenu.y + 3, curMenu.damage);
         break;
     }
     case NAME: {
-        addr = FX::readIndexedUInt24(CreatureNames::CreatureNames, curMenu.textAddress);
-        SpritesU::drawOverwriteFX(curMenu.x + 3, curMenu.y + 2, addr, FRAME(WHITETEXT));
-        SpritesU::drawOverwriteFX(curMenu.x + 3, curMenu.y + 10, attackText, FRAME(WHITETEXT));
+        drawDialogString(curMenu.x + 3, curMenu.y + 2, curMenu.textAddress, curMenu.width);
+        drawDialogString(curMenu.x + 3, curMenu.y + 10, attackText, 90);
         if (curMenu.damage != 0) {
-            addr = FX::readIndexedUInt24(MoveNames::MoveNames, curMenu.damage);
-            SpritesU::drawOverwriteFX(curMenu.x + 83, curMenu.y + 10, addr, FRAME(WHITETEXT));
+            drawDialogString(curMenu.x + 83, curMenu.y + 10, curMenu.detailAddress, curMenu.height);
         }
         break;
     }
     case ENEMY_NAME: {
-        addr = FX::readIndexedUInt24(CreatureNames::CreatureNames, curMenu.textAddress);
-        SpritesU::drawOverwriteFX(curMenu.x + 3, curMenu.y, addr, FRAME(WHITETEXT));
-        SpritesU::drawOverwriteFX(curMenu.x + 3, curMenu.y + 10, enemyAttackText, FRAME(WHITETEXT));
+        drawDialogString(curMenu.x + 3, curMenu.y, curMenu.textAddress, curMenu.width);
+        drawDialogString(curMenu.x + 3, curMenu.y + 10, enemyAttackText, 70);
         if (curMenu.damage != 0) {
-            addr = FX::readIndexedUInt24(MoveNames::MoveNames, curMenu.damage);
-            SpritesU::drawOverwriteFX(curMenu.x + 83, curMenu.y + 10, addr, FRAME(WHITETEXT));
+            drawDialogString(curMenu.x + 83, curMenu.y + 10, curMenu.detailAddress, curMenu.height);
         }
         break;
     }
     case FAINT: {
-        addr = FX::readIndexedUInt24(CreatureNames::CreatureNames, curMenu.textAddress);
-        SpritesU::drawOverwriteFX(curMenu.x + 3, curMenu.y, addr, FRAME(WHITETEXT));
-        SpritesU::drawOverwriteFX(curMenu.x + 3, curMenu.y + 10, Fainted, FRAME(WHITETEXT));
+        drawDialogString(curMenu.x + 3, curMenu.y, curMenu.textAddress, curMenu.width);
+        drawDialogString(curMenu.x + 3, curMenu.y + 10, Fainted, 45);
         break;
     }
     case SWITCH: {
-        addr = FX::readIndexedUInt24(CreatureNames::CreatureNames, curMenu.textAddress);
-        SpritesU::drawOverwriteFX(curMenu.x + 3, curMenu.y, addr, FRAME(WHITETEXT));
-        SpritesU::drawOverwriteFX(curMenu.x + 3, curMenu.y + 10, SwitchIn, FRAME(WHITETEXT));
+        drawDialogString(curMenu.x + 3, curMenu.y, curMenu.textAddress, curMenu.width);
+        drawDialogString(curMenu.x + 3, curMenu.y + 10, SwitchIn, 90);
         break;
     }
     case WIN: {
-        SpritesU::drawOverwriteFX(curMenu.x + 3, curMenu.y + 10, win, FRAME(WHITETEXT));
+        drawDialogString(curMenu.x + 3, curMenu.y + 10, win, 45);
         break;
     }
     case LOSS: {
-        addr = FX::readIndexedUInt24(CreatureNames::CreatureNames, curMenu.textAddress);
-        SpritesU::drawOverwriteFX(curMenu.x + 3, curMenu.y, addr, FRAME(WHITETEXT));
-        SpritesU::drawOverwriteFX(curMenu.x + 3, curMenu.y + 10, lose, FRAME(WHITETEXT));
+        drawDialogString(curMenu.x + 3, curMenu.y, curMenu.textAddress, curMenu.width);
+        drawDialogString(curMenu.x + 3, curMenu.y + 10, lose, 60);
         break;
     }
     case ESCAPE_ENCOUNTER: {
-        SpritesU::drawOverwriteFX(curMenu.x + 3, curMenu.y, escape, FRAME(WHITETEXT));
+        drawDialogString(curMenu.x + 3, curMenu.y, escape, 40);
         break;
     }
     case GATHERING: {
@@ -90,40 +94,36 @@ void DialogMenu::drawPopMenu() {
         break;
     }
     case TEAM_CHANGE: {
-        SpritesU::drawOverwriteFX(curMenu.x + 3, curMenu.y, changedIn, FRAME(WHITETEXT));
+        drawDialogString(curMenu.x + 3, curMenu.y, changedIn, 105);
         break;
     }
     case EFFECTIVENESS: {
         Modifier mod = Modifier(curMenu.textAddress);
         switch (mod) {
         case Modifier::Quarter:
-            SpritesU::drawOverwriteFX(curMenu.x + 3, curMenu.y, quarter, FRAME(WHITETEXT));
+            drawDialogString(curMenu.x + 3, curMenu.y, quarter, 95);
             break;
         case Modifier::Half:
-            SpritesU::drawOverwriteFX(curMenu.x + 3, curMenu.y, half, FRAME(WHITETEXT));
+            drawDialogString(curMenu.x + 3, curMenu.y, half, 70);
             break;
         case Modifier::Double:
-            SpritesU::drawOverwriteFX(curMenu.x + 3, curMenu.y, doubled, FRAME(WHITETEXT));
+            drawDialogString(curMenu.x + 3, curMenu.y, doubled, 75);
             break;
         case Modifier::Quadruple:
-            SpritesU::drawOverwriteFX(curMenu.x + 3, curMenu.y, quad, FRAME(WHITETEXT));
+            drawDialogString(curMenu.x + 3, curMenu.y, quad, 95);
             break;
         }
-        SpritesU::drawOverwriteFX(curMenu.x + 3, curMenu.y + 10, damageText, FRAME(WHITETEXT));
+        drawDialogString(curMenu.x + 3, curMenu.y + 10, damageText, 70);
         break;
     }
     case PLAYER_EFFECT: {
-        addr = FX::readIndexedUInt24(CreatureNames::CreatureNames, curMenu.textAddress);
-        SpritesU::drawOverwriteFX(curMenu.x + 3, curMenu.y, addr, FRAME(WHITETEXT));
-        addr = FX::readIndexedUInt24(EffectStrings::EffectStrings, curMenu.textAddress);
-        SpritesU::drawOverwriteFX(curMenu.x + 3, curMenu.y + 10, addr, FRAME(WHITETEXT));
+        drawDialogString(curMenu.x + 3, curMenu.y, curMenu.textAddress, curMenu.width);
+        drawDialogString(curMenu.x + 3, curMenu.y + 10, curMenu.detailAddress, curMenu.height);
         break;
     }
     case ENEMY_EFFECT: {
-        addr = FX::readIndexedUInt24(CreatureNames::CreatureNames, curMenu.textAddress);
-        SpritesU::drawOverwriteFX(curMenu.x + 3, curMenu.y, addr, FRAME(WHITETEXT));
-        addr = FX::readIndexedUInt24(EffectStrings::EffectStrings, curMenu.textAddress);
-        SpritesU::drawOverwriteFX(curMenu.x + 3, curMenu.y + 10, addr, FRAME(WHITETEXT));
+        drawDialogString(curMenu.x + 3, curMenu.y, curMenu.textAddress, curMenu.width);
+        drawDialogString(curMenu.x + 3, curMenu.y + 10, curMenu.detailAddress, curMenu.height);
         break;
     }
     default:

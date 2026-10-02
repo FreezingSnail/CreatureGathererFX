@@ -15,16 +15,16 @@
 namespace save_fx_test_detail {
 inline uint8_t replayedPayload = 0;
 
-inline JournalRecord record(uint8_t value, uint8_t slot = 0, uint8_t op = 0)
+inline JournalRecord record(uint8_t value, uint16_t slot = 0,
+                            LogOp op = LogOp::StoreAdd)
 {
     JournalRecord result = {};
     result.seq = 1;
-    result.op = op;
+    result.op = static_cast<uint8_t>(op);
     result.slot = slot;
-    result.payload[0] = value;
-    result.payload[1] = static_cast<uint8_t>(value + 1);
-    result.payload[2] = static_cast<uint8_t>(value + 2);
-    result.payload[3] = static_cast<uint8_t>(value + 3);
+    for (uint8_t i = 0; i < sizeof(result.payload); ++i) {
+        result.payload[i] = static_cast<uint8_t>(value + i);
+    }
     return result;
 }
 
@@ -70,6 +70,7 @@ inline void expectPixel(FxTest &test, int16_t x, int16_t y, uint8_t expected,
 
 inline void test_save(FxTest &test)
 {
+    journalInit();
     SaveFile blank = {};
     test.expectEq(saveFileLoad(blank), false, F("fresh save sector is blank"));
 
@@ -97,12 +98,22 @@ inline void test_save(FxTest &test)
     test.expectEq(saveFileLoad(loaded), true, F("latest appended record loads"));
     test.expectEq(loaded.playerLocation, second.playerLocation, F("latest record selected"));
 
-    JournalRecord added = save_fx_test_detail::record(0x47, 0, 0);
-    JournalRecord removed = save_fx_test_detail::record(0x88, 1, 1);
+    JournalRecord added = save_fx_test_detail::record(0x47, 0x0102, LogOp::StoreAdd);
+    JournalRecord removed = save_fx_test_detail::record(0x88, 1, LogOp::StoreRemove);
     test.expectEq(journalAppend(added), true, F("journal add appends in log sector"));
     test.expectEq(journalAppend(removed), true, F("journal remove appends in log sector"));
     test.expectEq(save_fx_test_detail::saveByte(save_log), added.seq,
                   F("journal uses separate log sector"));
+    test.expectEq(save_fx_test_detail::saveByte(save_log + 2), static_cast<uint8_t>(2),
+                  F("journal slot low byte"));
+    test.expectEq(save_fx_test_detail::saveByte(save_log + 3), static_cast<uint8_t>(1),
+                  F("journal slot high byte"));
+    for (uint8_t i = 0; i < sizeof(added.payload); ++i) {
+        test.expectEq(save_fx_test_detail::saveByte(save_log + 4 + i), added.payload[i],
+                      F("journal stores full payload"));
+    }
+    test.expectEq(save_fx_test_detail::saveByte(save_log + JOURNAL_RECORD_BYTES), removed.seq,
+                  F("journal second record has 16-byte stride"));
     test.expectEq(journalCount(), static_cast<uint16_t>(2), F("journal count sector 1"));
     save_fx_test_detail::replayedPayload = 0;
     test.expectEq(journalReplay(save_fx_test_detail::replay), static_cast<uint16_t>(2),
@@ -126,19 +137,10 @@ inline void test_save(FxTest &test)
     test.expectEq(loaded.playerLocation, compacted.playerLocation,
                   F("compacted record preserves live fields"));
 
-    const uint8_t *addedParty = reinterpret_cast<const uint8_t *>(&loaded.party[0]);
-    for (uint8_t index = 0; index < sizeof(added.payload); ++index) {
-        test.expectEq(addedParty[index], added.payload[index],
-                      F("journal add transfers creature bytes"));
-    }
-    for (uint16_t index = sizeof(added.payload); index < sizeof(Creature); ++index) {
-        test.expectEq(addedParty[index], static_cast<uint8_t>(0x62),
-                      F("journal add preserves committed creature tail"));
-    }
-    const uint8_t *removedParty = reinterpret_cast<const uint8_t *>(&loaded.party[1]);
-    for (uint16_t index = 0; index < sizeof(Creature); ++index) {
-        test.expectEq(removedParty[index], static_cast<uint8_t>(0),
-                      F("journal remove clears creature slot"));
+    for (uint16_t index = 0; index < sizeof(compacted.party); ++index) {
+        test.expectEq(reinterpret_cast<const uint8_t *>(loaded.party)[index],
+                      reinterpret_cast<const uint8_t *>(compacted.party)[index],
+                      F("store operations preserve live party snapshot"));
     }
 
     FX::waitWhileBusy();

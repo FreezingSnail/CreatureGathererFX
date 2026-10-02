@@ -17,16 +17,16 @@ inline void advanceToDone(SaveFile &state)
     }
 }
 
-inline JournalRecord record(uint8_t value, uint8_t slot = 0, uint8_t op = 0)
+inline JournalRecord record(uint8_t value, uint16_t slot = 0,
+                            LogOp op = LogOp::StoreAdd)
 {
     JournalRecord result = {};
     result.seq = value;
-    result.op = op;
+    result.op = static_cast<uint8_t>(op);
     result.slot = slot;
-    result.payload[0] = value;
-    result.payload[1] = static_cast<uint8_t>(value + 1);
-    result.payload[2] = static_cast<uint8_t>(value + 2);
-    result.payload[3] = static_cast<uint8_t>(value + 3);
+    for (uint8_t i = 0; i < sizeof(result.payload); ++i) {
+        result.payload[i] = static_cast<uint8_t>(value + i);
+    }
     return result;
 }
 
@@ -103,19 +103,64 @@ inline void SaveRecordEncodeDecodeTest(TestSuite &suite)
 {
     Test test = Test(__func__);
     flashFakeReset();
-    JournalRecord source = save_test_detail::record(7, 2, 1);
+    JournalRecord source = save_test_detail::record(7, 0x1234, LogOp::StoreAdd);
+    const StoreRecord stored = {7, 0x1234, {2, 3, 4, 5}, 0};
+    memcpy(source.payload, &stored, sizeof(stored));
+    source.payload[8] = 0x5a;
+    source.payload[9] = 0xa5;
     uint8_t encoded[JOURNAL_RECORD_BYTES] = {};
     JournalRecord decoded = {};
     test.assert(journalEncode(source, encoded), true, "Record encode succeeds");
     test.assert(journalDecode(encoded, decoded), true, "Record decode succeeds");
-    test.assert(memcmp(&source, &decoded, sizeof(source) - 1) == 0, true,
-                "Record round-trips fields");
-    const uint8_t blank[JOURNAL_RECORD_BYTES] = {
-        0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
+    test.assert(decoded.seq, source.seq, "Sequence round-trips");
+    test.assert(decoded.op, source.op, "Operation round-trips");
+    test.assert(decoded.slot, source.slot, "16-bit slot round-trips");
+    test.assert(memcmp(decoded.payload, source.payload, sizeof(source.payload)), 0,
+                "Full store payload round-trips");
+    test.assert(encoded[2], static_cast<uint8_t>(0x34), "Slot low byte");
+    test.assert(encoded[3], static_cast<uint8_t>(0x12), "Slot high byte");
+    test.assert(encoded[15], static_cast<uint8_t>(0xff), "Pad stays erased");
+    uint8_t checked = 0;
+    for (uint8_t i = 0; i <= 14; ++i) {
+        checked ^= encoded[i];
+    }
+    test.assert(checked, static_cast<uint8_t>(0xff),
+                "Check covers bytes 0 through 14");
+    uint8_t blank[JOURNAL_RECORD_BYTES];
+    memset(blank, 0xff, sizeof(blank));
     test.assert(journalDecode(blank, decoded), false, "All-FF record is blank");
-    encoded[3] ^= 1;
+    encoded[13] ^= 1;
     test.assert(journalDecode(encoded, decoded), false,
                 "Flipped payload fails record check");
+    suite.addTest(test);
+}
+
+inline void JournalUnknownOpAndBootTailTest(TestSuite &suite)
+{
+    Test test = Test(__func__);
+    flashFakeReset();
+    journalInit();
+    JournalRecord legacy = save_test_detail::record(1);
+    legacy.op = 0;
+    JournalRecord future = save_test_detail::record(2);
+    future.op = 99;
+    test.assert(journalAppend(legacy), true, "Legacy opcode is stored");
+    test.assert(journalAppend(future), true, "Future opcode is stored");
+    test.assert(journalAppend(save_test_detail::record(3)), true,
+                "Known opcode follows unknown records");
+    save_test_detail::replayOrder = 0;
+    test.assert(journalReplay(save_test_detail::recordOrder), static_cast<uint16_t>(3),
+                "Replay counts all valid records");
+    test.assert(save_test_detail::replayOrder, static_cast<uint16_t>(3),
+                "Replay skips unknown operations and continues");
+    journalInit(); // Simulated boot scan of a nonempty sector.
+    flashFakeResetReadCount();
+    test.assert(journalAppend(save_test_detail::record(4)), true,
+                "Boot-scanned tail accepts next record");
+    test.assert(flashFakeReadCount() <= static_cast<uint32_t>(1), true,
+                "Append after boot scan uses at most one flash read");
+    test.assert(journalCount(), static_cast<uint16_t>(4),
+                "Boot-scanned append does not overwrite prior records");
     suite.addTest(test);
 }
 
@@ -256,8 +301,12 @@ inline void JournalAppendReplayAndEraseTest(TestSuite &suite)
 {
     Test test = Test(__func__);
     flashFakeReset();
+    journalInit();
 
+    flashFakeResetReadCount();
     journalAppend(save_test_detail::record(1));
+    test.assert(flashFakeReadCount() <= static_cast<uint32_t>(1), true,
+                "Post-init append reads at most one record window");
     journalAppend(save_test_detail::record(2));
     journalAppend(save_test_detail::record(3));
     test.assert(journalCount(), static_cast<uint16_t>(3), "Journal counts appended records");
@@ -272,11 +321,15 @@ inline void JournalAppendReplayAndEraseTest(TestSuite &suite)
     test.assert(flashFakeData()[4096], static_cast<uint8_t>(0xff), "Journal erase fills with 0xff");
 
     journalAppend(save_test_detail::record(4));
-    const uint8_t torn[JOURNAL_RECORD_BYTES] = {5, 0, 0, 1, 2, 3, 4, 0};
+    uint8_t torn[JOURNAL_RECORD_BYTES] = {};
+    torn[0] = 5;
     flashFakeSetBytes(4096 + JOURNAL_RECORD_BYTES, torn, sizeof(torn));
     test.assert(journalCount(), static_cast<uint16_t>(1), "Torn tail stops journal scan");
     test.assert(journalReplay(save_test_detail::recordOrder), static_cast<uint16_t>(1),
                 "Torn tail is not replayed");
+    journalInit();
+    test.assert(journalAppend(save_test_detail::record(6)), false,
+                "Torn tail cannot be overwritten");
 
     suite.addTest(test);
 }
@@ -285,6 +338,7 @@ inline void JournalFullSectorRefusalTest(TestSuite &suite)
 {
     Test test = Test(__func__);
     flashFakeReset();
+    journalInit();
 
     for (uint16_t i = 0; i < JOURNAL_CAPACITY; ++i) {
         test.assert(journalAppend(save_test_detail::record(static_cast<uint8_t>(i))), true,
@@ -294,7 +348,7 @@ inline void JournalFullSectorRefusalTest(TestSuite &suite)
     memcpy(before, flashFakeData() + 4096, sizeof(before));
     test.assert(journalFull(), true, "Journal reports a full sector");
     test.assert(journalAppend(save_test_detail::record(99)), false,
-                "Journal rejects record 513 without erase");
+                "Journal rejects record 257 without erase");
     test.assert(memcmp(flashFakeData() + 4096, before, sizeof(before)), 0,
                 "Refusal leaves the entire journal sector unchanged");
 
@@ -305,6 +359,7 @@ inline void CompactionSequenceAndInterruptionsTest(TestSuite &suite)
 {
     Test test = Test(__func__);
     flashFakeReset();
+    journalInit();
 
     SaveFile previous = save_test_detail::state(0x0102, 0x11);
     saveFileCommit(previous);
@@ -316,9 +371,12 @@ inline void CompactionSequenceAndInterruptionsTest(TestSuite &suite)
     test.assert(saveFileLoad(loaded), true, "Clean compaction leaves valid save");
     test.assert(loaded.playerLocation, static_cast<uint16_t>(0x0304),
                 "Compaction commits live fields");
+    test.assert(memcmp(loaded.party, next.party, sizeof(next.party)), 0,
+                "Store operation cannot modify live party snapshot");
     test.assert(journalCount(), static_cast<uint16_t>(0), "Compaction erases journal after verify");
 
     flashFakeReset();
+    journalInit();
     previous = save_test_detail::state(0x1112, 0x33);
     saveFileCommit(previous);
     journalAppend(save_test_detail::record(0x55));
@@ -336,6 +394,7 @@ inline void CompactionSequenceAndInterruptionsTest(TestSuite &suite)
     test.assert(journalCount(), static_cast<uint16_t>(1), "Interrupted commit retains journal");
 
     flashFakeReset();
+    journalInit();
     journalAppend(save_test_detail::record(0x66));
     next = save_test_detail::state(0x1516, 0x55);
     saveBegin();
@@ -365,6 +424,7 @@ inline void VerifyMismatchPreservesJournalTest(TestSuite &suite)
 {
     Test test = Test(__func__);
     flashFakeReset();
+    journalInit();
     journalAppend(save_test_detail::record(0x77));
     SaveFile state = save_test_detail::state(0x2021, 0x44);
     saveBegin();
@@ -386,6 +446,7 @@ inline void CompactionBusyGateTest(TestSuite &suite)
 {
     Test test = Test(__func__);
     flashFakeReset();
+    journalInit();
     journalAppend(save_test_detail::record(1));
     SaveFile state = save_test_detail::state(0x9999, 0xaa);
     saveBegin();
@@ -438,6 +499,7 @@ inline void SaveSuite(TestRunner &runner)
     TestSuite suite = TestSuite("Save Suite");
     StoreRecordLayoutAndAddressTest(suite);
     SaveRecordEncodeDecodeTest(suite);
+    JournalUnknownOpAndBootTailTest(suite);
     SaveFileRoundTripAndValidationTest(suite);
     SaveFileLegacyV1DiscardMigrationTest(suite);
     SaveFileStreamingSelectionTest(suite);

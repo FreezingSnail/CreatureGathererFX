@@ -1,33 +1,11 @@
 #include "Compaction.hpp"
 
-#include <string.h>
-
 #include "FlashBackend.hpp"
 #include "Journal.hpp"
 
 namespace {
 SaveStep saveStep = SaveStep::Idle;
-SaveFile *replayState = nullptr;
 bool eraseIssued = false;
-
-void applyJournalRecord(const JournalRecord &record)
-{
-    if (record.slot >= PARTY_MAX) {
-        return;
-    }
-
-    Creature &creature = replayState->party[record.slot];
-    switch (record.op) {
-    case 0: // add
-        memcpy(&creature, record.payload, sizeof(record.payload));
-        break;
-    case 1: // remove
-        memset(&creature, 0, sizeof(creature));
-        break;
-    default:
-        break;
-    }
-}
 
 } // namespace
 
@@ -51,16 +29,8 @@ SaveStep saveStepAdvance(SaveFile &state)
 
     switch (saveStep) {
     case SaveStep::Replay: {
-        // Callers pass a fresh snapshot of live RAM. Restore only the
-        // journal-owned party baseline, then apply its slot mutations. This
-        // avoids replacing unrelated live fields (location, flags, plants, and
-        // inventory); without a valid commit, the supplied new-game state stays
-        // intact and receives any journal records.
-        saveFileLoadParty(state);
-
-        replayState = &state;
-        journalReplay(applyJournalRecord);
-        replayState = nullptr;
+        // Until store compaction lands, the live SaveFile snapshot owns the
+        // party. Store ops cannot be replayed into Creature bytes.
         saveStep = SaveStep::Commit;
         break;
     }
