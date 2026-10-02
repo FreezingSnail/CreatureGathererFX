@@ -396,3 +396,58 @@ make check
 ```
 
 The device suite observes an asynchronous save-sector erase in progress before and after `SaveController::drawStatus`, confirms the save remains active, and samples framebuffer pixels for SAVING ink and paper plus the inactive-save FAILED glyph. A first assertion run exposed that framebuffer bits are set for paper and cleared for ink; expectations were corrected and the final run passed. No screenshot is available in Ardens serial mode. Worker wall time: approximately 7 minutes including the focused coverage follow-up. The integrated gate took 26 seconds; `git diff --check` passes.
+
+# CreatureGathererFX-qu9.7 — remove inert debug optimization flag
+
+Removed `--optimize-for-debug` from the FX production build, Mini build, and
+FX-suite compile recipes. On the installed `arduboy-homemade:avr` 1.4.0 core,
+`compiler.optimization_flags` is empty and `compiler.cpp.flags` hardcodes
+`-Os`, so the flag did not select different compiler options.
+
+```text
+make build                         # before removal; exit 0
+# Sketch: 17,942 B flash; globals: 1,857 B, 703 B free.
+shasum -a 256 build/CreatureGathererFX.ino.elf
+# a396abf9abfd1391d45880a449b83ad15a46b4c386cd46f05fb7cf90b05672d3
+
+arduino-cli compile --fqbn "arduboy-homemade:avr:arduboy-fx" --output-dir "build" .
+# without the flag; exit 0, same flash and globals.
+shasum -a 256 build/CreatureGathererFX.ino.elf
+# a396abf9abfd1391d45880a449b83ad15a46b4c386cd46f05fb7cf90b05672d3
+
+make build                         # after removal; exit 0
+# Sketch: 17,942 B flash; globals: 1,857 B, 703 B free.
+shasum -a 256 build/CreatureGathererFX.ino.elf
+# a396abf9abfd1391d45880a449b83ad15a46b4c386cd46f05fb7cf90b05672d3
+
+make -n mini fxtest-build
+# PASS: both dry-run compile recipes omit --optimize-for-debug.
+rg -n 'optimize-for-debug|debug build' Makefile README.md .vscode/launch.json
+# exit 1 (no matches).
+git diff --check
+# PASS.
+```
+
+The first no-flag `arduino-cli compile` attempt failed because sandbox access to
+the Arduino sketch cache was denied (`operation not permitted`). Retrying the
+same command with approved escalation passed; no source change was needed for
+that deviation. `make build` completed in about 3 seconds each; the direct
+compile took about 2 seconds after escalation; dry-run and diff checks were
+under 1 second. Worker elapsed time, including investigation and reporting:
+about 6 minutes. The build sizes here include the concurrent qu9.4 source
+change and are only used to compare identical inputs with and without the flag.
+The worker did not run `make check`, commit, or update/close the bead.
+
+Orchestrator integrated gate after the Makefile change:
+
+```text
+make check
+# exit 0; host 942/0, VM 10/0, generated-data checks pass, all ten Ardens
+# suites pass. test_stack reports headroom=188 B and passes its current 128 B
+# floor. Build/test global-RAM summaries and the ELF are unchanged.
+git diff --check
+# PASS.
+```
+
+The integrated gate took about 28 seconds. The 188 B stack result is expected
+for the separate qu9.11 trim bead and does not meet qu9.1's 400 B acceptance.
