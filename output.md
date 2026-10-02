@@ -494,3 +494,74 @@ git diff --check
 
 The integrated gate took about 28 seconds. The 188 B stack result is expected
 for the separate qu9.11 trim bead and does not meet qu9.1's 400 B acceptance.
+
+# CreatureGathererFX-jp8.1.4 — RAM report and CDC linkage diagnosis
+
+Added `make ram`, which depends on the FX build, resolves `avr-size` and
+`avr-nm` from PATH or an installed Arduino AVR-GCC package without pinning a
+toolchain version, prints the section totals and stable `RAM_*` keys, then
+lists the largest named `.data`/`.bss` records. `RAM_STATIC_BYTES` uses
+`avr-size`'s Data section total (including unnamed linker bookkeeping); the
+symbol list is attribution only. Added target/help contract coverage and CI
+logging via `make ram`, which builds first. README documents the total vs
+symbol-list distinction.
+
+```text
+make --no-print-directory ram BUILD_DIR=build/ram-check
+# exit 0; isolated ELF: build/ram-check/CreatureGathererFX.ino.elf
+# Sketch uses 17736 bytes; globals 1857 bytes; free 703 bytes.
+# AVR Memory Usage: Program 17736, Data 1857.
+# RAM_ELF=build/ram-check/CreatureGathererFX.ino.elf
+# RAM_FLASH_BYTES=17736
+# RAM_FLASH_LIMIT=29696
+# RAM_STATIC_BYTES=1857
+# RAM_STATIC_LIMIT=2560
+# RAM_FREE_BYTES=703
+# Top records: sBuffer 1024, engine 144, saveState 127, player 112,
+# dialogMenu 85. The changed records reflect the already-landed qu9.11 save
+# work; the historical bead values are not from this current ELF.
+
+tools/tests/make-contract-test.sh
+# PASS: make contract.
+
+make test
+# PASS: 953 passed, 0 failed.
+make testvm
+# PASS: 10 passed, 0 failed.
+make verify-generated
+# exit 0.
+make test-manifest
+# PASS.
+make test-generated-libs
+# PASS: generated libs 6/0; invariants 5/0; alias checks 28/0.
+
+git diff --check
+# PASS.
+```
+
+CDC diagnosis: production sketch code has no active `Serial` or
+`HardwareSerial` calls. `src/common.hpp` includes Arduboy2; the installed
+Arduboy core's `main.cpp` calls `serialEventRun`, and `CDC.cpp` defines the USB
+`Serial_` object while `USBCON` is enabled. The current isolated ELF has
+`Serial` 80 B, `_ZTV7Serial_` 18 B, and `_ZL12_usbLineInfo` 8 B. The commented
+serial lines in the main sketch are left alone, and the exact P/F serial test
+protocol under `tst/fxdatatest/` is untouched. `ARDUBOY_NO_USB` remains
+disabled; any CDC removal and its USB upload/reset tradeoff remain with qu9.9.
+
+The first sandboxed RAM build could not read Arduino CLI's sketch cache
+(`operation not permitted`); the same command completed under approved
+escalation. Build and report took about 32 seconds including that retry; the
+contract and host/VM/generation checks took about 3 seconds total. Worker
+elapsed time excluding the pause for qu9.11's gate: about 7 minutes. The
+worker did not run `make check`, commit, or update/close the bead.
+
+Orchestrator integrated gate:
+
+```text
+make check
+# exit 0: host 953/0; VM 10/0; generated-data and library checks pass.
+# All ten Ardens device suites print P; test_stack headroom=428 B.
+# Wall time: about 17 seconds.
+git diff --check
+# PASS.
+```

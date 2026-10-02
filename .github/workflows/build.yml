@@ -35,5 +35,5 @@ jobs:
     - name: Install bitmap library
       run: arduino-cli lib install ArdBitmap
 
-    - name: build
-      run: arduino-cli compile --fqbn "arduboy-homemade:avr:arduboy"  .  --output-dir .
+    - name: Build FX and report flash/RAM
+      run: make ram
