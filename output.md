@@ -900,3 +900,29 @@ figures. Worker time: about 45 minutes for dialog tracing, rendering diagnosis,
 and focused checks. Orchestrator stack diagnosis, extraction, and final
 verification took about 3 minutes. No packed image bytes changed, so the pack
 parity baseline did not need updating.
+
+## Command workflow optimization
+
+Added `fxtest-spike` to run a selected device suite and `test_stack` once,
+and `final-gate` to run the full integrated check followed by the shipping RAM
+report. Both require Ardens. Recursive stages run serially; `final-gate`
+overrides focused device selections so every suite is included. Complete logs
+are retained under `BUILD_DIR/final-gate`, with concise success summaries and
+the last 80 log lines on failure. Gate failures retain their status and stop
+before the next stage. Updated AGENTS.md and dev-flow command guidance.
+
+```text
+tools/tests/make-contract-test.sh
+# PASS; focused suite selection, stack deduplication, missing inputs,
+# full suite selection despite a focused override, stage ordering under -j4,
+# concise success output, retained logs, and check/RAM failure propagation.
+make final-gate BUILD_DIR=build/command-optimizations ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS; host 1,086/0, VM 10/0, generation/manifest/generated checks,
+# all eleven device suites, and stack headroom 401 B. Shipping flash
+# 17,634 B, static RAM 1,872 B, free RAM 688 B.
+# Full logs: build/command-optimizations/final-gate/check.log and ram.log.
+git diff --check
+# PASS; generation introduced no unexpected tracked changes.
+```
+
+No new bead was started. Build artifact caching remains unchanged.

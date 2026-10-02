@@ -9,12 +9,19 @@ agent. `AGENTS.md` carries the short list.
 - One device suite while iterating:
   `make fxtest-headless FXTEST_INOS=tst/fxdatatest/test_save.ino` (`FXTEST_INOS` is a `?=` override;
   the default is the whole wildcard).
-- Full device gate: `make fxtest-headless` compiles every `tst/fxdatatest/*.ino` suite (9 today) and
+- First device spike for work that can affect call depth or stack use:
+  `make fxtest-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_save.ino`; this runs the selected suite
+  with `test_stack`. Set `ARDENS=/path/to/Ardens`; the target errors instead of silently skipping.
+- Full device gate: `make fxtest-headless` compiles every `tst/fxdatatest/*.ino` suite and
   requires each to print an exact `P` or `F` marker. Unset `ARDENS` reports a skip; an Ardens
   without `captureserial` is BLOCKED, never a pass.
-- Full gate before every commit: `make gen` with an empty diff, `make test`, `make testvm`,
-  `make test-manifest`, `make test-generated-libs`, `make verify-generated`, full
-  `make fxtest-headless`, plus `make test-pack-parity` when packed bytes can change.
+- Final pre-commit gate: `make final-gate ARDENS=/path/to/Ardens` runs `make check` and then the
+  shipping RAM report, sequentially. Confirm generation left no unexpected tracked changes; also
+  run `make test-pack-parity` when packed bytes can change.
+- `final-gate` prints result counts and resource figures while saving complete output in
+  `build/final-gate/check.log` and `ram.log` (under `BUILD_DIR`, overridable with
+  `FINAL_GATE_LOG_DIR`). Failures print the last 80 log lines and stop the gate. The device stage
+  always selects every suite, even when a focused `FXTEST_INOS` override was supplied.
 - `make check` bundles gen + host + VM + manifest + generated-libs + verify-generated + fxtest
   (device stage skipped without `ARDENS`). It does not include pack-parity or doctor tests.
 
@@ -41,8 +48,9 @@ agent. `AGENTS.md` carries the short list.
   Flash 18314/29696 (61%). SRAM is the binding constraint; the FX image uses 609 KB of 16 MB.
 - Audit targets: ~203 B safe shrink → globals 1815; drop saveState → 1688 (recommended stop);
   USB/opponent streaming are reserves, taken only when a feature needs the bytes.
-- There is no `make size` / `make ram` target yet — read the size lines from `arduino-cli compile`
-  or `avr-size` the ELF. qu9.8 adds the ceiling gate.
+- `make ram` builds the shipping FX image and reports flash bytes, static RAM, free SRAM, and the
+  largest static symbols. Run it alone during a budget spike, or use `make final-gate` to pair it
+  with the integrated checks after the implementation settles.
 - Spike before any change that can flip flash/RAM; report whole-image deltas (LTO makes per-symbol
   arithmetic meaningless).
 - 2026-10-02 `-mrelax` current-head spike (Arduino CLI 1.2.0, Arduboy homemade AVR core 1.4.0,

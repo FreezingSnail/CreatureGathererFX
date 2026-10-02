@@ -6,7 +6,7 @@ ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd -P)
 cd "$ROOT"
 
 help=$(make --no-print-directory help)
-for target in setup doctor gen test testvm build ram run dev check fxtest fxtest-headless; do
+for target in setup doctor gen test testvm build ram run dev check final-gate fxtest fxtest-headless fxtest-spike; do
     printf '%s\n' "$help" | grep -Fq "  $target " || {
         printf 'missing help entry: %s\n' "$target" >&2
         exit 1
@@ -19,6 +19,59 @@ case $help in
         exit 1
         ;;
 esac
+
+# Exercise wrappers without compiling firmware or launching Ardens.
+gate_dir="$ROOT/build/contract/gate"
+mkdir -p "$gate_dir"
+GATE_CALL_LOG="$gate_dir/calls.log"
+export GATE_CALL_LOG
+fixture_make="$ROOT/tools/tests/fixtures/gate-make.sh"
+: >"$GATE_CALL_LOG"
+spike=$(make --no-print-directory fxtest-spike MAKE="$fixture_make" \
+    FXTEST_SPIKE_INO=tst/fxdatatest/test_dialog.ino ARDENS=fixture-ardens)
+grep -Fxq -- '--no-print-directory -j1 fxtest-headless FXTEST_INOS=tst/fxdatatest/test_dialog.ino tst/fxdatatest/test_stack.ino' "$GATE_CALL_LOG"
+: >"$GATE_CALL_LOG"
+make --no-print-directory fxtest-spike MAKE="$fixture_make" \
+    FXTEST_SPIKE_INO=tst/fxdatatest/test_stack.ino ARDENS=fixture-ardens >/dev/null
+grep -Fxq -- '--no-print-directory -j1 fxtest-headless FXTEST_INOS=tst/fxdatatest/test_stack.ino' "$GATE_CALL_LOG"
+for arguments in '' 'FXTEST_SPIKE_INO=missing.ino' 'FXTEST_SPIKE_INO=tst/fxdatatest/test_dialog.ino'; do
+    if make --no-print-directory fxtest-spike MAKE="$fixture_make" ARDENS= $arguments >"$gate_dir/error.log" 2>&1; then
+        echo 'spike accepted missing suite or Ardens' >&2
+        exit 1
+    fi
+done
+if make --no-print-directory final-gate ARDENS= >"$gate_dir/error.log" 2>&1; then
+    echo 'final gate accepted missing Ardens' >&2
+    exit 1
+fi
+: >"$GATE_CALL_LOG"
+gate=$(make --no-print-directory -j4 final-gate MAKE="$fixture_make" \
+    ARDENS=fixture-ardens FINAL_GATE_LOG_DIR="$gate_dir/logs" \
+    FXTEST_INOS=tst/fxdatatest/test_dialog.ino)
+test "$(awk '{print $3}' "$GATE_CALL_LOG")" = "$(printf 'check\nram')"
+for suite in tst/fxdatatest/*.ino; do
+    head -n 1 "$GATE_CALL_LOG" | grep -Fq "$suite"
+done
+printf '%s\n' "$gate" | grep -Fq 'Total Passed: 123'
+printf '%s\n' "$gate" | grep -Fq 'RAM_FREE_BYTES=2360'
+if printf '%s\n' "$gate" | grep -Fq 'fixture full diagnostics'; then
+    echo 'gate leaked full success log into summary' >&2
+    exit 1
+fi
+grep -Fq 'fixture full diagnostics' "$gate_dir/logs/check.log"
+for stage in check ram; do
+    : >"$GATE_CALL_LOG"
+    if GATE_FAIL_STAGE="$stage" make --no-print-directory final-gate MAKE="$fixture_make" \
+        ARDENS=fixture-ardens FINAL_GATE_LOG_DIR="$gate_dir/logs" >"$gate_dir/error.log" 2>&1; then
+        echo 'final gate swallowed failure' >&2
+        exit 1
+    fi
+    grep -Fq 'fixture failure detail' "$gate_dir/error.log"
+    grep -Fq 'FAIL (exit 7)' "$gate_dir/error.log"
+    if [ "$stage" = check ]; then
+        test "$(wc -l <"$GATE_CALL_LOG" | tr -d ' ')" -eq 1
+    fi
+done
 
 build=$(make --no-print-directory -n build \
     ARDUINO_CLI=fixture-arduino FQBN=fixture:fx BUILD_DIR=build/contract)
