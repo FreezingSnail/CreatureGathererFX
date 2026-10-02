@@ -156,6 +156,57 @@ inline void SaveFileLegacyV1DiscardMigrationTest(TestSuite &suite)
     suite.addTest(test);
 }
 
+inline void SaveFileStreamingSelectionTest(TestSuite &suite)
+{
+    Test test = Test(__func__);
+    flashFakeReset();
+
+    SaveFile first = save_test_detail::state(0x1111, 0x11);
+    SaveFile second = save_test_detail::state(0x2222, 0x22);
+    saveFileCommit(first);
+    saveFileCommit(second);
+    first.version = second.version = SAVE_VERSION;
+    first.checksum = saveFileChecksum(first);
+    second.checksum = saveFileChecksum(second);
+
+    SaveFile live = save_test_detail::state(0x7777, 0x77);
+    const SaveFile original = live;
+    test.assert(saveFileLoadParty(live), true,
+                "Party loader selects last valid record");
+    test.assert(memcmp(live.party, second.party, sizeof(live.party)), 0,
+                "Last valid party is loaded");
+    test.assert(memcmp(&live, &original, offsetof(SaveFile, party)), 0,
+                "Party load preserves fields before party");
+    constexpr size_t afterParty = offsetof(SaveFile, plants);
+    test.assert(memcmp(reinterpret_cast<const uint8_t *>(&live) + afterParty,
+                       reinterpret_cast<const uint8_t *>(&original) + afterParty,
+                       sizeof(SaveFile) - afterParty), 0,
+                "Party load preserves plants and inventory");
+    test.assert(saveFileMatchesStored(second), true,
+                "Streaming verify matches latest record");
+    test.assert(saveFileMatchesStored(first), false,
+                "Streaming verify rejects an older record");
+
+    const uint16_t secondOffset = static_cast<uint16_t>(sizeof(SaveFile) + 4);
+    const uint8_t corrupt = static_cast<uint8_t>(
+        flashFakeData()[secondOffset + offsetof(SaveFile, inventory)] ^ 1);
+    flashFakeSetBytes(secondOffset + offsetof(SaveFile, inventory), &corrupt, 1);
+    test.assert(saveFileLoadParty(live), true,
+                "Invalid tail falls back to previous valid record");
+    test.assert(memcmp(live.party, first.party, sizeof(live.party)), 0,
+                "Fallback party is first valid record");
+    test.assert(saveFileMatchesStored(first), true,
+                "Streaming verify uses fallback record");
+
+    flashFakeReset();
+    const SaveFile beforeFailure = live;
+    test.assert(saveFileLoadParty(live), false,
+                "Blank sector has no party baseline");
+    test.assert(memcmp(&live, &beforeFailure, sizeof(live)), 0,
+                "Failed party load preserves caller state byte for byte");
+    suite.addTest(test);
+}
+
 inline void JournalAppendReplayAndEraseTest(TestSuite &suite)
 {
     Test test = Test(__func__);
@@ -343,6 +394,7 @@ inline void SaveSuite(TestRunner &runner)
     SaveRecordEncodeDecodeTest(suite);
     SaveFileRoundTripAndValidationTest(suite);
     SaveFileLegacyV1DiscardMigrationTest(suite);
+    SaveFileStreamingSelectionTest(suite);
     JournalAppendReplayAndEraseTest(suite);
     JournalFullSectorRefusalTest(suite);
     CompactionSequenceAndInterruptionsTest(suite);

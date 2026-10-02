@@ -29,11 +29,6 @@ void applyJournalRecord(const JournalRecord &record)
     }
 }
 
-bool saveFileMatches(const SaveFile &expected, const SaveFile &actual)
-{
-    return actual.checksum == saveFileChecksum(actual) &&
-           memcmp(&expected, &actual, sizeof(SaveFile)) == 0;
-}
 } // namespace
 
 void saveBegin()
@@ -56,15 +51,12 @@ SaveStep saveStepAdvance(SaveFile &state)
 
     switch (saveStep) {
     case SaveStep::Replay: {
-        SaveFile committed = {};
         // Callers pass a fresh snapshot of live RAM. Restore only the
         // journal-owned party baseline, then apply its slot mutations. This
         // avoids replacing unrelated live fields (location, flags, plants, and
         // inventory); without a valid commit, the supplied new-game state stays
         // intact and receives any journal records.
-        if (saveFileLoad(committed)) {
-            memcpy(state.party, committed.party, sizeof(state.party));
-        }
+        saveFileLoadParty(state);
 
         replayState = &state;
         journalReplay(applyJournalRecord);
@@ -76,13 +68,12 @@ SaveStep saveStepAdvance(SaveFile &state)
     case SaveStep::Commit:
         state.version = SAVE_VERSION;
         state.checksum = saveFileChecksum(state);
-        saveFileCommit(state);
+        saveFileCommitPrepared(state);
         saveStep = SaveStep::Verify;
         break;
 
     case SaveStep::Verify: {
-        SaveFile persisted = {};
-        if (!saveFileLoad(persisted) || !saveFileMatches(state, persisted)) {
+        if (!saveFileMatchesStored(state)) {
             saveStep = SaveStep::Failed;
             break;
         }

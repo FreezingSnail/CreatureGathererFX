@@ -35,5 +35,10 @@ static_assert(sizeof(SaveFile) + 2 <= 4094,
 
 // On failure, leaves out unchanged so callers retain their live/new-game state.
 bool saveFileLoad(SaveFile &out);
+// Reads only the committed party baseline; leaves state unchanged on failure.
+bool saveFileLoadParty(SaveFile &state);
+bool saveFileMatchesStored(const SaveFile &expected);
 void saveFileCommit(const SaveFile &in);
+// Caller has already set version and checksum on its mutable save snapshot.
+void saveFileCommitPrepared(const SaveFile &record);
 uint16_t saveFileChecksum(const SaveFile &in);
