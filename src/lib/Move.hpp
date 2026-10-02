@@ -46,7 +46,7 @@ class Move {
     constexpr Move(MoveBitSet movePack) : move(packMove(movePack)), effect1(Effect::NONE), effect2(Effect::NONE) {
     }
 
-    constexpr Move(uint32_t buffer) : move(buffer >> 16), effect1(Effect((buffer >> 8) & 0b11111111)), effect2(Effect(buffer & 0b11111111)) {
+    constexpr Move(uint32_t buffer) : move(buffer >> 16), effect1(static_cast<Effect>((buffer >> 8) & 0b11111111)), effect2(static_cast<Effect>(buffer & 0b11111111)) {
     }
     constexpr uint8_t getMovePower() {
         return (this->move & PowerMask) >> PowerShift;
@@ -65,6 +65,6 @@ class Move {
     }
 
     constexpr Effect getMoveEffect() {
-        return Effect((this->effect1));
+        return this->effect1;
     }
 };

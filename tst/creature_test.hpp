@@ -2,6 +2,13 @@
 #include "test.hpp"
 #include "../src/creature/Creature.hpp"
 #include "../src/lib/ReadData.hpp"
+static_assert(sizeof(Move) == 4, "Move must retain its packed four-byte runtime layout");
+#if defined(__AVR__)
+static_assert(sizeof(Creature) == 33, "Creature size is part of the RAM budget");
+#else
+static_assert(sizeof(Creature) == 34, "Host Creature size includes host alignment padding");
+#endif
+static_assert(sizeof(Effect) == sizeof(uint8_t), "Effect must use one byte");
 
 void CreatureLoadTest(TestSuite &t) {
     Test test = Test(__func__);

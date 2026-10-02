@@ -4,6 +4,12 @@
 
 #include "FlashBackend.hpp"
 
+namespace {
+// Pre-Effect-narrowing SaveFile v1 was 157 bytes on AVR. Treat it as an
+// incompatible save and skip it; jp8.2.6 owns the next schema migration.
+constexpr uint16_t LEGACY_SAVE_V1_AVR_BYTES = 157;
+}
+
 uint16_t saveFileChecksum(const SaveFile &in)
 {
     const uint8_t *bytes = reinterpret_cast<const uint8_t *>(&in);
@@ -23,6 +29,15 @@ void saveFileCommit(const SaveFile &in)
     SaveFile record = in;
     record.version = SAVE_VERSION;
     record.checksum = saveFileChecksum(record);
+    uint8_t firstHeader[2];
+    flash.readBytes(0, firstHeader, sizeof(firstHeader));
+    const uint16_t firstSize = static_cast<uint16_t>(firstHeader[0] << 8) |
+                               static_cast<uint16_t>(firstHeader[1]);
+    if (firstSize == LEGACY_SAVE_V1_AVR_BYTES) {
+        // The platform append helper cannot safely append a differently sized
+        // record behind v1, so discard that sector before the first new save.
+        flash.eraseSector(0);
+    }
     FX::saveGameState(reinterpret_cast<const uint8_t *>(&record), sizeof(record));
 }
 
@@ -38,7 +53,20 @@ bool saveFileLoad(SaveFile &out)
         flash.readBytes(addr, header, sizeof(header));
         const uint16_t size = static_cast<uint16_t>(header[0] << 8) |
                               static_cast<uint16_t>(header[1]);
-        if (size != sizeof(SaveFile) || addr + 2 + size > SAVE_SECTOR_BYTES) {
+        if (addr + 2 + size > SAVE_SECTOR_BYTES) {
+            break;
+        }
+
+        if (size == LEGACY_SAVE_V1_AVR_BYTES) {
+            uint8_t legacyVersion = 0;
+            flash.readBytes(addr + 2, &legacyVersion, sizeof(legacyVersion));
+            if (legacyVersion != SAVE_VERSION) {
+                break;
+            }
+            addr = static_cast<uint16_t>(addr + 2 + size);
+            continue;
+        }
+        if (size != sizeof(SaveFile)) {
             break;
         }
 

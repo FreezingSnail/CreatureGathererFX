@@ -8,6 +8,10 @@
 #include "src/lib/ReadData.hpp"
 #include "src/opponent/Opponent.hpp"
 
+static_assert(sizeof(Effect) == sizeof(uint8_t), "Effect must be one byte on AVR");
+static_assert(sizeof(Move) == 4, "Move must be four bytes on AVR");
+static_assert(sizeof(Creature) == 33, "Creature must be 33 bytes on AVR");
+
 void test_creatureData(FxTest &test, const CreatureData_t &actual,
                        const CreatureData_t &expected, uint8_t index) {
     test.expectEqIdx(actual.id, expected.id, F("creature.id"), index);
