@@ -284,9 +284,9 @@ static void drawScene(BattleEngine &engine) {
     drawPlayerHP(engine);
 }
 
-static void drawMapFast(const WorldEngine &world) {
-    const uint16_t loc = world.location();
-    const ViewOffset view = world.view();
+static void drawMapFast(const WorldTransient &world) {
+    const uint16_t loc = WorldEngine::location();
+    const ViewOffset view = WorldEngine::view(world);
 
     // Convert 1D location to 2D coordinates
     const int16_t playerX = loc & 0xFF;   // X coordinate (0-255)

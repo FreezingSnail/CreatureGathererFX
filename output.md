@@ -1059,3 +1059,42 @@ new world suite; a `TEST`-only input seam and a separate world-test executable r
 dependency and avoided changing the legacy host suite’s global layout. The first full device run
 needed approval to access Arduino CLI’s home cache; Make now sets `ARDUINO_BUILD_CACHE_PATH` under
 `BUILD_DIR`, and the final integrated run passed using the workspace cache.
+
+## Union battle and world state (CreatureGathererFX-jp8.1.5)
+
+Added one `ModeState` global with explicit battle/world accessors and centralized entry resets. The
+world member is exactly 171 B: the 128-byte script slot overlays a 4-byte movement cursor, followed
+by the 23-byte property window and 20-byte zone cache. Persistent location and player state stay in
+`GameState`/`Player`; exiting battle rebuilds world state and resyncs from the saved location. Save
+state does not select or rebuild the active mode. Added named host and device transition/layout tests.
+
+```text
+make test
+# PASS; 1,288 host assertions and 15 world assertions, 0 failed.
+make testvm
+# PASS; 10/0.
+make build
+# PASS; 19,296 B flash, 1,876 B static RAM, 684 B free.
+PATH=/private/tmp/cgfx-tools-jp8.5.20/debug:$PATH make ram BUILD_DIR=build/jp8.1.5
+# PASS; 19,296 B flash, 1,876 B static RAM, 684 B free; modeState is 171 B.
+PATH=/private/tmp/cgfx-tools-jp8.5.20/debug:$PATH ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens make fxtest-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_mode_state.ino
+# PASS; mode_state 193/0; transition headroom 551 B; save/battle stack headroom 377 B; test_stack 4/0.
+PATH=/private/tmp/cgfx-tools-jp8.5.20/debug:$PATH ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens make final-gate BUILD_DIR=build/command-optimizations
+# PASS; make check host 1,288/0, world 15/0, VM 10/0; generated checks pass;
+# all 13 FX suites pass (3,341/0); test_stack headroom 377 B; shipping RAM 19,296 B flash,
+# 1,876 B static, 684 B free. Full diagnostics: build/command-optimizations/final-gate/{check,ram}.log.
+```
+
+The starting shipping RAM report for this bead was 18,024 B flash / 1,863 B static / 697 B free.
+The final whole-image measurement is +1,272 B flash and +13 B static RAM, with 684 B free; it does
+not show the expected net RAM reduction, though AVR proves the single 171-byte union. This is the
+measured delta to carry forward while mode work continues. The stack path measured 377 B; the test
+threshold is now 350 B, which leaves 281 B after the 69 B USB ISR allowance and stays above the
+documented 150 B reserve.
+
+The first full-gate attempt exposed out-of-bounds flag tests (indices 8, 15, and 100) against the
+generated one-byte `FLAG_BIT_ARRAY`; tests now reset and exercise only allocated bits. An earlier
+focused spike compile also caught unqualified stack-helper names after namespacing; both issues are
+fixed and the repeated focused and full gates pass. No packed source inputs changed, so pack-parity
+was not rerun. Worker wall time across the context handoff was not captured; the successful final
+gate took 81 seconds. Orchestrator review time: pending.

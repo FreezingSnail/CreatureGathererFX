@@ -99,6 +99,8 @@ TEST_SOURCES = tst/src/ReadData.cpp \
 	src/lib/ListView.cpp \
 	src/lib/BattleEventPlayer.cpp \
 	src/engine/battle/Battle.cpp \
+	src/engine/ModeState.cpp \
+	src/engine/world/World.cpp \
 	src/GameState.cpp \
 	src/flags/flag_bit_array.cpp \
 	tst/main.cpp

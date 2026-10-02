@@ -17,16 +17,14 @@
 
 decltype(arduboy) arduboy;
 
-uint8_t debug;
 GameState gameState;
+ModeState modeState;
 MenuV2 menu = MenuV2();
-BattleEngine engine;
 Player player = Player();
 
 // ARDUBOY_NO_USB
 
 Arena arena = Arena();
-WorldEngine world;
 Animator animator = Animator();
 PlantGameState plants;
 
