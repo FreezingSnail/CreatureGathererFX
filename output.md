@@ -650,3 +650,94 @@ git diff --check
 ```
 
 Orchestrator gate elapsed time: about 22 seconds.
+
+# Wave 2 — chunk geometry and script slots
+
+## CreatureGathererFX-jp8.1.3 — arithmetic chunk and script slot addresses
+
+Added `Chunk.hpp` as the shared 256×256 tile, 8×4 tile chunk contract. Map
+chunk addresses use 64 bytes; script slots use 128 bytes with a 24-bit cast
+before shifting. `drawChunkAtOffset` now uses the shared map address helper,
+and `drawMap` clips signed viewport coordinates before deriving chunk IDs.
+`WorldEngine` records a 16-bit last chunk and calls `onChunkChange` only after a
+completed step crosses a chunk boundary. The layout appends `scripts.bin` after
+`generator_version`, preserving previous raw addresses. The regenerated
+`src/fxdata.h` publishes `scripts=0x095BEF`; `FX_DATA_BYTES` rises from 613,359
+to 875,503 and the packed cart from 646,144 to 908,288 bytes, both +262,144.
+The new SHA baseline is
+`c4cf97bf4f86e7dc576174943f81787e52d669db5a418032c98d54a031786305`.
+
+```text
+bd update CreatureGathererFX-jp8.1.3 --claim
+# PASS; issue in progress.
+make gen
+# PASS; scripts.hpp regenerated and contains only blob0, blob32, blob33.
+make test-generated-libs
+# PASS; 7 byte-placement checks, 5 invariants, 28 alias checks.
+make test-pack-parity
+# PASS; layout equivalence, negative perturbation, and new SHA.
+make test
+# PASS; host 1,131/0 including ChunkTest 33/0.
+make testvm
+# PASS; VM 10/0.
+make verify-generated
+# PASS.
+make fxtest-headless FXTEST_INOS=tst/fxdatatest/test_tables.ino ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# Initial compile failed because the device staging copies src/ and suite headers,
+# not fxdata/generated/scripts.hpp. The test now pins the three generated blob
+# prefixes locally in PROGMEM.
+make fxtest-headless FXTEST_INOS=tst/fxdatatest/test_tables.ino FXTEST_BUILD_DIR=build/jp8.1.3/fxtest ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS; test_tables 300/0, exact P. Sketch 13,836 B flash, 1,536 B globals.
+make check BUILD_DIR=build/jp8.1.3 FXTEST_BUILD_DIR=build/jp8.1.3/fxtest ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS; host 1,131/0, VM 10/0, manifest and generated libraries PASS; all
+# nine Ardens suites exact P, including test_tables 300/0 and stack headroom 425 B.
+make ram BUILD_DIR=build/jp8.1.3
+# First sandbox attempt blocked by the Arduino cache path. Approved retry PASS:
+# shipping image 17,412 B flash, 1,856 B globals, 704 B free. These match the
+# isolated e5b relaxation measurement, so the chunk bead adds 0 B to either.
+git diff --check
+# PASS.
+```
+
+The bead's explicit full `make fxtest-headless` command was fulfilled by the
+same target inside `make check`; it was not repeated as a second full gate.
+`dist/` and the generated manifest are ignored by git; the tracked generated
+header changed only in its data page, byte count, and new scripts address.
+Worker elapsed time from claim through report: about 19 minutes, including
+parallel-wave coordination. The full `make check` gate took about 35 seconds.
+
+## CreatureGathererFX-e5b — apply measured AVR linker relaxation
+
+Added overridable `AVR_RELAX_FLAGS` and `AVR_BUILD_PROPERTIES` to the Makefile.
+The default `-mrelax` settings reach the C++, C, and ELF linker stages in FX,
+Mini, and device-test builds. The make contract suite pins each target's flag
+propagation and verifies a local properties override. The current-head spike
+measured 17,412 B flash / 1,856 B globals, down 324 B flash and 1 B static RAM
+from the 17,736 B / 1,857 B baseline. Mini measured 17,010 B flash / 1,856 B
+globals. The save suite passed 229/0; the painted stack suite passed 3/0 with
+425 B headroom, above the 400 B floor.
+
+```text
+tools/tests/make-contract-test.sh
+# PASS; FX, Mini, fxtest flag propagation and AVR_BUILD_PROPERTIES override.
+make build BUILD_DIR=build/e5b
+# PASS; FX shipping build.
+make ram BUILD_DIR=build/e5b
+# PASS; 17,412 B flash, 1,856 B globals, 704 B free.
+make mini BUILD_DIR=build/e5b
+# PASS; Mini 17,010 B flash, 1,856 B globals.
+make fxtest-headless ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens FXTEST_INOS='tst/fxdatatest/test_save.ino tst/fxdatatest/test_stack.ino' BUILD_DIR=build/e5b FXTEST_BUILD_DIR=build/e5b/fxtest
+# PASS; save 229/0; stack 3/0, headroom=425 B.
+make check BUILD_DIR=build/wave2-gate FXTEST_BUILD_DIR=build/wave2-gate/fxtest ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS; host 1,131/0, VM 10/0, manifest PASS, generated libs 7/0,
+# invariants 5/0, aliases 28/0, and all ten Ardens suites exact P;
+# test_stack headroom=425 B. Generation left no unexpected tracked changes.
+make test-pack-parity
+# PASS; layout equivalence, perturbation diagnostic, and packed SHA parity.
+git diff --check
+# PASS.
+```
+
+Worker elapsed time from claim through focused report: about 14 minutes,
+including the coordinated wait for FX data regeneration. Orchestrator gate
+and parity checks completed in about 45 seconds.

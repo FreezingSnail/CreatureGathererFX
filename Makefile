@@ -5,6 +5,12 @@ CXX ?= g++
 ARDUINO_CLI ?= arduino-cli
 FQBN ?= arduboy-homemade:avr:arduboy-fx
 MINI_FQBN ?= arduboy-homemade:avr:arduboy-mini
+# Shared AVR toolchain properties for shipping and device-test builds.
+# Override AVR_RELAX_FLAGS or AVR_BUILD_PROPERTIES for local toolchain needs.
+AVR_RELAX_FLAGS ?= -mrelax
+AVR_BUILD_PROPERTIES ?= --build-property compiler.cpp.extra_flags=$(AVR_RELAX_FLAGS) \
+	--build-property compiler.c.extra_flags=$(AVR_RELAX_FLAGS) \
+	--build-property compiler.c.elf.extra_flags=$(AVR_RELAX_FLAGS)
 BUILD_DIR ?= build
 DIST_DIR ?= dist
 FXDATA_BIN ?= $(DIST_DIR)/fxdata.bin
@@ -106,7 +112,7 @@ full: gen build
 
 build:
 	@mkdir -p "$(BUILD_DIR)"
-	$(ARDUINO_CLI) compile --fqbn "$(FQBN)" --output-dir "$(BUILD_DIR)" .
+	$(ARDUINO_CLI) compile --fqbn "$(FQBN)" $(AVR_BUILD_PROPERTIES) --output-dir "$(BUILD_DIR)" .
 
 ram: build
 	@set -eu; \
@@ -129,7 +135,7 @@ ram: build
 
 mini:
 	@mkdir -p "$(BUILD_DIR)"
-	$(ARDUINO_CLI) compile --fqbn "$(MINI_FQBN)" --output-dir "$(BUILD_DIR)" .
+	$(ARDUINO_CLI) compile --fqbn "$(MINI_FQBN)" $(AVR_BUILD_PROPERTIES) --output-dir "$(BUILD_DIR)" .
 
 # Interactive development run, not a test path: FX suites still execute only
 # through fxtest-headless. Data and save images load separately because Ardens
@@ -270,6 +276,7 @@ fxtest-build:
 		done; \
 		echo $$ino; \
 		$(ARDUINO_CLI) compile --fqbn "$(FQBN)" \
+		    $(AVR_BUILD_PROPERTIES) \
 		    --output-dir "$$stage/output" \
 		    "$$stage/$$ino.ino"; \
 	done

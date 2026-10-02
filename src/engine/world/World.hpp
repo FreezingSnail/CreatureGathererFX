@@ -2,6 +2,7 @@
 #include <stdint.h>
 
 #include <ArduboyFX.h>
+#include "Chunk.hpp"
 
 #define EVENTCOUNT 6
 
@@ -18,7 +19,9 @@ class WorldEngine {
     uint8_t mapx, mapy;
     uint8_t height, width;
     int8_t up, side;
-    int8_t curChunk, chunkX, chunkY;
+    uint16_t lastChunk;
+
+    void onChunkChange(uint16_t newChunk);
 
     bool moving;
     uint8_t stepTicker;
