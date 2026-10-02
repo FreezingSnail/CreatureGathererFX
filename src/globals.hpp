@@ -16,6 +16,8 @@ extern MenuStack menuStack;
 #include "GameState.hpp"
 extern GameState gameState;
 
+#include "engine/ModeState.hpp"
+
 #include "plants/PlantGamestate.hpp"
 extern PlantGameState plants;
 

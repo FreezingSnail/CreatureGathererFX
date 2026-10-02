@@ -8,223 +8,238 @@
 extern GameState gameState;
 #endif
 
-#define TILE_SIZE 16
-#define MAPYADJUST -3
-#define MAPXADJUST -4
+namespace {
+constexpr uint8_t TILE_SIZE = 16;
+constexpr uint8_t WORLD_MAP_WIDTH = 32;
+constexpr uint8_t WORLD_MAP_HEIGHT = 16;
+constexpr uint8_t DIRECTION_MASK = 0x03;
+constexpr uint8_t MOVING_MASK = 0x04;
+constexpr uint8_t WALK_MASK_BITS = 0x38;
+constexpr uint8_t WALK_SHIFT = 3;
 
-constexpr uint8_t tileswide = (128 / TILE_SIZE) + 4;
-constexpr uint8_t tilestall = (64 / TILE_SIZE) + 2;
+enum WalkMaskIndex : uint8_t {
+    WALK_NONE = 0,
+    WALK_LEFT = 1,
+    WALK_RIGHT = 2,
+    WALK_UP = 3,
+    WALK_DOWN = 4
+};
 
-void WorldEngine::init() {
-    this->playerDirection = Direction::DOWN;
-    this->width = this->height = 0;
-    this->stepOffsetX = 0;
-    this->stepOffsetY = 0;
-    this->walkMask = 0;
-    this->moving = false;
-    this->stepTicker = 0;
-    this->curx = 4;
-    this->cury = 2;
-    gameState.playerLocation = static_cast<uint16_t>(curx) +
-                               (static_cast<uint16_t>(cury) << 8);
-    lastChunk = Chunk::chunkAt(static_cast<uint8_t>(curx), static_cast<uint8_t>(cury));
+Direction direction(const WorldMotion &motion) {
+    return static_cast<Direction>(motion.directionAndFlags & DIRECTION_MASK);
 }
 
-void WorldEngine::loadMap(uint8_t mapIndex, uint8_t submapIndex) {
+bool moving(const WorldMotion &motion) {
+    return (motion.directionAndFlags & MOVING_MASK) != 0;
+}
+
+void setDirection(WorldMotion &motion, Direction value) {
+    motion.directionAndFlags = static_cast<uint8_t>(
+        (motion.directionAndFlags & ~DIRECTION_MASK) | static_cast<uint8_t>(value));
+}
+
+void setMoving(WorldMotion &motion, bool value) {
+    if (value) motion.directionAndFlags |= MOVING_MASK;
+    else motion.directionAndFlags &= static_cast<uint8_t>(~MOVING_MASK);
+}
+
+void setWalkMask(WorldMotion &motion, WalkMaskIndex value) {
+    motion.directionAndFlags = static_cast<uint8_t>(
+        (motion.directionAndFlags & ~WALK_MASK_BITS) |
+        (static_cast<uint8_t>(value) << WALK_SHIFT));
+}
+
+uint8_t walkMask(const WorldMotion &motion) {
+    switch ((motion.directionAndFlags & WALK_MASK_BITS) >> WALK_SHIFT) {
+    case WALK_LEFT: return 0b10000000;
+    case WALK_RIGHT: return 0b01000000;
+    case WALK_UP: return 0b00100000;
+    case WALK_DOWN: return 0b00001000;
+    default: return 0;
+    }
+}
+
+WalkMaskIndex walkMaskFor(Direction value) {
+    switch (value) {
+    case Direction::LEFT: return WALK_LEFT;
+    case Direction::RIGHT: return WALK_RIGHT;
+    case Direction::UP: return WALK_UP;
+    case Direction::DOWN: return WALK_DOWN;
+    }
+    return WALK_NONE;
+}
+
+uint16_t origin(const WorldMotion &motion) {
+    return static_cast<uint16_t>(motion.originLow) |
+           (static_cast<uint16_t>(motion.originHigh) << 8);
+}
+
+void setOrigin(WorldMotion &motion, uint16_t value) {
+    motion.originLow = static_cast<uint8_t>(value & 0xFF);
+    motion.originHigh = static_cast<uint8_t>(value >> 8);
+}
+
+void clearStep(WorldMotion &motion, uint16_t newOrigin) {
+    motion.step = 0;
+    setMoving(motion, false);
+    setWalkMask(motion, WALK_NONE);
+    setOrigin(motion, newOrigin);
+}
+}
+
+void WorldEngine::init(WorldTransient &world) {
+    world.activateMotion();
+    world.motion.directionAndFlags = static_cast<uint8_t>(Direction::DOWN);
+    world.motion.step = 0;
+    setOrigin(world.motion, gameState.playerLocation);
+}
+
+void WorldEngine::loadMap(WorldTransient &, uint8_t mapIndex, uint8_t submapIndex) {
     // The FX image contains one canonical map; it occupies map/submap 0/0.
     (void)mapIndex;
     (void)submapIndex;
-    this->width = 32;
-    this->height = 16;
 }
 
-void WorldEngine::setPos(uint8_t x, uint8_t y) {
-    this->curx = x;
-    this->cury = y;
-    gameState.playerLocation = static_cast<uint16_t>(x) +
+void WorldEngine::setPos(WorldTransient &world, uint8_t x, uint8_t y) {
+    gameState.playerLocation = static_cast<uint16_t>(x) |
                                (static_cast<uint16_t>(y) << 8);
-    this->stepOffsetX = this->stepOffsetY = 0;
-    this->walkMask = 0;
-    this->moving = false;
-    this->stepTicker = 0;
-    lastChunk = Chunk::chunkOfLocation(gameState.playerLocation);
+    clearStep(world.motion, gameState.playerLocation);
 }
 
-uint16_t WorldEngine::location() const {
+uint16_t WorldEngine::location() {
     return gameState.playerLocation;
 }
 
-ViewOffset WorldEngine::view() const {
-    ViewOffset result = {stepOffsetX, stepOffsetY, walkMask};
+ViewOffset WorldEngine::view(const WorldTransient &world) {
+    const WorldMotion &motion = world.motion;
+    int8_t x = 0;
+    int8_t y = 0;
+    switch (direction(motion)) {
+    case Direction::UP: y = static_cast<int8_t>(motion.step); break;
+    case Direction::DOWN: y = -static_cast<int8_t>(motion.step); break;
+    case Direction::LEFT: x = static_cast<int8_t>(motion.step); break;
+    case Direction::RIGHT: x = -static_cast<int8_t>(motion.step); break;
+    }
+    ViewOffset result = {x, y, walkMask(motion)};
     return result;
 }
 
-void WorldEngine::syncFromLocation() {
+void WorldEngine::syncFromLocation(WorldTransient &world) {
     const uint16_t published = gameState.playerLocation;
-    const uint8_t x = static_cast<uint8_t>(published & 0xFF);
-    const uint8_t y = static_cast<uint8_t>(published >> 8);
-    if (x == curx && y == cury) return;
-
-    curx = x;
-    cury = y;
-    stepOffsetX = stepOffsetY = 0;
-    walkMask = 0;
-    moving = false;
-    stepTicker = 0;
-    lastChunk = Chunk::chunkOfLocation(published);
+    if (published == origin(world.motion)) return;
+    clearStep(world.motion, published);
 }
 
-void WorldEngine::input() {
+void WorldEngine::input(WorldTransient &world) {
 #ifdef TEST
+    (void)world;
     // Device input is covered by the Arduboy path; host tests drive movement
     // through beginMoveForTest() so they do not need Arduino headers.
 #else
+    WorldMotion &motion = world.motion;
     if (arduboy.pressed(LEFT_BUTTON)) {
-        this->playerDirection = Direction::LEFT;
-        if (this->moveable()) {
-            this->moving = true;
-            this->walkMask = 0b10000000;
+        setDirection(motion, Direction::LEFT);
+        if (moveable(world)) {
+            setMoving(motion, true);
+            setWalkMask(motion, walkMaskFor(Direction::LEFT));
         }
     } else if (arduboy.pressed(RIGHT_BUTTON)) {
-        this->playerDirection = Direction::RIGHT;
-        if (this->moveable()) {
-            this->moving = true;
-            this->walkMask = 0b01000000;
+        setDirection(motion, Direction::RIGHT);
+        if (moveable(world)) {
+            setMoving(motion, true);
+            setWalkMask(motion, walkMaskFor(Direction::RIGHT));
         }
     } else if (arduboy.pressed(UP_BUTTON)) {
-        this->playerDirection = Direction::UP;
-        if (this->moveable()) {
-            this->moving = true;
-            this->walkMask = 0b00100000;
+        setDirection(motion, Direction::UP);
+        if (moveable(world)) {
+            setMoving(motion, true);
+            setWalkMask(motion, walkMaskFor(Direction::UP));
         }
     } else if (arduboy.pressed(DOWN_BUTTON)) {
-        this->playerDirection = Direction::DOWN;
-        if (this->moveable()) {
-            this->moving = true;
-            this->walkMask = 0b00001000;
+        setDirection(motion, Direction::DOWN);
+        if (moveable(world)) {
+            setMoving(motion, true);
+            setWalkMask(motion, walkMaskFor(Direction::DOWN));
         }
     } else {
-        moving = false;
+        setMoving(motion, false);
     }
 #endif
 }
 
-#define PLAYER_SIZE 16
-#define PLAYER_X_OFFSET WIDTH / 2 - PLAYER_SIZE / 2
-#define PLAYER_Y_OFFSET HEIGHT / 2 - PLAYER_SIZE / 2
-
-void WorldEngine::runMap() {
+void WorldEngine::runMap(WorldTransient &world) {
 #ifdef TEST
-    syncFromLocation();
+    syncFromLocation(world);
 #else
-    this->syncFromLocation();
-
-    if (this->moving && this->moveable()) {
-        this->moveChar();
+    syncFromLocation(world);
+    if (moving(world.motion) && moveable(world)) {
+        moveChar(world);
     } else if (!dialogMenu.peek()) {
-        this->interact();
-        this->input();
-        // Match the old sketch path: the first animation pixel is applied on
-        // the same frame that accepts the direction, for 16 ticks per tile.
-        if (this->moving && this->moveable()) this->moveChar();
-    } else {
-        if (arduboy.justPressed(A_BUTTON)) {
-            // dialogMenu.popMenu();
-        }
+        interact();
+        input(world);
+        // Match the previous sketch path: the first animation pixel is applied
+        // on the same frame that accepts the direction, for 16 ticks per tile.
+        if (moving(world.motion) && moveable(world)) moveChar(world);
+    } else if (arduboy.justPressed(A_BUTTON)) {
+        // dialogMenu.popMenu();
     }
 #endif
-
 }
 
-void WorldEngine::moveChar() {
-    switch (this->playerDirection) {
-    case Direction::UP:
-        this->stepOffsetY++;
-        break;
-    case Direction::DOWN:
-        this->stepOffsetY--;
-        break;
-    case Direction::LEFT:
-        this->stepOffsetX++;
-        break;
-    case Direction::RIGHT:
-        this->stepOffsetX--;
-        break;
+void WorldEngine::moveChar(WorldTransient &world) {
+    WorldMotion &motion = world.motion;
+    const Direction moveDirection = direction(motion);
+    ++motion.step;
+    if (motion.step != TILE_SIZE) return;
+
+    const uint16_t oldLocation = gameState.playerLocation;
+    int16_t x = static_cast<uint8_t>(oldLocation & 0xFF);
+    int16_t y = static_cast<uint8_t>(oldLocation >> 8);
+    switch (moveDirection) {
+    case Direction::UP: --y; break;
+    case Direction::DOWN: ++y; break;
+    case Direction::LEFT: --x; break;
+    case Direction::RIGHT: ++x; break;
     }
-    this->stepTicker++;
-    if (this->stepTicker == TILE_SIZE) {
-        this->stepTicker = 0;
-        switch (this->playerDirection) {
-        case Direction::UP:
-            this->cury--;
-            break;
-        case Direction::DOWN:
-            this->cury++;
-            break;
-        case Direction::LEFT:
-            this->curx--;
-            break;
-        case Direction::RIGHT:
-            this->curx++;
-            break;
-        }
-        gameState.playerLocation = static_cast<uint16_t>(curx) +
-                                   (static_cast<uint16_t>(cury) << 8);
-        const uint16_t newChunk = Chunk::chunkOfLocation(gameState.playerLocation);
-        if (Chunk::chunkChanged(lastChunk, newChunk)) onChunkChange(newChunk);
-        this->moving = false;
-        this->walkMask = 0;
-        this->stepOffsetX = this->stepOffsetY = 0;
-    }
+    const uint16_t newLocation = static_cast<uint16_t>(x) |
+                                 (static_cast<uint16_t>(y) << 8);
+    gameState.playerLocation = newLocation;
+    clearStep(motion, newLocation);
+
+    const uint16_t oldChunk = Chunk::chunkOfLocation(oldLocation);
+    const uint16_t newChunk = Chunk::chunkOfLocation(newLocation);
+    if (Chunk::chunkChanged(oldChunk, newChunk)) onChunkChange(world, newChunk);
 }
 
 #ifdef TEST
-void WorldEngine::beginMoveForTest(Direction direction) {
-    playerDirection = direction;
-    moving = true;
-    switch (direction) {
-    case Direction::LEFT: walkMask = 0b10000000; break;
-    case Direction::RIGHT: walkMask = 0b01000000; break;
-    case Direction::UP: walkMask = 0b00100000; break;
-    case Direction::DOWN: walkMask = 0b00001000; break;
-    }
+void WorldEngine::beginMoveForTest(WorldTransient &world, Direction value) {
+    setDirection(world.motion, value);
+    setMoving(world.motion, true);
+    setWalkMask(world.motion, walkMaskFor(value));
 }
 #endif
 
-void WorldEngine::onChunkChange(uint16_t newChunk) {
+void WorldEngine::onChunkChange(WorldTransient &, uint16_t newChunk) {
     // Transition-specific FX reads are attached here by their owning beads.
-    lastChunk = newChunk;
+    (void)newChunk;
 }
 
 void WorldEngine::encounter() {
     // TODO: redesign this
 }
 
-bool WorldEngine::moveable() {
-    uint8_t tilex = this->curx;
-    uint8_t tiley = this->cury;
-    switch (this->playerDirection) {
-    case Direction::UP:
-        tiley--;
-        break;
-    case Direction::DOWN:
-        tiley++;
-        break;
-    case Direction::LEFT:
-        tilex--;
-        break;
-    case Direction::RIGHT:
-        tilex++;
-        break;
+bool WorldEngine::moveable(const WorldTransient &world) {
+    (void)world;
+    const uint16_t loc = gameState.playerLocation;
+    int16_t x = static_cast<uint8_t>(loc & 0xFF);
+    int16_t y = static_cast<uint8_t>(loc >> 8);
+    switch (direction(world.motion)) {
+    case Direction::UP: --y; break;
+    case Direction::DOWN: ++y; break;
+    case Direction::LEFT: --x; break;
+    case Direction::RIGHT: ++x; break;
     }
-
-    if (tilex < 0 || tiley < 0 || tilex >= this->width || tiley >= this->height) {
-        return false;
-    }
-
-    // TODO: need to do a tile lookup
-
-    return true;
+    return x >= 0 && y >= 0 && x < WORLD_MAP_WIDTH && y < WORLD_MAP_HEIGHT;
 }
 
 void WorldEngine::interact() {

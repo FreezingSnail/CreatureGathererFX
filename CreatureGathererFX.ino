@@ -21,16 +21,14 @@
 
 decltype(arduboy) arduboy;
 
-uint8_t debug;
 GameState gameState;
+ModeState modeState;
 MenuV2 menu = MenuV2();
-BattleEngine engine;
 Player player = Player();
 
 // ARDUBOY_NO_USB
 
 Arena arena = Arena();
-WorldEngine world;
 Animator animator = Animator();
 PlantGameState plants;
 
@@ -54,12 +52,12 @@ void setup() {
     journalInit();
     // FX::setFont(ArduFont, dcmNormal);   // select default font
     FX::setCursorRange(0, 32767);
-    world.init();
-    world.loadMap(0, 0);
-    world.setPos(3, 2);
+    gameState.playerLocation = static_cast<uint16_t>(3) |
+                               (static_cast<uint16_t>(2) << 8);
+    enterBattle();
+    exitBattle();
 
     gameState.state = GameState_t::WORLD;
-    engine.init();
     player.basic();
     vm.initVM();
 
@@ -70,13 +68,17 @@ void setup() {
 void run() {
     switch (gameState.state) {
     case GameState_t::BATTLE:
-        drawScene(engine);
+        drawScene(battle());
         break;
     case GameState_t::WORLD:
-        world.runMap();
+        WorldEngine::runMap(worldState());
         break;
     case GameState_t::ARENA:
-        arena.drawarenaLoop(menu, player, engine);
+        if (arena.arenaLoop(menu, player)) {
+            enterBattle();
+            arena.startBattle(battle(), player, menu);
+            gameState.state = GameState_t::BATTLE;
+        }
         break;
     case GameState_t::SAVING:
         SaveController::advance();
@@ -85,8 +87,8 @@ void run() {
     animator.play();
     if (dialogMenu.peek()) {
         dialogMenu.drawPopMenu();
-    } else {
-        menu.printMenu(engine);
+    } else if (gameState.state == GameState_t::BATTLE) {
+        menu.printMenu(battle());
     }
 }
 
@@ -95,14 +97,14 @@ void render() {
 
     switch (gameState.state) {
     case GameState_t::BATTLE:
-        drawScene(engine);
+        drawScene(battle());
         break;
     case GameState_t::WORLD:
-        drawMapFast(world);
+        drawMapFast(worldState());
         drawPlayer();
         break;
     case GameState_t::ARENA:
-        arena.drawarenaLoop(menu, player, engine);
+        arena.drawarenaLoop(menu, player);
         break;
     case GameState_t::SAVING:
         SaveController::drawStatus();

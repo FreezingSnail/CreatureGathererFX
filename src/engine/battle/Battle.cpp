@@ -116,7 +116,26 @@ uint8_t BattleEngine::aiChooseStrongestMove() {
 }
 
 void BattleEngine::init() {
-    this->activeBattle = false;
+    debug = 0;
+    for (uint8_t i = 0; i < PARTY_SIZE; ++i) {
+        playerParty[i] = nullptr;
+        playerHealths[i] = 0;
+        opponentHealths[i] = 0;
+    }
+    playerCur = nullptr;
+    opponentCur = nullptr;
+    // A global mode entry placement-constructs a fresh BattleEngine first, so
+    // its Opponent member has already run its constructor without a large
+    // temporary copy on the constrained stack.
+    playerIndex = 0;
+    opponentIndex = 0;
+    playerAction = Action();
+    opponentAction = Action();
+    playerAction.actionIndex = -1;
+    opponentAction.actionIndex = -1;
+    activeBattle = false;
+    turnState = BattleState::TURN_INPUT;
+    updateState = false;
 }
 
 uint8_t *BattleEngine::getPlayerCurCreatureMoves() {

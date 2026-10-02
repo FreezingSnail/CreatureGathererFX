@@ -11,16 +11,15 @@ class Arena {
     uint8_t moveCreature;
     uint8_t cursor;
     uint8_t movePointer;
-    uint32_t debug;
 
   public:
     Arena() = default;
-    void arenaLoop(MenuV2 &menu2, Player &player, BattleEngine &engine);
+    bool arenaLoop(MenuV2 &menu2, Player &player);
     void registerRentals(Player &player, MenuV2 &menu2);
     void registerMoves(Player &player);
     void drawregisterMoves(Player &player);
     uint8_t selectOpponent();
     void startBattle(BattleEngine &engine, Player &player, MenuV2 &menu2);
     void displayRegisteredCount();
-    void drawarenaLoop(MenuV2 &menu2, Player &player, BattleEngine &engine);
+    void drawarenaLoop(MenuV2 &menu2, Player &player);
 };

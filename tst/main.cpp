@@ -14,10 +14,13 @@
 #include "listview_test.hpp"
 #include "chunk_test.hpp"
 #include "dialog_test.hpp"
+#include "mode_state_test.hpp"
 
 #include "../src/globals.hpp"
 
 Player player = Player();
+GameState gameState;
+ModeState modeState;
 BattleEvent battleEventStack[10];
 BattleEventPlayer battleEventPlayer;
 MenuStack menuStack;
@@ -63,6 +66,8 @@ int main() {
     std::cout << "ChunkSuite finished" << std::endl;
     DialogSuite(tests);
     std::cout << "DialogSuite finished" << std::endl;
+    ModeStateSuite(tests);
+    std::cout << "ModeStateSuite finished" << std::endl;
     std::cout << "Tests Finished" << std::endl;
     tests.printSummary();
     if (tests.fail()) {

@@ -7,16 +7,15 @@
 #include "../../common.hpp"
 #include "../../lib/ReadData.hpp"
 
-void Arena::arenaLoop(MenuV2 &menu2, Player &player, BattleEngine &engine) {
+bool Arena::arenaLoop(MenuV2 &menu2, Player &player) {
     // This seems wrong
     if (this->moveIndex == 11) {
         this->cursor = 0;
         this->movePointer = 0;
         this->moveIndex = 0;
         this->registerIndex = 0;
-        this->startBattle(engine, player, menu2);
+        return true;
     }
-
     if (this->registerIndex < 3) {
         if (Arduboy2::justPressed(DOWN_BUTTON)) {
             menu2.cursorIndex += 1;
@@ -28,9 +27,10 @@ void Arena::arenaLoop(MenuV2 &menu2, Player &player, BattleEngine &engine) {
     } else if (this->moveIndex < 12) {
         this->registerMoves(player);
     }
+    return false;
 }
 
-void DGF Arena::drawarenaLoop(MenuV2 &menu2, Player &player, BattleEngine &engine) {
+void DGF Arena::drawarenaLoop(MenuV2 &menu2, Player &player) {
 
     if (this->registerIndex < 3) {
         menu2.creatureRental();

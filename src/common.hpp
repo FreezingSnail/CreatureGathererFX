@@ -17,8 +17,7 @@ extern Animator animator;
 #include "engine/menu/MenuV2.hpp"
 extern MenuV2 menu;
 
-#include "engine/battle/Battle.hpp"
-extern BattleEngine engine;
+#include "engine/ModeState.hpp"
 
 #define DGF __attribute__((optimize("-O0")))
 

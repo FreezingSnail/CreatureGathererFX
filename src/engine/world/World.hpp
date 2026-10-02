@@ -1,11 +1,13 @@
 #pragma once
+
 #include <stdint.h>
 
+#include "../ModeState.hpp"
 #include "Chunk.hpp"
 
 #define EVENTCOUNT 6
 
-enum class Direction {
+enum class Direction : uint8_t {
     UP,
     RIGHT,
     DOWN,
@@ -18,37 +20,28 @@ struct ViewOffset {
     uint8_t mask;
 };
 
+// Stateless world operations use the active WorldTransient storage. Persistent
+// coordinates live in GameState, outside ModeState.
 class WorldEngine {
-  private:
-    Direction playerDirection;
-    uint8_t height, width;
-    int8_t stepOffsetX, stepOffsetY;
-    uint8_t walkMask;
-    uint16_t lastChunk;
-
-    void onChunkChange(uint16_t newChunk);
-
-    bool moving;
-    uint8_t stepTicker;
-    uint8_t curx, cury;
-
   public:
-    WorldEngine() = default;
-    void init();
-    void input();
-    void runMap();
-    void moveChar();
-    uint8_t getTile();
-    void encounter();
-    bool moveable();
-    void interact();
+    static void init(WorldTransient &world);
+    static void input(WorldTransient &world);
+    static void runMap(WorldTransient &world);
+    static void moveChar(WorldTransient &world);
+    static uint8_t getTile();
+    static void encounter();
+    static bool moveable(const WorldTransient &world);
+    static void interact();
 
-    void loadMap(uint8_t mapIndex, uint8_t submapIndex);
-    void setPos(uint8_t x, uint8_t y);
-    ViewOffset view() const;
-    uint16_t location() const;
-    void syncFromLocation();
+    static void loadMap(WorldTransient &world, uint8_t mapIndex, uint8_t submapIndex);
+    static void setPos(WorldTransient &world, uint8_t x, uint8_t y);
+    static ViewOffset view(const WorldTransient &world);
+    static uint16_t location();
+    static void syncFromLocation(WorldTransient &world);
 #ifdef TEST
-    void beginMoveForTest(Direction direction);
+    static void beginMoveForTest(WorldTransient &world, Direction direction);
 #endif
+
+  private:
+    static void onChunkChange(WorldTransient &world, uint16_t newChunk);
 };
