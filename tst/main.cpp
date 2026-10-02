@@ -63,7 +63,6 @@ int main() {
     std::cout << "ChunkSuite finished" << std::endl;
     DialogSuite(tests);
     std::cout << "DialogSuite finished" << std::endl;
-
     std::cout << "Tests Finished" << std::endl;
     tests.printSummary();
     if (tests.fail()) {

@@ -1019,3 +1019,43 @@ git diff --check -- tst/fxdatatest/items_test.hpp tst/fxdatatest/test_items.ino 
 The PATH `cgfx-tools` initially resolved to version 0.2.0, which predates the consumables mode. The
 existing sibling source was built offline to `/private/tmp/cgfx-tools-jp8.5.20`; the sibling checkout
 was not modified. Worker time: approximately 15 minutes; integrated check took about 1 minute.
+
+## WorldEngine movement ownership (CreatureGathererFX-jp8.1.2)
+
+Moved overworld input, coordinates, and signed step offsets into `WorldEngine`; the sketch now calls
+`world.runMap()` and renders from `world.view()` / `world.location()`. `GameState::playerLocation`
+remains the packed VM/save field and is synchronized at `runMap()` entry. Added host coverage for
+`setPos`, an in-progress and completed move, and external teleport synchronization.
+
+```text
+PATH=/private/tmp/cgfx-tools-jp8.5.20/debug:$PATH make check BUILD_DIR=build/jp8-1-2 ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS; host 1,099/0, world 15/0, VM 10/0; manifest, generated libs (8/0), invariants (5/0), aliases (28/0).
+# All 12 FX suites pass (3,147/0); test_stack headroom 404 B (400 B required).
+make ram BUILD_DIR=build/jp8-1-2
+# PASS; 18,024 B flash, 1,863 B static RAM, 697 B free; WorldEngine global is 19 B.
+./tools/tests/make-contract-test.sh
+# PASS.
+git diff --check
+# PASS.
+git archive HEAD | tar -x -C /private/tmp/CreatureGathererFX
+make build BUILD_DIR=/private/tmp/CreatureGathererFX/build
+# Baseline PASS; 17,634 B flash, 1,872 B static RAM.
+rg -n "handleMovement|xStepOffset|yStepOffset|walkingMask|drawMapFast\\(" CreatureGathererFX.ino src tst
+# PASS; only WorldEngine's walk mask and drawMapFast(world) remain.
+```
+
+Compared with a pristine `HEAD` build using the same `-mrelax` properties, flash increased 390 B
+and static RAM decreased 9 B. `ARDUINO_BUILD_CACHE_PATH` now defaults under `BUILD_DIR`; Make passes
+it to Arduino CLI so device builds no longer need writes under `~/Library/Caches/arduino`. The first
+device run found that a non-empty `WorldEngine` constructor retained an unused global in test
+sketches and reduced painted stack headroom to 391 B. Defaulting the constructor and initializing
+all fields in `init()` restored the device test image and headroom to 404 B. Host, VM, build, RAM,
+Make contract, and all headless device checks passed. Worker time: approximately 20 minutes.
+
+Iteration failures and causes: the default `cgfx-tools` rejected the project’s newer
+`--consumables-csv` option, so checks were rerun with the compatible binary under
+`/private/tmp/cgfx-tools-jp8.5.20/debug`. The first host compile linked Arduino headers into the
+new world suite; a `TEST`-only input seam and a separate world-test executable removed that
+dependency and avoided changing the legacy host suite’s global layout. The first full device run
+needed approval to access Arduino CLI’s home cache; Make now sets `ARDUINO_BUILD_CACHE_PATH` under
+`BUILD_DIR`, and the final integrated run passed using the workspace cache.

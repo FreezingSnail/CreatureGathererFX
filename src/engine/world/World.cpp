@@ -1,8 +1,12 @@
 #include "World.hpp"
 
+#ifndef TEST
 #include "../../common.hpp"
-
 #include "../../globals.hpp"
+#else
+#include "../../GameState.hpp"
+extern GameState gameState;
+#endif
 
 #define TILE_SIZE 16
 #define MAPYADJUST -3
@@ -11,16 +15,18 @@
 constexpr uint8_t tileswide = (128 / TILE_SIZE) + 4;
 constexpr uint8_t tilestall = (64 / TILE_SIZE) + 2;
 
-WorldEngine::WorldEngine() {
-}
 void WorldEngine::init() {
-    this->mapx = 0;
-    this->mapy = 0;
+    this->playerDirection = Direction::DOWN;
+    this->width = this->height = 0;
+    this->stepOffsetX = 0;
+    this->stepOffsetY = 0;
+    this->walkMask = 0;
+    this->moving = false;
+    this->stepTicker = 0;
     this->curx = 4;
     this->cury = 2;
-
-    up = 2;
-    side = 3;
+    gameState.playerLocation = static_cast<uint16_t>(curx) +
+                               (static_cast<uint16_t>(cury) << 8);
     lastChunk = Chunk::chunkAt(static_cast<uint8_t>(curx), static_cast<uint8_t>(cury));
 }
 
@@ -35,38 +41,72 @@ void WorldEngine::loadMap(uint8_t mapIndex, uint8_t submapIndex) {
 void WorldEngine::setPos(uint8_t x, uint8_t y) {
     this->curx = x;
     this->cury = y;
-    gameState.playerLocation = x + (256 * y);
+    gameState.playerLocation = static_cast<uint16_t>(x) +
+                               (static_cast<uint16_t>(y) << 8);
+    this->stepOffsetX = this->stepOffsetY = 0;
+    this->walkMask = 0;
+    this->moving = false;
+    this->stepTicker = 0;
     lastChunk = Chunk::chunkOfLocation(gameState.playerLocation);
 }
 
+uint16_t WorldEngine::location() const {
+    return gameState.playerLocation;
+}
+
+ViewOffset WorldEngine::view() const {
+    ViewOffset result = {stepOffsetX, stepOffsetY, walkMask};
+    return result;
+}
+
+void WorldEngine::syncFromLocation() {
+    const uint16_t published = gameState.playerLocation;
+    const uint8_t x = static_cast<uint8_t>(published & 0xFF);
+    const uint8_t y = static_cast<uint8_t>(published >> 8);
+    if (x == curx && y == cury) return;
+
+    curx = x;
+    cury = y;
+    stepOffsetX = stepOffsetY = 0;
+    walkMask = 0;
+    moving = false;
+    stepTicker = 0;
+    lastChunk = Chunk::chunkOfLocation(published);
+}
+
 void WorldEngine::input() {
-    if (arduboy.pressed(UP_BUTTON)) {
-        this->playerDirection = Direction::UP;
-        if (this->moveable()) {
-            this->moving = true;
-            up -= 1;
-        }
-    } else if (arduboy.pressed(DOWN_BUTTON)) {
-        this->playerDirection = Direction::DOWN;
-        if (this->moveable()) {
-            this->moving = true;
-            up += 1;
-        }
-    } else if (arduboy.pressed(LEFT_BUTTON)) {
+#ifdef TEST
+    // Device input is covered by the Arduboy path; host tests drive movement
+    // through beginMoveForTest() so they do not need Arduino headers.
+#else
+    if (arduboy.pressed(LEFT_BUTTON)) {
         this->playerDirection = Direction::LEFT;
         if (this->moveable()) {
             this->moving = true;
-            side -= 1;
+            this->walkMask = 0b10000000;
         }
     } else if (arduboy.pressed(RIGHT_BUTTON)) {
         this->playerDirection = Direction::RIGHT;
         if (this->moveable()) {
             this->moving = true;
-            side += 1;
+            this->walkMask = 0b01000000;
+        }
+    } else if (arduboy.pressed(UP_BUTTON)) {
+        this->playerDirection = Direction::UP;
+        if (this->moveable()) {
+            this->moving = true;
+            this->walkMask = 0b00100000;
+        }
+    } else if (arduboy.pressed(DOWN_BUTTON)) {
+        this->playerDirection = Direction::DOWN;
+        if (this->moveable()) {
+            this->moving = true;
+            this->walkMask = 0b00001000;
         }
     } else {
         moving = false;
     }
+#endif
 }
 
 #define PLAYER_SIZE 16
@@ -74,44 +114,41 @@ void WorldEngine::input() {
 #define PLAYER_Y_OFFSET HEIGHT / 2 - PLAYER_SIZE / 2
 
 void WorldEngine::runMap() {
-    // this->drawMap();
+#ifdef TEST
+    syncFromLocation();
+#else
+    this->syncFromLocation();
 
     if (this->moving && this->moveable()) {
         this->moveChar();
     } else if (!dialogMenu.peek()) {
         this->interact();
         this->input();
+        // Match the old sketch path: the first animation pixel is applied on
+        // the same frame that accepts the direction, for 16 ticks per tile.
+        if (this->moving && this->moveable()) this->moveChar();
     } else {
         if (arduboy.justPressed(A_BUTTON)) {
             // dialogMenu.popMenu();
         }
     }
+#endif
 
-    if (up == 4 && !moving) {
-        up = 0;
-    } else if (up == -1 && !moving) {
-        up = 3;
-    }
-    if (side == 4 && !moving) {
-        side = 0;
-    } else if (side == -1 && !moving) {
-        side = 3;
-    }
 }
 
 void WorldEngine::moveChar() {
     switch (this->playerDirection) {
     case Direction::UP:
-        this->mapy++;
+        this->stepOffsetY++;
         break;
     case Direction::DOWN:
-        this->mapy--;
+        this->stepOffsetY--;
         break;
     case Direction::LEFT:
-        this->mapx++;
+        this->stepOffsetX++;
         break;
     case Direction::RIGHT:
-        this->mapx--;
+        this->stepOffsetX--;
         break;
     }
     this->stepTicker++;
@@ -131,14 +168,28 @@ void WorldEngine::moveChar() {
             this->curx++;
             break;
         }
-        const uint16_t location = static_cast<uint16_t>(
-            cury * Chunk::MAP_WIDTH_TILES + curx);
-        const uint16_t newChunk = Chunk::chunkOfLocation(location);
+        gameState.playerLocation = static_cast<uint16_t>(curx) +
+                                   (static_cast<uint16_t>(cury) << 8);
+        const uint16_t newChunk = Chunk::chunkOfLocation(gameState.playerLocation);
         if (Chunk::chunkChanged(lastChunk, newChunk)) onChunkChange(newChunk);
         this->moving = false;
-        // this->encounter(arduboy, player);
+        this->walkMask = 0;
+        this->stepOffsetX = this->stepOffsetY = 0;
     }
 }
+
+#ifdef TEST
+void WorldEngine::beginMoveForTest(Direction direction) {
+    playerDirection = direction;
+    moving = true;
+    switch (direction) {
+    case Direction::LEFT: walkMask = 0b10000000; break;
+    case Direction::RIGHT: walkMask = 0b01000000; break;
+    case Direction::UP: walkMask = 0b00100000; break;
+    case Direction::DOWN: walkMask = 0b00001000; break;
+    }
+}
+#endif
 
 void WorldEngine::onChunkChange(uint16_t newChunk) {
     // Transition-specific FX reads are attached here by their owning beads.

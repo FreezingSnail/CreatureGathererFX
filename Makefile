@@ -12,6 +12,8 @@ AVR_BUILD_PROPERTIES ?= --build-property compiler.cpp.extra_flags=$(AVR_RELAX_FL
 	--build-property compiler.c.extra_flags=$(AVR_RELAX_FLAGS) \
 	--build-property compiler.c.elf.extra_flags=$(AVR_RELAX_FLAGS)
 BUILD_DIR ?= build
+ARDUINO_BUILD_PATH ?= $(BUILD_DIR)/arduino-build
+ARDUINO_BUILD_CACHE_PATH ?= $(BUILD_DIR)/arduino-cache
 DIST_DIR ?= dist
 FXDATA_BIN ?= $(DIST_DIR)/fxdata.bin
 FXDATA_DATA_BIN ?= $(DIST_DIR)/fxdata-data.bin
@@ -27,6 +29,7 @@ FXTEST_MS ?= 3000
 FXTEST_BUILD_DIR ?= $(BUILD_DIR)/fxtest
 FINAL_GATE_LOG_DIR ?= $(BUILD_DIR)/final-gate
 HOST_TEST_BIN ?= $(BUILD_DIR)/tests/host
+WORLD_TEST_BIN ?= $(BUILD_DIR)/tests/world
 VM_TEST_BIN ?= $(BUILD_DIR)/tests/vm
 GENERATED_TEST_BIN ?= $(BUILD_DIR)/tests/generated
 RAM_ELF ?= $(BUILD_DIR)/CreatureGathererFX.ino.elf
@@ -60,7 +63,7 @@ help:
 		'  fxtest-headless  run every FX device sketch through Ardens serial capture; blocks unsupported Ardens' \
 		'  fxtest-spike  run one selected FX suite plus test_stack; set FXTEST_SPIKE_INO and ARDENS' \
 		'' \
-		'Overrides: CXX, ARDUINO_CLI, FQBN, BUILD_DIR, DIST_DIR, FXDATA_BIN, ARDENS, FXTEST_MS, RAM_ELF, AVR_SIZE, AVR_NM.'
+		'Overrides: CXX, ARDUINO_CLI, FQBN, BUILD_DIR, ARDUINO_BUILD_PATH, ARDUINO_BUILD_CACHE_PATH, DIST_DIR, FXDATA_BIN, ARDENS, FXTEST_MS, RAM_ELF, AVR_SIZE, AVR_NM.'
 
 setup:
 	@printf '%s\n' \
@@ -117,7 +120,8 @@ full: gen build
 
 build:
 	@mkdir -p "$(BUILD_DIR)"
-	$(ARDUINO_CLI) compile --fqbn "$(FQBN)" $(AVR_BUILD_PROPERTIES) --output-dir "$(BUILD_DIR)" .
+	@mkdir -p "$(ARDUINO_BUILD_PATH)/fx"
+	ARDUINO_BUILD_CACHE_PATH="$(ARDUINO_BUILD_CACHE_PATH)" $(ARDUINO_CLI) compile --fqbn "$(FQBN)" $(AVR_BUILD_PROPERTIES) --build-path "$(ARDUINO_BUILD_PATH)/fx" --output-dir "$(BUILD_DIR)" .
 
 ram: build
 	@set -eu; \
@@ -140,7 +144,8 @@ ram: build
 
 mini:
 	@mkdir -p "$(BUILD_DIR)"
-	$(ARDUINO_CLI) compile --fqbn "$(MINI_FQBN)" $(AVR_BUILD_PROPERTIES) --output-dir "$(BUILD_DIR)" .
+	@mkdir -p "$(ARDUINO_BUILD_PATH)/mini"
+	ARDUINO_BUILD_CACHE_PATH="$(ARDUINO_BUILD_CACHE_PATH)" $(ARDUINO_CLI) compile --fqbn "$(MINI_FQBN)" $(AVR_BUILD_PROPERTIES) --build-path "$(ARDUINO_BUILD_PATH)/mini" --output-dir "$(BUILD_DIR)" .
 
 # Interactive development run, not a test path: FX suites still execute only
 # through fxtest-headless. Data and save images load separately because Ardens
@@ -241,9 +246,13 @@ test-pack-parity:
 
 test:
 	$(call run_test,,$(TEST_FLAGS),$(TEST_SOURCES),$(HOST_TEST_BIN))
+	$(call run_test,,$(TEST_FLAGS),$(WORLD_TEST_SOURCES),$(WORLD_TEST_BIN))
 
 test-debug:
 	$(call run_test,$(DEBUG_FLAGS),$(TEST_FLAGS),$(TEST_SOURCES),$(HOST_TEST_BIN))
+	$(call run_test,$(DEBUG_FLAGS),$(TEST_FLAGS),$(WORLD_TEST_SOURCES),$(WORLD_TEST_BIN))
+
+WORLD_TEST_SOURCES = src/GameState.cpp src/engine/world/World.cpp src/flags/flag_bit_array.cpp tst/world_test_main.cpp
 
 testvm:
 	$(call run_test,,$(TEST_FLAGS),$(TESTVM_SOURCES),$(VM_TEST_BIN))
@@ -298,8 +307,9 @@ fxtest-build:
 			printf '#include "../%s"\n' "$$name" > "$$stage/generated/$$name"; \
 		done; \
 		echo $$ino; \
-		$(ARDUINO_CLI) compile --fqbn "$(FQBN)" \
+		ARDUINO_BUILD_CACHE_PATH="$(ARDUINO_BUILD_CACHE_PATH)" $(ARDUINO_CLI) compile --fqbn "$(FQBN)" \
 		    $(AVR_BUILD_PROPERTIES) \
+		    --build-path "$$stage/build" \
 		    --output-dir "$$stage/output" \
 		    "$$stage/$$ino.ino"; \
 	done
