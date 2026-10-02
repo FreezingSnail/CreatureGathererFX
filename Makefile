@@ -100,11 +100,11 @@ full: gen build
 
 build:
 	@mkdir -p "$(BUILD_DIR)"
-	$(ARDUINO_CLI) compile --fqbn "$(FQBN)" --optimize-for-debug --output-dir "$(BUILD_DIR)" .
+	$(ARDUINO_CLI) compile --fqbn "$(FQBN)" --output-dir "$(BUILD_DIR)" .
 
 mini:
 	@mkdir -p "$(BUILD_DIR)"
-	$(ARDUINO_CLI) compile --fqbn "$(MINI_FQBN)" --optimize-for-debug --output-dir "$(BUILD_DIR)" .
+	$(ARDUINO_CLI) compile --fqbn "$(MINI_FQBN)" --output-dir "$(BUILD_DIR)" .
 
 # Interactive development run, not a test path: FX suites still execute only
 # through fxtest-headless. Data and save images load separately because Ardens
@@ -240,7 +240,7 @@ fxtest-build:
 		done; \
 		echo $$ino; \
 		$(ARDUINO_CLI) compile --fqbn "$(FQBN)" \
-		    --optimize-for-debug --output-dir "$$stage/output" \
+		    --output-dir "$$stage/output" \
 		    "$$stage/$$ino.ino"; \
 	done
 
