@@ -565,3 +565,88 @@ make check
 git diff --check
 # PASS.
 ```
+
+# Wave 1 — save layout, ListView, and HP/save sequencing decision
+
+## CreatureGathererFX-jp8.2.1 — reserve the 8-sector save region
+
+Verified the installed ArduboyFX implementation at
+`/Users/connorfranc/Library/Arduino15/packages/arduboy-homemade/hardware/avr/1.4.0/libraries/ArduboyFX/src/ArduboyFX.cpp`:
+`loadGameState` calls `seekSave(0)` at line 538 (and its non-AVR path at 575),
+while `saveGameState` checks `(addr + size) > 4094` and erases block 0 at lines
+688-692. Added the eight
+sector layout with `save_main`, `save_log`, the store pair, and four named
+reserved sectors. Regenerated the published constants and intentionally updated
+the pack parity baseline. Image size changed from 621,568 to 646,144 bytes
+(+24,576); `FX_SAVE_BYTES` is 32,768, `FX_DATA_PAGE` changed `0xf684` to
+`0xf624`, and `FX_SAVE_PAGE` changed `0xffe0` to `0xff80`.
+
+```text
+make gen
+# PASS; packed FX image emitted.
+make verify-generated
+# PASS.
+make test-manifest
+# fxdata-manifest: PASS.
+make test-pack-parity
+# layout equivalence and perturbation diagnostics PASS; pack parity: PASS.
+make test
+# 1,098 passed, 0 failed (included the concurrently added ListView suite).
+make fxtest-headless ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# 10/10 suites PASS; test_save 229/0; test_stack headroom=428 B.
+```
+
+Worker elapsed time: about 2 minutes 47 seconds. Generated manifest and image
+artifacts are ignored; tracked generated output is staged with its layout source.
+
+## CreatureGathererFX-jp8.4.8 — add ListView
+
+Added the 4-byte, non-wrapping ListView value type, implementation and host
+suite. `make build` confirms static RAM remains at 1,857 bytes (703 free), the
+same as the prior baseline. The first sandboxed build could not read the
+Arduino CLI cache; the approved retry completed successfully.
+
+```text
+make test
+# ListViewSuite printed; 1,098 passed, 0 failed.
+make build
+# PASS after approved retry; flash 17,736 B, globals 1,857 B, free 703 B.
+git diff --check
+# PASS.
+```
+
+Worker elapsed time: about 4 minutes. The integrated gate below includes the
+new suite.
+
+## CreatureGathererFX-jp8.7 — settle HP and save version ownership
+
+Chose Player as persistent HP owner and BattleState as the transient owner
+during a live session. BattleSession imports HP at battle start, writes it back
+on every terminal exit, and synchronizes active HP before a save from BATTLE.
+The explicit `partyHP[3]` field bumps M0 from SaveFile v1 to v2; the M1 store
+rewrite bumps v2 to v3. Both changes intentionally invalidate the previous
+pre-release schema. Updated the jp8.1.10, jp8.2/jp8.2.6, and jp8.3.11 bead notes;
+no extra integration bead was needed.
+
+```text
+bd show CreatureGathererFX-jp8.1.10 --json
+bd show CreatureGathererFX-jp8.2.6 --json
+bd show CreatureGathererFX-jp8.3.11 --json
+# Decision override notes and updated v3 titles confirmed.
+# All updates succeeded. No code tests apply to this planning bead.
+```
+
+Orchestrator investigation/decision time: about 6 minutes.
+
+## Wave 1 integrated gate
+
+```text
+make check ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# exit 0; host 1,098/0; VM 10/0; manifest PASS; generated libs 6/0;
+# invariants 5/0; alias checks 28/0; all ten Ardens suites print P;
+# test_stack headroom=428 B.
+git diff --check
+# PASS.
+```
+
+Orchestrator gate elapsed time: about 22 seconds.

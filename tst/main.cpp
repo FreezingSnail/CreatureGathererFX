@@ -11,6 +11,7 @@
 #include "gamestate_test.hpp"
 #include "save_test.hpp"
 #include "item_test.hpp"
+#include "listview_test.hpp"
 
 #include "../src/globals.hpp"
 
@@ -54,6 +55,8 @@ int main() {
     std::cout << "SaveSuite finished" << std::endl;
     ItemSuite(tests);
     std::cout << "ItemSuite finished" << std::endl;
+    ListViewSuite(tests);
+    std::cout << "ListViewSuite finished" << std::endl;
 
     std::cout << "Tests Finished" << std::endl;
     tests.printSummary();

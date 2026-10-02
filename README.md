@@ -145,10 +145,11 @@ The packer emits:
 - `fxdata/generated/manifest.json`: deterministic provenance record for the layout target,
   `cgfx-tools` version, discovered input/output paths, and SHA-256 checksums.
 
-For this project, `[save]` reserves two sectors. `save_main` starts at offset `0` and `save_log` at
-offset `4096`; the generated save image is therefore two sectors (`8192` bytes), and the combined
-device image carries that region after the data image. Keep save offsets stable: changing them
-changes the generated header and the on-device format.
+For this project, `[save]` reserves eight sectors (`32768` bytes). `save_main` starts at offset `0`,
+`save_log` at `4096`, and the two store sectors at `8192` and `12288`. Four named reserved sectors
+occupy offsets `16384` through `28672`. The combined device image carries this region after the
+data image. Keep save offsets stable: changing them changes the generated header and the on-device
+format.
 
 `make pack` regenerates the packed artifacts. `make verify-generated` is non-mutating: it checks the
 manifest against current inputs and generated outputs (and checks the image when present), rejecting
