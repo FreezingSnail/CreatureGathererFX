@@ -348,16 +348,59 @@ The explicit qu9.1 acceptance of **at least 400 B painted-stack headroom** is un
 
 Worker wall time: about 3 minutes including implementation, two device stack measurements, host/VM/device save checks, generation verification, and LTO frame inspection.
 
+# CreatureGathererFX-qu9.11 — reach 400 B painted stack headroom
+
+At clean HEAD `9033e45`, the original 188 B painted headroom reproduced. Streaming validation in `SaveFile.cpp` computes the same byte-ordered, modulo-255 checksum through an 8 B flash window; the scanner still skips 157 B legacy v1 records and selects the last valid current record before writing to the caller's output. Compaction now loads only a validated party baseline into its live snapshot and verifies the stored record in bounded chunks, removing full-record replay and verify locals. Its mutable snapshot already has version and checksum set before commit, so compaction calls `saveFileCommitPrepared` and avoids a second 127 B copy; the public `saveFileCommit` still normalizes its input before calling that helper. `SAVE_VERSION` and the on-flash schema did not change. Host coverage checks last-valid selection, invalid-tail fallback, preservation of fields outside party, and byte-for-byte preservation after a failed party load.
+
+Measured checkpoints with `make fxtest-headless FXTEST_INOS=tst/fxdatatest/test_stack.ino ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens` after each change:
+
+| Checkpoint | Stack base | Low-water | Headroom | Result |
+| --- | --- | --- | ---: | --- |
+| Starting HEAD | `0x84C` | `0x908` | 188 B | P at old 128 B pin |
+| 8 B streaming validation | `0x84C` | `0x979` | 301 B | P at old pin |
+| Party-only replay and bounded verification | `0x84C` | `0x99B` | 335 B | P at old pin |
+| Prepared compaction commit, diagnostic build | `0x84C` | `0x9F1` | 421 B | P at old pin |
+| Final permanent suite, `MIN_HEADROOM=400` | `0x84C` | `0x9F8` | **428 B** | PASSED=3 FAILED=0, P |
+
+The temporary pre-save diagnostic showed 577 B headroom before `runSave`, so the peak belongs to the save chain. The diagnostic was removed before the final measurement. Final test globals are 1,868 B of 2,560 B; 692 B remain, and the observed peak stack use is 264 B. The 428 B painted headroom contains the 69 B USB ISR reserve. The suite continues to create its 127 B conservative local snapshot, perform a full compaction, and measure all resident test globals.
+
+Exact final worker commands and results:
+
+```text
+make build
+# PASS; 17,736 B flash, 1,857 B globals (703 B free).
+
+make fxtest-headless FXTEST_INOS=tst/fxdatatest/test_stack.ino ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS; base=0x84C, top=0xAA5, low=0x9F8, headroom=428 B; P.
+
+make fxtest-headless FXTEST_INOS=tst/fxdatatest/test_save.ino ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS; 229 passed, 0 failed; P. Covers repeated commits, save/load fields,
+# latest-record selection, journal replay, compaction, and controller behavior.
+
+make test
+# PASS; 953 passed, 0 failed, including 11 new streaming-selection assertions.
+make testvm
+# PASS; 10 passed, 0 failed.
+make verify-generated
+# PASS; no generated artifacts changed.
+git diff --check
+# PASS.
+```
+
+Production LTO ELF from `make build`: `saveStepAdvance` and `saveFileLoad` are inlined into callers; `main` reserves 48 B (down from 179 B at baseline), while `latestValidRecordAddr` saves 18 registers plus a 17 B local frame, 35 B total. `flash_backend_detail::readBytes` saves 4 B. The representative `main` → latest-valid scan → flash read chain is about 91 B including two 2 B return addresses, below the 400 B chain cap; the painted suite directly measured a larger conservative 264 B peak. Final device `runSave` reserves 169 B plus 18 register saves = 187 B. No physical hardware check was performed; the Ardens save and stack suites are green.
+
+Worker wall time: about 5 minutes (02:43–02:48 UTC) for three measured trims, diagnostics, focused tests, LTO frame review, and reporting. Deviation: reaching 400 B required two additional production-chain copy trims after the first streaming-validation checkpoint; the rejected option was lowering the 400 B threshold.
+
 Orchestrator integrated gate:
 
 ```text
 make check
-# PASS: host 942/0; VM 10/0; generated artifacts and library checks pass.
-# All 10 Ardens device suites print P, including test_stack at 188 B headroom.
-# Wall time: 27 seconds.
+# exit 0: host 953/0; VM 10/0; generated-data and library checks pass.
+# All 10 Ardens device suites print P; test_stack headroom=428 B at
+# MIN_HEADROOM=400. Wall time: about 17 seconds.
 ```
 
-The integrated gate is green and the save overflow is remediated against the suite's pinned 128 B floor. qu9.1 remains open because the bead's separate 400 B measured-headroom acceptance is still 212 B short; no threshold or acceptance was changed.
+The integrated gate is green. qu9.11 reaches its 400 B target at 428 B, with no save schema or version change. The previously blocked qu9.1 stack acceptance is now met and can be closed after this implementation commit.
 
 # CreatureGathererFX-qu9.2 — post-fix pass and threshold assertion
 

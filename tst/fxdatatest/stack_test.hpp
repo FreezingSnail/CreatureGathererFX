@@ -10,9 +10,9 @@ extern "C" uint8_t __bss_end;
 
 constexpr uint8_t PAINT_BYTE = 0xC5;
 constexpr uint8_t PAINT_MARGIN = 64;
-// ATmega32u4 has 2560 B SRAM. The device test includes the game globals;
-// reserve at least 128 B beyond their stack use for the 69 B USB ISR and margin.
-constexpr uint16_t MIN_HEADROOM = 128;
+// ATmega32u4 has 2560 B SRAM. The qu9.11 save-chain run measured 421 B
+// above the device-test globals; pin 400 B, including the 69 B USB ISR reserve.
+constexpr uint16_t MIN_HEADROOM = 400;
 
 inline uint16_t paintStack()
 {
@@ -115,5 +115,5 @@ inline void test_stack(FxTest &test)
     test.expectEq(static_cast<uint8_t>(step), static_cast<uint8_t>(SaveStep::Done),
                   F("save compaction completes"));
     test.expectEq(low > base, true, F("stack does not collide with globals"));
-    test.expectEq(headroom >= MIN_HEADROOM, true, F("stack headroom >= 128 B"));
+    test.expectEq(headroom >= MIN_HEADROOM, true, F("stack headroom >= 400 B"));
 }
