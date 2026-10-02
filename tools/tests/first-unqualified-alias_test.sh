@@ -9,9 +9,9 @@ root=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd -P)
 header=${FX_HEADER:-$root/src/fxdata.h}
 image=${FX_IMAGE:-$root/dist/fxdata-data.bin}
 expectations=${FX_ALIAS_EXPECTATIONS:-$root/tools/tests/fixtures/first-unqualified-aliases.tsv}
-# This is the committed pre-alias-resolution table location, deliberately not
-# read from the regenerated header.
-menu_strings_address=0x04EA95
+# This is the committed table location after appending item name sprites,
+# deliberately not read from the regenerated header.
+menu_strings_address=0x04F8C3
 
 failures=0
 passes=0

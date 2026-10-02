@@ -33,8 +33,9 @@ source = { expand = { path = "../../../fxdata/data/chunks.txt" } }
 [[entry]]
 source = { expand = { path = "../../../fxdata/Sprites.txt" } }
 
+# Match the positive migration fixture; only encounterRates is perturbed.
 [[entry]]
-source = { expand = { path = "../../../fxdata/generated/Sprites.txt" } }
+source = { expand = { path = "../../../fxdata/generated/Sprites.txt", exclude = ["lureTier0", "lureTier1", "lureTier2", "lureType0", "lureType1", "lureType2", "lureType3", "lureType4", "lureType5", "lureType6", "lureType7", "consumable0", "consumable1", "consumable2", "consumable3", "consumable4", "consumable5", "consumable6", "consumable7", "LureTierNames", "LureTypeNames", "ConsumableNames"] } }
 
 [[entry]]
 source = { expand = { path = "../../../fxdata/battleEffects/Sprites.txt" } }

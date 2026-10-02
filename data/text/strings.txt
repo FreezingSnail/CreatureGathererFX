@@ -113,3 +113,31 @@ namespace MenuStrings {
 namespace EffectStrings {
     applied = "applied effect"
 }
+
+namespace LureTierNames {
+    lureTier0 = "crude"
+    lureTier1 = "fine"
+    lureTier2 = "pure"
+}
+
+namespace LureTypeNames {
+    lureType0 = "spirit"
+    lureType1 = "water"
+    lureType2 = "wind"
+    lureType3 = "earth"
+    lureType4 = "fire"
+    lureType5 = "lightning"
+    lureType6 = "plant"
+    lureType7 = "elder"
+}
+
+namespace ConsumableNames {
+    consumable0 = "tonic"
+    consumable1 = "salve"
+    consumable2 = "elixir"
+    consumable3 = "remedy"
+    consumable4 = "herb"
+    consumable5 = "nectar"
+    consumable6 = "essence"
+    consumable7 = "crystal"
+}
