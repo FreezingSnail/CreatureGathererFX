@@ -6,6 +6,7 @@
 #include "../globals.hpp"
 #include "../lib/ReadData.hpp"
 #include "world/Chunk.hpp"
+#include "world/World.hpp"
 #include "../external/SpritesABC.hpp"
 
 #include <ArduboyFX.h>
@@ -283,28 +284,29 @@ static void drawScene(BattleEngine &engine) {
     drawPlayerHP(engine);
 }
 
-static void drawMapFast() {
-    uint16_t loc = gameState.playerLocation;
+static void drawMapFast(const WorldEngine &world) {
+    const uint16_t loc = world.location();
+    const ViewOffset view = world.view();
 
     // Convert 1D location to 2D coordinates
-    uint8_t playerX = loc % 256;   // X coordinate (0-255)
-    uint8_t playerY = loc / 256;   // Y coordinate (0-255)
+    const int16_t playerX = loc & 0xFF;   // X coordinate (0-255)
+    const int16_t playerY = loc >> 8;    // Y coordinate (0-255)
 
     // Calculate the top-left corner of the 8x4 viewport in world coordinates
     // Player is at tile 3,2 of the viewport
-    uint16_t viewportStartX = playerX - 3;   // 3 tiles left of player
-    uint16_t viewportStartY = playerY - 2;   // 2 tiles above player
+    const int16_t viewportStartX = playerX - 3;   // 3 tiles left of player
+    const int16_t viewportStartY = playerY - 2;   // 2 tiles above player
 
-    uint16_t startTile = (viewportStartX + (256 * viewportStartY));
+    const uint16_t startTile = static_cast<uint16_t>(viewportStartX + (256 * viewportStartY));
 
-    uint8_t xOffset = gameState.xStepOffset;
-    uint8_t yOffset = gameState.yStepOffset;
+    const int8_t xOffset = view.x;
+    const int8_t yOffset = view.y;
     uint8_t rows = 4;
     int16_t startMod = 0;
     int8_t xShift = 0;
     int8_t yShift = 0;
-    if (gameState.walkingMask != 0) {
-        switch (gameState.walkingMask) {
+    if (view.mask != 0) {
+        switch (view.mask) {
         case 0b10000000:
             startMod = -1 * 2;
             xShift = 1;
@@ -334,15 +336,15 @@ static void drawMapFast() {
             uint8_t screenX = (16 * j);
             uint8_t screenY = (16 * i);
             uint16_t tile = rowbuf[j] - 1;
-            int8_t x = screenX + xOffset;
-            int8_t y = screenY + yOffset;
+            int16_t x = static_cast<int16_t>(screenX) + xOffset;
+            int16_t y = static_cast<int16_t>(screenY) + yOffset;
 
             if (xShift == 1) {
                 x -= 16;
             } else if (yShift == -1) {
                 y -= 16;
             }
-            SpritesABC ::drawSizedFX(x, y, 16, 16, tiles, SpritesABC::MODE_OVERWRITE, FRAME(tile));
+            SpritesABC ::drawSizedFX(static_cast<int8_t>(x), static_cast<int8_t>(y), 16, 16, tiles, SpritesABC::MODE_OVERWRITE, FRAME(tile));
         }
     }
 }

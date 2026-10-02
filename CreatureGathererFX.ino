@@ -41,11 +41,6 @@ DialogMenu dialogMenu;
 ScriptVm vm;
 uint8_t *buffer;
 
-// TODO: only needs 4 bits
-uint8_t stepTicker = 0;
-// TODO: unsure if need
-uint8_t ticker = 0;
-
 void setup() {
     // Serial.begin(9600);
     //  arduboy.begin();
@@ -72,67 +67,13 @@ void setup() {
 }
 
 
-void handleMovement() {
-    ticker++;
-    if (gameState.walkingMask == 0) {
-        if (arduboy.pressed(LEFT_BUTTON)) {
-            gameState.walkingMask |= 0b10000000;
-        } else if (arduboy.pressed(RIGHT_BUTTON)) {
-            gameState.walkingMask |= 0b01000000;
-        } else if (arduboy.pressed(UP_BUTTON)) {
-            gameState.walkingMask |= 0b00100000;
-        } else if (arduboy.pressed(DOWN_BUTTON)) {
-            gameState.walkingMask |= 0b00001000;
-        }
-    }
-
-    if (gameState.walkingMask != 0) {
-        stepTicker += 1;
-        switch (gameState.walkingMask) {
-        case 0b10000000:
-            gameState.xStepOffset += 1;
-            break;
-        case 0b01000000:
-            gameState.xStepOffset -= 1;
-            break;
-        case 0b00100000:
-            gameState.yStepOffset += 1;
-            break;
-        case 0b00001000:
-            gameState.yStepOffset -= 1;
-            break;
-        }
-    }
-
-    if (stepTicker > 15) {
-        stepTicker = 0;
-        switch (gameState.walkingMask) {
-        case 0b10000000:
-            gameState.playerLocation -= 1;
-            break;
-        case 0b01000000:
-            gameState.playerLocation += 1;
-            break;
-        case 0b00100000:
-            gameState.playerLocation -= 256;
-            break;
-        case 0b00001000:
-            gameState.playerLocation += 256;
-            break;
-        }
-        gameState.walkingMask = 0;
-        gameState.xStepOffset = 0;
-        gameState.yStepOffset = 0;
-    }
-}
-
 void run() {
     switch (gameState.state) {
     case GameState_t::BATTLE:
         drawScene(engine);
         break;
     case GameState_t::WORLD:
-        handleMovement();
+        world.runMap();
         break;
     case GameState_t::ARENA:
         arena.drawarenaLoop(menu, player, engine);
@@ -157,7 +98,7 @@ void render() {
         drawScene(engine);
         break;
     case GameState_t::WORLD:
-        drawMapFast();
+        drawMapFast(world);
         drawPlayer();
         break;
     case GameState_t::ARENA:

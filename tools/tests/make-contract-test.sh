@@ -76,6 +76,8 @@ done
 build=$(make --no-print-directory -n build \
     ARDUINO_CLI=fixture-arduino FQBN=fixture:fx BUILD_DIR=build/contract)
 printf '%s\n' "$build" | grep -Fq 'fixture-arduino compile --fqbn "fixture:fx"'
+printf '%s\n' "$build" | grep -Fq 'ARDUINO_BUILD_CACHE_PATH="build/contract/arduino-cache" fixture-arduino compile'
+printf '%s\n' "$build" | grep -Fq -- '--build-path "build/contract/arduino-build/fx"'
 printf '%s\n' "$build" | grep -Fq -- '--output-dir "build/contract"'
 for property in compiler.cpp.extra_flags compiler.c.extra_flags compiler.c.elf.extra_flags; do
     printf '%s\n' "$build" | grep -Fq -- "--build-property $property=-mrelax"
@@ -84,6 +86,7 @@ done
 mini=$(make --no-print-directory -n mini \
     ARDUINO_CLI=fixture-arduino MINI_FQBN=fixture:mini BUILD_DIR=build/contract)
 printf '%s\n' "$mini" | grep -Fq 'fixture-arduino compile --fqbn "fixture:mini"'
+printf '%s\n' "$mini" | grep -Fq -- '--build-path "build/contract/arduino-build/mini"'
 printf '%s\n' "$mini" | grep -Fq -- '--output-dir "build/contract"'
 for property in compiler.cpp.extra_flags compiler.c.extra_flags compiler.c.elf.extra_flags; do
     printf '%s\n' "$mini" | grep -Fq -- "--build-property $property=-mrelax"
@@ -123,6 +126,8 @@ fxtest=$(make --no-print-directory -n fxtest-build \
     ARDUINO_CLI=fixture-arduino FQBN=fixture:fx BUILD_DIR=build/contract)
 printf '%s\n' "$fxtest" | grep -Fq 'stage="build/contract/fxtest/'
 printf '%s\n' "$fxtest" | grep -Fq -- '--fqbn "fixture:fx"'
+printf '%s\n' "$fxtest" | grep -Fq -- '--build-path "$stage/build"'
+printf '%s\n' "$fxtest" | grep -Fq 'ARDUINO_BUILD_CACHE_PATH="build/contract/arduino-cache" fixture-arduino compile'
 for property in compiler.cpp.extra_flags compiler.c.extra_flags compiler.c.elf.extra_flags; do
     printf '%s\n' "$fxtest" | grep -Fq -- "--build-property $property=-mrelax"
 done
