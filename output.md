@@ -308,3 +308,53 @@ make fxtest-headless
 Save compatibility: the old AVR v1 157 B record is deliberately discarded. `saveFileLoad` accepts no legacy payload and leaves its output unchanged; it skips the legacy bytes so a current-format record later in the sector remains discoverable. On the first subsequent commit, the old sector is erased before saving the narrowed runtime representation. No other save schema fields or version values changed.
 
 Wall time: approximately 20 minutes including code, save-path inspection, and gates; final host suite 1.7 seconds, production build 4.0 seconds, integrated gate 42 seconds. Deviation: full device validation cannot pass until the separate qu9.1 stack remediation; the qu9.2 baseline's exact expected `F` was retained. Bead remains open pending the integrated green stack gate. No commit, push, or bd completion update performed.
+
+# CreatureGathererFX-qu9.1 — save-path stack remediation (BLOCKED on 400 B acceptance)
+
+Changed `journalCount` and `journalReplay` from 256 B page buffers to 32 B record-aligned windows. `saveFileLoad` now tracks the address of the latest validated record, then reads that one record into `out` only after finding a valid candidate. A failed scan leaves `out` untouched; SAVE_VERSION and record layout are unchanged. qu9.3's narrowed Effect is already present.
+
+Measured after each step with the permanent painted-stack suite:
+
+```text
+make fxtest-headless FXTEST_INOS=tst/fxdatatest/test_stack.ino ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# After 32 B journal window alone: base=0x84C, top=0xAA5, low=0x88B,
+# headroom=63 B; PASSED=2 FAILED=1, F (128 B pin still failed).
+
+make fxtest-headless FXTEST_INOS=tst/fxdatatest/test_stack.ino ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# After last-valid-address load: base=0x84C, top=0xAA5, low=0x908,
+# headroom=188 B; PASSED=3 FAILED=0, P. qu9.1 >=400 B target misses by 212 B.
+
+make build
+# Sketch 17,966 B flash; globals 1,917/2,560 B, 643 B free.
+
+make gen
+# PASS; no generated-file diff.
+make test
+# 942 passed, 0 failed.
+make testvm
+# 10 passed, 0 failed.
+make verify-generated
+# PASS.
+make fxtest-headless FXTEST_INOS=tst/fxdatatest/test_save.ino ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# Device save suite PASSED=211 FAILED=0, P; exercises two commits, latest-record
+# selection, journal replay, compaction, and save/reload of serialized fields.
+git diff --check
+# PASS.
+```
+
+Production LTO ELF: `saveStepAdvance` is inlined into `main`; `main` reserves 179 B (`subi r28, 0xB3`), `saveFileLoad` reserves 129 B plus 16 register saves = 145 B, and `flash_backend_detail::readBytes` saves 4 B. This is roughly 334 B along the main → save load → flash read chain with three 2 B return addresses, below the 400 B chain cap, but the test's measured low-water is the stricter recorded fact. `sizeof(SaveFile)` is 127 B on AVR; qu9.3's `Effect` is 1 B. A 69 B USB ISR reserve fits within the 188 B device mark, leaving 119 B in this test scenario.
+
+The explicit qu9.1 acceptance of **at least 400 B painted-stack headroom** is unmet (188 B measured; 212 B deficit). Reaching that number requires another stack reduction, likely avoiding the 127 B scan candidate and/or the 127 B compaction snapshot in the device chain; both exceed this bead's pinned two changes and need a separately reviewed design. An alternate interpretation would be to amend the acceptance to a measured safe reserve, but that must be a deliberate plan correction; do not mark this bead complete from a green `P` alone. The suite's 128 B pin has not been raised. The worker did not run `make check`, commit, close the bead, or claim the 400 B criterion passed. No physical-device interactive state inspection was performed.
+
+Worker wall time: about 3 minutes including implementation, two device stack measurements, host/VM/device save checks, generation verification, and LTO frame inspection.
+
+Orchestrator integrated gate:
+
+```text
+make check
+# PASS: host 942/0; VM 10/0; generated artifacts and library checks pass.
+# All 10 Ardens device suites print P, including test_stack at 188 B headroom.
+# Wall time: 27 seconds.
+```
+
+The integrated gate is green and the save overflow is remediated against the suite's pinned 128 B floor. qu9.1 remains open because the bead's separate 400 B measured-headroom acceptance is still 212 B short; no threshold or acceptance was changed.
