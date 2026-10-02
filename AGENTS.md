@@ -20,15 +20,23 @@ make test-generated-libs   # packed image <-> src/fxdata.h <-> generated sources
 make test-pack-parity      # native packed-image SHA-256 baseline
 make test-doctor           # setup-diagnostic tests
 make build | mini | run    # shipping FX / Mini / interactive Ardens run
+make ram                   # shipping FX build with flash/RAM report
 make doctor                # tool readiness (cgfx-tools, arduino-cli, Ardens)
 make check                 # gen + host + VM + manifest + generated-libs + verify-generated + fxtest
+make fxtest-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_save.ino
+                           # selected device suite plus test_stack headroom check
+make final-gate            # full make check followed by shipping RAM report; requires ARDENS
 ```
 
-Full gate before any commit: `make gen` with an empty diff, `make test`, `make testvm`,
-`make test-manifest`, `make test-generated-libs`, `make verify-generated`, full
-`make fxtest-headless`, plus `make test-pack-parity` when packed bytes can change. Iterate device
-work with `make fxtest-headless FXTEST_INOS=tst/fxdatatest/test_<name>.ino`; only the final run is
-the full gate.
+Before committing, run `make final-gate ARDENS=/path/to/Ardens`; it runs `make check` and then the
+shipping RAM report. Confirm generation left no unexpected tracked changes, and run
+`make test-pack-parity` when packed bytes can change. During a device spike, use
+`make fxtest-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_save.ino ARDENS=/path/to/Ardens` to run
+the touched suite with `test_stack`; use `make fxtest-headless FXTEST_INOS=...` for other focused
+device iterations. Run the final gate after implementation and edge-case fixes are settled.
+`final-gate` prints concise results and preserves complete diagnostics in
+`$(BUILD_DIR)/final-gate/{check,ram}.log` (override `FINAL_GATE_LOG_DIR` to relocate them).
+It always runs every FX suite, even if a focused `FXTEST_INOS` override is present.
 
 ## Hard rules
 

@@ -1,4 +1,4 @@
-.PHONY: help setup doctor plant test test-debug testvm testvm-debug gen gen-data gen-sprites gen-fixtures pack full build mini ram run dev check verify-generated test-manifest test-generated-libs test-doctor fxtest fxtest-headless fxtest-preflight fxtest-headless-preflight fxtest-build fxtest-run new-fxtest
+.PHONY: help setup doctor plant test test-debug testvm testvm-debug gen gen-data gen-sprites gen-fixtures pack full build mini ram run dev check final-gate verify-generated test-manifest test-generated-libs test-doctor fxtest fxtest-headless fxtest-spike fxtest-preflight fxtest-headless-preflight fxtest-build fxtest-run new-fxtest
 
 # Public command API. Override tool, board, and output variables per workspace/CI.
 CXX ?= g++
@@ -25,6 +25,7 @@ FXDATA_DIST_DIR ?= $(DIST_DIR)
 ARDENS ?=
 FXTEST_MS ?= 3000
 FXTEST_BUILD_DIR ?= $(BUILD_DIR)/fxtest
+FINAL_GATE_LOG_DIR ?= $(BUILD_DIR)/final-gate
 HOST_TEST_BIN ?= $(BUILD_DIR)/tests/host
 VM_TEST_BIN ?= $(BUILD_DIR)/tests/vm
 GENERATED_TEST_BIN ?= $(BUILD_DIR)/tests/generated
@@ -47,6 +48,7 @@ help:
 		'  testvm   run fast ScriptVM C++ tests; prerequisite: $(CXX); output: $(VM_TEST_BIN)' \
 		'  build    compile Arduboy FX sketch; prerequisite: $(ARDUINO_CLI); output: $(BUILD_DIR)' \
 		'  ram      build and report FX flash/RAM plus largest static symbols; prerequisite: $(ARDUINO_CLI), avr-size, avr-nm' \
+		'  final-gate  run the full check then the shipping RAM report; requires ARDENS' \
 		'  run      launch Ardens with the sketch, FX data, and FX save images; prerequisite: ARDENS' \
 		'  dev      regenerate FX data, rebuild, then launch Ardens (gen + run); prerequisite: cgfx-tools, ARDENS' \
 		'  check    run generation, host tests, VM tests, then optional FX runtime tests' \
@@ -56,6 +58,7 @@ help:
 		'  test-doctor run permanent setup-diagnostic tests' \
 		'  fxtest   alias for fxtest-headless; skips only when ARDENS is unset' \
 		'  fxtest-headless  run every FX device sketch through Ardens serial capture; blocks unsupported Ardens' \
+		'  fxtest-spike  run one selected FX suite plus test_stack; set FXTEST_SPIKE_INO and ARDENS' \
 		'' \
 		'Overrides: CXX, ARDUINO_CLI, FQBN, BUILD_DIR, DIST_DIR, FXDATA_BIN, ARDENS, FXTEST_MS, RAM_ELF, AVR_SIZE, AVR_NM.'
 
@@ -198,6 +201,13 @@ pack:
 
 check: gen test testvm test-manifest test-generated-libs verify-generated fxtest
 
+# Final pre-commit gate. Keep the integrated check and shipping RAM build
+# sequential even when the caller invokes make with -j.
+final-gate:
+	@test -n "$(ARDENS)" || { echo "final-gate: ARDENS is unset; set ARDENS=/path/to/Ardens" >&2; exit 1; }
+	@./tools/run-logged-command.sh "$(FINAL_GATE_LOG_DIR)/check.log" $(MAKE) --no-print-directory -j1 check FXTEST_INOS="$(wildcard tst/fxdatatest/*.ino)"
+	@./tools/run-logged-command.sh "$(FINAL_GATE_LOG_DIR)/ram.log" $(MAKE) --no-print-directory -j1 ram
+
 verify-generated:
 	@if test ! -e "$(FXDATA_DIST_DIR)/fxdata-data.bin" && test ! -e "$(FXDATA_DIST_DIR)/fxdata.bin"; then \
 		echo 'verify-generated: image not built; run make gen to build packed FX artifacts'; \
@@ -241,8 +251,18 @@ testvm-debug:
 
 FXTEST_INOS ?= $(wildcard tst/fxdatatest/*.ino)
 FXTEST_NAMES = $(basename $(notdir $(FXTEST_INOS)))
+FXTEST_SPIKE_INO ?=
+FXTEST_SPIKE_INOS = $(sort $(FXTEST_SPIKE_INO) tst/fxdatatest/test_stack.ino)
 
 fxtest: fxtest-headless
+
+# Early device spike: pair the selected feature suite with the painted stack
+# budget suite so increased call depth is caught before the full gate.
+fxtest-spike:
+	@test -n "$(FXTEST_SPIKE_INO)" || { echo "fxtest-spike: set FXTEST_SPIKE_INO=tst/fxdatatest/test_save.ino (or another suite)" >&2; exit 1; }
+	@test -f "$(FXTEST_SPIKE_INO)" || { echo "fxtest-spike: suite not found at $(FXTEST_SPIKE_INO)" >&2; exit 1; }
+	@test -n "$(ARDENS)" || { echo "fxtest-spike: ARDENS is unset; set ARDENS=/path/to/Ardens" >&2; exit 1; }
+	@$(MAKE) --no-print-directory -j1 fxtest-headless FXTEST_INOS="$(FXTEST_SPIKE_INOS)"
 
 fxtest-headless:
 	@if [ -z "$(ARDENS)" ]; then \
