@@ -6,8 +6,8 @@ using uint24_t = __uint24;
 
 // Initialize FX hardware using  FX::begin(FX_DATA_PAGE); in the setup() function.
 
-constexpr uint16_t FX_DATA_PAGE  = 0xf692;
-constexpr uint24_t FX_DATA_BYTES = 609672;
+constexpr uint16_t FX_DATA_PAGE  = 0xf684;
+constexpr uint24_t FX_DATA_BYTES = 613359;
 
 constexpr uint16_t FX_SAVE_PAGE  = 0xFFE0;
 constexpr uint24_t FX_SAVE_BYTES = 8192;
@@ -341,38 +341,72 @@ constexpr uint24_t quarter = 0x04E55E;
 constexpr uint24_t creature22 = 0x04E798;
 constexpr uint24_t change = 0x04E84C;
 constexpr uint24_t creature31 = 0x04E93C;
+constexpr uint24_t lureTier0 = 0x04E9D2;
+constexpr uint24_t lureTier1 = 0x04EA86;
+constexpr uint24_t lureTier2 = 0x04EB1C;
+constexpr uint24_t lureType0 = 0x04EBB2;
+constexpr uint24_t lureType1 = 0x04EC84;
+constexpr uint24_t lureType2 = 0x04ED38;
+constexpr uint24_t lureType3 = 0x04EDCE;
+constexpr uint24_t lureType4 = 0x04EE82;
+constexpr uint24_t lureType5 = 0x04EF18;
+constexpr uint24_t lureType6 = 0x04F044;
+constexpr uint24_t lureType7 = 0x04F0F8;
+constexpr uint24_t consumable0 = 0x04F1AC;
+constexpr uint24_t consumable1 = 0x04F260;
+constexpr uint24_t consumable2 = 0x04F314;
+constexpr uint24_t consumable3 = 0x04F3E6;
+constexpr uint24_t consumable4 = 0x04F4B8;
+constexpr uint24_t consumable5 = 0x04F54E;
+constexpr uint24_t consumable6 = 0x04F620;
+constexpr uint24_t consumable7 = 0x04F710;
 namespace CreatureNames
 {
-  constexpr uint24_t CreatureNames = 0x04E9D2;
+  constexpr uint24_t CreatureNames = 0x04F800;
 }
 
 namespace MoveNames
 {
-  constexpr uint24_t MoveNames = 0x04EA32;
+  constexpr uint24_t MoveNames = 0x04F860;
 }
 
 namespace MenuStrings
 {
-  constexpr uint24_t MenuStrings = 0x04EA95;
+  constexpr uint24_t MenuStrings = 0x04F8C3;
 }
 
 namespace EffectStrings
 {
-  constexpr uint24_t EffectStrings = 0x04EB07;
+  constexpr uint24_t EffectStrings = 0x04F935;
 }
 
-constexpr uint24_t basicBeamR = 0x04EB0A;
-constexpr uint24_t basicBeamL = 0x05030A;
-constexpr uint24_t BasicWaveR = 0x051B0A;
-constexpr uint24_t BasicWaveL = 0x05330A;
-constexpr uint24_t fontTrimmed = 0x054B0A;
+namespace LureTierNames
+{
+  constexpr uint24_t LureTierNames = 0x04F938;
+}
+
+namespace LureTypeNames
+{
+  constexpr uint24_t LureTypeNames = 0x04F941;
+}
+
+namespace ConsumableNames
+{
+  constexpr uint24_t ConsumableNames = 0x04F959;
+}
+
+constexpr uint24_t basicBeamR = 0x04F971;
+constexpr uint24_t basicBeamL = 0x051171;
+constexpr uint24_t BasicWaveR = 0x052971;
+constexpr uint24_t BasicWaveL = 0x054171;
+constexpr uint24_t fontTrimmed = 0x055971;
 constexpr uint16_t fontTrimmedWidth  = 5;
 constexpr uint16_t fontTrimmedHeight = 6;
 constexpr uint8_t  fontTrimmedFrames = 75;
 
-constexpr uint24_t type_table = 0x054C85;
-constexpr uint24_t move_table = 0x054CC5;
-constexpr uint24_t map_data = 0x054D75;
-constexpr uint24_t raw_map_data = 0x074D75;
-constexpr uint24_t raw_map_text = 0x094D75;
-constexpr uint24_t generator_version = 0x094D77;
+constexpr uint24_t type_table = 0x055AEC;
+constexpr uint24_t move_table = 0x055B2C;
+constexpr uint24_t map_data = 0x055BDC;
+constexpr uint24_t raw_map_data = 0x075BDC;
+constexpr uint24_t raw_map_text = 0x095BDC;
+constexpr uint24_t generator_version = 0x095BDE;

@@ -69,6 +69,9 @@ TEST_SOURCES = tst/src/ReadData.cpp \
 	src/save/Compaction.cpp \
 	src/plants/PlantStage.cpp \
 	src/plants/PlantPair.cpp \
+	src/item/Inventory.cpp \
+	src/item/KeyItems.cpp \
+	src/item/ItemNames.cpp \
 	src/creature/Creature.cpp \
 	src/player/Player.cpp \
 	src/opponent/Opponent.cpp \

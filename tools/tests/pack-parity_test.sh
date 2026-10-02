@@ -10,7 +10,7 @@ old_layout=$fixtures/fxlayout-old-304.toml
 new_layout=$fixtures/fxlayout-expand-20.toml
 perturbed_layout=$fixtures/fxlayout-expand-20-perturbed.toml
 # Baseline changes when cgfx-project.json selects the real maps/world_map.json.
-expected=c175c9dd7cf71cbcdab7cfaef40141ddb0624aec3d043c855186022bfea7fdd0
+expected=42873ff66900cdd6b135de95c3be0088dddf0a487b05f29d69b67c068cf1b57c
 
 for layout in "$old_layout" "$new_layout" "$perturbed_layout"; do
     test -f "$layout" || {

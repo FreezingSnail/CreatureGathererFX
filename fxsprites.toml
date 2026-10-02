@@ -42,4 +42,7 @@ order = [
   "creature17", "creature20", "creature21", "quad", "creature7", "SwitchIn", "amove11", "creature16", "power",
   "spirit", "doubled", "amove23", "pointerText", "attackText", "move", "creature18", "amove31", "escape", "creature1",
   "applied", "amove10", "quarter", "creature22", "change", "creature31",
+  "lureTier0", "lureTier1", "lureTier2",
+  "lureType0", "lureType1", "lureType2", "lureType3", "lureType4", "lureType5", "lureType6", "lureType7",
+  "consumable0", "consumable1", "consumable2", "consumable3", "consumable4", "consumable5", "consumable6", "consumable7",
 ]

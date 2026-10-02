@@ -10,6 +10,7 @@
 #include "effect_test.hpp"
 #include "gamestate_test.hpp"
 #include "save_test.hpp"
+#include "item_test.hpp"
 
 #include "../src/globals.hpp"
 
@@ -51,6 +52,8 @@ int main() {
     std::cout << "GameStateSuite finished" << std::endl;
     SaveSuite(tests);
     std::cout << "SaveSuite finished" << std::endl;
+    ItemSuite(tests);
+    std::cout << "ItemSuite finished" << std::endl;
 
     std::cout << "Tests Finished" << std::endl;
     tests.printSummary();
