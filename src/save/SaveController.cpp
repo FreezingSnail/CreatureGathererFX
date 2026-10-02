@@ -1,5 +1,7 @@
 #include "SaveController.hpp"
 
+#include <avr/pgmspace.h>
+
 #include "../common.hpp"
 #include "../globals.hpp"
 #include "../plants/PlantGamestate.hpp"
@@ -38,7 +40,7 @@ void captureLiveSaveState()
 
 void drawSavingStatus(bool failed)
 {
-    static const uint8_t saving[6][5] = {
+    static const uint8_t saving[6][5] PROGMEM = {
         {0x0f, 0x10, 0x0e, 0x01, 0x1e}, // S
         {0x0e, 0x11, 0x1f, 0x11, 0x11}, // A
         {0x11, 0x11, 0x11, 0x0a, 0x04}, // V
@@ -46,7 +48,7 @@ void drawSavingStatus(bool failed)
         {0x11, 0x19, 0x15, 0x13, 0x11}, // N
         {0x0e, 0x10, 0x17, 0x11, 0x0e}, // G
     };
-    static const uint8_t failedText[6][5] = {
+    static const uint8_t failedText[6][5] PROGMEM = {
         {0x1f, 0x10, 0x1e, 0x10, 0x10}, // F
         {0x0e, 0x11, 0x1f, 0x11, 0x11}, // A
         {0x1f, 0x04, 0x04, 0x04, 0x1f}, // I
@@ -56,13 +58,14 @@ void drawSavingStatus(bool failed)
     };
     const uint8_t (*text)[5] = failed ? failedText : saving;
 
-    // Glyphs are drawn from RAM bitmaps instead of the FX font: FX reads while
-    // save flash is busy corrupt it.
+    // Keep using internal-flash glyphs here: the FX font shares SPI with the
+    // save flash, but pgm_read_byte uses AVR LPM and does not access that bus.
     SpritesU::fillRect(0, 0, 128, 64, WHITE);
     for (uint8_t glyph = 0; glyph < 6; ++glyph) {
         for (uint8_t row = 0; row < 5; ++row) {
+            const uint8_t rowBits = pgm_read_byte(&text[glyph][row]);
             for (uint8_t column = 0; column < 5; ++column) {
-                if ((text[glyph][row] & (1 << (4 - column))) != 0) {
+                if ((rowBits & (1 << (4 - column))) != 0) {
                     SpritesU::fillRect(34 + (glyph * 10) + (column * 2),
                                        27 + (row * 2), 2, 2, BLACK);
                 }

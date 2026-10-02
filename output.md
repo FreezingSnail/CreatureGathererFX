@@ -374,3 +374,25 @@ make fxtest-headless FXTEST_INOS=tst/fxdatatest/test_stack.ino ARDENS=/Users/con
 ```
 
 The threshold flip confirms the assertion direction. The 400 B qu9.1 criterion remains unmet and is recorded separately under that bead.
+
+# CreatureGathererFX-qu9.4 — move save status glyphs to PROGMEM
+
+`SaveController::drawSavingStatus` now reads the 6 x 5 `saving` and `failedText` glyph matrices from AVR internal flash with `pgm_read_byte`, once per row. This keeps the 6-by-5 glyph indexing intact and does not access the external FX SPI bus while the save flash is busy. Corrected the controller comments to explain that distinction; the FX font path remains unused here.
+
+```text
+make build
+# Sketch: 17,942 B flash; globals: 1,857 B, 703 B free.
+# Prior integrated production build in the qu9.1 report: 17,966 B flash,
+#   1,917 B globals. Delta: -24 B flash, -60 B globals.
+
+make fxtest-headless FXTEST_INOS=tst/fxdatatest/test_save.ino ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# exit 0; test_save PASSED=229 FAILED=0; P.
+# Confirms busy before/after drawStatus, the save remains active, framebuffer
+# pixels for ink/paper across all six SAVING glyphs, and FAILED F/background.
+
+make check
+# exit 0; host 942/0, VM 10/0, generated-data checks pass, and all 10 Ardens
+# device suites print P (test_save 229/0; test_stack 188 B headroom).
+```
+
+The device suite observes an asynchronous save-sector erase in progress before and after `SaveController::drawStatus`, confirms the save remains active, and samples framebuffer pixels for SAVING ink and paper plus the inactive-save FAILED glyph. A first assertion run exposed that framebuffer bits are set for paper and cleared for ink; expectations were corrected and the final run passed. No screenshot is available in Ardens serial mode. Worker wall time: approximately 7 minutes including the focused coverage follow-up. The integrated gate took 26 seconds; `git diff --check` passes.
