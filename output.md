@@ -358,3 +358,19 @@ make check
 ```
 
 The integrated gate is green and the save overflow is remediated against the suite's pinned 128 B floor. qu9.1 remains open because the bead's separate 400 B measured-headroom acceptance is still 212 B short; no threshold or acceptance was changed.
+
+# CreatureGathererFX-qu9.2 — post-fix pass and threshold assertion
+
+After qu9.1/qu9.3, the focused stack suite measures 188 B headroom and passes at its committed 128 B minimum. Temporarily raising the minimum to 189 B produces the expected F with the measured 188 B, then restoring 128 B produces P. The committed suite remains pinned at 128 B.
+
+```text
+make fxtest-headless FXTEST_INOS=tst/fxdatatest/test_stack.ino ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# exit 0: base=0x84C, top=0xAA5, low=0x908, headroom=188; PASSED=3 FAILED=0; P.
+
+# Temporarily set MIN_HEADROOM=189, then run the same targeted command.
+make fxtest-headless FXTEST_INOS=tst/fxdatatest/test_stack.ino ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# exit 2: headroom remains 188; the headroom assertion fails and emits F.
+# Restore MIN_HEADROOM=128 and rerun the first command; it exits 0 and emits P.
+```
+
+The threshold flip confirms the assertion direction. The 400 B qu9.1 criterion remains unmet and is recorded separately under that bead.
