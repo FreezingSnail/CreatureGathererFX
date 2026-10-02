@@ -5,6 +5,7 @@
 #include "fxtest.hpp"
 #include "src/fxdata.h"
 #include "src/lib/ReadData.hpp"
+#include "src/engine/world/Chunk.hpp"
 
 /*
  * Read-path contracts for the generated tables, asserted on hardware because
@@ -171,10 +172,74 @@ inline void test_text_block(FxTest &test) {
     }
 }
 
+inline void expect_uint24_bytes(FxTest &test, const uint24_t &actual,
+                                const uint24_t &expected,
+                                const __FlashStringHelper *label) {
+    uint8_t got[3], want[3];
+    memcpy(got, &actual, sizeof(got));
+    memcpy(want, &expected, sizeof(want));
+    for (uint8_t index = 0; index < 3; ++index) {
+        test.expectEqIdx(got[index], want[index], label, index);
+    }
+}
+
+inline void expect_script_prefix(FxTest &test, uint16_t chunkId,
+                                 const uint8_t *prefix, uint8_t size) {
+    uint8_t bytes[15];
+    FX::readDataBytes(Chunk::scriptSlotAddr(scripts, chunkId), bytes, size);
+    for (uint8_t index = 0; index < size; ++index) {
+        test.expectEqIdx(bytes[index], pgm_read_byte(prefix + index), F("script blob prefix"), index);
+    }
+}
+
+inline void test_chunk_layout(FxTest &test) {
+    // Prefixes are pinned from the three blobs in regenerated scripts.hpp.
+    // The device sketch stages src/ and this suite, not generator source files.
+    static const uint8_t blob0Prefix[] PROGMEM = {5, 0, 0, 0, 1, 9, 4, 0, 1, 0, 1, 0, 0, 0, 0};
+    static const uint8_t blob32Prefix[] PROGMEM = {4, 0, 4, 0, 4, 0, 12, 0, 7};
+    static const uint8_t blob33Prefix[] PROGMEM = {4, 0, 12, 0, 7, 0, 4, 0, 4};
+    uint8_t mapBytes[2];
+    FX::readDataBytes(Chunk::mapChunkAddr(map_data, 0), mapBytes, sizeof(mapBytes));
+    test.expectEq(mapBytes[0], 0, F("map chunk 0 first word high"));
+    test.expectEq(mapBytes[1], 7, F("map chunk 0 first word low"));
+    FX::readDataBytes(Chunk::mapChunkAddr(map_data, 3), mapBytes, sizeof(mapBytes));
+    test.expectEq(mapBytes[0], 0, F("map chunk 3 first word high"));
+    test.expectEq(mapBytes[1], 0, F("map chunk 3 first word low"));
+    FX::readDataBytes(Chunk::mapChunkAddr(map_data, 2047), mapBytes, sizeof(mapBytes));
+    test.expectEq(mapBytes[0], 0, F("map chunk 2047 first word high"));
+    test.expectEq(mapBytes[1], 0, F("map chunk 2047 first word low"));
+
+    expect_script_prefix(test, 0, blob0Prefix, sizeof(blob0Prefix));
+    expect_script_prefix(test, 32, blob32Prefix, sizeof(blob32Prefix));
+    expect_script_prefix(test, 33, blob33Prefix, sizeof(blob33Prefix));
+
+    const uint16_t emptySlots[] = {3, 35, 64, 67, 96, 99, 2047};
+    const uint24_t imageEnd = scripts +
+        static_cast<uint24_t>(Chunk::CHUNK_COUNT) * Chunk::SCRIPT_SLOT_BYTES;
+    for (uint8_t index = 0; index < sizeof(emptySlots) / sizeof(emptySlots[0]); ++index) {
+        const uint16_t id = emptySlots[index];
+        const uint24_t address = Chunk::scriptSlotAddr(scripts, id);
+        const uint24_t slotEnd = address + Chunk::SCRIPT_SLOT_BYTES;
+        test.expectEqIdx(Chunk::validChunkId(id), true, F("script slot id valid"), index);
+        test.expectEqIdx(address >= scripts && slotEnd <= imageEnd, true,
+                         F("script slot inside image"), index);
+        uint8_t byte;
+        FX::readDataBytes(address, &byte, 1);
+        FX::readDataBytes(slotEnd - 1, &byte, 1);
+    }
+    const uint24_t lastAddress = scripts + static_cast<uint24_t>(262016UL);
+    expect_uint24_bytes(test, Chunk::scriptSlotAddr(scripts, 2047), lastAddress,
+                        F("last script slot uint24 bytes"));
+    expect_uint24_bytes(test, Chunk::mapChunkAddr(map_data, 2047),
+                        map_data + static_cast<uint24_t>(131008UL),
+                        F("last map chunk uint24 bytes"));
+}
+
 inline void test_tables(FxTest &test) {
     test_address_table(test);
     test_high_address_table(test);
     test_indexed_bytes(test);
     test_indexed_u32_stride(test);
     test_text_block(test);
+    test_chunk_layout(test);
 }

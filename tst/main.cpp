@@ -12,6 +12,7 @@
 #include "save_test.hpp"
 #include "item_test.hpp"
 #include "listview_test.hpp"
+#include "chunk_test.hpp"
 
 #include "../src/globals.hpp"
 
@@ -57,6 +58,8 @@ int main() {
     std::cout << "ItemSuite finished" << std::endl;
     ListViewSuite(tests);
     std::cout << "ListViewSuite finished" << std::endl;
+    ChunkSuite(tests);
+    std::cout << "ChunkSuite finished" << std::endl;
 
     std::cout << "Tests Finished" << std::endl;
     tests.printSummary();

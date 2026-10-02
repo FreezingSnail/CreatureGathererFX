@@ -67,6 +67,10 @@ source = { raw = "fxdata/generated/text.bin" }
 name = "generator_version"
 source = { raw = "fxdata/generated/tool_version.bin" }
 
+[[entry]]
+name = "scripts"
+source = { raw = "fxdata/generated/scripts.bin" }
+
 [save]
 sectors = 8
 

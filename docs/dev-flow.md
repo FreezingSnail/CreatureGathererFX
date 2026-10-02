@@ -45,6 +45,11 @@ agent. `AGENTS.md` carries the short list.
   or `avr-size` the ELF. qu9.8 adds the ceiling gate.
 - Spike before any change that can flip flash/RAM; report whole-image deltas (LTO makes per-symbol
   arithmetic meaningless).
+- 2026-10-02 `-mrelax` current-head spike (Arduino CLI 1.2.0, Arduboy homemade AVR core 1.4.0,
+  AVR-GCC 7.3.0-atmel3.6.1-arduino7): isolated FX baseline was 17736 B flash / 1857 B static RAM;
+  adding `-mrelax` to C++, C, and ELF linker extra flags measured 17412 B / 1856 B (-324 B flash,
+  -1 B static RAM). Shipping FX, Mini, and device-test builds share these properties. Focused
+  device-suite verification is recorded in `output.md`.
 - One measured item per bead; record each number in the bead notes. Bundled shrinkings make savings
   unattributable and the audit's per-item numbers unverifiable.
 - Plan waves against measured headroom minus a reserve; never land below ~150 B free.

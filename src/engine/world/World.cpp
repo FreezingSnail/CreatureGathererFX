@@ -21,8 +21,7 @@ void WorldEngine::init() {
 
     up = 2;
     side = 3;
-    chunkX = 4;
-    chunkY = 3;
+    lastChunk = Chunk::chunkAt(static_cast<uint8_t>(curx), static_cast<uint8_t>(cury));
 }
 
 void WorldEngine::loadMap(uint8_t mapIndex, uint8_t submapIndex) {
@@ -37,6 +36,7 @@ void WorldEngine::setPos(uint8_t x, uint8_t y) {
     this->curx = x;
     this->cury = y;
     gameState.playerLocation = x + (256 * y);
+    lastChunk = Chunk::chunkOfLocation(gameState.playerLocation);
 }
 
 void WorldEngine::input() {
@@ -120,24 +120,29 @@ void WorldEngine::moveChar() {
         switch (this->playerDirection) {
         case Direction::UP:
             this->cury--;
-            chunkY -= 1;
             break;
         case Direction::DOWN:
             this->cury++;
-            chunkY += 1;
             break;
         case Direction::LEFT:
             this->curx--;
-            chunkX -= 1;
             break;
         case Direction::RIGHT:
             this->curx++;
-            chunkX += 1;
             break;
         }
+        const uint16_t location = static_cast<uint16_t>(
+            cury * Chunk::MAP_WIDTH_TILES + curx);
+        const uint16_t newChunk = Chunk::chunkOfLocation(location);
+        if (Chunk::chunkChanged(lastChunk, newChunk)) onChunkChange(newChunk);
         this->moving = false;
         // this->encounter(arduboy, player);
     }
+}
+
+void WorldEngine::onChunkChange(uint16_t newChunk) {
+    // Transition-specific FX reads are attached here by their owning beads.
+    lastChunk = newChunk;
 }
 
 void WorldEngine::encounter() {

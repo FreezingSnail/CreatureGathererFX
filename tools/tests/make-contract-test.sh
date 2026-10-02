@@ -24,6 +24,26 @@ build=$(make --no-print-directory -n build \
     ARDUINO_CLI=fixture-arduino FQBN=fixture:fx BUILD_DIR=build/contract)
 printf '%s\n' "$build" | grep -Fq 'fixture-arduino compile --fqbn "fixture:fx"'
 printf '%s\n' "$build" | grep -Fq -- '--output-dir "build/contract"'
+for property in compiler.cpp.extra_flags compiler.c.extra_flags compiler.c.elf.extra_flags; do
+    printf '%s\n' "$build" | grep -Fq -- "--build-property $property=-mrelax"
+done
+
+mini=$(make --no-print-directory -n mini \
+    ARDUINO_CLI=fixture-arduino MINI_FQBN=fixture:mini BUILD_DIR=build/contract)
+printf '%s\n' "$mini" | grep -Fq 'fixture-arduino compile --fqbn "fixture:mini"'
+printf '%s\n' "$mini" | grep -Fq -- '--output-dir "build/contract"'
+for property in compiler.cpp.extra_flags compiler.c.extra_flags compiler.c.elf.extra_flags; do
+    printf '%s\n' "$mini" | grep -Fq -- "--build-property $property=-mrelax"
+done
+
+override=$(make --no-print-directory -n build \
+    ARDUINO_CLI=fixture-arduino FQBN=fixture:fx BUILD_DIR=build/contract \
+    AVR_BUILD_PROPERTIES='--build-property compiler.cpp.extra_flags=-DLOCAL')
+printf '%s\n' "$override" | grep -Fq -- '--build-property compiler.cpp.extra_flags=-DLOCAL'
+if printf '%s\n' "$override" | grep -Fq -- 'compiler.cpp.extra_flags=-mrelax'; then
+    printf 'AVR_BUILD_PROPERTIES override was ignored\n' >&2
+    exit 1
+fi
 
 ram=$(make --no-print-directory -n ram \
     ARDUINO_CLI=fixture-arduino BUILD_DIR=build/contract \
@@ -50,6 +70,9 @@ fxtest=$(make --no-print-directory -n fxtest-build \
     ARDUINO_CLI=fixture-arduino FQBN=fixture:fx BUILD_DIR=build/contract)
 printf '%s\n' "$fxtest" | grep -Fq 'stage="build/contract/fxtest/'
 printf '%s\n' "$fxtest" | grep -Fq -- '--fqbn "fixture:fx"'
+for property in compiler.cpp.extra_flags compiler.c.extra_flags compiler.c.elf.extra_flags; do
+    printf '%s\n' "$fxtest" | grep -Fq -- "--build-property $property=-mrelax"
+done
 
 grep -Fxq 'fxtest: fxtest-headless' Makefile
 

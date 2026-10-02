@@ -5,6 +5,7 @@
 #include "../common.hpp"
 #include "../globals.hpp"
 #include "../lib/ReadData.hpp"
+#include "world/Chunk.hpp"
 #include "../external/SpritesABC.hpp"
 
 #include <ArduboyFX.h>
@@ -350,7 +351,7 @@ static void drawMapFast() {
 static void DGF drawChunkAtOffset(uint16_t chunkIndex, int8_t offsetX, int8_t offsetY) {
     // TODO: extract tile lookup into stand alone func
     // TODO: load chunk into the screenbuffer?
-    uint24_t chunkAddress = map_data + ((32 * 2) * chunkIndex);
+    uint24_t chunkAddress = Chunk::mapChunkAddr(map_data, chunkIndex);
     // for (uint8_t i = 0; i < 32; i++) {
     //     FX::seekData(chunkAddress);
     //     uint8_t tile[2];
@@ -362,15 +363,16 @@ static void DGF drawChunkAtOffset(uint16_t chunkIndex, int8_t offsetX, int8_t of
     //     // we can store each tile in the leading 2 bytes of its location for simplicity
     //     arduboy.sBuffer;
     // }
-    for (uint8_t i = 0; i < 32; i++) {
-        uint8_t tileX = i % 8;   // 0-7 within chunk
-        uint8_t tileY = i / 8;   // 0-3 within chunk
+    for (uint8_t i = 0; i < Chunk::MAP_CHUNK_TILES; i++) {
+        uint8_t tileX = i % Chunk::CHUNK_WIDTH_TILES;
+        uint8_t tileY = i / Chunk::CHUNK_WIDTH_TILES;
 
         // Calculate viewport tile position
         int8_t viewportTileX = offsetX + tileX;
         int8_t viewportTileY = offsetY + tileY;
 
-        if (viewportTileX >= 0 && viewportTileX < 8 && viewportTileY >= 0 && viewportTileY < 4) {
+        if (viewportTileX >= 0 && viewportTileX < Chunk::CHUNK_WIDTH_TILES &&
+            viewportTileY >= 0 && viewportTileY < Chunk::CHUNK_HEIGHT_TILES) {
             int8_t screenX = viewportTileX * 16;
             int8_t screenY = viewportTileY * 16;
 
@@ -392,53 +394,21 @@ static void drawMap() {
     int16_t viewportStartX = playerX - 3;   // 3 tiles left of player
     int16_t viewportStartY = playerY - 2;   // 2 tiles above player
 
-    // Calculate which 4 chunks we need (2x2 chunk grid for 8x4 viewport)
-    uint8_t topLeftChunkX = viewportStartX / 8;
-    uint8_t topLeftChunkY = viewportStartY / 4;
-
-    // The 4 chunks we need
-    struct ChunkInfo {
-        uint16_t index;
-        int8_t offsetX;   // Where this chunk's top-left appears in viewport tile coordinates
-        int8_t offsetY;
-    };
-
-    ChunkInfo chunks[4];
-
-    // Calculate the world coordinates of each chunk's top-left corner
-    int16_t topLeftChunkWorldX = topLeftChunkX * 8;
-    int16_t topLeftChunkWorldY = topLeftChunkY * 4;
-    int16_t topRightChunkWorldX = (topLeftChunkX + 1) * 8;
-    int16_t bottomLeftChunkWorldY = (topLeftChunkY + 1) * 4;
-
-    // Top-left chunk
-    chunks[0].index = topLeftChunkY * 32 + topLeftChunkX;
-    chunks[0].offsetX = topLeftChunkWorldX - viewportStartX;
-    chunks[0].offsetY = topLeftChunkWorldY - viewportStartY;
-
-    // Top-right chunk
-    chunks[1].index = topLeftChunkY * 32 + (topLeftChunkX + 1);
-    chunks[1].offsetX = topRightChunkWorldX - viewportStartX;
-    chunks[1].offsetY = topLeftChunkWorldY - viewportStartY;
-
-    // Bottom-left chunk
-    chunks[2].index = (topLeftChunkY + 1) * 32 + topLeftChunkX;
-    chunks[2].offsetX = topLeftChunkWorldX - viewportStartX;
-    chunks[2].offsetY = bottomLeftChunkWorldY - viewportStartY;
-
-    // Bottom-right chunk
-    chunks[3].index = (topLeftChunkY + 1) * 32 + (topLeftChunkX + 1);
-    chunks[3].offsetX = topRightChunkWorldX - viewportStartX;
-    chunks[3].offsetY = bottomLeftChunkWorldY - viewportStartY;
-
-    // Draw all 4 chunks
-    for (uint8_t i = 0; i < 4; i++) {
-        // Bounds check for chunk indices
-        uint8_t chunkX = chunks[i].index % 32;
-        uint8_t chunkY = chunks[i].index / 32;
-
-        if (chunkX < 32 && chunkY < 64) {
-            drawChunkAtOffset(chunks[i].index, chunks[i].offsetX, chunks[i].offsetY);
+    // Clip signed viewport coordinates before converting them to map tiles.
+    // A negative coordinate must never wrap to the far map edge.
+    const int16_t firstX = viewportStartX < 0 ? 0 :
+        (viewportStartX / Chunk::CHUNK_WIDTH_TILES) * Chunk::CHUNK_WIDTH_TILES;
+    const int16_t firstY = viewportStartY < 0 ? 0 :
+        (viewportStartY / Chunk::CHUNK_HEIGHT_TILES) * Chunk::CHUNK_HEIGHT_TILES;
+    for (uint8_t row = 0; row < 2; ++row) {
+        const int16_t worldY = firstY + row * Chunk::CHUNK_HEIGHT_TILES;
+        if (worldY >= Chunk::MAP_HEIGHT_TILES) continue;
+        for (uint8_t column = 0; column < 2; ++column) {
+            const int16_t worldX = firstX + column * Chunk::CHUNK_WIDTH_TILES;
+            if (worldX >= Chunk::MAP_WIDTH_TILES) continue;
+            drawChunkAtOffset(Chunk::chunkAt(static_cast<uint8_t>(worldX),
+                                             static_cast<uint8_t>(worldY)),
+                              worldX - viewportStartX, worldY - viewportStartY);
         }
     }
 }
