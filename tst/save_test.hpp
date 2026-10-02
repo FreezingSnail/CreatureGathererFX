@@ -109,6 +109,53 @@ inline void SaveFileRoundTripAndValidationTest(TestSuite &suite)
     suite.addTest(test);
 }
 
+inline void SaveFileLegacyV1DiscardMigrationTest(TestSuite &suite)
+{
+    Test test = Test(__func__);
+    constexpr uint16_t legacyBytes = 157;
+    const uint8_t legacyHeader[2] = {
+        static_cast<uint8_t>(legacyBytes >> 8), static_cast<uint8_t>(legacyBytes)};
+    uint8_t legacyPayload[legacyBytes] = {SAVE_VERSION};
+
+    flashFakeReset();
+    flashFakeSetBytes(0, legacyHeader, sizeof(legacyHeader));
+    flashFakeSetBytes(sizeof(legacyHeader), legacyPayload, sizeof(legacyPayload));
+    SaveFile preserved = save_test_detail::state(0x4567, 0x3c);
+    const SaveFile before = preserved;
+    test.assert(saveFileLoad(preserved), false,
+                "Legacy AVR v1 save is discarded");
+    test.assert(memcmp(&preserved, &before, sizeof(preserved)), 0,
+                "Legacy-only load leaves caller state unchanged");
+
+    SaveFile current = save_test_detail::state(0x89ab, 0x6d);
+    current.version = SAVE_VERSION;
+    current.checksum = saveFileChecksum(current);
+    const uint16_t currentOffset = static_cast<uint16_t>(2 + legacyBytes);
+    const uint8_t currentHeader[2] = {
+        static_cast<uint8_t>(sizeof(SaveFile) >> 8),
+        static_cast<uint8_t>(sizeof(SaveFile))};
+    flashFakeSetBytes(currentOffset, currentHeader, sizeof(currentHeader));
+    flashFakeSetBytes(currentOffset + sizeof(currentHeader),
+                      reinterpret_cast<const uint8_t *>(&current), sizeof(current));
+    SaveFile loaded = {};
+    test.assert(saveFileLoad(loaded), true,
+                "Current-format save after legacy v1 data loads");
+    test.assert(memcmp(&loaded, &current, sizeof(current)), 0,
+                "Current-format record after legacy data round-trips");
+
+    flashFakeReset();
+    flashFakeSetBytes(0, legacyHeader, sizeof(legacyHeader));
+    flashFakeSetBytes(sizeof(legacyHeader), legacyPayload, sizeof(legacyPayload));
+    saveFileCommit(current);
+    test.assert(flashFakeData()[0], static_cast<uint8_t>(sizeof(SaveFile) >> 8),
+                "First current save erases the legacy sector");
+    loaded = {};
+    test.assert(saveFileLoad(loaded), true,
+                "Current save loads after legacy sector discard");
+
+    suite.addTest(test);
+}
+
 inline void JournalAppendReplayAndEraseTest(TestSuite &suite)
 {
     Test test = Test(__func__);
@@ -295,6 +342,7 @@ inline void SaveSuite(TestRunner &runner)
     TestSuite suite = TestSuite("Save Suite");
     SaveRecordEncodeDecodeTest(suite);
     SaveFileRoundTripAndValidationTest(suite);
+    SaveFileLegacyV1DiscardMigrationTest(suite);
     JournalAppendReplayAndEraseTest(suite);
     JournalFullSectorRefusalTest(suite);
     CompactionSequenceAndInterruptionsTest(suite);

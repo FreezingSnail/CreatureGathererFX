@@ -1,12 +1,14 @@
 #pragma once
 
+#include <stdint.h>
+
 enum class EffectResults {
     NO_EFFECT,
     TARGET_SELF,
     SKIP_TURN
 };
 
-enum class Effect {
+enum class Effect : uint8_t {
     NONE = 255,
     // type down
     DPRSD = 0,
@@ -53,17 +55,23 @@ enum class Effect {
 };
 
 constexpr bool isStatEffect(Effect effect) {
-    return effect >= Effect::ATKDWN && effect <= Effect::SPDUP;
+    return static_cast<uint8_t>(effect) >= static_cast<uint8_t>(Effect::ATKDWN) &&
+           static_cast<uint8_t>(effect) <= static_cast<uint8_t>(Effect::SPDUP);
 }
 
 constexpr bool isTypeStatusEffect(Effect effect) {
-    return effect >= Effect::DPRSD && effect <= Effect::EVOLVD;
+    return static_cast<uint8_t>(effect) >= static_cast<uint8_t>(Effect::DPRSD) &&
+           static_cast<uint8_t>(effect) <= static_cast<uint8_t>(Effect::EVOLVD);
 }
 
 constexpr bool isTickEffect(Effect effect) {
-    return effect >= Effect::SAPPD && effect <= Effect::INFSED;
+    return static_cast<uint8_t>(effect) >= static_cast<uint8_t>(Effect::SAPPD) &&
+           static_cast<uint8_t>(effect) <= static_cast<uint8_t>(Effect::INFSED);
 }
 
 constexpr bool isSelfEffect(Effect effect) {
-    return effect >= Effect::ENLTND && effect <= Effect::EVOLVD && effect >= Effect::ATKUP && effect <= Effect::SPDUP;
+    return static_cast<uint8_t>(effect) >= static_cast<uint8_t>(Effect::ENLTND) &&
+           static_cast<uint8_t>(effect) <= static_cast<uint8_t>(Effect::EVOLVD) &&
+           static_cast<uint8_t>(effect) >= static_cast<uint8_t>(Effect::ATKUP) &&
+           static_cast<uint8_t>(effect) <= static_cast<uint8_t>(Effect::SPDUP);
 }

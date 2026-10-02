@@ -275,3 +275,36 @@ git diff --check
 Baseline: the low-water mark clobbered BSS at `0x8B2` (0 B headroom) while the pinned minimum is 128 B. The suite completes the save chain and emits the exact `F` marker. This is the required pre-qu9.1/qu9.3 baseline; rerun after those fixes and require `P` before closing qu9.2. The full device gate is intentionally deferred to the orchestrator's integrated stack wave.
 
 Wall time: approximately 5 minutes for the worker, including diagnosis and targeted reruns; final targeted device run 1.6 seconds. Deviation: initial sandbox cache access needed the already approved elevated rerun. No commit, push, or bd closure performed.
+
+# CreatureGathererFX-qu9.3 — narrow Effect enum and discard legacy save records
+
+Changes: `Effect` now has `uint8_t` underlying storage; range helpers and battle/move callsites use explicit casts. Host tests assert `Move` is 4 B and record host `Creature` size 34 B; device tests assert AVR `Effect` is 1 B, `Move` is 4 B, and `Creature` is 33 B. Current SaveFile v1 embedded runtime `Creature` bytes, so the old AVR 157 B record cannot be interpreted safely after this narrowing. The loader skips only 157 B records whose payload version byte equals `SAVE_VERSION`, then continues scanning; a legacy-only sector returns false without modifying the caller's output. A subsequent commit erases a legacy-first save sector before writing the current format. `SAVE_VERSION` and the v2 schema are unchanged; jp8.2.6 owns the new schema.
+
+Commands and results:
+
+```text
+make test
+# Total Passed: 942; Total Failed: 0
+
+make build
+# Sketch uses 18,024 bytes; globals 1,917 B, down 102 B from 2,019 B baseline.
+# AVR Creature size: 33 B; Move size: 4 B.
+
+make fxtest-headless FXTEST_INOS=tst/fxdatatest/test_creatures.ino
+# test_creatures PASSED=470 FAILED=0; compiled AVR size assertions pass.
+
+make check
+# host: 942 passed, 0 failed; VM: 10 passed, 0 failed
+# manifest, generated-libs, generated-libs-invariants, and alias tests passed
+# full fxtest: all suites passed except test_stack, which emitted the expected
+#   qu9.2 pre-qu9.1 failure: 0 B headroom; collision and 128 B minimum failed.
+# exit 2 from make check due to the expected in-flight qu9.2 baseline.
+
+make fxtest-headless
+# 9/10 device suites passed; test_stack reported expected F, 0 B headroom.
+# exit 2; rerun after qu9.1 and require P before closing qu9.2 or qu9.3.
+```
+
+Save compatibility: the old AVR v1 157 B record is deliberately discarded. `saveFileLoad` accepts no legacy payload and leaves its output unchanged; it skips the legacy bytes so a current-format record later in the sector remains discoverable. On the first subsequent commit, the old sector is erased before saving the narrowed runtime representation. No other save schema fields or version values changed.
+
+Wall time: approximately 20 minutes including code, save-path inspection, and gates; final host suite 1.7 seconds, production build 4.0 seconds, integrated gate 42 seconds. Deviation: full device validation cannot pass until the separate qu9.1 stack remediation; the qu9.2 baseline's exact expected `F` was retained. Bead remains open pending the integrated green stack gate. No commit, push, or bd completion update performed.

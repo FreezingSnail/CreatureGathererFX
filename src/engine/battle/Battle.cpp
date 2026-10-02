@@ -566,7 +566,7 @@ void BattleEngine::resetOpponent() {
 }
 
 void BattleEngine::applyEffect(Creature *target, Effect effect) {
-    if (!(effect >= Effect::ATKDWN && effect <= Effect::SPDUP)) {
+    if (!isStatEffect(effect)) {
         bool applied = target->status.applyEffect(effect);
 
         if (!applied)
@@ -674,7 +674,7 @@ void BattleEngine::runEffect(Creature *commiter, Creature *other, Effect &effect
     //     return;
     //
 
-    uint8_t rate = getEffectRateFX(uint8_t(effect));
+    uint8_t rate = getEffectRateFX(static_cast<uint8_t>(effect));
     uint8_t roll = randomRoll(1, 100);   // random(1, 100);
     if (roll > rate) {
         return;
