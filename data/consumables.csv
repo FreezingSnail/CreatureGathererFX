@@ -1,0 +1,10 @@
+# ConsumableKind values: None = 0, Heal = 1, Cure = 2, Charge = 3
+id,kind,arg
+0,Heal,16
+1,Heal,32
+2,Heal,64
+3,Cure,1
+4,Cure,2
+5,Cure,3
+6,Charge,16
+7,Charge,32
