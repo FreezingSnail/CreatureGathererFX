@@ -229,3 +229,49 @@ git diff --check                 PASS
 Size delta: flash and global SRAM match the prior item-bead baseline (17,960 B and 2,019 B). `itemNameAddr` is not linked into the shipping sketch yet; it has no current device-size effect.
 
 Wall time: approximately 9 minutes including fixture investigation and gate runs; full final gate 48.67 seconds. Deviations: initial `make test-generated-libs` found the old pinned table address, and the first `make test-pack-parity` observed the expected old SHA mismatch; both were corrected and rerun. First sandbox `make build` attempt could not clean the Arduino cache; the approved escalated rerun passed. No commit or push performed.
+
+# CreatureGathererFX-qu9.2 — pre-fix stack baseline
+
+Implementation: scaffolded the permanent device suite with `make new-fxtest NAME=stack`. It paints `[&__bss_end, SP - 64)` through a volatile pointer, runs the VM, battle turn, menu render, and save compaction, then reports base/top/low-water/headroom and checks collision plus the pinned 128 B minimum. The large `SaveFile` snapshot lives in a noinline save helper so the initial paint runs from a shallow frame. The test sketch supplies the production `ScriptVm` global omitted by the shared FX test harness.
+
+Commands and results:
+
+```text
+bd update CreatureGathererFX-qu9.2 --claim
+✓ Updated issue: CreatureGathererFX-qu9.2 — Add painted-stack low-water-mark FX test suite
+
+make new-fxtest NAME=stack
+new-fxtest: created tst/fxdatatest/stack_test.hpp and tst/fxdatatest/test_stack.ino
+
+make fxtest-headless FXTEST_INOS=tst/fxdatatest/test_stack.ino ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# first sandbox attempt: arduino-cli could not create its cache directory (operation not permitted)
+# approved rerun, before save-frame isolation: test_stack: FAIL (no serial)
+
+make fxtest-headless FXTEST_INOS=tst/fxdatatest/test_stack.ino FXTEST_MS=10000 ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# diagnostic markers reached VM and player.basic, then stopped in startFight
+# diagnostic scan before startFight: base=0x8B2 (2226), top=0x858 (2136)
+# SaveFile had been allocated in test_stack's entry frame, pushing SP below BSS before paint.
+# Disabling the paint loop did not change that stop. The save snapshot was moved to runSave().
+
+make fxtest-headless FXTEST_INOS=tst/fxdatatest/test_stack.ino ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+Sketch uses 20460 bytes (68%) of program storage space. Maximum is 29696 bytes.
+Global variables use 1970 bytes (76%) of dynamic memory, leaving 590 bytes for local variables. Maximum is 2560 bytes.
+=== test_stack ===
+stack base=0x8B2 (2226)
+stack top=0xAA1 (2721)
+stack low=0x8B2 (2226)
+stack headroom=0x0 (0)
+FAIL stack does not collide with globals got=0 want=1
+FAIL stack headroom >= 128 B got=0 want=1
+test_stack PASSED=1 FAILED=2
+F
+test_stack: FAIL
+# exit 2; expected pre-fix failure, with save compaction completion passing
+
+git diff --check
+# exit 0
+```
+
+Baseline: the low-water mark clobbered BSS at `0x8B2` (0 B headroom) while the pinned minimum is 128 B. The suite completes the save chain and emits the exact `F` marker. This is the required pre-qu9.1/qu9.3 baseline; rerun after those fixes and require `P` before closing qu9.2. The full device gate is intentionally deferred to the orchestrator's integrated stack wave.
+
+Wall time: approximately 5 minutes for the worker, including diagnosis and targeted reruns; final targeted device run 1.6 seconds. Deviation: initial sandbox cache access needed the already approved elevated rerun. No commit, push, or bd closure performed.
