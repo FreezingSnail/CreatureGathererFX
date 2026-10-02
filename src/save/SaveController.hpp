@@ -15,8 +15,8 @@ void begin(GameState_t returnState);
 // sequence completes. Starts a WORLD-returning save if none is in progress.
 void advance();
 
-// Draws save progress or failure. This path is deliberately RAM-only: reading
-// FX while the save flash is busy corrupts the read.
+// Draws save progress or failure from internal flash, without reading FX while
+// the save flash is busy.
 void drawStatus();
 
 } // namespace SaveController

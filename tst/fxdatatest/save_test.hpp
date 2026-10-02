@@ -7,7 +7,9 @@
 #include "src/fxdata.h"
 #include "src/lib/ReadData.hpp"
 #include "src/save/Compaction.hpp"
+#include "src/save/FlashBackend.hpp"
 #include "src/save/Journal.hpp"
+#include "src/save/SaveController.hpp"
 #include "src/save/SaveFile.hpp"
 
 namespace save_fx_test_detail {
@@ -54,6 +56,15 @@ inline SaveFile state(uint16_t location, uint8_t fill)
     memset(&result.plants, fill, sizeof(result.plants));
     memset(result.inventory, fill, sizeof(result.inventory));
     return result;
+}
+
+inline void expectPixel(FxTest &test, int16_t x, int16_t y, uint8_t expected,
+                        const __FlashStringHelper *label)
+{
+    const uint8_t *buffer = arduboy.getBuffer();
+    const uint16_t index = static_cast<uint16_t>(x + (y / 8) * WIDTH);
+    const uint8_t mask = static_cast<uint8_t>(1 << (y % 8));
+    test.expectEq((buffer[index] & mask) != 0, expected, label);
 }
 } // namespace save_fx_test_detail
 
@@ -133,4 +144,38 @@ inline void test_save(FxTest &test)
     FX::waitWhileBusy();
     test.expectEq(ReadFXu16(move_table), rawReadMoveTableFirst,
                   F("FX data read after wait"));
+
+    // Once the previous save has completed, drawStatus chooses FAILED. Check
+    // framebuffer pixels to cover PROGMEM reads in the inactive-save branch.
+    SaveController::drawStatus();
+    save_fx_test_detail::expectPixel(test, 34, 27, 0, F("FAILED F glyph pixel"));
+    save_fx_test_detail::expectPixel(test, 32, 27, 1, F("FAILED screen background"));
+
+    // Start a real asynchronous save-flash erase, then draw while the external
+    // chip is busy. The status renderer must use only the internal flash glyphs.
+    FX::eraseSaveBlock(0);
+    const bool busyBeforeDraw = flash.busy();
+    SaveController::begin(GameState_t::WORLD);
+    test.expectEq(busyBeforeDraw, true, F("save flash busy before status draw"));
+    test.expectEq(saveInProgress(), true, F("save remains active before status draw"));
+    SaveController::drawStatus();
+    const bool busyAfterDraw = flash.busy();
+    test.expectEq(busyAfterDraw, true, F("save flash remains busy after status draw"));
+    test.expectEq(saveInProgress(), true, F("save remains active after status draw"));
+
+    // Sample both ink and paper at each letter's first row. This checks the
+    // flattened six-by-five glyph selection, not just that the screen changed.
+    save_fx_test_detail::expectPixel(test, 34, 27, 1, F("S first pixel paper"));
+    save_fx_test_detail::expectPixel(test, 36, 27, 0, F("S second pixel ink"));
+    save_fx_test_detail::expectPixel(test, 44, 27, 1, F("A first pixel paper"));
+    save_fx_test_detail::expectPixel(test, 46, 27, 0, F("A second pixel ink"));
+    save_fx_test_detail::expectPixel(test, 54, 27, 0, F("V first pixel ink"));
+    save_fx_test_detail::expectPixel(test, 56, 27, 1, F("V second pixel paper"));
+    save_fx_test_detail::expectPixel(test, 64, 27, 0, F("I first pixel ink"));
+    save_fx_test_detail::expectPixel(test, 66, 27, 0, F("I second pixel ink"));
+    save_fx_test_detail::expectPixel(test, 74, 27, 0, F("N first pixel ink"));
+    save_fx_test_detail::expectPixel(test, 76, 27, 1, F("N second pixel paper"));
+    save_fx_test_detail::expectPixel(test, 84, 27, 1, F("G first pixel paper"));
+    save_fx_test_detail::expectPixel(test, 86, 27, 0, F("G second pixel ink"));
+    FX::waitWhileBusy();
 }
