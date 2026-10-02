@@ -22,6 +22,12 @@ path.
 
 `cgfx-tools` must be available on `PATH`. Run `make doctor` to verify the selected executable.
 
+Run `make ram` to build the FX sketch and print stable flash/static-RAM totals, free static RAM, and
+the 15 largest `.data`/`.bss` symbols. `RAM_STATIC_BYTES` comes from the linker section total and
+is the static RAM budget figure; the symbol list attributes named records and can sum lower because
+it omits unnamed linker bookkeeping. Override `RAM_ELF`, `AVR_SIZE`, or `AVR_NM` when inspecting a
+specific ELF or using tools outside the Arduino AVR-GCC package.
+
 ## Tooling
 
 CreatureGathererFX uses the native Rust `cgfx-tools` binary from

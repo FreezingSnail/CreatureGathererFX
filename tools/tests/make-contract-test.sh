@@ -6,7 +6,7 @@ ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd -P)
 cd "$ROOT"
 
 help=$(make --no-print-directory help)
-for target in setup doctor gen test testvm build run dev check fxtest fxtest-headless; do
+for target in setup doctor gen test testvm build ram run dev check fxtest fxtest-headless; do
     printf '%s\n' "$help" | grep -Fq "  $target " || {
         printf 'missing help entry: %s\n' "$target" >&2
         exit 1
@@ -24,6 +24,27 @@ build=$(make --no-print-directory -n build \
     ARDUINO_CLI=fixture-arduino FQBN=fixture:fx BUILD_DIR=build/contract)
 printf '%s\n' "$build" | grep -Fq 'fixture-arduino compile --fqbn "fixture:fx"'
 printf '%s\n' "$build" | grep -Fq -- '--output-dir "build/contract"'
+
+ram=$(make --no-print-directory -n ram \
+    ARDUINO_CLI=fixture-arduino BUILD_DIR=build/contract \
+    AVR_SIZE=fixture-size AVR_NM=fixture-nm)
+printf '%s\n' "$ram" | grep -Fq 'fixture-arduino compile --fqbn'
+printf '%s\n' "$ram" | grep -Fq 'elf="build/contract/CreatureGathererFX.ino.elf"'
+printf '%s\n' "$ram" | grep -Fq 'fixture-size" --format=avr --mcu=atmega32u4'
+printf '%s\n' "$ram" | grep -Fq 'fixture-nm" --print-size --size-sort --radix=d'
+for key in RAM_ELF RAM_FLASH_BYTES RAM_FLASH_LIMIT RAM_STATIC_BYTES RAM_STATIC_LIMIT RAM_FREE_BYTES; do
+    printf '%s\n' "$ram" | grep -Fq "$key=" || {
+        printf 'ram target missing machine-readable key: %s\n' "$key" >&2
+        exit 1
+    }
+done
+printf '%s\n' "$ram" | grep -Fq 'RAM_TOP_SYMBOLS_BEGIN'
+printf '%s\n' "$ram" | grep -Fq 'address size type name'
+printf '%s\n' "$ram" | grep -Fq 'RAM_TOP_SYMBOLS_END'
+if printf '%s\n' "$ram" | grep -Fq '7.3.0-atmel3.6.1-arduino7'; then
+    printf 'ram target pins an AVR-GCC toolchain version\n' >&2
+    exit 1
+fi
 
 fxtest=$(make --no-print-directory -n fxtest-build \
     ARDUINO_CLI=fixture-arduino FQBN=fixture:fx BUILD_DIR=build/contract)

@@ -1,4 +1,4 @@
-.PHONY: help setup doctor plant test test-debug testvm testvm-debug gen gen-data gen-sprites gen-fixtures pack full build mini run dev check verify-generated test-manifest test-generated-libs test-doctor fxtest fxtest-headless fxtest-preflight fxtest-headless-preflight fxtest-build fxtest-run new-fxtest
+.PHONY: help setup doctor plant test test-debug testvm testvm-debug gen gen-data gen-sprites gen-fixtures pack full build mini ram run dev check verify-generated test-manifest test-generated-libs test-doctor fxtest fxtest-headless fxtest-preflight fxtest-headless-preflight fxtest-build fxtest-run new-fxtest
 
 # Public command API. Override tool, board, and output variables per workspace/CI.
 CXX ?= g++
@@ -22,6 +22,9 @@ FXTEST_BUILD_DIR ?= $(BUILD_DIR)/fxtest
 HOST_TEST_BIN ?= $(BUILD_DIR)/tests/host
 VM_TEST_BIN ?= $(BUILD_DIR)/tests/vm
 GENERATED_TEST_BIN ?= $(BUILD_DIR)/tests/generated
+RAM_ELF ?= $(BUILD_DIR)/CreatureGathererFX.ino.elf
+AVR_NM ?= $(shell command -v avr-nm 2>/dev/null || find "$(HOME)/Library/Arduino15/packages" "$(HOME)/.arduino15/packages" -type f -path '*/tools/avr-gcc/*/bin/avr-nm' -print -quit 2>/dev/null)
+AVR_SIZE ?= $(shell command -v avr-size 2>/dev/null || find "$(HOME)/Library/Arduino15/packages" "$(HOME)/.arduino15/packages" -type f -path '*/tools/avr-gcc/*/bin/avr-size' -print -quit 2>/dev/null)
 
 CPPFLAGS ?= -I.
 CXXFLAGS ?= -std=c++17 -w -O0 -g3
@@ -37,6 +40,7 @@ help:
 		'  test     run fast host C++ tests; prerequisite: $(CXX); output: $(HOST_TEST_BIN)' \
 		'  testvm   run fast ScriptVM C++ tests; prerequisite: $(CXX); output: $(VM_TEST_BIN)' \
 		'  build    compile Arduboy FX sketch; prerequisite: $(ARDUINO_CLI); output: $(BUILD_DIR)' \
+		'  ram      build and report FX flash/RAM plus largest static symbols; prerequisite: $(ARDUINO_CLI), avr-size, avr-nm' \
 		'  run      launch Ardens with the sketch, FX data, and FX save images; prerequisite: ARDENS' \
 		'  dev      regenerate FX data, rebuild, then launch Ardens (gen + run); prerequisite: cgfx-tools, ARDENS' \
 		'  check    run generation, host tests, VM tests, then optional FX runtime tests' \
@@ -47,7 +51,7 @@ help:
 		'  fxtest   alias for fxtest-headless; skips only when ARDENS is unset' \
 		'  fxtest-headless  run every FX device sketch through Ardens serial capture; blocks unsupported Ardens' \
 		'' \
-		'Overrides: CXX, ARDUINO_CLI, FQBN, BUILD_DIR, DIST_DIR, FXDATA_BIN, ARDENS, FXTEST_MS.'
+		'Overrides: CXX, ARDUINO_CLI, FQBN, BUILD_DIR, DIST_DIR, FXDATA_BIN, ARDENS, FXTEST_MS, RAM_ELF, AVR_SIZE, AVR_NM.'
 
 setup:
 	@printf '%s\n' \
@@ -102,6 +106,25 @@ full: gen build
 build:
 	@mkdir -p "$(BUILD_DIR)"
 	$(ARDUINO_CLI) compile --fqbn "$(FQBN)" --output-dir "$(BUILD_DIR)" .
+
+ram: build
+	@set -eu; \
+	elf="$(RAM_ELF)"; \
+	test -f "$$elf" || { echo "ram: ELF not found at $$elf" >&2; exit 1; }; \
+	command -v "$(AVR_SIZE)" >/dev/null 2>&1 || { echo "ram: avr-size not found; install Arduino AVR-GCC or set AVR_SIZE=/path/to/avr-size" >&2; exit 1; }; \
+	command -v "$(AVR_NM)" >/dev/null 2>&1 || { echo "ram: avr-nm not found; install Arduino AVR-GCC or set AVR_NM=/path/to/avr-nm" >&2; exit 1; }; \
+	size_output=$$("$(AVR_SIZE)" --format=avr --mcu=atmega32u4 "$$elf"); \
+	printf '%s\n' "$$size_output"; \
+	flash_bytes=$$(printf '%s\n' "$$size_output" | awk '$$1 == "Program:" {print $$2; exit}'); \
+	static_bytes=$$(printf '%s\n' "$$size_output" | awk '$$1 == "Data:" {print $$2; exit}'); \
+	test -n "$$flash_bytes" && test -n "$$static_bytes" || { echo "ram: unable to parse avr-size output" >&2; exit 1; }; \
+	flash_limit=29696; static_limit=2560; free_bytes=$$((static_limit - static_bytes)); \
+	printf 'RAM_ELF=%s\nRAM_FLASH_BYTES=%s\nRAM_FLASH_LIMIT=%s\nRAM_STATIC_BYTES=%s\nRAM_STATIC_LIMIT=%s\nRAM_FREE_BYTES=%s\n' \
+	    "$$elf" "$$flash_bytes" "$$flash_limit" "$$static_bytes" "$$static_limit" "$$free_bytes"; \
+	echo 'RAM_TOP_SYMBOLS_BEGIN'; \
+	echo 'address size type name'; \
+	"$(AVR_NM)" --print-size --size-sort --radix=d "$$elf" | awk '$$3 ~ /^[bBdD]$$/' | tail -15; \
+	echo 'RAM_TOP_SYMBOLS_END'
 
 mini:
 	@mkdir -p "$(BUILD_DIR)"
