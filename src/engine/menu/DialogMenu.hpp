@@ -6,10 +6,13 @@
 class DialogMenu {
   public:
     PopUpDialog popDialogStack[6];
-    int8_t dialogPointer = -1;
+    uint8_t dialogCount = 0;
 
     bool peek();
+    PopUpDialog &head();
     void drawPopMenu();
+    bool push(PopUpDialog info);
+    void clear();
     void pushMenu(PopUpDialog menuInfo);
     void pushEvent(Event event);
     void popMenu();

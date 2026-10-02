@@ -6,6 +6,7 @@
 #include "../lib/Stats.hpp"
 #include "../lib/StatusEffect.hpp"
 #include "../lib/StatModifier.hpp"
+#include "../save/StoreRecord.hpp"
 
 class Creature {
 
@@ -36,6 +37,7 @@ class Creature {
 
     Creature();
     void load(CreatureData_t seed);
+    void load(const StoreRecord &record);
     void loadFromOpponentSeed(CreatureSeed seed);
 
     void setStats(CreatureData_t seed);

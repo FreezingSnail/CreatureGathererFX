@@ -8,6 +8,7 @@
 #include "../src/engine/menu/DialogMenu.hpp"
 
 decltype(arduboy) arduboy;
+Animator animator = Animator();
 DialogMenu dialogMenu;
 #else
 #include "../src/globals.hpp"
