@@ -3,6 +3,7 @@
 #include "../src/item/ItemIds.hpp"
 #include "../src/item/Inventory.hpp"
 #include "../src/item/KeyItems.hpp"
+#include "../src/item/ConsumableDef.hpp"
 #include "../src/item/ItemNames.hpp"
 #include "src/FXDataFake.hpp"
 #include "../src/fxdata.h"
@@ -26,6 +27,45 @@ void ItemSuite(TestRunner &runner) {
     test.assert(item::lureRateOf(0), static_cast<uint8_t>(1), "tier 0 rate");
     test.assert(item::lureRateOf(1), static_cast<uint8_t>(2), "tier 1 rate");
     test.assert(item::lureRateOf(2), static_cast<uint8_t>(4), "tier 2 rate");
+
+    fxDataFake::dataBase = consumable_table;
+    fxDataFake::dataBytes[0] = static_cast<uint8_t>(item::ConsumableKind::Heal);
+    fxDataFake::dataBytes[1] = 16;
+    fxDataFake::dataBytes[14] = static_cast<uint8_t>(item::ConsumableKind::Charge);
+    fxDataFake::dataBytes[15] = 32;
+
+    fxDataFake::readCount = 0;
+    item::ConsumableDef consumable = item::readConsumableDef(0);
+    test.assert(consumable.kind, static_cast<uint8_t>(item::ConsumableKind::Heal),
+                "consumable zero decodes its kind");
+    test.assert(consumable.arg, static_cast<uint8_t>(16), "consumable zero decodes its arg");
+    test.assert(fxDataFake::lastDataAddress, consumable_table,
+                "consumable zero reads its table address");
+    test.assert(fxDataFake::lastDataLength, static_cast<size_t>(2),
+                "consumable read is two bytes");
+    test.assert(fxDataFake::readCount, static_cast<uint32_t>(1),
+                "consumable zero uses one FX read");
+
+    fxDataFake::readCount = 0;
+    consumable = item::readConsumableDef(7);
+    test.assert(consumable.kind, static_cast<uint8_t>(item::ConsumableKind::Charge),
+                "consumable seven decodes its kind");
+    test.assert(consumable.arg, static_cast<uint8_t>(32), "consumable seven decodes its arg");
+    test.assert(fxDataFake::lastDataAddress,
+                consumable_table + static_cast<uint16_t>(7) * 2,
+                "consumable id uses a two-byte address stride");
+    test.assert(fxDataFake::lastDataLength, static_cast<size_t>(2),
+                "last consumable read is two bytes");
+    test.assert(fxDataFake::readCount, static_cast<uint32_t>(1),
+                "consumable seven uses one FX read");
+
+    fxDataFake::readCount = 0;
+    consumable = item::readConsumableDef(8);
+    test.assert(consumable.kind, static_cast<uint8_t>(item::ConsumableKind::None),
+                "out-of-range consumable kind is None");
+    test.assert(consumable.arg, static_cast<uint8_t>(0), "out-of-range consumable arg is zero");
+    test.assert(fxDataFake::readCount, static_cast<uint32_t>(0),
+                "out-of-range consumable performs no FX read");
 
     item::KeyItems keyItems;
     item::keyItemsClear(keyItems);

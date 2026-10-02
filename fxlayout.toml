@@ -64,6 +64,10 @@ name = "raw_map_text"
 source = { raw = "fxdata/generated/text.bin" }
 
 [[entry]]
+name = "consumable_table"
+source = { raw = "fxdata/generated/consumables.bin" }
+
+[[entry]]
 name = "generator_version"
 source = { raw = "fxdata/generated/tool_version.bin" }
 

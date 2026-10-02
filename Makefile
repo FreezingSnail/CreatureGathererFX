@@ -86,6 +86,7 @@ TEST_SOURCES = tst/src/ReadData.cpp \
 	src/plants/PlantPair.cpp \
 	src/item/Inventory.cpp \
 	src/item/KeyItems.cpp \
+	src/item/ConsumableDef.cpp \
 	src/item/ItemNames.cpp \
 	src/creature/Creature.cpp \
 	src/player/Player.cpp \
@@ -175,6 +176,7 @@ gen-data:
 	cp -f fxdata/generated/flag_bit_array.cpp src/flags/flag_bit_array.cpp; \
 	cgfx-tools --arena-csv data/arena.csv --arena-output fxdata/generated; \
 	cgfx-tools --type-table-csv data/typetable.csv --type-table-output fxdata/generated; \
+	cgfx-tools --consumables-csv data/consumables.csv --consumables-output fxdata/generated; \
 
 gen-fixtures:
 	@set -e; \

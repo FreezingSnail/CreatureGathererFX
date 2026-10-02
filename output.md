@@ -926,3 +926,96 @@ git diff --check
 ```
 
 No new bead was started. Build artifact caching remains unchanged.
+
+## ConsumableDef FX table (CreatureGathererFX-jp8.5.14)
+
+Added the eight-record `ConsumableDef` source table and generator mode. The packed table is 16 B;
+`src/fxdata.h` publishes `consumable_table = 0x095BDE` and the next entry at `0x095BEE`. The
+two-byte reader returns `None, 0` without an FX read for ids at or above `CONSUMABLE_COUNT`.
+The packed image SHA-256 changed to `01c44a29cf47d37bd1ab334e4f126da7c457b29df5dfc4b7f3b08be9540a3833`,
+and the permanent pack-parity baseline was deliberately refreshed.
+
+```text
+CARGO_TARGET_DIR=/private/tmp/jp8-5-14-cargo-target cargo test --manifest-path crates/core/Cargo.toml --locked --offline consumables
+# PASS; 3 passed, 0 failed (builder encoding/validation and CLI mode).
+CARGO_TARGET_DIR=/private/tmp/jp8-5-14-cargo-target cargo build --manifest-path crates/core/Cargo.toml --locked --offline --bin cgfx-tools
+# PASS; offline build. Existing unused-import warning in crates/core/src/writer/bin.rs.
+PATH=/private/tmp/jp8-5-14-cargo-target/debug:$PATH make gen BUILD_DIR=build/jp8-5-14
+# PASS; packed FX image generated.
+wc -c fxdata/generated/consumables.bin && rg -n -C 1 'consumable_table' src/fxdata.h
+# PASS; 16 bytes; consumable_table = 0x095BDE; generator_version = 0x095BEE.
+make verify-generated BUILD_DIR=build/jp8-5-14
+# PASS.
+make test-manifest BUILD_DIR=build/jp8-5-14
+# PASS; fxdata-manifest.
+make test BUILD_DIR=build/jp8-5-14
+# PASS; host 1,099/0; ItemSuite 140/0.
+make build BUILD_DIR=build/jp8-5-14
+# PASS; 17,634 B flash, 1,872 B static RAM, 688 B free.
+PATH=/private/tmp/jp8-5-14-cargo-target/debug:$PATH make test-pack-parity BUILD_DIR=build/jp8-5-14
+# First run correctly exposed the old SHA c4cf97bf4f86e7dc576174943f81787e52d669db5a418032c98d54a031786305.
+# Refreshed the baseline to the generated SHA above; rerun PASS, layout equivalence and perturbation diagnostic PASS.
+PATH=/private/tmp/jp8-5-14-cargo-target/debug:$PATH make check BUILD_DIR=build/jp8-5-14 ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# First attempt stopped when the sandbox denied Arduino CLI cache creation under ~/Library/Caches/arduino/sketches.
+# Elevated rerun PASS; host 1,099/0, VM 10/0, manifest PASS, generated-libs 8/0,
+# invariants 5/0, aliases 28/0, all 11 device suites passed (3,036/0 total).
+# test_stack: 401 B headroom (400 B required); exact P markers from every suite.
+git diff --check
+# PASS.
+```
+
+The initial focused Rust run found a test assumption that Clap rejects `--consumables-csv` without
+its output; the existing type-table mode validates this at dispatch. The test now checks the valid
+pair and output-without-source rejection; rerun passed 3/3. Worker time: approximately 13 minutes;
+the elevated integrated gate took about 1 minute 7 seconds after the sandbox-blocked attempt.
+Orchestrator time: pending.
+
+## UseItem battle action (CreatureGathererFX-jp8.5.18) — blocked
+
+The required battle contract is not present in the source tree. Dependencies
+CreatureGathererFX-jp8.3.2 and CreatureGathererFX-jp8.3.6 are still OPEN. The battle directory
+contains only the legacy `Battle.cpp` and `Battle.hpp`; `tst/battle_test.hpp` only includes the
+legacy engine. `BattleState.hpp`, `Resolve.hpp`, `Resolve.cpp`, `battle::ActionKind`,
+`battle::firstMover`, and `battle::resolveTurn` are absent. The inventory and `ConsumableDef`
+interfaces from completed item beads are present. No source changes or acceptance checks were made;
+implementing against the legacy engine would violate this bead's stated interfaces and scope.
+
+```text
+bd show CreatureGathererFX-jp8.5.18
+# IN_PROGRESS; contract requires the battle::BattleState and resolveTurn APIs.
+bd show CreatureGathererFX-jp8.3.2
+# OPEN; defines BattleState.hpp and BattleEvents.hpp, which are absent.
+bd show CreatureGathererFX-jp8.3.6
+# OPEN; defines Resolve.hpp/.cpp, which are absent.
+rg --files src/engine/battle tst | sort | rg '(^src/engine/battle/|battle_test|BattleState|Resolve)'
+# Only src/engine/battle/Battle.cpp, src/engine/battle/Battle.hpp, and tst/battle_test.hpp.
+rg -n "namespace battle|ActionKind|BattleAction|resolveTurn|firstMover" src/engine/battle
+# No matches.
+```
+
+Worker time: approximately 4 minutes. Acceptance commands (`make test`, `make build`, `make check`)
+were not run because the required dependency interfaces are absent; bead remains in progress.
+
+## Consumable and item-name device readback (CreatureGathererFX-jp8.5.20)
+
+Added `items_test.hpp` and `test_items.ino`. The suite reads all eight two-byte consumable rows and
+checks each record address at a two-byte stride, then checks the 3 lure-tier, 8 lure-type, and 8
+consumable name pointers against their published `src/fxdata.h` globals as three-byte values. It
+also checks the composed names for lure ids 0 and 23.
+
+```text
+PATH=/private/tmp/cgfx-tools-jp8.5.20/debug:$PATH make gen
+# PASS; regenerated packed image using the current consumables-capable cgfx-tools build.
+PATH=/private/tmp/cgfx-tools-jp8.5.20/debug:$PATH ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens make fxtest-headless FXTEST_INOS=tst/fxdatatest/test_items.ino
+# First compile was blocked because the sandbox denied Arduino CLI's ~/Library/Caches/arduino/sketches write.
+# Approved rerun PASS; test_items reported 111 passed, 0 failed, exact P marker.
+PATH=/private/tmp/cgfx-tools-jp8.5.20/debug:$PATH ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens make check
+# PASS; host 1,099/0, VM 10/0, manifest, generated libraries (8/0), invariants (5/0), aliases (28/0),
+# and all 12 device suites (3,147/0 total); test_stack headroom 401 B (400 B required).
+git diff --check -- tst/fxdatatest/items_test.hpp tst/fxdatatest/test_items.ino output.md
+# PASS.
+```
+
+The PATH `cgfx-tools` initially resolved to version 0.2.0, which predates the consumables mode. The
+existing sibling source was built offline to `/private/tmp/cgfx-tools-jp8.5.20`; the sibling checkout
+was not modified. Worker time: approximately 15 minutes; integrated check took about 1 minute.
