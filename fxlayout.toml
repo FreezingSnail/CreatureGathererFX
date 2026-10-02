@@ -68,7 +68,7 @@ name = "generator_version"
 source = { raw = "fxdata/generated/tool_version.bin" }
 
 [save]
-sectors = 2
+sectors = 8
 
 [[save.entry]]
 name = "save_main"
@@ -77,3 +77,27 @@ offset = 0
 [[save.entry]]
 name = "save_log"
 offset = 4096
+
+[[save.entry]]
+name = "save_store_a"
+offset = 8192
+
+[[save.entry]]
+name = "save_store_b"
+offset = 12288
+
+[[save.entry]]
+name = "save_reserved_0"
+offset = 16384
+
+[[save.entry]]
+name = "save_reserved_1"
+offset = 20480
+
+[[save.entry]]
+name = "save_reserved_2"
+offset = 24576
+
+[[save.entry]]
+name = "save_reserved_3"
+offset = 28672

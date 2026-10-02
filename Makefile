@@ -82,6 +82,7 @@ TEST_SOURCES = tst/src/ReadData.cpp \
 	src/opponent/Opponent.cpp \
 	src/action/Action.cpp \
 	src/lib/MenuStack.cpp \
+	src/lib/ListView.cpp \
 	src/lib/BattleEventPlayer.cpp \
 	src/engine/battle/Battle.cpp \
 	src/GameState.cpp \
