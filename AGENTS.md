@@ -58,10 +58,28 @@ the full gate.
 - **Headroom reserve.** Plan against measured headroom minus a reserve; never land below ~150 B free.
 - **Freeze interaction details before dispatch.** Formats, offsets, caps, labels and row models are
   pinned in the bead's `design`; workers may not reinterpret them.
+- **Inspect data formats and edge entries before dispatch.** For rendering or generated-data work,
+  inspect both the generator and its inputs. Pin whether assets include headers, how dimensions are
+  derived, and how empty or sentinel IDs behave. A focused device spike should draw one ordinary
+  entry and the relevant edge entry before the implementation expands to every case.
+- **Check stack during the first device spike.** For changes that add calls, return large structs,
+  or create local copies, run `test_stack` alongside the touched device suite before broadening the
+  implementation. Record the headroom change and trim immediately if it crosses the reserve.
+- **Finish edge-case review before the final gate.** Use host and focused device suites while
+  iterating; check table bounds, empty entries, and sentinel IDs before running the integrated
+  gate. Run the full gate after edits are settled. If it fails or code changes afterward, fix the
+  cause and rerun the gate before committing; record failed attempts and their cause in `output.md`.
 - **One full gate per bead.** The worker runs host/VM suites, touched device suites, and generation
-  checks; the orchestrator runs the full gate once before committing — not twice.
+  checks; the orchestrator runs the final full gate once before committing. Focused checks do not
+  replace that final gate.
 - **Parallelize non-overlapping beads.** Docs/tooling beads can run alongside code beads; only
   same-file work serializes. Split oversized beads before dispatch (2–3 logical layers each).
+- **Route implementation by risk.** Use Sol for high-risk AVR, save-format, SPI, or stack work.
+  Use Luna for bounded tests, tables, and documentation once the contract is pinned. For mixed work,
+  have Sol settle the risky design first, then dispatch non-overlapping bounded implementation work.
+- **Do not repeat blocked commands unchanged.** If a build or Git write is blocked by the sandbox at
+  an external tool cache or repository metadata path, use the permitted access path for that command
+  instead of retrying the same unprivileged invocation.
 - **Log wall time per bead** (worker / gate / orchestrator) in `output.md` so the next retro is data.
 
 ## Worker protocol (agents spawned for bd tasks)
@@ -69,6 +87,9 @@ the full gate.
 - One bead = one implement-verify loop. Read `bd show <id>`, implement, run the bead's exact
   verification commands, write the report to `output.md` (exact commands, tails, numbers, wall
   time, documented deviations), then `bd close <id>`.
+- Keep reports and tool output compact: include exact commands, pass/fail counts, resource figures,
+  elapsed time, and only the relevant output tail or failure trace. Do not paste full test logs or
+  reopen full bead descriptions just to confirm a close already reported by `bd close`.
 - **Do not commit or push** — the orchestrator commits between bead waves and runs the full gate.
 - If the build cannot fit or a gate fails, report BLOCKED with the deficit and options; never fake a
   pass.
