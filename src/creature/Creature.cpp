@@ -3,6 +3,7 @@
 #include "../lib/Move.hpp"
 #include "../lib/DataTypes.hpp"
 #include "../lib/ReadData.hpp"
+#include "LevelCurve.hpp"
 
 // This will need to load the creature seed from the progmemstore
 Creature::Creature() {
@@ -16,8 +17,9 @@ Creature::Creature() {
 
 void Creature::load(CreatureData_t seed) {
     id = static_cast<uint8_t>((seed.id));
-    // TODO: for testing
-    level = 31;
+    // Legacy species-only callers have no experience. Keep their current
+    // maximum-level setup until they load a StoreRecord.
+    level = levelFromExp(levelExpThreshold(LEVEL_COUNT - 1));
     loadTypes(seed);
     setStats(seed);
     // Need some kind of default setting for moves ?
@@ -25,12 +27,23 @@ void Creature::load(CreatureData_t seed) {
     // loadSprite(seed);
 }
 
+void Creature::load(const StoreRecord &record) {
+    id = record.id;
+    level = levelFromExp(record.exp);
+    CreatureData_t seed = getCreatureFromStore(id);
+    loadTypes(seed);
+    setStats(seed);
+    for (uint8_t slot = 0; slot < 4; ++slot) {
+        setMove(record.moves[slot], slot);
+    }
+}
+
 // 00,id1,lvl1,move11,move12,move13,move14,
 void Creature::loadFromOpponentSeed(CreatureSeed seed) {
     id = seed.id;
     CreatureData_t cSeed = getCreatureFromStore(id);
     loadTypes(cSeed);
-    level = 31;   // seed.lvl;
+    level = seed.lvl;
     setStats(cSeed);
     setMove(parseOpponentCreatureSeedMove(seed.moves, 0), 0);
     setMove(parseOpponentCreatureSeedMove(seed.moves, 1), 1);

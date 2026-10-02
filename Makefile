@@ -73,6 +73,7 @@ doctor:
 # Common source files for main tests
 TEST_SOURCES = tst/src/ReadData.cpp \
 	tst/src/DialogMenu.cpp \
+	src/engine/menu/DialogQueue.cpp \
 	tst/src/random.cpp \
 	tst/src/FlashBackendFake.cpp \
 	src/save/SaveFile.cpp \

@@ -741,3 +741,91 @@ git diff --check
 Worker elapsed time from claim through focused report: about 14 minutes,
 including the coordinated wait for FX data regeneration. Orchestrator gate
 and parity checks completed in about 45 seconds.
+
+## CreatureGathererFX-jp8.2.2 — store record and derived level curve (worker)
+
+Added the packed 8 B `StoreRecord` (`id`, 16-bit `exp`, four moves, reserved),
+0xFF tombstone ID, and `base + (uint24_t(slot) << 3)` address helper for 512
+slots per sector. Added 32 cubic experience thresholds (`0^3` through `31^3`)
+in a 64 B PROGMEM table; the maximum is 29,791, below 65,535. Stored creatures
+derive levels 1–31 from experience and load their recorded moves. Opponent
+creatures use their explicit seed level. Legacy species-only loading keeps its
+existing maximum-level setup through the curve's PROGMEM accessor. Host tests
+cover byte layout and round-trips at slots 0, 257, and 511, page and sector
+addresses, every threshold and one below each positive threshold, experience
+0 and 65,535, stored stats and moves, and an opponent at level 17.
+
+```text
+make test
+# PASS on the final run; host 1,291/0, including StoreRecordLayoutAndAddressTest
+# 27/0, CreatureLevelCurveTest 97/0, and CreatureStoredRecordTest 4/0.
+git diff --check
+# PASS.
+```
+
+The worker ran `make test` three times while integrating and fixing the AVR
+PROGMEM access; each run passed. No device build or full gate was run by this
+worker because the orchestrator's integrated gate was pending. Whole-image
+flash and RAM deltas remain for that gate. Worker time: 7m29s.
+
+## CreatureGathererFX-jp8.4.4 — dialog FIFO and DAMAGE rendering (worker)
+
+Changed DialogMenu to use a FIFO head/count contract with `head()`, bounded
+boolean `push()`, and `clear()`. Queue clearing and each vacated slot zero all
+fields. Event dialogs now assign TEXT and zero damage explicitly. MenuV2 clears
+the queue through its API, and pop/animation drawing reads the head. DAMAGE has
+an explicit switch break. DialogSuite covers three-item FIFO order, the six
+entry capacity and rejected seventh push, clear/vacated-slot fields, and event
+field placement.
+
+The first real device run exposed an existing number-sprite issue on this path:
+the generated sprite symbols point at payload bytes, while the inferred-size
+`SpritesU` overload treated those bytes as dimensions (the single-digit sprite
+appeared to have width zero and stalled rendering). As a documented scope
+deviation, `drawNumbersBlack` now uses the explicit-size overload for its 3×8
+single-digit and 7×8 pair cells, passing each payload address minus two so the
+overload advances to the payload while retaining the frame offset. A permanent
+FX test draws a DAMAGE dialog and checks ink in the label and number regions,
+plus paper outside the dialog. The DAMAGE case break is also pinned in the
+production switch.
+
+```text
+make test BUILD_DIR=build/dialog-jp8-4-4
+# PASS; host 1,291/0, including DialogSuite 30/0.
+make fxtest-headless FXTEST_INOS=tst/fxdatatest/test_dialog.ino FXTEST_BUILD_DIR=build/dialog-jp8-4-4/fxtest
+# PASS; test_dialog PASSED=4 FAILED=0; 11,638 B flash (39%), 1,731 B globals
+# (67%), 829 B free SRAM.
+```
+
+Before the number-sprite correction, the same device test compiled but stalled
+inside the first number sprite call after the damage label. Focused existing
+device baselines `test_version` (1/0) and `test_arena` (462/0) passed. No full
+`make check` or integrated shipping build was run by this worker. Worker time
+from claim through report: about 22 minutes, including coordination and device
+diagnosis. Scope deviation: the required `drawNumbersBlack` fix in
+`src/common.hpp` was necessary to complete the DAMAGE device rendering check.
+
+## Wave 3 integrated gate — StoreRecord and dialog FIFO
+
+```text
+make check BUILD_DIR=build/wave3-gate FXTEST_BUILD_DIR=build/wave3-gate/fxtest ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# First attempt stopped during device linking: the new DialogQueue.cpp
+# references animator, which FX_GLOBALS_MINIMAL sketches did not define.
+# Added Animator to the minimal device-test globals, then reran the full gate:
+# PASS; host 1,291/0, VM 10/0, manifest PASS, generated libs 7/0,
+# invariants 5/0, aliases 28/0; all eleven Ardens suites exact P, including
+# test_dialog 4/0 and test_stack headroom 427 B. Generation introduced no
+# unexpected tracked artifact changes.
+make ram BUILD_DIR=build/wave3-gate
+# Sandbox retry was blocked cleaning an Arduino cache file. Elevated retry
+# PASS; shipping FX 17,676 B flash, 1,856 B static RAM, 704 B free.
+make mini BUILD_DIR=build/wave3-gate
+# Sandbox retry was blocked cleaning the same Arduino cache file. Elevated
+# retry PASS; Mini 17,256 B flash, 1,856 B static RAM, 704 B free.
+git diff --check
+# PASS.
+```
+
+The linked FX image adds 264 B flash over Wave 2; static RAM is unchanged.
+The full gate and final FX/Mini builds took about three minutes of orchestrator
+time, excluding the cache permission wait.

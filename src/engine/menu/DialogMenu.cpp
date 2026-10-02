@@ -13,7 +13,7 @@
 #define BLACKTEXT 0
 
 void DialogMenu::drawPopMenu() {
-    PopUpDialog curMenu = popDialogStack[0];
+    PopUpDialog curMenu = head();
     SpritesU::drawOverwriteFX(0, 40, battleMenu, FRAME(0));
 
     uint24_t addr;
@@ -27,6 +27,7 @@ void DialogMenu::drawPopMenu() {
     case DAMAGE: {
         SpritesU::drawOverwriteFX(curMenu.x + 12, curMenu.y + 2, damageText, FRAME(WHITETEXT));
         drawNumbersBlack(curMenu.x + 4, curMenu.y + 3, curMenu.damage);
+        break;
     }
     case ENEMY_DAMAGE: {
         // font.setCursor(curMenu.x + 3, curMenu.y + 3);
@@ -130,43 +131,16 @@ void DialogMenu::drawPopMenu() {
     }
 }
 
-bool DialogMenu::peek() {
-    return dialogPointer >= 0;
-}
-
-void DialogMenu::pushMenu(PopUpDialog info) {
-    dialogPointer++;
-    popDialogStack[dialogPointer] = info;
-}
-
-void DialogMenu::pushEvent(Event event) {
-    dialogPointer++;
-    popDialogStack[dialogPointer] = PopUpDialog{0, 34, 120, 30, event.textAddress, TEXT};
-}
-
-void DialogMenu::popMenu() {
-    if (dialogPointer < 0) {
+void DialogMenu::pushAnimation() {
+    if (!peek()) {
         return;
     }
-    for (uint8_t i = 0; i < dialogPointer; i++) {
-        popDialogStack[i] = popDialogStack[i + 1];
-    }
-
-    popDialogStack[dialogPointer] = PopUpDialog{0, 0, 0, 0, 0, 0};
-    dialogPointer--;
-
-    if (popDialogStack[0].animation != 0) {
-        pushAnimation();
-    }
-}
-
-void DialogMenu::pushAnimation() {
-    switch (popDialogStack[0].type) {
+    switch (head().type) {
     case NAME:
-        animator.push(Animation{60, 0, 8, popDialogStack[0].animation});
+        animator.push(Animation{60, 0, 8, head().animation});
         break;
     case ENEMY_NAME:
-        animator.push(Animation{40, 0, 8, popDialogStack[0].animation});
+        animator.push(Animation{40, 0, 8, head().animation});
         break;
     }
 }

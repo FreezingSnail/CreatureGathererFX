@@ -7,6 +7,7 @@
 #include "../src/save/FlashBackend.hpp"
 #include "../src/save/Journal.hpp"
 #include "../src/save/SaveFile.hpp"
+#include "../src/save/StoreRecord.hpp"
 
 namespace save_test_detail {
 inline void advanceToDone(SaveFile &state)
@@ -53,6 +54,50 @@ inline void applyRecord(const JournalRecord &record)
     memcpy(&replayState->party[record.slot], record.payload, sizeof(record.payload));
 }
 } // namespace save_test_detail
+
+inline void StoreRecordLayoutAndAddressTest(TestSuite &suite)
+{
+    Test test = Test(__func__);
+    constexpr uint24_t base = 0x19000;
+    uint8_t sector[4096];
+    memset(sector, 0xff, sizeof(sector));
+    const uint16_t slots[] = {0, 257, 511};
+    for (uint16_t slot : slots) {
+        const uint24_t address = storeRecordAddr(base, slot);
+        const uint16_t offset = static_cast<uint16_t>(slot << 3);
+        test.assert(address, base + offset,
+                    "Store slot address " + std::to_string(slot));
+        test.assert(storeRecordAddr(base, slot + 1) - address,
+                    static_cast<uint24_t>(STORE_RECORD_BYTES),
+                    "Store slot stride " + std::to_string(slot));
+        test.assert(sector[offset], STORE_RECORD_TOMBSTONE_ID,
+                    "Erased slot is a tombstone " + std::to_string(slot));
+
+        const StoreRecord original = {
+            static_cast<uint8_t>(slot + 1), static_cast<uint16_t>(0x1200 + slot),
+            {2, 3, 4, 5}, 0};
+        memcpy(&sector[offset], &original, sizeof(original));
+        StoreRecord decoded = {};
+        memcpy(&decoded, &sector[offset], sizeof(decoded));
+        test.assert(memcmp(&decoded, &original, sizeof(original)), 0,
+                    "Store slot round-trips " + std::to_string(slot));
+        test.assert(sector[offset + 0], original.id, "Packed id");
+        test.assert(sector[offset + 1], static_cast<uint8_t>(original.exp),
+                    "Packed experience low byte");
+        test.assert(sector[offset + 2], static_cast<uint8_t>(original.exp >> 8),
+                    "Packed experience high byte");
+        test.assert(sector[offset + 7], static_cast<uint8_t>(0),
+                    "Zero reserved byte is default");
+    }
+    test.assert(storeRecordAddr(base, 31), base + 248,
+                "Last record in first page");
+    test.assert(storeRecordAddr(base, 32), base + 256,
+                "First record in second page");
+    test.assert(storeRecordAddr(base, STORE_RECORDS_PER_SECTOR - 1),
+                base + 4096 - STORE_RECORD_BYTES,
+                "Last record fits inside sector");
+    suite.addTest(test);
+}
 
 inline void SaveRecordEncodeDecodeTest(TestSuite &suite)
 {
@@ -391,6 +436,7 @@ inline void CompactionBusyGateTest(TestSuite &suite)
 inline void SaveSuite(TestRunner &runner)
 {
     TestSuite suite = TestSuite("Save Suite");
+    StoreRecordLayoutAndAddressTest(suite);
     SaveRecordEncodeDecodeTest(suite);
     SaveFileRoundTripAndValidationTest(suite);
     SaveFileLegacyV1DiscardMigrationTest(suite);

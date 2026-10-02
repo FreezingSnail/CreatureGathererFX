@@ -1,6 +1,7 @@
 #pragma once
 #include "test.hpp"
 #include "../src/creature/Creature.hpp"
+#include "../src/creature/LevelCurve.hpp"
 #include "../src/lib/ReadData.hpp"
 static_assert(sizeof(Move) == 4, "Move must retain its packed four-byte runtime layout");
 #if defined(__AVR__)
@@ -45,6 +46,47 @@ void CreatureLoadFromOpponnetSeed(TestSuite &t) {
     test.assert(creature.moves[2], 255, "Creature Move 3");
     test.assert(creature.moves[3], 255, "Creature Move 4");
 
+    creature.loadFromOpponentSeed({0, 17, 4294967040});
+    test.assert(creature.level, 17, "Creature uses opponent seed level");
+    test.assert(creature.statlist.attack,
+                static_cast<uint8_t>(2 * 17 + 3 * (17 / 3)),
+                "Opponent stats use the seed level");
+
+    t.addTest(test);
+}
+
+void CreatureStoredRecordTest(TestSuite &t) {
+    Test test = Test(__func__);
+    StoreRecord record = {0, 27, {9, 32, 32, 32}, 0};
+    Creature creature;
+    creature.load(record);
+    test.assert(creature.id, record.id, "Stored creature ID");
+    test.assert(creature.level, 3, "Stored experience derives level");
+    test.assert(creature.moves[0], record.moves[0], "Stored move overrides species default");
+    test.assert(creature.statlist.attack, creature.seedToStat(3),
+                "Stored creature stats use derived level");
+    t.addTest(test);
+}
+
+void CreatureLevelCurveTest(TestSuite &t) {
+    Test test = Test(__func__);
+    test.assert(levelFromExp(0), 1, "Zero experience has minimum level");
+    for (uint8_t level = 0; level < LEVEL_COUNT; ++level) {
+        const uint16_t threshold = levelExpThreshold(level);
+        const uint16_t expectedThreshold = static_cast<uint16_t>(level) * level * level;
+        const uint8_t expectedLevel = level == 0 ? 1 : level;
+        test.assert(threshold, expectedThreshold,
+                    "Cubic threshold " + std::to_string(level));
+        test.assert(levelFromExp(threshold), expectedLevel,
+                    "At threshold " + std::to_string(level));
+        if (threshold > 0) {
+            const uint8_t previousLevel = level <= 2 ? 1 : level - 1;
+            test.assert(levelFromExp(threshold - 1), previousLevel,
+                        "Below threshold " + std::to_string(level));
+        }
+    }
+    test.assert(levelFromExp(65535), LEVEL_COUNT - 1,
+                "Experience above the final threshold caps at maximum level");
     t.addTest(test);
 }
 
@@ -52,5 +94,7 @@ void CreatureSuite(TestRunner &r) {
     TestSuite t = TestSuite("Creature Suite");
     CreatureLoadTest(t);
     CreatureLoadFromOpponnetSeed(t);
+    CreatureStoredRecordTest(t);
+    CreatureLevelCurveTest(t);
     r.addTestSuite(t);
 }
