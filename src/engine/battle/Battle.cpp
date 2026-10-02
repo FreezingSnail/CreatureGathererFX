@@ -7,6 +7,10 @@
 #include "../../lib/random.hpp"
 #include "../../lib/Effect.hpp"
 
+static __attribute__((noinline)) void pushBattleDialog(DialogType type, uint24_t number, uint16_t damage) {
+    dialogMenu.pushMenu(newDialogBox(type, number, damage));
+}
+
 BattleEngine::BattleEngine() {
 }
 
@@ -445,26 +449,26 @@ void BattleEngine::commitAction(Action *action, Creature *commiter, Creature *re
             runEffect(commiter, receiver, moveEffect);
             if (isPlayer) {
                 // battleEventPlayer.push({BattleEventType::ATTACK, commiter->id, commiter->moves[action->actionIndex]});
-                dialogMenu.pushMenu(newDialogBox(NAME, commiter->id, commiter->moves[action->actionIndex]));
+                pushBattleDialog(NAME, commiter->id, commiter->moves[action->actionIndex]);
 
             } else {
                 // battleEventPlayer.push({BattleEventType::OPPONENT_ATTACK, commiter->id, commiter->moves[action->actionIndex]});
-                dialogMenu.pushMenu(newDialogBox(ENEMY_NAME, commiter->id, commiter->moves[action->actionIndex]));
+                pushBattleDialog(ENEMY_NAME, commiter->id, commiter->moves[action->actionIndex]);
             }
 
         } else if (turnState == BattleState::PLAYER_RECEIVE_DAMAGE || turnState == BattleState::OPPONENT_RECEIVE_DAMAGE) {
             if (mod != Modifier::Same) {
-                dialogMenu.pushMenu(newDialogBox(EFFECTIVENESS, uint24_t(mod), 0));
+                pushBattleDialog(EFFECTIVENESS, uint24_t(mod), 0);
             }
             applyDamage(damage, receiver);
 
             if (isPlayer) {
-                dialogMenu.pushMenu(newDialogBox(ENEMY_DAMAGE, receiver->id, damage));
+                pushBattleDialog(ENEMY_DAMAGE, receiver->id, damage);
                 //  battleEventPlayer.push({BattleEventType::OPPONENT_DAMAGE, 0, damage});
 
             } else {
                 //    battleEventPlayer.push({BattleEventType::DAMAGE, 0, damage});
-                dialogMenu.pushMenu(newDialogBox(DAMAGE, receiver->id, damage));
+                pushBattleDialog(DAMAGE, receiver->id, damage);
             }
         }
 
@@ -479,10 +483,10 @@ void BattleEngine::commitAction(Action *action, Creature *commiter, Creature *re
 
         if (turnState == BattleState::PLAYER_ATTACK || turnState == BattleState::OPPONENT_ATTACK) {
             if (isPlayer) {
-                dialogMenu.pushMenu(newDialogBox(TEAM_CHANGE, 0, 0));
-                dialogMenu.pushMenu(newDialogBox(SWITCH, playerParty[action->actionIndex]->id, 0));
+                pushBattleDialog(TEAM_CHANGE, 0, 0);
+                pushBattleDialog(SWITCH, playerParty[action->actionIndex]->id, 0);
             } else {
-                dialogMenu.pushMenu(newDialogBox(SWITCH, opponent.party[action->actionIndex].id, 0));
+                pushBattleDialog(SWITCH, opponent.party[action->actionIndex].id, 0);
             }
 
         } else if (turnState == BattleState::PLAYER_RECEIVE_DAMAGE || turnState == BattleState::OPPONENT_RECEIVE_DAMAGE) {
@@ -499,7 +503,7 @@ void BattleEngine::commitAction(Action *action, Creature *commiter, Creature *re
         // should add a check in here for opponent vs random encounter
         if (turnState == BattleState::PLAYER_ATTACK || turnState == BattleState::OPPONENT_ATTACK) {
 
-            dialogMenu.pushMenu(newDialogBox(ESCAPE_ENCOUNTER, 0, 0));
+            pushBattleDialog(ESCAPE_ENCOUNTER, 0, 0);
         } else {
             this->endEncounter();
         }

@@ -16,8 +16,8 @@ GameState_t stateBeforeSaving = GameState_t::WORLD;
 bool savingStarted = false;
 
 // SaveFile is a compaction buffer, not a second authoritative game state.
-// Snapshot RAM immediately before saveBegin; Compaction restores only the
-// journal-owned party baseline before replay and preserves these other fields.
+// Snapshot RAM immediately before saveBegin; the current party and other
+// RAM-resident fields remain in this snapshot.
 void captureLiveSaveState()
 {
     saveState.version = SAVE_VERSION;

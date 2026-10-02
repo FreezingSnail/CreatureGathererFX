@@ -1,6 +1,30 @@
 #include "../../src/lib/ReadData.hpp"
 #include "parseCSV.hpp"
 
+uint24_t readCreatureNameAddress(uint8_t id) {
+    return 0x10000UL + id;
+}
+
+uint24_t readMoveNameAddress(uint16_t id) {
+    return 0x20000UL + id;
+}
+
+uint24_t readEffectStringAddress() {
+    return 0x30000UL;
+}
+
+uint8_t readCreatureNameWidth(uint8_t id) {
+    return id == 3 ? 60 : (id < 32 ? 70 : 0);
+}
+
+uint8_t readMoveNameWidth(uint16_t id) {
+    return id < 32 ? 40 : 0;
+}
+
+uint8_t readEffectStringWidth() {
+    return 75;
+}
+
 Move readMoveFX(uint8_t index) {
     Move move;
     // uint24_t rowAddress = MoveData::movePack + sizeof(MoveBitSet) * index;

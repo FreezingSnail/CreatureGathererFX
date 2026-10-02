@@ -11,6 +11,7 @@
 #include "src/engine/world/World.hpp"
 #include "src/fxdata.h"
 #include "src/save/SaveController.hpp"
+#include "src/save/Journal.hpp"
 #include "src/player/Player.hpp"
 #include "src/plants/PlantGamestate.hpp"
 #include "src/engine/draw.h"
@@ -55,6 +56,7 @@ void setup() {
     //  plants.tick();
 
     FX::begin(FX_DATA_PAGE, FX_SAVE_PAGE);
+    journalInit();
     // FX::setFont(ArduFont, dcmNormal);   // select default font
     FX::setCursorRange(0, 32767);
     world.init();
@@ -180,4 +182,3 @@ void loop() {
     render();
     FX::display(CLEAR_BUFFER);
 }
-

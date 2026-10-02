@@ -829,3 +829,74 @@ git diff --check
 The linked FX image adds 264 B flash over Wave 2; static RAM is unchanged.
 The full gate and final FX/Mini builds took about three minutes of orchestrator
 time, excluding the cache permission wait.
+
+# Wave 4 — journal records and dialog address resolution
+
+## CreatureGathererFX-jp8.2.3 — widen log record to 16B and cache the tail
+
+Expanded journal entries to 16 bytes with a 10-byte payload, 16-bit slot,
+checksum, and padding; defined STORE_ADD, STORE_REMOVE, and PARTY_ASSIGN
+operations. Boot now scans the tail once, and appends check only the next
+record. Sector scans use 32-byte windows, keeping record reads within one
+window. Unknown operations are skipped. The interim compaction replay keeps
+the live SaveFile party snapshot and defers store operations; interpreting new
+store payload bytes as legacy Creature data would corrupt the snapshot.
+
+```text
+make test BUILD_DIR=build/jp8.2.3
+# PASS; host 1,073/0.
+make fxtest-headless FXTEST_INOS=tst/fxdatatest/test_save.ino BUILD_DIR=build/jp8.2.3-device
+# PASS; test_save 275/0, 16,846 B flash, 1,752 B globals, 808 B free.
+git diff --check
+# PASS.
+```
+
+Worker time from claim through report: 7m45s. The integrated gate also passed
+the complete save suite; the final shipping build uses 1,872 B static RAM and
+leaves 688 B free.
+
+## CreatureGathererFX-jp8.4.5 — resolve dialog addresses at push time
+
+`newDialogBox` now resolves creature-name, move-name, and effect-string table
+addresses when creating a dialog. `PopUpDialog` carries the second resolved
+address, and `drawPopMenu` has no `FX::read` calls. Added PROGMEM bitmap widths
+for indexed text and explicit-size drawing because these generated strings are
+raw bitmaps without dimension headers. The single effect label resolves at
+index zero. The empty move sentinel (`amove32`) has width zero. Event TEXT
+continues using its already-resolved raw text address.
+
+Device rendering exposed the dialog bitmap format mismatch and the empty move
+sentinel width edge case. A noinline battle helper now constructs and pushes
+one dialog at a time: this avoids retaining multiple 17-byte dialog temporaries
+in `commitAction` and restores the required stack margin. The painted stack
+check passes with 401 B headroom (400 B required). These rendering and stack
+changes were needed to satisfy the bead's device behavior and stack budget.
+
+```text
+make test BUILD_DIR=build/jp8-4-5-audit-host-deterministic
+# PASS; host 1,084/0 before the empty-sentinel regression assertion.
+make build BUILD_DIR=build/jp8-4-5-audit-fx-deterministic
+# PASS; 17,634 B flash, 1,872 B globals, 688 B free.
+make fxtest-headless FXTEST_INOS=tst/fxdatatest/test_dialog.ino BUILD_DIR=build/jp8-4-5-audit-device-deterministic FXTEST_BUILD_DIR=build/jp8-4-5-audit-device-deterministic/fxtest
+# PASS; test_dialog 57/0 before the empty-sentinel regression assertion.
+make test BUILD_DIR=build/wave4-final-host
+# PASS; host 1,086/0, including DialogAddressTest 32/0.
+make fxtest-headless FXTEST_INOS=tst/fxdatatest/test_dialog.ino BUILD_DIR=build/wave4-final-dialog FXTEST_BUILD_DIR=build/wave4-final-dialog/fxtest ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS; test_dialog 59/0.
+make check BUILD_DIR=build/wave4-final FXTEST_BUILD_DIR=build/wave4-final/fxtest ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS; host 1,086/0, VM 10/0, manifest, generated libs 7/0, invariants
+# 5/0, aliases 28/0, and every device suite exact P. test_save 275/0;
+# test_dialog 59/0; test_stack 3/0 with 401 B headroom. Generation left no
+# unexpected tracked changes. Final gate elapsed time: about 42 seconds.
+make ram BUILD_DIR=build/wave4-final-ram
+# Elevated retry PASS after Arduino CLI cache writes were blocked by the
+# sandbox: shipping FX 17,634 B flash, 1,872 B static RAM, 688 B free.
+git diff --check
+# PASS.
+```
+
+The final integrated build matches the prior shipping flash and static RAM
+figures. Worker time: about 45 minutes for dialog tracing, rendering diagnosis,
+and focused checks. Orchestrator stack diagnosis, extraction, and final
+verification took about 3 minutes. No packed image bytes changed, so the pack
+parity baseline did not need updating.

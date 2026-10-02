@@ -2,9 +2,10 @@
 
 #include "test.hpp"
 #include "../src/engine/menu/DialogMenu.hpp"
+#include "../src/globals.hpp"
 
 inline PopUpDialog dialogFixture(uint24_t text, uint16_t damage = 0) {
-    return PopUpDialog{1, 2, 3, 4, text, damage, DAMAGE, 0};
+    return PopUpDialog{1, 2, 3, 4, text, 0, damage, DAMAGE, 0};
 }
 
 void DialogTest(TestSuite &suite) {
@@ -41,6 +42,7 @@ void DialogTest(TestSuite &suite) {
     test.assert(dialog.popDialogStack[0].width, static_cast<uint8_t>(0), "clear erases width");
     test.assert(dialog.popDialogStack[0].height, static_cast<uint8_t>(0), "clear erases height");
     test.assert(dialog.popDialogStack[0].textAddress, static_cast<uint24_t>(0), "clear erases text address");
+    test.assert(dialog.popDialogStack[0].detailAddress, static_cast<uint24_t>(0), "clear erases detail address");
     test.assert(dialog.popDialogStack[0].damage, static_cast<uint16_t>(0), "clear erases damage");
     test.assert(dialog.popDialogStack[0].type, TEXT, "clear erases dialog type");
     test.assert(dialog.popDialogStack[0].animation, static_cast<uint24_t>(0), "clear erases animation");
@@ -52,8 +54,69 @@ void DialogTest(TestSuite &suite) {
     suite.addTest(test);
 }
 
+void DialogAddressTest(TestSuite &suite) {
+    Test test = Test(__func__);
+    DialogMenu dialog;
+    constexpr uint8_t creatureId = 0;
+    constexpr uint16_t moveId = 1;
+    const uint24_t nameAddress = readCreatureNameAddress(creatureId);
+    const uint24_t moveAddress = readMoveNameAddress(moveId);
+    const uint24_t effectAddress = readEffectStringAddress();
+
+    test.assert(dialog.push(newDialogBox(NAME, creatureId, moveId)), true, "name pushed");
+    test.assert(dialog.head().textAddress, nameAddress, "name address resolved");
+    test.assert(dialog.head().detailAddress, moveAddress, "move address resolved");
+    test.assert(dialog.head().width, static_cast<uint8_t>(70), "name bitmap width resolved");
+    test.assert(dialog.head().height, static_cast<uint8_t>(40), "move bitmap width resolved");
+    test.assert(dialog.head().textAddress != 0, true, "name address nonzero");
+    test.assert(dialog.head().detailAddress != 0, true, "move address nonzero");
+    dialog.drawPopMenu();
+    test.assert(dialog.dialogCount, static_cast<uint8_t>(1), "drawing keeps count");
+    test.assert(dialog.head().textAddress, nameAddress, "drawing keeps head address");
+    test.assert(dialog.head().detailAddress, moveAddress, "drawing keeps detail address");
+
+    dialog.popMenu();
+    constexpr uint16_t emptyMoveId = 32;
+    test.assert(dialog.push(newDialogBox(NAME, creatureId, emptyMoveId)), true, "empty move pushed");
+    test.assert(dialog.head().height, static_cast<uint8_t>(0), "empty move has no bitmap width");
+    dialog.popMenu();
+
+    test.assert(dialog.push(newDialogBox(NAME, creatureId, 0)), true, "name without move pushed");
+    test.assert(dialog.head().detailAddress, static_cast<uint24_t>(0), "zero move remains unresolved");
+    test.assert(dialog.head().height, static_cast<uint8_t>(0), "zero move has no bitmap width");
+    dialog.popMenu();
+
+    test.assert(dialog.push(newDialogBox(FAINT, creatureId, 0)), true, "faint pushed");
+    test.assert(dialog.head().textAddress, nameAddress, "faint name resolved");
+    test.assert(dialog.head().width, static_cast<uint8_t>(70), "faint bitmap width resolved");
+    test.assert(dialog.head().detailAddress, static_cast<uint24_t>(0), "faint has no detail");
+    dialog.popMenu();
+
+    constexpr uint8_t otherCreatureId = 3;
+    test.assert(dialog.push(newDialogBox(PLAYER_EFFECT, otherCreatureId, 0)), true, "effect pushed");
+    test.assert(dialog.head().textAddress, readCreatureNameAddress(otherCreatureId), "effect creature name resolved");
+    test.assert(dialog.head().width, static_cast<uint8_t>(60), "effect creature bitmap width resolved");
+    test.assert(dialog.head().detailAddress, effectAddress, "effect string resolved");
+    test.assert(dialog.head().height, static_cast<uint8_t>(75), "effect bitmap width resolved");
+    test.assert(dialog.head().detailAddress != 0, true, "effect string nonzero");
+    dialog.drawPopMenu();
+    test.assert(dialog.dialogCount, static_cast<uint8_t>(1), "drawing effect keeps count");
+    test.assert(dialog.head().detailAddress, effectAddress, "drawing effect keeps detail");
+
+    dialog.popMenu();
+    test.assert(dialog.push(newDialogBox(ENEMY_EFFECT, otherCreatureId, 0)), true, "enemy effect pushed");
+    test.assert(dialog.head().textAddress, readCreatureNameAddress(otherCreatureId),
+                "enemy effect creature name resolved");
+    test.assert(dialog.head().detailAddress, effectAddress, "enemy effect uses sole effect string");
+    test.assert(dialog.head().width, static_cast<uint8_t>(60), "enemy effect creature width resolved");
+    test.assert(dialog.head().height, static_cast<uint8_t>(75), "enemy effect string width resolved");
+
+    suite.addTest(test);
+}
+
 void DialogSuite(TestRunner &runner) {
     TestSuite suite = TestSuite("Dialog Suite");
     DialogTest(suite);
+    DialogAddressTest(suite);
     runner.addTestSuite(suite);
 }
