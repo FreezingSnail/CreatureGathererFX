@@ -296,12 +296,25 @@ void resolveAction(BattleState &state, Side actor, BattleAction action,
         break;
     case ActionKind::Switch:
     case ActionKind::Gather:
-    case ActionKind::Escape:
-        // These transitions are owned by setup/.7, .8 and .9 respectively.
-        // Keep a visible refused result here rather than importing their seams.
+        // These transitions are owned by setup/.7 and .9 respectively. Keep
+        // a visible refused result here rather than importing their seams.
         out.kind = extensionResult(action.kind);
         out.actor = actor;
         out.flags |= REFUSED;
+        break;
+    case ActionKind::Escape:
+        out.kind = ResultKind::Escape;
+        out.actor = actor;
+        if (state.trainer) {
+            // Trainer battles never escape; refusal still consumes this one
+            // action, so the caller may resolve the other actor normally.
+            out.flags |= REFUSED;
+        } else {
+            // Keep the active combatants intact for terminal presentation.
+            // The session observes over and cancels the other action/end turn.
+            state.over = true;
+            out.outcome = Outcome::Escaped;
+        }
         break;
     }
 
