@@ -16,6 +16,7 @@
 #include "dialog_test.hpp"
 #include "mode_state_test.hpp"
 #include "world_interact_test.hpp"
+#include "step_test.hpp"
 #include "fx_read_counter_test.hpp"
 
 #include "../src/globals.hpp"
@@ -28,6 +29,7 @@ BattleEvent battleEventStack[10];
 BattleEventPlayer battleEventPlayer;
 MenuStack menuStack;
 DialogMenu dialogMenu;
+PlantGameState plants;
 uint8_t screenBuffer[128 * 64];
 uint8_t *buffer = screenBuffer;
 
@@ -58,10 +60,36 @@ void reset() {
 }
 }
 
+namespace worldMovementFake {
+bool hasRequest = false;
+Direction requestedDirection = Direction::DOWN;
+uint16_t calls = 0;
+
+void reset() {
+    hasRequest = false;
+    requestedDirection = Direction::DOWN;
+    calls = 0;
+}
+
+void request(Direction direction) {
+    requestedDirection = direction;
+    hasRequest = true;
+}
+
+uint16_t inputCalls() { return calls; }
+}
+
 bool worldInteractionJustPressedA() { return worldInteractionFake::pressedA; }
 bool worldInteractionDialogActive() { return dialogMenu.peek(); }
 void worldInteractionPopDialog() { dialogMenu.popMenu(); }
 uint24_t worldInteractionScriptsBase() { return worldInteractionFake::scriptsBase; }
+bool worldMovementDirection(Direction &direction) {
+    ++worldMovementFake::calls;
+    if (!worldMovementFake::hasRequest) return false;
+    worldMovementFake::hasRequest = false;
+    direction = worldMovementFake::requestedDirection;
+    return true;
+}
 void worldInteractionReadScript(uint24_t address, uint8_t *dst, uint8_t length) {
     ++worldInteractionFake::readCount;
     worldInteractionFake::lastAddress = address;
@@ -118,6 +146,8 @@ int main() {
     std::cout << "ModeStateSuite finished" << std::endl;
     WorldInteractionSuite(tests);
     std::cout << "WorldInteractionSuite finished" << std::endl;
+    StepSuite(tests);
+    std::cout << "StepSuite finished" << std::endl;
     FxReadCounterSuite(tests);
     std::cout << "FxReadCounterSuite finished" << std::endl;
     std::cout << "Tests Finished" << std::endl;

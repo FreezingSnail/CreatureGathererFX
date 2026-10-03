@@ -1,5 +1,6 @@
 #include "World.hpp"
 #include "WorldCollision.hpp"
+#include "StepEvent.hpp"
 
 #ifndef TEST
 #include "../../common.hpp"
@@ -14,6 +15,7 @@ extern void worldInteractionPopDialog();
 extern void worldInteractionReadScript(uint24_t address, uint8_t *buffer, uint8_t length);
 extern void worldInteractionRunScript(uint8_t *script, uint16_t currentTile, uint16_t targetTile);
 extern uint24_t worldInteractionScriptsBase();
+extern bool worldMovementDirection(Direction &value);
 #endif
 
 namespace {
@@ -165,6 +167,7 @@ void WorldEngine::init(WorldTransient &world) {
     TilePropertyWindow::invalidate(world.propertyWindow);
     world.motion.directionAndFlags = static_cast<uint8_t>(Direction::DOWN);
     world.motion.step = 0;
+    setMoving(world.motion, false);
     setOrigin(world.motion, gameState.playerLocation);
 }
 
@@ -209,9 +212,16 @@ void WorldEngine::syncFromLocation(WorldTransient &world) {
 
 void WorldEngine::input(WorldTransient &world) {
 #ifdef TEST
-    (void)world;
-    // Device input is covered by the Arduboy path; host tests drive movement
-    // through beginMoveForTest() so they do not need Arduino headers.
+    Direction requested;
+    if (worldMovementDirection(requested)) {
+        setDirection(world.motion, requested);
+        if (moveable(world)) {
+            setMoving(world.motion, true);
+            setWalkMask(world.motion, walkMaskFor(requested));
+        }
+    } else {
+        setMoving(world.motion, false);
+    }
 #else
     WorldMotion &motion = world.motion;
     if (arduboy.pressed(LEFT_BUTTON)) {
@@ -245,33 +255,27 @@ void WorldEngine::input(WorldTransient &world) {
 }
 
 void WorldEngine::runMap(WorldTransient &world) {
-#ifdef TEST
     syncFromLocation(world);
     if (interactionDialogActive()) {
         if (interactionJustPressedA()) popInteractionDialog();
-    } else {
-        interact();
-    }
-#else
-    syncFromLocation(world);
-    if (dialogMenu.peek()) {
-        if (arduboy.justPressed(A_BUTTON)) dialogMenu.popMenu();
     } else if (moving(world.motion) && moveable(world)) {
         moveChar(world);
     } else {
         const uint16_t beforeInteract = gameState.playerLocation;
         interact();
         if (gameState.playerLocation != beforeInteract) syncFromLocation(world);
-        if (!dialogMenu.peek()) input(world);
+        if (!interactionDialogActive()) input(world);
         // Match the previous sketch path: the first animation pixel is applied
         // on the same frame that accepts the direction, for 16 ticks per tile.
-        if (moving(world.motion) && moveable(world)) moveChar(world);
+        if (!interactionDialogActive() && moving(world.motion) && moveable(world)) {
+            moveChar(world);
+        }
     }
-#endif
 }
 
 void WorldEngine::moveChar(WorldTransient &world) {
     WorldMotion &motion = world.motion;
+    if (!moving(motion)) return;
     const Direction moveDirection = direction(motion);
     ++motion.step;
     if (motion.step != TILE_SIZE) return;
@@ -290,6 +294,7 @@ void WorldEngine::moveChar(WorldTransient &world) {
     gameState.playerLocation = newLocation;
     clearStep(motion, newLocation);
     TilePropertyWindow::invalidate(world.propertyWindow);
+    onStep(newLocation);
 
     const uint16_t oldChunk = Chunk::chunkOfLocation(oldLocation);
     const uint16_t newChunk = Chunk::chunkOfLocation(newLocation);
