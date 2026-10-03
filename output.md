@@ -1688,3 +1688,43 @@ Ardens, fxtest/fxtest-headless/fxtest-spike, visual/hardware checks  SKIPPED per
 ```
 
 Wall time: worker approximately 13 minutes (2026-10-03). No commit, push, or bead close; b2a.2 remains in progress pending published release tag and both asset hashes.
+# CreatureGathererFX-jp8.3.4
+
+Implementation: added the AVR-two-byte injected `battle::Rng` seam (`src/engine/battle/BattleRng.hpp`), pure `Effects.cpp/.hpp` mechanics, PROGMEM rate-100 table with host rate callback, repaired self-target predicate, and permanent native integration coverage for targeting, rate gates, status/stat caps, turn gates, ordered mixed ticks, zero absorption, and no revival. Legacy Battle callers remain untouched.
+
+Commands and output tails:
+
+```text
+make test
+# host: Total Passed: 1677, Total Failed: 0; world: Total Passed: 190, Total Failed: 0
+
+make testvm
+# Total Passed: 42, Total Failed: 0
+
+make verify-generated
+# exit 0
+
+make test-manifest
+# fxdata-manifest: PASS
+
+make test-generated-libs
+# generated-libs: 8 passed, 0 failed
+# generated-libs-invariants: 5 passed, 0 failed
+# first-unqualified-alias: 28 passed, 0 failed
+
+make test-avr-build-budget test-fxtest-ram
+# AVR build budget: PASS; fxtest RAM guard: PASS
+
+make build
+# AVR_BUDGET_TARGET=FX; AVR_FLASH_BYTES=18012; AVR_FLASH_FREE_BYTES=5988
+# AVR_STATIC_RAM_BYTES=1871; AVR_STATIC_RAM_FREE_BYTES=289
+
+make ram
+# RAM_FLASH_BYTES=18012; RAM_STATIC_BYTES=1871; RAM_FREE_BYTES=689
+```
+
+Failed attempts fixed: initial `make test` compile failed on ambiguous legacy/global `BattleState` in the new test; qualified `battle::BattleState`. Initial `make build` failed because AVR C++11 rejects local variables in `constexpr`; restored single-return C++11 predicate form. Final reruns pass.
+
+Wall time (worker): approximately 5m17s (2026-10-03 17:19:12 EDT through 17:24:29 EDT).
+
+Deviation: Ardens, `make fxtest`, `make fxtest-headless`, `make fxtest-spike`, interactive visual, and hardware checks intentionally not run per live steering. No generated inputs or packed artifacts changed. No commit or push performed.

@@ -70,8 +70,9 @@ constexpr bool isTickEffect(Effect effect) {
 }
 
 constexpr bool isSelfEffect(Effect effect) {
-    return static_cast<uint8_t>(effect) >= static_cast<uint8_t>(Effect::ENLTND) &&
-           static_cast<uint8_t>(effect) <= static_cast<uint8_t>(Effect::EVOLVD) &&
-           static_cast<uint8_t>(effect) >= static_cast<uint8_t>(Effect::ATKUP) &&
-           static_cast<uint8_t>(effect) <= static_cast<uint8_t>(Effect::SPDUP);
+    return (static_cast<uint8_t>(effect) >= static_cast<uint8_t>(Effect::ENLTND) &&
+            static_cast<uint8_t>(effect) <= static_cast<uint8_t>(Effect::EVOLVD)) ||
+           (static_cast<uint8_t>(effect) >= static_cast<uint8_t>(Effect::ATKUP) &&
+            static_cast<uint8_t>(effect) <= static_cast<uint8_t>(Effect::SPDUP)) ||
+           effect == Effect::INFSED;
 }
