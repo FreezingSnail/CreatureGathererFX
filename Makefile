@@ -117,6 +117,7 @@ TEST_SOURCES = tst/src/ReadData.cpp \
 	src/lib/ListView.cpp \
 	src/lib/BattleEventPlayer.cpp \
 	src/engine/battle/Battle.cpp \
+	src/engine/battle/BattlePresenter.cpp \
 	src/engine/ModeState.cpp \
 	src/engine/world/World.cpp \
 	src/engine/world/StepEvent.cpp \

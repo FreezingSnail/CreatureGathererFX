@@ -18,6 +18,9 @@
 #include "world_interact_test.hpp"
 #include "step_test.hpp"
 #include "fx_read_counter_test.hpp"
+#include "battle_view_test.hpp"
+#include "battle_test.hpp"
+#include "battle_presentation_test.hpp"
 
 #include "../src/globals.hpp"
 #include <cstring>
@@ -150,6 +153,12 @@ int main() {
     std::cout << "StepSuite finished" << std::endl;
     FxReadCounterSuite(tests);
     std::cout << "FxReadCounterSuite finished" << std::endl;
+    BattleViewSuite(tests);
+    std::cout << "BattleViewSuite finished" << std::endl;
+    BattleSuite(tests);
+    std::cout << "BattleSuite finished" << std::endl;
+    BattlePresentationSuite(tests);
+    std::cout << "BattlePresentationSuite finished" << std::endl;
     std::cout << "Tests Finished" << std::endl;
     tests.printSummary();
     if (tests.fail()) {

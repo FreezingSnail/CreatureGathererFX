@@ -9,6 +9,7 @@
 #include "world/Chunk.hpp"
 #include "world/TilePropertyWindow.hpp"
 #include "world/World.hpp"
+#include "battle/BattleViewAdapter.hpp"
 #include "../external/SpritesABC.hpp"
 
 #include <ArduboyFX.h>
@@ -252,43 +253,59 @@ static void printCreatureMenu(uint8_t c1, uint8_t c2, Creature *cpointer,
     }
 }
 
-static void drawPlayerHP(BattleEngine &engine) {
-    uint16_t curHealth = engine.playerHealths[engine.playerIndex];
-    uint16_t maxHealth = engine.playerCur->statlist.hp;
-    double dif = static_cast<double>(curHealth) / static_cast<double>(maxHealth);
-    double length = 30.0 * dif;
+static uint8_t battleHpBarWidth(uint8_t hp, uint8_t maxHp) {
+    if (maxHp == 0) {
+        return 0;
+    }
+    const uint8_t boundedHp = hp > maxHp ? maxHp : hp;
+    return static_cast<uint8_t>((static_cast<uint16_t>(boundedHp) * 30) / maxHp);
+}
+
+static void drawPlayerHP(const battle::BattleView &view) {
+    const battle::ActiveView &creature = view.active[static_cast<uint8_t>(battle::Side::Player)];
     SpritesU::fillRect(88, 34, 34, 6, BLACK);
-    SpritesU::fillRect(90, 36, length, 2, WHITE);
+    SpritesU::fillRect(90, 36, battleHpBarWidth(creature.hp, creature.maxHp), 2, WHITE);
 
     // SpritesU::fillRect(60, 38, curHealth, 2, WHITE);
     // drawStatNumbers(110, 34, curHealth);
 }
 
-static void drawOpponentHP(BattleEngine &engine) {
-    uint16_t curHealth = engine.opponentHealths[engine.opponentIndex];
-    uint16_t maxHealth = engine.opponentCur->statlist.hp;
-    double dif = static_cast<double>(curHealth) / static_cast<double>(maxHealth);
-    double length = 30.0 * dif;
+static void drawOpponentHP(const battle::BattleView &view) {
+    const battle::ActiveView &creature = view.active[static_cast<uint8_t>(battle::Side::Opponent)];
     SpritesU::fillRect(6, 34, 34, 6, BLACK);
-    SpritesU::fillRect(8, 36, length, 2, WHITE);
+    SpritesU::fillRect(8, 36, battleHpBarWidth(creature.hp, creature.maxHp), 2, WHITE);
 }
 
-static void drawOpponent(BattleEngine &engine) {
-    SpritesU::drawPlusMaskFX(0, 0, 32, 32, NewecreatureSprites - 2, FRAME((engine.opponentCur->id * 2)));
+static constexpr uint8_t kBattleSpeciesCount = 32;
+
+static void drawOpponent(const battle::BattleView &view) {
+    const battle::ActiveView &creature = view.active[static_cast<uint8_t>(battle::Side::Opponent)];
+    if (creature.id >= kBattleSpeciesCount) {
+        return;
+    }
+    SpritesU::drawPlusMaskFX(0, 0, 32, 32, NewecreatureSprites - 2, FRAME((creature.id * 2)));
 }
 
-static void drawPlayer(BattleEngine &engine) {
-    SpritesU::drawPlusMaskFX(96, 0, 32, 32, NewecreatureSprites - 2, FRAME(((engine.playerCur->id * 2) + 1)));
+static void drawPlayer(const battle::BattleView &view) {
+    const battle::ActiveView &creature = view.active[static_cast<uint8_t>(battle::Side::Player)];
+    if (creature.id < kBattleSpeciesCount) {
+        SpritesU::drawPlusMaskFX(96, 0, 32, 32, NewecreatureSprites - 2,
+                                FRAME(((creature.id * 2) + 1)));
+    }
 
-    drawPlayerHP(engine);
+    drawPlayerHP(view);
+}
+
+static void drawScene(const battle::BattleView &view) {
+    // SpritesU::drawPlusMaskFX(0, 15, fieldBacground, FRAME(0));
+    drawPlayer(view);
+    drawOpponent(view);
+    drawOpponentHP(view);
+    drawPlayerHP(view);
 }
 
 static void drawScene(BattleEngine &engine) {
-    // SpritesU::drawPlusMaskFX(0, 15, fieldBacground, FRAME(0));
-    drawPlayer(engine);
-    drawOpponent(engine);
-    drawOpponentHP(engine);
-    drawPlayerHP(engine);
+    drawScene(battle::legacyBattleView(engine));
 }
 
 static uint8_t drawMapFast(WorldTransient &world) {
