@@ -26,6 +26,7 @@
 #include "battle_test.hpp"
 #include "battle_ai_test.hpp"
 #include "battle_resolve_test.hpp"
+#include "battle_faint_test.hpp"
 #include "battle_presentation_test.hpp"
 #include "renderer_test.hpp"
 
@@ -176,6 +177,8 @@ int main() {
     std::cout << "BattleAiSuite finished" << std::endl;
     BattleResolveSuite(tests);
     std::cout << "BattleResolveSuite finished" << std::endl;
+    BattleFaintSwitchSuite(tests);
+    std::cout << "BattleFaintSwitchSuite finished" << std::endl;
     BattlePresentationSuite(tests);
     std::cout << "BattlePresentationSuite finished" << std::endl;
     NativeRendererSuite(tests);

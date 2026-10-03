@@ -200,6 +200,28 @@ void snapshotParty(const BattleState &state, Side side,
     }
 }
 
+// Switch results carry a complete pre/post view so presentation and the next
+// action observe the unchanged side as well as the incoming combatant.
+void captureTransitionBefore(const BattleState &state, ActionResult &out)
+{
+    for (uint8_t side = 0; side < 2; ++side) {
+        out.speciesBefore[side] = state.active[side].id;
+        out.maxHpBefore[side] = state.active[side].maxHp;
+        out.hpBefore[side] = state.active[side].hp;
+        out.hpAfter[side] = state.active[side].hp;
+    }
+    out.progressBefore = state.gather.progress;
+    out.progressAfter = state.gather.progress;
+}
+
+void captureTransitionAfter(const BattleState &state, ActionResult &out)
+{
+    for (uint8_t side = 0; side < 2; ++side) {
+        out.hpAfter[side] = state.active[side].hp;
+    }
+    out.progressAfter = state.gather.progress;
+}
+
 uint8_t originalSlotForBench(const BattleState &state, Side side,
                              uint8_t benchIndex)
 {
@@ -246,7 +268,7 @@ bool validSwitchRequest(const BattleState &state, Side side,
 {
     const uint8_t sideIndex = static_cast<uint8_t>(side);
     const uint8_t count = state.partyCount[sideIndex];
-    return count > 0 && count <= PARTY_SIZE &&
+    return !state.over && count > 0 && count <= PARTY_SIZE &&
            originalSlot < count && originalSlot != state.activeSlot[sideIndex] &&
            state.activeSlot[sideIndex] < count;
 }
@@ -303,13 +325,17 @@ bool applySwitch(BattleState &state, Side side, uint8_t originalSlot,
 {
     resetActionResult(out);
     const uint8_t sideIndex = static_cast<uint8_t>(side);
+    out.kind = ResultKind::Switch;
+    out.actor = side;
+    out.flags = forced ? FORCED_SWITCH : 0;
+
+    // Capture RAM state before validating. Refused requests still need a
+    // presentable result, while validation must remain entirely pre-FX.
+    if (sideIndex < 2) {
+        captureTransitionBefore(state, out);
+    }
     if (sideIndex >= 2 || !validSwitchRequest(state, side, originalSlot)) {
-        if (sideIndex < 2) {
-            out.kind = ResultKind::Switch;
-            out.actor = side;
-            out.flags = static_cast<uint8_t>(REFUSED |
-                                              (forced ? FORCED_SWITCH : 0));
-        }
+        out.flags |= REFUSED;
         return false;
     }
 
@@ -317,10 +343,8 @@ bool applySwitch(BattleState &state, Side side, uint8_t originalSlot,
     snapshotParty(state, side, slots);
     const BenchSlot incomingSlot = slots[originalSlot];
     if (incomingSlot.hp == 0 || incomingSlot.id >= SPECIES_COUNT) {
-        out.kind = ResultKind::Switch;
-        out.actor = side;
-        out.flags = static_cast<uint8_t>(REFUSED |
-                                          (forced ? FORCED_SWITCH : 0));
+        out.flags |= REFUSED;
+        captureTransitionAfter(state, out);
         return false;
     }
 
@@ -330,10 +354,8 @@ bool applySwitch(BattleState &state, Side side, uint8_t originalSlot,
     Combatant incoming;
     uint8_t reads = 0;
     if (!loadIncoming(side, originalSlot, incomingSlot, incoming, reads)) {
-        out.kind = ResultKind::Switch;
-        out.actor = side;
-        out.flags = static_cast<uint8_t>(REFUSED |
-                                          (forced ? FORCED_SWITCH : 0));
+        out.flags |= REFUSED;
+        captureTransitionAfter(state, out);
         return false;
     }
     FxReadCounter::transitionExact(reads);
@@ -354,14 +376,11 @@ bool applySwitch(BattleState &state, Side side, uint8_t originalSlot,
         ++benchSlot;
     }
 
-    out.kind = ResultKind::Switch;
-    out.actor = side;
     out.index = incoming.id;
-    out.flags = forced ? FORCED_SWITCH : 0;
     out.speciesBefore[sideIndex] = oldId;
     out.maxHpBefore[sideIndex] = oldMaxHp;
     out.hpBefore[sideIndex] = oldHp;
-    out.hpAfter[sideIndex] = incoming.hp;
+    captureTransitionAfter(state, out);
     return true;
 }
 

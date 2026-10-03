@@ -270,6 +270,9 @@ void resolveAction(BattleState &state, Side actor, BattleAction action,
     if (state.active[actorIndex].hp == 0) {
         resolveSkip(state, actor, true, false, out);
         captureAfter(state, out);
+        // A pending dead actor cannot act, but entry/transition callers still
+        // need the terminal result when its real party has no live slot.
+        setTerminalOutcome(state, out);
         return;
     }
 
@@ -332,9 +335,11 @@ bool sideDefeated(const BattleState &state, Side side)
 {
     if (!validSide(side)) return true;
     const uint8_t index = sideIndex(side);
-    const uint8_t count = state.partyCount[index] > PARTY_LIMIT
-        ? PARTY_LIMIT : state.partyCount[index];
-    if (count == 0 || state.activeSlot[index] >= count) return true;
+    const uint8_t count = state.partyCount[index];
+    if (count == 0 || count > PARTY_LIMIT ||
+        state.activeSlot[index] >= count) {
+        return true;
+    }
     if (state.active[index].hp != 0) return false;
 
     const uint8_t benchCount = static_cast<uint8_t>(count - 1);
