@@ -1883,3 +1883,28 @@ Evidence (2026-10-03):
 - `make test-avr-build-budget` — PASS; 0.09s.
 - `make test-fxtest-ram` — PASS; 0.12s.
 - Initial `make test` compile failed on ambiguous global/`battle::BattleState`; fixed explicit qualification. First resolver run exposed undefined `typeEffectModifier` fallback for PINNED/CONCUSED self-hit; added integer-safe default and reran all checks.
+
+## CreatureGathererFX-jp8.3.10 — deterministic battle AI
+
+Added pure `battle::chooseAction(const BattleState&, Side)` in `Ai.cpp/.hpp`: acting-side damage evaluation, lowest-slot damage ties, highest-power zero-damage fallback, move-ID-255 filtering, `Skip/255` for invalid/terminal/empty/fainted states, no FX/global/RNG reads. Added permanent native `BattleAiIntegrationTest` covering asymmetric opponent selection, repeated deterministic calls, ties, immunity fallback, move ID 0, absent/empty moves, invalid side/party slot, terminal, faint actor/target. Existing ABI/turn-order assertions remain in `BattleSuite`/`BattleResolveSuite`.
+
+```text
+make test
+# PASS; host 1,952/0, world 190/0; BattleAiIntegrationTest 22/0.
+make testvm
+# PASS; VM 42/0.
+make test-manifest && make test-generated-libs && make verify-generated
+# PASS; manifest; generated-libs 8/0; invariants 5/0; aliases 28/0; generated artifacts unchanged.
+make test-fxtest-ram && make test-avr-build-budget
+# PASS; both static guard suites.
+make build
+# PASS; 18,610 B flash, 1,879 B static RAM, 5,390 B free under 24,000-B build ceiling, 281 B under 2,160-B static ceiling.
+make ram
+# PASS; 18,610 B flash, 1,879 B static RAM, 681 B absolute RAM free under 2,560 B device limit.
+/usr/bin/time -p sh -c 'make test >/dev/null && make testvm >/dev/null && make test-manifest >/dev/null && make test-generated-libs >/dev/null && make verify-generated >/dev/null && make test-fxtest-ram >/dev/null && make test-avr-build-budget >/dev/null && make build >/dev/null && make ram >/dev/null'
+# PASS; real 21.24s, user 11.08s, sys 10.32s.
+git diff --check
+# PASS.
+```
+
+Ardens, `make fxtest`, `make fxtest-headless`, `make fxtest-spike`, visual, and hardware checks intentionally not run per live steering. The frozen AI contract explicitly forbids a `Rng` parameter; deterministic repeated-call coverage and existing injected-Rng resolver coverage preserve that boundary. Worker wall time: approximately 3 minutes (18:09:59–18:12:54 -0400). No commit/push.
