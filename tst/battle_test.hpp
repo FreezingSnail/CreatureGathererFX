@@ -2,6 +2,7 @@
 #include "test.hpp"
 #include "../src/engine/battle/BattleState.hpp"
 #include "../src/engine/battle/ActionResult.hpp"
+#include "../src/engine/battle/Damage.hpp"
 
 #include <stddef.h>
 #include <type_traits>
@@ -67,8 +68,145 @@ void BattleDataContractTest(TestSuite &suite) {
     suite.addTest(test);
 }
 
+namespace battle_damage_test_detail {
+
+inline Move makeMove(Type type, uint8_t power, bool physical,
+                     Accuracy accuracy = Accuracy::HUNDRED)
+{
+    return Move(MoveBitSet{
+        static_cast<uint8_t>(type), power, static_cast<uint8_t>(physical),
+        static_cast<uint8_t>(accuracy), 0
+    });
+}
+
+inline battle::Combatant combatant(Type type)
+{
+    battle::Combatant result = {};
+    result.types = DualType(type, Type::NONE);
+    result.maxHp = result.hp = result.stats.hp = 100;
+    result.stats.attack = 40;
+    result.stats.defense = 20;
+    result.stats.spcAtk = 30;
+    result.stats.spcDef = 15;
+    result.moves[0] = makeMove(type, 10, true);
+    return result;
+}
+
+} // namespace battle_damage_test_detail
+
+void BattleDamageIntegrationTest(TestSuite &suite)
+{
+    using namespace battle;
+    using namespace battle_damage_test_detail;
+    Test test(__func__);
+
+    const uint16_t stageExpected[9] = {33, 40, 50, 66, 100, 150, 200, 250, 300};
+    for (uint8_t index = 0; index < 9; ++index) {
+        const int8_t stage = static_cast<int8_t>(index) - 4;
+        test.assert(applyStage(100, stage), stageExpected[index],
+                    "nine-entry stage table value");
+    }
+    test.assert(applyStage(100, -127), static_cast<uint16_t>(33),
+                "stage clamps below minus four");
+    test.assert(applyStage(100, 127), static_cast<uint16_t>(300),
+                "stage clamps above plus four");
+    test.assert(applyStage(applyStage(100, 1), -1), static_cast<uint16_t>(100),
+                "plus one then minus one preserves base");
+
+    Combatant attacker = combatant(Type::WIND);
+    Combatant defender = combatant(Type::SPIRIT);
+    test.addToLog("known damage expected=80 from power10 attack40 defense20 STAB");
+    test.assert(computeDamage(attacker, defender, 0), static_cast<uint8_t>(80),
+                "known damage value");
+
+    attacker = combatant(Type::SPIRIT);
+    defender = combatant(Type::SPIRIT);
+    attacker.stats.spcAtk = 12;
+    defender.stats.spcDef = 6;
+    attacker.moves[0] = makeMove(Type::FIRE, 10, false);
+    test.assert(computeDamage(attacker, defender, 0), static_cast<uint8_t>(40),
+                "special move selects special attack and defense");
+
+    attacker = combatant(Type::SPIRIT);
+    defender = combatant(Type::WATER);
+    attacker.moves[0] = makeMove(Type::FIRE, 10, true);
+    test.assert(computeDamage(attacker, defender, 0), static_cast<uint8_t>(0),
+                "type immunity returns zero");
+    defender.types = DualType(Type::WIND, Type::NONE);
+    test.assert(computeDamage(attacker, defender, 0), static_cast<uint8_t>(80),
+                "type double modifier applies");
+    defender.types = DualType(Type::WIND, Type::WATER);
+    test.assert(computeDamage(attacker, defender, 0), static_cast<uint8_t>(0),
+                "dual-type immunity absorbs other effectiveness");
+
+    attacker = combatant(Type::WIND);
+    defender = combatant(Type::SPIRIT);
+    attacker.status.effects[0] = Effect::BUFTD;
+    test.assert(computeDamage(attacker, defender, 0), static_cast<uint8_t>(40),
+                "attacker type-down cancels same-type bonus");
+    attacker.status.clearEffects();
+    defender.status.effects[0] = Effect::DPRSD;
+    test.assert(computeDamage(attacker, defender, 0), static_cast<uint8_t>(160),
+                "defender type-down is inverted for damage");
+
+    attacker = combatant(Type::WIND);
+    defender = combatant(Type::SPIRIT);
+    attacker.statMods.setModifier(StatType::ATTACK_M, 1);
+    test.assert(computeDamage(attacker, defender, 0), static_cast<uint8_t>(120),
+                "attacker stage scales attack term");
+    attacker.statMods.clearModifiers();
+    defender.statMods.setModifier(StatType::DEFENSE_M, 1);
+    test.assert(computeDamage(attacker, defender, 0), static_cast<uint8_t>(52),
+                "defender stage scales defense term");
+
+    attacker = combatant(Type::SPIRIT);
+    defender = combatant(Type::SPIRIT);
+    attacker.stats.attack = 1;
+    defender.stats.defense = 255;
+    attacker.moves[0] = makeMove(Type::SPIRIT, 1, true);
+    test.assert(computeDamage(attacker, defender, 0), static_cast<uint8_t>(1),
+                "nonimmune damage floors at one");
+    defender.stats.defense = 1;
+    test.assert(computeDamage(attacker, defender, 0), static_cast<uint8_t>(2),
+                "defense one clamps divisor instead of dividing by zero");
+
+    attacker = combatant(Type::NONE);
+    attacker.stats.attack = 255;
+    attacker.moves[0] = makeMove(Type::SPIRIT, 31, true);
+    defender = combatant(Type::SPIRIT);
+    defender.stats.defense = 1;
+    test.assert(computeDamage(attacker, defender, 0), static_cast<uint8_t>(255),
+                "large damage saturates at 255 instead of wrapping");
+
+    attacker = combatant(Type::WIND);
+    defender = combatant(Type::SPIRIT);
+    attacker.moves[0] = makeMove(Type::WIND, 0, true);
+    test.assert(computeDamage(attacker, defender, 0), static_cast<uint8_t>(0),
+                "zero-power move stays zero");
+    test.assert(computeDamage(attacker, defender, 4), static_cast<uint8_t>(0),
+                "out-of-range move slot stays zero");
+    attacker.moves[0] = makeMove(static_cast<Type>(9), 10, true);
+    test.assert(computeDamage(attacker, defender, 0), static_cast<uint8_t>(0),
+                "invalid move type stays bounded");
+
+    attacker = combatant(Type::WIND);
+    defender = combatant(Type::SPIRIT);
+    attacker.moves[0] = makeMove(Type::WIND, 10, true, Accuracy::HUNDRED);
+    const uint8_t deterministic = computeDamage(attacker, defender, 0);
+    attacker.moves[0] = makeMove(Type::WIND, 10, true, Accuracy::SEVENTY);
+    test.assert(computeDamage(attacker, defender, 0), deterministic,
+                "accuracy is ignored by deterministic damage");
+    for (uint8_t repeat = 0; repeat < 8; ++repeat) {
+        test.assert(computeDamage(attacker, defender, 0), deterministic,
+                    "critical and variance remain out of scope");
+    }
+
+    suite.addTest(test);
+}
+
 void BattleSuite(TestRunner &runner) {
     TestSuite suite("Battle data contract suite");
     BattleDataContractTest(suite);
+    BattleDamageIntegrationTest(suite);
     runner.addTestSuite(suite);
 }

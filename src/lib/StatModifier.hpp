@@ -32,7 +32,7 @@ class StatModifer {
         }
     }
 
-    int8_t getModifier(StatType stat) {
+    int8_t getModifier(StatType stat) const {
         int8_t ret = 0;
         switch (stat) {
         case StatType::ATTACK_M:

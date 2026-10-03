@@ -48,19 +48,19 @@ class Move {
 
     constexpr Move(uint32_t buffer) : move(buffer >> 16), effect1(static_cast<Effect>((buffer >> 8) & 0b11111111)), effect2(static_cast<Effect>(buffer & 0b11111111)) {
     }
-    constexpr uint8_t getMovePower() {
+    constexpr uint8_t getMovePower() const {
         return (this->move & PowerMask) >> PowerShift;
     }
 
-    constexpr uint8_t getMoveType() {
+    constexpr uint8_t getMoveType() const {
         return (this->move & TypeMask) >> TypeShift;
     }
 
-    constexpr bool isPhysical() {
+    constexpr bool isPhysical() const {
         return (this->move & PhysMask) >> PhysShift;
     }
 
-    constexpr Accuracy getMoveAccuracy() {
+    constexpr Accuracy getMoveAccuracy() const {
         return Accuracy((this->move & AccMask) >> AccShift);
     }
 
