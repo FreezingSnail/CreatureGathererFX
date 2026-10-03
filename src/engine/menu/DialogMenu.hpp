@@ -7,6 +7,7 @@ class DialogMenu {
   public:
     PopUpDialog popDialogStack[6];
     uint8_t dialogCount = 0;
+    uint8_t scriptText[36] = {};
 
     bool peek();
     PopUpDialog &head();
@@ -17,4 +18,5 @@ class DialogMenu {
     void pushEvent(Event event);
     void popMenu();
     void pushAnimation();
+    void prepareHead();
 };

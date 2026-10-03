@@ -37,11 +37,15 @@ class ScriptVm {
     int8_t memory[8];
     uint8_t stack[8];
     uint16_t currentTile;
+    uint16_t targetTile;
 
-    // buffer to load the script
+    // The slot remains owned by WorldTransient; the VM only borrows it.
+    uint8_t *base;
     uint8_t *ptr;
+    uint8_t *endPtr;
+    bool valid;
 
-    void initVM();
+    void initVM(uint8_t *script, uint16_t current, uint16_t target);
 
     void run();
     void end();

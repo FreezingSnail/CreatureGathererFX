@@ -15,8 +15,11 @@
 #include "chunk_test.hpp"
 #include "dialog_test.hpp"
 #include "mode_state_test.hpp"
+#include "world_interact_test.hpp"
+#include "fx_read_counter_test.hpp"
 
 #include "../src/globals.hpp"
+#include <cstring>
 
 Player player = Player();
 GameState gameState;
@@ -27,6 +30,51 @@ MenuStack menuStack;
 DialogMenu dialogMenu;
 uint8_t screenBuffer[128 * 64];
 uint8_t *buffer = screenBuffer;
+
+namespace worldInteractionFake {
+bool pressedA = false;
+uint24_t scriptsBase = 0x12000;
+uint8_t slotBytes[128] = {};
+uint16_t readCount = 0;
+uint24_t lastAddress = 0;
+uint8_t lastLength = 0;
+uint8_t *lastScript = nullptr;
+uint16_t runCount = 0;
+uint16_t currentTile = 0;
+uint16_t targetTile = 0;
+uint8_t runFirstByte = 0;
+
+void reset() {
+    pressedA = false;
+    std::memset(slotBytes, 0, sizeof(slotBytes));
+    readCount = 0;
+    lastAddress = 0;
+    lastLength = 0;
+    lastScript = nullptr;
+    runCount = 0;
+    currentTile = 0;
+    targetTile = 0;
+    runFirstByte = 0;
+}
+}
+
+bool worldInteractionJustPressedA() { return worldInteractionFake::pressedA; }
+bool worldInteractionDialogActive() { return dialogMenu.peek(); }
+void worldInteractionPopDialog() { dialogMenu.popMenu(); }
+uint24_t worldInteractionScriptsBase() { return worldInteractionFake::scriptsBase; }
+void worldInteractionReadScript(uint24_t address, uint8_t *dst, uint8_t length) {
+    ++worldInteractionFake::readCount;
+    worldInteractionFake::lastAddress = address;
+    worldInteractionFake::lastLength = length;
+    worldInteractionFake::lastScript = dst;
+    std::memcpy(dst, worldInteractionFake::slotBytes, length);
+}
+void worldInteractionRunScript(uint8_t *script, uint16_t currentTile, uint16_t targetTile) {
+    ++worldInteractionFake::runCount;
+    worldInteractionFake::currentTile = currentTile;
+    worldInteractionFake::targetTile = targetTile;
+    worldInteractionFake::runFirstByte = script[0];
+}
 
 int main() {
     std::cout << "Starting Runner" << std::endl;
@@ -68,6 +116,10 @@ int main() {
     std::cout << "DialogSuite finished" << std::endl;
     ModeStateSuite(tests);
     std::cout << "ModeStateSuite finished" << std::endl;
+    WorldInteractionSuite(tests);
+    std::cout << "WorldInteractionSuite finished" << std::endl;
+    FxReadCounterSuite(tests);
+    std::cout << "FxReadCounterSuite finished" << std::endl;
     std::cout << "Tests Finished" << std::endl;
     tests.printSummary();
     if (tests.fail()) {

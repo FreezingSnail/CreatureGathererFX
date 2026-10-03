@@ -24,6 +24,7 @@ enum DialogType {
     TEAM_CHANGE,        // 12
     PLAYER_EFFECT,      // 13
     ENEMY_EFFECT,       // 14
+    SCRIPT_TEXT,        // 15; textAddress carries a raw_map_text index.
 };
 ;
 

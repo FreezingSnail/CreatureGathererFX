@@ -45,8 +45,9 @@ struct PopUpDialog {
     // TEXT keeps its box dimensions. Indexed dialogs use width for the first
     // string bitmap and height for the move/effect bitmap; draw positions stay fixed.
     uint8_t width, height;
-    // TEXT holds an event address; name dialogs hold a resolved creature name.
-    // EFFECTIVENESS holds a Modifier value. Other types do not draw this field.
+    // TEXT holds an event address; SCRIPT_TEXT holds a raw_map_text index;
+    // name dialogs hold a resolved creature name. EFFECTIVENESS holds a Modifier.
+    // Other types do not draw this field.
     uint24_t textAddress;
     // Resolved move name for NAME/ENEMY_NAME, or effect text for effect dialogs.
     uint24_t detailAddress;

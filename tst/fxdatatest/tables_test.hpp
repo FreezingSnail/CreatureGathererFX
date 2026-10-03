@@ -6,21 +6,22 @@
 #include "src/fxdata.h"
 #include "src/lib/ReadData.hpp"
 #include "src/engine/world/Chunk.hpp"
+#include "src/vm/opcodes.hpp"
 
 /*
  * Read-path contracts for the generated tables, asserted on hardware because
  * the byte order depends on which ArduboyFX helper is used:
  *
- *   - FX::readIndexedUInt16/24/32 and FX::readPending*  assemble
- *     most-significant byte first, which is what the packer writes for typed
- *     symbol tables (uint24_t address tables, packed move rows).
+ *   - Indexed FX helpers assemble most-significant byte first, except the AVR
+ *     readPendingLastUInt24 path loses the top byte. FxRead::indexed24 reads
+ *     the same packed big-endian table as raw bytes and reconstructs uint24_t.
  *   - FX::readDataObject/readDataBytes copy raw bytes, so multi-byte struct
  *     fields and the script text block are little endian.
  *
  * Mixing the two silently byte-swaps. These tests pin each convention to the
  * table it belongs to, and pin the one ArduboyFX helper that is outright broken
- * (readIndexedUInt32 seeks with a three-byte stride), so a library upgrade that
- * changes either behaviour fails here instead of in game logic.
+ * (readIndexedUInt32 seeks with a three-byte stride), so the workaround stays
+ * pinned here instead of depending on the library implementation.
  */
 
 namespace {
@@ -47,7 +48,7 @@ inline void expect_indexed_uint24_bytes(
     const uint24_t &published,
     const __FlashStringHelper *const raw_labels[3],
     const __FlashStringHelper *const published_labels[3]) {
-    const uint24_t actual = FX::readIndexedUInt24(table, index);
+    const uint24_t actual = FxRead::indexed24(table, index);
     uint8_t got[3];
     memcpy(got, &actual, sizeof(actual));
 
@@ -213,6 +214,14 @@ inline void test_chunk_layout(FxTest &test) {
     expect_script_prefix(test, 32, blob32Prefix, sizeof(blob32Prefix));
     expect_script_prefix(test, 33, blob33Prefix, sizeof(blob33Prefix));
 
+    uint8_t tpIf[9];
+    FX::readDataBytes(Chunk::scriptSlotAddr(scripts, 32), tpIf, sizeof(tpIf));
+    test.expectEq(tpIf[0], static_cast<uint8_t>(VmOpcode::TpIf), F("script opcode symbol"));
+    test.expectEq(composeBigEndian(&tpIf[1], 2), 4, F("script x operand is big endian"));
+    test.expectEq(composeBigEndian(&tpIf[3], 2), 4, F("script y operand is big endian"));
+    test.expectEq(composeBigEndian(&tpIf[5], 2), 12, F("script target x is big endian"));
+    test.expectEq(composeBigEndian(&tpIf[7], 2), 7, F("script target y is big endian"));
+
     const uint16_t emptySlots[] = {3, 35, 64, 67, 96, 99, 2047};
     const uint24_t imageEnd = scripts +
         static_cast<uint24_t>(Chunk::CHUNK_COUNT) * Chunk::SCRIPT_SLOT_BYTES;
@@ -230,6 +239,11 @@ inline void test_chunk_layout(FxTest &test) {
     const uint24_t lastAddress = scripts + static_cast<uint24_t>(262016UL);
     expect_uint24_bytes(test, Chunk::scriptSlotAddr(scripts, 2047), lastAddress,
                         F("last script slot uint24 bytes"));
+    const uint24_t chunk512Address = Chunk::scriptSlotAddr(scripts, 512);
+    expect_uint24_bytes(test, chunk512Address, scripts + static_cast<uint24_t>(65536UL),
+                        F("chunk 512 script slot uint24 bytes"));
+    test.expectEq(chunk512Address + Chunk::SCRIPT_SLOT_BYTES <= imageEnd, true,
+                  F("chunk 512 script slot inside image"));
     expect_uint24_bytes(test, Chunk::mapChunkAddr(map_data, 2047),
                         map_data + static_cast<uint24_t>(131008UL),
                         F("last map chunk uint24 bytes"));

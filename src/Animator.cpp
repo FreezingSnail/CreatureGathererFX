@@ -9,6 +9,10 @@ void Animator::push(Animation animation) {
     if (stackPointer >= 1)
         return;
 
+    const FxRead::SpriteHeader header = FxRead::spriteHeader(animation.data);
+    FxReadCounter::transitionExact(1);
+    animation.width = header.width;
+    animation.height = header.height;
     stackPointer++;
     animationStack[stackPointer] = animation;
     start();
@@ -25,7 +29,9 @@ void Animator::play() {
 
     if (!playing)
         return;
-    SpritesU::drawPlusMaskFX(animationStack[stackPointer].xOrigin, animationStack[stackPointer].yOrigin, animationStack[stackPointer].data,
+    const Animation &animation = animationStack[stackPointer];
+    SpritesU::drawPlusMaskFX(animation.xOrigin, animation.yOrigin,
+                             animation.width, animation.height, animation.data,
                              FRAME(currentFrame));
     if (ticker % 20 != 0) {
         return;

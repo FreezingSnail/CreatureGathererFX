@@ -22,8 +22,6 @@ ModeState modeState;
 MenuV2 menu = MenuV2();
 Player player = Player();
 
-// ARDUBOY_NO_USB
-
 Arena arena = Arena();
 Animator animator = Animator();
 PlantGameState plants;

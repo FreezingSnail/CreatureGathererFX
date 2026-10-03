@@ -22,6 +22,7 @@ extern GameState gameState;
 extern PlantGameState plants;
 
 #include "lib/ReadData.hpp"
+#include "lib/FxReadCounter.hpp"
 
 #define XSTART 0
 #define YSTART 43
@@ -39,6 +40,7 @@ static PopUpDialog newDialogBox(DialogType type, uint24_t number, uint16_t damag
     dialog.detailAddress = 0;
     dialog.damage = damage;
     dialog.animation = animation;
+    uint8_t lookups = 0;
 
     switch (type) {
     case TEXT:
@@ -48,10 +50,12 @@ static PopUpDialog newDialogBox(DialogType type, uint24_t number, uint16_t damag
     case NAME:
     case ENEMY_NAME:
         dialog.textAddress = readCreatureNameAddress(static_cast<uint8_t>(number));
+        ++lookups;
         dialog.width = readCreatureNameWidth(static_cast<uint8_t>(number));
         dialog.height = 0;
         if (damage != 0) {
             dialog.detailAddress = readMoveNameAddress(damage);
+            ++lookups;
             dialog.height = readMoveNameWidth(damage);
         }
         break;
@@ -59,19 +63,23 @@ static PopUpDialog newDialogBox(DialogType type, uint24_t number, uint16_t damag
     case SWITCH:
     case LOSS:
         dialog.textAddress = readCreatureNameAddress(static_cast<uint8_t>(number));
+        ++lookups;
         dialog.width = readCreatureNameWidth(static_cast<uint8_t>(number));
         break;
     case PLAYER_EFFECT:
     case ENEMY_EFFECT:
         dialog.textAddress = readCreatureNameAddress(static_cast<uint8_t>(number));
+        ++lookups;
         dialog.width = readCreatureNameWidth(static_cast<uint8_t>(number));
         dialog.detailAddress = readEffectStringAddress();
+        ++lookups;
         dialog.height = readEffectStringWidth();
         break;
     default:
         break;
     }
 
+    if (lookups != 0) FxReadCounter::transitionExact(lookups);
     return dialog;
 }
 

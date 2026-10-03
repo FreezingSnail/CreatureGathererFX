@@ -12,6 +12,7 @@ Options
 #define SPRITESU_FX
 #if defined(SPRITESU_FX)
 #include <ArduboyFX.h>
+#include "../lib/FxRead.hpp"
 #else
 using uint24_t = __uint24;
 #endif
@@ -883,19 +884,15 @@ void SpritesU::drawPlusMask(int16_t x, int16_t y, uint8_t w, uint8_t h, uint8_t 
 
 #ifdef SPRITESU_FX
 void SpritesU::drawOverwriteFX(int16_t x, int16_t y, uint24_t image, uint16_t frame) {
-    FX::seekData(image);
-    uint8_t w = FX::readPendingUInt8();
-    uint8_t h = FX::readEnd();
-    drawBasic(x, y, w, h, image + 2, frame, MODE_OVERWRITEFX);
+    const FxRead::SpriteHeader header = FxRead::spriteHeader(image);
+    drawBasic(x, y, header.width, header.height, image + 2, frame, MODE_OVERWRITEFX);
 }
 void SpritesU::drawOverwriteFX(int16_t x, int16_t y, uint8_t w, uint8_t h, uint24_t image, uint16_t frame) {
     drawBasic(x, y, w, h, image + 2, frame, MODE_OVERWRITEFX);
 }
 void SpritesU::drawPlusMaskFX(int16_t x, int16_t y, uint24_t image, uint16_t frame) {
-    FX::seekData(image);
-    uint8_t w = FX::readPendingUInt8();
-    uint8_t h = FX::readEnd();
-    drawBasic(x, y, w, h, image + 2, frame, MODE_PLUSMASKFX);
+    const FxRead::SpriteHeader header = FxRead::spriteHeader(image);
+    drawBasic(x, y, header.width, header.height, image + 2, frame, MODE_PLUSMASKFX);
 }
 void SpritesU::drawPlusMaskFX(int16_t x, int16_t y, uint8_t w, uint8_t h, uint24_t image, uint16_t frame) {
     drawBasic(x, y, w, h, image + 2, frame, MODE_PLUSMASKFX);

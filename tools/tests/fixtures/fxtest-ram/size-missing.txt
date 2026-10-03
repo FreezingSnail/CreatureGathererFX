@@ -1,0 +1,4 @@
+fixture.elf:
+section size addr
+.data 20 8388864
+.text 1234 0

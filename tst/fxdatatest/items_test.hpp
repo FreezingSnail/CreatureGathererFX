@@ -6,6 +6,7 @@
 #include "fxtest.hpp"
 #include "src/fxdata.h"
 #include "src/item/ItemNames.hpp"
+#include "src/lib/FxRead.hpp"
 
 namespace {
 
@@ -28,7 +29,7 @@ inline void expect_name_table(FxTest &test, uint24_t table,
                               uint8_t count,
                               const __FlashStringHelper *label) {
     for (uint8_t index = 0; index < count; ++index) {
-        const uint24_t actual = FX::readIndexedUInt24(table, index);
+        const uint24_t actual = FxRead::indexed24(table, index);
         uint8_t actualBytes[3];
         uint8_t publishedBytes[3];
         memcpy(actualBytes, &actual, sizeof(actualBytes));
@@ -100,11 +101,11 @@ inline void test_items(FxTest &test) {
     test_item_name_tables(test);
 
     // Lure IDs are type * 3 + tier: 0 is tier/type 0/0, and 23 is 2/7.
-    const uint24_t tier0 = FX::readIndexedUInt24(LureTierNames::LureTierNames, 0);
-    const uint24_t type0 = FX::readIndexedUInt24(LureTypeNames::LureTypeNames, 0);
+    const uint24_t tier0 = FxRead::indexed24(LureTierNames::LureTierNames, 0);
+    const uint24_t type0 = FxRead::indexed24(LureTypeNames::LureTypeNames, 0);
     expect_lure_name(test, 0, tier0, type0);
 
-    const uint24_t tier2 = FX::readIndexedUInt24(LureTierNames::LureTierNames, 2);
-    const uint24_t type7 = FX::readIndexedUInt24(LureTypeNames::LureTypeNames, 7);
+    const uint24_t tier2 = FxRead::indexed24(LureTierNames::LureTierNames, 2);
+    const uint24_t type7 = FxRead::indexed24(LureTypeNames::LureTypeNames, 7);
     expect_lure_name(test, 23, tier2, type7);
 }

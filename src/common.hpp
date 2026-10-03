@@ -28,8 +28,8 @@ extern MenuV2 menu;
 static void drawStatNumbers(uint8_t x, uint8_t y, uint8_t number) {
     uint8_t upper = number / 100;
     uint8_t lower = number % 100;
-    SpritesU::drawPlusMaskFX(x, y, singlenumberswhite, FRAME(upper));
-    SpritesU::drawPlusMaskFX(x + 4, y, numberswhite, FRAME(lower));
+    SpritesU::drawPlusMaskFX(x, y, 3, 8, singlenumberswhite - 2, FRAME(upper));
+    SpritesU::drawPlusMaskFX(x + 4, y, 7, 8, numberswhite - 2, FRAME(lower));
 }
 
 static void drawNumbersBlack(uint8_t x, uint8_t y, uint8_t number) {

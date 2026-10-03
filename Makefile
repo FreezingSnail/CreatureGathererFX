@@ -1,16 +1,30 @@
-.PHONY: help setup doctor plant test test-debug testvm testvm-debug gen gen-data gen-sprites gen-fixtures pack full build mini ram run dev check final-gate verify-generated test-manifest test-generated-libs test-doctor fxtest fxtest-headless fxtest-spike fxtest-preflight fxtest-headless-preflight fxtest-build fxtest-run new-fxtest
+.PHONY: help setup doctor plant test test-debug testvm testvm-debug gen gen-data gen-sprites gen-fixtures pack full build mini ram run dev check final-gate verify-generated test-manifest test-generated-libs test-doctor test-fxtest-ram test-avr-build-budget fxtest fxtest-headless fxtest-spike fxtest-preflight fxtest-headless-preflight fxtest-build fxtest-run new-fxtest
 
 # Public command API. Override tool, board, and output variables per workspace/CI.
 CXX ?= g++
 ARDUINO_CLI ?= arduino-cli
 FQBN ?= arduboy-homemade:avr:arduboy-fx
 MINI_FQBN ?= arduboy-homemade:avr:arduboy-mini
-# Shared AVR toolchain properties for shipping and device-test builds.
-# Override AVR_RELAX_FLAGS or AVR_BUILD_PROPERTIES for local toolchain needs.
-AVR_RELAX_FLAGS ?= -mrelax
-AVR_BUILD_PROPERTIES ?= --build-property compiler.cpp.extra_flags=$(AVR_RELAX_FLAGS) \
-	--build-property compiler.c.extra_flags=$(AVR_RELAX_FLAGS) \
-	--build-property compiler.c.elf.extra_flags=$(AVR_RELAX_FLAGS)
+# Shared AVR toolchain properties for shipping and device-test builds. Relaxed
+# linking plus shared function prologues save flash without changing measured
+# static RAM or painted stack. Shipping builds add the no-USB entry separately.
+AVR_RELAX_FLAGS ?= -mrelax -mcall-prologues
+# Instrument FX test firmware with the logical read counter while preserving
+# the stock USB main used by the serial P/F harness.
+AVR_FXTEST_CPP_FLAGS ?= $(AVR_RELAX_FLAGS) -DFX_READ_COUNTER
+AVR_FXTEST_BUILD_PROPERTIES ?= --build-property "compiler.cpp.extra_flags=$(AVR_FXTEST_CPP_FLAGS)" \
+	--build-property "compiler.c.extra_flags=$(AVR_RELAX_FLAGS)" \
+	--build-property "compiler.c.elf.extra_flags=$(AVR_RELAX_FLAGS)"
+# Only shipping FX/Mini sketches compile their no-USB main. Device-test
+# sketches keep the stock core main so Serial P/F output remains available.
+AVR_SHIPPING_CPP_FLAGS ?= $(AVR_RELAX_FLAGS) -DCGFX_SHIPPING_NO_USB
+AVR_SHIPPING_BUILD_PROPERTIES ?= --build-property "compiler.cpp.extra_flags=$(AVR_SHIPPING_CPP_FLAGS)" \
+	--build-property "compiler.c.extra_flags=$(AVR_RELAX_FLAGS)" \
+	--build-property "compiler.c.elf.extra_flags=$(AVR_RELAX_FLAGS)"
+# Leave 5,986 B above the current 18,014 B FX image for feature growth. Keep
+# 400 B static free as an independent guard; it does not measure painted stack.
+AVR_FLASH_BUDGET ?= 24000
+AVR_STATIC_RAM_BUDGET ?= 2160
 BUILD_DIR ?= build
 ARDUINO_BUILD_PATH ?= $(BUILD_DIR)/arduino-build
 ARDUINO_BUILD_CACHE_PATH ?= $(BUILD_DIR)/arduino-cache
@@ -26,6 +40,7 @@ FXDATA_MANIFEST ?= fxdata/generated/manifest.json
 FXDATA_DIST_DIR ?= $(DIST_DIR)
 ARDENS ?=
 FXTEST_MS ?= 3000
+FXTEST_RAM_BUDGET ?= 2160
 FXTEST_BUILD_DIR ?= $(BUILD_DIR)/fxtest
 FINAL_GATE_LOG_DIR ?= $(BUILD_DIR)/final-gate
 HOST_TEST_BIN ?= $(BUILD_DIR)/tests/host
@@ -51,6 +66,7 @@ help:
 		'  testvm   run fast ScriptVM C++ tests; prerequisite: $(CXX); output: $(VM_TEST_BIN)' \
 		'  build    compile Arduboy FX sketch; prerequisite: $(ARDUINO_CLI); output: $(BUILD_DIR)' \
 		'  ram      build and report FX flash/RAM plus largest static symbols; prerequisite: $(ARDUINO_CLI), avr-size, avr-nm' \
+		'  test-avr-build-budget exercise the fail-closed shipping flash/RAM parser' \
 		'  final-gate  run the full check then the shipping RAM report; requires ARDENS' \
 		'  run      launch Ardens with the sketch, FX data, and FX save images; prerequisite: ARDENS' \
 		'  dev      regenerate FX data, rebuild, then launch Ardens (gen + run); prerequisite: cgfx-tools, ARDENS' \
@@ -59,11 +75,12 @@ help:
 		'  test-generated-libs check generated libs against the packed image; prerequisite: $(CXX)' \
 		'  test-pack-parity verify native packed-image SHA-256 baseline' \
 		'  test-doctor run permanent setup-diagnostic tests' \
+		'  test-fxtest-ram exercise the fail-closed device ELF static-RAM guard' \
 		'  fxtest   alias for fxtest-headless; skips only when ARDENS is unset' \
 		'  fxtest-headless  run every FX device sketch through Ardens serial capture; blocks unsupported Ardens' \
 		'  fxtest-spike  run one selected FX suite plus test_stack; set FXTEST_SPIKE_INO and ARDENS' \
 		'' \
-		'Overrides: CXX, ARDUINO_CLI, FQBN, BUILD_DIR, ARDUINO_BUILD_PATH, ARDUINO_BUILD_CACHE_PATH, DIST_DIR, FXDATA_BIN, ARDENS, FXTEST_MS, RAM_ELF, AVR_SIZE, AVR_NM.'
+		'Overrides: CXX, ARDUINO_CLI, FQBN, BUILD_DIR, ARDUINO_BUILD_PATH, ARDUINO_BUILD_CACHE_PATH, DIST_DIR, FXDATA_BIN, ARDENS, FXTEST_MS, FXTEST_RAM_BUDGET, AVR_FLASH_BUDGET, AVR_STATIC_RAM_BUDGET, RAM_ELF, AVR_SIZE, AVR_NM, AVR_RELAX_FLAGS, AVR_FXTEST_BUILD_PROPERTIES, AVR_FXTEST_CPP_FLAGS, AVR_SHIPPING_BUILD_PROPERTIES, AVR_SHIPPING_CPP_FLAGS.'
 
 setup:
 	@printf '%s\n' \
@@ -107,6 +124,8 @@ TEST_SOURCES = tst/src/ReadData.cpp \
 
 # Common source files for VM tests
 TESTVM_SOURCES = src/vm/ScriptVM.cpp \
+	src/engine/menu/DialogQueue.cpp \
+	tst/src/DialogMenu.cpp \
 	src/GameState.cpp \
 	src/flags/flag_bit_array.cpp \
 	tst/script_tests/action_test.cpp \
@@ -123,7 +142,14 @@ full: gen build
 build:
 	@mkdir -p "$(BUILD_DIR)"
 	@mkdir -p "$(ARDUINO_BUILD_PATH)/fx"
-	ARDUINO_BUILD_CACHE_PATH="$(ARDUINO_BUILD_CACHE_PATH)" $(ARDUINO_CLI) compile --fqbn "$(FQBN)" $(AVR_BUILD_PROPERTIES) --build-path "$(ARDUINO_BUILD_PATH)/fx" --output-dir "$(BUILD_DIR)" .
+	@set -eu; \
+	log="$(BUILD_DIR)/build.log"; \
+	if ARDUINO_BUILD_CACHE_PATH="$(ARDUINO_BUILD_CACHE_PATH)" $(ARDUINO_CLI) compile --fqbn "$(FQBN)" $(AVR_SHIPPING_BUILD_PROPERTIES) --build-path "$(ARDUINO_BUILD_PATH)/fx" --output-dir "$(BUILD_DIR)" . >"$$log" 2>&1; then \
+		cat "$$log"; \
+	else \
+		cat "$$log"; exit 1; \
+	fi; \
+	./tools/check-avr-build-budget.sh "$$log" "$(AVR_FLASH_BUDGET)" "$(AVR_STATIC_RAM_BUDGET)" FX
 
 ram: build
 	@set -eu; \
@@ -147,7 +173,14 @@ ram: build
 mini:
 	@mkdir -p "$(BUILD_DIR)"
 	@mkdir -p "$(ARDUINO_BUILD_PATH)/mini"
-	ARDUINO_BUILD_CACHE_PATH="$(ARDUINO_BUILD_CACHE_PATH)" $(ARDUINO_CLI) compile --fqbn "$(MINI_FQBN)" $(AVR_BUILD_PROPERTIES) --build-path "$(ARDUINO_BUILD_PATH)/mini" --output-dir "$(BUILD_DIR)" .
+	@set -eu; \
+	log="$(BUILD_DIR)/mini-build.log"; \
+	if ARDUINO_BUILD_CACHE_PATH="$(ARDUINO_BUILD_CACHE_PATH)" $(ARDUINO_CLI) compile --fqbn "$(MINI_FQBN)" $(AVR_SHIPPING_BUILD_PROPERTIES) --build-path "$(ARDUINO_BUILD_PATH)/mini" --output-dir "$(BUILD_DIR)" . >"$$log" 2>&1; then \
+		cat "$$log"; \
+	else \
+		cat "$$log"; exit 1; \
+	fi; \
+	./tools/check-avr-build-budget.sh "$$log" "$(AVR_FLASH_BUDGET)" "$(AVR_STATIC_RAM_BUDGET)" Mini
 
 # Interactive development run, not a test path: FX suites still execute only
 # through fxtest-headless. Data and save images load separately because Ardens
@@ -208,7 +241,7 @@ pack:
 	./tools/record-fxdata-manifest.sh "$(FX_LAYOUT)" "$(FXDATA_MANIFEST)"; \
 	./tools/assert-fxdata-manifest.sh "$(FX_LAYOUT)" "$(FXDATA_MANIFEST)"
 
-check: gen test testvm test-manifest test-generated-libs verify-generated fxtest
+check: gen test testvm test-manifest test-generated-libs test-fxtest-ram test-avr-build-budget verify-generated build fxtest
 
 # Final pre-commit gate. Keep the integrated check and shipping RAM build
 # sequential even when the caller invokes make with -j.
@@ -239,6 +272,12 @@ test-generated-libs:
 
 test-doctor:
 	./tools/tests/doctor_test.sh
+
+test-fxtest-ram:
+	./tools/tests/fxtest-ram_test.sh
+
+test-avr-build-budget:
+	./tools/tests/avr-build-budget_test.sh
 
 sim:
 	g++  -g -std=c++17 simulator/creature/Creature.cpp simulator/opponent/Opponent.cpp simulator/player/Player.cpp src/action/Action.cpp simulator/Battle.cpp simulator/main.cpp  -o simulator/simu.o
@@ -310,10 +349,11 @@ fxtest-build:
 		done; \
 		echo $$ino; \
 		ARDUINO_BUILD_CACHE_PATH="$(ARDUINO_BUILD_CACHE_PATH)" $(ARDUINO_CLI) compile --fqbn "$(FQBN)" \
-		    $(AVR_BUILD_PROPERTIES) \
+		    $(AVR_FXTEST_BUILD_PROPERTIES) \
 		    --build-path "$$stage/build" \
 		    --output-dir "$$stage/output" \
 		    "$$stage/$$ino.ino"; \
+		./tools/check-fxtest-ram.sh "$$stage/build/$$ino.ino.elf" "$(AVR_SIZE)" "$(FXTEST_RAM_BUDGET)" "$$ino"; \
 	done
 
 fxtest-run:

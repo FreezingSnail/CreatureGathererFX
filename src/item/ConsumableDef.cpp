@@ -6,6 +6,7 @@
 #include <ArduboyFX.h>
 #endif
 #include "../fxdata.h"
+#include "../lib/FxRead.hpp"
 
 namespace item {
 
@@ -16,7 +17,7 @@ ConsumableDef readConsumableDef(uint8_t id) {
 
     uint8_t bytes[sizeof(ConsumableDef)];
     const uint24_t address = consumable_table + static_cast<uint16_t>(id) * sizeof(ConsumableDef);
-    FX::readDataBytes(address, bytes, sizeof(bytes));
+    FxRead::bytes(address, bytes, sizeof(bytes));
     return {bytes[0], bytes[1]};
 }
 
