@@ -3,9 +3,15 @@
 
 #include "../../creature/Creature.hpp"
 #include "../../lib/Move.hpp"
-#include "../../lib/ReadData.hpp"
 #include "../../lib/random.hpp"
 #include "../../lib/Effect.hpp"
+
+// Legacy engine loaders remain until the session port. Keep their declarations
+// local while the session boundary is introduced.
+OpponentSeed readOpponentSeed(uint8_t index);
+void ReadOpt(Opponent *opt, uint8_t index);
+void loadEncounterOpt(Opponent *opt, uint8_t creatureID, uint8_t level);
+uint8_t getEffectRateFX(uint8_t id);
 
 static __attribute__((noinline)) void pushBattleDialog(DialogType type, uint24_t number, uint16_t damage) {
     dialogMenu.pushMenu(newDialogBox(type, number, damage));

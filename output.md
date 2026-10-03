@@ -1728,3 +1728,42 @@ Failed attempts fixed: initial `make test` compile failed on ambiguous legacy/gl
 Wall time (worker): approximately 5m17s (2026-10-03 17:19:12 EDT through 17:24:29 EDT).
 
 Deviation: Ardens, `make fxtest`, `make fxtest-headless`, `make fxtest-spike`, interactive visual, and hardware checks intentionally not run per live steering. No generated inputs or packed artifacts changed. No commit or push performed.
+
+# CreatureGathererFX-jp8.3.5
+
+Implemented frozen transition-only BattleSetup boundary. Added `beginWild`, `beginTrainer`, original-slot `applySwitch`, legacy bench-index `loadActive`, player persistent-HP import/lowest-live selection, packed Move + semantic moveId caching, trainer party-count derivation, gather initialization, HP-preserving bench rebuild, forced/refused Switch results, incoming status/stage reset, and FX transition accounting. Removed direct ReadData includes from legacy battle/presenter TUs; BattleSetup.cpp is the sole direct reader include under `src/engine/battle/`. Added permanent native BattleSetup integration coverage for ordinary wild/trainer setup, level 1/8/12/40 gather caps, species-0 trainer data, original-slot switches, forced/refused/one-creature edges, player HP mapping, and no-live entry.
+
+Commands/results:
+
+```text
+make test
+# PASS: host 1727/0; world 190/0; real 2.408 s
+
+make testvm
+# PASS: VM 42/0; real 1.777 s
+
+make verify-generated
+# PASS; real 2.715 s
+
+make test-manifest
+# PASS: fxdata-manifest; real 3.055 s
+
+make test-generated-libs
+# PASS: generated-libs 8/0; invariants 5/0; first-unqualified-alias 28/0; real 1.824 s
+
+make test-avr-build-budget test-fxtest-ram
+# PASS: AVR build budget; fxtest RAM guard; real 0.242 s
+
+make build
+# PASS: flash 18012/24000 (5988 B free); static RAM 1871/2160 (289 B free); real 6.020 s
+
+make ram
+# PASS: flash 18012/29696 (11684 B free); static RAM 1871/2560 (689 B free)
+
+grep -RIn --include='*.cpp' --include='*.hpp' '^[[:space:]]*#include .*ReadData\\.hpp' src/engine/battle
+# PASS: only src/engine/battle/BattleSetup.cpp
+```
+
+Failed attempts fixed: first host compile used ambiguous global `BattleState`; qualified `battle::BattleState`. Initial setup test assumed generated seed bytes while host CSV fake decodes its own packed values; assertions now compare `readOpponentSeed` semantic decoding. Final reruns pass. Source-only changes; no generated inputs/artifacts changed. No commit or push.
+
+Forbidden by live steering and not run: Ardens, `make fxtest`, `make fxtest-headless`, `make fxtest-spike`, `make check` (would invoke FX stage), interactive visual checks, hardware checks. Wall time (worker validation): approximately 5 minutes across implementation/final checks on 2026-10-03. Existing untracked `.codex/` untouched.
