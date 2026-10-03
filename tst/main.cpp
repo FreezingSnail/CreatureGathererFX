@@ -20,6 +20,7 @@
 #include "mode_state_test.hpp"
 #include "world_interact_test.hpp"
 #include "step_test.hpp"
+#include "encounter_test.hpp"
 #include "fx_read_counter_test.hpp"
 #include "battle_view_test.hpp"
 #include "battle_test.hpp"
@@ -161,6 +162,8 @@ int main() {
     std::cout << "WorldInteractionSuite finished" << std::endl;
     StepSuite(tests);
     std::cout << "StepSuite finished" << std::endl;
+    EncounterSuite(tests);
+    std::cout << "EncounterSuite finished" << std::endl;
     FxReadCounterSuite(tests);
     std::cout << "FxReadCounterSuite finished" << std::endl;
     BattleViewSuite(tests);

@@ -31,6 +31,9 @@ void Player::loadCreature(uint8_t index, uint8_t creatureIndex) {
 
 void Player::setCreature(uint8_t index, CreatureData_t seed) {
     this->party[index].load(seed);
+    // Player owns current HP between battle transitions. Installing a new
+    // creature is the only path that initializes its full persistent HP.
+    this->creatureHPs[index] = this->party[index].statlist.hp;
 }
 
 void Player::storeCreature(uint8_t slot, uint8_t id, uint8_t level) {   // this->storedCreatures[slot] = caughtCreature{id, level};

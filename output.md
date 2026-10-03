@@ -1833,3 +1833,37 @@ git diff --check
 ```
 
 Initial `make build` failed before validation because `MenuV2Legacy.cpp` omitted `MenuNav.hpp` (`MENU_NAV_LEFT/RIGHT/UP/DOWN` undeclared); added the include and reran successfully. No generated artifacts changed. Live steering deviation: did not run Ardens, `make fxtest`, `make fxtest-headless`, `make fxtest-spike`, interactive, visual, or hardware checks. No commit/push.
+
+# CreatureGathererFX-jp8.1.9
+
+Implementation: added transition-loaded `EncounterFXData` ZoneDef/EncTable data; 10-slot uniform wild selection with injected TEST RNG, three-slot integer average, signed offset and inclusive level clamps; RAM-only destination-property step hook; WORLD→union BATTLE entry; persistent Player HP import/write-through; cache invalidation/reload on initial map load, chunk change, teleport, and battle exit. Added permanent native encounter integration coverage and refreshed generated-layout/alias/parity fixtures for the intentional encounter ABI replacement.
+
+Commands/results (worker, 2026-10-03):
+
+```text
+bd show CreatureGathererFX-jp8.1.9
+bd update CreatureGathererFX-jp8.1.9 --claim
+# PASS; target only claimed
+
+make gen                         # initial PATH tool: BLOCKED; installed cgfx-tools 0.2.0 rejected --consumables-csv
+cargo build --release -p cgfx-core # PASS; local native generator built
+PATH=.../CreatureGathererTools/target/release:$PATH make gen # PASS
+
+make test                         # PASS; host 1847/0, isolated world 190/0
+make testvm                       # PASS; VM 42/0
+PATH=... make verify-generated    # PASS
+make test-manifest                # PASS
+PATH=... make test-generated-libs # PASS; generated libs 8/0, invariants 5/0, alias 28/0
+PATH=... make test-pack-parity    # PASS; layout equivalence + negative diagnostic + SHA
+PATH=... make build               # PASS; flash 18610/29696, static 1879/2160, build free 281 B
+PATH=... make ram                 # PASS; RAM_FLASH_BYTES=18610, RAM_STATIC_BYTES=1879, RAM_FREE_BYTES=681
+PATH=... make verify-generated    # PASS
+
+git diff --check                  # PASS
+```
+
+Resource evidence: `make build` 18,610 B flash / 1,879 B static RAM / 281 B budget headroom; `make ram` 681 B physical static-RAM headroom. No changed device source contains `float` or `double`.
+
+Deviations: no `make check`, `make fxtest`, `make fxtest-headless`, `make fxtest-spike`, Ardens, visual, or hardware command per live steering. Generated-library/parity first exposed stale `encounterRates` migration fixtures and old MenuStrings/alias pins; updated permanent fixtures to `zoneDefs`/`tables`, regenerated expected addresses/hash, reran PASS. Pre-existing untracked `.codex/` untouched. No commit, push, or Dolt sync.
+
+Wall time: approximately 10 minutes worker implementation/validation; final checks complete 17:54 EDT.
