@@ -1767,3 +1767,40 @@ grep -RIn --include='*.cpp' --include='*.hpp' '^[[:space:]]*#include .*ReadData\
 Failed attempts fixed: first host compile used ambiguous global `BattleState`; qualified `battle::BattleState`. Initial setup test assumed generated seed bytes while host CSV fake decodes its own packed values; assertions now compare `readOpponentSeed` semantic decoding. Final reruns pass. Source-only changes; no generated inputs/artifacts changed. No commit or push.
 
 Forbidden by live steering and not run: Ardens, `make fxtest`, `make fxtest-headless`, `make fxtest-spike`, `make check` (would invoke FX stage), interactive visual checks, hardware checks. Wall time (worker validation): approximately 5 minutes across implementation/final checks on 2026-10-03. Existing untracked `.codex/` untouched.
+
+# CreatureGathererFX-jp8.3.3 — pure integer damage
+
+Implemented `battle::applyStage` with the nine-entry `-4..+4` integer table and pure `computeDamage`: legacy power/attack and defense/2 terms, physical/special stat selection, staged divisor guard, type/dual-type/status/STAB modifiers, immunity/floor/saturation clamps, invalid-input bounds, and no FX/global/float/random reads. Added const accessors needed by the const ABI. Added permanent native BattleSuite integration coverage: all stages/clamps, known value, physical/special, type/dual-type/status, stage effects, defense-one, floor, 255 saturation, zero power, invalid slot/type, and deterministic accuracy/critical/variance behavior.
+
+Commands/results (final):
+
+```text
+make test
+# PASS: host 1763/0; world 190/0; real 2.86 s
+
+make testvm
+# PASS: VM 42/0; real 1.04 s
+
+make verify-generated
+# PASS; real 2.62 s
+
+make test-manifest
+# PASS: fxdata-manifest; real 1.99 s
+
+make test-generated-libs
+# PASS: generated-libs 8/0; invariants 5/0; first-unqualified-alias 28/0; real 1.09 s
+
+make test-avr-build-budget test-fxtest-ram
+# PASS: AVR build budget; fxtest RAM guard; real 0.28 s
+
+make build
+# PASS: flash 18012/24000 (5988 B free); static RAM 1871/2160 (289 B free); real 5.95 s
+
+make ram
+# PASS: flash 18012/29696; static RAM 1871/2560 (689 B free); real 5.67 s
+
+avr-nm --print-size --size-sort --radix=d build/CreatureGathererFX.ino.elf | awk '$3 ~ /^[bBdD]$/ && $4 ~ /(stage|Damage|applyStage|computeDamage)/ {print}'
+# PASS: writable-damage-symbols=none
+```
+
+No generated inputs/artifacts changed. No Ardens, `make fxtest`, `make fxtest-headless`, `make fxtest-spike`, `make check`, interactive visual, or hardware checks run per live steering. No commit/push. Legacy `applyIntMod`/`BattleEngine::calculateDamage` remain intentionally untouched per this bead's scope until final legacy-engine deletion. Wall time recorded per command above; worker implementation/validation completed 2026-10-03.

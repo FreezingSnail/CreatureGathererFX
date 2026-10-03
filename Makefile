@@ -121,6 +121,7 @@ TEST_SOURCES = tst/src/Arduboy2Host.cpp \
 	src/lib/ListView.cpp \
 	src/lib/BattleEventPlayer.cpp \
 	src/engine/battle/Battle.cpp \
+	src/engine/battle/Damage.cpp \
 	src/engine/battle/Effects.cpp \
 	src/engine/battle/BattleSetup.cpp \
 	src/engine/battle/BattlePresenter.cpp \
