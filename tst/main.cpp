@@ -24,6 +24,7 @@
 #include "fx_read_counter_test.hpp"
 #include "battle_view_test.hpp"
 #include "battle_test.hpp"
+#include "battle_ai_test.hpp"
 #include "battle_resolve_test.hpp"
 #include "battle_presentation_test.hpp"
 #include "renderer_test.hpp"
@@ -171,6 +172,8 @@ int main() {
     std::cout << "BattleViewSuite finished" << std::endl;
     BattleSuite(tests);
     std::cout << "BattleSuite finished" << std::endl;
+    BattleAiSuite(tests);
+    std::cout << "BattleAiSuite finished" << std::endl;
     BattleResolveSuite(tests);
     std::cout << "BattleResolveSuite finished" << std::endl;
     BattlePresentationSuite(tests);
