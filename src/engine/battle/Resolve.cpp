@@ -214,6 +214,43 @@ void resolveSkip(BattleState &state, Side actor, bool refused,
     if (statusSkipped) out.flags |= STATUS_SKIPPED;
 }
 
+void resolveGather(BattleState &state, Side actor, Rng &rng,
+                   ActionResult &out)
+{
+    out.kind = ResultKind::Gather;
+    out.actor = actor;
+
+    // Gather is a wild encounter action. Availability/refusal is checked
+    // before status gates so refused actions consume no RNG or progress.
+    if (actor != Side::Player || state.trainer || !state.gatherable) {
+        out.flags |= REFUSED;
+        return;
+    }
+
+    const TurnGate gate = gateTurn(state, actor, rng);
+    if (gate == TurnGate::Skip) {
+        resolveSkip(state, actor, false, true, out);
+        return;
+    }
+    if (gate == TurnGate::SelfHit) {
+        if (validMove(state.active[sideIndex(actor)], 0)) {
+            resolveAttack(state, actor, 0, true, rng, out);
+        } else {
+            resolveSkip(state, actor, true, false, out);
+        }
+        return;
+    }
+
+    const uint8_t need = state.gather.need;
+    if (state.gather.progress < need) {
+        const uint16_t updated = static_cast<uint16_t>(state.gather.progress) +
+                                 state.gather.tierRate;
+        state.gather.progress = updated >= need
+            ? need
+            : static_cast<uint8_t>(updated);
+    }
+}
+
 ResultKind extensionResult(ActionKind kind)
 {
     switch (kind) {
@@ -295,12 +332,14 @@ void resolveAction(BattleState &state, Side actor, BattleAction action,
         resolveSkip(state, actor, false, false, out);
         break;
     case ActionKind::Switch:
-    case ActionKind::Gather:
-        // These transitions are owned by setup/.7 and .9 respectively. Keep
-        // a visible refused result here rather than importing their seams.
+        // Switch transitions are setup-owned. Keep a visible refused result
+        // rather than importing their FX seam into resolution.
         out.kind = extensionResult(action.kind);
         out.actor = actor;
         out.flags |= REFUSED;
+        break;
+    case ActionKind::Gather:
+        resolveGather(state, actor, rng, out);
         break;
     case ActionKind::Escape:
         out.kind = ResultKind::Escape;
@@ -329,7 +368,6 @@ void resolveEndTurn(BattleState &state, Rng &rng, bool acquisitionPending,
                     ActionResult &out)
 {
     (void)rng;
-    (void)acquisitionPending;
     resetActionResult(out);
     captureBefore(state, out);
     out.kind = ResultKind::EndTurn;
@@ -341,7 +379,34 @@ void resolveEndTurn(BattleState &state, Rng &rng, bool acquisitionPending,
     tickEffects(state, out);
     captureAfter(state, out);
     markFaints(out, out.flags);
+
+    // End-turn terminal order is intentionally explicit: a KO wins over a
+    // pending gather, which wins over the wild flee countdown.
     setTerminalOutcome(state, out);
+    if (out.outcome != Outcome::None) return;
+
+    // A fainted active awaits replacement; it is not an active encounter for
+    // acquisition or countdown purposes until the session switches it.
+    if (state.active[static_cast<uint8_t>(Side::Player)].hp == 0 ||
+        state.active[static_cast<uint8_t>(Side::Opponent)].hp == 0) {
+        return;
+    }
+
+    if (acquisitionPending) {
+        state.over = true;
+        out.outcome = Outcome::Gathered;
+        return;
+    }
+
+    if (!state.trainer && state.gatherable) {
+        if (state.gather.fleeTurns != 0) {
+            --state.gather.fleeTurns;
+        }
+        if (state.gather.fleeTurns == 0) {
+            state.over = true;
+            out.outcome = Outcome::Fled;
+        }
+    }
 }
 
 bool sideDefeated(const BattleState &state, Side side)

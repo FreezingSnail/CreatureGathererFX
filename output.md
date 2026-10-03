@@ -2132,3 +2132,41 @@ PASS
 ```
 
 Generated failures are pre-existing artifact/baseline state unrelated to resolver/test changes; no generated source/header or packed paths changed. No Ardens, fxtest targets, hardware, or visual checks run per task instruction. Native `BattleEscapeIntegrationTest` is the permitted headless substitute. No commit/push. Wall: approximately 2m18s (19:40:14–19:42:32 -0400).
+
+
+# CreatureGathererFX-jp8.3.9 — wild gather progress and flee timer
+
+Implemented pure Gather resolution and EndTurn wild countdown. Gather accepts only player wild-gatherable state, applies status gates once, saturates `progress` by `tierRate` at `need`, records before/after, refuses trainer/non-gatherable requests, and performs no FX reads. EndTurn ticks live slots in existing order, preserves HP/progress, resolves Lose/Win before pending Gathered, then decrements wild flee once and absorbs Fled at zero. Added permanent native headless integration coverage for level-12 need14, tier1/tier4 saturation, refusal, ready-gather opponent damage/ticks, KO/acquisition/flee ordering, countdown underflow/terminal repeats, RNG determinism, and FX-read budget.
+
+```text
+make test
+Host: 2275 passed, 0 failed; World: 190 passed, 0 failed
+PASS; final timed wall 4s
+
+make testvm
+VM: 42 passed, 0 failed
+PASS; final timed wall 1s
+
+make test-manifest
+PASS; final timed wall 2s
+
+make test-generated-libs
+generated-libs: 8 passed, 0 failed; invariants: 5 passed, 0 failed; first-unqualified-alias: 28 passed, 0 failed
+PASS; final timed wall 1s
+
+make verify-generated
+PASS; final timed wall 3s
+
+make build
+flash: 19870 B / 24000 B; static: 1873 B / 2160 B; free: 4130 B flash, 287 B static
+PASS; final timed wall 7s
+
+make ram
+RAM_FLASH_BYTES=19870; RAM_STATIC_BYTES=1873; RAM_FREE_BYTES=687
+PASS; final timed wall 6s
+
+git diff --check
+PASS
+```
+
+No generated, packed, FX, or flag/opcode artifacts changed. No Ardens, fxtest target, visual, or hardware check run per task instruction. Device-only acceptance reconciled to permanent native `BattleGatherIntegrationTest`; its resolver assertions include `FxReadCounter::count()==0` and terminal repeat absorption. No commit/push. Final timed validation wall: 24s.
