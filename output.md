@@ -1867,3 +1867,19 @@ Resource evidence: `make build` 18,610 B flash / 1,879 B static RAM / 281 B budg
 Deviations: no `make check`, `make fxtest`, `make fxtest-headless`, `make fxtest-spike`, Ardens, visual, or hardware command per live steering. Generated-library/parity first exposed stale `encounterRates` migration fixtures and old MenuStrings/alias pins; updated permanent fixtures to `zoneDefs`/`tables`, regenerated expected addresses/hash, reran PASS. Pre-existing untracked `.codex/` untouched. No commit, push, or Dolt sync.
 
 Wall time: approximately 10 minutes worker implementation/validation; final checks complete 17:54 EDT.
+
+## CreatureGathererFX-jp8.3.6 — one-action resolver
+
+Implemented `Resolve.hpp/.cpp`: frozen first-mover priority/speed, one-action Attack/Skip resolution, injected `Rng`/Damage/Effects seams, explicit effect targets, self-hit/no-effect rules, compact result reset/snapshots, faint/KO outcomes, pure defeat/switch guards, and exactly-once terminal end-turn tick boundary. Added permanent native `BattleResolveSuite`; fixed undefined type-status fallback for gate effects. No Ardens/device/hardware checks per live steering.
+
+Evidence (2026-10-03):
+- `make test` — PASS; host 1930 passed/0 failed, world 190/0; 3.85s.
+- `make testvm` — PASS; 42/0; 0.92s.
+- `make test-manifest` — PASS; 1.84s.
+- `make test-generated-libs` — PASS; generated libs 8/0, invariants 5/0, alias 28/0; 0.96s.
+- `make verify-generated` — PASS; 2.45s.
+- `make build` — PASS; flash 18,610 B / 24,000 budget, static 1,879 B / 2,160 budget, free 5,390/281 B; 6.45s.
+- `make ram` — PASS; flash 18,610 B, static 1,879 B, device RAM free 681 B; 5.84s.
+- `make test-avr-build-budget` — PASS; 0.09s.
+- `make test-fxtest-ram` — PASS; 0.12s.
+- Initial `make test` compile failed on ambiguous global/`battle::BattleState`; fixed explicit qualification. First resolver run exposed undefined `typeEffectModifier` fallback for PINNED/CONCUSED self-hit; added integer-safe default and reran all checks.
