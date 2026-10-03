@@ -1940,3 +1940,40 @@ git diff --check
 ```
 
 Worker wall time: approximately 25 minutes including interrupted baseline inspection and final evidence run. No commit, push, or Dolt sync. Ardens/fxtest/device acceptance intentionally deferred per dispatch; permanent native integration coverage substitutes for device-only snapshot assertions under live steering.
+
+# CreatureGathererFX-jp8.3.7
+
+Implementation: completed pure faint classification/terminal guards; completed `applySwitch` result snapshots/refusal semantics and terminal guard; added permanent native `BattleFaintSwitchSuite` coverage for one-party Win, real 3-party lowest-live original-slot replacement, forced/player replacement boundaries, invalid/current/dead refusal, state/status/stage/HP synchronization, mixed double ticks, deterministic resolution, and zero steady-state FX reads. No dialogs/menus/FX reads in `Resolve.cpp`.
+
+Commands/results:
+
+```text
+make AVR_NM=/usr/bin/true AVR_SIZE=/usr/bin/true test
+host: 2119 passed, 0 failed; world: 190 passed, 0 failed
+
+make AVR_NM=/usr/bin/true AVR_SIZE=/usr/bin/true testvm
+VM: 42 passed, 0 failed
+
+make AVR_NM=/usr/bin/true AVR_SIZE=/usr/bin/true verify-generated
+PASS
+
+make AVR_NM=/usr/bin/true AVR_SIZE=/usr/bin/true test-manifest
+PASS
+
+make AVR_NM=/usr/bin/true AVR_SIZE=/usr/bin/true test-generated-libs
+generated-libs: 8/0; invariants: 5/0; first-unqualified-alias: 28/0; PASS
+
+make AVR_NM=/usr/bin/true AVR_SIZE=/usr/bin/true build
+flash: 19032/24000 B; static: 1870/2160 B; budget free: 496 B flash, 290 B static
+
+make AVR_NM=$HOME/Library/Arduino15/packages/arduino/tools/avr-gcc/7.3.0-atmel3.6.1-arduino7/bin/avr-nm AVR_SIZE=$HOME/Library/Arduino15/packages/arduino/tools/avr-gcc/7.3.0-atmel3.6.1-arduino7/bin/avr-size ram
+shipping: 19032 B flash; 1870 B static; physical RAM free 690 B / 2560 B
+
+git diff --check
+PASS
+
+git diff --exit-code -- fxdata/generated tst/fxdatatest/generated src/fxdata.h fxdata/Sprites.txt src/vm/opcodes.hpp src/flags
+PASS; no generated drift
+```
+
+Wall time: approximately 5 minutes worker implementation/validation; closeout 2026-10-03T23:24:59Z. Deviations: live steering forbade Ardens, all fxtest targets, visual, and hardware checks; none run. No commits, pushes, or bead sync. `.codex/` remains unrelated untracked workspace state.
