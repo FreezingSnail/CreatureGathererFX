@@ -2,6 +2,8 @@
 
 #include "fxtest.hpp"
 #include "src/save/Compaction.hpp"
+#include "src/engine/battle/Battle.hpp"
+#include "src/engine/battle/BattleViewAdapter.hpp"
 #include "src/save/SaveFile.hpp"
 #include "src/vm/opcodes.hpp"
 
@@ -104,7 +106,7 @@ inline void test_stack(FxTest &test)
 
     player.basic();
     legacyBattle().startFight(0);
-    menu.printMenu(legacyBattle());
+    menu.printMenu(battle::legacyBattleView(legacyBattle()));
     legacyBattle().opponentCur->level = 31;
     legacyBattle().opponentHealths[0] = 1000;
     legacyBattle().queueAction(ActionType::ATTACK, 0);

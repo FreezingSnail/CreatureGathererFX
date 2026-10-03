@@ -1,10 +1,18 @@
 #include "MenuV2.hpp"
 
 #include "MenuNav.hpp"
+#include "../../lib/FxReadCounter.hpp"
+#include "../../lib/ReadData.hpp"
 
 namespace {
 constexpr uint8_t MENU_PARTY_SLOT_COUNT = 3;
 constexpr uint8_t MENU_PARTY_CHOICE_COUNT = 2;
+constexpr uint8_t MENU_MOVE_COUNT = 4;
+constexpr uint8_t MOVE_INFO_BITS = 10;
+constexpr uint8_t MOVE_INFO_BYTES = 5;
+constexpr uint8_t MOVE_ID_EMPTY = 32;
+constexpr uint8_t MOVE_ID_ABSENT = 255;
+constexpr uint8_t CREATURE_ID_COUNT = 32;
 
 MenuIntent noIntent() {
     return {MenuIntentKind::None, 0};
@@ -35,15 +43,103 @@ bool validPartyChoice(const battle::PartySnapshot &snapshot, uint8_t cursor) {
         return false;
     }
     const battle::PartyChoice &choice = snapshot.choices[cursor];
-    // Species zero is valid. HP zero is the dead sentinel; slots outside the
-    // three original party positions cannot be dispatched to BattleSession.
-    return choice.hp != 0 && choice.slot < MENU_PARTY_SLOT_COUNT;
+    // Species zero is valid. IDs outside the creature table, HP zero, and
+    // slots outside the original party are dead/invalid sentinels.
+    return choice.id < CREATURE_ID_COUNT && choice.hp != 0 &&
+           choice.slot < MENU_PARTY_SLOT_COUNT;
+}
+
+uint16_t compactMoveInfo(const Move &move) {
+    return static_cast<uint16_t>(
+        ((static_cast<uint16_t>(move.getMoveType()) & 0x0f) << 6) |
+        ((static_cast<uint16_t>(move.getMovePower()) & 0x1f) << 1) |
+        (move.isPhysical() ? 1u : 0u));
+}
+
+void storeMoveInfo(uint8_t *packed, uint8_t slot, uint16_t info) {
+    const uint8_t bitOffset = static_cast<uint8_t>(slot * MOVE_INFO_BITS);
+    for (uint8_t bit = 0; bit < MOVE_INFO_BITS; ++bit) {
+        const uint8_t byte = static_cast<uint8_t>((bitOffset + bit) >> 3);
+        const uint8_t mask = static_cast<uint8_t>(1u << ((bitOffset + bit) & 7));
+        if ((info & (static_cast<uint16_t>(1u) << bit)) != 0) {
+            packed[byte] |= mask;
+        } else {
+            packed[byte] &= static_cast<uint8_t>(~mask);
+        }
+    }
 }
 } // namespace
 
 MenuV2::MenuV2() {
     menuPointer = -1;
     cursorIndex = 0;
+}
+
+void MenuV2::openMenu(MenuEnum menu, const battle::BattleView &view) {
+    if (menuPointer < 0 || stack[menuPointer] != menu) {
+        if (menuPointer >= 5) return;
+        push(menu);
+    }
+
+    if (menu == BATTLE_MOVE_SELECT) {
+        moveSnapshot = {};
+        for (uint8_t slot = 0; slot < MENU_MOVE_COUNT; ++slot) {
+            moveSnapshot.moveIds[slot] = view.moveIds[slot];
+            moveNameAddresses[slot] = 0;
+        }
+        for (uint8_t byte = 0; byte < MOVE_INFO_BYTES; ++byte) {
+            moveInfoPacked[byte] = 0;
+        }
+        uint8_t reads = 0;
+        for (uint8_t slot = 0; slot < MENU_MOVE_COUNT; ++slot) {
+            const uint8_t id = moveSnapshot.moveIds[slot];
+            if (id == MOVE_ID_EMPTY || id == MOVE_ID_ABSENT ||
+                id >= CREATURE_ID_COUNT) {
+                continue;
+            }
+            moveNameAddresses[slot] = readMoveNameAddress(id);
+            storeMoveInfo(moveInfoPacked, slot, compactMoveInfo(readMoveFX(id)));
+            reads = static_cast<uint8_t>(reads + 2);
+        }
+        FxReadCounter::transitionExact(reads);
+        return;
+    }
+
+    if (menu == BATTLE_CREATURE_SELECT) {
+        partyChoicesSnapshot = {};
+        creatureNameAddresses[0] = 0;
+        creatureNameAddresses[1] = 0;
+        const uint8_t player = static_cast<uint8_t>(battle::Side::Player);
+        const uint8_t activeSlot = view.activeSlot[player];
+        const uint8_t count = view.partyCount[player] > MENU_PARTY_SLOT_COUNT
+                                  ? MENU_PARTY_SLOT_COUNT
+                                  : view.partyCount[player];
+        uint8_t reads = 0;
+        for (uint8_t slot = 0; slot < count; ++slot) {
+            if (slot == activeSlot ||
+                partyChoicesSnapshot.count >= MENU_PARTY_CHOICE_COUNT) {
+                continue;
+            }
+            const battle::PartySummary &summary = view.party[player][slot];
+            const uint8_t choice = partyChoicesSnapshot.count++;
+            // PartySummary::alive is authoritative at the view boundary. Keep
+            // the original HP only for live choices; update() rejects zero.
+            const uint8_t hp = summary.alive ? summary.hp : 0;
+            partyChoicesSnapshot.choices[choice] = {summary.id, slot, hp};
+            creatureNameAddresses[choice] = 0;
+            if (summary.alive && summary.hp != 0 &&
+                summary.id < CREATURE_ID_COUNT) {
+                creatureNameAddresses[choice] =
+                    readCreatureNameAddress(summary.id);
+                ++reads;
+            }
+        }
+        FxReadCounter::transitionExact(reads);
+    }
+}
+
+const battle::MoveSnapshot &MenuV2::movesSnapshot() const {
+    return moveSnapshot;
 }
 
 void MenuV2::setPartySnapshot(const battle::PartySnapshot &snapshot) {
@@ -57,6 +153,10 @@ void MenuV2::setPartySnapshot(const battle::PartySnapshot &snapshot) {
 
 const battle::PartySnapshot &MenuV2::partySnapshot() const {
     return partyChoicesSnapshot;
+}
+
+const uint8_t *MenuV2::moveInfo() const {
+    return moveInfoPacked;
 }
 
 void MenuV2::push(MenuEnum type) {
@@ -75,8 +175,16 @@ void MenuV2::pop() {
 void MenuV2::clear() {
     menuPointer = -1;
     cursorIndex = 0;
-    cachedNameMode = 255;
+    moveSnapshot = {};
+    for (uint8_t slot = 0; slot < MENU_MOVE_COUNT; ++slot) {
+        moveNameAddresses[slot] = 0;
+    }
+    for (uint8_t byte = 0; byte < MOVE_INFO_BYTES; ++byte) {
+        moveInfoPacked[byte] = 0;
+    }
     partyChoicesSnapshot = {};
+    creatureNameAddresses[0] = 0;
+    creatureNameAddresses[1] = 0;
 }
 
 MenuIntent MenuV2::update(uint8_t edgeButtons) {

@@ -128,7 +128,7 @@ void run() {
     if (dialogMenu.peek()) {
         dialogMenu.drawPopMenu();
     } else if (gameState.state == GameState_t::BATTLE) {
-        menu.printMenu(legacyBattle());
+        menu.printMenu(battle::legacyBattleView(legacyBattle()));
     }
 }
 
