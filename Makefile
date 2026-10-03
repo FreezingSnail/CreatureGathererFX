@@ -104,6 +104,7 @@ TEST_SOURCES = tst/src/ReadData.cpp \
 	src/save/Compaction.cpp \
 	src/plants/PlantStage.cpp \
 	src/plants/PlantPair.cpp \
+	src/plants/PlantGamestate.cpp \
 	src/item/Inventory.cpp \
 	src/item/KeyItems.cpp \
 	src/item/ConsumableDef.cpp \
@@ -118,6 +119,7 @@ TEST_SOURCES = tst/src/ReadData.cpp \
 	src/engine/battle/Battle.cpp \
 	src/engine/ModeState.cpp \
 	src/engine/world/World.cpp \
+	src/engine/world/StepEvent.cpp \
 	src/GameState.cpp \
 	src/flags/flag_bit_array.cpp \
 	tst/main.cpp
@@ -293,7 +295,7 @@ test-debug:
 	$(call run_test,$(DEBUG_FLAGS),$(TEST_FLAGS),$(TEST_SOURCES),$(HOST_TEST_BIN))
 	$(call run_test,$(DEBUG_FLAGS),$(TEST_FLAGS),$(WORLD_TEST_SOURCES),$(WORLD_TEST_BIN))
 
-WORLD_TEST_SOURCES = src/GameState.cpp src/engine/world/World.cpp src/flags/flag_bit_array.cpp tst/world_test_main.cpp
+WORLD_TEST_SOURCES = src/GameState.cpp src/engine/world/World.cpp src/engine/world/StepEvent.cpp src/plants/PlantGamestate.cpp src/plants/PlantStage.cpp src/plants/PlantPair.cpp src/flags/flag_bit_array.cpp tst/world_test_main.cpp
 
 testvm:
 	$(call run_test,,$(TEST_FLAGS),$(TESTVM_SOURCES),$(VM_TEST_BIN))

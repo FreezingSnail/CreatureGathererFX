@@ -1274,3 +1274,40 @@ defect (76 failures); the raw-byte `FxRead::indexed24` workaround made the same 
 orchestrator focused checks took 5–11 s each and the passing integrated gate took about 60 s.
 Beads y2v, y2v.1, y2v.2, jp8.1.7, qws, qu9.8, and qu9.9 are closed with their measured outcomes.
 0s0 remains blocked at 229 B against its unchanged 400 B painted-stack criterion.
+
+## jp8.1.8 Step event dispatch
+
+Added the RAM-only step dispatcher and attached it to committed 16-pixel movement completion. Host
+movement coverage exercises partial frames, destination commit, stationary repeat frames, blocked
+and dialog-gated input; plant ticking rolls over on the 128th event.
+
+```text
+make test
+# PASS: host 1,354/0; world 190/0.
+make testvm
+# PASS: VM 42/0.
+make gen
+# First attempt failed because the installed cgfx-tools 0.2.0 rejected --consumables-csv.
+PATH=/Users/connorfranc/code/CreatureGathererTools/target/debug:$PATH make gen
+# PASS; generated artifacts left no tracked changes.
+make verify-generated
+# PASS.
+PATH=/private/tmp/cgfx-tools-jp8.5.20/debug:$PATH ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens make fxtest-headless
+# PASS: all 17 suites, 3,468/0; test_stack headroom 229 B (mode transition 370 B).
+PATH=/Users/connorfranc/code/CreatureGathererTools/target/debug:$PATH ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens make fxtest-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_tiles.ino
+# PASS: test_tiles 18/0; test_stack 4/0; headroom 229 B.
+PATH=/Users/connorfranc/code/CreatureGathererTools/target/debug:$PATH ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens make final-gate
+# PASS in about 92 s. Host 1,354/0; World 190/0; VM 42/0; generated checks pass;
+# all 17 FX suites pass (3,468/0), test_stack headroom 229 B. Shipping image:
+# 18,492 B flash, 1,871 B static RAM, 689 B free. Logs:
+# build/final-gate/{check,ram}.log.
+git diff --check
+# PASS.
+```
+
+The first two host build attempts exposed test wiring mistakes (the suite must be added through a
+`TestSuite`, and `StepEvent.cpp` must be linked); both were corrected before the passing host run.
+The initial generation failure was resolved by selecting the adjacent tools checkout's current
+debug binary first on `PATH`. `make doctor` also reported missing Arduboy2/ArdBitmap libraries,
+but the full device build and all serial suites passed with the installed Arduboy core. Worker wall
+time was approximately 6 minutes (not separately timed); the integrated gate took about 92 seconds.
