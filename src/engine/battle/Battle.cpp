@@ -552,11 +552,14 @@ void BattleEngine::commitAction(Action *action, Creature *commiter, Creature *re
 
 void BattleEngine::applyDamage(uint16_t damage, Creature *receiver) {
     if (receiver == this->playerCur) {
-        uint8_t hp = this->playerHealths[this->playerIndex];
-        this->playerHealths[this->playerIndex] -= damage >= hp ? hp : damage;
+        uint16_t hp = this->playerHealths[this->playerIndex];
+        const uint16_t next = damage >= hp ? 0 : static_cast<uint16_t>(hp - damage);
+        this->playerHealths[this->playerIndex] = next;
+        player.creatureHPs[this->playerIndex] = static_cast<uint8_t>(next);
     } else {
-        uint8_t hp = this->opponentHealths[this->opponentIndex];
-        this->opponentHealths[this->opponentIndex] -= damage >= hp ? hp : damage;
+        uint16_t hp = this->opponentHealths[this->opponentIndex];
+        this->opponentHealths[this->opponentIndex] =
+            damage >= hp ? 0 : static_cast<uint16_t>(hp - damage);
     }
 }
 
@@ -581,12 +584,11 @@ void BattleEngine::loadPlayer() {
     this->playerParty[0] = &(player.party[0]);
     this->playerParty[1] = &(player.party[1]);
     this->playerParty[2] = &(player.party[2]);
-    // for now the hp will refil every encounter so we dont need to use the player
-    // field
-    // this->playerHealths[i] = player.creatureHPs[i];
-    this->playerHealths[0] = this->playerParty[0]->statlist.hp;
-    this->playerHealths[1] = this->playerParty[1]->statlist.hp;
-    this->playerHealths[2] = this->playerParty[2]->statlist.hp;
+    // Current HP belongs to Player, not the transient battle member. Entry
+    // copies it without refilling from the creature's authored max HP.
+    this->playerHealths[0] = player.creatureHPs[0];
+    this->playerHealths[1] = player.creatureHPs[1];
+    this->playerHealths[2] = player.creatureHPs[2];
 
     this->playerIndex = 0;
     this->playerCur = this->playerParty[0];

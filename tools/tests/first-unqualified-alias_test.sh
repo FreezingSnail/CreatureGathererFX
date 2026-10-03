@@ -11,7 +11,7 @@ image=${FX_IMAGE:-$root/dist/fxdata-data.bin}
 expectations=${FX_ALIAS_EXPECTATIONS:-$root/tools/tests/fixtures/first-unqualified-aliases.tsv}
 # This is the committed table location after appending item name sprites,
 # deliberately not read from the regenerated header.
-menu_strings_address=0x04F8C3
+menu_strings_address=0x04F8D7
 
 failures=0
 passes=0

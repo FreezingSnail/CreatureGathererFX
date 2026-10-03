@@ -12,7 +12,7 @@ inline uint32_t readCount = 0;
 inline uint24_t dataBase = 0;
 inline uint24_t lastDataAddress = 0;
 inline size_t lastDataLength = 0;
-inline uint8_t dataBytes[16] = {};
+inline uint8_t dataBytes[128] = {};
 }
 
 namespace FX {

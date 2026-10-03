@@ -1,7 +1,7 @@
 # Permanent migration-equivalence fixture. Paths are relative to this file.
 
 [[entry]]
-source = { expand = { path = "../../../fxdata/data/encounters.txt", exclude = ["encounterRates"] } }
+source = { expand = { path = "../../../fxdata/data/encounters.txt", exclude = ["zoneDefs", "tables"] } }
 
 [[entry]]
 source = { expand = { path = "../../../fxdata/generated/opponents.txt" } }
@@ -33,7 +33,7 @@ source = { expand = { path = "../../../fxdata/data/chunks.txt" } }
 [[entry]]
 source = { expand = { path = "../../../fxdata/Sprites.txt" } }
 
-# Match the positive migration fixture; only encounterRates is perturbed.
+# Match the positive migration fixture; only zone/table declarations are perturbed.
 [[entry]]
 source = { expand = { path = "../../../fxdata/generated/Sprites.txt", exclude = ["lureTier0", "lureTier1", "lureTier2", "lureType0", "lureType1", "lureType2", "lureType3", "lureType4", "lureType5", "lureType6", "lureType7", "consumable0", "consumable1", "consumable2", "consumable3", "consumable4", "consumable5", "consumable6", "consumable7", "LureTierNames", "LureTypeNames", "ConsumableNames"] } }
 

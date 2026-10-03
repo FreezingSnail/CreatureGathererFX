@@ -1,8 +1,14 @@
 # Native cgfx-tools declaration order mirrored by src/fxdata.h.
 
 [[entry]]
-name = "encounterRates"
-source = { carray = { path = "../../../fxdata/data/encounters.txt", symbol = "encounterRates" } }
+name = "zoneDefs"
+namespace = "EncounterFXData"
+source = { carray = { path = "../../../fxdata/data/encounters.txt", symbol = "zoneDefs" } }
+
+[[entry]]
+name = "tables"
+namespace = "EncounterFXData"
+source = { carray = { path = "../../../fxdata/data/encounters.txt", symbol = "tables" } }
 
 [[entry]]
 name = "opponent_seeds"

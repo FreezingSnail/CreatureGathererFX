@@ -1,6 +1,7 @@
 #include "World.hpp"
 #include "WorldCollision.hpp"
 #include "StepEvent.hpp"
+#include "Encounter.hpp"
 
 #ifndef TEST
 #include "../../common.hpp"
@@ -165,6 +166,7 @@ bool facedTile(uint16_t playerLocation, Direction facing, uint16_t &target) {
 void WorldEngine::init(WorldTransient &world) {
     world.activateMotion();
     TilePropertyWindow::invalidate(world.propertyWindow);
+    Encounter::invalidate(world.zoneTableCache);
     world.motion.directionAndFlags = static_cast<uint8_t>(Direction::DOWN);
     world.motion.step = 0;
     setMoving(world.motion, false);
@@ -176,13 +178,17 @@ void WorldEngine::loadMap(WorldTransient &world, uint8_t mapIndex, uint8_t subma
     (void)mapIndex;
     (void)submapIndex;
     TilePropertyWindow::invalidate(world.propertyWindow);
+    onChunkChange(world, Chunk::chunkOfLocation(gameState.playerLocation));
 }
 
 void WorldEngine::setPos(WorldTransient &world, uint8_t x, uint8_t y) {
+    const uint16_t oldChunk = Chunk::chunkOfLocation(gameState.playerLocation);
     gameState.playerLocation = static_cast<uint16_t>(x) |
                                (static_cast<uint16_t>(y) << 8);
     clearStep(world.motion, gameState.playerLocation);
     TilePropertyWindow::invalidate(world.propertyWindow);
+    const uint16_t newChunk = Chunk::chunkOfLocation(gameState.playerLocation);
+    if (Chunk::chunkChanged(oldChunk, newChunk)) onChunkChange(world, newChunk);
 }
 
 uint16_t WorldEngine::location() {
@@ -206,8 +212,11 @@ ViewOffset WorldEngine::view(const WorldTransient &world) {
 void WorldEngine::syncFromLocation(WorldTransient &world) {
     const uint16_t published = gameState.playerLocation;
     if (published == origin(world.motion)) return;
+    const uint16_t oldChunk = Chunk::chunkOfLocation(origin(world.motion));
     clearStep(world.motion, published);
     TilePropertyWindow::invalidate(world.propertyWindow);
+    const uint16_t newChunk = Chunk::chunkOfLocation(published);
+    if (Chunk::chunkChanged(oldChunk, newChunk)) onChunkChange(world, newChunk);
 }
 
 void WorldEngine::input(WorldTransient &world) {
@@ -293,12 +302,17 @@ void WorldEngine::moveChar(WorldTransient &world) {
                                  (static_cast<uint16_t>(y) << 8);
     gameState.playerLocation = newLocation;
     clearStep(motion, newLocation);
-    TilePropertyWindow::invalidate(world.propertyWindow);
-    onStep(newLocation);
 
     const uint16_t oldChunk = Chunk::chunkOfLocation(oldLocation);
     const uint16_t newChunk = Chunk::chunkOfLocation(newLocation);
     if (Chunk::chunkChanged(oldChunk, newChunk)) onChunkChange(world, newChunk);
+
+    // The destination property window remains readable during dispatch. It is
+    // invalidated only after the hook because encounter gating is RAM-only.
+    onStep(newLocation);
+    if (gameState.state == GameState_t::WORLD) {
+        TilePropertyWindow::invalidate(world.propertyWindow);
+    }
 }
 
 #ifdef TEST
@@ -309,13 +323,17 @@ void WorldEngine::beginMoveForTest(WorldTransient &world, Direction value) {
 }
 #endif
 
-void WorldEngine::onChunkChange(WorldTransient &, uint16_t newChunk) {
-    // Transition-specific FX reads are attached here by their owning beads.
-    (void)newChunk;
+void WorldEngine::onChunkChange(WorldTransient &world, uint16_t newChunk) {
+    if (!Chunk::validChunkId(newChunk)) {
+        Encounter::invalidate(world.zoneTableCache);
+        return;
+    }
+    Encounter::load(world.zoneTableCache, newChunk);
 }
 
 void WorldEngine::encounter() {
-    // TODO: redesign this
+    // Wild rolls belong to onStep(), which receives the committed destination.
+    // Keep this legacy symbol inert so callers cannot create a second roll path.
 }
 
 bool WorldEngine::moveable(const WorldTransient &world) {
