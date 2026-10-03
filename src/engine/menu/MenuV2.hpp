@@ -19,16 +19,17 @@ class MenuV2 {
     MenuEnum stack[6] = {};
     int8_t menuPointer = -1;
     int8_t cursorIndex = 0;
-    uint8_t *moveList = nullptr;
-    uint8_t creatures[2] = {};
     bool drawMenu = true;
+    battle::MoveSnapshot moveSnapshot = {};
     uint24_t moveNameAddresses[4] = {};
-    uint8_t moveNameIds[4] = {255, 255, 255, 255};
-    uint8_t cachedNameMode = 255;
     uint24_t creatureNameAddresses[2] = {};
-    uint8_t creatureNameIds[2] = {255, 255};
     uint8_t cachedRentalId = 255;
-    uint24_t rentalNameAddress = 0;
+    // Battle move metadata and arena rental name never coexist. Five bytes
+    // hold four ten-bit (type, power, physical) move descriptors.
+    union {
+        uint24_t rentalNameAddress = 0;
+        uint8_t moveInfoPacked[5];
+    };
     struct RentalStats {
         uint8_t type1, type2;
         uint8_t hpSeed, atkSeed, defSeed;
@@ -40,17 +41,23 @@ class MenuV2 {
     // Consume one already-edge-qualified button mask. No engine, dialog, or
     // FX state is consulted; the caller owns routing the resulting intent.
     MenuIntent update(uint8_t edgeButtons);
+
+    // Copy the data needed by a battle submenu at its transition boundary.
+    // Rendering and subsequent updates consume only these copied values.
+    void openMenu(MenuEnum menu, const battle::BattleView &view);
+    const battle::MoveSnapshot &movesSnapshot() const;
     void setPartySnapshot(const battle::PartySnapshot &snapshot);
     const battle::PartySnapshot &partySnapshot() const;
+    const uint8_t *moveInfo() const;
 
     void push(MenuEnum type);
     void pop();
     void clear();
 
-    // Legacy render/arena entry points remain until their owning menu beads
-    // port them to snapshots. They do not participate in update().
+    // run keeps the legacy button bridge for existing callers; rendering and
+    // snapshot transitions consume only BattleView/snapshot data.
     void run(BattleEngine &engine);
-    void printMenu(BattleEngine &engine);
+    void printMenu(const battle::BattleView &view);
     void prepareCreatureRental();
     void creatureRental();
 

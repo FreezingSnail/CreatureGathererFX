@@ -1908,3 +1908,35 @@ git diff --check
 ```
 
 Ardens, `make fxtest`, `make fxtest-headless`, `make fxtest-spike`, visual, and hardware checks intentionally not run per live steering. The frozen AI contract explicitly forbids a `Rng` parameter; deterministic repeated-call coverage and existing injected-Rng resolver coverage preserve that boundary. Worker wall time: approximately 3 minutes (18:09:59–18:12:54 -0400). No commit/push.
+
+
+# CreatureGathererFX-jp8.4.3
+
+Implemented open-time battle-menu snapshots. `MenuV2::openMenu(MenuEnum, const battle::BattleView&)` copies move IDs and original party slots/HP/alive state, resolves valid name addresses and packed move info only at transition, and supports already-pushed submenu routing without duplicate stack entries. `update()` remains pure `MenuIntent` ownership; invalid/dead party rows cannot emit `SelectParty`. Draw helpers consume snapshots and cached metadata, with no engine/table lookups on steady update/draw paths. Battle move cache overlays arena-only rental-name storage; static RAM remains below prior baseline.
+
+Added native host integration coverage for valid/empty/absent moves, species-zero party IDs, original-slot mapping, post-open source mutation isolation, invalid/dead slots, transition read counts, and zero-read steady updates. Host counter fakes now model logical name/move reads under `TEST`.
+
+Validation (no Ardens, no fxtest target, no hardware/visual check):
+
+```text
+make test
+# host 1,996 passed, 0 failed; world 190 passed, 0 failed; 2.93 s
+make testvm
+# VM 42 passed, 0 failed; 1.02 s
+make build
+# flash 19,032 B / 24,000 budget; static 1,870 B / 2,160 budget; free 290 B; 6.87 s
+make ram
+# RAM_STATIC_BYTES=1870; RAM_FREE_BYTES=690; menu symbol=89 B; 6.61 s
+make test-manifest
+# PASS; 2.03 s
+make test-generated-libs
+# generated-libs 8 passed/0 failed; invariants 5 passed/0 failed; alias 28 passed/0 failed; 1.16 s
+make verify-generated
+# PASS; 2.84 s
+make test-avr-build-budget
+# PASS; 0.09 s
+git diff --check
+# PASS
+```
+
+Worker wall time: approximately 25 minutes including interrupted baseline inspection and final evidence run. No commit, push, or Dolt sync. Ardens/fxtest/device acceptance intentionally deferred per dispatch; permanent native integration coverage substitutes for device-only snapshot assertions under live steering.

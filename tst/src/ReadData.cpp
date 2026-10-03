@@ -3,10 +3,12 @@
 #include "parseCSV.hpp"
 
 uint24_t readCreatureNameAddress(uint8_t id) {
+    FxReadCounter::record();
     return 0x10000UL + id;
 }
 
 uint24_t readMoveNameAddress(uint16_t id) {
+    FxReadCounter::record();
     return 0x20000UL + id;
 }
 
@@ -27,6 +29,7 @@ uint8_t readEffectStringWidth() {
 }
 
 Move readMoveFX(uint8_t index) {
+    FxReadCounter::record();
     Move move;
     // uint24_t rowAddress = MoveData::movePack + sizeof(MoveBitSet) * index;
     // FX::readDataObject(rowAddress, move);

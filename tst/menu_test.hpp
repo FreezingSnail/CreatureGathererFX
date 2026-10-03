@@ -59,11 +59,13 @@ void MenuNavTest(TestSuite &suite) {
 }
 
 void MenuIntentTest(TestSuite &suite);
+void MenuSnapshotIntegrationTest(TestSuite &suite);
 
 void MenuNavSuite(TestRunner &runner) {
     TestSuite suite("Menu navigation suite");
     MenuNavTest(suite);
     MenuIntentTest(suite);
+    MenuSnapshotIntegrationTest(suite);
     runner.addTestSuite(suite);
 }
 
@@ -213,6 +215,118 @@ void MenuIntentTest(TestSuite &suite) {
     assertNone(menu.update(0), "idle update emits no intent");
     test.assert(FxReadCounter::count(), static_cast<uint8_t>(0),
                 "pure menu update performs no FX reads");
+
+    suite.addTest(test);
+}
+
+
+void MenuSnapshotIntegrationTest(TestSuite &suite) {
+    Test test(__func__);
+    MenuV2 menu;
+    battle::BattleView view = {};
+    const uint8_t player = static_cast<uint8_t>(battle::Side::Player);
+
+    view.activeSlot[player] = 1;
+    view.partyCount[player] = 3;
+    view.party[player][0] = {0, 40, 1}; // species zero remains valid
+    view.party[player][1] = {5, 60, 1};
+    view.party[player][2] = {7, 22, 1};
+    view.moveIds[0] = 0;
+    view.moveIds[1] = 32;
+    view.moveIds[2] = 3;
+    view.moveIds[3] = 255;
+
+    FxReadCounter::resetFrame();
+    menu.openMenu(BATTLE_MOVE_SELECT, view);
+    test.assert(menu.menuPointer, static_cast<int8_t>(0),
+                "move snapshot opens one submenu");
+    test.assert(menu.movesSnapshot().moveIds[0], static_cast<uint8_t>(0),
+                "move zero copied at open");
+    test.assert(menu.movesSnapshot().moveIds[1], static_cast<uint8_t>(32),
+                "empty move sentinel copied at open");
+    test.assert(menu.movesSnapshot().moveIds[2], static_cast<uint8_t>(3),
+                "ordinary move copied at open");
+    test.assert(menu.movesSnapshot().moveIds[3], static_cast<uint8_t>(255),
+                "absent move sentinel copied at open");
+    test.assert(menu.moveNameAddresses[0], static_cast<uint24_t>(0x20000),
+                "move zero name resolved once");
+    test.assert(menu.moveNameAddresses[1], static_cast<uint24_t>(0),
+                "empty move has no name lookup");
+    test.assert(menu.moveNameAddresses[2], static_cast<uint24_t>(0x20003),
+                "ordinary move name resolved once");
+    test.assert(menu.moveNameAddresses[3], static_cast<uint24_t>(0),
+                "absent move has no name lookup");
+    test.assert(FxReadCounter::count(), static_cast<uint8_t>(4),
+                "open resolves each valid move name and record once");
+
+    view.moveIds[0] = 9;
+    view.party[player][0] = {11, 1, 1};
+    FxReadCounter::resetFrame();
+    for (uint8_t frame = 0; frame < 4; ++frame) {
+        menu.update(0);
+    }
+    test.assert(FxReadCounter::count(), static_cast<uint8_t>(0),
+                "steady menu updates perform no FX reads");
+    test.assert(menu.movesSnapshot().moveIds[0], static_cast<uint8_t>(0),
+                "post-open move source changes do not mutate snapshot");
+    test.assert(menu.moveNameAddresses[0], static_cast<uint24_t>(0x20000),
+                "post-open move source changes do not mutate addresses");
+
+    view.moveIds[0] = 0;
+    view.party[player][0] = {0, 40, 1};
+    view.party[player][2] = {7, 22, 1};
+    menu.clear();
+    FxReadCounter::resetFrame();
+    menu.openMenu(BATTLE_CREATURE_SELECT, view);
+    test.assert(menu.partySnapshot().count, static_cast<uint8_t>(2),
+                "party snapshot excludes active slot but keeps original rows");
+    test.assert(menu.partySnapshot().choices[0].id, static_cast<uint8_t>(0),
+                "species zero party ID copied");
+    test.assert(menu.partySnapshot().choices[0].slot, static_cast<uint8_t>(0),
+                "first party row keeps original slot");
+    test.assert(menu.partySnapshot().choices[1].slot, static_cast<uint8_t>(2),
+                "second party row keeps original slot");
+    test.assert(menu.creatureNameAddresses[0], static_cast<uint24_t>(0x10000),
+                "species zero name resolved at open");
+    test.assert(menu.creatureNameAddresses[1], static_cast<uint24_t>(0x10007),
+                "second party name resolved at open");
+    test.assert(FxReadCounter::count(), static_cast<uint8_t>(2),
+                "party names resolve once at open");
+
+    view.party[player][0] = {12, 1, 1};
+    view.party[player][2] = {13, 0, 0};
+    FxReadCounter::resetFrame();
+    menu.update(0);
+    test.assert(FxReadCounter::count(), static_cast<uint8_t>(0),
+                "party updates perform no FX reads");
+    test.assert(menu.partySnapshot().choices[0].id, static_cast<uint8_t>(0),
+                "post-open party source changes do not mutate ID");
+    test.assert(menu.partySnapshot().choices[1].hp, static_cast<uint8_t>(22),
+                "post-open party source changes do not mutate HP");
+    menu.cursorIndex = 1;
+    MenuIntent intent = menu.update(MENU_EDGE_A);
+    test.assert(intent.kind, MenuIntentKind::SelectParty,
+                "party snapshot emits SelectParty");
+    test.assert(intent.index, static_cast<uint8_t>(2),
+                "party intent preserves original slot");
+
+    menu.clear();
+    view.party[player][0] = {255, 30, 1};
+    view.party[player][2] = {9, 20, 0};
+    FxReadCounter::resetFrame();
+    menu.openMenu(BATTLE_CREATURE_SELECT, view);
+    test.assert(FxReadCounter::count(), static_cast<uint8_t>(0),
+                "invalid/dead party rows do not resolve names");
+    menu.cursorIndex = 0;
+    intent = menu.update(MENU_EDGE_A);
+    test.assert(intent.kind, MenuIntentKind::None,
+                "invalid party ID cannot emit intent");
+    menu.cursorIndex = 1;
+    intent = menu.update(MENU_EDGE_A);
+    test.assert(intent.kind, MenuIntentKind::None,
+                "dead party row cannot emit intent");
+    test.assert(menu.menuPointer, static_cast<int8_t>(0),
+                "invalid/dead choices retain menu ownership");
 
     suite.addTest(test);
 }

@@ -147,25 +147,51 @@ static void drawInfoRec(uint8_t x, uint8_t y) {
     FX::drawBitmap(x - 3, y - 3, moveInfo, 0, dbmNormal);
 }
 
+static uint16_t packedMoveInfo(const uint8_t *packed, uint8_t slot) {
+    if (packed == nullptr || slot >= 4) {
+        return 0;
+    }
+    const uint8_t bitOffset = static_cast<uint8_t>(slot * 10);
+    uint16_t info = 0;
+    for (uint8_t bit = 0; bit < 10; ++bit) {
+        const uint8_t offset = static_cast<uint8_t>(bitOffset + bit);
+        if ((packed[offset >> 3] & (1u << (offset & 7))) != 0) {
+            info |= static_cast<uint16_t>(1u << bit);
+        }
+    }
+    return info;
+}
+
+static void printMoveInfoValues(uint8_t type, bool isPhysical,
+                                uint8_t movePower, uint8_t x, uint8_t y) {
+    setTextColorBlack();
+    drawInfoRec(x, y);
+    printType(Type(type), x, y);
+    if (isPhysical) {
+        drawStringSprite(x, y + 8, physical, 25, FRAME(0));
+    } else {
+        drawStringSprite(x, y + 8, special, 25, FRAME(0));
+    }
+    drawStringSprite(x, y + 16, power, 35, FRAME(0));
+    drawStatNumbers(x + 33, y + 17, movePower);
+}
+
 static void printMoveInfo(uint8_t index, uint8_t x, uint8_t y, Move m) {
     if (index == 32) {
         return;
     }
-    setTextColorBlack();
-    drawInfoRec(x, y);
-    printType(Type(m.getMoveType()), x, y);
-    if (m.isPhysical()) {
-        drawStringSprite(x, y + 8, physical, 25, FRAME(0));
-        // printString(font, MenuFXData::physical, x, y + 8);
-    } else {
-        drawStringSprite(x, y + 8, special, 25, FRAME(0));
-        // printString(font, MenuFXData::special, x, y + 8);
+    printMoveInfoValues(m.getMoveType(), m.isPhysical(), m.getMovePower(), x, y);
+}
+
+static void printPackedMoveInfo(uint8_t moveId, uint8_t slot, uint8_t x,
+                                uint8_t y, const uint8_t *packed) {
+    if (moveId >= 32 || slot >= 4) {
+        return;
     }
-    drawStringSprite(x, y + 16, power, 35, FRAME(0));
-    // printString(font, MenuFXData::power, x, y + 16);
-    // font.setCursor(x + 30, y + 16);
-    // font.print(m.power);
-    drawStatNumbers(x + 33, y + 17, m.getMovePower());
+    const uint16_t info = packedMoveInfo(packed, slot);
+    printMoveInfoValues(static_cast<uint8_t>((info >> 6) & 0x0f),
+                        (info & 1u) != 0,
+                        static_cast<uint8_t>((info >> 1) & 0x1f), x, y);
 }
 
 static void printBattleMenu(int8_t index) {
@@ -191,67 +217,50 @@ static void printCursor(int8_t index) {
     // FX::setFont(font4x6, dbmNormal);
 }
 
-static void printMoveMenu(int8_t index, uint8_t *moveList,
-                          const uint24_t *nameAddresses, Move selectedMove) {
-    if (moveList == nullptr) {
+static void printMoveMenu(int8_t index, const battle::MoveSnapshot &moves,
+                          const uint24_t *nameAddresses,
+                          const uint8_t *moveInfo) {
+    if (nameAddresses == nullptr || moveInfo == nullptr) {
         return;
     }
 
+    uint8_t selected = index < 0 ? 0 : static_cast<uint8_t>(index);
+    if (selected >= 4) {
+        selected = 3;
+    }
     uint8_t color[4] = {1, 1, 1, 1};
-    if (moveList[index] != 32) {
-        color[index] = 0;
+    if (moves.moveIds[selected] < 32) {
+        color[selected] = 0;
     }
-    drawStringSprite(6, 45, nameAddresses[0], readMoveNameWidth(moveList[0]), FRAME(color[0]));
-    drawStringSprite(69, 45, nameAddresses[1], readMoveNameWidth(moveList[1]), FRAME(color[1]));
-    drawStringSprite(6, 53, nameAddresses[2], readMoveNameWidth(moveList[2]), FRAME(color[2]));
-    drawStringSprite(69, 53, nameAddresses[3], readMoveNameWidth(moveList[3]), FRAME(color[3]));
-    printMoveInfo(moveList[index], 38, 4, selectedMove);
+    drawStringSprite(6, 45, nameAddresses[0],
+                     readMoveNameWidth(moves.moveIds[0]), FRAME(color[0]));
+    drawStringSprite(69, 45, nameAddresses[1],
+                     readMoveNameWidth(moves.moveIds[1]), FRAME(color[1]));
+    drawStringSprite(6, 53, nameAddresses[2],
+                     readMoveNameWidth(moves.moveIds[2]), FRAME(color[2]));
+    drawStringSprite(69, 53, nameAddresses[3],
+                     readMoveNameWidth(moves.moveIds[3]), FRAME(color[3]));
+    printPackedMoveInfo(moves.moveIds[selected], selected, 38, 4, moveInfo);
 }
 
-// TODO deal with drawing numbers
-static void printCreature(Creature *creature, const uint24_t *moveNames) {
-    drawStringSprite(35, 0, hpText, 20, FRAME(0));
-    drawStringSprite(35, 10, atkText, 25, FRAME(0));
-    drawStringSprite(35, 20, defText, 25, FRAME(0));
-    drawStringSprite(72, 0, satkText, 30, FRAME(0));
-    drawStringSprite(72, 10, sdefText, 30, FRAME(0));
-    drawStringSprite(72, 20, spdText, 25, FRAME(0));
-
-    drawStatNumbers(60, 0, creature->statlist.hp);
-    drawStatNumbers(60, 10, creature->statlist.attack);
-    drawStatNumbers(60, 20, creature->statlist.defense);
-    drawStatNumbers(103, 0, creature->statlist.spcAtk);
-    drawStatNumbers(103, 10, creature->statlist.spcDef);
-    drawStatNumbers(103, 20, creature->statlist.speed);
-
-    for (uint8_t i = 0; i < 4; i++) {
-        if (creature->moves[i] == 32) {
-            continue;
-        }
-        uint8_t offset = i % 2;
-        uint8_t x = 4 + (60 * offset);
-        uint8_t y = 34 + (8 * (i / 2));
-
-        drawStringSprite(x, y, moveNames[i], readMoveNameWidth(creature->moves[i]), FRAME(1));
-    }
-}
-
-static void printCreatureMenu(uint8_t c1, uint8_t c2, Creature *cpointer,
-                              uint8_t index, const uint24_t *creatureNames,
-                              const uint24_t *moveNames) {
+static void printCreatureMenu(const battle::PartySnapshot &party, uint8_t index,
+                              const uint24_t *creatureNames) {
     SpritesU::fillRect(0, 33, 128, 31, WHITE);
     SpritesU::fillRect(0, 0, 128, 32, BLACK);
-    printCreature(cpointer, moveNames);
-    const uint24_t c1addr = creatureNames[0];
-    const uint24_t c2addr = creatureNames[1];
-    if (index == 0) {
-        drawStringSprite(6, 49, c1addr, readCreatureNameWidth(c1), FRAME(0));
-        drawStringSprite(6, 56, c2addr, readCreatureNameWidth(c2), FRAME(1));
-    } else {
-        drawStringSprite(6, 49, c1addr, readCreatureNameWidth(c1), FRAME(1));
-        drawStringSprite(6, 56, c2addr, readCreatureNameWidth(c2), FRAME(0));
+    if (creatureNames == nullptr || party.count == 0) {
+        return;
+    }
+
+    const uint8_t count = party.count > 2 ? 2 : party.count;
+    const uint8_t selected = index < count ? index : 0;
+    for (uint8_t row = 0; row < count; ++row) {
+        const uint8_t id = party.choices[row].id;
+        drawStringSprite(6, static_cast<uint8_t>(49 + row * 7),
+                         creatureNames[row], readCreatureNameWidth(id),
+                         FRAME(row == selected ? 0 : 1));
     }
 }
+
 
 static uint8_t battleHpBarWidth(uint8_t hp, uint8_t maxHp) {
     if (maxHp == 0) {

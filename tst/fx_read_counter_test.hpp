@@ -9,7 +9,7 @@ void FxReadCounterTest(TestSuite &suite) {
     test.assert(FxReadCounter::count(), static_cast<uint8_t>(0), "frame reset");
     test.assert(FxReadCounter::markUpdate(), true, "idle update has zero reads");
 
-#if defined(FX_READ_COUNTER) || defined(DEBUG)
+#if defined(FX_READ_COUNTER) || defined(DEBUG) || defined(TEST)
     FxReadCounter::record();
     test.assert(FxReadCounter::count(), static_cast<uint8_t>(1), "one logical read");
     FxReadCounter::resetFrame();

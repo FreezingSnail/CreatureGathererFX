@@ -18,7 +18,6 @@ uint8_t menuEdgeButtons() {
 } // namespace
 
 void MenuV2::run(BattleEngine &engine) {
-    (void)engine;
     if (menuPointer < 0 && !dialogMenu.peek()) return;
 
     // World/script dialogs retain their separate A dismiss owner. Battle
@@ -28,12 +27,21 @@ void MenuV2::run(BattleEngine &engine) {
         return;
     }
 
-    // The sketch integration bead consumes this value. Keep this legacy
-    // entry point side-effect free with respect to BattleEngine.
+    const int8_t previousPointer = menuPointer;
     (void)update(menuEdgeButtons());
+    // update() owns cursor/intent state. When it opens a battle submenu, this
+    // compatibility boundary supplies the view and resolves transition data;
+    // steady update calls never revisit battle memory or FX tables.
+    if (menuPointer > previousPointer) {
+        const MenuEnum current = stack[menuPointer];
+        if (current == BATTLE_MOVE_SELECT || current == BATTLE_CREATURE_SELECT) {
+            openMenu(current, battle::legacyBattleView(engine));
+        }
+    }
 }
 
-void MenuV2::printMenu(BattleEngine &engine) {
+void MenuV2::printMenu(const battle::BattleView &view) {
+    (void)view;
     if (menuPointer < 0) return;
     if (!drawMenu) {
         SpritesU::drawOverwriteFX(0, 40, 128, 24, battleMenu - 2, FRAME(0));
@@ -48,16 +56,24 @@ void MenuV2::printMenu(BattleEngine &engine) {
 
     case BATTLE_MOVE_SELECT:
         SpritesU::drawOverwriteFX(0, 40, 128, 24, battleMenu - 2, FRAME(0));
-        if (moveList != nullptr) {
-            printMoveMenu(cursorIndex, moveList, moveNameAddresses,
-                          moveList[cursorIndex]);
-        }
+        printMoveMenu(cursorIndex, moveSnapshot, moveNameAddresses,
+                      moveInfoPacked);
         break;
 
-    case BATTLE_CREATURE_SELECT:
-        // Party rendering is snapshot-owned by the next menu bead. Keep this
-        // compatibility path free of BattleEngine and draw only its cursor.
+    case BATTLE_CREATURE_SELECT: {
+        const battle::PartySnapshot &party = partySnapshot();
+        printCreatureMenu(party, cursorIndex, creatureNameAddresses);
+        if (party.count != 0) {
+            const uint8_t selected =
+                cursorIndex < 0 ? 0 : static_cast<uint8_t>(cursorIndex);
+            if (selected < party.count && party.choices[selected].id < 32) {
+                SpritesU::drawPlusMaskFX(
+                    0, 0, 32, 32, NewecreatureSprites - 2,
+                    FRAME(static_cast<uint8_t>(party.choices[selected].id * 2)));
+            }
+        }
         break;
+    }
 
     default:
         break;

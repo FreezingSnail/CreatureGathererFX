@@ -6,7 +6,7 @@
 // streaming have separate ownership and are deliberately outside this budget.
 namespace FxReadCounter {
 
-#if defined(FX_READ_COUNTER) || defined(DEBUG)
+#if defined(FX_READ_COUNTER) || defined(DEBUG) || defined(TEST)
 inline uint8_t &frameReads() {
     static uint8_t reads = 0;
     return reads;
