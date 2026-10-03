@@ -1804,3 +1804,32 @@ avr-nm --print-size --size-sort --radix=d build/CreatureGathererFX.ino.elf | awk
 ```
 
 No generated inputs/artifacts changed. No Ardens, `make fxtest`, `make fxtest-headless`, `make fxtest-spike`, `make check`, interactive visual, or hardware checks run per live steering. No commit/push. Legacy `applyIntMod`/`BattleEngine::calculateDamage` remain intentionally untouched per this bead's scope until final legacy-engine deletion. Wall time recorded per command above; worker implementation/validation completed 2026-10-03.
+
+
+## CreatureGathererFX-jp8.4.2 — pure MenuIntent choices
+
+Implemented `MenuV2::update(uint8_t)->MenuIntent` without Battle/FX/dialog dependencies. Root options open move/party submenus or emit Gather/Escape; move rows emit slot indices; party rows copy/validate snapshot choices and emit original party slots. Voluntary B emits Back; forced replacement ignores B, dead, and invalid rows. Legacy render/rental symbols moved to `MenuV2Legacy.cpp`; legacy run only translates fresh edges and does not interpret battle actions or enqueue dialogs. Added permanent native MenuIntent edge/intent/ownership/original-slot/forced/dead/invalid/no-FX tests; linked pure source into host tests.
+
+```text
+make test
+# PASS: host 1817/0; world 190/0; MenuIntentTest 54/0.
+# wall: 2.69 s
+make testvm
+# PASS: 42/0.
+# wall: 1.01 s
+make verify-generated
+# PASS; wall 3.21 s
+make test-manifest
+# PASS; fxdata-manifest PASS; wall 2.08 s
+make test-generated-libs
+# PASS: generated libs 8/0; invariants 5/0; first-unqualified-alias 28/0; wall 1.12 s
+make build
+# PASS: flash 17,356/24,000 B; static 1,879/2,160 B; build free 281 B; wall 6.55 s
+make ram
+# PASS: flash 17,356/29,696 B; static 1,879/2,560 B; RAM free 681 B; wall 6.65 s
+
+git diff --check
+# PASS
+```
+
+Initial `make build` failed before validation because `MenuV2Legacy.cpp` omitted `MenuNav.hpp` (`MENU_NAV_LEFT/RIGHT/UP/DOWN` undeclared); added the include and reran successfully. No generated artifacts changed. Live steering deviation: did not run Ardens, `make fxtest`, `make fxtest-headless`, `make fxtest-spike`, interactive, visual, or hardware checks. No commit/push.

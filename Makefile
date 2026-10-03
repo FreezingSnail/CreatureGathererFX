@@ -100,6 +100,7 @@ TEST_SOURCES = tst/src/Arduboy2Host.cpp \
 	tst/src/DialogMenu.cpp \
 	src/engine/menu/DialogQueue.cpp \
 	src/engine/menu/MenuNav.cpp \
+	src/engine/menu/MenuV2.cpp \
 	src/save/SaveController.cpp \
 	tst/src/random.cpp \
 	tst/src/FlashBackendFake.cpp \
