@@ -9,6 +9,7 @@
 #include "type_test.hpp"
 #include "effect_test.hpp"
 #include "battle_effects_test.hpp"
+#include "battle_setup_test.hpp"
 #include "gamestate_test.hpp"
 #include "save_test.hpp"
 #include "item_test.hpp"
@@ -138,6 +139,8 @@ int main() {
     std::cout << "EffectSuite finished" << std::endl;
     BattleEffectsSuite(tests);
     std::cout << "BattleEffectsSuite finished" << std::endl;
+    BattleSetupSuite(tests);
+    std::cout << "BattleSetupSuite finished" << std::endl;
     GameStateSuite(tests);
     std::cout << "GameStateSuite finished" << std::endl;
     SaveSuite(tests);

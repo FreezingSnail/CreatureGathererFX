@@ -1,12 +1,17 @@
 #include "BattlePresenter.hpp"
-#include "../../lib/ReadData.hpp"
 #include "../../lib/FxReadCounter.hpp"
+#include "../../lib/uint24.h"
 #ifdef TEST
 #include "../../../tst/src/FXDataFake.hpp"
 #include "../../fxdata.h"
 #else
 #include "../../common.hpp"
 #endif
+
+uint24_t readCreatureNameAddress(uint8_t id);
+uint24_t readMoveNameAddress(uint16_t id);
+uint8_t readCreatureNameWidth(uint8_t id);
+uint8_t readMoveNameWidth(uint16_t id);
 
 namespace battle {
 namespace {
