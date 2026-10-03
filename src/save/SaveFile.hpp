@@ -8,7 +8,7 @@
 #include "../plants/PlantGamestate.hpp"
 #include "../player/Player.hpp"
 
-constexpr uint8_t SAVE_VERSION = 1;
+constexpr uint8_t SAVE_VERSION = 2;
 constexpr uint8_t PARTY_MAX = sizeof(((Player *)nullptr)->party) / sizeof(Creature);
 constexpr uint8_t FLAG_BYTES = sizeof(FLAG_BIT_ARRAY);
 constexpr uint8_t INVENTORY_BYTES = sizeof(((Player *)nullptr)->items);
@@ -25,6 +25,7 @@ struct SaveFile {
     uint16_t playerLocation;
     uint8_t flags[FLAG_BYTES];
     Creature party[PARTY_MAX];
+    uint8_t partyHP[PARTY_MAX];
     PlantSaveBlock plants;
     uint8_t inventory[INVENTORY_BYTES];
     uint16_t checksum;

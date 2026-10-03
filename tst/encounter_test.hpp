@@ -209,8 +209,8 @@ void EncounterWorldIntegrationTest(TestSuite &suite) {
     test.assert(legacyBattle().opponent.party[0].statlist.attack,
                 static_cast<uint8_t>(2 * 5 + encounterSeed.atkSeed * (5 / 3)),
                 "computed encounter level reaches creature stats");
-    test.assert(legacyBattle().playerHealths[0], player.creatureHPs[0],
-                "battle entry preserves persistent player HP");
+    test.assert(legacyBattle().playerCur == &player.party[0], true,
+                "battle entry binds persistent player party");
     test.assert(fxDataFake::readCount, readsBeforeStep,
                 "battle entry uses cached encounter data only");
     const uint8_t callsAfterEntry = rngCalls;

@@ -9,6 +9,7 @@
 void reset() {
     player = Player();
     battleEventPlayer = BattleEventPlayer();
+    menu = MenuV2();
     menuStack = MenuStack();
     dialogMenu = DialogMenu();
 }
@@ -47,13 +48,13 @@ void EngineTickTest(TestSuite &t) {
     player.basic();
     eng.startFight(0);
     test.assert(battleEventPlayer.stackPointer, -1, "battleEventPlayer.stackPointer Pointer empty");
-    test.addToLog("Healths: " + std::to_string(eng.playerHealths[0]) + " " + std::to_string(eng.opponentHealths[0]));
+    test.addToLog("Healths: " + std::to_string(player.creatureHPs[0]) + " " + std::to_string(eng.opponentHealths[0]));
     // TODO: shoudnt need to bump opponent for this test
     eng.opponentCur->level = 31;
     eng.opponentHealths[0] = 1000;
-    test.addToLog("Healths: " + std::to_string(eng.playerHealths[0]) + " " + std::to_string(eng.opponentHealths[0]));
+    test.addToLog("Healths: " + std::to_string(player.creatureHPs[0]) + " " + std::to_string(eng.opponentHealths[0]));
 
-    auto playerHP = eng.playerHealths[0];
+    auto playerHP = player.creatureHPs[0];
     auto opponentHP = eng.opponentHealths[0];
 
     test.assert(eng.activeBattle, true, "Active Battle");
@@ -104,7 +105,7 @@ void EngineTickTest(TestSuite &t) {
     eng.turnState = BattleState::END_TURN;
     eng.turnTick();
 
-    // test.assert(eng.playerHealths[0], playerHP - battleEventStack[3].data, "Player Health set");
+    // test.assert(player.creatureHPs[0], playerHP - battleEventStack[3].data, "Player Health set");
     // test.assert(eng.opponentHealths[0], opponentHP - battleEventStack[1].data, "Opponent Health set");
 
     t.addTest(test);
@@ -352,23 +353,23 @@ void ApplyHPTickEffects(TestSuite &t) {
     BattleEngine eng = BattleEngine();
     player.basic();
     eng.startFight(0);
-    eng.playerHealths[eng.playerIndex] = 100;
+    player.creatureHPs[eng.playerIndex] = 100;
 
     eng.applyEffect(eng.playerCur, Effect::SAPPD);
     eng.runtTickEffects();
     int16_t targetHP = 100 - (eng.playerCur->statlist.hp / 16);
-    test.assert(eng.playerHealths[eng.playerIndex], targetHP, "HP ticked down");
+    test.assert(player.creatureHPs[eng.playerIndex], targetHP, "HP ticked down");
 
     eng.playerCur->status.clearEffects();
 
-    eng.playerHealths[eng.playerIndex] = 10;
+    player.creatureHPs[eng.playerIndex] = 10;
 
     eng.applyEffect(eng.playerCur, Effect::INFSED);
     targetHP = 10 + (eng.playerCur->statlist.hp / 16);
     test.addToLog(("targetHP for tick up: " + std::to_string(targetHP)));
-    test.addToLog("playerHP for tick up: " + std::to_string(eng.playerHealths[eng.playerIndex]));
+    test.addToLog("playerHP for tick up: " + std::to_string(player.creatureHPs[eng.playerIndex]));
     eng.runtTickEffects();
-    test.assert(eng.playerHealths[eng.playerIndex], targetHP, "HP ticked up");
+    test.assert(player.creatureHPs[eng.playerIndex], targetHP, "HP ticked up");
 
     t.addTest(test);
 }
@@ -391,6 +392,94 @@ void ChangeCreatureTest(TestSuite &t) {
     t.addTest(test);
 }
 
+void beginGlobalBattleForTest(uint16_t location) {
+    gameState.playerLocation = location;
+    gameState.state = GameState_t::WORLD;
+    menu.clear();
+    menuStack.clear();
+    dialogMenu.clear();
+    enterBattle();
+    legacyBattle().startEncounter(0, 31);
+    gameState.state = GameState_t::BATTLE;
+}
+
+void assertBattleExitClean(Test &test, uint16_t location, const char *label) {
+    test.assert(gameState.state, GameState_t::WORLD,
+                std::string(label) + " returns WORLD");
+    test.assert(gameState.playerLocation, location,
+                std::string(label) + " preserves location");
+    test.assert(menu.menuPointer, static_cast<int8_t>(-1),
+                std::string(label) + " clears MenuV2");
+    test.assert(menuStack.pointer, static_cast<int8_t>(-1),
+                std::string(label) + " clears legacy menu");
+    test.assert(dialogMenu.peek(), false,
+                std::string(label) + " clears dialogs");
+}
+
+void BattleTerminalExitTest(TestSuite &t) {
+    Test test = Test(__func__);
+    constexpr uint16_t location = 0x0709;
+
+    reset();
+    player.basic();
+    beginGlobalBattleForTest(location);
+    BattleEngine &win = legacyBattle();
+    menu.push(BATTLE_OPTIONS);
+    dialogMenu.push(PopUpDialog{});
+    win.opponentHealths[0] = 0;
+    win.encounter();
+    assertBattleExitClean(test, location, "win");
+
+    reset();
+    player.basic();
+    player.creatureHPs[0] = 0;
+    player.creatureHPs[1] = 0;
+    player.creatureHPs[2] = 0;
+    beginGlobalBattleForTest(location);
+    legacyBattle().encounter();
+    assertBattleExitClean(test, location, "loss");
+
+    reset();
+    player.basic();
+    beginGlobalBattleForTest(location);
+    BattleEngine &flee = legacyBattle();
+    Action escape = {};
+    escape.actionType = ActionType::ESCAPE;
+    escape.actionIndex = 0;
+    escape.priority = Priority::FAST;
+    flee.turnState = BattleState::PLAYER_RECEIVE_DAMAGE;
+    flee.commitAction(&escape, flee.playerCur, flee.opponentCur, true);
+    assertBattleExitClean(test, location, "flee");
+
+    reset();
+    player.basic();
+    beginGlobalBattleForTest(location);
+    BattleEngine &damage = legacyBattle();
+    const uint8_t fullHP = player.creatureHPs[0];
+    damage.applyDamage(5, damage.playerCur);
+    const uint8_t damagedHP = player.creatureHPs[0];
+    test.assert(damagedHP < fullHP, true, "damage lowers Player HP");
+    damage.endEncounter();
+    beginGlobalBattleForTest(location);
+    test.assert(player.creatureHPs[0], damagedHP,
+                "HP survives battle exit and re-entry");
+    legacyBattle().endEncounter();
+
+    reset();
+    gameState.state = GameState_t::WORLD;
+    menu.push(BATTLE_OPTIONS);
+    menuStack.push(MenuEnum::BATTLE_OPTIONS);
+    dialogMenu.push(PopUpDialog{});
+    BattleEngine local;
+    local.init();
+    local.activeBattle = true;
+    local.endEncounter();
+    local.endEncounter();
+    assertBattleExitClean(test, gameState.playerLocation, "repeated local exit");
+
+    t.addTest(test);
+}
+
 void EngineSuite(TestRunner &r) {
     TestSuite t = TestSuite("Engine Suite");
     EngineStartTest(t);
@@ -402,6 +491,7 @@ void EngineSuite(TestRunner &r) {
     ApplyStatModEffects(t);
     ApplyHPTickEffects(t);
     ChangeCreatureTest(t);
+    BattleTerminalExitTest(t);
     r.addTestSuite(t);
     reset();
 }

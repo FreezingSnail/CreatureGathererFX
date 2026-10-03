@@ -1977,3 +1977,117 @@ PASS; no generated drift
 ```
 
 Wall time: approximately 5 minutes worker implementation/validation; closeout 2026-10-03T23:24:59Z. Deviations: live steering forbade Ardens, all fxtest targets, visual, and hardware checks; none run. No commits, pushes, or bead sync. `.codex/` remains unrelated untracked workspace state.
+
+# CreatureGathererFX-jp8.1.10
+
+Implementation: battle terminal paths now restore WORLD through `exitBattle()` after clearing MenuV2, legacy MenuStack, and DialogMenu; terminal callers return before union-member access. Removed `BattleEngine::playerHealths`; Player owns bounded persistent HP through damage/effects/re-entry and `BattleView`/draw. Added SaveFile v2 `partyHP[3]`, SaveController capture/load, startup restore, and host/FX HP round-trip coverage. No generated files changed. No commit/push; bead remains claimed/in progress because required generation gates are blocked/failing in the pre-existing tool/artifact baseline.
+
+Commands/results:
+
+```text
+make test
+Host: Total Passed 2152, Total Failed 0
+World: Total Passed 190, Total Failed 0
+PASS
+
+make testvm
+Total Passed: 42, Total Failed: 0
+PASS
+
+make build
+Sketch uses 19870 bytes; Global variables use 1873 bytes, leaving 687 B physical RAM.
+AVR_FLASH_BYTES=19870/24000; AVR_STATIC_RAM_BYTES=1873/2160; AVR_STATIC_RAM_FREE_BYTES=287
+PASS
+
+make ram
+RAM_FLASH_BYTES=19870; RAM_STATIC_BYTES=1873; RAM_FREE_BYTES=687
+PASS
+
+git diff --check
+PASS
+
+make test-manifest
+fxdata-manifest: PASS
+PASS
+
+make gen
+FAIL: installed cgfx-tools 0.2.0 rejects repository-required `--consumables-csv`.
+
+make verify-generated
+FAIL: `expected schema_version 1`; malformed committed `fxdata/generated/manifest.json`; remedy make gen.
+
+make test-generated-libs
+FAIL: raw_map_data differs at 0x75BF0 (131072-byte entry); 7 passed, 1 failed.
+
+make test-pack-parity
+FAIL: expected SHA-256 838354d28975c5959ce2c105348704c68baf608e64c834c3e2bf02b4aa88a2a7; observed 3d2171b166d711ac1a026666e4bb6345f714815f38164b5439c449a26558c18f.
+
+make fxtest-headless / Ardens / hardware / visual checks
+NOT RUN per wave instruction; permanent native host battle/save integration covers device-only acceptance.
+```
+
+Resource delta: shipping static RAM 1873 B (287 B below 2160-B build budget; 687 B below 2560-B physical limit), flash 19870 B (4130 B below 24000-B build budget). Wall: ~8m13s (2026-10-03T19:29:22-04:00 to 19:37:35-04:00).
+
+
+# CreatureGathererFX-jp8.1.10 — validation unblock and closeout
+
+Resolved prior artifact-gate blocker with repository-native target/debug tool. The PATH-installed 0.2.0 binary omitted `--consumables-csv`; target/debug reports the same version but includes the required option.
+
+Commands/results:
+
+```text
+PATH="/Users/connorfranc/code/CreatureGathererTools/target/debug:$PATH" sh -c 'set -eu; command -v cgfx-tools; cgfx-tools --version; cgfx-tools --help | sed -n "/consumables-csv/p"; make gen'
+/Users/connorfranc/code/CreatureGathererTools/target/debug/cgfx-tools
+cgfx-tools 0.2.0
+      --consumables-csv <CSV>
+Packed FX image: /Users/connorfranc/code/CreatureGathererFX/build/cgfx-pack.npi5mp/dist/fxdata.bin
+PASS
+
+make verify-generated
+PASS
+
+make test-generated-libs
+generated-libs: 8 passed, 0 failed
+generated-libs-invariants: 5 passed, 0 failed
+first-unqualified-alias: 28 passed, 0 failed
+PASS
+
+PATH="/Users/connorfranc/code/CreatureGathererTools/target/debug:$PATH" make test-pack-parity
+layout equivalence: PASS
+layout equivalence: perturbation diagnostic: PASS
+pack parity: PASS
+baseline SHA-256: 838354d28975c5959ce2c105348704c68baf608e64c834c3e2bf02b4aa88a2a7
+
+make test
+Host: 2152 passed, 0 failed
+World: 190 passed, 0 failed
+PASS
+
+make testvm
+VM: 42 passed, 0 failed
+PASS
+
+make build
+flash: 19870 B / 24000 B budget; static: 1873 B / 2160 B budget; free: 4130 B flash, 287 B static
+PASS
+
+make ram
+RAM_FLASH_BYTES=19870; RAM_STATIC_BYTES=1873; RAM_FREE_BYTES=687
+PASS
+
+make test-manifest
+PASS
+
+make test-avr-build-budget
+PASS
+
+git diff --check
+PASS
+
+git diff --exit-code -- fxdata/generated tst/fxdatatest/generated src/fxdata.h fxdata/Sprites.txt src/vm/opcodes.hpp src/flags
+PASS; no protected generated drift
+```
+
+Generation/artifact output stable: no generated source/header or packed-artifact paths changed; worktree contains pre-existing jp8.1.10 source/tests, this report, and expected Beads close metadata. `dist/fxdata.bin` now matches the committed parity baseline. Non-device acceptance passes.
+
+Device acceptance reconciliation: live steering forbade Ardens, all `fxtest*` targets, visual checks, and hardware checks, so no serial/device result is claimed. Permanent native integration in `make test` covers terminal WORLD restoration, menu/dialog cleanup, HP damage/re-entry, and SaveController/SaveFile HP round-trip (`BattleTerminalExitTest`, `SaveControllerPartyHPPersistenceTest`, and related battle/save suites); this is the permitted headless native substitute for this wave. No commit/push. Worker wall time for unblock and gates: approximately 2 minutes (19:38:11–19:39:32 -0400).

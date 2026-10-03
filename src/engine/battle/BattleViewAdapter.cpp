@@ -3,6 +3,8 @@
 #include "Battle.hpp"
 #include "../../values.hpp"
 
+extern Player player;
+
 namespace battle {
 
 namespace {
@@ -28,7 +30,7 @@ void copyActive(BattleView &view, Side side, const Creature *creature,
 }
 
 void copyParty(BattleView &view, Side side, Creature *const *party,
-               const uint16_t *healths) {
+               const uint8_t *healths) {
     const uint8_t index = sideIndex(side);
     for (uint8_t slot = 0; slot < PARTY_SIZE; ++slot) {
         const Creature *creature = party[slot];
@@ -69,14 +71,14 @@ BattleView legacyBattleView(const BattleEngine &engine) {
 
     if (engine.playerIndex < PARTY_SIZE) {
         copyActive(view, Side::Player, engine.playerCur,
-                   engine.playerHealths[engine.playerIndex], engine.playerIndex);
+                   player.creatureHPs[engine.playerIndex], engine.playerIndex);
     }
     if (engine.opponentIndex < PARTY_SIZE) {
         copyActive(view, Side::Opponent, engine.opponentCur,
                    engine.opponentHealths[engine.opponentIndex], engine.opponentIndex);
     }
 
-    copyParty(view, Side::Player, engine.playerParty, engine.playerHealths);
+    copyParty(view, Side::Player, engine.playerParty, player.creatureHPs);
     copyOpponentParty(view, engine);
 
     if (engine.playerCur != nullptr) {

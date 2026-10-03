@@ -53,6 +53,7 @@ inline SaveFile state(uint16_t location, uint8_t fill)
     result.playerLocation = location;
     memset(result.flags, fill, sizeof(result.flags));
     memset(result.party, fill, sizeof(result.party));
+    memset(result.partyHP, fill, sizeof(result.partyHP));
     memset(&result.plants, fill, sizeof(result.plants));
     memset(result.inventory, fill, sizeof(result.inventory));
     return result;
@@ -75,6 +76,9 @@ inline void test_save(FxTest &test)
     test.expectEq(saveFileLoad(blank), false, F("fresh save sector is blank"));
 
     SaveFile first = save_fx_test_detail::state(0x1234, 0x31);
+    first.partyHP[0] = 17;
+    first.partyHP[1] = 23;
+    first.partyHP[2] = 29;
     saveFileCommit(first);
     first.version = SAVE_VERSION;
     first.checksum = saveFileChecksum(first);
@@ -85,6 +89,9 @@ inline void test_save(FxTest &test)
         const uint8_t expected = reinterpret_cast<const uint8_t *>(&first)[index];
         test.expectEq(actual, expected, F("save round trip byte"));
     }
+    test.expectEq(loaded.partyHP[0], static_cast<uint8_t>(17), F("first HP survives reload"));
+    test.expectEq(loaded.partyHP[1], static_cast<uint8_t>(23), F("second HP survives reload"));
+    test.expectEq(loaded.partyHP[2], static_cast<uint8_t>(29), F("third HP survives reload"));
 
     SaveFile second = save_fx_test_detail::state(0x5678, 0x62);
     saveFileCommit(second);

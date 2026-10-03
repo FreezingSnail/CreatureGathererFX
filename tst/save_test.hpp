@@ -6,7 +6,9 @@
 #include "../src/save/Compaction.hpp"
 #include "../src/save/FlashBackend.hpp"
 #include "../src/save/Journal.hpp"
+#include "../src/save/SaveController.hpp"
 #include "../src/save/SaveFile.hpp"
+#include "../src/globals.hpp"
 #include "../src/save/StoreRecord.hpp"
 
 namespace save_test_detail {
@@ -36,6 +38,7 @@ inline SaveFile state(uint16_t location, uint8_t fill)
     result.playerLocation = location;
     memset(result.flags, fill, sizeof(result.flags));
     memset(result.party, fill, sizeof(result.party));
+    memset(result.partyHP, fill, sizeof(result.partyHP));
     memset(&result.plants, fill, sizeof(result.plants));
     memset(result.inventory, fill, sizeof(result.inventory));
     return result;
@@ -205,7 +208,7 @@ inline void SaveFileLegacyV1DiscardMigrationTest(TestSuite &suite)
     constexpr uint16_t legacyBytes = 157;
     const uint8_t legacyHeader[2] = {
         static_cast<uint8_t>(legacyBytes >> 8), static_cast<uint8_t>(legacyBytes)};
-    uint8_t legacyPayload[legacyBytes] = {SAVE_VERSION};
+    uint8_t legacyPayload[legacyBytes] = {1};
 
     flashFakeReset();
     flashFakeSetBytes(0, legacyHeader, sizeof(legacyHeader));
@@ -265,6 +268,8 @@ inline void SaveFileStreamingSelectionTest(TestSuite &suite)
                 "Party loader selects last valid record");
     test.assert(memcmp(live.party, second.party, sizeof(live.party)), 0,
                 "Last valid party is loaded");
+    test.assert(memcmp(live.partyHP, second.partyHP, sizeof(live.partyHP)), 0,
+                "Last valid party HP is loaded");
     test.assert(memcmp(&live, &original, offsetof(SaveFile, party)), 0,
                 "Party load preserves fields before party");
     constexpr size_t afterParty = offsetof(SaveFile, plants);
@@ -285,6 +290,8 @@ inline void SaveFileStreamingSelectionTest(TestSuite &suite)
                 "Invalid tail falls back to previous valid record");
     test.assert(memcmp(live.party, first.party, sizeof(live.party)), 0,
                 "Fallback party is first valid record");
+    test.assert(memcmp(live.partyHP, first.partyHP, sizeof(live.partyHP)), 0,
+                "Fallback party HP is first valid record");
     test.assert(saveFileMatchesStored(first), true,
                 "Streaming verify uses fallback record");
 
@@ -494,6 +501,48 @@ inline void CompactionBusyGateTest(TestSuite &suite)
     suite.addTest(test);
 }
 
+inline void SaveControllerPartyHPPersistenceTest(TestSuite &suite)
+{
+    Test test = Test(__func__);
+    flashFakeReset();
+    journalInit();
+    player.basic();
+    player.creatureHPs[0] = 17;
+    player.creatureHPs[1] = 23;
+    player.creatureHPs[2] = 29;
+    gameState.playerLocation = 0x4321;
+    gameState.state = GameState_t::BATTLE;
+
+    SaveController::begin(GameState_t::BATTLE);
+    for (uint8_t attempt = 0; attempt < 12 && gameState.state == GameState_t::SAVING;
+         ++attempt) {
+        SaveController::advance();
+    }
+
+    SaveFile stored = {};
+    test.assert(saveFileLoad(stored), true, "controller save commits");
+    test.assert(stored.partyHP[0], static_cast<uint8_t>(17),
+                "controller captures damaged first HP");
+    test.assert(stored.partyHP[1], static_cast<uint8_t>(23),
+                "controller captures damaged second HP");
+    test.assert(gameState.state, GameState_t::BATTLE,
+                "save from battle resumes battle state");
+
+    player = Player();
+    gameState.playerLocation = 0;
+    test.assert(SaveController::load(), true, "startup load finds committed save");
+    test.assert(gameState.playerLocation, static_cast<uint16_t>(0x4321),
+                "startup load restores location");
+    test.assert(player.creatureHPs[0], static_cast<uint8_t>(17),
+                "startup load restores damaged first HP");
+    test.assert(player.creatureHPs[1], static_cast<uint8_t>(23),
+                "startup load restores damaged second HP");
+    test.assert(player.creatureHPs[2], static_cast<uint8_t>(29),
+                "startup load restores damaged third HP");
+    gameState.state = GameState_t::WORLD;
+    suite.addTest(test);
+}
+
 inline void SaveSuite(TestRunner &runner)
 {
     TestSuite suite = TestSuite("Save Suite");
@@ -508,5 +557,6 @@ inline void SaveSuite(TestRunner &runner)
     CompactionSequenceAndInterruptionsTest(suite);
     VerifyMismatchPreservesJournalTest(suite);
     CompactionBusyGateTest(suite);
+    SaveControllerPartyHPPersistenceTest(suite);
     runner.addTestSuite(suite);
 }

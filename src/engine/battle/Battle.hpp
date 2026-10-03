@@ -16,7 +16,6 @@ class BattleEngine {
     Creature *opponentCur;
 
     Opponent opponent;
-    uint16_t playerHealths[PARTY_SIZE];
     uint16_t opponentHealths[PARTY_SIZE];
 
     uint8_t playerIndex;
@@ -93,7 +92,7 @@ class BattleEngine {
     bool PlayerActionReady();
     bool OpponentActionReady();
     bool TurnReady();
-    void commitPlayerAction();
-    void commitOpponentAction();
+    bool commitPlayerAction();
+    bool commitOpponentAction();
     void updateFightState();
 };

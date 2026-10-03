@@ -33,7 +33,7 @@ inline void test_mode_state(FxTest &test)
     enterBattle();
     test.expectEq(legacyBattle().activeBattle, false, F("fresh battle inactive"));
     test.expectEq(legacyBattle().playerParty[0] == nullptr, true, F("fresh battle pointers cleared"));
-    test.expectEq(legacyBattle().playerHealths[0], 0, F("fresh battle health cleared"));
+    test.expectEq(player.creatureHPs[0], 81, F("battle entry preserves player HP"));
     test.expectEq(legacyBattle().playerAction.actionIndex, -1, F("fresh battle action reset"));
 
     exitBattle();

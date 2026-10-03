@@ -125,7 +125,6 @@ void BattleEngine::init() {
     debug = 0;
     for (uint8_t i = 0; i < PARTY_SIZE; ++i) {
         playerParty[i] = nullptr;
-        playerHealths[i] = 0;
         opponentHealths[i] = 0;
     }
     playerCur = nullptr;
@@ -226,15 +225,11 @@ void BattleEngine::startEncounter(uint8_t creatureID, uint8_t level) {
 void BattleEngine::encounter() {
     if (this->checkLoss()) {
         this->endEncounter();
-        dialogMenu.pushMenu(newDialogBox(LOSS, 0, 0));
-        this->activeBattle = false;
         return;
     }
 
     if (this->checkWin()) {
         this->endEncounter();
-        dialogMenu.pushMenu(newDialogBox(WIN, 0, 0));
-        this->activeBattle = false;
         return;
     }
 
@@ -270,24 +265,24 @@ void BattleEngine::turnTick() {
 
     } break;
     case BattleState::PLAYER_ATTACK:
-        this->commitPlayerAction();
+        if (!this->commitPlayerAction()) return;
         break;
     case BattleState::OPPONENT_RECEIVE_DAMAGE:
-        this->commitPlayerAction();
+        if (!this->commitPlayerAction()) return;
         break;
     case BattleState::OPPONENT_RECEIVE_EFFECT_APPLICATION:
-        this->commitPlayerAction();
+        if (!this->commitPlayerAction()) return;
         playerAction.actionIndex = -1;
         break;
 
     case BattleState::OPPONENT_ATTACK:
-        this->commitOpponentAction();
+        if (!this->commitOpponentAction()) return;
         break;
     case BattleState::PLAYER_RECEIVE_DAMAGE:
-        this->commitOpponentAction();
+        if (!this->commitOpponentAction()) return;
         break;
     case BattleState::PLAYER_RECEIVE_EFFECT_APPLICATION:
-        this->commitOpponentAction();
+        if (!this->commitOpponentAction()) return;
         opponentAction.actionIndex = -1;
         break;
     case BattleState::END_TURN:
@@ -305,7 +300,8 @@ void BattleEngine::turnTick() {
 }
 
 bool BattleEngine::checkLoss() {
-    if (this->playerHealths[0] <= 0 && this->playerHealths[1] <= 0 && this->playerHealths[2] <= 0) {
+    if (player.creatureHPs[0] <= 0 && player.creatureHPs[1] <= 0 &&
+        player.creatureHPs[2] <= 0) {
         return true;
     }
     return false;
@@ -320,7 +316,7 @@ bool BattleEngine::checkWin() {
 
 // These are just place holders until menu & ai written for proper swapping
 bool BattleEngine::checkPlayerFaint() {
-    if (this->playerHealths[this->playerIndex] <= 0) {
+    if (player.creatureHPs[this->playerIndex] <= 0) {
         // BUG: can backout out of change menu if creature is down
         dialogMenu.pushMenu(newDialogBox(FAINT, playerCur->id, 0));
         // battleEventPlayer.push({BattleEventType::FAINT, playerCur->id, 0});
@@ -346,7 +342,7 @@ bool BattleEngine::checkOpponentFaint() {
     return false;
 }
 
-void BattleEngine::commitPlayerAction() {
+bool BattleEngine::commitPlayerAction() {
     // TODO: If changing creature should skip all this
     EffectResults effectRes = runTurnEffect(playerCur);
 
@@ -363,13 +359,16 @@ void BattleEngine::commitPlayerAction() {
     if (!skip) {
         this->commitAction(&this->playerAction, this->opponentCur, target, true);
     }
-    if (turnState == BattleState::OPPONENT_RECEIVE_DAMAGE && checkOpponentFaint() || !this->activeBattle) {
-        playerAction.setActionType(ActionType::SKIP, Priority::NORMAL);
-        return;
+    if (!this->activeBattle) {
+        return false;
     }
+    if (turnState == BattleState::OPPONENT_RECEIVE_DAMAGE && checkOpponentFaint()) {
+        playerAction.setActionType(ActionType::SKIP, Priority::NORMAL);
+    }
+    return true;
 }
 
-void BattleEngine::commitOpponentAction() {
+bool BattleEngine::commitOpponentAction() {
 
     EffectResults effectRes = runTurnEffect(playerCur);
 
@@ -387,10 +386,13 @@ void BattleEngine::commitOpponentAction() {
     if (!skip) {
         this->commitAction(&this->opponentAction, this->opponentCur, target, false);
     }
-    if (turnState == BattleState::PLAYER_RECEIVE_DAMAGE && checkPlayerFaint() || !this->activeBattle) {
-        opponentAction.setActionType(ActionType::SKIP, Priority::NORMAL);
-        return;
+    if (!this->activeBattle) {
+        return false;
     }
+    if (turnState == BattleState::PLAYER_RECEIVE_DAMAGE && checkPlayerFaint()) {
+        opponentAction.setActionType(ActionType::SKIP, Priority::NORMAL);
+    }
+    return true;
 }
 
 void BattleEngine::setMoveList(uint8_t **pointer) {
@@ -425,9 +427,25 @@ bool BattleEngine::tryCapture() {
 }
 
 void BattleEngine::endEncounter() {
+    if (!this->activeBattle) {
+        return;
+    }
+
+    // Capture ownership before exitBattle() destroys the union member. No
+    // battle object access is valid after that final transition call.
+    const bool globalBattle = this == &legacyBattle();
     this->activeBattle = false;
-    // gameState.state = GameState_t::WORLD;
-    //  menu.clear();
+    this->updateState = false;
+    this->playerAction.actionIndex = -1;
+    this->opponentAction.actionIndex = -1;
+
+    gameState.state = GameState_t::WORLD;
+    menu.clear();
+    menuStack.clear();
+    dialogMenu.clear();
+    if (globalBattle) {
+        exitBattle();
+    }
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -540,6 +558,7 @@ void BattleEngine::commitAction(Action *action, Creature *commiter, Creature *re
             pushBattleDialog(ESCAPE_ENCOUNTER, 0, 0);
         } else {
             this->endEncounter();
+            return;
         }
 
         break;
@@ -552,10 +571,11 @@ void BattleEngine::commitAction(Action *action, Creature *commiter, Creature *re
 
 void BattleEngine::applyDamage(uint16_t damage, Creature *receiver) {
     if (receiver == this->playerCur) {
-        uint16_t hp = this->playerHealths[this->playerIndex];
-        const uint16_t next = damage >= hp ? 0 : static_cast<uint16_t>(hp - damage);
-        this->playerHealths[this->playerIndex] = next;
-        player.creatureHPs[this->playerIndex] = static_cast<uint8_t>(next);
+        const uint8_t hp = player.creatureHPs[this->playerIndex];
+        const uint8_t next = damage >= hp
+            ? 0
+            : static_cast<uint8_t>(hp - damage);
+        player.creatureHPs[this->playerIndex] = next;
     } else {
         uint16_t hp = this->opponentHealths[this->opponentIndex];
         this->opponentHealths[this->opponentIndex] =
@@ -584,11 +604,6 @@ void BattleEngine::loadPlayer() {
     this->playerParty[0] = &(player.party[0]);
     this->playerParty[1] = &(player.party[1]);
     this->playerParty[2] = &(player.party[2]);
-    // Current HP belongs to Player, not the transient battle member. Entry
-    // copies it without refilling from the creature's authored max HP.
-    this->playerHealths[0] = player.creatureHPs[0];
-    this->playerHealths[1] = player.creatureHPs[1];
-    this->playerHealths[2] = player.creatureHPs[2];
 
     this->playerIndex = 0;
     this->playerCur = this->playerParty[0];
@@ -741,21 +756,23 @@ void BattleEngine::tickEffects(Creature *target, Effect &effect) {
         if (effect == Effect::SAPPD) {
             hp16th *= -1;
         }
-        bool player = target == playerCur;
-        if (player) {
-            playerHealths[playerIndex] += hp16th;
-            if (playerHealths[playerIndex] > playerCur->statlist.hp) {
-                playerHealths[playerIndex] = playerCur->statlist.hp;
-            } else if (playerHealths[playerIndex] < 0) {
-                playerHealths[playerIndex] = 0;
+        bool playerSide = target == playerCur;
+        if (playerSide) {
+            int16_t next = static_cast<int16_t>(player.creatureHPs[playerIndex]) + hp16th;
+            if (next > playerCur->statlist.hp) {
+                next = playerCur->statlist.hp;
+            } else if (next < 0) {
+                next = 0;
             }
+            player.creatureHPs[playerIndex] = static_cast<uint8_t>(next);
         } else {
-            opponentHealths[opponentIndex] += hp16th;
-            if (opponentHealths[opponentIndex] > opponentCur->statlist.hp) {
-                opponentHealths[opponentIndex] = opponentCur->statlist.hp;
-            } else if (opponentHealths[opponentIndex] < 0) {
-                opponentHealths[opponentIndex] = 0;
+            int16_t next = static_cast<int16_t>(opponentHealths[opponentIndex]) + hp16th;
+            if (next > opponentCur->statlist.hp) {
+                next = opponentCur->statlist.hp;
+            } else if (next < 0) {
+                next = 0;
             }
+            opponentHealths[opponentIndex] = static_cast<uint16_t>(next);
         }
     }
 }
