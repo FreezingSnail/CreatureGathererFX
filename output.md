@@ -1560,3 +1560,131 @@ git diff --check
 Read-only .15 review: APPROVED after the caption correction and missing host cases were added.
 The owner waived only the .14 interactive visual observation; no visual observation is claimed.
 No commit or push at this report point.
+
+
+# CreatureGathererFX-jp8.4.1
+
+Status: PASS. Added Arduino-free descriptor/navigation core, replaced `MenuV2::transverse` per-menu switch with Arduboy-mask collection plus one `menuNavMove` call, added permanent `MenuNavSuite`, host wiring, and `MenuNav.cpp` test-source wiring. No generated artifacts changed. No commit/push.
+
+```text
+bd update CreatureGathererFX-jp8.4.1 --claim
+# PASS
+
+/usr/bin/time -p make build BUILD_DIR=build/jp8-4-1-baseline
+# PASS; flash 18012 B, static RAM 1871 B, free 689 B; real 12.11 s
+
+/usr/bin/time -p make test BUILD_DIR=build/jp8-4-1-host
+# PASS; host 1591/0, world 190/0; MenuNavTest 67/0; real 2.93 s
+
+c++ -DTEST -I. -std=c++17 -w -O0 -g3 -c src/engine/menu/MenuNav.cpp -o build/jp8-4-1-build/MenuNav.test.o
+# PASS; Arduino-free TEST translation unit
+
+/usr/bin/time -p make build BUILD_DIR=build/jp8-4-1-build
+# PASS; flash 18012 B, static RAM 1871 B, free 689 B; unchanged; real 8.84 s
+
+PATH=/private/tmp/jp8-5-14-cargo-target/debug:$PATH ARDENS= /usr/bin/time -p make check BUILD_DIR=build/jp8-4-1-check-no-ardens FXTEST_BUILD_DIR=build/jp8-4-1-check-no-ardens/fxtest
+# PASS; host 1591/0, world 190/0, VM 42/0, generated-libs 8/0,
+# invariants 5/0, aliases 28/0, RAM/build guards PASS; optional fxtest skipped; real 28.76 s
+
+/usr/bin/time -p make fxtest-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_menurun.ino ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens BUILD_DIR=build/jp8-4-1-spike FXTEST_BUILD_DIR=build/jp8-4-1-spike/fxtest
+# PASS; test_menurun 4/0, test_stack 4/0, painted headroom 229 B; real 9.70 s
+
+git diff --check
+# PASS
+```
+
+Full Ardens `make check` attempt with compatible tool reached every suite; all passed except unrelated existing `test_tiles` (5 walkability/property assertions, 13/5), so exit 2. Default PATH first failed earlier at generation because installed `/Users/connorfranc/Applications/CreatureGathererTools/bin/cgfx-tools` lacks `--consumables-csv`; compatible `/private/tmp/jp8-5-14-cargo-target/debug/cgfx-tools` used for successful generation/check. Generated status remained clean. `.codex/` was pre-existing untracked and untouched. Measured command wall time: 172.58 s (2m52.58s) across timed commands; untimed inspection/edit/Beads overhead excluded.
+
+
+# CreatureGathererFX-jp8.3.3
+
+Status: BLOCKED. `bd show CreatureGathererFX-jp8.3.3 --json` explicitly states `HUMAN ONLY. Agents must not implement, claim or dispatch this.` AGENTS.md repeats the prohibition. Did not run `bd update --claim`; bead remains OPEN. No implementation or unrelated edits made; existing MenuNav worktree changes reviewed and left untouched.
+
+```text
+bd show CreatureGathererFX-jp8.3.3 --json
+# PASS; status=open; labels=battle,difficulty:high,m0,roadmap,test; notes=HUMAN ONLY
+
+git status --short
+# pre-existing changes: .beads/interactions.jsonl, Makefile, output.md,
+# src/engine/menu/MenuV2.cpp, tst/main.cpp, plus untracked .codex/,
+# src/engine/menu/MenuNav.cpp, src/engine/menu/MenuNav.hpp, tst/menu_test.hpp
+
+make test; make build
+# NOT RUN: agent prohibited from claiming/implementing this human-only bead
+```
+
+Options: owner implements the bead, or owner removes the human-only restriction / creates an agent-eligible bead, then claim and run the specified acceptance checks. Validation/resource: no code changed for this bead; flash/static/stack unchanged and not remeasured. Wall time: 0s implementation; inspection elapsed not instrumented. No commit or push.
+
+# CreatureGathererFX-jp8.6 — BLOCKED
+
+No implementation. Acceptance cannot be met in this run.
+
+Evidence:
+
+- `bd update CreatureGathererFX-jp8.6 --claim` PASS; bead remains open/in progress.
+- `bd show CreatureGathererFX-jp8.3.9`: OPEN and explicitly `HUMAN ONLY`; its battle integration is not landed. The jp8.6 fallback permits local gather logic, but the current tree contains no jp8.6 prototype or playable lure-zone path.
+- `git status --short`: only pre-existing `.beads/interactions.jsonl`, `Makefile`, `output.md`, `src/engine/menu/MenuV2.cpp`, `tst/main.cpp`, and untracked `src/engine/menu/MenuNav.*`/`tst/menu_test.hpp`; no generated-data, `SaveFile`, lure, gather, zone, material, or prototype diff. Protected MenuV2/MenuNav/menu_test work untouched.
+- `ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens` is present, but no throwaway prototype exists to play. `make run` is interactive GUI execution, not a deterministic native test; no human input/playtest occurred. Therefore turns-to-acquire, HP cost/acquisition, flee-fire count, and tuning values cannot be honestly recorded.
+- Acceptance also requires deleting the prototype in one commit. User instruction explicitly forbids commit/push, so that criterion cannot be satisfied here.
+
+Commands/results:
+
+```text
+bd update CreatureGathererFX-jp8.6 --claim
+# PASS
+bd show CreatureGathererFX-jp8.3.9
+# OPEN; HUMAN ONLY; dependencies remain open
+bd prime
+# PASS
+ git log --oneline --decorate -12
+# HEAD ba1987a Complete jp8.3 presenter wave; no jp8.6 prototype commit
+find ... -iname '*lure*' -o -iname '*gather*' -o -iname '*prototype*' -o -iname '*zone*' -o -iname '*material*'
+# only existing Notes/build artifacts; no source prototype
+```
+
+Validation: no source implementation, permanent test, build, or playtest run; running them cannot produce the required measurements or deletion commit. Wall time: approximately 2 minutes, inspection/report only (2026-10-03 EDT). Deviation: no commit, push, or `bd close`; bead intentionally left open.
+
+
+# CreatureGathererFX-b2a.1
+
+Status: PASS. Native host verification replaces Ardens/interactive visual/hardware checks per live steering. Existing unrelated worktree edits preserved; no generated artifacts changed; no commit/push/sync.
+
+```text
+bd update CreatureGathererFX-b2a.1 --claim
+# PASS
+
+make test BUILD_DIR=build/b2a-1-host
+# initial FAIL: linker lacked SpritesU::fillRect; after host link fix, 2 NativeFrameSavePathTest assertions failed because fillRect_i8 non-AVR body was TODO.
+# fixed with host-only Arduboy2Base pixel fallback; AVR assembly unchanged.
+
+/usr/bin/time -p make test BUILD_DIR=build/b2a-1-final-host
+# PASS; host 1613/0, world 190/0; native renderer 22/0; real 2.96 s
+
+/usr/bin/time -p make testvm BUILD_DIR=build/b2a-1-vm
+# PASS; VM 42/0; real 1.18 s
+
+/usr/bin/time -p make build BUILD_DIR=build/b2a-1-build
+# PASS; flash 18012 B / 24000 B (5988 B free); static RAM 1871 B / 2160 B (289 B free; 155 B below bead's 2026 B ceiling); real 13.70 s
+
+git diff --check
+# PASS
+```
+
+Timed validation total: 17.84 s. Generation checks skipped: no generated input/artifact touched. Forbidden by steering and not run: Ardens, make fxtest/fxtest-headless/fxtest-spike, make run, interactive visual, hardware.
+
+# CreatureGathererFX-b2a.2 — BLOCKED
+
+No source/config/generated artifacts changed. Frozen bead design requires the released CreatureGathererTools-23k.3 `cgfx-tools` tag plus macOS/Linux SHA-256 pins before generation. Blocker evidence: `git ls-remote --tags origin 'refs/tags/v*'` returned no tags; `gh release view v0.2.0 --repo FreezingSnail/CreatureGathererTools` returned `release not found`; PATH tool reports `cgfx-tools 0.2.0` but external checkout is `d61c163-dirty`, so it is not a releasable/pinned tool. Cannot safely run `make gen` or update `tools/toolchain.lock`; doing so would violate the bead's “do not start until release tag + sha256 values exist” rule. Generated baseline remains `FX_DATA_BYTES=875519`, `FX_SAVE_PAGE=0xFF80`, `dist/fxdata.bin` SHA-256 `01c44a29cf47d37bd1ab334e4f126da7c457b29df5dfc4b7f3b08be9540a3833`; no before/after delta or new parity SHA.
+
+Commands/results:
+
+```text
+bd update CreatureGathererFX-b2a.2 --claim                         PASS
+make doctor                                                        BLOCKED: missing Arduboy2 and ArdBitmap libraries; cgfx-tools 0.2.0; manifest fresh
+make test                                                          PASS: host 1613/0, world 190/0 (1803/0 total)
+make testvm                                                        PASS: 42/0
+make gen, generated checks, make build, pack parity                 NOT RUN: external release pin absent
+Ardens, fxtest/fxtest-headless/fxtest-spike, visual/hardware checks  SKIPPED per live steering
+```
+
+Wall time: worker approximately 13 minutes (2026-10-03). No commit, push, or bead close; b2a.2 remains in progress pending published release tag and both asset hashes.

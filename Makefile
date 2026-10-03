@@ -53,6 +53,7 @@ AVR_SIZE ?= $(shell command -v avr-size 2>/dev/null || find "$(HOME)/Library/Ard
 
 CPPFLAGS ?= -I.
 CXXFLAGS ?= -std=c++17 -w -O0 -g3
+TEST_CPPFLAGS = -I tst/host
 TEST_FLAGS = -DTEST
 DEBUG_FLAGS = -DDEBUG
 
@@ -94,9 +95,12 @@ doctor:
 	@CXX="$(CXX)" ARDUINO_CLI="$(ARDUINO_CLI)" ARDENS="$(ARDENS)" ./tools/doctor.sh
 
 # Common source files for main tests
-TEST_SOURCES = tst/src/ReadData.cpp \
+TEST_SOURCES = tst/src/Arduboy2Host.cpp \
+	tst/src/ReadData.cpp \
 	tst/src/DialogMenu.cpp \
 	src/engine/menu/DialogQueue.cpp \
+	src/engine/menu/MenuNav.cpp \
+	src/save/SaveController.cpp \
 	tst/src/random.cpp \
 	tst/src/FlashBackendFake.cpp \
 	src/save/SaveFile.cpp \
@@ -137,7 +141,7 @@ TESTVM_SOURCES = src/vm/ScriptVM.cpp \
 # Function to run tests in target-owned output directories.
 define run_test
 	@mkdir -p "$(dir $(4))"
-	$(CXX) $(1) $(CPPFLAGS) $(CXXFLAGS) $(2) $(3) -o "$(4)" && "$(4)"
+	$(CXX) $(1) $(CPPFLAGS) $(TEST_CPPFLAGS) $(CXXFLAGS) $(2) $(3) -o "$(4)" && "$(4)"
 endef
 
 full: gen build

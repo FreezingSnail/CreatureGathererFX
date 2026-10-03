@@ -1070,7 +1070,16 @@ void SpritesU::fillRect_i8(int8_t x, int8_t y, uint8_t w, uint8_t h, uint8_t col
                  : [buf] "+&e"(buf), [w] "+&r"(w), [rows] "+&r"(rows), [col] "=&r"(col)
                  : [buf_adv] "r"(buf_adv), [color] "r"(color), [m0] "r"(m0), [m1] "r"(m1), [c0] "r"(c0), [c1] "r"(c1), [bot] "r"(bot));
 #else
-    // TODO: C implementation
+    // Native host tests use the same 1bpp buffer layout as Arduboy2Base.
+    // Keep the AVR fast path untouched; this fallback makes game screens
+    // observable without an OLED or Arduino runtime.
+    for (uint8_t row = 0; row < h; ++row) {
+        for (uint8_t column = 0; column < w; ++column) {
+            Arduboy2Base::drawPixel(static_cast<int16_t>(x) + column,
+                                    static_cast<int16_t>(y) + row,
+                                    color == 0 ? BLACK : WHITE);
+        }
+    }
 #endif
 }
 #endif
