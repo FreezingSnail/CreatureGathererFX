@@ -5,8 +5,8 @@
 #include "FlashBackend.hpp"
 
 namespace {
-// Pre-Effect-narrowing SaveFile v1 was 157 bytes on AVR. Treat it as an
-// incompatible save and skip it; jp8.2.6 owns the next schema migration.
+// Pre-party-HP SaveFile v1 was 157 bytes on AVR. Treat it as an incompatible
+// save and skip it; jp8.2.6 owns the next schema migration.
 constexpr uint16_t LEGACY_SAVE_V1_AVR_BYTES = 157;
 constexpr uint8_t SAVE_VALIDATION_BYTES = 8;
 
@@ -57,11 +57,8 @@ bool latestValidRecordAddr(uint16_t &latestAddr)
         }
 
         if (size == LEGACY_SAVE_V1_AVR_BYTES) {
-            uint8_t legacyVersion = 0;
-            flash.readBytes(addr + 2, &legacyVersion, sizeof(legacyVersion));
-            if (legacyVersion != SAVE_VERSION) {
-                break;
-            }
+            // Legacy records cannot validate against the v2 shape, but a
+            // later current record in the append log remains loadable.
             addr = static_cast<uint16_t>(addr + 2 + size);
             continue;
         }
@@ -133,6 +130,8 @@ bool saveFileLoadParty(SaveFile &state)
     }
     flash.readBytes(latestAddr + offsetof(SaveFile, party),
                     reinterpret_cast<uint8_t *>(state.party), sizeof(state.party));
+    flash.readBytes(latestAddr + offsetof(SaveFile, partyHP),
+                    state.partyHP, sizeof(state.partyHP));
     return true;
 }
 

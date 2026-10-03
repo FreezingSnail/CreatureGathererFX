@@ -22,5 +22,6 @@ class Player {
     void basic();
     void loadCreature(uint8_t index, uint8_t creatureIndex);
     void setCreature(uint8_t index, CreatureData_t seed);
+    void restore(const Creature *savedParty, const uint8_t *savedHP);
     void storeCreature(uint8_t slot, uint8_t id, uint8_t level);
 };

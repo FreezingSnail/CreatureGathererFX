@@ -76,12 +76,13 @@ void ModeTransitionClearsTransientTest(TestSuite &suite) {
     memset(state.world.propertyWindow, 0xB6, sizeof(state.world.propertyWindow));
     memset(state.world.zoneTableCache, 0xC7, sizeof(state.world.zoneTableCache));
 
+    player.creatureHPs[0] = 77;
     state.enterBattle();
     test.assert(state.battle.activeBattle, false, "fresh battle member is inactive");
     test.assert(state.battle.playerParty[0] == nullptr, true,
                 "fresh battle member clears party pointers");
-    test.assert(state.battle.playerHealths[0], static_cast<uint16_t>(0),
-                "fresh battle member clears temporary health");
+    test.assert(player.creatureHPs[0], static_cast<uint8_t>(77),
+                "fresh battle member preserves player HP");
     test.assert(state.battle.playerAction.actionIndex, static_cast<int8_t>(-1),
                 "fresh battle member resets player action");
 

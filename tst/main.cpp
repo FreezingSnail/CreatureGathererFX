@@ -31,11 +31,13 @@
 #include "renderer_test.hpp"
 
 #include "../src/globals.hpp"
+#include "../src/engine/menu/MenuV2.hpp"
 #include <cstring>
 
 Player player = Player();
 GameState gameState;
 ModeState modeState;
+MenuV2 menu;
 BattleEvent battleEventStack[10];
 BattleEventPlayer battleEventPlayer;
 MenuStack menuStack;

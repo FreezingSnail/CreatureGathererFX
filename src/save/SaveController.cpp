@@ -1,6 +1,7 @@
 #include "SaveController.hpp"
 
 #include <avr/pgmspace.h>
+#include <string.h>
 
 #include "../common.hpp"
 #include "../globals.hpp"
@@ -28,6 +29,7 @@ void captureLiveSaveState()
     }
     for (uint8_t i = 0; i < PARTY_MAX; ++i) {
         saveState.party[i] = player.party[i];
+        saveState.partyHP[i] = player.creatureHPs[i];
     }
     saveState.plants.plantStages = plants.plantStages;
     saveState.plants.plantPairs[0] = plants.plantPairs[0];
@@ -100,6 +102,26 @@ void advance()
 void drawStatus()
 {
     drawSavingStatus(!saveInProgress());
+}
+
+bool load()
+{
+    SaveFile loaded = {};
+    if (!saveFileLoad(loaded)) {
+        return false;
+    }
+
+    gameState.playerLocation = loaded.playerLocation;
+    for (uint8_t i = 0; i < FLAG_BYTES; ++i) {
+        gameState.flags[i] = loaded.flags[i];
+    }
+    player.restore(loaded.party, loaded.partyHP);
+    plants.plantStages = loaded.plants.plantStages;
+    plants.plantPairs[0] = loaded.plants.plantPairs[0];
+    plants.plantPairs[1] = loaded.plants.plantPairs[1];
+    plants.ticker = loaded.plants.ticker;
+    memcpy(player.items, loaded.inventory, sizeof(loaded.inventory));
+    return true;
 }
 
 } // namespace SaveController

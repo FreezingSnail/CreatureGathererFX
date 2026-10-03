@@ -7,6 +7,10 @@
 // SaveFile, the journal, or the step machine directly.
 namespace SaveController {
 
+// Loads the latest committed save into persistent game/player state. Returns
+// false when the save sector is blank or incompatible, leaving live state unchanged.
+bool load();
+
 // Snapshots live RAM and enters the multi-frame save sequence. returnState is
 // the state to restore once the sequence finishes.
 void begin(GameState_t returnState);

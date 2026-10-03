@@ -12,3 +12,7 @@ void MenuStack::pop() {
 MenuEnum MenuStack::top() {
     return this->stack[this->pointer];
 }
+
+void MenuStack::clear() {
+    this->pointer = -1;
+}

@@ -86,6 +86,9 @@ static PopUpDialog newDialogBox(DialogType type, uint24_t number, uint16_t damag
 #include "engine/menu/DialogMenu.hpp"
 extern DialogMenu dialogMenu;
 
+#include "engine/menu/MenuV2.hpp"
+extern MenuV2 menu;
+
 #include "vm/ScriptVM.hpp"
 extern ScriptVm vm;
 

@@ -36,5 +36,13 @@ void Player::setCreature(uint8_t index, CreatureData_t seed) {
     this->creatureHPs[index] = this->party[index].statlist.hp;
 }
 
+void Player::restore(const Creature *savedParty, const uint8_t *savedHP) {
+    for (uint8_t index = 0; index < 3; ++index) {
+        this->party[index] = savedParty[index];
+        const uint8_t maxHP = this->party[index].statlist.hp;
+        this->creatureHPs[index] = savedHP[index] > maxHP ? maxHP : savedHP[index];
+    }
+}
+
 void Player::storeCreature(uint8_t slot, uint8_t id, uint8_t level) {   // this->storedCreatures[slot] = caughtCreature{id, level};
 }

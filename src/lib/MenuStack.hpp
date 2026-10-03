@@ -16,4 +16,5 @@ struct MenuStack {
     void push(MenuEnum menu);
     void pop();
     MenuEnum top();
+    void clear();
 };

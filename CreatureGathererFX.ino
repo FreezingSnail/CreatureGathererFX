@@ -88,18 +88,22 @@ void setup() {
 
     FX::begin(FX_DATA_PAGE, FX_SAVE_PAGE);
     journalInit();
-    // FX::setFont(ArduFont, dcmNormal);   // select default font
     FX::setCursorRange(0, 32767);
 #ifdef CGFX_BATTLE_PRESENTATION_SPIKE
     battle_presentation_fixture::shippingSpike();
 #endif
-    gameState.playerLocation = static_cast<uint16_t>(3) |
-                               (static_cast<uint16_t>(2) << 8);
+    const bool restored = SaveController::load();
+    if (!restored) {
+        gameState.playerLocation = static_cast<uint16_t>(3) |
+                                   (static_cast<uint16_t>(2) << 8);
+    }
     enterBattle();
     exitBattle();
 
     gameState.state = GameState_t::WORLD;
-    player.basic();
+    if (!restored) {
+        player.basic();
+    }
 
     // buffer = arduboy.sBuffer;
 }
