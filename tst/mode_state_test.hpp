@@ -15,12 +15,12 @@ extern Player player;
 
 void ModeStateLayoutTest(TestSuite &suite) {
     Test test(__func__);
-    test.assert(sizeof(WorldTransient), static_cast<size_t>(171),
+    test.assert(sizeof(WorldTransient), static_cast<size_t>(191),
                 "world payload is script, property window, and cache");
     test.assert(offsetof(WorldTransient, propertyWindow), static_cast<size_t>(128),
                 "property window follows the 128-byte script slot");
-    test.assert(offsetof(WorldTransient, zoneTableCache), static_cast<size_t>(151),
-                "zone cache follows the 23-byte property window");
+    test.assert(offsetof(WorldTransient, zoneTableCache), static_cast<size_t>(171),
+                "zone cache follows the 43-byte property window");
     test.assert(sizeof(ModeState) >= sizeof(WorldTransient), true,
                 "mode union holds the complete world payload");
     suite.addTest(test);

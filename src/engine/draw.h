@@ -5,7 +5,9 @@
 #include "../common.hpp"
 #include "../globals.hpp"
 #include "../lib/ReadData.hpp"
+#include "../lib/FxRead.hpp"
 #include "world/Chunk.hpp"
+#include "world/TilePropertyWindow.hpp"
 #include "world/World.hpp"
 #include "../external/SpritesABC.hpp"
 
@@ -13,7 +15,7 @@
 #include <stdint.h>
 
 [[gnu::naked, gnu::noinline]]
-static void fx_read_data_bytes(uint24_t addr, void *dst, size_t num) {
+static void fx_read_data_bytes_raw(uint24_t addr, void *dst, size_t num) {
     // addr: r22,r23,r24
     // dst:  r20,r21
     // num:  r18,r19
@@ -82,35 +84,48 @@ static void fx_read_data_bytes(uint24_t addr, void *dst, size_t num) {
                    [fxport] "I"(_SFR_IO_ADDR(FX_PORT)), [fxbit] "I"(FX_BIT));
 }
 
+static void fx_read_data_bytes(uint24_t addr, void *dst, size_t num) {
+    FxReadCounter::record();
+    fx_read_data_bytes_raw(addr, dst, num);
+}
+
+static void drawStringSprite(int16_t x, int16_t y, uint24_t address,
+                             uint8_t width, uint16_t frame) {
+    if (width != 0) {
+        // Generated string symbols point at pixels, not a dimension header.
+        SpritesU::drawOverwriteFX(x, y, width, 8, address - 2, frame);
+    }
+}
+
 // TODO: Refactor to only 1 func call
 static void printType(Type t, uint8_t x, uint8_t y) {
     switch (t) {
     case Type::SPIRIT:
-        SpritesU::drawOverwriteFX(x, y, spirit, FRAME(0));
+        drawStringSprite(x, y, spirit, 35, FRAME(0));
         break;
     case Type::WATER:
-        SpritesU::drawOverwriteFX(x, y, water, FRAME(0));
+        drawStringSprite(x, y, water, 30, FRAME(0));
         break;
     case Type::WIND:
-        SpritesU::drawOverwriteFX(x, y, wind, FRAME(0));
+        drawStringSprite(x, y, wind, 25, FRAME(0));
         break;
     case Type::EARTH:
-        SpritesU::drawOverwriteFX(x, y, earth, FRAME(0));
+        drawStringSprite(x, y, earth, 30, FRAME(0));
         break;
     case Type::FIRE:
-        SpritesU::drawOverwriteFX(x, y, fire, FRAME(0));
+        drawStringSprite(x, y, fire, 25, FRAME(0));
         break;
     case Type::LIGHTNING:
-        SpritesU::drawOverwriteFX(x, y, lightning, FRAME(0));
+        drawStringSprite(x, y, lightning, 50, FRAME(0));
         break;
     case Type::PLANT:
-        SpritesU::drawOverwriteFX(x, y, plant, FRAME(0));
+        drawStringSprite(x, y, plant, 30, FRAME(0));
         break;
     case Type::ELDER:
-        SpritesU::drawOverwriteFX(x, y, elder, FRAME(0));
+        drawStringSprite(x, y, elder, 30, FRAME(0));
         break;
     case Type::STATUS:
-        SpritesU::drawOverwriteFX(x, y, status, FRAME(0));
+        drawStringSprite(x, y, status, 35, FRAME(0));
         break;
     }
 }
@@ -131,23 +146,21 @@ static void drawInfoRec(uint8_t x, uint8_t y) {
     FX::drawBitmap(x - 3, y - 3, moveInfo, 0, dbmNormal);
 }
 
-static void printMoveInfo(uint8_t index, uint8_t x, uint8_t y) {
+static void printMoveInfo(uint8_t index, uint8_t x, uint8_t y, Move m) {
     if (index == 32) {
         return;
     }
     setTextColorBlack();
     drawInfoRec(x, y);
-    Move m = readMoveFX(index);
-
     printType(Type(m.getMoveType()), x, y);
     if (m.isPhysical()) {
-        SpritesU::drawOverwriteFX(x, y + 8, physical, FRAME(0));
+        drawStringSprite(x, y + 8, physical, 25, FRAME(0));
         // printString(font, MenuFXData::physical, x, y + 8);
     } else {
-        SpritesU::drawOverwriteFX(x, y + 8, special, FRAME(0));
+        drawStringSprite(x, y + 8, special, 25, FRAME(0));
         // printString(font, MenuFXData::special, x, y + 8);
     }
-    SpritesU::drawOverwriteFX(x, y + 16, power, FRAME(0));
+    drawStringSprite(x, y + 16, power, 35, FRAME(0));
     // printString(font, MenuFXData::power, x, y + 16);
     // font.setCursor(x + 30, y + 16);
     // font.print(m.power);
@@ -177,7 +190,8 @@ static void printCursor(int8_t index) {
     // FX::setFont(font4x6, dbmNormal);
 }
 
-static void printMoveMenu(int8_t index, uint8_t *moveList) {
+static void printMoveMenu(int8_t index, uint8_t *moveList,
+                          const uint24_t *nameAddresses, Move selectedMove) {
     if (moveList == nullptr) {
         return;
     }
@@ -186,29 +200,21 @@ static void printMoveMenu(int8_t index, uint8_t *moveList) {
     if (moveList[index] != 32) {
         color[index] = 0;
     }
-    uint24_t rowAddress = FX::readIndexedUInt24(MoveNames::MoveNames, moveList[0]);
-    SpritesU::drawOverwriteFX(6, 45, rowAddress, FRAME(color[0]));
-    // printString(font, rowAddress, 6, 45);
-    rowAddress = FX::readIndexedUInt24(MoveNames::MoveNames, moveList[1]);
-    SpritesU::drawOverwriteFX(69, 45, rowAddress, FRAME(color[1]));
-    // printString(font, rowAddress, 69, 45);
-    rowAddress = FX::readIndexedUInt24(MoveNames::MoveNames, moveList[2]);
-    SpritesU::drawOverwriteFX(6, 53, rowAddress, FRAME(color[2]));
-    // printString(font, rowAddress, 6, 53);
-    rowAddress = FX::readIndexedUInt24(MoveNames::MoveNames, moveList[3]);
-    SpritesU::drawOverwriteFX(69, 53, rowAddress, FRAME(color[3]));
-    // printString(font, rowAddress, 69, 53);
-    printMoveInfo(moveList[index], 38, 4);
+    drawStringSprite(6, 45, nameAddresses[0], readMoveNameWidth(moveList[0]), FRAME(color[0]));
+    drawStringSprite(69, 45, nameAddresses[1], readMoveNameWidth(moveList[1]), FRAME(color[1]));
+    drawStringSprite(6, 53, nameAddresses[2], readMoveNameWidth(moveList[2]), FRAME(color[2]));
+    drawStringSprite(69, 53, nameAddresses[3], readMoveNameWidth(moveList[3]), FRAME(color[3]));
+    printMoveInfo(moveList[index], 38, 4, selectedMove);
 }
 
 // TODO deal with drawing numbers
-static void printCreature(Creature *creature) {
-    SpritesU::drawOverwriteFX(35, 0, hpText, FRAME(0));
-    SpritesU::drawOverwriteFX(35, 10, atkText, FRAME(0));
-    SpritesU::drawOverwriteFX(35, 20, defText, FRAME(0));
-    SpritesU::drawOverwriteFX(72, 0, satkText, FRAME(0));
-    SpritesU::drawOverwriteFX(72, 10, sdefText, FRAME(0));
-    SpritesU::drawOverwriteFX(72, 20, spdText, FRAME(0));
+static void printCreature(Creature *creature, const uint24_t *moveNames) {
+    drawStringSprite(35, 0, hpText, 20, FRAME(0));
+    drawStringSprite(35, 10, atkText, 25, FRAME(0));
+    drawStringSprite(35, 20, defText, 25, FRAME(0));
+    drawStringSprite(72, 0, satkText, 30, FRAME(0));
+    drawStringSprite(72, 10, sdefText, 30, FRAME(0));
+    drawStringSprite(72, 20, spdText, 25, FRAME(0));
 
     drawStatNumbers(60, 0, creature->statlist.hp);
     drawStatNumbers(60, 10, creature->statlist.attack);
@@ -225,23 +231,24 @@ static void printCreature(Creature *creature) {
         uint8_t x = 4 + (60 * offset);
         uint8_t y = 34 + (8 * (i / 2));
 
-        uint24_t rowAddress = FX::readIndexedUInt24(MoveNames::MoveNames, creature->moves[i]);
-        SpritesU::drawOverwriteFX(x, y, rowAddress, FRAME(1));
+        drawStringSprite(x, y, moveNames[i], readMoveNameWidth(creature->moves[i]), FRAME(1));
     }
 }
 
-static void printCreatureMenu(uint8_t c1, uint8_t c2, Creature *cpointer, uint8_t index) {
+static void printCreatureMenu(uint8_t c1, uint8_t c2, Creature *cpointer,
+                              uint8_t index, const uint24_t *creatureNames,
+                              const uint24_t *moveNames) {
     SpritesU::fillRect(0, 33, 128, 31, WHITE);
     SpritesU::fillRect(0, 0, 128, 32, BLACK);
-    printCreature(cpointer);
-    uint24_t c1addr = FX::readIndexedUInt24(CreatureNames::CreatureNames, c1);
-    uint24_t c2addr = FX::readIndexedUInt24(CreatureNames::CreatureNames, c2);
+    printCreature(cpointer, moveNames);
+    const uint24_t c1addr = creatureNames[0];
+    const uint24_t c2addr = creatureNames[1];
     if (index == 0) {
-        SpritesU::drawOverwriteFX(6, 49, c1addr, FRAME(0));
-        SpritesU::drawOverwriteFX(6, 56, c2addr, FRAME(1));
+        drawStringSprite(6, 49, c1addr, readCreatureNameWidth(c1), FRAME(0));
+        drawStringSprite(6, 56, c2addr, readCreatureNameWidth(c2), FRAME(1));
     } else {
-        SpritesU::drawOverwriteFX(6, 49, c1addr, FRAME(1));
-        SpritesU::drawOverwriteFX(6, 56, c2addr, FRAME(0));
+        drawStringSprite(6, 49, c1addr, readCreatureNameWidth(c1), FRAME(1));
+        drawStringSprite(6, 56, c2addr, readCreatureNameWidth(c2), FRAME(0));
     }
 }
 
@@ -267,11 +274,11 @@ static void drawOpponentHP(BattleEngine &engine) {
 }
 
 static void drawOpponent(BattleEngine &engine) {
-    SpritesU::drawPlusMaskFX(0, 0, NewecreatureSprites, FRAME((engine.opponentCur->id * 2)));
+    SpritesU::drawPlusMaskFX(0, 0, 32, 32, NewecreatureSprites - 2, FRAME((engine.opponentCur->id * 2)));
 }
 
 static void drawPlayer(BattleEngine &engine) {
-    SpritesU::drawPlusMaskFX(96, 0, NewecreatureSprites, FRAME(((engine.playerCur->id * 2) + 1)));
+    SpritesU::drawPlusMaskFX(96, 0, 32, 32, NewecreatureSprites - 2, FRAME(((engine.playerCur->id * 2) + 1)));
 
     drawPlayerHP(engine);
 }
@@ -284,7 +291,7 @@ static void drawScene(BattleEngine &engine) {
     drawPlayerHP(engine);
 }
 
-static void drawMapFast(const WorldTransient &world) {
+static uint8_t drawMapFast(WorldTransient &world) {
     const uint16_t loc = WorldEngine::location();
     const ViewOffset view = WorldEngine::view(world);
 
@@ -297,18 +304,17 @@ static void drawMapFast(const WorldTransient &world) {
     const int16_t viewportStartX = playerX - 3;   // 3 tiles left of player
     const int16_t viewportStartY = playerY - 2;   // 2 tiles above player
 
-    const uint16_t startTile = static_cast<uint16_t>(viewportStartX + (256 * viewportStartY));
-
     const int8_t xOffset = view.x;
     const int8_t yOffset = view.y;
     uint8_t rows = 4;
-    int16_t startMod = 0;
+    int16_t readStartX = viewportStartX;
+    int16_t readStartY = viewportStartY;
     int8_t xShift = 0;
     int8_t yShift = 0;
     if (view.mask != 0) {
         switch (view.mask) {
         case 0b10000000:
-            startMod = -1 * 2;
+            --readStartX;
             xShift = 1;
             break;
         case 0b01000000:
@@ -316,7 +322,7 @@ static void drawMapFast(const WorldTransient &world) {
             break;
         case 0b00100000:
             rows = 5;
-            startMod = -256 * 2;
+            --readStartY;
             yShift = -1;
             break;
         case 0b00001000:
@@ -325,28 +331,50 @@ static void drawMapFast(const WorldTransient &world) {
         }
     }
 
-    // need to double the tile since uint16_t
-    uint24_t intialAdder = raw_map_data + (startTile * 2);
+    TilePropertyWindow propertyWindow(world.propertyWindow);
+    propertyWindow.begin(readStartX, readStartY);
+    uint8_t rowReads = 0;
     // TODO: need to lock rows to 2 when text is drawn
     for (uint8_t i = 0; i < rows; i++) {
-        uint16_t rowbuf[9];
-        uint24_t addr = intialAdder + (i * 512) + startMod;
-        fx_read_data_bytes(addr, rowbuf, sizeof(rowbuf));
-        for (uint8_t j = 0; j < 9; j++) {
+        uint16_t rowbuf[TilePropertyWindow::WINDOW_WIDTH] = {};
+        const int16_t mapY = readStartY + i;
+        const int16_t firstMapX = readStartX < 0 ? 0 : readStartX;
+        const int16_t endMapX = readStartX + TilePropertyWindow::WINDOW_WIDTH > 256
+                                    ? 256
+                                    : readStartX + TilePropertyWindow::WINDOW_WIDTH;
+        if (mapY >= 0 && mapY < 256 && firstMapX < endMapX) {
+            const uint8_t firstColumn = static_cast<uint8_t>(firstMapX - readStartX);
+            const uint8_t cellCount = static_cast<uint8_t>(endMapX - firstMapX);
+            const uint32_t byteOffset =
+                (static_cast<uint32_t>(mapY) * 256u + static_cast<uint16_t>(firstMapX)) * 2u;
+            const uint24_t address = raw_map_data + byteOffset;
+            fx_read_data_bytes(address, rowbuf + firstColumn,
+                               static_cast<size_t>(cellCount) * sizeof(uint16_t));
+            ++rowReads;
+        }
+        propertyWindow.writeRow(i, rowbuf);
+
+        for (uint8_t j = 0; j < TilePropertyWindow::WINDOW_WIDTH; j++) {
             uint8_t screenX = (16 * j);
             uint8_t screenY = (16 * i);
-            uint16_t tile = rowbuf[j] - 1;
+            const int16_t mapX = readStartX + j;
+            const uint16_t tileId = TileProps::tileId(rowbuf[j]);
             int16_t x = static_cast<int16_t>(screenX) + xOffset;
             int16_t y = static_cast<int16_t>(screenY) + yOffset;
+
+            if (mapX < 0 || mapX >= 256 || mapY < 0 || mapY >= 256 || tileId == 0) {
+                continue;
+            }
 
             if (xShift == 1) {
                 x -= 16;
             } else if (yShift == -1) {
                 y -= 16;
             }
-            SpritesABC ::drawSizedFX(static_cast<int8_t>(x), static_cast<int8_t>(y), 16, 16, tiles, SpritesABC::MODE_OVERWRITE, FRAME(tile));
+            SpritesABC ::drawSizedFX(static_cast<int8_t>(x), static_cast<int8_t>(y), 16, 16, tiles, SpritesABC::MODE_OVERWRITE, FRAME(tileId - 1));
         }
     }
+    return rowReads;
 }
 
 // NOTE: chunk based drawing can allow for map modification
@@ -378,7 +406,7 @@ static void DGF drawChunkAtOffset(uint16_t chunkIndex, int8_t offsetX, int8_t of
             int8_t screenX = viewportTileX * 16;
             int8_t screenY = viewportTileY * 16;
 
-            uint16_t tile = FX::readIndexedUInt16(chunkAddress, i);
+            uint16_t tile = FxRead::indexed16(chunkAddress, i);
             SpritesABC::drawSizedFX(screenX, screenY, 16, 16, tiles, SpritesABC::MODE_OVERWRITE, FRAME((tile - 1)));
         }
     }
@@ -412,35 +440,6 @@ static void drawMap() {
                                              static_cast<uint8_t>(worldY)),
                               worldX - viewportStartX, worldY - viewportStartY);
         }
-    }
-}
-
-#define FONTSIZE 379
-
-// Uses the front half of the screenbuffer as scratch, needs to be called top of drawing
-static void DGF drawScriptText(uint16_t index) {
-    FX::seekData(fontTrimmed + 4);
-    FX::readBytes(arduboy.sBuffer, FONTSIZE);
-    FX::readEnd();
-
-    uint16_t offsetCount = ReadFXu16(raw_map_text);
-    uint24_t addr = raw_map_text + 2 + (2 * index);
-    uint16_t textOffset = ReadFXu16(addr);
-    uint24_t textStart = raw_map_text + 2 + (offsetCount * 2);
-    uint16_t len = ReadFXu16(textStart + textOffset);
-    FX::seekData(textStart + textOffset + 2);
-    FX::readBytes(&arduboy.sBuffer[FONTSIZE], len);
-    FX::readEnd();
-
-    uint8_t *txtptr = &arduboy.sBuffer[FONTSIZE];
-    uint8_t *ptr = &arduboy.sBuffer[512];
-    for (uint8_t i = 0; i < len; i++) {
-        // fonter.write(*ptr);
-        uint8_t letter = (*txtptr) - 48;
-        uint16_t index = letter * 5;
-        memccpy(ptr, &arduboy.sBuffer[index], 0, sizeof(uint8_t) * 5);
-        ptr += 6;
-        txtptr++;
     }
 }
 

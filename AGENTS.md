@@ -55,6 +55,10 @@ It always runs every FX suite, even if a focused `FXTEST_INOS` override is prese
   that overflows by ~262 B). Budget rules live in `docs/dev-flow.md`.
 - **FX/OLED share SPI**: cart reads happen only on transitions, never per-step or per-frame. The
   per-frame read counter (jp8.1.7) keeps this enforceable.
+- **24-bit FX table reads**: ArduboyFX 1.4.0's AVR `readIndexedUInt24` path returns an incorrect
+  top byte. Route packed address-table reads through `FxRead::indexed24` in `src/lib/FxRead.hpp`;
+  it reads the three big-endian bytes and reconstructs `uint24_t`. Keep the device table test,
+  including entries above `0x010000`, as evidence for this workaround.
 
 ## Dev-cycle speed rules (from past waves)
 

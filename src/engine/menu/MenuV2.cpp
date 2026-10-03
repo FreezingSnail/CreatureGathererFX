@@ -13,6 +13,44 @@ MenuV2::MenuV2() {
 // TODO: reads too much
 void MenuV2::updateMoveList(BattleEngine &engine) {
     this->moveList = engine.getPlayerCurCreatureMoves();
+    if (cachedNameMode != BATTLE_MOVE_SELECT) {
+        cachedNameMode = BATTLE_MOVE_SELECT;
+        for (uint8_t i = 0; i < 4; ++i) moveNameIds[i] = 255;
+    }
+    uint8_t lookups = 0;
+    for (uint8_t i = 0; i < 4; ++i) {
+        const uint8_t id = moveList[i];
+        if (moveNameIds[i] == id) continue;
+        moveNameIds[i] = id;
+        moveNameAddresses[i] = id == 32 ? 0 : readMoveNameAddress(id);
+        if (id != 32) ++lookups;
+    }
+    if (lookups != 0) FxReadCounter::transitionExact(lookups);
+}
+
+void MenuV2::updateCreatureNames(BattleEngine &engine) {
+    if (cachedNameMode != BATTLE_CREATURE_SELECT) {
+        cachedNameMode = BATTLE_CREATURE_SELECT;
+        for (uint8_t i = 0; i < 4; ++i) moveNameIds[i] = 255;
+    }
+    uint8_t lookups = 0;
+    for (uint8_t i = 0; i < 2; ++i) {
+        const uint8_t id = creatures[i];
+        if (creatureNameIds[i] == id) continue;
+        creatureNameIds[i] = id;
+        creatureNameAddresses[i] = readCreatureNameAddress(id);
+        ++lookups;
+    }
+    const uint8_t selected = cursorIndex == 0 ? creatures[0] : creatures[1];
+    Creature *creature = engine.getCreature(selected);
+    for (uint8_t i = 0; i < 4; ++i) {
+        const uint8_t id = creature->moves[i];
+        if (moveNameIds[i] == id) continue;
+        moveNameIds[i] = id;
+        moveNameAddresses[i] = id == 32 ? 0 : readMoveNameAddress(id);
+        if (id != 32) ++lookups;
+    }
+    if (lookups != 0) FxReadCounter::transitionExact(lookups);
 }
 
 void MenuV2::push(MenuEnum type) {
@@ -28,6 +66,7 @@ void MenuV2::pop() {
 }
 void MenuV2::clear() {
     this->menuPointer = -1;
+    cachedNameMode = 255;
     dialogMenu.clear();
 }
 
@@ -145,7 +184,7 @@ void MenuV2::action(BattleEngine &engine) {
     }
 }
 
-void DGF MenuV2::run(BattleEngine &engine) {
+void MenuV2::run(BattleEngine &engine) {
     if (this->menuPointer < 0 && !dialogMenu.peek())
         return;
     if (dialogMenu.peek()) {
@@ -155,32 +194,36 @@ void DGF MenuV2::run(BattleEngine &engine) {
 
     } else {
         // TODO very inefficient
-        updateMoveList(engine);
         engine.updateInactiveCreatures(this->creatures);
 
         transverse();
         action(engine);
+        if (menuPointer >= 0) {
+            if (CURRENT_MENU == BATTLE_MOVE_SELECT) updateMoveList(engine);
+            else if (CURRENT_MENU == BATTLE_CREATURE_SELECT) updateCreatureNames(engine);
+        }
     }
 }
 
 void MenuV2::printMenu(BattleEngine &engine) {
     if (!this->drawMenu) {
-        SpritesU::drawOverwriteFX(0, 40, battleMenu, FRAME(0));
+        SpritesU::drawOverwriteFX(0, 40, 128, 24, battleMenu - 2, FRAME(0));
         return;
     }
     if (this->menuPointer < 0) {
-        SpritesU::drawOverwriteFX(0, 40, battleMenu, FRAME(0));
+        SpritesU::drawOverwriteFX(0, 40, 128, 24, battleMenu - 2, FRAME(0));
         return;
     }
     // arduboy.fillRect(0, 43, 128, 32, WHITE);
     switch (CURRENT_MENU) {
     case BATTLE_OPTIONS:
-        SpritesU::drawOverwriteFX(0, 40, fightMenu, FRAME(cursorIndex));
+        SpritesU::drawOverwriteFX(0, 40, 128, 24, fightMenu - 2, FRAME(cursorIndex));
         break;
 
     case BATTLE_MOVE_SELECT:
-        SpritesU::drawOverwriteFX(0, 40, battleMenu, FRAME(0));
-        printMoveMenu(this->cursorIndex, this->moveList);
+        SpritesU::drawOverwriteFX(0, 40, 128, 24, battleMenu - 2, FRAME(0));
+        printMoveMenu(this->cursorIndex, this->moveList,
+                      moveNameAddresses, engine.playerCur->moveList[cursorIndex]);
         break;
 
     // TODO: Lets you pick a fainted creature
@@ -189,8 +232,9 @@ void MenuV2::printMenu(BattleEngine &engine) {
         if (this->cursorIndex == 0) {
             cIndex = this->creatures[0];
         }
-        printCreatureMenu(this->creatures[0], this->creatures[1], engine.getCreature(cIndex), this->cursorIndex);
-        SpritesU::drawPlusMaskFX(0, 0, NewecreatureSprites, FRAME((engine.getCreature(cIndex)->id * 2)));
+        printCreatureMenu(this->creatures[0], this->creatures[1], engine.getCreature(cIndex),
+                          this->cursorIndex, creatureNameAddresses, moveNameAddresses);
+        SpritesU::drawPlusMaskFX(0, 0, 32, 32, NewecreatureSprites - 2, FRAME((engine.getCreature(cIndex)->id * 2)));
         break;
     }
     printCursor(this->cursorIndex);
@@ -198,39 +242,47 @@ void MenuV2::printMenu(BattleEngine &engine) {
 }
 
 // TODO move textdrawing
-void MenuV2::creatureRental() {
-    // printString(font, MenuFXData::pointerText, 0, 55);
-    FX::setCursor(10, 55);
+void MenuV2::prepareCreatureRental() {
     if (cursorIndex > 30) {
         cursorIndex = 0;
     } else if (cursorIndex < 0) {
         cursorIndex = 30;
     }
-    uint24_t addr = FX::readIndexedUInt24(CreatureNames::CreatureNames, this->cursorIndex);
-    SpritesU::drawOverwriteFX(0, 55, addr, FRAME(0));
-    SpritesU::drawPlusMaskFX(0, 0, NewecreatureSprites, FRAME((this->cursorIndex * 2)));
+    if (cachedRentalId == static_cast<uint8_t>(cursorIndex)) return;
+    cachedRentalId = static_cast<uint8_t>(cursorIndex);
+    rentalNameAddress = readCreatureNameAddress(cachedRentalId);
+    const CreatureData_t seed = getCreatureFromStore(cachedRentalId);
+    rentalSeed = {seed.type1, seed.type2, seed.hpSeed, seed.atkSeed,
+                  seed.defSeed, seed.spcAtkSeed, seed.spcDefSeed, seed.spdSeed};
+    FxReadCounter::transitionExact(2);
+}
+
+void MenuV2::creatureRental() {
+    // printString(font, MenuFXData::pointerText, 0, 55);
+    FX::setCursor(10, 55);
+    if (cachedRentalId != static_cast<uint8_t>(cursorIndex)) return;
+    drawStringSprite(0, 55, rentalNameAddress, readCreatureNameWidth(cachedRentalId), FRAME(0));
+    SpritesU::drawPlusMaskFX(0, 0, 32, 32, NewecreatureSprites - 2, FRAME((this->cursorIndex * 2)));
 
     // FX::drawBitmap(0, 0, NewecreatureSprites, FRAME((this->cursorIndex * 2)), dbmWhite);
-    CreatureData_t cseed;
-    uint24_t rowAddress = CreatureData::creatureData + (sizeof(CreatureData_t) * this->cursorIndex);
-    FX::readDataObject(rowAddress, cseed);
+    const RentalStats &cseed = rentalSeed;
 
-    SpritesU::drawOverwriteFX(35, 0, hpText, FRAME(0));
+    drawStringSprite(35, 0, hpText, 20, FRAME(0));
     drawStatNumbers(60, 0, cseed.hpSeed);
 
-    SpritesU::drawOverwriteFX(35, 10, atkText, FRAME(0));
+    drawStringSprite(35, 10, atkText, 25, FRAME(0));
     drawStatNumbers(60, 10, cseed.atkSeed);
 
-    SpritesU::drawOverwriteFX(35, 20, defText, FRAME(0));
+    drawStringSprite(35, 20, defText, 25, FRAME(0));
     drawStatNumbers(60, 20, cseed.defSeed);
 
-    SpritesU::drawOverwriteFX(72, 0, satkText, FRAME(0));
+    drawStringSprite(72, 0, satkText, 30, FRAME(0));
     drawStatNumbers(103, 0, cseed.spcAtkSeed);
 
-    SpritesU::drawOverwriteFX(72, 10, sdefText, FRAME(0));
+    drawStringSprite(72, 10, sdefText, 30, FRAME(0));
     drawStatNumbers(103, 10, cseed.spcDefSeed);
 
-    SpritesU::drawOverwriteFX(72, 20, spdText, FRAME(0));
+    drawStringSprite(72, 20, spdText, 25, FRAME(0));
     drawStatNumbers(103, 20, cseed.spdSeed);
 
     printType(Type(cseed.type1), 0, 35);

@@ -13,6 +13,7 @@ bool DialogMenu::push(PopUpDialog info) {
         return false;
     }
     popDialogStack[dialogCount++] = info;
+    if (dialogCount == 1) prepareHead();
     return true;
 }
 
@@ -41,6 +42,7 @@ void DialogMenu::popMenu() {
     }
     --dialogCount;
     popDialogStack[dialogCount] = PopUpDialog{0, 0, 0, 0, 0, 0, 0, TEXT, 0};
+    if (peek()) prepareHead();
     if (peek() && head().animation != 0) {
         pushAnimation();
     }

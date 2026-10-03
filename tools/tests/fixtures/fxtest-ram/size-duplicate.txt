@@ -1,0 +1,5 @@
+fixture.elf:
+section size addr
+.data 20 8388864
+.bss 80 8388884
+.data 1 8389000

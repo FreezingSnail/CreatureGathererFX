@@ -1,5 +1,5 @@
 #include "ReadData.hpp"
-#include <ArduboyFX.h>
+#include "FxRead.hpp"
 #include <avr/pgmspace.h>
 #include "../fxdata.h"
 
@@ -38,15 +38,15 @@ uint8_t readEffectStringWidth() {
 }
 
 uint24_t readCreatureNameAddress(uint8_t id) {
-    return FX::readIndexedUInt24(CreatureNames::CreatureNames, id);
+    return FxRead::indexed24(CreatureNames::CreatureNames, id);
 }
 
 uint24_t readMoveNameAddress(uint16_t id) {
-    return FX::readIndexedUInt24(MoveNames::MoveNames, id);
+    return FxRead::indexed24(MoveNames::MoveNames, id);
 }
 
 uint24_t readEffectStringAddress() {
-    return FX::readIndexedUInt24(EffectStrings::EffectStrings, 0);
+    return FxRead::indexed24(EffectStrings::EffectStrings, 0);
 }
 
 uint8_t getEffectRateFX(uint8_t id) {
@@ -57,22 +57,22 @@ Move readMoveFX(uint8_t index) {
     Move move;
     auto offset = sizeof(uint32_t) * index;
     uint24_t rowAddress = move_table + offset;
-    buffer = FX::readIndexedUInt32(rowAddress, 0);
+    buffer = FxRead::indexed32(rowAddress, 0);
     move = Move(buffer);
     return move;
 }
 
 OpponentSeed readOpponentSeed(uint8_t index) {
     OpponentSeed seed = OpponentSeed{0, 0, 1};
-    uint24_t rowAddress = FX::readIndexedUInt24(opts, index);
-    FX::readDataObject(rowAddress, seed);
+    uint24_t rowAddress = FxRead::indexed24(opts, index);
+    FxRead::object(rowAddress, seed);
     return seed;
 }
 
 CreatureData_t getCreatureFromStore(uint8_t id) {
     CreatureData_t cseed;
     uint24_t rowAddress = CreatureData::creatureData + (sizeof(CreatureData_t) * id);
-    FX::readDataObject(rowAddress, cseed);
+    FxRead::object(rowAddress, cseed);
     return cseed;
 }
 
@@ -91,35 +91,33 @@ void load(Creature *creature, CreatureData_t seed, uint8_t level) {
 // 00,id1,lvl1,move11,move12,move13,move14,
 
 void arenaLoad(Creature *creature, uint24_t addr, uint8_t lvl) {
-    uint8_t data[4];
-    data[0] = FX::readIndexedUInt8(addr, 1);
-    data[1] = FX::readIndexedUInt8(addr, 2);
-    data[2] = FX::readIndexedUInt8(addr, 3);
-    data[3] = FX::readIndexedUInt8(addr, 4);
-
-    creature->id = FX::readIndexedUInt8(addr, 0);
+    uint8_t record[5];
+    FxRead::bytes(addr, record, sizeof(record));
+    creature->id = record[0];
     CreatureData_t cSeed = getCreatureFromStore(creature->id);
 
     creature->loadTypes(cSeed);
     creature->level = lvl;
     creature->setStats(cSeed);
-    creature->setMove(FX::readIndexedUInt8(addr, 1), 0);
-    creature->setMove(FX::readIndexedUInt8(addr, 2), 1);
-    creature->setMove(FX::readIndexedUInt8(addr, 3), 2);
-    creature->setMove(FX::readIndexedUInt8(addr, 4), 3);
+    for (uint8_t slot = 0; slot < 4; ++slot) {
+        creature->setMove(record[slot + 1], slot);
+    }
+    // One record block, one creature seed, and the four packed move records
+    // resolved by Creature::setMove() form this load transition.
+    FxReadCounter::transitionExact(6);
 }
 
 void ReadOpt(Opponent *opt, uint8_t index) {
     uint24_t addr = opponent_seeds + sizeof(OpponentSeed) * index;
     OpponentSeed seed;
-    FX::readDataObject(addr, seed);
+    FxRead::object(addr, seed);
     opt->loadOpt(&seed);
 }
 
 void loadEncounterOpt(Opponent *opt, uint8_t id, uint8_t level) {
     CreatureData_t cseed;
     uint24_t rowAddress = CreatureData::creatureData + (sizeof(CreatureData_t) * id);
-    FX::readDataObject(rowAddress, cseed);
+    FxRead::object(rowAddress, cseed);
     opt->levels[0] = level;
     opt->levels[1] = 0;
     opt->levels[2] = 0;
@@ -129,9 +127,5 @@ void loadEncounterOpt(Opponent *opt, uint8_t id, uint8_t level) {
 }
 
 uint16_t ReadFXu16(uint24_t addr) {
-    FX::seekData(addr);
-    uint8_t bytes[2];
-    FX::readBytes(bytes, 2);
-    FX::readEnd();
-    return static_cast<uint16_t>(bytes[1]) << 8 | bytes[0];
+    return FxRead::littleEndian16(addr);
 }

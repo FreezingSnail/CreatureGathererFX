@@ -173,6 +173,9 @@ Creature *BattleEngine::getCreature(uint8_t index) {
 // TODO: make these one to get rid of repeated code
 void BattleEngine::startFight(uint8_t optID) {
     this->loadOpponent(optID);
+#ifndef TEST
+    FxReadCounter::transitionExact(17);
+#endif
     // ReadOpt(&opponent, optID);
     // resetOpponent();
     this->loadPlayer();
@@ -184,6 +187,9 @@ void BattleEngine::startFight(uint8_t optID) {
 }
 void BattleEngine::startArena(uint8_t optID) {
     ReadOpt(&this->opponent, optID);
+#ifndef TEST
+    FxReadCounter::transitionExact(16);
+#endif
     resetOpponent();
     loadPlayer();
     activeBattle = true;
@@ -194,6 +200,9 @@ void BattleEngine::startArena(uint8_t optID) {
 
 void BattleEngine::startEncounter(uint8_t creatureID, uint8_t level) {
     this->LoadCreature(creatureID, level);
+#ifndef TEST
+    FxReadCounter::transitionExact(5);
+#endif
     this->loadPlayer();
     this->activeBattle = true;
     playerAction.actionIndex = -1;

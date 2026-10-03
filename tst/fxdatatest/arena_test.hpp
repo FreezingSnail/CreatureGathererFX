@@ -5,6 +5,7 @@
 #include "generated/arena_data.hpp"
 #include "generated/creature_data.hpp"
 #include "src/creature/Creature.hpp"
+#include "src/lib/FxReadCounter.hpp"
 #include "src/lib/ReadData.hpp"
 
 // Teams::StockCreatures::null is the canonical first 5-byte arena row. Each
@@ -18,9 +19,6 @@ uint8_t arenaFixtureStat(uint8_t seed) {
 }
 
 void test_arena(FxTest &test) {
-    // arenaLoad currently reads data[4] before independently reading the same
-    // four move bytes for setMove(). Those first reads are dead; preserve them
-    // here as source behavior rather than masking or fixing them in this test.
     for (uint8_t row = 0; row < arenaFixtureCount; ++row) {
         uint8_t arenaRow[arenaFixtureRowSize];
         memcpy_P(arenaRow, arenaFixtures[row], sizeof(arenaRow));
@@ -29,8 +27,11 @@ void test_arena(FxTest &test) {
         memcpy_P(&creatureSeed, creatureFixtures + arenaRow[0], sizeof(creatureSeed));
 
         Creature creature;
+        FxReadCounter::resetFrame();
         arenaLoad(&creature, arenaFixtureBase + arenaFixtureRowSize * row,
                   arenaFixtureLevel);
+        test.expectEq(FxReadCounter::count(), static_cast<uint8_t>(6),
+                      F("arena block, seed, and four move records"));
 
         test.expectEqIdx(creature.id, arenaRow[0], F("arena.id"), row);
         test.expectEqIdx(creature.level, arenaFixtureLevel, F("arena.level"), row);

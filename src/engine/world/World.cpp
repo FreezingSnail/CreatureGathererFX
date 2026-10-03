@@ -1,17 +1,23 @@
 #include "World.hpp"
+#include "WorldCollision.hpp"
 
 #ifndef TEST
 #include "../../common.hpp"
 #include "../../globals.hpp"
+#include "../../lib/FxRead.hpp"
 #else
 #include "../../GameState.hpp"
 extern GameState gameState;
+extern bool worldInteractionJustPressedA();
+extern bool worldInteractionDialogActive();
+extern void worldInteractionPopDialog();
+extern void worldInteractionReadScript(uint24_t address, uint8_t *buffer, uint8_t length);
+extern void worldInteractionRunScript(uint8_t *script, uint16_t currentTile, uint16_t targetTile);
+extern uint24_t worldInteractionScriptsBase();
 #endif
 
 namespace {
 constexpr uint8_t TILE_SIZE = 16;
-constexpr uint8_t WORLD_MAP_WIDTH = 32;
-constexpr uint8_t WORLD_MAP_HEIGHT = 16;
 constexpr uint8_t DIRECTION_MASK = 0x03;
 constexpr uint8_t MOVING_MASK = 0x04;
 constexpr uint8_t WALK_MASK_BITS = 0x38;
@@ -85,25 +91,95 @@ void clearStep(WorldMotion &motion, uint16_t newOrigin) {
     setWalkMask(motion, WALK_NONE);
     setOrigin(motion, newOrigin);
 }
+
+bool interactionJustPressedA() {
+#ifdef TEST
+    return worldInteractionJustPressedA();
+#else
+    return arduboy.justPressed(A_BUTTON);
+#endif
+}
+
+bool interactionDialogActive() {
+#ifdef TEST
+    return worldInteractionDialogActive();
+#else
+    return dialogMenu.peek();
+#endif
+}
+
+void popInteractionDialog() {
+#ifdef TEST
+    worldInteractionPopDialog();
+#else
+    dialogMenu.popMenu();
+#endif
+}
+
+void readInteractionScript(uint24_t address, uint8_t *script, uint8_t length) {
+#ifdef TEST
+    worldInteractionReadScript(address, script, length);
+#else
+    FxRead::bytes(address, script, length);
+    FxReadCounter::transitionExact(1);
+#endif
+}
+
+void runInteractionScript(uint8_t *script, uint16_t currentTile, uint16_t targetTile) {
+#ifdef TEST
+    worldInteractionRunScript(script, currentTile, targetTile);
+#else
+    vm.initVM(script, currentTile, targetTile);
+    vm.run();
+#endif
+}
+
+uint24_t interactionScriptsBase() {
+#ifdef TEST
+    return worldInteractionScriptsBase();
+#else
+    return scripts;
+#endif
+}
+
+bool facedTile(uint16_t playerLocation, Direction facing, uint16_t &target) {
+    int16_t x = static_cast<uint8_t>(playerLocation & 0xFF);
+    int16_t y = static_cast<uint8_t>(playerLocation >> 8);
+    switch (facing) {
+    case Direction::UP: --y; break;
+    case Direction::DOWN: ++y; break;
+    case Direction::LEFT: --x; break;
+    case Direction::RIGHT: ++x; break;
+    }
+    if (x < 0 || y < 0 || x >= Chunk::MAP_WIDTH_TILES || y >= Chunk::MAP_HEIGHT_TILES) {
+        return false;
+    }
+    target = static_cast<uint16_t>((static_cast<uint16_t>(y) << 8) |
+                                   static_cast<uint16_t>(x));
+    return true;
+}
 }
 
 void WorldEngine::init(WorldTransient &world) {
     world.activateMotion();
+    TilePropertyWindow::invalidate(world.propertyWindow);
     world.motion.directionAndFlags = static_cast<uint8_t>(Direction::DOWN);
     world.motion.step = 0;
     setOrigin(world.motion, gameState.playerLocation);
 }
 
-void WorldEngine::loadMap(WorldTransient &, uint8_t mapIndex, uint8_t submapIndex) {
+void WorldEngine::loadMap(WorldTransient &world, uint8_t mapIndex, uint8_t submapIndex) {
     // The FX image contains one canonical map; it occupies map/submap 0/0.
     (void)mapIndex;
     (void)submapIndex;
+    TilePropertyWindow::invalidate(world.propertyWindow);
 }
 
 void WorldEngine::setPos(WorldTransient &world, uint8_t x, uint8_t y) {
     gameState.playerLocation = static_cast<uint16_t>(x) |
                                (static_cast<uint16_t>(y) << 8);
     clearStep(world.motion, gameState.playerLocation);
+    TilePropertyWindow::invalidate(world.propertyWindow);
 }
 
 uint16_t WorldEngine::location() {
@@ -128,6 +204,7 @@ void WorldEngine::syncFromLocation(WorldTransient &world) {
     const uint16_t published = gameState.playerLocation;
     if (published == origin(world.motion)) return;
     clearStep(world.motion, published);
+    TilePropertyWindow::invalidate(world.propertyWindow);
 }
 
 void WorldEngine::input(WorldTransient &world) {
@@ -170,18 +247,25 @@ void WorldEngine::input(WorldTransient &world) {
 void WorldEngine::runMap(WorldTransient &world) {
 #ifdef TEST
     syncFromLocation(world);
+    if (interactionDialogActive()) {
+        if (interactionJustPressedA()) popInteractionDialog();
+    } else {
+        interact();
+    }
 #else
     syncFromLocation(world);
-    if (moving(world.motion) && moveable(world)) {
+    if (dialogMenu.peek()) {
+        if (arduboy.justPressed(A_BUTTON)) dialogMenu.popMenu();
+    } else if (moving(world.motion) && moveable(world)) {
         moveChar(world);
-    } else if (!dialogMenu.peek()) {
+    } else {
+        const uint16_t beforeInteract = gameState.playerLocation;
         interact();
-        input(world);
+        if (gameState.playerLocation != beforeInteract) syncFromLocation(world);
+        if (!dialogMenu.peek()) input(world);
         // Match the previous sketch path: the first animation pixel is applied
         // on the same frame that accepts the direction, for 16 ticks per tile.
         if (moving(world.motion) && moveable(world)) moveChar(world);
-    } else if (arduboy.justPressed(A_BUTTON)) {
-        // dialogMenu.popMenu();
     }
 #endif
 }
@@ -205,6 +289,7 @@ void WorldEngine::moveChar(WorldTransient &world) {
                                  (static_cast<uint16_t>(y) << 8);
     gameState.playerLocation = newLocation;
     clearStep(motion, newLocation);
+    TilePropertyWindow::invalidate(world.propertyWindow);
 
     const uint16_t oldChunk = Chunk::chunkOfLocation(oldLocation);
     const uint16_t newChunk = Chunk::chunkOfLocation(newLocation);
@@ -229,7 +314,6 @@ void WorldEngine::encounter() {
 }
 
 bool WorldEngine::moveable(const WorldTransient &world) {
-    (void)world;
     const uint16_t loc = gameState.playerLocation;
     int16_t x = static_cast<uint8_t>(loc & 0xFF);
     int16_t y = static_cast<uint8_t>(loc >> 8);
@@ -239,9 +323,27 @@ bool WorldEngine::moveable(const WorldTransient &world) {
     case Direction::LEFT: --x; break;
     case Direction::RIGHT: ++x; break;
     }
-    return x >= 0 && y >= 0 && x < WORLD_MAP_WIDTH && y < WORLD_MAP_HEIGHT;
+    return WorldCollision::canEnter(x, y, Chunk::MAP_WIDTH_TILES,
+                                    Chunk::MAP_HEIGHT_TILES, world.propertyWindow);
 }
 
 void WorldEngine::interact() {
-    // TODO: move to vm
+    if (!interactionJustPressedA() || interactionDialogActive()) return;
+
+    WorldTransient &world = worldState();
+    const uint16_t playerTile = gameState.playerLocation;
+    uint16_t targetTile;
+    if (!facedTile(playerTile, direction(world.motion), targetTile)) return;
+
+    const uint16_t playerChunk = Chunk::chunkOfLocation(playerTile);
+    if (!Chunk::validChunkId(playerChunk)) return;
+
+    // The 128-byte script slot overlays WorldMotion. Preserve the movement
+    // cursor and facing across execution; message dialogs can pause the world
+    // after this call returns.
+    const WorldMotion savedMotion = world.motion;
+    const uint24_t slot = Chunk::scriptSlotAddr(interactionScriptsBase(), playerChunk);
+    readInteractionScript(slot, world.script, Chunk::SCRIPT_SLOT_BYTES);
+    runInteractionScript(world.script, playerTile, targetTile);
+    world.motion = savedMotion;
 }

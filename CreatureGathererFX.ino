@@ -16,6 +16,10 @@
 #include "src/plants/PlantGamestate.hpp"
 #include "src/engine/draw.h"
 #include "src/vm/ScriptVm.hpp"
+#include "src/lib/FxReadCounter.hpp"
+#if defined(CGFX_SHIPPING_NO_USB)
+#include <avr/power.h>
+#endif
 
 // #include <HardwareSerial.h>
 
@@ -25,8 +29,6 @@ GameState gameState;
 ModeState modeState;
 MenuV2 menu = MenuV2();
 Player player = Player();
-
-// ARDUBOY_NO_USB
 
 Arena arena = Arena();
 Animator animator = Animator();
@@ -38,6 +40,39 @@ MenuStack menuStack;
 DialogMenu dialogMenu;
 ScriptVm vm;
 uint8_t *buffer;
+
+// Arduboy2's ARDUBOY_NO_USB entry point removes USB attach and serialEventRun,
+// but this installed mainNoUSB() omits initVariant(). This shipping entry point
+// keeps the core's full startup order and its DOWN-at-bootloader recovery path.
+#if defined(CGFX_SHIPPING_NO_USB)
+void initVariant() __attribute__((weak));
+int main(void) __attribute__((OS_main));
+int main(void) {
+    UDCON = _BV(DETACH);
+    UDIEN = 0;
+    UDINT = 0;
+    USBCON = _BV(FRZCLK);
+    UHWCON = 0;
+    power_usb_disable();
+
+    init();
+    if (initVariant != nullptr) {
+        initVariant();
+    }
+
+    bitSet(DOWN_BUTTON_PORT, DOWN_BUTTON_BIT);
+    bitClear(DOWN_BUTTON_DDR, DOWN_BUTTON_BIT);
+    Arduboy2Core::delayByte(10);
+    if (bitRead(DOWN_BUTTON_PORTIN, DOWN_BUTTON_BIT) == 0) {
+        Arduboy2Core::exitToBootloader();
+    }
+
+    setup();
+    for (;;) {
+        loop();
+    }
+}
+#endif
 
 void setup() {
     // Serial.begin(9600);
@@ -59,7 +94,6 @@ void setup() {
 
     gameState.state = GameState_t::WORLD;
     player.basic();
-    vm.initVM();
 
     // buffer = arduboy.sBuffer;
 }
@@ -92,23 +126,25 @@ void run() {
     }
 }
 
-void render() {
+uint8_t render() {
     // drawScriptText(1);
 
     switch (gameState.state) {
     case GameState_t::BATTLE:
         drawScene(battle());
-        break;
+        return 0;
     case GameState_t::WORLD:
-        drawMapFast(worldState());
+    {
+        const uint8_t rowsRead = drawMapFast(worldState());
         drawPlayer();
-        break;
+        return rowsRead;
+    }
     case GameState_t::ARENA:
         arena.drawarenaLoop(menu, player);
-        break;
+        return 0;
     case GameState_t::SAVING:
         SaveController::drawStatus();
-        return;
+        return 0;
     }
     // animator.play();
     // if (dialogMenu.peek()) {
@@ -116,12 +152,25 @@ void render() {
     // } else {
     //     menu.printMenu(engine);
     // }
+    return 0;
 }
 
 void loop() {
     if (!arduboy.nextFrame()) return;
+#if defined(FX_READ_COUNTER) || defined(DEBUG)
+    FxReadCounter::resetFrame();
+#endif
     arduboy.pollButtons();
     run();
-    render();
+#if defined(FX_READ_COUNTER) || defined(DEBUG)
+    FxReadCounter::markUpdate();
+#endif
+    const uint8_t expectedRenderReads = render();
+#if defined(FX_READ_COUNTER) || defined(DEBUG)
+    FxReadCounter::renderExact(expectedRenderReads);
+    if (!FxReadCounter::framePassed()) {
+        for (;;) {}
+    }
+#endif
     FX::display(CLEAR_BUFFER);
 }

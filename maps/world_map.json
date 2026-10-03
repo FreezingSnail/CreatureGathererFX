@@ -1,6 +1,12 @@
 {
   "width": 256,
   "height": 256,
+  "tilesets": [
+    {
+      "firstgid": 1,
+      "source": "tiles.tsx"
+    }
+  ],
   "tiles": [
     [
       7,

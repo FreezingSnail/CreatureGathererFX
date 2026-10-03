@@ -12,6 +12,7 @@ inline void operator delete(void *, void *) noexcept {}
 #endif
 
 #include "battle/Battle.hpp"
+#include "world/TilePropertyWindow.hpp"
 
 // Script execution pauses tile movement, so the two-byte movement cursor can
 // share the script slot. Coordinates stay in GameState::playerLocation; the
@@ -28,7 +29,7 @@ struct WorldTransient {
         uint8_t script[128];
         WorldMotion motion;
     };
-    uint8_t propertyWindow[23];
+    uint8_t propertyWindow[TilePropertyWindow::STORAGE_BYTES];
     uint8_t zoneTableCache[20];
 
     void activateScript() {
@@ -39,7 +40,7 @@ struct WorldTransient {
 
 static_assert(sizeof(WorldMotion) == 4, "world motion cursor must fit the script-slot overlay");
 static_assert(alignof(WorldMotion) == 1, "world motion cursor must stay byte aligned");
-static_assert(sizeof(WorldTransient) == 171, "world transient payload must remain 171 bytes");
+static_assert(sizeof(WorldTransient) == 191, "world transient payload must remain 191 bytes");
 static_assert(alignof(WorldTransient) == 1, "world transient payload must stay byte aligned");
 
 // Only these two modes are mutually exclusive. SaveController state remains
@@ -59,7 +60,7 @@ static_assert(__has_trivial_destructor(BattleEngine),
               "ModeState transitions rely on BattleEngine having no owned resources");
 static_assert(sizeof(ModeState) >= sizeof(WorldTransient), "ModeState must hold the world payload");
 #ifdef __AVR__
-static_assert(sizeof(ModeState) == 171, "AVR mode storage must be the 171-byte world member");
+static_assert(sizeof(ModeState) == 191, "AVR mode storage must be the 191-byte world member");
 static_assert(alignof(ModeState) == 1, "AVR mode storage must remain byte aligned");
 #endif
 

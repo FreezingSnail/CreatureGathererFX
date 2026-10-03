@@ -28,6 +28,19 @@ is the static RAM budget figure; the symbol list attributes named records and ca
 it omits unnamed linker bookkeeping. Override `RAM_ELF`, `AVR_SIZE`, or `AVR_NM` when inspecting a
 specific ELF or using tools outside the Arduino AVR-GCC package.
 
+`make build` and `make mini` enforce default whole-image ceilings of 24,000 B flash and 2,160 B
+static RAM. `make check` runs the host-side parser tests and the FX build gate. Override
+`AVR_FLASH_BUDGET` or `AVR_STATIC_RAM_BUDGET` to test a different ceiling. Each device-test ELF is
+also checked against `FXTEST_RAM_BUDGET` (default 2,160 B `.data` + `.bss`) before Ardens runs;
+that static allowance is separate from the painted `test_stack` headroom gate.
+
+Shipping FX and Mini builds disable the USB/CDC application stack to recover flash and static RAM.
+The device-test sketches keep the stock USB entry point because their exact serial `P`/`F` result
+depends on it. Automatic uploader reset is unavailable while the game is running. To recover for
+upload, connect USB, hold DOWN while resetting the Arduboy, then start the upload while the
+bootloader is active; shipping startup also checks DOWN and transfers to the bootloader. If that
+path does not enter the bootloader, double-tap reset and start the upload promptly.
+
 ## Tooling
 
 CreatureGathererFX uses the native Rust `cgfx-tools` binary from

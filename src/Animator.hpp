@@ -6,6 +6,7 @@ struct Animation {
     uint8_t xOrigin, yOrigin;
     uint8_t frames;
     uint24_t data;
+    uint8_t width, height;
 };
 
 enum class AnimationType {

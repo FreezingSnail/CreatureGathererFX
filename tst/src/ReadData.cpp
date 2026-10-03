@@ -1,4 +1,5 @@
 #include "../../src/lib/ReadData.hpp"
+#include "../../src/lib/FxRead.hpp"
 #include "parseCSV.hpp"
 
 uint24_t readCreatureNameAddress(uint8_t id) {
@@ -70,22 +71,17 @@ CreatureData_t getCreatureFromStore(uint8_t id) {
 }
 
 void arenaLoad(Creature *creature, uint24_t addr, uint8_t lvl) {
-    uint8_t data[4];
-    // data[0] = FX::readIndexedUInt8(addr, 1);
-    // data[1] = FX::readIndexedUInt8(addr, 2);
-    // data[2] = FX::readIndexedUInt8(addr, 3);
-    // data[3] = FX::readIndexedUInt8(addr, 4);
-
-    // creature->id = FX::readIndexedUInt8(addr, 0);
+    uint8_t record[5];
+    FxRead::bytes(addr, record, sizeof(record));
+    creature->id = record[0];
     CreatureData_t cSeed = getCreatureFromStore(creature->id);
 
     creature->loadTypes(cSeed);
     creature->level = lvl;
     creature->setStats(cSeed);
-    // creature->setMove(FX::readIndexedUInt8(addr, 1), 0);
-    // creature->setMove(FX::readIndexedUInt8(addr, 2), 1);
-    // creature->setMove(FX::readIndexedUInt8(addr, 3), 2);
-    // creature->setMove(FX::readIndexedUInt8(addr, 4), 3);
+    for (uint8_t slot = 0; slot < 4; ++slot) {
+        creature->setMove(record[slot + 1], slot);
+    }
 }
 
 void ReadOpt(Opponent *opt, uint8_t index) {
