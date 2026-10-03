@@ -12,6 +12,7 @@
 #include "save_test.hpp"
 #include "item_test.hpp"
 #include "listview_test.hpp"
+#include "menu_test.hpp"
 #include "chunk_test.hpp"
 #include "dialog_test.hpp"
 #include "mode_state_test.hpp"
@@ -21,6 +22,7 @@
 #include "battle_view_test.hpp"
 #include "battle_test.hpp"
 #include "battle_presentation_test.hpp"
+#include "renderer_test.hpp"
 
 #include "../src/globals.hpp"
 #include <cstring>
@@ -141,6 +143,8 @@ int main() {
     std::cout << "ItemSuite finished" << std::endl;
     ListViewSuite(tests);
     std::cout << "ListViewSuite finished" << std::endl;
+    MenuNavSuite(tests);
+    std::cout << "MenuNavSuite finished" << std::endl;
     ChunkSuite(tests);
     std::cout << "ChunkSuite finished" << std::endl;
     DialogSuite(tests);
@@ -159,6 +163,8 @@ int main() {
     std::cout << "BattleSuite finished" << std::endl;
     BattlePresentationSuite(tests);
     std::cout << "BattlePresentationSuite finished" << std::endl;
+    NativeRendererSuite(tests);
+    std::cout << "NativeRendererSuite finished" << std::endl;
     std::cout << "Tests Finished" << std::endl;
     tests.printSummary();
     if (tests.fail()) {

@@ -1,5 +1,6 @@
 #include "MenuV2.hpp"
 #include "../battle/Battle.hpp"
+#include "MenuNav.hpp"
 #include "../draw.h"
 #include "../../common.hpp"
 #include "../../globals.hpp"
@@ -71,56 +72,17 @@ void MenuV2::clear() {
 }
 
 void MenuV2::transverse() {
-    switch (CURRENT_MENU) {
-    case BATTLE_OPTIONS:
-        if (arduboy.justPressed(LEFT_BUTTON)) {
-            this->cursorIndex--;
-        }
-        if (arduboy.justPressed(RIGHT_BUTTON)) {
-            this->cursorIndex++;
-        }
-        if (arduboy.justPressed(DOWN_BUTTON)) {
-            this->cursorIndex += 2;
-        }
-        if (arduboy.justPressed(UP_BUTTON)) {
-            this->cursorIndex -= 2;
-        }
-        break;
-    case BATTLE_MOVE_SELECT:
-        if (arduboy.justPressed(LEFT_BUTTON)) {
-            this->cursorIndex--;
-        }
-        if (arduboy.justPressed(RIGHT_BUTTON)) {
-            this->cursorIndex++;
-        }
-        if (arduboy.justPressed(DOWN_BUTTON)) {
-            this->cursorIndex += 2;
-        }
-        if (arduboy.justPressed(UP_BUTTON)) {
-            this->cursorIndex -= 2;
-        }
-        break;
-    case BATTLE_CREATURE_SELECT:
-        if (arduboy.justPressed(DOWN_BUTTON)) {
-            this->cursorIndex += 2;
-        } else if (arduboy.justPressed(UP_BUTTON)) {
-            this->cursorIndex -= 2;
-        }
-        break;
-    case ARENA_MENU:
-        if (arduboy.justPressed(LEFT_BUTTON)) {
-            this->cursorIndex--;
-        } else if (arduboy.justPressed(RIGHT_BUTTON)) {
-            this->cursorIndex++;
-        }
-        return;
-    }
-    if (this->cursorIndex > 3) {
-        this->cursorIndex = 0;
-    }
-    if (this->cursorIndex < 0) {
-        this->cursorIndex = 3;
-    }
+    uint8_t buttons = 0;
+    if (arduboy.justPressed(LEFT_BUTTON)) buttons |= MENU_NAV_LEFT;
+    if (arduboy.justPressed(RIGHT_BUTTON)) buttons |= MENU_NAV_RIGHT;
+    if (arduboy.justPressed(DOWN_BUTTON)) buttons |= MENU_NAV_DOWN;
+    if (arduboy.justPressed(UP_BUTTON)) buttons |= MENU_NAV_UP;
+
+    const uint8_t cursor = this->cursorIndex < 0
+                               ? 0
+                               : static_cast<uint8_t>(this->cursorIndex);
+    this->cursorIndex = static_cast<int8_t>(
+        menuNavMove(menuDescFor(CURRENT_MENU), cursor, buttons));
 }
 
 void MenuV2::action(BattleEngine &engine) {
