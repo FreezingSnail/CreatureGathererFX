@@ -299,6 +299,8 @@ static Modifier typeEffectModifier(Effect effect, DualType type) {
         increase = true;
         modType = DualType(Type::ELDER, Type::NONE);
         break;
+    default:
+        return Modifier::Same;
     }
 
     if (!type.hasType(modType.getType1())) {
