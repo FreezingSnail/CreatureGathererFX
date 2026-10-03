@@ -2091,3 +2091,44 @@ PASS; no protected generated drift
 Generation/artifact output stable: no generated source/header or packed-artifact paths changed; worktree contains pre-existing jp8.1.10 source/tests, this report, and expected Beads close metadata. `dist/fxdata.bin` now matches the committed parity baseline. Non-device acceptance passes.
 
 Device acceptance reconciliation: live steering forbade Ardens, all `fxtest*` targets, visual checks, and hardware checks, so no serial/device result is claimed. Permanent native integration in `make test` covers terminal WORLD restoration, menu/dialog cleanup, HP damage/re-entry, and SaveController/SaveFile HP round-trip (`BattleTerminalExitTest`, `SaveControllerPartyHPPersistenceTest`, and related battle/save suites); this is the permitted headless native substitute for this wave. No commit/push. Worker wall time for unblock and gates: approximately 2 minutes (19:38:11–19:39:32 -0400).
+
+
+# CreatureGathererFX-jp8.3.8 — wild escape terminal outcome
+
+Implemented pure one-action Escape resolution: wild escape sets `BattleState::over` and `Outcome::Escaped` while preserving active species/HP/progress for terminal presentation; trainer escape returns `Escape|REFUSED`, no outcome/mutation, allowing the opposing action to resolve. Added native headless integration coverage for zero-flee edge, exact result sentinels, terminal absorption, RNG/FX-read budgets, HP/active-state preservation, and one-action refusal/success semantics. No setup/session/gather/end-turn files changed.
+
+```text
+make test
+Host: 2219 passed, 0 failed; World: 190 passed, 0 failed
+PASS
+
+make testvm
+VM: 42 passed, 0 failed
+PASS
+
+make test-manifest
+PASS
+
+make test-generated-libs
+generated-libs: 8 passed, 0 failed; invariants: 5 passed, 0 failed; first-unqualified-alias: 28 passed, 0 failed
+PASS
+
+make verify-generated
+FAIL: unexpected dist/fxdata-data.bin; observed 440d4d26c160ed99a97d1ea4c964e5ec14a23f4947bb9cd06b3b9a1e0c908100; manifest entry missing.
+
+make test-pack-parity
+FAIL: expected 838354d28975c5959ce2c105348704c68baf608e64c834c3e2bf02b4aa88a2a7; observed 3d2171b166d711ac1a026666e4bb6345f714815f38164b5439c449a26558c18f.
+
+make build
+flash 19870/24000 B; static 1873/2160 B; free 4130 flash, 287 static
+PASS
+
+make ram
+RAM_FLASH_BYTES=19870; RAM_STATIC_BYTES=1873; RAM_FREE_BYTES=687
+PASS
+
+git diff --check
+PASS
+```
+
+Generated failures are pre-existing artifact/baseline state unrelated to resolver/test changes; no generated source/header or packed paths changed. No Ardens, fxtest targets, hardware, or visual checks run per task instruction. Native `BattleEscapeIntegrationTest` is the permitted headless substitute. No commit/push. Wall: approximately 2m18s (19:40:14–19:42:32 -0400).

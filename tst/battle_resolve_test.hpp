@@ -3,6 +3,7 @@
 #include "test.hpp"
 #include "../src/engine/battle/Resolve.hpp"
 #include "../src/engine/battle/BattleSetup.hpp"
+#include "../src/lib/FxReadCounter.hpp"
 
 namespace battle_resolve_test_detail {
 
@@ -327,9 +328,139 @@ inline void BattleResolveIntegrationTest(TestSuite &suite)
     suite.addTest(test);
 }
 
+inline void BattleEscapeIntegrationTest(TestSuite &suite)
+{
+    using namespace battle;
+    using namespace battle_resolve_test_detail;
+    Test test(__func__);
+    Rng rng = {scriptedRoll};
+    ActionResult result;
+
+    battle::BattleState state = stateFixture();
+    state.active[0].hp = 37;
+    state.active[1].hp = 83;
+    state.gather.progress = 11;
+    state.gather.fleeTurns = 0;
+    const battle::BattleState wildBeforeEscape = state;
+    result.kind = ResultKind::Attack;
+    result.flags = 255;
+    result.consequences[0] = {Effect::ATKUP, 0, 3};
+    script(0);
+    FxReadCounter::resetFrame();
+    resolveAction(state, Side::Player, {ActionKind::Escape, 0}, rng, result);
+    test.assert(result.kind, ResultKind::Escape,
+                "wild escape resolves as one terminal action");
+    test.assert(result.actor, Side::Player, "wild escape names player actor");
+    test.assert(result.index, static_cast<uint8_t>(255),
+                "escape result keeps non-attack index sentinel");
+    test.assert(result.flags, static_cast<uint8_t>(0),
+                "wild escape has no refusal or faint flags");
+    test.assert(result.outcome, Outcome::Escaped,
+                "wild escape reports Escaped outcome");
+    test.assert(result.speciesBefore[0], wildBeforeEscape.active[0].id,
+                "escape preserves player species before presentation");
+    test.assert(result.speciesBefore[1], wildBeforeEscape.active[1].id,
+                "escape preserves opponent species before presentation");
+    test.assert(result.hpBefore[0], static_cast<uint8_t>(37),
+                "escape captures player HP before terminal result");
+    test.assert(result.hpAfter[0], static_cast<uint8_t>(37),
+                "escape leaves player HP unchanged");
+    test.assert(result.hpBefore[1], static_cast<uint8_t>(83),
+                "escape captures opponent HP before terminal result");
+    test.assert(result.hpAfter[1], static_cast<uint8_t>(83),
+                "escape leaves opponent HP unchanged");
+    test.assert(result.progressBefore, static_cast<uint8_t>(11),
+                "escape captures gather progress before terminal result");
+    test.assert(result.progressAfter, static_cast<uint8_t>(11),
+                "escape leaves gather progress unchanged");
+    test.assert(state.active[0].hp, wildBeforeEscape.active[0].hp,
+                "wild escape preserves active player HP");
+    test.assert(state.active[1].hp, wildBeforeEscape.active[1].hp,
+                "wild escape preserves active opponent HP");
+    test.assert(state.active[0].id, wildBeforeEscape.active[0].id,
+                "wild escape preserves active player state");
+    test.assert(state.active[1].id, wildBeforeEscape.active[1].id,
+                "wild escape preserves active opponent state");
+    test.assert(state.gather.fleeTurns, static_cast<uint8_t>(0),
+                "wild escape does not underflow zero flee countdown");
+    test.assert(state.over, true,
+                "wild escape marks battle terminal immediately");
+    test.assert(scriptedCalls, static_cast<uint8_t>(0),
+                "wild escape consumes no RNG or flee roll");
+    test.assert(FxReadCounter::count(), static_cast<uint8_t>(0),
+                "wild escape performs no FX reads");
+    test.assert(FxReadCounter::markUpdate(), true,
+                "wild escape leaves native read budget clean");
+    assertSentinels(test, result);
+
+    const uint8_t escapedPlayerHp = state.active[0].hp;
+    const uint8_t escapedOpponentHp = state.active[1].hp;
+    script(0);
+    FxReadCounter::resetFrame();
+    resolveAction(state, Side::Opponent, {ActionKind::Attack, 0}, rng, result);
+    test.assert(result.kind, ResultKind::None,
+                "terminal wild escape cancels the opposing action");
+    test.assert(state.active[0].hp, escapedPlayerHp,
+                "cancelled opposing action preserves player HP");
+    test.assert(state.active[1].hp, escapedOpponentHp,
+                "cancelled opposing action preserves opponent HP");
+    test.assert(state.over, true,
+                "terminal wild escape remains absorbing");
+    test.assert(scriptedCalls, static_cast<uint8_t>(0),
+                "cancelled opposing action consumes no RNG");
+    test.assert(FxReadCounter::count(), static_cast<uint8_t>(0),
+                "cancelled opposing action performs no FX reads");
+
+    state = stateFixture();
+    state.trainer = true;
+    state.active[0].hp = 100;
+    state.active[1].hp = 100;
+    state.gather.fleeTurns = 0;
+    const battle::BattleState trainerBeforeEscape = state;
+    script(127);
+    FxReadCounter::resetFrame();
+    resolveAction(state, Side::Player, {ActionKind::Escape, 0}, rng, result);
+    test.assert(result.kind, ResultKind::Escape,
+                "trainer escape resolves as one refused action");
+    test.assert(result.actor, Side::Player, "trainer escape names player actor");
+    test.assert(result.index, static_cast<uint8_t>(255),
+                "trainer escape keeps non-attack index sentinel");
+    test.assert((result.flags & REFUSED) != 0, true,
+                "trainer escape reports refusal");
+    test.assert(result.outcome, Outcome::None,
+                "trainer escape has no terminal outcome");
+    test.assert(state.over, false,
+                "trainer escape leaves battle active");
+    test.assert(state.active[0].hp, trainerBeforeEscape.active[0].hp,
+                "trainer refusal leaves player HP unchanged");
+    test.assert(state.active[1].hp, trainerBeforeEscape.active[1].hp,
+                "trainer refusal leaves opponent HP unchanged");
+    test.assert(state.gather.fleeTurns, static_cast<uint8_t>(0),
+                "trainer refusal does not underflow zero flee countdown");
+    test.assert(scriptedCalls, static_cast<uint8_t>(0),
+                "trainer refusal consumes no RNG or flee roll");
+    test.assert(FxReadCounter::count(), static_cast<uint8_t>(0),
+                "trainer refusal performs no FX reads");
+    test.assert(FxReadCounter::markUpdate(), true,
+                "trainer refusal leaves native read budget clean");
+    assertSentinels(test, result);
+
+    script(0);
+    resolveAction(state, Side::Opponent, {ActionKind::Attack, 0}, rng, result);
+    test.assert(result.kind, ResultKind::Attack,
+                "trainer refusal consumes only player action");
+    test.assert(state.active[0].hp < trainerBeforeEscape.active[0].hp, true,
+                "opponent acts after trainer escape refusal");
+    test.assert(state.over, false,
+                "nonterminal opposing action keeps trainer battle active");
+
+    suite.addTest(test);
+}
+
 inline void BattleResolveSuite(TestRunner &runner)
 {
     TestSuite suite("Battle resolution integration");
     BattleResolveIntegrationTest(suite);
+    BattleEscapeIntegrationTest(suite);
     runner.addTestSuite(suite);
 }
