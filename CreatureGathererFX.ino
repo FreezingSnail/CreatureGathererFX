@@ -17,6 +17,9 @@
 #include "src/engine/draw.h"
 #include "src/vm/ScriptVm.hpp"
 #include "src/lib/FxReadCounter.hpp"
+#ifdef CGFX_BATTLE_PRESENTATION_SPIKE
+#include "tst/fxdatatest/battlepresentation_fixture.hpp"
+#endif
 #if defined(CGFX_SHIPPING_NO_USB)
 #include <avr/power.h>
 #endif
@@ -87,6 +90,9 @@ void setup() {
     journalInit();
     // FX::setFont(ArduFont, dcmNormal);   // select default font
     FX::setCursorRange(0, 32767);
+#ifdef CGFX_BATTLE_PRESENTATION_SPIKE
+    battle_presentation_fixture::shippingSpike();
+#endif
     gameState.playerLocation = static_cast<uint16_t>(3) |
                                (static_cast<uint16_t>(2) << 8);
     enterBattle();
@@ -102,7 +108,7 @@ void setup() {
 void run() {
     switch (gameState.state) {
     case GameState_t::BATTLE:
-        drawScene(battle());
+        drawScene(legacyBattle());
         break;
     case GameState_t::WORLD:
         WorldEngine::runMap(worldState());
@@ -110,7 +116,7 @@ void run() {
     case GameState_t::ARENA:
         if (arena.arenaLoop(menu, player)) {
             enterBattle();
-            arena.startBattle(battle(), player, menu);
+            arena.startBattle(legacyBattle(), player, menu);
             gameState.state = GameState_t::BATTLE;
         }
         break;
@@ -122,7 +128,7 @@ void run() {
     if (dialogMenu.peek()) {
         dialogMenu.drawPopMenu();
     } else if (gameState.state == GameState_t::BATTLE) {
-        menu.printMenu(battle());
+        menu.printMenu(legacyBattle());
     }
 }
 
@@ -131,7 +137,7 @@ uint8_t render() {
 
     switch (gameState.state) {
     case GameState_t::BATTLE:
-        drawScene(battle());
+        drawScene(legacyBattle());
         return 0;
     case GameState_t::WORLD:
     {

@@ -1311,3 +1311,252 @@ The initial generation failure was resolved by selecting the adjacent tools chec
 debug binary first on `PATH`. `make doctor` also reported missing Arduboy2/ArdBitmap libraries,
 but the full device build and all serial suites passed with the installed Arduboy core. Worker wall
 time was approximately 6 minutes (not separately timed); the integrated gate took about 92 seconds.
+
+## jp8.3.13–.16 battle-demo baseline (2026-10-03)
+
+The requested one-action presentation wave begins with contract reconciliation. Dependencies
+remain enforced; implementation workers do not commit or push. Initial user changes were
+`.beads/interactions.jsonl` and untracked `.codex/`.
+
+```text
+make ram BUILD_DIR=build/battle-demo-baseline
+# PASS: 18,492 B flash; 1,871 B static RAM; 689 B free SRAM.
+make fxtest-headless FXTEST_INOS=tst/fxdatatest/test_stack.ino BUILD_DIR=build/battle-demo-baseline ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS: test_stack 4/0; painted headroom 229 B; mode-transition headroom 370 B.
+# Device-test image: 21,734 B flash / 2,050 B static RAM.
+```
+
+Baseline effective reserve is 160 B after the 69 B USB ISR allowance, only 10 B above the
+150 B reserve. Baseline checks took about 11 seconds of wall time (shipping and device builds
+ran concurrently in separate build subdirectories).
+
+## jp8.3.13 — frozen one-action contract (2026-10-03)
+
+Design-only deliverable: `docs/battle-action-contract.md` pins Result28 B, AVR Combatant35/State93, cursor9/Rng2, presenter ceiling24 and combined156 B under existing191-byte mode storage. Read actual Battle/DialogQueue/Animator/ModeState/Move/Effect/HP contracts and native move generator inputs/output. Reconciled16 Beads records including .1/.5, epic and menu .4.2; labels, dependencies, statuses and HP/version decision preserved. Updated .2/.6/.4.2 titles to remove obsolete interface wording.
+
+Pinned both move effects and four ordered end-tick facts, original-slot switching, faint invalidation/resume, pending acquisition paying opposing action/ticks (Lose before Gathered before flee), exactly-once cursor acknowledgement, delayed terminal exit,52 FPS timing, input edge isolation and safe raw asset rendering. Packed beam/wave assets are headerless: fixed32x32/8 frames at address-2; old Animator header lookup is not adopted. Preserve move0 valid /32 empty /255 absent. No engine implementation, build pass or savings is claimed.
+
+Exact validation commands:
+```text
+bd show <each changed ID below> --json
+bd dep cycles
+# PASS: No dependency cycles detected.
+bd lint CreatureGathererFX-jp8.3.1 CreatureGathererFX-jp8.3.2 CreatureGathererFX-jp8.3.4 CreatureGathererFX-jp8.3.6 CreatureGathererFX-jp8.3.7 CreatureGathererFX-jp8.3.8 CreatureGathererFX-jp8.3.9 CreatureGathererFX-jp8.3.11 CreatureGathererFX-jp8.3.12 CreatureGathererFX-jp8.4.2 CreatureGathererFX-jp8.3.14 CreatureGathererFX-jp8.3.15 CreatureGathererFX-jp8.3.16 CreatureGathererFX-jp8.3 CreatureGathererFX-jp8.3.13 CreatureGathererFX-jp8.3.5
+# PASS: No template warnings found (16 issues checked).
+```
+
+Wall time: design/reconciliation worker14m22s (13:17:49–13:32:11 UTC); gate0 (design-only); orchestrator time recorded separately. No commit/push. Implementation beads retain resource spike/final-gate/pack-parity requirements; raw asset header assumption and30 FPS draft corrected before freeze.
+
+Contract prerequisite clarification: .1/.2 use `make test; make build; make ram` with no static increase; their acceptance does not require the future .14 presentation suite. .1 may run existing `test_stack` for renderer call-depth evidence. `bd lint CreatureGathererFX-jp8.3.1 CreatureGathererFX-jp8.3.2`: PASS, no warnings (2 checked).
+
+Read-only contract edge review clarified faint visibility with root approval: overlay hides by species sentinel255 after Faint completion, guarded sprite IDs; already-zero before-state stays hidden across replacement announcement. Two presenter flag bits, no extra storage. Updated doc and focused .1/.14/.15 notes plus epic/.13 frozen design. `bd lint CreatureGathererFX-jp8.3.1 CreatureGathererFX-jp8.3.14 CreatureGathererFX-jp8.3.15`: PASS3 checked. Review/amendment approximately6 minutes; no code changes.
+
+## jp8.3.1 — focused implementation (in progress)
+
+Initial host compile exposed a collision between the frozen `namespace battle` API and the existing
+global `battle()` BattleEngine accessor in `ModeState.hpp`; C++ cannot declare both in one
+translation unit. The orchestrator owns renaming the legacy accessor to `legacyBattle()` and its
+call sites. BattleView headers keep the frozen namespace; focused checks resume after that fix.
+
+```text
+make test BUILD_DIR=build/battle-view
+# FAIL after about 1.7 s: namespace/function name conflict at BattleTypes.hpp and ModeState.hpp.
+```
+
+`.1` native compilation exposed a namespace collision: `battle::` and existing global `battle()` cannot coexist. Root owns mechanical old-accessor rename to `legacyBattle()`; union member remains `battle`. Final session accessor is `battleSession()`, legacy accessor removed in .12. Frozen doc and .1/.11/.12 scope/acceptance amended; `bd lint CreatureGathererFX-jp8.3.1 CreatureGathererFX-jp8.3.11 CreatureGathererFX-jp8.3.12`: PASS3. Failed command: `make test BUILD_DIR=build/battle-view`; compiler: `redefinition of battle as different kind of symbol` from ModeState.hpp global accessor. .1 implementation owner records detailed failure tail. Contract amendment approximately2 minutes; no contract-agent code edits.
+
+Implementation checks after the accessor rename:
+```text
+make test BUILD_DIR=build/battle-view
+# PASS: host 1,367/0; world 190/0.
+make build BUILD_DIR=build/battle-view
+# PASS: 18,012 B flash; 1,871 B static RAM.
+make ram BUILD_DIR=build/battle-view
+# PASS: 18,012 B flash; 1,871 B static RAM; 689 B free SRAM.
+```
+
+Static RAM matches the recorded shipping baseline exactly; flash is 480 B lower than the
+18,492 B baseline after replacing the two floating-point HP bar ratios with integer widths.
+Focused commands took approximately20 seconds total. Orchestrator full gate remains pending.
+
+Orchestrator full gate:
+```text
+PATH=/Users/connorfranc/code/CreatureGathererTools/target/debug:$PATH make final-gate BUILD_DIR=build/battle-view ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS in 109 s: host 1,367/0; world 190/0; VM 42/0; all 17 FX suites 3,468/0;
+# test_stack painted headroom 229 B. Shipping 18,012 B flash / 1,871 B static / 689 B free.
+# Logs: build/battle-view/final-gate/{check,ram}.log. Generated sets unchanged.
+```
+
+## jp8.3.2 compact battle state and action result
+
+Added the frozen pure data headers and registered the native BattleSuite. The result has four
+semantic consequence facts with explicit unused sentinels; no resolver or event queue was added.
+Effect was already byte sized, so this bead claims no narrowing savings. Extended the existing
+mode-state device suite to prove AVR sizes without instantiating a second resident state.
+
+```text
+make test BUILD_DIR=build/battle-state
+# PASS: host 1,397/0; world 190/0; BattleDataContractTest 30/0.
+make ram BUILD_DIR=build/battle-state
+# PASS (includes shipping build): 18,012 B flash / 1,871 B static / 689 B free.
+make fxtest-headless FXTEST_INOS=tst/fxdatatest/test_mode_state.ino BUILD_DIR=build/battle-state ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS: mode_state 216/0; AVR Combatant 35 B / BattleState 93 B / ActionResult 28 B.
+PATH=/Users/connorfranc/code/CreatureGathererTools/target/debug:$PATH make final-gate BUILD_DIR=build/battle-state ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS in 113 s: host 1,397/0; world 190/0; VM 42/0; all 17 FX suites 3,471/0;
+# test_stack painted headroom 229 B (160 B effective after USB allowance).
+# Shipping unchanged: 18,012 B flash / 1,871 B static / 689 B free.
+# Logs: build/battle-state/final-gate/{check,ram}.log.
+git diff --check
+# PASS; generation left no tracked generated changes.
+```
+
+No failed attempts. Implementation and focused-check wall time was about 79 s; integrated gate
+113 s (new log birth/modification timestamps); orchestrator/report time about 21 s at measurement.
+The existing device layout suite was used instead of the not-yet-created presentation suite,
+as required by the amended shape-only prerequisite contract. No commit or push.
+
+Root-approved .14 resource refinement: Result/Consequence raw POD without member defaults; `inline resetActionResult(out)` explicitly restores zero/semantic sentinels before fresh population, never during playback. Mask/timing constants become byte enum values with pinned names/values and no SRAM templates/tables. Same layouts28/3, mechanics unchanged; .2 sentinel tests explicitly reset, .14 full gate reruns closed .2. Exercised30B .data attribution supplied by Sol/root (6 mask+6 timing+5 duration+1 fixture-count+12 default facts); final resource deltas belong spike report. Frozen doc, epic/.13 design and .2/.6/.14/.15 focused notes updated; `bd lint CreatureGathererFX-jp8.3.2 CreatureGathererFX-jp8.3.6 CreatureGathererFX-jp8.3.14 CreatureGathererFX-jp8.3.15`: PASS4. Contract amendment approximately3 minutes, no code edits.
+
+### jp8.3.14 — one-result presentation spike (2026-10-03)
+
+Implemented only ordinary/KO Attack playback: borrowed result, prepared FX item, automatic
+announce/impact/faint stages, fresh-A acceleration, pure repeated draw, historical HP and
+sprite visibility until faint completion. Result28 B + Presenter24 B (AVR), prepared item16 B;
+projected session132+presenter24=156 B fits191-byte overlay, but no full session is measured.
+Permanent fixture results use generated species/move fields; this proves result-to-screen,
+not resolver correctness. Headerless 32x32 eight-frame beam input/encoder/packed6144-byte stride
+were inspected; names/animation draw explicit dimensions at raw address-2. No assets changed.
+
+Commands use `PATH=/Users/connorfranc/code/CreatureGathererTools/target/debug:$PATH` and
+`ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens`:
+
+- `make test BUILD_DIR=build/battle-presentation`: host1492/0 (presentation95/0), world190/0.
+- `make fxtest-spike BUILD_DIR=build/battle-presentation FXTEST_SPIKE_INO=tst/fxdatatest/test_battlepresentation.ino ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens`: final presenter94/0 P, stack4/0 P. Presenter firmware14964 flash/1894 static; real local result+presenter+FX-render chain painted483 B, effective414 after69 ISR. Existing stack firmware21734/2050, save/legacy chain229 painted/160 effective, mode transition370. First spike86/0 P measured517/448; adding eight sentinel/empty raster assertions increased test frame footprint (pre-trim467/398); this is test overhead, not shipping resource growth.
+- `make ram BUILD_DIR=build/battle-presentation-normal`: shipping18012 flash/1871 static/689 free, unchanged from shared .1/.2 baseline. Parent original18492/1871 predates integer HP draw ports; the480-byte flash reduction belongs .1, not this spike.
+- `make ram BUILD_DIR=build/battle-presentation-exercised AVR_SHIPPING_CPP_FLAGS='-mrelax -mcall-prologues -DCGFX_SHIPPING_NO_USB -DCGFX_BATTLE_PRESENTATION_SPIKE -I/Users/connorfranc/code/CreatureGathererFX/build/battle-presentation-exercised/arduino-build/fx/sketch'`: exercised shipping19566 flash/1871 static/689 free, +1554 flash/+0 static. Optional setup hook really calls both fixture playbacks and FX draw under production LTO, using stack storage with no result/presenter globals. This is presenter cost, not completed session/integration cost.
+- `make fxtest-build BUILD_DIR=build/battle-presentation-visual FXTEST_INOS=tst/fxdatatest/test_battlepresentation.ino AVR_FXTEST_CPP_FLAGS='-mrelax -mcall-prologues -DFX_READ_COUNTER -DCGFX_BATTLE_PRESENTATION_VISUAL'`: looping interactive fixture15184 flash/1956 static (extra visual globals52 B), hex `build/battle-presentation-visual/fxtest/test_battlepresentation/output/test_battlepresentation.ino.hex`. Automated default remains exactP/F and exits; visual flag repeats ordinary/KO at52FPS and accepts freshA.
+
+Failed attempts/resource correction: initial optional shipping-hook build failed nested fixture
+`src/...` include search; original-source `-I` then duplicated copied Arduino headers under
+`#pragma once`; staged-sketch include path above fixed it. First exercised success19688/1901
+showed +30 SRAM, predicting reserve130 rather than150. ELF .data/nm attributed6 mask constants,
+6 timing constants,5 switch-duration bytes,1 fixture-count byte,12 fact initialization bytes.
+Stopped broadening and trimmed: byte enum constants retain names/values, duration branches,
+raw result/fact POD plus explicit `resetActionResult` semantic initialization. Intermediate
+19590/1889 still retained the constructor fact template; removing member defaults eliminated it.
+Final exercised globals match baseline, preserving160-effective existing chain reserve.
+Shared shapes remain28/3 with identical offsets; .2 sentinel test explicitly resets and asserts
+trivial POD. The contract amendment is root-approved and recorded by the planner.
+
+Worker active implementation/verification wall time approximately20 minutes (13:53:49–14:13:58 UTC),
+plus prerequisite inspection/wait before claim. Native/build final rerun, root read-only review,
+interactive visual observations and root full gate follow this entry. No commit or push.
+
+Final worker command `PATH=/Users/connorfranc/code/CreatureGathererTools/target/debug:$PATH make test build BUILD_DIR=build/battle-presentation-normal`: PASS host1492/0, world190/0; shipping18012/1871. Latest trivial-POD assertion compiled. Automated worker evidence is complete; interactive Ardens and full gate remain orchestrator-owned.
+
+Orchestrator final gate after resource trim and raw-POD reset:
+```text
+PATH=/Users/connorfranc/code/CreatureGathererTools/target/debug:$PATH make final-gate BUILD_DIR=build/battle-presentation-final ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS in 125 s: host 1,492/0; world 190/0; VM 42/0; all 18 FX suites 3,565/0,
+# including presentation 94/0 and test_stack 4/0 at 229 B painted headroom.
+# Shipping 18,012 B flash / 1,871 B static / 689 B free; exercised spike +1,554 B flash / +0 RAM.
+# Logs: build/battle-presentation-final/final-gate/{check,ram}.log.
+git diff --check
+# PASS; make gen left tracked generated files unchanged.
+```
+
+Read-only .14 review: APPROVED. On 2026-10-03 the owner explicitly waived interactive Ardens
+visual verification; the implementation, automated suite, resource measurements, review and
+orchestrator final gate are complete. No visual observation is claimed.
+
+## jp8.3.15 — automatic battle presentation (2026-10-03)
+
+Completed the one-result presenter for all current result kinds and consequence facts. The
+presenter borrows the result, prepares one 16-byte display item, updates only timing/animation
+state, and keeps draw pure. It renders transition-cached creature/move/effect metadata, internal
+PSTR captions through the existing `fontTrimmed` glyphs, switch and Gather boundaries, sequential
+EndTurn HP facts, ordered faint hiding, and terminal feedback. No FX strings/assets or packed
+bytes changed. Presenter remains 24 B AVR; ActionResult is 28 B. The read-only switch review found
+the caption selector's pointer switch table cost 30 B SRAM; disabling switch-table conversion
+keeps its captions in flash and removes that `.data` table.
+
+Focused commands:
+```text
+make test BUILD_DIR=build/battle-presentation
+# PASS: host 1,506/0 (BattlePresentationSuite 109/0); world 190/0.
+make fxtest-spike BUILD_DIR=build/battle-presentation FXTEST_SPIKE_INO=tst/fxdatatest/test_battlepresentation.ino ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS: battle presentation 97/0; test_stack 4/0.
+# Presenter device image 18,848 B flash; .data 86 B / .bss 1,832 B / total 1,918 B (242 B free to suite limit).
+# Attack/KO playback painted headroom 354 B / 285 B after 69 B ISR; isolated PSTR caption chain 391 B / 322 B.
+# Caption glyph pixel and repeated-draw/no-metadata-read assertions pass; test_stack headroom 229 B.
+make build BUILD_DIR=build/battle-presentation
+# PASS: shipping 18,012 B flash / 1,871 B static RAM / 689 B free.
+make ram BUILD_DIR=build/battle-presentation
+# PASS: 18,012 B flash / 1,871 B static RAM / 689 B free; shipping delta from supplied baseline 0 B.
+git diff --check
+# PASS. No generated/packed source paths changed; pack parity is not applicable.
+```
+
+Failed attempts retained for attribution:
+- First `make test BUILD_DIR=build/battle-presentation` stopped at host compile because the
+  presenter referenced FX symbols not supplied in the `TEST` branch. The branch now includes the
+  host FX-data fake and generated FX declarations.
+- First focused device compile included `src/engine/draw.h` in the fixture and failed with
+  repeated declarations from Arduino's copied-header path aliases. Device drawing now uses the
+  fixture's guarded `drawView`; `test_battlepresentation.ino` uses that same port. A later compile
+  caught two unqualified `BattleView` names in the device test; qualifying them fixed the build.
+- The optional expanded device case matrix failed its stack check at 194 B painted / 125 B
+  effective, below the 150 B reserve. This included an oversized test harness frame and a combined
+  playback/caption chain, so it was not used as a production-chain attribution. After removing
+  optional cases, the PSTR caption path was isolated in a noinline fixture with only the resident
+  result/presenter and transient view shape; it passes at 391/322 B. No production stack trim was
+  needed. The separate caption selector SRAM issue was fixed: suite `.data` fell from116 to86 B
+  (−30 B), `.bss` stayed1,832 B, and total suite globals fell from1,948 to1,918 B; caption-path
+  flash increased92 B in the test image.
+
+Worker wall time was approximately48 minutes from the bead claim/update at14:36:21 UTC to final
+focused checks at15:24 UTC; the final host/device/build/RAM commands consumed about17 seconds of
+tool wall time. The orchestrator owns the single `make final-gate`; no pack parity run is needed
+unless a later change alters packed bytes. Bead remains in progress pending root review/gate.
+
+### Reviewer-directed .15 repair (2026-10-03)
+
+Successful Attack consequence facts `SAPPD`, `INFSED`, `PINNED` and `CONCUSED` now use the
+generic “status applied” caption. Their consequence records describe applied effects; immediate
+HP/tick, skip-turn and self-hit wording remains reserved for EndTurn tick facts and result flags.
+Added native checks for SELF_HIT actor HP, Opponent-actor target HP, STATUS_SKIPPED feedback dwell,
+Win/Lose/Gathered terminal completion, and stable ResultKind::None completion. No device matrix,
+asset, or generated-data change.
+
+```text
+make test BUILD_DIR=build/battle-presentation
+# PASS: host 1,524/0 (BattlePresentationSuite 127/0); world 190/0.
+make fxtest-spike BUILD_DIR=build/battle-presentation FXTEST_SPIKE_INO=tst/fxdatatest/test_battlepresentation.ino ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS: presenter 97/0; test_stack 4/0. Device globals: .data86/.bss1,832/1,918 B total.
+# Playback chain 354/285 B painted/effective; isolated caption chain 391/322 B; stack headroom229 B.
+make build BUILD_DIR=build/battle-presentation
+# PASS: shipping18,012 B flash/1,871 B static/689 B free.
+make ram BUILD_DIR=build/battle-presentation
+# PASS: shipping18,012 B flash/1,871 B static/689 B free; no shipping delta.
+git diff --check
+# PASS; generated and packed source paths unchanged.
+```
+
+Repair and focused verification took about4 minutes elapsed; the four focused commands consumed
+about17 seconds of tool wall time. No failures in this repair run.
+
+Orchestrator final gate:
+```text
+PATH=/Users/connorfranc/code/CreatureGathererTools/target/debug:$PATH make final-gate BUILD_DIR=build/battle-presentation-final ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS in about102 s: host1,524/0; world190/0; VM42/0; all18 FX device suites passed.
+# Presenter97/0; test_stack4/0 at229 B painted headroom.
+# Shipping18,012 B flash/1,871 B static/689 B free; no delta from .13/.14 shipping baseline.
+# Generated manifest/libraries/invariants and build RAM guards passed; no generated/packed files changed.
+# Logs: build/battle-presentation-final/final-gate/{check,ram}.log.
+git diff --check
+# PASS.
+```
+
+Read-only .15 review: APPROVED after the caption correction and missing host cases were added.
+The owner waived only the .14 interactive visual observation; no visual observation is claimed.
+No commit or push at this report point.

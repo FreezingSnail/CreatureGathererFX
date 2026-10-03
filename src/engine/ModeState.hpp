@@ -68,7 +68,7 @@ extern ModeState modeState;
 
 // Call these only when the matching union member is active. A save state does
 // not change the active member and must never be used to select one.
-inline __attribute__((always_inline)) BattleEngine &battle() { return modeState.battle; }
+inline __attribute__((always_inline)) BattleEngine &legacyBattle() { return modeState.battle; }
 inline __attribute__((always_inline)) WorldTransient &worldState() { return modeState.world; }
 inline __attribute__((always_inline)) void enterBattle() { modeState.enterBattle(); }
 inline __attribute__((always_inline)) void exitBattle() { modeState.exitBattle(); }

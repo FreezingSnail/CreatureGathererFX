@@ -9,7 +9,7 @@ inline void test_menurun(FxTest &test) {
     constexpr uint16_t iterations = 2048;
     enterBattle();
     player.basic();
-    battle().startFight(0);
+    legacyBattle().startFight(0);
     menu.clear();
     menu.push(BATTLE_OPTIONS);
     menu.cursorIndex = 0;
@@ -18,7 +18,7 @@ inline void test_menurun(FxTest &test) {
     FxReadCounter::resetFrame();
     const uint32_t start = micros();
     for (uint16_t i = 0; i < iterations; ++i) {
-        menu.run(battle());
+        menu.run(legacyBattle());
     }
     const uint32_t elapsed = micros() - start;
     const uint32_t averageMicros = elapsed / iterations;

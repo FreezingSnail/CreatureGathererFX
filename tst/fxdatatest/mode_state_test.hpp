@@ -4,6 +4,8 @@
 
 #include "fxtest.hpp"
 #include "src/engine/ModeState.hpp"
+#include "src/engine/battle/BattleState.hpp"
+#include "src/engine/battle/ActionResult.hpp"
 #include "src/engine/world/Chunk.hpp"
 #include "src/engine/world/World.hpp"
 #include "src/player/Player.hpp"
@@ -13,6 +15,9 @@ inline void test_mode_state(FxTest &test)
     test.expectEq(sizeof(WorldTransient), 191, F("world payload size"));
     test.expectEq(sizeof(ModeState), sizeof(WorldTransient), F("AVR mode union size"));
     test.expectEq(alignof(WorldTransient), 1, F("world payload alignment"));
+    test.expectEq(sizeof(battle::Combatant), 35, F("AVR combatant size"));
+    test.expectEq(sizeof(battle::BattleState), 93, F("AVR battle state size"));
+    test.expectEq(sizeof(battle::ActionResult), 28, F("AVR action result size"));
 
     gameState.playerLocation = 0x0A0B;
     player.party[0].id = 13;
@@ -26,10 +31,10 @@ inline void test_mode_state(FxTest &test)
     memset(worldState().zoneTableCache, 0xC7, sizeof(worldState().zoneTableCache));
 
     enterBattle();
-    test.expectEq(battle().activeBattle, false, F("fresh battle inactive"));
-    test.expectEq(battle().playerParty[0] == nullptr, true, F("fresh battle pointers cleared"));
-    test.expectEq(battle().playerHealths[0], 0, F("fresh battle health cleared"));
-    test.expectEq(battle().playerAction.actionIndex, -1, F("fresh battle action reset"));
+    test.expectEq(legacyBattle().activeBattle, false, F("fresh battle inactive"));
+    test.expectEq(legacyBattle().playerParty[0] == nullptr, true, F("fresh battle pointers cleared"));
+    test.expectEq(legacyBattle().playerHealths[0], 0, F("fresh battle health cleared"));
+    test.expectEq(legacyBattle().playerAction.actionIndex, -1, F("fresh battle action reset"));
 
     exitBattle();
     test.expectEq(gameState.playerLocation, 0x0A0B, F("persistent location retained"));
