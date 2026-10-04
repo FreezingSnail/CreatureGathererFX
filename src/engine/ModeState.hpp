@@ -47,7 +47,7 @@ struct BattleMode : BattleSession {
 };
 
 #ifdef __AVR__
-static_assert(sizeof(BattleMode) == 156, "battle playback payload must remain 156 bytes");
+static_assert(sizeof(BattleMode) == 157, "battle playback payload must remain 157 bytes");
 #endif
 } // namespace battle
 

@@ -70,7 +70,8 @@ void Creature::loadTypes(CreatureData_t seed) {
 // should prob have error checking but w/e
 void Creature::setMove(uint8_t move, uint8_t slot) {
     this->moves[slot] = move;
-    this->moveList[slot] = readMoveFX(move);
+    // Trainer rows use 255 for an absent move. Never look beyond move_table.
+    this->moveList[slot] = move == 255 ? Move() : readMoveFX(move);
 }
 
 void Creature::setStats(CreatureData_t seed) {

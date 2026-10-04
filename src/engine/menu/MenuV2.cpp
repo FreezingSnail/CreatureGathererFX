@@ -1,8 +1,12 @@
 #include "MenuV2.hpp"
 
 #include "MenuNav.hpp"
+#include "DialogMenu.hpp"
+#include "../battle/BattleSession.hpp"
 #include "../../lib/FxReadCounter.hpp"
 #include "../../lib/ReadData.hpp"
+
+extern DialogMenu dialogMenu;
 
 namespace {
 constexpr uint8_t MENU_PARTY_SLOT_COUNT = 3;
@@ -185,6 +189,24 @@ void MenuV2::clear() {
     partyChoicesSnapshot = {};
     creatureNameAddresses[0] = 0;
     creatureNameAddresses[1] = 0;
+}
+
+MenuIntent MenuV2::run(battle::BattleSession &session, uint8_t edgeButtons) {
+    if (menuPointer < 0 && !dialogMenu.peek()) return noIntent();
+    if (dialogMenu.peek()) {
+        if ((edgeButtons & MENU_EDGE_A) != 0) dialogMenu.popMenu();
+        return noIntent();
+    }
+
+    const int8_t previousPointer = menuPointer;
+    const MenuIntent result = update(edgeButtons);
+    if (menuPointer > previousPointer) {
+        const MenuEnum current = stack[menuPointer];
+        if (current == BATTLE_MOVE_SELECT || current == BATTLE_CREATURE_SELECT) {
+            openMenu(current, session.view());
+        }
+    }
+    return result;
 }
 
 MenuIntent MenuV2::update(uint8_t edgeButtons) {

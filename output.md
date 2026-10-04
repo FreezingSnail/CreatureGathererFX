@@ -2735,3 +2735,95 @@ instructions. The completed map fix and test repairs follow in a separate
 commit. 4ty's tile blocker is resolved; its original size/parity acceptance
 remains satisfied and owner visual checklist remains **pending** as permitted.
 No push or remote sync; existing untracked .codex configuration is preserved.
+
+## CreatureGathererFX-c98 — retire project flash ceiling (2026-10-03)
+
+Owner explicitly removed the 24000 B project flash requirement. Default
+AVR_FLASH_BUDGET is now physical29696 B for FX/Mini; README and dev-flow
+requirements agree. Static2160 B and painted/effective stack reserve remain.
+Active9ge/7dk requirements were reconciled; historical measurements retained.
+Existing Make contract checks now expect29696 B and current retained renderer
+flags; their serial assertion follows fxTestSetup into the shared harness.
+Exact verification: `./tools/tests/make-contract-test.sh` PASS;
+`make test-avr-build-budget` PASS; default `make ram` PASS with flash26254 B,
+static1925 B, physical flash free3442 B, SRAM free635 B. Log:
+`build/c98-ram.log`. `git diff --check` PASS. No firmware, data, layout, save,
+or stack changes; no full device rerun needed for this budget/configuration edit.
+Wall time approximately4 minutes including requirement review; no subagents.
+No commit or push requested for this follow-up.
+
+## CreatureGathererFX-jp8.3.16.1 — trainer replacement (2026-10-04)
+
+Trainer replacement now rereads the original opponent row using one resident
+`trainerId`, retaining authored levels and moves by original party slot while
+keeping depleted bench HP. Move ID 255 stores an empty `Move()` without an FX
+lookup; the packed move decoder uses a defined 32-bit shift on AVR. Native and
+real-FX tests cover all three original slots, return switches, four packed byte
+positions, and empty move descriptors. AVR layout is state94/session133/
+BattleMode157, with ModeState still191 bytes.
+
+Exact checks with `PATH=/private/tmp/cgfx-nmh-tools/debug:$PATH`:
+`make test` PASS (host3633/0, world190/0); `make testvm` PASS (42/0);
+`make ram BUILD_DIR=build/trainer-repair-ram` PASS (flash26714/29696,
+static1925/2160, physical flash free2982, SRAM free635);
+`make fxtest-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_trainer_setup.ino
+ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+BUILD_DIR=build/trainer-repair-fx` PASS (trainer setup95/0, stack4/0).
+Trainer start used8 logical reads and replacement4 for the one-Smite row.
+Stack painted headroom261 B, effective192 B after69 B ISR; mode transition365 B.
+`git diff --check` PASS. Focused suite path differs from the bead's planned
+`test_battlesession.ino` because the demo suite is owned by the dependent bead.
+Whole-image resource deltas are not attributable during concurrent demo and
+preset edits; last committed shipping baseline was26254 flash/1925 static.
+Worker wall time approximately10 min; full gate is the orchestrator's checkpoint.
+
+## CreatureGathererFX-jp8.3.16.2/.3 — resume after Codex session termination (2026-10-03)
+
+Resumed preserved uncommitted work for named trainer/player presets and the shared battle frame controller. Sibling `../CreatureGathererTools` contains the matching `battle_presets` generator/parser and native tests; built it out-of-tree at `/private/tmp/cgfx-trainer-tools` and used that binary through `PATH` without replacing the installed executable. Added the one production correction found by the trainer device spike: player replacement after faint now emits `FORCED_SWITCH`, matching forced replacement semantics.
+
+Generation/tool validation:
+
+```text
+cargo build --locked --manifest-path ../CreatureGathererTools/Cargo.toml --bin cgfx-tools --target-dir /private/tmp/cgfx-trainer-tools
+# PASS
+PATH=/private/tmp/cgfx-trainer-tools/debug:$PATH make gen
+# PASS; preset fixture emitted; no tracked generated drift
+cargo test --locked -p cgfx-core
+# PASS; 189 core tests + integration/doc suites; one existing unused-import warning
+make test-doctor
+# PASS
+```
+
+The first core-test attempt failed only in two stale sprite source line fixtures (`fxpack_carray`); current generated 1bpp sources place declarations at different lines. Updated those sibling test expectations, reran, and all tests passed. Initial `make verify-generated` raced a parallel pack-parity invocation and saw a transient malformed manifest; sequential rerun passed.
+
+Project validation:
+
+```text
+make test
+# PASS; host 3763/0, world 190/0
+make testvm
+# PASS; VM 42/0
+make verify-generated
+# PASS
+make test-generated-libs
+# PASS; generated libs 12/0, invariants 5/0, aliases 28/0
+make test-pack-parity
+# PASS; layout equivalence, perturbation diagnostic, parity
+PATH=/private/tmp/cgfx-trainer-tools/debug:$PATH make fxtest-headless ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens FXTEST_MS=10000
+# PASS; 22 suites, 3105 assertions, 0 failures
+# new suites: battle_presets 122/0, battlesession 92/0, trainer_setup 95/0
+# painted trainer headroom 372 B / effective 303 B; test_stack 261 B
+PATH=/private/tmp/cgfx-trainer-tools/debug:$PATH make final-gate ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS; host 3763/0, world 190/0, VM 42/0, all 22 FX suites PASS
+# shipping flash 26714 B, static RAM 1925 B, physical flash free 2982 B, SRAM free 635 B
+```
+
+Opt-in demo compile checks:
+
+```text
+make build BUILD_DIR=build/trainer-demo-opening AVR_SHIPPING_CPP_FLAGS='-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X -DCGFX_SHIPPING_NO_USB -DCGFX_TRAINER_DEMO'
+make build BUILD_DIR=build/trainer-demo-switch AVR_SHIPPING_CPP_FLAGS='-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X -DCGFX_SHIPPING_NO_USB -DCGFX_TRAINER_DEMO -DCGFX_TRAINER_DEMO_SWITCH_DRILL'
+# both PASS; 26228 B flash / 1925 B static RAM
+```
+
+`git diff --check` passes in both repositories. No commit, push, or remote sync. Manual Ardens visual observations remain owner work; generated preset/tool/source changes and the full battle-demo diff remain uncommitted for review.

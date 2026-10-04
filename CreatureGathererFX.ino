@@ -3,7 +3,9 @@
 #include "src/globals.hpp"
 
 #include "src/engine/battle/BattleSession.hpp"
+#include "src/engine/battle/BattleFlow.hpp"
 #include "src/engine/game/Gamestate.hpp"
+#include "src/engine/menu/MenuNav.hpp"
 #include "src/engine/menu/MenuV2.hpp"
 #include "src/engine/world/Event.hpp"
 #include "src/engine/world/World.hpp"
@@ -15,6 +17,10 @@
 #include "src/engine/draw.h"
 #include "src/vm/ScriptVm.hpp"
 #include "src/lib/FxReadCounter.hpp"
+#ifdef CGFX_TRAINER_DEMO
+#include "src/engine/battle/BattlePresets.hpp"
+#include "tst/fxdatatest/generated/battle_preset_data.hpp"
+#endif
 #ifdef CGFX_BATTLE_PRESENTATION_SPIKE
 #include "tst/fxdatatest/battlepresentation_fixture.hpp"
 #endif
@@ -82,11 +88,32 @@ void setup() {
     //  plants.tick();
 
     FX::begin(FX_DATA_PAGE, FX_SAVE_PAGE);
+#ifndef CGFX_TRAINER_DEMO
     journalInit();
+#endif
     FX::setCursorRange(0, 32767);
 #ifdef CGFX_BATTLE_PRESENTATION_SPIKE
     battle_presentation_fixture::shippingSpike();
 #endif
+#ifdef CGFX_TRAINER_DEMO
+    gameState.playerLocation = static_cast<uint16_t>(3) |
+                               (static_cast<uint16_t>(2) << 8);
+#ifdef CGFX_TRAINER_DEMO_SWITCH_DRILL
+    battle::applyPlayerPreset(player, BattlePresets::switch_drill);
+    const BattlePresets::Preset preset =
+        BattlePresets::copyPreset(BattlePresets::switch_drill);
+#else
+    battle::applyPlayerPreset(player, BattlePresets::opening);
+    const BattlePresets::Preset preset =
+        BattlePresets::copyPreset(BattlePresets::opening);
+#endif
+    menu.clear();
+    dialogMenu.clear();
+    enterBattle();
+    battleSession().beginTrainer(preset.trainerId);
+    gameState.state = GameState_t::BATTLE;
+    return;
+#else
     const bool restored = SaveController::load();
     if (!restored) {
         gameState.playerLocation = static_cast<uint16_t>(3) |
@@ -99,87 +126,21 @@ void setup() {
     if (!restored) {
         player.basic();
     }
+#endif
 
     // buffer = arduboy.sBuffer;
 }
 
 namespace {
-
-bool battleMenuAt(MenuEnum menuType) {
-    return menu.menuPointer >= 0 && menu.stack[menu.menuPointer] == menuType;
-}
-
-void openBattleChoiceMenu() {
-    if (battleMenuAt(BATTLE_OPTIONS) || battleMenuAt(BATTLE_MOVE_SELECT) ||
-        battleMenuAt(BATTLE_CREATURE_SELECT)) {
-        return;
-    }
-    menu.clear();
-    menu.push(BATTLE_OPTIONS);
-}
-
-void openForcedReplacementMenu(battle::BattleSession &session) {
-    if (battleMenuAt(BATTLE_CREATURE_SELECT)) return;
-    menu.clear();
-    const battle::BattleView view = session.view();
-    menu.openMenu(BATTLE_CREATURE_SELECT, view);
-    menu.setPartySnapshot(session.partyChoices());
-}
-
-void beginBattleResult(battle::BattleSession &session,
-                       battle::BattlePresenter &presenter) {
-    if (!session.advance()) return;
-    presenter.begin(session.result());
-}
-
-bool runBattleUpdate() {
-    battle::BattleSession &session = battleSession();
-    battle::BattlePresenter &presenter = battlePresenter();
-
-    // Presenter owns the entire frame while a result is resident. The edge
-    // which completes the last stage cannot reach a newly opened menu.
-    if (presenter.stage() != battle::PresenterStage::Idle) {
-        if (!presenter.done()) {
-            presenter.update(arduboy.justPressed(A_BUTTON));
-        } else {
-            session.finishPresentation();
-            presenter.reset();
-            if (session.exitReady()) {
-                menu.clear();
-                dialogMenu.clear();
-                exitBattle();
-                gameState.state = GameState_t::WORLD;
-                return true;
-            }
-        }
-        return false;
-    }
-
-    if (!session.isActive()) return false;
-    if (dialogMenu.peek()) dialogMenu.clear();
-
-    if (session.awaitingReplacement()) {
-        openForcedReplacementMenu(session);
-        const MenuIntent intent = menu.run(session);
-        if (intent.kind != MenuIntentKind::None && session.submitIntent(intent)) {
-            menu.clear();
-            (void)beginBattleResult(session, presenter);
-        }
-        return false;
-    }
-
-    if (session.awaitingPlayer()) {
-        openBattleChoiceMenu();
-        const MenuIntent intent = menu.run(session);
-        if (intent.kind != MenuIntentKind::None && session.submitIntent(intent)) {
-            menu.clear();
-            (void)beginBattleResult(session, presenter);
-        }
-        return false;
-    }
-
-    (void)beginBattleResult(session, presenter);
-    return false;
+uint8_t battleEdgeButtons() {
+    uint8_t buttons = 0;
+    if (arduboy.justPressed(LEFT_BUTTON)) buttons |= MENU_NAV_LEFT;
+    if (arduboy.justPressed(RIGHT_BUTTON)) buttons |= MENU_NAV_RIGHT;
+    if (arduboy.justPressed(DOWN_BUTTON)) buttons |= MENU_NAV_DOWN;
+    if (arduboy.justPressed(UP_BUTTON)) buttons |= MENU_NAV_UP;
+    if (arduboy.justPressed(A_BUTTON)) buttons |= MENU_EDGE_A;
+    if (arduboy.justPressed(B_BUTTON)) buttons |= MENU_EDGE_B;
+    return buttons;
 }
 
 } // namespace
@@ -187,7 +148,7 @@ bool runBattleUpdate() {
 void run() {
     switch (gameState.state) {
     case GameState_t::BATTLE:
-        if (runBattleUpdate()) return;
+        if (BattleFlow::update(battleEdgeButtons())) return;
         break;
     case GameState_t::WORLD:
         WorldEngine::runMap(worldState());

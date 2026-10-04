@@ -79,29 +79,30 @@ printf '%s\n' "$build" | grep -Fq 'fixture-arduino compile --fqbn "fixture:fx"'
 printf '%s\n' "$build" | grep -Fq 'ARDUINO_BUILD_CACHE_PATH="build/contract/arduino-cache" fixture-arduino compile'
 printf '%s\n' "$build" | grep -Fq -- '--build-path "build/contract/arduino-build/fx"'
 printf '%s\n' "$build" | grep -Fq -- '--output-dir "build/contract"'
-printf '%s\n' "$build" | grep -Fq -- '--build-property "compiler.cpp.extra_flags=-mrelax -mcall-prologues -DCGFX_SHIPPING_NO_USB"'
+printf '%s\n' "$build" | grep -Fq -- '--build-property "compiler.cpp.extra_flags=-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X -DCGFX_SHIPPING_NO_USB"'
 for property in compiler.c.extra_flags compiler.c.elf.extra_flags; do
-    printf '%s\n' "$build" | grep -Fq -- "--build-property \"$property=-mrelax -mcall-prologues\""
+    printf '%s\n' "$build" | grep -Fq -- "--build-property \"$property=-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X\""
 done
-printf '%s\n' "$build" | grep -Fq 'check-avr-build-budget.sh "$log" "24000" "2160" FX'
+printf '%s\n' "$build" | grep -Fq 'check-avr-build-budget.sh "$log" "29696" "2160" FX'
 grep -Fq 'if (initVariant != nullptr)' CreatureGathererFX.ino
 grep -Fq 'Arduboy2Core::exitToBootloader()' CreatureGathererFX.ino
 if rg -n 'CGFX_SHIPPING_NO_USB|ARDUBOY_NO_USB|int main\(' tst/fxdatatest -g '*.ino'; then
     printf 'shipping USB-free entry point leaked into FX serial suites\n' >&2
     exit 1
 fi
-grep -Fq 'Serial.begin(9600)' tst/fxdatatest/fxdatatest.ino
+grep -Fq 'fxTestSetup();' tst/fxdatatest/fxdatatest.ino
+grep -Fq 'Serial.begin(9600)' tst/fxdatatest/harness/fx_globals.hpp
 
 mini=$(make --no-print-directory -n mini \
     ARDUINO_CLI=fixture-arduino MINI_FQBN=fixture:mini BUILD_DIR=build/contract)
 printf '%s\n' "$mini" | grep -Fq 'fixture-arduino compile --fqbn "fixture:mini"'
 printf '%s\n' "$mini" | grep -Fq -- '--build-path "build/contract/arduino-build/mini"'
 printf '%s\n' "$mini" | grep -Fq -- '--output-dir "build/contract"'
-printf '%s\n' "$mini" | grep -Fq -- '--build-property "compiler.cpp.extra_flags=-mrelax -mcall-prologues -DCGFX_SHIPPING_NO_USB"'
+printf '%s\n' "$mini" | grep -Fq -- '--build-property "compiler.cpp.extra_flags=-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X -DCGFX_SHIPPING_NO_USB"'
 for property in compiler.c.extra_flags compiler.c.elf.extra_flags; do
-    printf '%s\n' "$mini" | grep -Fq -- "--build-property \"$property=-mrelax -mcall-prologues\""
+    printf '%s\n' "$mini" | grep -Fq -- "--build-property \"$property=-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X\""
 done
-printf '%s\n' "$mini" | grep -Fq 'check-avr-build-budget.sh "$log" "24000" "2160" Mini'
+printf '%s\n' "$mini" | grep -Fq 'check-avr-build-budget.sh "$log" "29696" "2160" Mini'
 
 override=$(make --no-print-directory -n build \
     ARDUINO_CLI=fixture-arduino FQBN=fixture:fx BUILD_DIR=build/contract \
@@ -153,9 +154,9 @@ printf '%s\n' "$fxtest" | grep -Fq 'check-fxtest-ram.sh "$stage/build/$ino.ino.e
 printf '%s\n' "$fxtest" | grep -Fq 'check-fxtest-ram.sh "$stage/build/$ino.ino.elf"'
 for property in compiler.cpp.extra_flags compiler.c.extra_flags compiler.c.elf.extra_flags; do
     if [ "$property" = compiler.cpp.extra_flags ]; then
-        printf '%s\n' "$fxtest" | grep -Fq -- '--build-property "compiler.cpp.extra_flags=-mrelax -mcall-prologues -DFX_READ_COUNTER"'
+        printf '%s\n' "$fxtest" | grep -Fq -- '--build-property "compiler.cpp.extra_flags=-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X -DFX_READ_COUNTER"'
     else
-        printf '%s\n' "$fxtest" | grep -Fq -- "--build-property \"$property=-mrelax -mcall-prologues\""
+        printf '%s\n' "$fxtest" | grep -Fq -- "--build-property \"$property=-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X\""
     fi
 done
 

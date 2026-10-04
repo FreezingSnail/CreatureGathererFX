@@ -212,7 +212,7 @@ bool BattleSession::advance()
     if (needsReplacement(Side::Player)) {
         const BattleAction action =
             cursor_.plan.action[static_cast<uint8_t>(Side::Player)];
-        return emitReplacement(Side::Player, action.index, false);
+        return emitReplacement(Side::Player, action.index, true);
     }
     if (needsReplacement(Side::Opponent)) {
         const uint8_t original = firstLiveBenchSlot(Side::Opponent);

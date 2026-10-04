@@ -52,6 +52,7 @@ void clearState(BattleState &state)
     state.gatherable = false;
     state.trainer = false;
     state.over = false;
+    state.trainerId = 255;
 }
 
 void copyCreature(Combatant &destination, const Creature &source, uint8_t hp)
@@ -161,11 +162,25 @@ void setWildState(BattleState &state, bool gatherable, uint8_t tierRate,
     state.gather.tierRate = gatherable ? tierRate : 0;
 }
 
-void fillTrainer(BattleState &state, const OpponentSeed &seed, uint8_t count)
+uint8_t trainerCreatureReads(const CreatureSeed &seed)
 {
+    uint8_t reads = 1; // Species record.
+    for (uint8_t move = 0; move < 4; ++move) {
+        if (parseOpponentCreatureSeedMove(seed.moves, move) != EMPTY_MOVE) {
+            ++reads;
+        }
+    }
+    return reads;
+}
+
+uint8_t fillTrainer(BattleState &state, const OpponentSeed &seed, uint8_t count)
+{
+    uint8_t reads = 0;
     for (uint8_t slot = 0; slot < count; ++slot) {
         Creature creature;
-        loadTrainerCreature(creature, trainerSeed(seed, slot));
+        const CreatureSeed &authored = trainerSeed(seed, slot);
+        loadTrainerCreature(creature, authored);
+        reads = static_cast<uint8_t>(reads + trainerCreatureReads(authored));
         if (slot == 0) {
             copyCreature(state.active[static_cast<uint8_t>(Side::Opponent)],
                          creature, creature.statlist.hp);
@@ -179,6 +194,7 @@ void fillTrainer(BattleState &state, const OpponentSeed &seed, uint8_t count)
         state.bench[static_cast<uint8_t>(Side::Opponent)][benchSlot].hp =
             creature.statlist.hp;
     }
+    return reads;
 }
 
 void snapshotParty(const BattleState &state, Side side,
@@ -222,7 +238,7 @@ void captureTransitionAfter(const BattleState &state, ActionResult &out)
     out.progressAfter = state.gather.progress;
 }
 
-bool loadIncoming(Side side, uint8_t originalSlot,
+bool loadIncoming(const BattleState &state, Side side, uint8_t originalSlot,
                   const BenchSlot &slot, Combatant &incoming,
                   uint8_t &reads)
 {
@@ -242,6 +258,19 @@ bool loadIncoming(Side side, uint8_t originalSlot,
     }
 
     Creature creature;
+    if (side == Side::Opponent && state.trainer) {
+        const OpponentSeed trainer = readOpponentSeed(state.trainerId);
+        const CreatureSeed &authored = trainerSeed(trainer, originalSlot);
+        if (!validCreatureSeed(authored) || authored.id != slot.id ||
+            authored.lvl != slot.level) {
+            return false;
+        }
+        loadTrainerCreature(creature, authored);
+        reads = static_cast<uint8_t>(2 + trainerCreatureReads(authored));
+        copyCreature(incoming, creature, slot.hp);
+        return true;
+    }
+
     loadSpecies(creature, slot.id, slot.level);
     reads = 5;
     copyCreature(incoming, creature, slot.hp);
@@ -284,6 +313,7 @@ void beginTrainer(BattleState &state, uint8_t opponentId)
 {
     clearState(state);
     state.trainer = true;
+    state.trainerId = opponentId;
     if (!initializePlayer(state)) {
         state.over = true;
         return;
@@ -301,8 +331,8 @@ void beginTrainer(BattleState &state, uint8_t opponentId)
 
     state.partyCount[static_cast<uint8_t>(Side::Opponent)] = count;
     state.activeSlot[static_cast<uint8_t>(Side::Opponent)] = 0;
-    fillTrainer(state, seed, count);
-    FxReadCounter::transitionExact(static_cast<uint8_t>(2 + count * 5));
+    const uint8_t reads = fillTrainer(state, seed, count);
+    FxReadCounter::transitionExact(static_cast<uint8_t>(2 + reads));
 }
 
 bool applySwitch(BattleState &state, Side side, uint8_t originalSlot,
@@ -338,7 +368,7 @@ bool applySwitch(BattleState &state, Side side, uint8_t originalSlot,
     const uint8_t oldHp = state.active[sideIndex].hp;
     Combatant incoming;
     uint8_t reads = 0;
-    if (!loadIncoming(side, originalSlot, incomingSlot, incoming, reads)) {
+    if (!loadIncoming(state, side, originalSlot, incomingSlot, incoming, reads)) {
         out.flags |= REFUSED;
         captureTransitionAfter(state, out);
         return false;

@@ -21,9 +21,9 @@ AVR_SHIPPING_CPP_FLAGS ?= $(AVR_RELAX_FLAGS) -DCGFX_SHIPPING_NO_USB
 AVR_SHIPPING_BUILD_PROPERTIES ?= --build-property "compiler.cpp.extra_flags=$(AVR_SHIPPING_CPP_FLAGS)" \
 	--build-property "compiler.c.extra_flags=$(AVR_RELAX_FLAGS)" \
 	--build-property "compiler.c.elf.extra_flags=$(AVR_RELAX_FLAGS)"
-# Leave 5,986 B above the current 18,014 B FX image for feature growth. Keep
-# 400 B static free as an independent guard; it does not measure painted stack.
-AVR_FLASH_BUDGET ?= 24000
+# Use the physical application flash limit. Keep 400 B static free as an
+# independent guard; it does not measure painted stack.
+AVR_FLASH_BUDGET ?= 29696
 AVR_STATIC_RAM_BUDGET ?= 2160
 BUILD_DIR ?= build
 ARDUINO_BUILD_PATH ?= $(BUILD_DIR)/arduino-build
@@ -125,6 +125,8 @@ TEST_SOURCES = src/lib/Blit.cpp \
 	src/engine/battle/Effects.cpp \
 	src/engine/battle/Resolve.cpp \
 	src/engine/battle/BattleSession.cpp \
+	src/engine/battle/BattleFlow.cpp \
+	src/engine/battle/BattlePresets.cpp \
 	src/engine/battle/BattleSetup.cpp \
 	src/engine/battle/BattlePresenter.cpp \
 	src/engine/ModeState.cpp \

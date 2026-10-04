@@ -32,10 +32,10 @@ struct Combatant {                                             // AVR 35
 };
 struct BenchSlot { uint8_t id, level, hp; };                     // 3
 struct GatherState { uint8_t progress, need, fleeTurns, tierRate; }; // 4
-struct BattleState {                                           // AVR 93
+struct BattleState {                                           // AVR 94
     Combatant active[2]; BenchSlot bench[2][2];
     uint8_t partyCount[2], activeSlot[2]; GatherState gather;
-    bool gatherable, trainer, over;
+    bool gatherable, trainer, over; uint8_t trainerId;
 };
 }
 enum class MenuIntentKind : uint8_t { None, SelectMove, SelectParty, Gather, Escape, Back };
@@ -228,14 +228,17 @@ public:
 };
 ```
 
-Session owns state93+result28+cursor9+Rng2 =132 AVR bytes. Presenter ceiling24
+Session owns state94+result28+cursor9+Rng2 =133 AVR bytes. Presenter ceiling24
 AVR bytes: result pointer2, stage/elapsed/fact cursor/flags4, display HP2, prepared
 item16. Prepared item is three uint24 addresses (name/detail/animation), six byte
 dimensions (three width/height pairs), one frame count. No persistent BattleView.
-The combined payload ceiling is156 AVR bytes (rounding/alignment must be proven,
+The combined payload ceiling is157 AVR bytes (rounding/alignment must be proven,
 not assumed); fits the existing191-byte WorldTransient union capacity. If actual
 implementation needs extra bytes, trim before expanding and document a contract
 amendment; never enlarge ModeState silently. Host alignment may differ.
+`trainerId` is set on trainer entry and cleared to 255 on wild entry. Trainer
+replacement rereads the original trainer row by that ID and selects the original
+party slot, preserving authored moves without a resident row copy.
 
 Timing at the actual shipping52 FPS: named constants ANNOUNCE_TICKS=42,
 IMPACT_TICKS=21, CONSEQUENCE_TICKS=31, FAINT_TICKS=31, TERMINAL_TICKS=52,

@@ -51,11 +51,12 @@ struct BattleState {
     uint8_t partyCount[2], activeSlot[2];
     GatherState gather;
     bool gatherable, trainer, over;
+    uint8_t trainerId;
 };
 
 #ifdef __AVR__
 static_assert(sizeof(Combatant) == 35, "active combatant AVR contract");
-static_assert(sizeof(BattleState) == 93, "battle state AVR contract");
+static_assert(sizeof(BattleState) == 94, "battle state AVR contract");
 #endif
 
 } // namespace battle

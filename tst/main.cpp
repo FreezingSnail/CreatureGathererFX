@@ -35,6 +35,8 @@
 #include <cstring>
 #include "battle_session_test.hpp"
 #include "battle_playback_test.hpp"
+#include "battle_flow_test.hpp"
+#include "battle_presets_test.hpp"
 #include "battle_item_test.hpp"
 #include "lure_prototype_test.hpp"
 
@@ -187,6 +189,8 @@ int main() {
     std::cout << "BattleSessionSuite finished" << std::endl;
     BattlePlaybackSuite(tests);
     std::cout << "BattlePlaybackSuite finished" << std::endl;
+    BattleFlowSuite(tests);
+    BattlePresetsSuite(tests);
     BattleItemSuite(tests);
     std::cout << "BattleItemSuite finished" << std::endl;
     LurePrototypeSuite(tests);
