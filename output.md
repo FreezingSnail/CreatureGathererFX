@@ -2244,3 +2244,28 @@ git -C ../CreatureGathererTools status --short
 ## CreatureGathererFX-jp8.6 — BLOCKED
 
 World/item/gather seams inspected; no prototype code exists in the worktree. Acceptance requires owner human playtest measurements (turns to acquire, HP cost, six-turn flee-fire rate), tuning, and deletion in one owner commit. Steering forbids GUI/Ardens/hardware, so those measurements and deletion commit cannot be truthfully completed here. No production, SaveFile, generated-data, or throwaway prototype changes made.
+
+# CreatureGathererFX-jp8.6 — native wedge, owner action pending
+
+Added throwaway `lure_prototype::Prototype` plus permanent native metrics suite. Hardcoded one zone (`ZONE_ID=0`), gather tile `0x0203`, two-entry encounter table `{4,7}`, plant material, and battle-drop material. No SaveFile, FX layout, generated data, inventory, or UI wiring.
+
+Metrics (`make test`): plant `3` turns / `0` HP / `0` flee fires; battle drop `2` turns / `8` HP / `0` flee fires; standalone flee timer `1` fire per `6` turns. Native host total `2327 passed, 0 failed`; shipping build `20664 B flash`, `1873 B static RAM`, `287 B free`.
+
+Remaining owner-only acceptance: manual/playable playtest, tune/record feel numbers in jp8.2, then one deletion commit removing `src/engine/world/LurePrototype.{hpp,cpp}`, `tst/lure_prototype_test.hpp`, and test registration. Bead intentionally remains open; no Ardens/GUI/hardware used.
+
+# CreatureGathererFX-jp8.5.18 — resumed/completed
+
+Implemented `ActionKind::UseItem`/`ResultKind::UseItem`, fast priority, consume-before-read resolver through nullable `item::battleInventory()` seam, clamped Heal with actual-restored fact, and Cure/Charge no-op cases. Added permanent `BattleItemSuite`; no Player/SaveFile reinterpretation. `.5.13` can install the authoritative inventory pointer later.
+
+Commands/results:
+
+```text
+make test
+# PASS; host 2361 passed, 0 failed; BattleSession 34/0; BattleItem 25/0; Lure 28/0
+make build
+# PASS; flash 20664/24000 B; static RAM 1873/2160 B; free 287 B
+# First build caught stale emitReplacement call after concurrent session signature edit;
+# added explicit forced=true and reran PASS.
+```
+
+Live steering deviation: no Ardens/fxtest/GUI/hardware; native headless tests authoritative. No commit/push performed. Wall time: ~12 minutes, ending 2026-10-03 20:03 EDT.

@@ -126,9 +126,9 @@ uint8_t BattleSession::firstLiveBenchSlot(Side side) const
     return 255;
 }
 
-bool BattleSession::emitReplacement(Side side, uint8_t originalSlot)
+bool BattleSession::emitReplacement(Side side, uint8_t originalSlot,
+                                    bool forced)
 {
-    const bool forced = true;
     const bool switched = applySwitch(state_, side, originalSlot, forced, result_);
     if (!switched) cursor_.plan.action[sideIndex(side)] = skipAction();
     cursor_.phase = SessionPhase::Presenting;
@@ -212,14 +212,14 @@ bool BattleSession::advance()
     if (needsReplacement(Side::Player)) {
         const BattleAction action =
             cursor_.plan.action[static_cast<uint8_t>(Side::Player)];
-        return emitReplacement(Side::Player, action.index);
+        return emitReplacement(Side::Player, action.index, false);
     }
     if (needsReplacement(Side::Opponent)) {
         const uint8_t original = firstLiveBenchSlot(Side::Opponent);
         if (original == 255) return false;
         cursor_.plan.action[static_cast<uint8_t>(Side::Opponent)] =
             {ActionKind::Switch, original};
-        return emitReplacement(Side::Opponent, original);
+        return emitReplacement(Side::Opponent, original, true);
     }
 
     for (;;) {
@@ -273,7 +273,9 @@ bool BattleSession::advance()
 
 void BattleSession::finishNormalResult()
 {
-    if (result_.kind == ResultKind::EndTurn) {
+    // Replacements after EndTurn complete before opening a fresh choice. The
+    // cursor stays at COMPLETE while those switch results are presented.
+    if (result_.kind == ResultKind::EndTurn || cursor_.next == NEXT_COMPLETE) {
         resetCursor(SessionPhase::Choice);
         return;
     }
@@ -348,10 +350,15 @@ BattleView BattleSession::view() const
     BattleView out = {};
     for (uint8_t side = 0; side < SIDE_COUNT; ++side) {
         const Combatant &active = state_.active[side];
-        out.active[side] = {active.id, active.hp, active.maxHp};
         out.partyCount[side] = state_.partyCount[side] > PARTY_SIZE
             ? PARTY_SIZE : state_.partyCount[side];
         out.activeSlot[side] = state_.activeSlot[side];
+        if (out.partyCount[side] != 0 &&
+            out.activeSlot[side] < out.partyCount[side]) {
+            out.active[side] = {active.id, active.hp, active.maxHp};
+        } else {
+            out.active[side] = {255, 0, 0};
+        }
 
         uint8_t bench = 0;
         for (uint8_t original = 0; original < out.partyCount[side]; ++original) {

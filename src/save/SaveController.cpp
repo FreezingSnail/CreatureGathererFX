@@ -21,6 +21,11 @@ bool savingStarted = false;
 // RAM-resident fields remain in this snapshot.
 void captureLiveSaveState()
 {
+    if (gameState.state == GameState_t::BATTLE) {
+        // BattleState owns current HP while the battle union is active. Copy it
+        // back before SaveFile snapshots Player, then leave the session live.
+        battleSession().syncPlayerHp();
+    }
     saveState.version = SAVE_VERSION;
     saveState.reserved = 0;
     saveState.playerLocation = gameState.playerLocation;
