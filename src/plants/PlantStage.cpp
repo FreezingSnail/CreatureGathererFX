@@ -1,21 +1,12 @@
 #include "PlantStage.hpp"
 
 void PlantStage::increment(uint8_t index) {
-    // Shift the index to account for 2-bit pairs
-    index *= 2;
-
-    // Extract the 2-bit pair at the target position
-    uint64_t bits = (value >> index) & 0b11;
-
-    // Increment the 2-bit pair
-    bits = (bits + 1) & 0b11;
-
-    // Clear the bits at the target position in num
-    uint64_t mask = ~(0b11ULL << index);
-    value &= mask;
-
-    // Write the incremented bits to the target position in num
-    value |= (bits << index);
+    const uint8_t byteIndex = index >> 2;
+    const uint8_t shift = static_cast<uint8_t>((index & 0x03) << 1);
+    const uint8_t stage = static_cast<uint8_t>(((value[byteIndex] >> shift) + 1) & 0x03);
+    const uint8_t mask = static_cast<uint8_t>(0x03u << shift);
+    value[byteIndex] = static_cast<uint8_t>((value[byteIndex] & ~mask) |
+                                            (stage << shift));
 }
 
 void PlantStage::incrementAll() {
@@ -25,5 +16,5 @@ void PlantStage::incrementAll() {
 }
 
 uint8_t PlantStage::getStage(uint8_t index) {
-    return value >> (index * 2) & 0b11;
+    return static_cast<uint8_t>((value[index >> 2] >> ((index & 0x03) << 1)) & 0x03);
 }

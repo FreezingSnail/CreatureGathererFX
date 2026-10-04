@@ -1,6 +1,7 @@
 #define ABG_IMPLEMENTATION
 #define SPRITESU_IMPLEMENTATION
 #include "src/common.hpp"
+#include "src/lib/random.hpp"
 #include "src/globals.hpp"
 
 #include "src/engine/battle/BattleSession.hpp"
@@ -79,7 +80,7 @@ void setup() {
     //  arduboy.setFrameRate(45);
     arduboy.boot();
     arduboy.setFrameRate(52);
-    arduboy.initRandomSeed();
+    rngSeed(static_cast<uint16_t>(Arduboy2Core::generateRandomSeed()));
     //  plants.tick();
 
     FX::begin(FX_DATA_PAGE, FX_SAVE_PAGE);
@@ -127,11 +128,10 @@ void openForcedReplacementMenu(battle::BattleSession &session) {
     menu.setPartySnapshot(session.partyChoices());
 }
 
-bool beginBattleResult(battle::BattleSession &session,
+void beginBattleResult(battle::BattleSession &session,
                        battle::BattlePresenter &presenter) {
-    if (!session.advance()) return false;
+    if (!session.advance()) return;
     presenter.begin(session.result());
-    return true;
 }
 
 bool runBattleUpdate() {

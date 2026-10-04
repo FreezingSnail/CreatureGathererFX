@@ -2397,3 +2397,114 @@ git diff --check
 ```
 
 Initial baseline evidence was the committed .16 report (`make build`/`make ram`: 32,152 B flash, 2,015 B static; 2,456 B over board, 8,152 B over project, 145 B project static free). Local pre-trim compile reproduced 32,152 B / 2,015 B but the temporary oversized budget override still failed closed against the 29,696 B board maximum. No generated artifacts changed. No Ardens, fxtest target, visual check, hardware check, commit, or push performed. Final worker wall time: approximately 30 minutes; timed final gates above total approximately 38 s excluding the shipping builds.
+
+
+# CreatureGathererFX-9ge — measured AVR shipping trim (BLOCKED)
+
+Scope: retained only a private control-flow signature trim in `CreatureGathererFX.ino`: `beginBattleResult` returns `void` because every local caller explicitly discards its result. No generated FX artifacts, layout/order, save data/format, FX read path, rendering contract, or CreatureGathererFX-7dk files changed. `git diff --check` PASS; tracked diff contains only this file. Pre-existing untracked `.codex/` remains untouched.
+
+Baseline / symbol audit:
+
+```text
+make ram AVR_FLASH_BUDGET=29696 AVR_STATIC_RAM_BUDGET=2560
+RAM_FLASH_BYTES=29676  (board free 20 B)
+RAM_STATIC_BYTES=1943  (board free 617 B; project 2160-B free 217 B)
+
+<configured Arduino AVR avr-nm> --size-sort -S -C build/CreatureGathererFX.ino.elf
+Live high-cost functions verified through source references and avr-objdump calls:
+beginBattleResult 1634 B; WorldEngine::moveChar 1280 B;
+BattlePresenter::prepare 1204 B; resolveAttack 1190 B;
+SpritesABC::drawBasicFX 1004 B; MenuV2::run 660 B;
+ScriptVm::run 698 B; applySwitch 720 B; FX::drawBitmap 560 B.
+```
+
+One candidate per measurement checkpoint:
+
+```text
+1. AVR-only __attribute__((noinline)) on cold beginBattleResult
+   RAM_FLASH_BYTES=29676; delta 0 B; RAM_STATIC_BYTES=1943; delta 0 B.
+   Rejected: no whole-image win.
+
+2. Extract duplicated awaiting-replacement/awaiting-player menu-submit tail
+   RAM_FLASH_BYTES=29790; delta +114 B; RAM_STATIC_BYTES=1943; delta 0 B.
+   Rejected: board flash overflowed by 94 B; LTO made extraction larger.
+
+3. Retained: remove unused bool return from private beginBattleResult
+   RAM_FLASH_BYTES=29674; delta -2 B; board free 22 B.
+   RAM_STATIC_BYTES=1943; delta 0 B; project static free 217 B.
+```
+
+Final commands / results:
+
+```text
+make test
+host: 2297 passed, 0 failed; world: 190 passed, 0 failed
+make testvm
+42 passed, 0 failed
+make verify-generated
+PASS
+make test-generated-libs
+8/0 generated-libs; 5/0 invariants; 28/0 first-unqualified-alias
+make test-pack-parity
+layout equivalence PASS; perturbation diagnostic PASS; parity PASS
+make fxtest-headless FXTEST_INOS=tst/fxdatatest/test_battlepresentation.ino ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+test_battlepresentation: 97 passed, 0 failed; P
+painted stack headroom 387 B / effective 318 B; caption chain 425 B / effective 356 B
+make ram AVR_FLASH_BUDGET=29696 AVR_STATIC_RAM_BUDGET=2560
+RAM_FLASH_BYTES=29674 / 29696; RAM_FLASH_FREE_BYTES=22
+RAM_STATIC_BYTES=1943 / 2560; RAM_FREE_BYTES=617
+make ram
+RAM_FLASH_BYTES=29674 / project limit 24000; RAM_FLASH_FREE_BYTES=-5674
+RAM_STATIC_BYTES=1943 / 2160; RAM_STATIC_RAM_FREE_BYTES=217
+Expected project-budget failure: `AVR budget: FX uses 29674 B flash; limit is 24000 B`.
+git diff --check
+PASS
+```
+
+Device-stack deviation / block:
+
+```text
+make fxtest-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_battlepresentation.ino ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+The selected battle suite built, but required test_stack failed before execution:
+build/fxtest/test_stack/stack_test.hpp:5:10: fatal error:
+src/engine/battle/Battle.hpp: No such file or directory
+```
+
+This pre-existing generated harness include-path failure is outside bead scope; no stack result is claimed. Board margin passes and static headroom remains above the 150-B reserve, but the project flash ceiling remains 5,674 B over and the required companion stack gate cannot compile. Further safe trimming needs owner direction/redesign; this bead remains IN_PROGRESS/BLOCKED and is deliberately not closed. Final integrated gate remains orchestrator-owned.
+
+Worker wall time: 79 s command-timed (baseline/checkpoints/gates), plus inspection/edit overhead; no commit, push, generation, or unrelated file change.
+
+
+# concrete-flash-fixes — final measured ledger
+
+Baseline remeasure: `make ram AVR_FLASH_BUDGET=29696 AVR_STATIC_RAM_BUDGET=2560` → 29,674 flash / 1,943 static RAM (22 / 617 B free).
+
+Per-item checkpoint command (each item): `/usr/bin/time -p sh -c 'make test && make ram AVR_FLASH_BUDGET=29696 AVR_STATIC_RAM_BUDGET=2560'`.
+
+| checkpoint | retained change | command wall | flash | Δ flash | static RAM | Δ RAM | result |
+|---|---|---:|---:|---:|---:|---:|---|
+| Step 0 | Remove deleted `Battle.hpp`/`BattleViewAdapter.hpp` includes from `tst/fxdatatest/stack_test.hpp`; no legacy refs | `make test && make ram AVR_FLASH_BUDGET=29696 AVR_STATIC_RAM_BUDGET=2560` — 12.29 s | 29,674 | 0 | 1,943 | 0 | host 2,297 + world 190; PASS |
+| Item 1 | Delete dead `drawChunkAtOffset` and its dead `drawMap` wrapper; leave `drawMapFast`; retain `DGF` because `tst/fxdatatest/opponents_test.hpp` still uses it | same checkpoint command — 12.25 s | 29,272 | −402 | 1,927 | −16 | host 2,297 + world 190; PASS |
+| Item 2 | Drop `dbf` from `Creature::loadTypes`; remove unused macro | same checkpoint command — 12.95 s | 29,154 | −118 | 1,927 | 0 | host 2,297 + world 190; PASS |
+| Item 3 | Pack stages into `uint8_t[8]`; preserve `sizeof==8`/little-endian save bytes; add all-index/wrap/all/layout tests | corrected checkpoint command — 12.40 s | 28,782 | −372 | 1,927 | 0 | host 2,399 + world 190; PASS; `avr-nm`: no `__ashldi3`, `__lshrdi3`, `__ashrdi3`, `__adddi3_s8` |
+| Item 4 | Seeded xorshift16; `rngNext8`; multiply-high inclusive `randomRoll`; remove Arduino RNG seed/use | same checkpoint command — 12.24 s | 28,414 | −368 | 1,925 | −2 | host 2,399 + world 190; PASS; `avr-nm`: no `random`, `random_r`, `srandom` |
+
+Totals from baseline: **−1,260 flash / −18 static RAM**; final **28,414 / 1,925**. Rejected/failed attempts: Item 1 helper-only deletion exposed the existing dead `drawMap` caller; removed that dead wrapper so the source compiled (no measurement). Item 3 first fixture expected `0x4B` instead of actual old-layout byte `0x1B`; `make test` reported 2,398/1 and failed at 2.53 s; corrected fixture, reran retained checkpoint. No item reverted for a whole-image regression.
+
+Final commands/results:
+
+```text
+make test                                  PASS: host 2,399/0; world 190/0 (2.95 s)
+make testvm                                PASS: 42/0 (1.25 s)
+make verify-generated                      PASS (3.49 s)
+make test-generated-libs                   PASS: 8/0; invariants 5/0; aliases 28/0 (1.84 s)
+make test-pack-parity                     PASS: layout equivalence, perturbation diagnostic, parity (7.19 s)
+make ram AVR_FLASH_BUDGET=29696 AVR_STATIC_RAM_BUDGET=2560
+                                            PASS: 28,414 flash / 1,925 RAM; 1,282 / 635 B free (9.02 s)
+make ram                                  expected FAIL: project limit 24,000; 28,414 used; deficit 4,414 B. Static 1,925/2,160; 235 B free (8.94 s)
+make fxtest-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_save.ino ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+                                            PASS: test_save 281/0; test_stack 4/0; stack ELF 2,005/2,160 (155 B free); painted stack headroom 237 B; mode transition 352 B (10.94 s)
+git diff --check                         PASS
+```
+
+No commits/pushes/bead writes. Existing `CreatureGathererFX.ino` bool→void edit and prior `output.md` content preserved; untracked `.codex/` untouched. Worker wall times above are command timings; no generated artifacts changed.

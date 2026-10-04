@@ -63,7 +63,7 @@ void Creature::loadMoves(CreatureData_t seed) {
 //   this->sprite = creatureSprites[static_cast<uint8_t>((seed.id))];
 // }
 
-void dbf Creature::loadTypes(CreatureData_t seed) {
+void Creature::loadTypes(CreatureData_t seed) {
     this->types = DualType((Type) static_cast<uint8_t>((seed.type1)), (Type) static_cast<uint8_t>((seed.type2)));
 }
 
