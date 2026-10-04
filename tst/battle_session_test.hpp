@@ -12,7 +12,7 @@ inline void BattleSessionIntegrationTest(TestSuite &suite)
     Test test(__func__);
     static_assert(sizeof(TurnCursor) == 9, "cursor ABI remains nine bytes");
 #ifdef __AVR__
-    static_assert(sizeof(BattleSession) == 132, "session ABI remains compact");
+    static_assert(sizeof(BattleSession) == 133, "session ABI remains compact");
 #endif
 
     player = Player();

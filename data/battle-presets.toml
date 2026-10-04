@@ -1,0 +1,37 @@
+[[preset]]
+name = "opening"
+trainer_species = ["SquibbleSnail", "SkitterCrab", "squid"]
+
+[[preset.player]]
+species = "SquibbleSnail"
+level = 31
+moves = ["breeze", "bellow", "none", "none"]
+
+[[preset.player]]
+species = "SkitterCrab"
+level = 31
+moves = ["dirtburst", "slipfall", "none", "none"]
+
+[[preset.player]]
+species = "squid"
+level = 31
+moves = ["splash", "squirt", "none", "none"]
+
+[[preset]]
+name = "switch_drill"
+trainer_species = ["SquableSnail", "ScatterCrab", "bigsquid"]
+
+[[preset.player]]
+species = "SquableSnail"
+level = 31
+moves = ["breeze", "bellow", "torrent", "none"]
+
+[[preset.player]]
+species = "ScatterCrab"
+level = 31
+moves = ["dirtburst", "slipfall", "dirtfall", "none"]
+
+[[preset.player]]
+species = "bigsquid"
+level = 31
+moves = ["splash", "squirt", "soak", "none"]

@@ -18,8 +18,7 @@ struct OpponentSeed {
 };
 
 inline uint8_t parseOpponentCreatureSeedMove(uint32_t seed, uint8_t move) {
-    uint8_t shift = 8 * move;
-    return ((seed & (0b11111111 << (shift))) >> shift);
+    return static_cast<uint8_t>(seed >> (8u * move));
 }
 
 // todo research huffman encoding to squash these in mem

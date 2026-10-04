@@ -28,7 +28,7 @@ is the static RAM budget figure; the symbol list attributes named records and ca
 it omits unnamed linker bookkeeping. Override `RAM_ELF`, `AVR_SIZE`, or `AVR_NM` when inspecting a
 specific ELF or using tools outside the Arduino AVR-GCC package.
 
-`make build` and `make mini` enforce default whole-image ceilings of 24,000 B flash and 2,160 B
+`make build` and `make mini` enforce the physical application flash limit of 29,696 B and a 2,160 B
 static RAM. `make check` runs the host-side parser tests and the FX build gate. Override
 `AVR_FLASH_BUDGET` or `AVR_STATIC_RAM_BUDGET` to test a different ceiling. Each device-test ELF is
 also checked against `FXTEST_RAM_BUDGET` (default 2,160 B `.data` + `.bss`) before Ardens runs;
@@ -40,6 +40,29 @@ depends on it. Automatic uploader reset is unavailable while the game is running
 upload, connect USB, hold DOWN while resetting the Arduboy, then start the upload while the
 bootloader is active; shipping startup also checks DOWN and transfers to the bootloader. If that
 path does not enter the bootloader, double-tap reset and start the upload promptly.
+
+## Trainer battle demo (opt-in)
+
+After `make gen`, build the developer demo with the `CGFX_TRAINER_DEMO` flag. It starts a three-on-three
+trainer battle with the named `opening` player and trainer preset, using the normal battle controls.
+Add `-DCGFX_TRAINER_DEMO_SWITCH_DRILL` to choose the alternate `switch_drill` matchup. A reset
+restarts the selected matchup; ordinary builds omit this bootstrap.
+
+```sh
+make build BUILD_DIR=build/trainer-demo \
+  AVR_SHIPPING_CPP_FLAGS='-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X -DCGFX_SHIPPING_NO_USB -DCGFX_TRAINER_DEMO'
+mkdir -p build/trainer-demo/isolated
+cp -f dist/fxdata.bin build/trainer-demo/isolated/fxdata.bin
+cp -f dist/fxdata-save.bin build/trainer-demo/isolated/fxdata-save.bin
+/path/to/Ardens fxport=d1 display=ssd1306 \
+  file=build/trainer-demo/CreatureGathererFX.ino.hex \
+  file=build/trainer-demo/isolated/fxdata.bin \
+  save=build/trainer-demo/isolated/fxdata-save.bin
+```
+
+The demo bypasses save loading and does not auto-save. The copied cart and save files keep this run
+separate from any personal Ardens save. Press A to select and accelerate feedback, B to back out of
+optional submenus, and the directions to navigate. Trainer battles refuse Gather and Escape.
 
 ## Tooling
 

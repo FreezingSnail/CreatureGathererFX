@@ -6,5 +6,6 @@
   "map_tileset_png": "images/tiles.png",
   "npc_tileset_png": "images/npc_16x16.png",
   "output_dir": "fxdata/generated",
-  "fixture_dir": "tst/fxdatatest/generated"
+  "fixture_dir": "tst/fxdatatest/generated",
+  "battle_presets": "data/battle-presets.toml"
 }

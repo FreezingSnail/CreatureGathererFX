@@ -43,6 +43,10 @@ agent. `AGENTS.md` carries the short list.
 
 ## Budget-first for flash/RAM work
 
+- Current flash requirement is the physical application limit, 29,696 B. The
+  former 24,000 B project ceiling was retired by the owner on 2026-10-03.
+  Static RAM remains limited to 2,160 B; preserve the measured stack reserve.
+
 - Measured 2026-08-24 on the production LTO ELF: globals 2018/2560 B (78%), 542 B left for
   stack+locals; the save path alone needs 804 B (≥262 B overflow, 331 B+ with the USB ISR).
   Flash 18314/29696 (61%). SRAM is the binding constraint; the FX image uses 609 KB of 16 MB.

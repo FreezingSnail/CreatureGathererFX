@@ -9,6 +9,40 @@ extern Player player;
 
 namespace battle_setup_test_detail {
 
+uint8_t packedMoveByte(uint32_t packed, uint8_t position)
+{
+    return static_cast<uint8_t>((packed >> (static_cast<uint32_t>(position) * 8UL)) &
+                                0xFFUL);
+}
+
+const CreatureSeed &originalTrainerSlot(const OpponentSeed &seed, uint8_t slot)
+{
+    return slot == 0 ? seed.firstCreature :
+           slot == 1 ? seed.secondCreature : seed.thirdCreature;
+}
+
+void assertAuthoredTrainer(Test &test, const battle::BattleState &state,
+                           const CreatureSeed &seed, const char *context)
+{
+    const battle::Combatant &active = state.active[static_cast<uint8_t>(battle::Side::Opponent)];
+    test.assert(active.id, seed.id, context);
+    test.assert(active.level, seed.lvl, context);
+    for (uint8_t position = 0; position < 4; ++position) {
+        const uint8_t expected = packedMoveByte(seed.moves, position);
+        test.assert(parseOpponentCreatureSeedMove(seed.moves, position), expected,
+                    "decoder matches independent 32-bit byte extraction");
+        test.assert(active.moveIds[position], expected, context);
+        if (expected == 255) {
+            test.assert(active.moves[position].move, static_cast<uint16_t>(0),
+                        "empty trainer move has a zero descriptor");
+            test.assert(active.moves[position].effect1, Effect::NONE,
+                        "empty trainer move has no first effect");
+            test.assert(active.moves[position].effect2, Effect::NONE,
+                        "empty trainer move has no second effect");
+        }
+    }
+}
+
 void preparePlayer()
 {
     player.loadCreature(0, 1);
@@ -62,19 +96,23 @@ void BattleSetupIntegrationTest(TestSuite &suite)
 
     beginTrainer(state, 0);
     const OpponentSeed expectedTrainer = readOpponentSeed(0);
+    const uint32_t independentBytes = 0x78563412UL;
+    for (uint8_t position = 0; position < 4; ++position) {
+        test.assert(parseOpponentCreatureSeedMove(independentBytes, position),
+                    packedMoveByte(independentBytes, position),
+                    "decoder preserves every position with distinct bytes");
+    }
     test.assert(state.trainer, true, "trainer setup sets trainer flag");
+    test.assert(state.trainerId, static_cast<uint8_t>(0),
+                "trainer setup retains authored row identity");
     test.assert(state.gatherable, false, "trainer setup clears gatherable flag");
     test.assert(state.gather.tierRate, 0, "trainer setup clears tier rate");
     test.assert(state.partyCount[static_cast<uint8_t>(Side::Opponent)], 3,
                 "trainer setup derives all three seed party slots");
     test.assert(state.active[static_cast<uint8_t>(Side::Opponent)].id, 0,
                 "trainer setup accepts species zero seed");
-    test.assert(state.active[static_cast<uint8_t>(Side::Opponent)].moveIds[0],
-                parseOpponentCreatureSeedMove(expectedTrainer.firstCreature.moves, 0),
-                "trainer setup caches semantic seed move zero");
-    test.assert(state.active[static_cast<uint8_t>(Side::Opponent)].moveIds[1],
-                parseOpponentCreatureSeedMove(expectedTrainer.firstCreature.moves, 1),
-                "trainer setup caches absent semantic move");
+    assertAuthoredTrainer(test, state, originalTrainerSlot(expectedTrainer, 0),
+                         "trainer setup retains authored slot zero");
     test.assert(state.bench[static_cast<uint8_t>(Side::Opponent)][0].id, 3,
                 "trainer bench keeps original slot one");
     test.assert(state.bench[static_cast<uint8_t>(Side::Opponent)][1].id, 6,
@@ -91,6 +129,8 @@ void BattleSetupIntegrationTest(TestSuite &suite)
                 "switch loads incoming species");
     test.assert(state.active[static_cast<uint8_t>(Side::Opponent)].hp, 22,
                 "switch restores incoming bench HP");
+    assertAuthoredTrainer(test, state, originalTrainerSlot(expectedTrainer, 1),
+                         "replacement retains authored slot one");
     test.assert(state.bench[static_cast<uint8_t>(Side::Opponent)][0].id, 0,
                 "switch writes outgoing species into rebuilt bench");
     test.assert(state.bench[static_cast<uint8_t>(Side::Opponent)][0].hp, 15,
@@ -114,6 +154,20 @@ void BattleSetupIntegrationTest(TestSuite &suite)
                 "switch back round-trips outgoing HP");
     test.assert(state.activeSlot[static_cast<uint8_t>(Side::Opponent)], 0,
                 "switch back restores original slot index");
+    assertAuthoredTrainer(test, state, originalTrainerSlot(expectedTrainer, 0),
+                         "switch back retains authored slot zero");
+
+    state.bench[static_cast<uint8_t>(Side::Opponent)][1].hp = 9;
+    test.assert(applySwitch(state, Side::Opponent, 2, true, result), true,
+                "third original trainer slot can replace the first");
+    test.assert(state.active[static_cast<uint8_t>(Side::Opponent)].hp, 9,
+                "third slot preserves depleted bench HP");
+    assertAuthoredTrainer(test, state, originalTrainerSlot(expectedTrainer, 2),
+                         "replacement retains authored slot two");
+    test.assert(applySwitch(state, Side::Opponent, 0, false, result), true,
+                "first original slot can return after third");
+    test.assert(state.active[static_cast<uint8_t>(Side::Opponent)].hp, 15,
+                "first slot preserves depleted HP after third switch");
 
     const uint8_t activeBeforeRefused =
         state.active[static_cast<uint8_t>(Side::Opponent)].id;
@@ -131,6 +185,8 @@ void BattleSetupIntegrationTest(TestSuite &suite)
                 "one-creature wild refuses active-slot switch");
     test.assert(state.partyCount[static_cast<uint8_t>(Side::Opponent)], 1,
                 "one-creature wild has no switchable bench");
+    test.assert(state.trainerId, static_cast<uint8_t>(255),
+                "wild setup clears trainer row identity");
     test.assert(state.active[static_cast<uint8_t>(Side::Opponent)].id, wildId,
                 "one-creature wild ignores empty bench switch");
 

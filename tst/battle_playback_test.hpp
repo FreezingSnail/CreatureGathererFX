@@ -2,11 +2,17 @@
 
 #include "test.hpp"
 #include "../src/engine/battle/BattlePresenter.hpp"
+#include "../src/engine/battle/BattleFlow.hpp"
 #include "../src/engine/battle/BattleSession.hpp"
+#include "../src/engine/ModeState.hpp"
+#include "../src/engine/menu/MenuV2.hpp"
 #include "../src/lib/FxReadCounter.hpp"
 #include "../src/player/Player.hpp"
 
 extern Player player;
+extern GameState gameState;
+extern MenuV2 menu;
+extern DialogMenu dialogMenu;
 
 namespace battle_playback_test_detail {
 
@@ -45,36 +51,36 @@ void preparePlayer()
 }
 
 struct Driver {
-    battle::BattleSession session;
-    battle::BattlePresenter presenter;
-    bool resident = false;
+    static battle::BattleSession &startMode()
+    {
+        if (gameState.state == GameState_t::BATTLE) exitBattle();
+        enterBattle();
+        gameState.state = GameState_t::BATTLE;
+        menu.clear();
+        dialogMenu.clear();
+        return battleSession();
+    }
+
+    battle::BattleSession &session;
+    battle::BattlePresenter &presenter;
+    bool exited = false;
     uint8_t resultKinds[16] = {};
     uint8_t resultCount = 0;
 
+    Driver() : session(startMode()), presenter(battlePresenter()) {}
+
     bool frame(bool freshAEdge)
     {
-        if (resident) {
-            if (presenter.done()) {
-                session.finishPresentation();
-                presenter.reset();
-                resident = false;
-            } else {
-                presenter.update(freshAEdge);
-            }
-            return true;
-        }
-        if (!session.isActive() || session.exitReady() ||
-            session.awaitingPlayer()) {
-            return false;
-        }
-        if (!session.advance()) return false;
-        if (resultCount < sizeof(resultKinds)) {
+        if (exited) return false;
+        const battle::PresenterStage before = presenter.stage();
+        exited = BattleFlow::update(freshAEdge ? MENU_EDGE_A : 0);
+        if (!exited && before == battle::PresenterStage::Idle &&
+            presenter.stage() != battle::PresenterStage::Idle &&
+            resultCount < sizeof(resultKinds)) {
             resultKinds[resultCount++] =
                 static_cast<uint8_t>(session.result().kind);
+            FxReadCounter::resetFrame();
         }
-        presenter.begin(session.result());
-        FxReadCounter::resetFrame();
-        resident = true;
         return true;
     }
 
@@ -86,8 +92,8 @@ struct Driver {
     uint16_t drain(bool accelerated)
     {
         uint16_t frames = 0;
-        while (frames < 4096 && session.isActive() &&
-               !session.awaitingPlayer() && !session.exitReady()) {
+        while (frames < 4096 && !exited &&
+               !session.awaitingPlayer() && !session.awaitingReplacement()) {
             frame(accelerated);
             ++frames;
         }
@@ -99,13 +105,27 @@ void assertSameCombatState(Test &test, const battle::BattleState &a,
                            const battle::BattleState &b)
 {
     for (uint8_t side = 0; side < 2; ++side) {
+        test.assert(a.partyCount[side], b.partyCount[side],
+                    "natural and accelerated party counts match");
         test.assert(a.active[side].hp, b.active[side].hp,
                     "natural and accelerated active HP match");
         test.assert(a.active[side].id, b.active[side].id,
                     "natural and accelerated active identity matches");
         test.assert(a.activeSlot[side], b.activeSlot[side],
                     "natural and accelerated active slot matches");
+        for (uint8_t slot = 0; slot < 4; ++slot) {
+            test.assert(a.active[side].moveIds[slot], b.active[side].moveIds[slot],
+                        "natural and accelerated move IDs match");
+        }
+        for (uint8_t bench = 0; bench < 2; ++bench) {
+            test.assert(a.bench[side][bench].hp, b.bench[side][bench].hp,
+                        "natural and accelerated bench HP match");
+            test.assert(a.bench[side][bench].id, b.bench[side][bench].id,
+                        "natural and accelerated bench identities match");
+        }
     }
+    test.assert(a.trainerId, b.trainerId,
+                "natural and accelerated trainer identity matches");
     test.assert(a.gather.progress, b.gather.progress,
                 "natural and accelerated gather progress matches");
     test.assert(a.gather.fleeTurns, b.gather.fleeTurns,
@@ -138,6 +158,8 @@ inline void BattlePlaybackIntegrationTest(TestSuite &suite)
     const battle::BattleState naturalState = natural.session.state();
     const uint8_t naturalCalls = rngCalls;
     const uint8_t naturalResultCount = natural.resultCount;
+    const uint8_t naturalHp[3] = {player.creatureHPs[0],
+                                  player.creatureHPs[1], player.creatureHPs[2]};
 
     preparePlayer();
     resetRng();
@@ -154,6 +176,10 @@ inline void BattlePlaybackIntegrationTest(TestSuite &suite)
     test.assert(rngCalls, naturalCalls,
                 "accelerated and natural playback use identical RNG count");
     assertSameCombatState(test, naturalState, acceleratedState);
+    for (uint8_t slot = 0; slot < 3; ++slot) {
+        test.assert(player.creatureHPs[slot], naturalHp[slot],
+                    "natural and accelerated persistent HP match");
+    }
     test.assert(accelerated.resultCount, naturalResultCount,
                 "accelerated and natural playback keep result count");
     for (uint8_t i = 0; i < naturalResultCount && i < 16; ++i) {
@@ -224,10 +250,10 @@ inline void BattlePlaybackIntegrationTest(TestSuite &suite)
     test.assert(terminal.session.exitReady(), false,
                 "terminal feedback is not acknowledged at start");
     terminal.drain(false);
-    test.assert(terminal.session.exitReady(), true,
-                "terminal feedback acknowledges before external mode exit");
-    test.assert(terminal.session.isActive(), true,
-                "terminal result remains resident until mode exit");
+    test.assert(terminal.exited, true,
+                "terminal feedback acknowledges before shared mode exit");
+    test.assert(gameState.state, GameState_t::WORLD,
+                "shared controller restores world after playback");
     test.assert(player.creatureHPs[0], static_cast<uint8_t>(37),
                 "terminal acknowledgement synchronizes persistent active HP");
 

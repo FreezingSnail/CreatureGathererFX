@@ -73,7 +73,7 @@ class BattleSession {
 };
 
 #ifdef __AVR__
-static_assert(sizeof(BattleSession) == 132, "battle session AVR budget");
+static_assert(sizeof(BattleSession) == 133, "battle session AVR budget");
 #endif
 
 } // namespace battle
