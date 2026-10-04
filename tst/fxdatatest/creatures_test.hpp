@@ -6,7 +6,7 @@
 #include "fxtest.hpp"
 #include "generated/creature_data.hpp"
 #include "src/lib/ReadData.hpp"
-#include "src/opponent/Opponent.hpp"
+#include "src/engine/battle/BattleSetup.hpp"
 
 static_assert(sizeof(Effect) == sizeof(uint8_t), "Effect must be one byte on AVR");
 static_assert(sizeof(Move) == 4, "Move must be four bytes on AVR");
@@ -46,23 +46,31 @@ void test_creatures(FxTest &test) {
         CreatureData_t expected;
         memcpy_P(&expected, creatureFixtures + id, sizeof(expected));
 
-        Opponent encounter;
-        loadEncounterOpt(&encounter, id, encounterLevel);
+        // The current wild setup stores one active combatant and empty bench
+        // slots. Provide a living player so setup can reach the FX load path.
+        player.party[0].load(expected);
+        player.creatureHPs[0] = player.party[0].statlist.hp;
+        for (uint8_t slot = 1; slot < PARTY_SIZE; ++slot)
+            player.party[slot].level = 0;
+        battle::BattleState encounter;
+        battle::beginWild(encounter, id, encounterLevel, true, 1);
+        const uint8_t side = static_cast<uint8_t>(battle::Side::Opponent);
+        const battle::Combatant &active = encounter.active[side];
 
-        test.expectEqIdx(encounter.party[0].id, expected.id, F("encounter.id"), id);
-        test.expectEqIdx(static_cast<uint8_t>(encounter.party[0].types.getType1()), expected.type1,
+        test.expectEqIdx(active.id, expected.id, F("encounter.id"), id);
+        test.expectEqIdx(static_cast<uint8_t>(active.types.getType1()), expected.type1,
                          F("encounter.type1"), id);
-        test.expectEqIdx(static_cast<uint8_t>(encounter.party[0].types.getType2()), expected.type2,
+        test.expectEqIdx(static_cast<uint8_t>(active.types.getType2()), expected.type2,
                          F("encounter.type2"), id);
-        test.expectEqIdx(encounter.party[0].moves[0], expected.move1, F("encounter.move1"), id);
-        test.expectEqIdx(encounter.party[0].moves[1], expected.move2, F("encounter.move2"), id);
-        test.expectEqIdx(encounter.party[0].moves[2], expected.move3, F("encounter.move3"), id);
-        test.expectEqIdx(encounter.party[0].moves[3], expected.move4, F("encounter.move4"), id);
+        test.expectEqIdx(active.moveIds[0], expected.move1, F("encounter.move1"), id);
+        test.expectEqIdx(active.moveIds[1], expected.move2, F("encounter.move2"), id);
+        test.expectEqIdx(active.moveIds[2], expected.move3, F("encounter.move3"), id);
+        test.expectEqIdx(active.moveIds[3], expected.move4, F("encounter.move4"), id);
 
         // The requested level initializes both encounter metadata and creature stats.
-        test.expectEqIdx(encounter.levels[0], encounterLevel, F("encounter.level0"), id);
-        test.expectEqIdx(encounter.levels[1], 0, F("encounter.level1"), id);
-        test.expectEqIdx(encounter.levels[2], 0, F("encounter.level2"), id);
-        test.expectEqIdx(encounter.party[0].level, encounterLevel, F("encounter.party0.level"), id);
+        test.expectEqIdx(active.level, encounterLevel, F("encounter.level0"), id);
+        test.expectEqIdx(encounter.bench[side][0].level, 0, F("encounter.level1"), id);
+        test.expectEqIdx(encounter.bench[side][1].level, 0, F("encounter.level2"), id);
+        test.expectEqIdx(encounter.partyCount[side], 1, F("encounter.partyCount"), id);
     }
 }

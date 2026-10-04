@@ -1,5 +1,7 @@
 #pragma once
 
+#include "src/lib/FxRead.hpp"
+
 #include <string.h>
 
 #include "fxtest.hpp"

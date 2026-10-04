@@ -84,7 +84,7 @@ else
 fi
 
 if cgfx_tool=$(command -v cgfx-tools 2>/dev/null); then
-    cgfx_version=$($cgfx_tool --version 2>&1 | sed -n '1p')
+    cgfx_version=$("$cgfx_tool" --version 2>&1)
     cgfx_status=$?
     if test "$cgfx_status" -ne 0 || test -z "$cgfx_version"; then
         fail "cgfx-tools version unavailable: $cgfx_tool"
@@ -92,6 +92,22 @@ if cgfx_tool=$(command -v cgfx-tools 2>/dev/null); then
     else
         cgfx_version=$(printf '%s\n' "$cgfx_version" | awk '{print $NF}')
         pass "cgfx-tools: path=$cgfx_tool version=$cgfx_version"
+    fi
+    cgfx_help=$("$cgfx_tool" --help 2>&1)
+    cgfx_help_status=$?
+    missing_capabilities=
+    for capability in --project --arena-csv --arena-output --type-table-csv \
+        --type-table-output --consumables-csv --consumables-output \
+        --sprite-config --emit-fixtures --pack --layout --assert-layout-equivalent; do
+        if ! printf '%s\n' "$cgfx_help" | grep -Eq -- "(^|[[:space:]])$capability([[:space:]=]|$)"; then
+            missing_capabilities="${missing_capabilities:+$missing_capabilities }$capability"
+        fi
+    done
+    if test "$cgfx_help_status" -ne 0 || test -n "$missing_capabilities"; then
+        fail "cgfx-tools capabilities: help_status=$cgfx_help_status missing=${missing_capabilities:-none}"
+        remedy 'rebuild/install cgfx-tools from current CreatureGathererTools source and put its bin directory first on PATH; version alone does not establish compatibility'
+    else
+        pass 'cgfx-tools project capabilities'
     fi
 else
     fail 'cgfx-tools: not found on PATH'

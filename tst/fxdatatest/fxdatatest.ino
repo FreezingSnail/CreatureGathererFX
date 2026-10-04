@@ -1,44 +1,8 @@
-#include "src/common.hpp"
-#include "src/globals.hpp"
-
-#include "src/engine/arena/Arena.hpp"
-#include "src/engine/battle/Battle.hpp"
-#include "src/engine/game/Gamestate.hpp"
-#include "src/engine/menu/MenuV2.hpp"
-#include "src/engine/world/Event.hpp"
-#include "src/engine/world/World.hpp"
-#include "src/fxdata.h"
-#include "src/player/Player.hpp"
-#include "src/plants/PlantGamestate.hpp"
-
-// #include <HardwareSerial.h>
-
-decltype(arduboy) arduboy;
-
-GameState gameState;
-ModeState modeState;
-MenuV2 menu = MenuV2();
-Player player = Player();
-
-Arena arena = Arena();
-Animator animator = Animator();
-PlantGameState plants;
-
-BattleEvent battleEventStack[10];
-BattleEventPlayer battleEventPlayer;
-MenuStack menuStack;
-DialogMenu dialogMenu;
-
-#include "fxtest.hpp"
+#include "harness/fx_globals.hpp"
 #include "opponents_test.hpp"
 
 void setup() {
-    Serial.begin(9600);
-    arduboy.begin();
-
-    FX::begin(FX_DATA_PAGE);
-    FX::setCursorRange(0, 32767);
-
+    fxTestSetup();
     FxTest test;
     test_opponents(test);
     test.report(F("fxdatatest"));

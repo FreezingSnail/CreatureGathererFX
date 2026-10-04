@@ -2630,3 +2630,108 @@ menus; dialog; saving screen. No commit, push, sync, or full pre-commit gate.
 Wall time: implementation/checkpoint worker interval about **13 minutes**
 (22:21–22:34 EDT); settle validation/orchestration about **3 minutes**; no
 separate orchestrator commit gate. Commands ran directly, without subagents.
+
+## CreatureGathererFX-nmh — restore authored packed-map walkability (2026-10-03)
+
+**PASS.** Current CreatureGathererTools source restores the authored tile bits;
+no generator or firmware algorithm repair was needed. Built with:
+`cargo build --locked --manifest-path ../CreatureGathererTools/Cargo.toml
+-p cgfx-core --bin cgfx-tools --target-dir /private/tmp/cgfx-nmh-tools`.
+The installed September 8 binary and this build both advertise 0.2.0, but the
+installed binary lacks `--consumables-csv` / `--consumables-output`. The new
+binary also contains Store::load_map -> resolve_tile_properties and
+build_map's six-bit property packing. No installed executable was replaced.
+Every generation and validation command below used
+`PATH=/private/tmp/cgfx-nmh-tools/debug:$PATH`.
+
+Isolated `make -C /private/tmp/cgfx-nmh-isolated gen` recovered the floor bits.
+Working-repository `make gen` produced the same bytes. Review of all 65536
+map words found **31 changed words**, **zero low-10-bit GID changes**, and
+**zero mismatches with the TSX-authored property masks**. North/spawn floors
+(12,6)/(12,7): `13 01` / `0x0113` -> `13 05` / `0x0513` (GID 275, walkable).
+West/east walls remain `0x0106` / `0x0105`, blocked. Only raw_map_data changed
+inside the packed data payload; raw_map.bin and provenance manifest are the
+only changed generated sources. Header bytes/published addresses/declaration
+order, every other generated source and fixture, and the save payload/format
+are identical. Generated binaries/manifest remain ignored by existing policy;
+no tracked generated file changed. A second `make gen` followed by comparison
+of SHA-256 lists of generated sources, fixtures, header and images showed
+**no content drift**.
+
+Cart SHA-256:
+- old: `089de690677262e653181b1111563cce20a62bf632ad0f79c32cf7c7211552b9`
+- new: `55e84620e57745c872e5f9de7a60350f559af90f13bd888861c6bce81071d085`
+The permanent pack baseline was updated only after semantic and device passes.
+
+Permanent `tst/generated/generated_libs_test.cpp` checks named floor/wall
+cells through raw_map_data's published address, Chunk dimensions and TileProps
+masks, checking raw/packed equality AND authored IDs/properties. Before regen,
+`make test-generated-libs` deliberately failed **10 passed / 2 failed**, naming
+both floors as expected 0x0513, raw/packed 0x0113, despite source/image parity
+and valid provenance. After regen it passes **12 / 0**, invariants **5 / 0**,
+and alias compatibility **28 / 0**. Existing tile assertions are unchanged.
+Doctor now checks required project CLI capabilities as well as version, with
+native fixtures for each required missing mode, failed help and failed version.
+It preserves executable exit status instead of losing it through a pipeline.
+The readiness fixture explicitly clears inherited ARDENS for its skip case.
+`make test-doctor`: PASS. Live old-binary doctor correctly rejects the missing
+consumable options; compatible-binary capability and manifest checks PASS.
+Live doctor still reports missing libraries bundled in the selected core;
+that existing readiness false negative is tracked as CreatureGathererFX-0nm.
+Reliable generator release/build identity is tracked as CreatureGathererFX-jiu.
+
+Exact focused validation commands (with the PATH above):
+- `make gen`; `make test-generated-libs verify-generated test-doctor`: PASS.
+- `make fxtest-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_tiles.ino
+  ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens`:
+  tiles **22 / 0**, stack **4 / 0**, painted save headroom **246 B**,
+  transition headroom **351 B**, unchanged from 4ty.
+- `make test-pack-parity`: PASS, including layout equivalence and negative
+  perturbation diagnostic. Final gate regeneration retains the new cart hash.
+- `git diff --check`; `git diff --cached --check`: PASS.
+
+**Gate-discovered test repair: CreatureGathererFX-vlb.** Scope expanded only
+for stale test interfaces preventing the required all-suite gate:
+fxdatatest.ino now uses the shared harness instead of removed Arena/global
+interfaces; creatures_test.hpp exercises BattleSetup::beginWild instead of
+removed Opponent/loadEncounterOpt, preserving seed/type/move/level checks and
+checking the empty bench/one-member party; tables_test.hpp directly includes
+FxRead.hpp. No production-code edits or weakened assertions.
+Focused commands:
+- `make fxtest-headless FXTEST_INOS=tst/fxdatatest/fxdatatest.ino ARDENS=...`:
+  **171 / 0** (ARDENS is the same full path above).
+- `make fxtest-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_creatures.ino ARDENS=...`:
+  creatures **470 / 0**, stack **4 / 0**, same painted headroom.
+- `make fxtest-headless FXTEST_INOS='tst/fxdatatest/test_tables.ino
+  tst/fxdatatest/test_tiles.ino tst/fxdatatest/test_version.ino' ARDENS=...`:
+  tables **309 / 0**, tiles **22 / 0**, version **1 / 0**.
+
+Final exact command:
+`make final-gate AVR_FLASH_BUDGET=29696
+ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens`.
+**PASS**: host **3589 / 0**, world **190 / 0**, VM **42 / 0** (make test and
+make testvm executed by make check); manifest/generated libraries/guards PASS;
+all **19 FX suites / 2796 device assertions / zero failures**. Logs:
+`build/final-gate/{check,ram}.log`. Shipping flash **26254 B**, static RAM
+**1925 B**, free SRAM **635 B**; no change from renderer checkpoint. Painted
+headroom **246 B**, above reserve. Physical flash ceiling 29696 and static
+ceiling 2160 pass; default flash ceiling remains 24000 (**2254 B deficit**).
+Defaults were not changed.
+
+Failed gate attempts retained and resolved: isolated-copy gate omitted fixture
+dist directories during copying (host/VM passed; manifest fixture failed);
+working gate 1 failed removed Arena.hpp, gate 2 failed removed Opponent.hpp,
+gate 3 failed missing direct FxRead include. Working failure logs are retained
+as `build/nmh-gate-attempt{1,2,3}-check.log`. Fourth working gate PASS after all
+repairs; focused logs use `build/nmh-*.log`. Wall time approximately **18 min**
+(research/implementation/focused checks **9 min**, gate attempts **7 min**,
+orchestration **2 min**, including test-repair work); successful final gate
+approximately **2.5 min**. No subagents used.
+
+The initially empty index was clarified with the owner; original renderer
+changes were staged separately from this fix and committed as **3afa058**.
+Owner's explicit request to commit supersedes both beads' historical no-commit
+instructions. The completed map fix and test repairs follow in a separate
+commit. 4ty's tile blocker is resolved; its original size/parity acceptance
+remains satisfied and owner visual checklist remains **pending** as permitted.
+No push or remote sync; existing untracked .codex configuration is preserved.

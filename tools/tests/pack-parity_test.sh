@@ -10,7 +10,9 @@ old_layout=$fixtures/fxlayout-old-304.toml
 new_layout=$fixtures/fxlayout-expand-20.toml
 perturbed_layout=$fixtures/fxlayout-expand-20-perturbed.toml
 # Baseline includes the eight-sector save region declared by fxlayout.toml.
-expected=089de690677262e653181b1111563cce20a62bf632ad0f79c32cf7c7211552b9
+# Restored TSX-authored walkability; GIDs, field addresses and save bytes agree
+# with the prior baseline. Semantic map checks run in test-generated-libs.
+expected=55e84620e57745c872e5f9de7a60350f559af90f13bd888861c6bce81071d085
 
 for layout in "$old_layout" "$new_layout" "$perturbed_layout"; do
     test -f "$layout" || {
