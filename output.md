@@ -2269,3 +2269,9 @@ make build
 ```
 
 Live steering deviation: no Ardens/fxtest/GUI/hardware; native headless tests authoritative. No commit/push performed. Wall time: ~12 minutes, ending 2026-10-03 20:03 EDT.
+
+# Post-checkpoint native fixes
+
+Focused review fixed EndTurn-faint replacement cursor reset (`next=COMPLETE` now opens fresh Choice after switch) and `SaveController::captureLiveSaveState` syncs `battleSession()` HP when saving from BATTLE. Final native gates after UseItem/lure edits: `make test` host 2361/0 plus world 190/0; `make testvm` 42/0; `make verify-generated` PASS; `make build` 20664 flash / 1873 static RAM / 287 B free. No generated artifacts changed.
+
+`make ram` final: flash 20700/29696 B (3300 B to shipping limit), static RAM 1873/2560 B (687 B linker free; 287 B to project static budget). `modeState` 191 B; `player` 112 B; `saveState` 130 B.
