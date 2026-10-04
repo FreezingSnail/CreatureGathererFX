@@ -58,7 +58,7 @@ class MenuV2 {
 
     // run keeps the legacy button bridge for existing callers; rendering and
     // snapshot transitions consume only BattleView/snapshot data.
-    void run(battle::BattleSession &session);
+    MenuIntent run(battle::BattleSession &session);
     void printMenu(const battle::BattleView &view);
     void prepareCreatureRental();
     void creatureRental();

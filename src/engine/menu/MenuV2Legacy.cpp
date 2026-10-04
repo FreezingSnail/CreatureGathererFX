@@ -18,18 +18,18 @@ uint8_t menuEdgeButtons() {
 }
 } // namespace
 
-void MenuV2::run(battle::BattleSession &session) {
-    if (menuPointer < 0 && !dialogMenu.peek()) return;
+MenuIntent MenuV2::run(battle::BattleSession &session) {
+    if (menuPointer < 0 && !dialogMenu.peek()) return {MenuIntentKind::None, 0};
 
     // World/script dialogs retain their separate A dismiss owner. Battle
     // playback does not enter this compatibility path or enqueue dialogs.
     if (dialogMenu.peek()) {
         if (arduboy.justPressed(A_BUTTON)) dialogMenu.popMenu();
-        return;
+        return {MenuIntentKind::None, 0};
     }
 
     const int8_t previousPointer = menuPointer;
-    (void)update(menuEdgeButtons());
+    const MenuIntent result = update(menuEdgeButtons());
     // update() owns cursor/intent state. When it opens a battle submenu, this
     // compatibility boundary supplies the view and resolves transition data;
     // steady update calls never revisit battle memory or FX tables.
@@ -39,6 +39,7 @@ void MenuV2::run(battle::BattleSession &session) {
             openMenu(current, session.view());
         }
     }
+    return result;
 }
 
 void MenuV2::printMenu(const battle::BattleView &view) {

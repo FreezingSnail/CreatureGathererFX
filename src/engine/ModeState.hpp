@@ -11,6 +11,7 @@ inline void operator delete(void *, void *) noexcept {}
 #include <new>
 #endif
 
+#include "battle/BattlePresenter.hpp"
 #include "battle/BattleSession.hpp"
 #ifdef TEST
 #include "battle/Battle.hpp"
@@ -42,6 +43,18 @@ struct WorldTransient {
     void activateMotion() { motion = WorldMotion{}; }
 };
 
+namespace battle {
+struct BattleMode : BattleSession {
+    BattlePresenter presenter;
+
+    BattleMode() : BattleSession(), presenter() {}
+};
+
+#ifdef __AVR__
+static_assert(sizeof(BattleMode) == 156, "battle playback payload must remain 156 bytes");
+#endif
+} // namespace battle
+
 static_assert(sizeof(WorldMotion) == 4, "world motion cursor must fit the script-slot overlay");
 static_assert(alignof(WorldMotion) == 1, "world motion cursor must stay byte aligned");
 static_assert(sizeof(WorldTransient) == 191, "world transient payload must remain 191 bytes");
@@ -50,7 +63,7 @@ static_assert(alignof(WorldTransient) == 1, "world transient payload must stay b
 // Only these two modes are mutually exclusive. SaveController state remains
 // separate because saving can suspend either mode.
 union ModeState {
-    battle::BattleSession battle;
+    battle::BattleMode battle;
     WorldTransient world;
 
     ModeState() : world{} {}
@@ -60,8 +73,8 @@ union ModeState {
     void exitBattle();
 };
 
-static_assert(__has_trivial_destructor(battle::BattleSession),
-              "ModeState transitions rely on BattleSession having no owned resources");
+static_assert(__has_trivial_destructor(battle::BattleMode),
+              "ModeState transitions rely on BattleMode having no owned resources");
 static_assert(sizeof(ModeState) >= sizeof(WorldTransient), "ModeState must hold the world payload");
 #ifdef __AVR__
 static_assert(sizeof(ModeState) == 191, "AVR mode storage must be the 191-byte world member");
@@ -72,7 +85,12 @@ extern ModeState modeState;
 
 // Call these only when the matching union member is active. A save state does
 // not change the active member and must never be used to select one.
-inline __attribute__((always_inline)) battle::BattleSession &battleSession() { return modeState.battle; }
+inline __attribute__((always_inline)) battle::BattleSession &battleSession() {
+    return static_cast<battle::BattleSession &>(modeState.battle);
+}
+inline __attribute__((always_inline)) battle::BattlePresenter &battlePresenter() {
+    return modeState.battle.presenter;
+}
 #ifdef TEST
 // Host compatibility for legacy engine tests. Device/runtime ownership is the
 // BattleSession above; the old engine is not resident in ModeState.

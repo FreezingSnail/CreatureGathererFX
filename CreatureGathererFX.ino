@@ -108,11 +108,92 @@ void setup() {
     // buffer = arduboy.sBuffer;
 }
 
+namespace {
+
+bool battleMenuAt(MenuEnum menuType) {
+    return menu.menuPointer >= 0 && menu.stack[menu.menuPointer] == menuType;
+}
+
+void openBattleChoiceMenu() {
+    if (battleMenuAt(BATTLE_OPTIONS) || battleMenuAt(BATTLE_MOVE_SELECT) ||
+        battleMenuAt(BATTLE_CREATURE_SELECT)) {
+        return;
+    }
+    menu.clear();
+    menu.push(BATTLE_OPTIONS);
+}
+
+void openForcedReplacementMenu(battle::BattleSession &session) {
+    if (battleMenuAt(BATTLE_CREATURE_SELECT)) return;
+    menu.clear();
+    const battle::BattleView view = session.view();
+    menu.openMenu(BATTLE_CREATURE_SELECT, view);
+    menu.setPartySnapshot(session.partyChoices());
+}
+
+bool beginBattleResult(battle::BattleSession &session,
+                       battle::BattlePresenter &presenter) {
+    if (!session.advance()) return false;
+    presenter.begin(session.result());
+    return true;
+}
+
+bool runBattleUpdate() {
+    battle::BattleSession &session = battleSession();
+    battle::BattlePresenter &presenter = battlePresenter();
+
+    // Presenter owns the entire frame while a result is resident. The edge
+    // which completes the last stage cannot reach a newly opened menu.
+    if (presenter.stage() != battle::PresenterStage::Idle) {
+        if (!presenter.done()) {
+            presenter.update(arduboy.justPressed(A_BUTTON));
+        } else {
+            session.finishPresentation();
+            presenter.reset();
+            if (session.exitReady()) {
+                menu.clear();
+                dialogMenu.clear();
+                exitBattle();
+                gameState.state = GameState_t::WORLD;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    if (!session.isActive()) return false;
+    if (dialogMenu.peek()) dialogMenu.clear();
+
+    if (session.awaitingReplacement()) {
+        openForcedReplacementMenu(session);
+        const MenuIntent intent = menu.run(session);
+        if (intent.kind != MenuIntentKind::None && session.submitIntent(intent)) {
+            menu.clear();
+            (void)beginBattleResult(session, presenter);
+        }
+        return false;
+    }
+
+    if (session.awaitingPlayer()) {
+        openBattleChoiceMenu();
+        const MenuIntent intent = menu.run(session);
+        if (intent.kind != MenuIntentKind::None && session.submitIntent(intent)) {
+            menu.clear();
+            (void)beginBattleResult(session, presenter);
+        }
+        return false;
+    }
+
+    (void)beginBattleResult(session, presenter);
+    return false;
+}
+
+} // namespace
 
 void run() {
     switch (gameState.state) {
     case GameState_t::BATTLE:
-        drawScene(battleSession().view());
+        if (runBattleUpdate()) return;
         break;
     case GameState_t::WORLD:
         WorldEngine::runMap(worldState());
@@ -140,9 +221,13 @@ uint8_t render() {
     // drawScriptText(1);
 
     switch (gameState.state) {
-    case GameState_t::BATTLE:
-        drawScene(battleSession().view());
+    case GameState_t::BATTLE: {
+        battle::BattleView view = battleSession().view();
+        battlePresenter().overlay(view);
+        drawScene(view);
+        battlePresenter().draw();
         return 0;
+    }
     case GameState_t::WORLD:
     {
         const uint8_t rowsRead = drawMapFast(worldState());
