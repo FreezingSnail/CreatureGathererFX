@@ -2317,3 +2317,34 @@ make ram
 ```
 
 Initial failures recorded: clean release test expected 108 old sprite declarations while current FX has 130; synchronized that permanent tool fixture. First generation attempt selected the older installed binary because the release asset filename was not exposed as `cgfx-tools`; fixed by selecting the published v0.2.0 binary. An accidental inherited-`ARDENS` check was not used for acceptance: host/device build ran, `test_stack` reported 207 B versus its 219 B threshold and pre-existing `test_tiles` reported 5 failures; final acceptance reran explicitly with `ARDENS=` and permanent native headless coverage. No source/generated hand edits; no grep/rg/find commands.
+
+## CreatureGathererFX-jp8.3.16 — BLOCKED (native integration complete; shipping flash gap)
+
+Implemented resident `BattleMode` (`BattleSession` + `BattlePresenter`, 156 B AVR), sketch BATTLE ownership router, one-result presenter lifecycle/reset, MenuV2 intent return, forced replacement menu setup/rejection, terminal cleanup/exit ordering, transient HP overlay, and permanent native playback integration coverage. No legacy `.12` cleanup, jp8.6, b2a, or unrelated menu work changed.
+
+Commands/evidence:
+
+```text
+make test
+# PASS; host 2396/0; world 190/0; BattlePlayback 35/0; real 3.34 s
+make testvm
+# PASS; 42/0; real 1.05 s
+make verify-generated
+# PASS; real 2.94 s
+make test-manifest
+# PASS; real 2.13 s
+make test-generated-libs
+# PASS; generated libs 8/0, invariants 5/0, aliases 28/0; real 1.20 s
+make test-pack-parity
+# PASS; native pack parity; real 6.63 s
+make test-avr-build-budget
+# PASS
+make build
+# BLOCKED; 32152 B flash / 29696 B board max / 24000 B project ceiling;
+# 2015 B static / 2160 B project ceiling / 545 B physical free / 145 B project free;
+# exit 2, real 12.91 s
+make ram
+# BLOCKED through make build; same 32152 B / 2015 B figures; exit 2, real 9.78 s
+```
+
+`avr-size --format=avr --mcu=atmega32u4 build/arduino-build/fx/CreatureGathererFX.ino.elf`: Program 32152, Data 2015. Flash deficits: +2456 B over board capacity, +8152 B over project ceiling. Static headroom 145 B is below the approximately150 B reserve. No Ardens, fxtest target, GUI, visual, or hardware check invoked per live steering. No commit/push. Bead remains in progress pending an owner-approved resource/design trim (next `.12` legacy cleanup is a likely recovery path).

@@ -39,16 +39,13 @@ enum : uint8_t {
 
 // Keep the timing vocabulary in code on AVR. A compiler switch table costs
 // static SRAM in this sketch even though every duration is a compile-time byte.
-__attribute__((optimize("no-tree-switch-conversion")))
 uint8_t duration(PresenterStage stage) {
-    switch (stage) {
-    case PresenterStage::Announce: return ANNOUNCE_TICKS;
-    case PresenterStage::Impact: return IMPACT_TICKS;
-    case PresenterStage::Consequence: return CONSEQUENCE_TICKS;
-    case PresenterStage::Faint: return FAINT_TICKS;
-    case PresenterStage::Terminal: return TERMINAL_TICKS;
-    default: return 0;
-    }
+    if (stage == PresenterStage::Announce) return ANNOUNCE_TICKS;
+    if (stage == PresenterStage::Impact) return IMPACT_TICKS;
+    if (stage == PresenterStage::Consequence) return CONSEQUENCE_TICKS;
+    if (stage == PresenterStage::Faint) return FAINT_TICKS;
+    if (stage == PresenterStage::Terminal) return TERMINAL_TICKS;
+    return 0;
 }
 
 constexpr uint8_t hiddenBit(uint8_t side) { return static_cast<uint8_t>(1u << side); }
@@ -178,6 +175,14 @@ void drawTextSprite(int16_t x, int16_t y, uint24_t address, uint8_t width) {
 }
 #endif
 } // namespace
+
+void BattlePresenter::reset() {
+    result_ = nullptr;
+    stage_ = PresenterStage::Idle;
+    elapsed_ = fact_ = flags_ = 0;
+    displayHp_[0] = displayHp_[1] = 0;
+    item_ = {};
+}
 
 void BattlePresenter::begin(const ActionResult &result) {
     result_ = &result;

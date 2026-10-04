@@ -273,11 +273,7 @@ static uint8_t battleHpBarWidth(uint8_t hp, uint8_t maxHp) {
 
 static void drawPlayerHP(const battle::BattleView &view) {
     const battle::ActiveView &creature = view.active[static_cast<uint8_t>(battle::Side::Player)];
-    uint8_t hp = creature.hp;
-    const uint8_t slot = view.activeSlot[static_cast<uint8_t>(battle::Side::Player)];
-    if (slot < PARTY_SIZE) {
-        hp = player.creatureHPs[slot];
-    }
+    const uint8_t hp = creature.hp;
     SpritesU::fillRect(88, 34, 34, 6, BLACK);
     SpritesU::fillRect(90, 36, battleHpBarWidth(hp, creature.maxHp), 2, WHITE);
 

@@ -28,6 +28,7 @@ struct PreparedBattleItem {
 class BattlePresenter {
 public:
     void begin(const ActionResult &result);
+    void reset();
     void update(bool freshAEdge);
     void draw() const;
     bool done() const { return stage_ == PresenterStage::Done; }
