@@ -21,9 +21,8 @@ extern MenuV2 menu;
 
 #define DGF __attribute__((optimize("-O0")))
 
-// Interim: assets still carry 3 grayscale planes per frame; plane 1 is the
-// 50% (R >= 128) threshold, matching the upcoming 1bpp (shades = 2) encoding.
-#define FRAME(x) ((x) * 3 + 1)
+// Final 1bpp assets use one plane per frame.
+#define FRAME(x) (x)
 #include "fxdata.h"
 static void drawStatNumbers(uint8_t x, uint8_t y, uint8_t number) {
     uint8_t upper = number / 100;

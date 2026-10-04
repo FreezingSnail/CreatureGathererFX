@@ -47,10 +47,10 @@ inline void Arduboy2NativeRendererTest(TestSuite &suite)
     test.assert(Arduboy2Base::getPixel(0, 0), BLACK,
                 "native renderer clears a pixel");
 
-    test.assert(FRAME(0), static_cast<uint16_t>(1),
-                "interim frame selects plane one");
-    test.assert(FRAME(2), static_cast<uint16_t>(7),
-                "interim frame preserves three-plane stride");
+    test.assert(FRAME(0), static_cast<uint16_t>(0),
+                "final 1bpp frame starts at zero");
+    test.assert(FRAME(2), static_cast<uint16_t>(2),
+                "final 1bpp frame has one entry per frame");
     suite.addTest(test);
 }
 

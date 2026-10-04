@@ -2282,3 +2282,38 @@ Focused review fixed EndTurn-faint replacement cursor reset (`next=COMPLETE` now
 - `CreatureGathererFX-jp8.5.18`: CLOSED. UseItem fast action, consume-before-read, clamped Heal, full-HP zero restore, Cure/Charge no-op, empty-stack no-read tests. BattleItemSuite 25/0 in host total 2361/0; same VM/build gates above. Active-inventory pointer seam intentionally awaits .5.13 Player/Save ownership.
 - `CreatureGathererFX-jp8.6`: IN_PROGRESS. Native prototype/test metrics: plant 3 turns / 0 HP / 0 flee fires; battle-drop 2 turns / 8 HP / 0 flee fires; standalone six-turn timer 1 fire/6 turns. Owner must perform manual playable-feel playtest, record/tune jp8.2, then delete prototype in one commit; no commit/hardware/GUI available here.
 - `CreatureGathererFX-b2a.2`: IN_PROGRESS/BLOCKED. Local `cgfx-tools 0.2.0` supports shades 2 but is dirty, untagged, SHA `ffffe7520d0121d19c4a26970e46254ba9275c53d517751dc6b3841723efc61b`; lock requires reproducible `v0.1.0` release and pinned hashes, absent locally. No generated edits made.
+
+
+### CreatureGathererFX-b2a.2 — final 1bpp release (2026-10-04)
+
+Status: PASS under the explicit headless-only steering. Published clean `CreatureGathererTools v0.2.0` from tag `831989f`; tool source includes B&W `shades` support and consumables mode. Release assets verified after download:
+
+```text
+macOS ARM64 768245d149a9f0fce9c992ebbda0f3d1f74d4fedbcb9ecb0e95e7d52d14b79a4
+Linux x64    cfba8106018296593a9c3e935f8a6c59c6a95edbb049f8eee8b26c1042198880
+```
+
+Canonical changes: `fxsprites.toml` top-level `shades = 2`, strings inherit one plane; `src/common.hpp` `FRAME(x) = (x)`; generated battle-effect sprites/header and 1bpp-shifted alias fixtures regenerated; `tools/toolchain.lock` now pins published `v0.2.0`; pack parity baseline is `089de690677262e653181b1111563cce20a62bf632ad0f79c32cf7c7211552b9`.
+
+```text
+PATH=/Users/connorfranc/code/CreatureGathererTools-release-v0.2.0:$PATH make gen
+# PASS; FX_DATA_BYTES=644579; FX_SAVE_PAGE=0xFF80; tracked generated set stable on rerun
+
+make check ARDENS=
+# PASS; host 2361/0; world 190/0; VM 42/0; generated/manifest/libs/aliases/budget PASS; fxtest skipped
+# timed real 26.91 s
+
+make test-pack-parity
+# PASS; SHA 089de690677262e653181b1111563cce20a62bf632ad0f79c32cf7c7211552b9
+# timed real 6.56 s
+
+make build
+# PASS; 20604 B flash / 1873 B static / 287 B project-budget free
+# timed real 8.63 s
+
+make ram
+# PASS; 687 B physical static-RAM free
+# timed real 8.42 s
+```
+
+Initial failures recorded: clean release test expected 108 old sprite declarations while current FX has 130; synchronized that permanent tool fixture. First generation attempt selected the older installed binary because the release asset filename was not exposed as `cgfx-tools`; fixed by selecting the published v0.2.0 binary. An accidental inherited-`ARDENS` check was not used for acceptance: host/device build ran, `test_stack` reported 207 B versus its 219 B threshold and pre-existing `test_tiles` reported 5 failures; final acceptance reran explicitly with `ARDENS=` and permanent native headless coverage. No source/generated hand edits; no grep/rg/find commands.
