@@ -7,7 +7,9 @@
 #include "../battle/BattleView.hpp"
 #include "MenuIntent.hpp"
 
-class BattleEngine;
+namespace battle {
+class BattleSession;
+}
 
 enum MenuEdgeButton : uint8_t {
     MENU_EDGE_A = static_cast<uint8_t>(1u << 3),
@@ -56,7 +58,7 @@ class MenuV2 {
 
     // run keeps the legacy button bridge for existing callers; rendering and
     // snapshot transitions consume only BattleView/snapshot data.
-    void run(BattleEngine &engine);
+    void run(battle::BattleSession &session);
     void printMenu(const battle::BattleView &view);
     void prepareCreatureRental();
     void creatureRental();

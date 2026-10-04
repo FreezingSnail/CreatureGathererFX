@@ -1,6 +1,6 @@
 #include "Arena.hpp"
 #include "../../player/Player.hpp"
-#include "../battle/Battle.hpp"
+#include "../battle/BattleSession.hpp"
 #include "../draw.h"
 #include "../menu/MenuV2.hpp"
 #include <ArduboyFX.h>
@@ -149,8 +149,10 @@ uint8_t Arena::selectOpponent() {
     return 0;
 }
 
-void Arena::startBattle(BattleEngine &engine, Player &player, MenuV2 &menu2) {
-    engine.startArena(4);
+void Arena::startBattle(battle::BattleSession &session, Player &player, MenuV2 &menu2) {
+    (void)player;
+    (void)menu2;
+    session.beginTrainer(4);
 }
 
 void Arena::displayRegisteredCount() {

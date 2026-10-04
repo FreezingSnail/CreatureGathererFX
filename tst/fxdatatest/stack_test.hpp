@@ -105,28 +105,15 @@ inline void test_stack(FxTest &test)
     enterBattle();
 
     player.basic();
-    legacyBattle().startFight(0);
-    menu.printMenu(battle::legacyBattleView(legacyBattle()));
-    legacyBattle().opponentCur->level = 31;
-    legacyBattle().opponentHealths[0] = 1000;
-    legacyBattle().queueAction(ActionType::ATTACK, 0);
-    legacyBattle().turnState = BattleState::TURN_INPUT;
-    legacyBattle().turnTick();
-    legacyBattle().turnState = BattleState::PLAYER_ATTACK;
-    legacyBattle().turnTick();
-    legacyBattle().turnState = BattleState::OPPONENT_RECEIVE_DAMAGE;
-    legacyBattle().turnTick();
-    legacyBattle().turnState = BattleState::OPPONENT_RECEIVE_EFFECT_APPLICATION;
-    legacyBattle().turnTick();
-    legacyBattle().turnState = BattleState::OPPONENT_ATTACK;
-    legacyBattle().turnTick();
-    legacyBattle().turnState = BattleState::PLAYER_RECEIVE_DAMAGE;
-    legacyBattle().turnTick();
-    legacyBattle().turnState = BattleState::PLAYER_RECEIVE_EFFECT_APPLICATION;
-    legacyBattle().turnTick();
-    legacyBattle().turnState = BattleState::END_TURN;
-    legacyBattle().turnTick();
-    legacyBattle().endEncounter();
+    battleSession().beginTrainer(0);
+    menu.printMenu(battleSession().view());
+    battleSession().submitIntent({MenuIntentKind::SelectMove, 0});
+    for (uint8_t action = 0; action < 8 && !battleSession().exitReady(); ++action) {
+        if (!battleSession().advance()) break;
+        battleSession().finishPresentation();
+    }
+    battleSession().syncPlayerHp();
+    exitBattle();
 
     const SaveStep step = runSave();
 

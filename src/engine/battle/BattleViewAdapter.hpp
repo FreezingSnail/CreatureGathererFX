@@ -1,12 +1,11 @@
 #pragma once
 
+#include "BattleSession.hpp"
 #include "BattleView.hpp"
-
-class BattleEngine;
 
 namespace battle {
 
-// Temporary bridge for legacy battle callers. BattleSession replaces this in .11.
-BattleView legacyBattleView(const BattleEngine &engine);
+// Compatibility name for callers that only need a transient session view.
+BattleView legacyBattleView(const BattleSession &session);
 
 } // namespace battle

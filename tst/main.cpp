@@ -33,10 +33,12 @@
 #include "../src/globals.hpp"
 #include "../src/engine/menu/MenuV2.hpp"
 #include <cstring>
+#include "battle_session_test.hpp"
 
 Player player = Player();
 GameState gameState;
 ModeState modeState;
+BattleEngine legacyBattleForTests;
 MenuV2 menu;
 BattleEvent battleEventStack[10];
 BattleEventPlayer battleEventPlayer;
@@ -183,6 +185,8 @@ int main() {
     std::cout << "BattleFaintSwitchSuite finished" << std::endl;
     BattlePresentationSuite(tests);
     std::cout << "BattlePresentationSuite finished" << std::endl;
+    BattleSessionSuite(tests);
+    std::cout << "BattleSessionSuite finished" << std::endl;
     NativeRendererSuite(tests);
     std::cout << "NativeRendererSuite finished" << std::endl;
     std::cout << "Tests Finished" << std::endl;

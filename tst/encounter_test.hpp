@@ -200,17 +200,17 @@ void EncounterWorldIntegrationTest(TestSuite &suite) {
     onStep(tile);
     test.assert(gameState.state, GameState_t::BATTLE,
                 "tagged destination enters battle");
-    test.assert(legacyBattle().activeBattle, true, "battle owner is active");
-    test.assert(legacyBattle().opponent.party[0].id, static_cast<uint8_t>(9),
-                "battle receives slot-nine creature");
-    test.assert(legacyBattle().opponent.party[0].level, static_cast<uint8_t>(5),
-                "battle receives averaged level");
+    test.assert(battleSession().isActive(), true, "battle session is active");
+    test.assert(battleSession().state().active[static_cast<uint8_t>(battle::Side::Opponent)].id,
+                static_cast<uint8_t>(9), "battle receives slot-nine creature");
+    test.assert(battleSession().state().active[static_cast<uint8_t>(battle::Side::Opponent)].level,
+                static_cast<uint8_t>(5), "battle receives averaged level");
     const CreatureData_t encounterSeed = getCreatureFromStore(9);
-    test.assert(legacyBattle().opponent.party[0].statlist.attack,
+    test.assert(battleSession().state().active[static_cast<uint8_t>(battle::Side::Opponent)].stats.attack,
                 static_cast<uint8_t>(2 * 5 + encounterSeed.atkSeed * (5 / 3)),
                 "computed encounter level reaches creature stats");
-    test.assert(legacyBattle().playerCur == &player.party[0], true,
-                "battle entry binds persistent player party");
+    test.assert(battleSession().state().active[static_cast<uint8_t>(battle::Side::Player)].id,
+                player.party[0].id, "battle entry binds persistent player party");
     test.assert(fxDataFake::readCount, readsBeforeStep,
                 "battle entry uses cached encounter data only");
     const uint8_t callsAfterEntry = rngCalls;

@@ -431,9 +431,8 @@ void BattleEngine::endEncounter() {
         return;
     }
 
-    // Capture ownership before exitBattle() destroys the union member. No
-    // battle object access is valid after that final transition call.
-    const bool globalBattle = this == &legacyBattle();
+    // The session owns the active mode now. This legacy object is retained
+    // only for staged host compatibility until jp8.3.12 removes it.
     this->activeBattle = false;
     this->updateState = false;
     this->playerAction.actionIndex = -1;
@@ -443,9 +442,7 @@ void BattleEngine::endEncounter() {
     menu.clear();
     menuStack.clear();
     dialogMenu.clear();
-    if (globalBattle) {
-        exitBattle();
-    }
+    // No union transition here: only BattleSession owns the active mode.
 }
 
 //////////////////////////////////////////////////////////////////////////////

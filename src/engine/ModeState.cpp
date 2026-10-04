@@ -3,10 +3,13 @@
 #include "world/World.hpp"
 
 void ModeState::enterBattle() {
-    // BattleEngine is trivially destructible; placement construction starts a
-    // fresh active member without reading or clearing the inactive world data.
-    ::new (static_cast<void *>(&battle)) BattleEngine();
-    battle.init();
+    // BattleSession is trivially destructible; placement construction starts a
+    // fresh active member without reading or clearing inactive world data.
+    ::new (static_cast<void *>(&battle)) battle::BattleSession();
+#ifdef TEST
+    // Keep host-only legacy engine tests isolated from resident device state.
+    legacyBattleForTests.init();
+#endif
 }
 
 void ModeState::exitBattle() {

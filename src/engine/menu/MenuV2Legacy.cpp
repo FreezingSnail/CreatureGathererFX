@@ -1,5 +1,6 @@
 #include "MenuV2.hpp"
 #include "MenuNav.hpp"
+#include "../battle/BattleSession.hpp"
 #include "../draw.h"
 #include "../../common.hpp"
 #include "../../globals.hpp"
@@ -17,7 +18,7 @@ uint8_t menuEdgeButtons() {
 }
 } // namespace
 
-void MenuV2::run(BattleEngine &engine) {
+void MenuV2::run(battle::BattleSession &session) {
     if (menuPointer < 0 && !dialogMenu.peek()) return;
 
     // World/script dialogs retain their separate A dismiss owner. Battle
@@ -35,7 +36,7 @@ void MenuV2::run(BattleEngine &engine) {
     if (menuPointer > previousPointer) {
         const MenuEnum current = stack[menuPointer];
         if (current == BATTLE_MOVE_SELECT || current == BATTLE_CREATURE_SELECT) {
-            openMenu(current, battle::legacyBattleView(engine));
+            openMenu(current, session.view());
         }
     }
 }

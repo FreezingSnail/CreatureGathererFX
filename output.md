@@ -2170,3 +2170,47 @@ PASS
 ```
 
 No generated, packed, FX, or flag/opcode artifacts changed. No Ardens, fxtest target, visual, or hardware check run per task instruction. Device-only acceptance reconciled to permanent native `BattleGatherIntegrationTest`; its resolver assertions include `FxReadCounter::count()==0` and terminal repeat absorption. No commit/push. Final timed validation wall: 24s.
+
+## CreatureGathererFX-jp8.3.11 — managed session checkpoint
+
+Implemented BattleSession/TurnCursor session owner, one-result lifecycle, frozen order, faint invalidation and replacement sequencing, transient view/move/party snapshots, persistent HP sync, active sketch/world/arena ports, and native session coverage. Species-zero party terminator fixed in BattleSetup (`level != 0`).
+
+Commands/results:
+
+```text
+make test
+# host 2299 passed, 0 failed; BattleSessionIntegrationTest 25/0; EncounterWorldIntegrationTest 11/0
+make testvm
+# VM 42 passed, 0 failed
+make build
+# flash 20664/29696 B; static RAM 1873/2160 B; free 287 B
+# no Ardens/fxtest/hardware run per live steering
+```
+
+Native/build gates pass. Device-only acceptance intentionally replaced by permanent native session integration under steering; no packed/generated artifacts changed. Wall time: approximately 12 minutes including concurrent worker reconciliation and repair of species-zero setup/build namespace issues.
+
+# CreatureGathererFX-jp8.3.11
+
+Implemented `BattleSession`/`TurnCursor` (132 B AVR contract), frozen one-action lifecycle, opponent AI/order capture, cancellation masks, replacement sequencing, terminal pending state, transient `BattleView`/party/move snapshots, and persistent player HP synchronization. Ported active mode, wild/trainer/arena entry, draw/menu session views, and native session integration coverage. Legacy `BattleEngine` remains host-only compatibility until .12; no second resident engine in `ModeState`.
+
+Commands/results:
+
+```text
+make test
+# PASS; host 2299 passed, 0 failed; BattleSessionIntegrationTest 25/0
+make testvm
+# PASS; VM 42 passed, 0 failed
+make build
+# PASS; flash 20664/24000 B; static RAM 1873/2160 B; free 287 B
+# First build exposed unqualified Arena::BattleSession; fixed namespace and reran PASS.
+```
+
+Live steering deviation: no Ardens/fxtest/GUI/hardware; native headless session suite is authoritative. No generated artifacts changed. No commit/push performed. Wall time: ~10 minutes, ending 2026-10-03 19:59 EDT.
+
+# CreatureGathererFX-jp8.5.18 — BLOCKED
+
+Prerequisite session stage is closed, but item ownership is unavailable: `src/player/Player.hpp` still stores legacy `Item items[10]`; no `item::Inventory` instance/accessor exists. `.5.13` owns replacement and SaveFile v2 persistence. Do not reinterpret ten legacy bytes as the 32-byte inventory or touch Player/SaveFile from this bead. No UseItem resolver edits or fake tests landed. Resume after `.5.13` publishes the authoritative inventory owner/accessor.
+
+# CreatureGathererFX-b2a.2 — BLOCKED
+
+Pinned toolchain remains unavailable. `tools/toolchain.lock` requires v0.1.0, macOS ARM64 SHA256 `70576f759f1bc071df3c5416b4d8754cd916f7ac8dcff098f387ca4bab49284f`, and Linux x64 SHA256 `b9536f31ecfd34c6dc3e56324ef52a4f8eef6d0c4bb61563cb5b7d7e751b1489`. Sibling checkout has no v0.1.0 tag/release; PATH tool is v0.2.0 with hash `ffffe7520d0121d19c4a26970e46254ba9275c53d517751dc6b3841723efc61b`. It supports shades, but is not the pinned artifact. No source/generated edits or fake parity pass.

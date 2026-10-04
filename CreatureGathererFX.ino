@@ -4,7 +4,7 @@
 #include "src/globals.hpp"
 
 #include "src/engine/arena/Arena.hpp"
-#include "src/engine/battle/Battle.hpp"
+#include "src/engine/battle/BattleSession.hpp"
 #include "src/engine/game/Gamestate.hpp"
 #include "src/engine/menu/MenuV2.hpp"
 #include "src/engine/world/Event.hpp"
@@ -112,7 +112,7 @@ void setup() {
 void run() {
     switch (gameState.state) {
     case GameState_t::BATTLE:
-        drawScene(legacyBattle());
+        drawScene(battleSession().view());
         break;
     case GameState_t::WORLD:
         WorldEngine::runMap(worldState());
@@ -120,7 +120,7 @@ void run() {
     case GameState_t::ARENA:
         if (arena.arenaLoop(menu, player)) {
             enterBattle();
-            arena.startBattle(legacyBattle(), player, menu);
+            arena.startBattle(battleSession(), player, menu);
             gameState.state = GameState_t::BATTLE;
         }
         break;
@@ -132,7 +132,7 @@ void run() {
     if (dialogMenu.peek()) {
         dialogMenu.drawPopMenu();
     } else if (gameState.state == GameState_t::BATTLE) {
-        menu.printMenu(battle::legacyBattleView(legacyBattle()));
+        menu.printMenu(battleSession().view());
     }
 }
 
@@ -141,7 +141,7 @@ uint8_t render() {
 
     switch (gameState.state) {
     case GameState_t::BATTLE:
-        drawScene(legacyBattle());
+        drawScene(battleSession().view());
         return 0;
     case GameState_t::WORLD:
     {

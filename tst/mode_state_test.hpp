@@ -78,13 +78,11 @@ void ModeTransitionClearsTransientTest(TestSuite &suite) {
 
     player.creatureHPs[0] = 77;
     state.enterBattle();
-    test.assert(state.battle.activeBattle, false, "fresh battle member is inactive");
-    test.assert(state.battle.playerParty[0] == nullptr, true,
-                "fresh battle member clears party pointers");
+    test.assert(state.battle.isActive(), false, "fresh battle session is inactive");
+    test.assert(state.battle.awaitingPlayer(), false,
+                "fresh battle session has no pending choice");
     test.assert(player.creatureHPs[0], static_cast<uint8_t>(77),
-                "fresh battle member preserves player HP");
-    test.assert(state.battle.playerAction.actionIndex, static_cast<int8_t>(-1),
-                "fresh battle member resets player action");
+                "fresh battle session preserves player HP");
 
     state.exitBattle();
     test.assert(WorldEngine::location(), static_cast<uint16_t>(0x0607),
