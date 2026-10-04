@@ -1,3 +1,4 @@
+#include "lib/FxRead.hpp"
 #include "Animator.hpp"
 #include "common.hpp"
 
@@ -13,6 +14,8 @@ void Animator::push(Animation animation) {
     FxReadCounter::transitionExact(1);
     animation.width = header.width;
     animation.height = header.height;
+    // Normalize this legacy header-bearing API once, before rendering.
+    animation.data += 2;
     stackPointer++;
     animationStack[stackPointer] = animation;
     start();
@@ -30,9 +33,9 @@ void Animator::play() {
     if (!playing)
         return;
     const Animation &animation = animationStack[stackPointer];
-    SpritesU::drawPlusMaskFX(animation.xOrigin, animation.yOrigin,
+    Blit::draw(animation.xOrigin, animation.yOrigin,
                              animation.width, animation.height, animation.data,
-                             FRAME(currentFrame));
+                             FRAME(currentFrame), Blit::PLUSMASK);
     if (ticker % 20 != 0) {
         return;
     }

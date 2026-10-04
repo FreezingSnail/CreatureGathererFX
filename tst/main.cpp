@@ -28,6 +28,7 @@
 #include "battle_faint_test.hpp"
 #include "battle_presentation_test.hpp"
 #include "renderer_test.hpp"
+#include "blit_test.hpp"
 
 #include "../src/globals.hpp"
 #include "../src/engine/menu/MenuV2.hpp"
@@ -190,6 +191,7 @@ int main() {
     std::cout << "BattleItemSuite finished" << std::endl;
     LurePrototypeSuite(tests);
     std::cout << "LurePrototypeSuite finished" << std::endl;
+    BlitSuite(tests);
     NativeRendererSuite(tests);
     std::cout << "NativeRendererSuite finished" << std::endl;
     std::cout << "Tests Finished" << std::endl;

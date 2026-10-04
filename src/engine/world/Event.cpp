@@ -17,7 +17,3 @@ void Event::loadEvent(uint8_t mapIndex, uint8_t subIndex, uint8_t eventIndex) {
     this->cords = event;
     FxReadCounter::transitionExact(5);
 }
-
-void Event::draw(int16_t mapx, int16_t mapy) {
-    FX::drawBitmap(mapx, mapy, npc, 0, dbmMasked);
-}

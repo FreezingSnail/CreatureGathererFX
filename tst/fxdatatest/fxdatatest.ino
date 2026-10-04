@@ -1,5 +1,3 @@
-#define ABG_IMPLEMENTATION
-#define SPRITESU_IMPLEMENTATION
 #include "src/common.hpp"
 #include "src/globals.hpp"
 

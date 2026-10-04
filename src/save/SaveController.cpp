@@ -67,13 +67,13 @@ void drawSavingStatus(bool failed)
 
     // Keep using internal-flash glyphs here: the FX font shares SPI with the
     // save flash, but pgm_read_byte uses AVR LPM and does not access that bus.
-    SpritesU::fillRect(0, 0, 128, 64, WHITE);
+    Blit::fillRect(0, 0, 128, 64, WHITE);
     for (uint8_t glyph = 0; glyph < 6; ++glyph) {
         for (uint8_t row = 0; row < 5; ++row) {
             const uint8_t rowBits = pgm_read_byte(&text[glyph][row]);
             for (uint8_t column = 0; column < 5; ++column) {
                 if ((rowBits & (1 << (4 - column))) != 0) {
-                    SpritesU::fillRect(34 + (glyph * 10) + (column * 2),
+                    Blit::fillRect(34 + (glyph * 10) + (column * 2),
                                        27 + (row * 2), 2, 2, BLACK);
                 }
             }

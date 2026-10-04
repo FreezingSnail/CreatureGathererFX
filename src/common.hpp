@@ -3,13 +3,10 @@
 #include <stdint.h>
 
 #include <Arduboy2.h>
+#include <ArduboyFX.h>
 extern Arduboy2Base arduboy;
 
-#define SPRITESU_OVERWRITE
-#define SPRITESU_PLUSMASK
-#define SPRITESU_RECT
-#define SPRITESU_FX
-#include "external/SpritesU.hpp"
+#include "lib/Blit.hpp"
 
 #include "Animator.hpp"
 extern Animator animator;
@@ -27,15 +24,13 @@ extern MenuV2 menu;
 static void drawStatNumbers(uint8_t x, uint8_t y, uint8_t number) {
     uint8_t upper = number / 100;
     uint8_t lower = number % 100;
-    SpritesU::drawPlusMaskFX(x, y, 3, 8, singlenumberswhite - 2, FRAME(upper));
-    SpritesU::drawPlusMaskFX(x + 4, y, 7, 8, numberswhite - 2, FRAME(lower));
+    Blit::draw(x, y, 3, 8, singlenumberswhite, FRAME(upper), Blit::PLUSMASK);
+    Blit::draw(x + 4, y, 7, 8, numberswhite, FRAME(lower), Blit::PLUSMASK);
 }
 
 static void drawNumbersBlack(uint8_t x, uint8_t y, uint8_t number) {
     uint8_t upper = number / 100;
     uint8_t lower = number % 100;
-    // These FX symbols point at sprite payloads; the explicit-size overload
-    // expects the dimensions prefix because it advances past it internally.
-    SpritesU::drawPlusMaskFX(x, y, 3, 8, singlenumbersblack - 2, FRAME(upper));
-    SpritesU::drawPlusMaskFX(x + 4, y, 7, 8, numbersblack - 2, FRAME(lower));
+    Blit::draw(x, y, 3, 8, singlenumbersblack, FRAME(upper), Blit::PLUSMASK);
+    Blit::draw(x + 4, y, 7, 8, numbersblack, FRAME(lower), Blit::PLUSMASK);
 }
