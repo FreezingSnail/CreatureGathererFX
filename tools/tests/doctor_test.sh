@@ -18,13 +18,33 @@ run_doctor() {
     "$doctor" 2>&1
 }
 
-output=$(run_doctor "$valid")
+output=$(ARDENS= run_doctor "$valid")
 printf '%s\n' "$output" | grep -Fq "host: $(uname -s) $(uname -m)"
 printf '%s\n' "$output" | grep -Fq 'PASS cgfx-tools: path='
 printf '%s\n' "$output" | grep -Fq 'version=0.2.0'
+printf '%s\n' "$output" | grep -Fq 'PASS cgfx-tools project capabilities'
 printf '%s\n' "$output" | grep -Fq 'PASS manifest: fresh (generator=cgfx-tools:1.2.3)'
 printf '%s\n' "$output" | grep -Fq 'SKIP Ardens: not requested'
 printf '%s\n' "$output" | grep -Fq 'doctor: READY'
+
+# Same advertised version as the compatible fixture, but each missing
+# required generation mode must independently reject the binary.
+for capability in --consumables-csv --sprite-config --emit-fixtures --pack; do
+    if output=$(DOCTOR_MOCK_CGFX_MISSING="$capability" run_doctor "$valid"); then
+        printf 'missing cgfx-tools capability %s unexpectedly passed\n' "$capability" >&2
+        exit 1
+    fi
+    printf '%s\n' "$output" | grep -Fq "FAIL cgfx-tools capabilities: help_status=0 missing=$capability"
+    printf '%s\n' "$output" | grep -Fq 'remedy: rebuild/install cgfx-tools from current CreatureGathererTools source'
+done
+
+for failure in bad-version bad-help; do
+    if output=$(DOCTOR_MOCK_CGFX="$failure" run_doctor "$valid"); then
+        printf 'cgfx-tools %s unexpectedly passed\n' "$failure" >&2
+        exit 1
+    fi
+    printf '%s\n' "$output" | grep -Fq 'FAIL cgfx-tools'
+done
 
 if output=$(CXX=missing-cxx run_doctor "$valid"); then
     printf '%s\n' 'missing compiler unexpectedly passed' >&2

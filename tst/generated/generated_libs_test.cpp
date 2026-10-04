@@ -27,6 +27,9 @@
 #include <string>
 #include <vector>
 
+#include "../../src/engine/world/Chunk.hpp"
+#include "../../src/engine/world/TileProps.hpp"
+
 namespace {
 
 struct Failure {
@@ -661,6 +664,46 @@ std::string describeMismatch(const std::vector<uint8_t> &expected, const std::st
     return detail.str();
 }
 
+// Byte parity alone cannot detect a generator dropping authored properties
+// from both the raw source and the image. Pin real map cells independently
+// of their generated values, just as the device tile suite does.
+void checkAuthoredTiles(Report &report, const std::vector<uint8_t> &source,
+                       const std::string &image, uint32_t address) {
+    struct Cell {
+        const char *name;
+        uint16_t x, y, gid;
+        uint8_t properties;
+    };
+    const Cell cells[] = {
+        {"north floor", 12, 6, 275, TileProps::PROP_WALKABLE},
+        {"spawn floor", 12, 7, 275, TileProps::PROP_WALKABLE},
+        {"west wall", 11, 7, 262, 0},
+        {"east wall", 13, 7, 261, 0},
+    };
+    for (const Cell &cell : cells) {
+        const std::string label = std::string("authored tile ") + cell.name;
+        const std::size_t offset =
+            (static_cast<std::size_t>(cell.y) * Chunk::MAP_WIDTH_TILES + cell.x) * 2;
+        if (offset + 2 > source.size() || address + offset + 2 > image.size()) {
+            report.fail(label, "tile word runs past raw map or packed image");
+            continue;
+        }
+        const uint16_t raw = source[offset] | (uint16_t(source[offset + 1]) << 8);
+        const uint16_t packed = static_cast<uint8_t>(image[address + offset]) |
+            (uint16_t(static_cast<uint8_t>(image[address + offset + 1])) << 8);
+        const uint16_t authored = TileProps::packTile(cell.gid, cell.properties);
+        if (raw == packed && TileProps::tileId(packed) == cell.gid &&
+            TileProps::tileProps(packed) == cell.properties) {
+            report.pass();
+        } else {
+            std::ostringstream detail;
+            detail << "(" << cell.x << ',' << cell.y << ") expected=0x" << std::hex
+                   << authored << " raw=0x" << raw << " packed=0x" << packed;
+            report.fail(label, detail.str());
+        }
+    }
+}
+
 } // namespace
 
 int main(int argc, char **argv) {
@@ -741,6 +784,9 @@ int main(int argc, char **argv) {
         if (address + expected.size() > image->size()) {
             report.fail(label, "entry runs past the end of the packed image");
             continue;
+        }
+        if (entry.kind == "raw" && entry.key() == "raw_map_data") {
+            checkAuthoredTiles(report, expected, *image, address);
         }
         bool matches = true;
         for (std::size_t index = 0; index < expected.size(); ++index) {

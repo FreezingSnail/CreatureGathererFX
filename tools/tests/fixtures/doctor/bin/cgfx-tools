@@ -1,2 +1,19 @@
 #!/bin/sh
-printf '%s\n' 'cgfx-tools 0.2.0'
+case "$1" in
+    --version)
+        printf '%s\n' 'cgfx-tools 0.2.0'
+        test "${DOCTOR_MOCK_CGFX:-}" != bad-version
+        ;;
+    --help)
+        if test "${DOCTOR_MOCK_CGFX:-}" = bad-help; then
+            exit 1
+        fi
+        for option in --project --arena-csv --arena-output --type-table-csv \
+            --type-table-output --consumables-csv --consumables-output \
+            --sprite-config --emit-fixtures --pack --layout --assert-layout-equivalent; do
+            test "$option" != "${DOCTOR_MOCK_CGFX_MISSING:-}" || continue
+            printf '  %s\n' "$option"
+        done
+        ;;
+    *) exit 1 ;;
+esac
