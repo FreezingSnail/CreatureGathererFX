@@ -10,7 +10,7 @@
 #include "world/TilePropertyWindow.hpp"
 #include "world/World.hpp"
 #include "battle/BattleSession.hpp"
-#include "battle/BattleViewAdapter.hpp"
+#include "battle/BattleView.hpp"
 #include "../external/SpritesABC.hpp"
 
 #include <ArduboyFX.h>
@@ -313,10 +313,6 @@ static void drawScene(const battle::BattleView &view) {
     drawOpponent(view);
     drawOpponentHP(view);
     drawPlayerHP(view);
-}
-
-static void drawScene(const battle::BattleSession &session) {
-    drawScene(session.view());
 }
 
 static uint8_t drawMapFast(WorldTransient &world) {

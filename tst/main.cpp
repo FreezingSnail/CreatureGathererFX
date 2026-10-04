@@ -4,7 +4,6 @@
 #include "statModifier_test.hpp"
 #include "creature_test.hpp"
 #include "player_test.hpp"
-#include "engine_test.hpp"
 #include "opponent_test.hpp"
 #include "type_test.hpp"
 #include "effect_test.hpp"
@@ -41,10 +40,7 @@
 Player player = Player();
 GameState gameState;
 ModeState modeState;
-BattleEngine legacyBattleForTests;
 MenuV2 menu;
-BattleEvent battleEventStack[10];
-BattleEventPlayer battleEventPlayer;
 MenuStack menuStack;
 DialogMenu dialogMenu;
 PlantGameState plants;
@@ -142,8 +138,6 @@ int main() {
     std::cout << "CreatureSuite finished" << std::endl;
     PlayerSuite(tests);
     std::cout << "PlayerSuite finished" << std::endl;
-    EngineSuite(tests);
-    std::cout << "EngineSuite finished" << std::endl;
     OpponentSuite(tests);
     std::cout << "OpponentSuite finished" << std::endl;
     EffectSuite(tests);

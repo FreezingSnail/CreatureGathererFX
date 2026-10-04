@@ -222,21 +222,6 @@ void captureTransitionAfter(const BattleState &state, ActionResult &out)
     out.progressAfter = state.gather.progress;
 }
 
-uint8_t originalSlotForBench(const BattleState &state, Side side,
-                             uint8_t benchIndex)
-{
-    const uint8_t sideIndex = static_cast<uint8_t>(side);
-    const uint8_t count = state.partyCount[sideIndex];
-    const uint8_t activeSlot = state.activeSlot[sideIndex];
-    uint8_t benchSlot = 0;
-    for (uint8_t originalSlot = 0; originalSlot < count; ++originalSlot) {
-        if (originalSlot == activeSlot) continue;
-        if (benchSlot == benchIndex) return originalSlot;
-        ++benchSlot;
-    }
-    return PARTY_SIZE;
-}
-
 bool loadIncoming(Side side, uint8_t originalSlot,
                   const BenchSlot &slot, Combatant &incoming,
                   uint8_t &reads)
@@ -382,20 +367,6 @@ bool applySwitch(BattleState &state, Side side, uint8_t originalSlot,
     out.hpBefore[sideIndex] = oldHp;
     captureTransitionAfter(state, out);
     return true;
-}
-
-void loadActive(BattleState &state, Side side, uint8_t benchIndex)
-{
-    const uint8_t sideIndex = static_cast<uint8_t>(side);
-    if (sideIndex >= 2 || state.partyCount[sideIndex] == 0 ||
-        state.partyCount[sideIndex] > PARTY_SIZE ||
-        benchIndex >= static_cast<uint8_t>(state.partyCount[sideIndex] - 1)) {
-        return;
-    }
-    const uint8_t originalSlot = originalSlotForBench(state, side, benchIndex);
-    if (originalSlot >= PARTY_SIZE) return;
-    ActionResult result;
-    applySwitch(state, side, originalSlot, false, result);
 }
 
 } // namespace battle

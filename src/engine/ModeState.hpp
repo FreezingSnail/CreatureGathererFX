@@ -13,10 +13,6 @@ inline void operator delete(void *, void *) noexcept {}
 
 #include "battle/BattlePresenter.hpp"
 #include "battle/BattleSession.hpp"
-#ifdef TEST
-#include "battle/Battle.hpp"
-extern BattleEngine legacyBattleForTests;
-#endif
 #include "world/TilePropertyWindow.hpp"
 
 // Script execution pauses tile movement, so the two-byte movement cursor can
@@ -91,11 +87,6 @@ inline __attribute__((always_inline)) battle::BattleSession &battleSession() {
 inline __attribute__((always_inline)) battle::BattlePresenter &battlePresenter() {
     return modeState.battle.presenter;
 }
-#ifdef TEST
-// Host compatibility for legacy engine tests. Device/runtime ownership is the
-// BattleSession above; the old engine is not resident in ModeState.
-inline __attribute__((always_inline)) BattleEngine &legacyBattle() { return legacyBattleForTests; }
-#endif
 inline __attribute__((always_inline)) WorldTransient &worldState() { return modeState.world; }
 inline __attribute__((always_inline)) void enterBattle() { modeState.enterBattle(); }
 inline __attribute__((always_inline)) void exitBattle() { modeState.exitBattle(); }

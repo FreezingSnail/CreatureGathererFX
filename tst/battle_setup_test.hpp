@@ -127,7 +127,8 @@ void BattleSetupIntegrationTest(TestSuite &suite)
 
     beginWild(state, 4, 8, false, 0);
     const uint8_t wildId = state.active[static_cast<uint8_t>(Side::Opponent)].id;
-    loadActive(state, Side::Opponent, 0);
+    test.assert(applySwitch(state, Side::Opponent, 0, false, result), false,
+                "one-creature wild refuses active-slot switch");
     test.assert(state.partyCount[static_cast<uint8_t>(Side::Opponent)], 1,
                 "one-creature wild has no switchable bench");
     test.assert(state.active[static_cast<uint8_t>(Side::Opponent)].id, wildId,

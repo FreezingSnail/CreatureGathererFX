@@ -3,7 +3,6 @@
 #include "src/common.hpp"
 #include "src/globals.hpp"
 
-#include "src/engine/arena/Arena.hpp"
 #include "src/engine/battle/BattleSession.hpp"
 #include "src/engine/game/Gamestate.hpp"
 #include "src/engine/menu/MenuV2.hpp"
@@ -33,12 +32,9 @@ ModeState modeState;
 MenuV2 menu = MenuV2();
 Player player = Player();
 
-Arena arena = Arena();
 Animator animator = Animator();
 PlantGameState plants;
 
-BattleEvent battleEventStack[10];
-BattleEventPlayer battleEventPlayer;
 MenuStack menuStack;
 DialogMenu dialogMenu;
 ScriptVm vm;
@@ -198,13 +194,6 @@ void run() {
     case GameState_t::WORLD:
         WorldEngine::runMap(worldState());
         break;
-    case GameState_t::ARENA:
-        if (arena.arenaLoop(menu, player)) {
-            enterBattle();
-            arena.startBattle(battleSession(), player, menu);
-            gameState.state = GameState_t::BATTLE;
-        }
-        break;
     case GameState_t::SAVING:
         SaveController::advance();
         return;
@@ -234,9 +223,6 @@ uint8_t render() {
         drawPlayer();
         return rowsRead;
     }
-    case GameState_t::ARENA:
-        arena.drawarenaLoop(menu, player);
-        return 0;
     case GameState_t::SAVING:
         SaveController::drawStatus();
         return 0;
