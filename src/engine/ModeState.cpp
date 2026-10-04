@@ -6,10 +6,6 @@ void ModeState::enterBattle() {
     // BattleSession is trivially destructible; placement construction starts a
     // fresh active member without reading or clearing inactive world data.
     ::new (static_cast<void *>(&battle)) battle::BattleMode();
-#ifdef TEST
-    // Keep host-only legacy engine tests isolated from resident device state.
-    legacyBattleForTests.init();
-#endif
 }
 
 void ModeState::exitBattle() {

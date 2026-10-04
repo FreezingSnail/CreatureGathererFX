@@ -86,31 +86,3 @@ void arenaLoad(Creature *creature, uint24_t addr, uint8_t lvl) {
         creature->setMove(record[slot + 1], slot);
     }
 }
-
-void ReadOpt(Opponent *opt, uint8_t index) {
-    uint24_t creatures[3];
-    // uint24_t addr = Teams::teamList + sizeof(uint24_t) * 7 * index;
-    // creatures[0] = FX::readIndexedUInt24(addr, 0);
-    // creatures[1] = FX::readIndexedUInt24(addr, 1);
-    // creatures[2] = FX::readIndexedUInt24(addr, 2);
-    // opt->levels[0] = uint8_t(FX::readIndexedUInt24(addr, 3));
-    // opt->levels[1] = uint8_t(FX::readIndexedUInt24(addr, 4));
-    // opt->levels[2] = uint8_t(FX::readIndexedUInt24(addr, 5));
-    arenaLoad(&opt->party[0], creatures[0], opt->levels[0]);
-    arenaLoad(&opt->party[0], creatures[1], opt->levels[1]);
-    arenaLoad(&opt->party[0], creatures[2], opt->levels[2]);
-
-    // opt->nameptr = FX::readIndexedUInt24(addr, 6);
-}
-
-void loadEncounterOpt(Opponent *opt, uint8_t id, uint8_t level) {
-    CreatureData_t cseed = getCreatureFromStore(id);
-    opt->levels[0] = level;
-    opt->levels[1] = 0;
-    opt->levels[2] = 0;
-    opt->party[0].id = static_cast<uint8_t>(cseed.id);
-    opt->party[0].level = level;
-    opt->party[0].loadTypes(cseed);
-    opt->party[0].setStats(cseed);
-    opt->party[0].loadMoves(cseed);
-}

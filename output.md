@@ -2348,3 +2348,52 @@ make ram
 ```
 
 `avr-size --format=avr --mcu=atmega32u4 build/arduino-build/fx/CreatureGathererFX.ino.elf`: Program 32152, Data 2015. Flash deficits: +2456 B over board capacity, +8152 B over project ceiling. Static headroom 145 B is below the approximately150 B reserve. No Ardens, fxtest target, GUI, visual, or hardware check invoked per live steering. No commit/push. Bead remains in progress pending an owner-approved resource/design trim (next `.12` legacy cleanup is a likely recovery path).
+
+## CreatureGathererFX-jp8.3.12 — trim-first resource pass (BLOCKED)
+
+Scope: removed proven-dead `BattleEngine`/`Battle.cpp`/`Battle.hpp`, `BattleEventStack`/`BattleEventPlayer`, legacy `Opponent` RAM class/readers, Arena runtime class/object/dispatch, stale globals/externs, the dead StepEvent legacy call, unused view adapter, unused `BattleSetup::loadActive` seam, unused free `ReadData::load`, and dead legacy test/harness references. Parked `GameState_t::ARENA`, MenuV2 rental helpers, `arenaLoad`, generated arena fixtures, and permanent arena data tests. Preserved live `BattleSession`/`BattlePresenter`/playback, wild/trainer 3-party setup, persistent HP/save flow, generated `readOpponentSeed`, arena FX reader, and native battle/session/presenter tests. Ported opponent tests to `OpponentSeed`/`Creature`; ported setup coverage to `applySwitch`.
+
+Resource delta (whole shipping image):
+
+| image | flash | static RAM | free static |
+| --- | ---: | ---: | ---: |
+| committed .16 baseline (`eb5db70`) | 32,152 B | 2,015 B | 545 B physical / 145 B project |
+| after .12 trim | 29,676 B | 1,943 B | 20 B board flash / 617 B physical RAM / 217 B project RAM |
+| delta | -2,476 B | -72 B | +72 B |
+
+Project flash result: **BLOCKED**, 29,676 / 24,000 B, deficit **5,676 B**. Board result: 29,676 / 29,696 B, only 20 B headroom. Static project budget passes (1,943 / 2,160 B, 217 B free); physical RAM report passes (617 B free). Painted-stack reserve remains unverified because live steering forbids Ardens and every fxtest target. Do not close bead.
+
+Commands/results (all with `ARDENS=` explicitly empty where relevant):
+
+```text
+bd update CreatureGathererFX-jp8.3.12 --claim
+# PASS
+
+env ARDENS= make test
+# PASS; host 2297 passed, 0 failed; world 190 passed, 0 failed
+
+env ARDENS= make testvm
+# PASS; VM 42 passed, 0 failed; final timed real 1.67 s
+
+env ARDENS= make verify-generated
+# PASS; final timed real 3.73 s
+
+env ARDENS= make test-manifest
+# PASS; fxdata-manifest PASS; final timed real 2.90 s
+
+env ARDENS= make test-generated-libs
+# PASS; generated-libs 8/0, invariants 5/0, first-unqualified-alias 28/0; final timed real 1.76 s
+
+env ARDENS= make test-pack-parity
+# PASS; layout equivalence, perturbation diagnostic, image SHA parity; final timed real 7.31 s
+env ARDENS= make build
+# BLOCKED by project budget only; 29676/24000 B flash, -5676 B; 1943/2160 B static, 217 B free; exit 2; final timed real 10.10 s
+env ARDENS= make ram
+# BLOCKED through default make build; same 29676 B / 1943 B figures; exit 2
+env ARDENS= make ram AVR_FLASH_BUDGET=29696 AVR_STATIC_RAM_BUDGET=2560
+# PASS board-limit report; 29676/29696 B flash, 20 B free; 1943/2560 B static, 617 B free; final timed real 10.21 s
+git diff --check
+# PASS; final timed real 0.03 s
+```
+
+Initial baseline evidence was the committed .16 report (`make build`/`make ram`: 32,152 B flash, 2,015 B static; 2,456 B over board, 8,152 B over project, 145 B project static free). Local pre-trim compile reproduced 32,152 B / 2,015 B but the temporary oversized budget override still failed closed against the 29,696 B board maximum. No generated artifacts changed. No Ardens, fxtest target, visual check, hardware check, commit, or push performed. Final worker wall time: approximately 30 minutes; timed final gates above total approximately 38 s excluding the shipping builds.

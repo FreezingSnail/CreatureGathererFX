@@ -13,8 +13,6 @@ DialogMenu dialogMenu;
 #else
 #include "../src/globals.hpp"
 
-#include "../src/engine/arena/Arena.hpp"
-#include "../src/engine/battle/Battle.hpp"
 #include "../src/engine/game/Gamestate.hpp"
 #include "../src/engine/menu/MenuV2.hpp"
 #include "../src/engine/world/Event.hpp"
@@ -29,12 +27,8 @@ GameState gameState;
 ModeState modeState;
 MenuV2 menu = MenuV2();
 Player player = Player();
-Arena arena = Arena();
 Animator animator = Animator();
 PlantGameState plants;
-
-BattleEvent battleEventStack[10];
-BattleEventPlayer battleEventPlayer;
 MenuStack menuStack;
 DialogMenu dialogMenu;
 #endif

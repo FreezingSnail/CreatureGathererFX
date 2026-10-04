@@ -76,18 +76,6 @@ CreatureData_t getCreatureFromStore(uint8_t id) {
     return cseed;
 }
 
-// todo(snail)
-//  maybe I should move creature out into an abstraction so its easier to change
-void load(Creature *creature, CreatureData_t seed, uint8_t level) {
-    creature->id = static_cast<uint8_t>((seed.id));
-    creature->level = level;
-    creature->loadTypes(seed);
-    creature->setStats(seed);
-    // Need some kind of default setting for moves ?
-    creature->loadMoves(seed);
-    // creature->loadSprite(seed);
-}
-
 // 00,id1,lvl1,move11,move12,move13,move14,
 
 void arenaLoad(Creature *creature, uint24_t addr, uint8_t lvl) {
@@ -105,25 +93,6 @@ void arenaLoad(Creature *creature, uint24_t addr, uint8_t lvl) {
     // One record block, one creature seed, and the four packed move records
     // resolved by Creature::setMove() form this load transition.
     FxReadCounter::transitionExact(6);
-}
-
-void ReadOpt(Opponent *opt, uint8_t index) {
-    uint24_t addr = opponent_seeds + sizeof(OpponentSeed) * index;
-    OpponentSeed seed;
-    FxRead::object(addr, seed);
-    opt->loadOpt(&seed);
-}
-
-void loadEncounterOpt(Opponent *opt, uint8_t id, uint8_t level) {
-    CreatureData_t cseed;
-    uint24_t rowAddress = CreatureData::creatureData + (sizeof(CreatureData_t) * id);
-    FxRead::object(rowAddress, cseed);
-    opt->levels[0] = level;
-    opt->levels[1] = 0;
-    opt->levels[2] = 0;
-    load(&opt->party[0], cseed, level);
-    //  this->party[1].load(eseed);
-    //  this->party[2].load(eseed);
 }
 
 uint16_t ReadFXu16(uint24_t addr) {

@@ -116,12 +116,9 @@ TEST_SOURCES = tst/src/Arduboy2Host.cpp \
 	src/item/ItemNames.cpp \
 	src/creature/Creature.cpp \
 	src/player/Player.cpp \
-	src/opponent/Opponent.cpp \
 	src/action/Action.cpp \
 	src/lib/MenuStack.cpp \
 	src/lib/ListView.cpp \
-	src/lib/BattleEventPlayer.cpp \
-	src/engine/battle/Battle.cpp \
 	src/engine/battle/Ai.cpp \
 	src/engine/battle/Damage.cpp \
 	src/engine/battle/Effects.cpp \
