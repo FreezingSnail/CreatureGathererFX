@@ -10,7 +10,7 @@ old_layout=$fixtures/fxlayout-old-304.toml
 new_layout=$fixtures/fxlayout-expand-20.toml
 perturbed_layout=$fixtures/fxlayout-expand-20-perturbed.toml
 # Baseline includes the eight-sector save region declared by fxlayout.toml.
-expected=838354d28975c5959ce2c105348704c68baf608e64c834c3e2bf02b4aa88a2a7
+expected=089de690677262e653181b1111563cce20a62bf632ad0f79c32cf7c7211552b9
 
 for layout in "$old_layout" "$new_layout" "$perturbed_layout"; do
     test -f "$layout" || {

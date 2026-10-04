@@ -1,5 +1,7 @@
 # Native cgfx-tools source order. This preserves committed legacy Sprite.txt declarations.
 
+shades = 2
+
 [[set]]
 output = "fxdata/Sprites.txt"
 images = [
@@ -28,7 +30,6 @@ font = "images/ArduFont_5x6.png"
 input = "data/text/strings.txt"
 glyph_width = 5
 glyph_height = 6
-shades = 4
 order = [
   "amove20", "amove3", "creature24", "special", "creature30", "damage", "amove29", "amove4",
   "amove5", "status", "creature6", "amove7", "amove25", "creature27", "wind", "lightning",
