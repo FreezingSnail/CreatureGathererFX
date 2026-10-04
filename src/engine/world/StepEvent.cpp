@@ -43,7 +43,11 @@ void rollEncounterOnStep(uint16_t tile) {
     // The world member is destroyed by enterBattle(). Do not touch `world`
     // or any other WorldTransient field after this call.
     enterBattle();
+    battleSession().beginWild(decision.creatureId, decision.level, false, 0);
+#ifdef TEST
+    // Keep legacy host encounter assertions isolated from resident session state.
     legacyBattle().startEncounter(decision.creatureId, decision.level);
+#endif
     gameState.state = GameState_t::BATTLE;
 #endif
 }

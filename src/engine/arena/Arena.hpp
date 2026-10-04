@@ -1,6 +1,6 @@
 #pragma once
 #include "../../player/Player.hpp"
-#include "../battle/Battle.hpp"
+#include "../battle/BattleSession.hpp"
 #include "../menu/MenuV2.hpp"
 
 class Arena {
@@ -28,7 +28,7 @@ class Arena {
     void registerMoves(Player &player);
     void drawregisterMoves(Player &player);
     uint8_t selectOpponent();
-    void startBattle(BattleEngine &engine, Player &player, MenuV2 &menu2);
+    void startBattle(battle::BattleSession &session, Player &player, MenuV2 &menu2);
     void displayRegisteredCount();
     void drawarenaLoop(MenuV2 &menu2, Player &player);
 };

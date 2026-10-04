@@ -109,7 +109,7 @@ uint8_t wildNeed(uint8_t level)
 bool initializePlayer(BattleState &state)
 {
     uint8_t count = 0;
-    while (count < PARTY_SIZE && player.party[count].id != 0) {
+    while (count < PARTY_SIZE && player.party[count].level != 0) {
         ++count;
     }
     state.partyCount[static_cast<uint8_t>(Side::Player)] = count;

@@ -2,14 +2,14 @@
 
 #include "fxtest.hpp"
 #include "harness/fx_globals.hpp"
-#include "src/engine/battle/Battle.hpp"
+#include "src/engine/battle/BattleSession.hpp"
 #include "src/lib/FxReadCounter.hpp"
 
 inline void test_menurun(FxTest &test) {
     constexpr uint16_t iterations = 2048;
     enterBattle();
     player.basic();
-    legacyBattle().startFight(0);
+    battleSession().beginTrainer(0);
     menu.clear();
     menu.push(BATTLE_OPTIONS);
     menu.cursorIndex = 0;
@@ -18,7 +18,7 @@ inline void test_menurun(FxTest &test) {
     FxReadCounter::resetFrame();
     const uint32_t start = micros();
     for (uint16_t i = 0; i < iterations; ++i) {
-        menu.run(legacyBattle());
+        menu.run(battleSession());
     }
     const uint32_t elapsed = micros() - start;
     const uint32_t averageMicros = elapsed / iterations;

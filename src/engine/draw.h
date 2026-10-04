@@ -9,6 +9,7 @@
 #include "world/Chunk.hpp"
 #include "world/TilePropertyWindow.hpp"
 #include "world/World.hpp"
+#include "battle/BattleSession.hpp"
 #include "battle/BattleViewAdapter.hpp"
 #include "../external/SpritesABC.hpp"
 
@@ -318,8 +319,8 @@ static void drawScene(const battle::BattleView &view) {
     drawPlayerHP(view);
 }
 
-static void drawScene(BattleEngine &engine) {
-    drawScene(battle::legacyBattleView(engine));
+static void drawScene(const battle::BattleSession &session) {
+    drawScene(session.view());
 }
 
 static uint8_t drawMapFast(WorldTransient &world) {
