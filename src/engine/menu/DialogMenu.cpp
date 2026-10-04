@@ -1,6 +1,5 @@
 #pragma once
 #include "DialogMenu.hpp"
-#include "../../external/ArduboyG.h"
 #include "../../fxdata.h"
 #include "../../lib/Type.hpp"
 #include "../draw.h"
@@ -14,13 +13,6 @@
 namespace {
 // Static widths include spaces retained by the legacy strings parser in
 // data/text/strings.txt; generated bitmaps have no dimension prefix.
-void drawDialogString(int16_t x, int16_t y, uint24_t address, uint8_t width) {
-    if (width != 0) {
-        // String sprite symbols point at raw bitmap bytes. The explicit-size
-        // overload advances two bytes, so compensate just as drawNumbersBlack does.
-        SpritesU::drawOverwriteFX(x, y, width, 8, address - 2, FRAME(WHITETEXT));
-    }
-}
 
 uint8_t loadScriptText(uint16_t index, uint8_t *text, uint8_t capacity,
                        uint8_t &lookups) {
@@ -58,8 +50,8 @@ void drawScriptText(const uint8_t *text, uint8_t renderedLength, int16_t x, int1
         const uint8_t character = text[i];
         if (character >= '0' && character <= 'z') {
             const uint8_t glyph = character - '0';
-            SpritesU::drawOverwriteFX(x + column * 6, y + line * 8,
-                                      5, 6, fontTrimmed - 2, FRAME(glyph));
+            Blit::draw(x + column * 6, y + line * 8,
+                                      5, 6, fontTrimmed, FRAME(glyph), Blit::OVERWRITE);
         }
     }
 }
@@ -83,15 +75,13 @@ void DialogMenu::prepareHead() {
 void DialogMenu::drawPopMenu() {
     if (!peek()) return;
     PopUpDialog curMenu = head();
-    SpritesU::drawOverwriteFX(0, 40, 128, 24, battleMenu - 2, FRAME(0));
-
-    setTextColorBlack();
+    Blit::draw(0, 40, 128, 24, battleMenu, FRAME(0), Blit::OVERWRITE);
 
     switch (curMenu.type) {
     case TEXT: {
         // Event::load supplies a direct address in the separate raw ASCII event format.
-        SpritesU::drawOverwriteFX(curMenu.x + 8, curMenu.y + 2,
-                                  curMenu.width, curMenu.height, curMenu.textAddress, FRAME(WHITETEXT));
+        Blit::draw(curMenu.x + 8, curMenu.y + 2,
+                                  curMenu.width, curMenu.height, curMenu.textAddress, FRAME(WHITETEXT), Blit::OVERWRITE);
         break;
     }
     case SCRIPT_TEXT: {
@@ -99,54 +89,54 @@ void DialogMenu::drawPopMenu() {
         break;
     }
     case DAMAGE: {
-        drawDialogString(curMenu.x + 12, curMenu.y + 2, damageText, 70);
+        drawText(curMenu.x + 12, curMenu.y + 2, damageText, 70, FRAME(WHITETEXT));
         drawNumbersBlack(curMenu.x + 4, curMenu.y + 3, curMenu.damage);
         break;
     }
     case ENEMY_DAMAGE: {
         // font.setCursor(curMenu.x + 3, curMenu.y + 3);
         // font.println(curMenu.damage);
-        drawDialogString(curMenu.x + 12, curMenu.y + 2, damageText, 70);
+        drawText(curMenu.x + 12, curMenu.y + 2, damageText, 70, FRAME(WHITETEXT));
         drawNumbersBlack(curMenu.x + 4, curMenu.y + 3, curMenu.damage);
         break;
     }
     case NAME: {
-        drawDialogString(curMenu.x + 3, curMenu.y + 2, curMenu.textAddress, curMenu.width);
-        drawDialogString(curMenu.x + 3, curMenu.y + 10, attackText, 90);
+        drawText(curMenu.x + 3, curMenu.y + 2, curMenu.textAddress, curMenu.width, FRAME(WHITETEXT));
+        drawText(curMenu.x + 3, curMenu.y + 10, attackText, 90, FRAME(WHITETEXT));
         if (curMenu.damage != 0) {
-            drawDialogString(curMenu.x + 83, curMenu.y + 10, curMenu.detailAddress, curMenu.height);
+            drawText(curMenu.x + 83, curMenu.y + 10, curMenu.detailAddress, curMenu.height, FRAME(WHITETEXT));
         }
         break;
     }
     case ENEMY_NAME: {
-        drawDialogString(curMenu.x + 3, curMenu.y, curMenu.textAddress, curMenu.width);
-        drawDialogString(curMenu.x + 3, curMenu.y + 10, enemyAttackText, 70);
+        drawText(curMenu.x + 3, curMenu.y, curMenu.textAddress, curMenu.width, FRAME(WHITETEXT));
+        drawText(curMenu.x + 3, curMenu.y + 10, enemyAttackText, 70, FRAME(WHITETEXT));
         if (curMenu.damage != 0) {
-            drawDialogString(curMenu.x + 83, curMenu.y + 10, curMenu.detailAddress, curMenu.height);
+            drawText(curMenu.x + 83, curMenu.y + 10, curMenu.detailAddress, curMenu.height, FRAME(WHITETEXT));
         }
         break;
     }
     case FAINT: {
-        drawDialogString(curMenu.x + 3, curMenu.y, curMenu.textAddress, curMenu.width);
-        drawDialogString(curMenu.x + 3, curMenu.y + 10, Fainted, 45);
+        drawText(curMenu.x + 3, curMenu.y, curMenu.textAddress, curMenu.width, FRAME(WHITETEXT));
+        drawText(curMenu.x + 3, curMenu.y + 10, Fainted, 45, FRAME(WHITETEXT));
         break;
     }
     case SWITCH: {
-        drawDialogString(curMenu.x + 3, curMenu.y, curMenu.textAddress, curMenu.width);
-        drawDialogString(curMenu.x + 3, curMenu.y + 10, SwitchIn, 90);
+        drawText(curMenu.x + 3, curMenu.y, curMenu.textAddress, curMenu.width, FRAME(WHITETEXT));
+        drawText(curMenu.x + 3, curMenu.y + 10, SwitchIn, 90, FRAME(WHITETEXT));
         break;
     }
     case WIN: {
-        drawDialogString(curMenu.x + 3, curMenu.y + 10, win, 45);
+        drawText(curMenu.x + 3, curMenu.y + 10, win, 45, FRAME(WHITETEXT));
         break;
     }
     case LOSS: {
-        drawDialogString(curMenu.x + 3, curMenu.y, curMenu.textAddress, curMenu.width);
-        drawDialogString(curMenu.x + 3, curMenu.y + 10, lose, 60);
+        drawText(curMenu.x + 3, curMenu.y, curMenu.textAddress, curMenu.width, FRAME(WHITETEXT));
+        drawText(curMenu.x + 3, curMenu.y + 10, lose, 60, FRAME(WHITETEXT));
         break;
     }
     case ESCAPE_ENCOUNTER: {
-        drawDialogString(curMenu.x + 3, curMenu.y, escape, 40);
+        drawText(curMenu.x + 3, curMenu.y, escape, 40, FRAME(WHITETEXT));
         break;
     }
     case GATHERING: {
@@ -157,36 +147,36 @@ void DialogMenu::drawPopMenu() {
         break;
     }
     case TEAM_CHANGE: {
-        drawDialogString(curMenu.x + 3, curMenu.y, changedIn, 105);
+        drawText(curMenu.x + 3, curMenu.y, changedIn, 105, FRAME(WHITETEXT));
         break;
     }
     case EFFECTIVENESS: {
         Modifier mod = Modifier(curMenu.textAddress);
         switch (mod) {
         case Modifier::Quarter:
-            drawDialogString(curMenu.x + 3, curMenu.y, quarter, 95);
+            drawText(curMenu.x + 3, curMenu.y, quarter, 95, FRAME(WHITETEXT));
             break;
         case Modifier::Half:
-            drawDialogString(curMenu.x + 3, curMenu.y, half, 70);
+            drawText(curMenu.x + 3, curMenu.y, half, 70, FRAME(WHITETEXT));
             break;
         case Modifier::Double:
-            drawDialogString(curMenu.x + 3, curMenu.y, doubled, 75);
+            drawText(curMenu.x + 3, curMenu.y, doubled, 75, FRAME(WHITETEXT));
             break;
         case Modifier::Quadruple:
-            drawDialogString(curMenu.x + 3, curMenu.y, quad, 95);
+            drawText(curMenu.x + 3, curMenu.y, quad, 95, FRAME(WHITETEXT));
             break;
         }
-        drawDialogString(curMenu.x + 3, curMenu.y + 10, damageText, 70);
+        drawText(curMenu.x + 3, curMenu.y + 10, damageText, 70, FRAME(WHITETEXT));
         break;
     }
     case PLAYER_EFFECT: {
-        drawDialogString(curMenu.x + 3, curMenu.y, curMenu.textAddress, curMenu.width);
-        drawDialogString(curMenu.x + 3, curMenu.y + 10, curMenu.detailAddress, curMenu.height);
+        drawText(curMenu.x + 3, curMenu.y, curMenu.textAddress, curMenu.width, FRAME(WHITETEXT));
+        drawText(curMenu.x + 3, curMenu.y + 10, curMenu.detailAddress, curMenu.height, FRAME(WHITETEXT));
         break;
     }
     case ENEMY_EFFECT: {
-        drawDialogString(curMenu.x + 3, curMenu.y, curMenu.textAddress, curMenu.width);
-        drawDialogString(curMenu.x + 3, curMenu.y + 10, curMenu.detailAddress, curMenu.height);
+        drawText(curMenu.x + 3, curMenu.y, curMenu.textAddress, curMenu.width, FRAME(WHITETEXT));
+        drawText(curMenu.x + 3, curMenu.y + 10, curMenu.detailAddress, curMenu.height, FRAME(WHITETEXT));
         break;
     }
     default:

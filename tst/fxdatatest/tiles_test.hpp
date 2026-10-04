@@ -9,6 +9,7 @@
 #include "src/engine/world/WorldCollision.hpp"
 #include "src/fxdata.h"
 #include "src/lib/ReadData.hpp"
+#include "src/lib/FxRead.hpp"
 
 extern GameState gameState;
 
@@ -27,6 +28,23 @@ uint16_t rawTileWordAt(uint8_t x, uint8_t y) {
 // its authored property bits and collision path only with those real entries.
 // Higher GIDs such as 527 are covered by the generator and host tests.
 inline void test_tiles(FxTest &test) {
+    // Tile frame count follows the generated packed fields, not a record index.
+    const uint16_t lastFrame = (maskedFont - tiles) / 32 - 1;
+    for (uint8_t caseIndex = 0; caseIndex < 2; ++caseIndex) {
+        const uint16_t frame = caseIndex ? lastFrame : 0;
+        uint8_t pixels[32];
+        FxRead::bytes(tiles + static_cast<uint24_t>(frame) * 32, pixels, sizeof(pixels));
+        memset(Arduboy2Base::sBuffer, 0xA5, 1024);
+        Blit::draw(-15, -15, 16, 16, tiles, frame, Blit::OVERWRITE);
+        // Exactly the bottom-right sprite pixel reaches screen (0,0).
+        const uint8_t expected = (0xA5 & 0xFE) | (pixels[31] >> 7);
+        test.expectEq(Arduboy2Base::sBuffer[0], expected, F("clipped tile pixel"));
+        bool unchanged = true;
+        for (uint16_t byte = 1; byte < 1024; ++byte)
+            if (Arduboy2Base::sBuffer[byte] != 0xA5) unchanged = false;
+        test.expectEq(unchanged, true, F("clipped tile preserves other bytes"));
+    }
+
     const uint16_t floorNorth = rawTileWordAt(12, 6);
     const uint16_t floor = rawTileWordAt(12, 7);
     const uint16_t wallWest = rawTileWordAt(11, 7);

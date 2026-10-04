@@ -8,7 +8,7 @@ MINI_FQBN ?= arduboy-homemade:avr:arduboy-mini
 # Shared AVR toolchain properties for shipping and device-test builds. Relaxed
 # linking plus shared function prologues save flash without changing measured
 # static RAM or painted stack. Shipping builds add the no-USB entry separately.
-AVR_RELAX_FLAGS ?= -mrelax -mcall-prologues
+AVR_RELAX_FLAGS ?= -mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X
 # Instrument FX test firmware with the logical read counter while preserving
 # the stock USB main used by the serial P/F harness.
 AVR_FXTEST_CPP_FLAGS ?= $(AVR_RELAX_FLAGS) -DFX_READ_COUNTER
@@ -95,7 +95,8 @@ doctor:
 	@CXX="$(CXX)" ARDUINO_CLI="$(ARDUINO_CLI)" ARDENS="$(ARDENS)" ./tools/doctor.sh
 
 # Common source files for main tests
-TEST_SOURCES = tst/src/Arduboy2Host.cpp \
+TEST_SOURCES = src/lib/Blit.cpp \
+	tst/src/Arduboy2Host.cpp \
 	tst/src/ReadData.cpp \
 	tst/src/DialogMenu.cpp \
 	src/engine/menu/DialogQueue.cpp \

@@ -17,5 +17,4 @@ class Event {
     uint24_t textAddress;
 
     void loadEvent(uint8_t index, uint8_t subIndex, uint8_t eventIndex);
-    void draw(int16_t mapx, int16_t mapy);
 };

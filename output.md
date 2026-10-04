@@ -2508,3 +2508,125 @@ git diff --check                         PASS
 ```
 
 No commits/pushes/bead writes. Existing `CreatureGathererFX.ino` bool→void edit and prior `output.md` content preserved; untracked `.codex/` untouched. Worker wall times above are command timings; no generated artifacts changed.
+
+## CreatureGathererFX-4ty — renderer consolidation (2026-10-03)
+
+Baseline `make ram AVR_FLASH_BUDGET=29696 AVR_STATIC_RAM_BUDGET=2560`:
+28414 B flash / 1925 B static RAM. Step 1 removes invalid header-based
+FX bitmap calls, unused Event::draw, and unused FX font-mode helpers:
+27802 / 1925 (-612 / 0). First build failed because DialogMenu still called
+the removed helper; removed its call and reran successfully.
+Step 2 replaces SpritesABC tile/player draws with explicit-size SpritesU:
+26678 / 1925 (-1124 / 0). Both checkpoints ran `make test` (host and world,
+zero failures) and the same relaxed-budget `make ram`; full logs under
+`build/4ty-step{1,2}-{test,ram}.log`. No commits or pushes.
+
+### Remaining checkpoints and final evidence
+
+| Checkpoint | Flash B | Static RAM B | Delta from preceding retained step |
+|---|---:|---:|---:|
+| Baseline | 28414 | 1925 | — |
+| 1: remove FX bitmap/font-mode paths | 27802 | 1925 | -612 / 0 |
+| 2: replace SpritesABC | 26678 | 1925 | -1124 / 0 |
+| 3: both size flags | 26306 | 1925 | -372 / 0 |
+| 4: shared non-inline drawText | 26304 | 1925 | -2 / 0 |
+| 5: C blitter after arithmetic trim | 26254 | 1925 | -50 / 0 |
+| 6: remove ArduboyG includes/defines | 26254 | 1925 | 0 / 0 |
+
+Step 3 flag experiments use `make ram AVR_FLASH_BUDGET=29696
+AVR_STATIC_RAM_BUDGET=2560 AVR_RELAX_FLAGS='...'`, retaining the existing
+`-mrelax -mcall-prologues` in every experiment:
+- `-fno-move-loop-invariants` alone: 26444 / 1925 (-234 / 0).
+- `-mstrict-X` alone: 26550 / 1925 (-128 / 0).
+- Both: 26306 / 1925 (-372 / 0); retained in shared compile/LTO flags.
+Logs: `build/4ty-flag-{loop,x,both}.log`.
+
+AVR-only noinline candidates measured individually against 26306 / 1925:
+`beginBattleResult`, `BattlePresenter::prepare`, `MenuV2::openMenu`,
+`BattleSession::beginTrainer`, `WorldEngine::onChunkChange`: unchanged;
+`BattleSession::beginWild`: 26340 / 1925 (+34 / 0).
+All rejected/reverted. Logs: `build/4ty-noinline-{0..5}.log`.
+The retained `drawText` is AVR-only noinline and guards zero width/address;
+all generated text addresses are nonzero. Dialog keeps FRAME(WHITETEXT).
+No remaining draw.h static function is used from multiple translation units:
+scene/map helpers are sketch-owned; legacy menu helpers are MenuV2Legacy-owned.
+No extra extraction was needed after moving the shared text helper.
+
+Step 5 initially grew to 26358 / 1925 (+54 / 0); trimmed immediately before
+retention. Computing a 16-bit stride and multiplying once at 24 bits, plus
+bounding the destination page to int8_t after clipping, recovered 104 B.
+No final blitter address subtracts two. Animator's legacy header-bearing
+input is normalized to its pixel address once in `push`, preserving its old
+explicit-size renderer's implicit +2 without adding render-time data reads.
+Initial migration build failures were missing explicit FX/FxRead includes
+previously supplied by SpritesU and missed draw.h calls; fixed and rebuilt.
+
+Parity capture, before deleting SpritesU:
+`make fxtest-headless FXTEST_INOS='tst/fxdatatest/test_blit.ino
+tst/fxdatatest/test_tiles.ino' FXTEST_RAM_BUDGET=2560
+ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens`.
+Full framebuffer memcmp passed all 29 cases; CRC-16/Modbus (initial 0xFFFF)
+values captured in `build/4ty-parity.log` became PROGMEM golden expectations.
+Capture-only expected buffer used 2351 B static RAM (209 B available);
+permanent golden suite uses 1326 B and needs no RAM-budget override.
+**Contract correction:** SpritesU truncates `h >> 3` and its frame stride,
+so h=6 glyphs previously disappeared. Those two golden cases were validated
+against an independent per-pixel FX reference instead of reproducing the bug.
+Native pixel-reference tests cover partial pages, mask preservation, clipped
+and extreme int16 coordinates, frame offsets exceeding 65535, and zero sizes.
+The tile endpoints in the current packed sheet are blank; the native patterned
+fixtures and real creature/text/menu golden cases provide nonblank coverage.
+
+Step 6 removes the unused include and all three ABG_IMPLEMENTATION defines.
+This is the requested cleanup with zero size delta, an explicit exception to
+the optimization-only shrink rule. The vendored ArduboyG.h remains owned by
+open bead CreatureGathererFX-b2a.4; its docs/deletion scope is not implemented.
+
+Final exact validation commands (full logs under `build/4ty-*`):
+- `make test`: host **3589 passed / 0 failed**, world **190 / 0**.
+- `make testvm`: **42 / 0**.
+- `make verify-generated`: PASS, no generated/FX/save-format changes.
+- `make test-generated-libs`: image/header **8 / 0**, invariants **5 / 0**,
+  alias compatibility **28 / 0**.
+- `make test-pack-parity`: PASS, layout equivalence/perturbation checks PASS.
+- Each retained step ran `make test` and
+  `make ram AVR_FLASH_BUDGET=29696 AVR_STATIC_RAM_BUDGET=2560`.
+- `make ram`: expected default-budget FAIL: **26254 > 24000** (2254 B deficit),
+  static **1925 <= 2160**, physical free SRAM **635 B**.
+- `make fxtest-headless FXTEST_INOS='tst/fxdatatest/test_blit.ino
+  tst/fxdatatest/test_tiles.ino tst/fxdatatest/test_battlepresentation.ino
+  tst/fxdatatest/test_dialog.ino tst/fxdatatest/test_menurun.ino'
+  ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens`:
+  blit **29 / 0**, tiles **17 / 5**, presentation **97 / 0**, dialog **59 / 0**,
+  menu **4 / 0**. Presentation effective painted headroom **312 B**;
+  caption effective headroom **346 B**.
+- `make fxtest-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_blit.ino
+  ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens`:
+  blit **29 / 0**, stack **4 / 0**, painted save headroom **246 B**,
+  mode-transition headroom **351 B**.
+- `make fxtest-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_save.ino
+  ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens`:
+  save **281 / 0**, stack **4 / 0**, painted headroom **246 B**.
+- `git diff --check`: PASS after removing an extra Event.cpp EOF blank line.
+- `/Users/connorfranc/Library/Arduino15/packages/arduino/tools/avr-gcc/7.3.0-atmel3.6.1-arduino7/bin/avr-nm
+  -S -C --size-sort build/CreatureGathererFX.ino.elf`: Blit::draw/fillRect and
+  drawText present; no FX::drawBitmap, SpritesABC, or SpritesU symbols.
+
+**Validation blocker:** five tile walkability assertions fail identically on
+untouched HEAD (13 / 5 before adding the four renderer assertions). Reproduced:
+`git archive HEAD | tar -x -C /private/tmp/cgfx-4ty-baseline`, then
+`make -C /private/tmp/cgfx-4ty-baseline fxtest-headless
+FXTEST_INOS=tst/fxdatatest/test_tiles.ino
+FXDATA_BIN=/Users/connorfranc/code/CreatureGathererFX/dist/fxdata.bin
+ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens`.
+The TSX marks global GID 275 walkable but packed map words have zero properties.
+Tracked as **CreatureGathererFX-nmh**, now a dependency of 4ty. The existing
+assertions remain intact; generated bytes are outside this bead's contract.
+4ty remains in progress pending that fix and successful tile validation.
+
+Total flash saving **2160 B**, static RAM delta **0 B**. Owner visual checklist
+**pending**: overworld walking/map edges; battle creatures/HP/numbers/captions;
+menus; dialog; saving screen. No commit, push, sync, or full pre-commit gate.
+Wall time: implementation/checkpoint worker interval about **13 minutes**
+(22:21–22:34 EDT); settle validation/orchestration about **3 minutes**; no
+separate orchestrator commit gate. Commands ran directly, without subagents.

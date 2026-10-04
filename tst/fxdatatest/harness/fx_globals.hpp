@@ -1,7 +1,5 @@
 #pragma once
 
-#define ABG_IMPLEMENTATION
-#define SPRITESU_IMPLEMENTATION
 #include "../src/common.hpp"
 
 #ifdef FX_GLOBALS_MINIMAL

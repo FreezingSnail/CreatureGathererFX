@@ -53,7 +53,7 @@ inline void test_dialogs(FxTest &test) {
 
     arduboy.clear();
     arduboy.fillScreen(WHITE);
-    SpritesU::drawOverwriteFX(0, 40, 128, 24, battleMenu - 2, FRAME(0));
+    Blit::draw(0, 40, 128, 24, battleMenu, FRAME(0), Blit::OVERWRITE);
     test.expectEq(dialog_fx_test_detail::regionHasPixel(8, 43, 58, 7, 0), false,
                   F("top text row starts blank"));
     test.expectEq(dialog_fx_test_detail::regionHasPixel(8, 53, 58, 7, 0), false,

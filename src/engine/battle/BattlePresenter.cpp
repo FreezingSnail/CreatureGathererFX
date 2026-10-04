@@ -1,3 +1,4 @@
+#include "../../lib/Text.hpp"
 #include "BattlePresenter.hpp"
 #include "../../lib/FxReadCounter.hpp"
 #include "../../lib/uint24.h"
@@ -160,19 +161,15 @@ uint8_t drawCaption(uint8_t caption, int16_t x, int16_t y) {
         const uint8_t character = pgm_read_byte(text + count);
         if (character == 0) break;
         if (character >= '0' && character <= 'z') {
-            SpritesU::drawOverwriteFX(x + static_cast<int16_t>(count) * 6, y,
-                                      5, 6, fontTrimmed - 2,
-                                      FRAME(character - '0'));
+            Blit::draw(x + static_cast<int16_t>(count) * 6, y,
+                                      5, 6, fontTrimmed,
+                                      FRAME(character - '0'), Blit::OVERWRITE);
         }
         ++count;
     }
     return static_cast<uint8_t>(count * 6);
 }
 
-void drawTextSprite(int16_t x, int16_t y, uint24_t address, uint8_t width) {
-    if (width != 0 && address != 0)
-        SpritesU::drawOverwriteFX(x, y, width, 8, address - 2, FRAME(0));
-}
 #endif
 } // namespace
 
@@ -520,26 +517,26 @@ void BattlePresenter::draw() const {
 
     // Scene sprites and HP bars are rendered once by drawScene(overlay(view)).
     // This layer owns only the bounded feedback panel and attack animation.
-    SpritesU::fillRect(0, 40, 128, 24, WHITE);
+    Blit::fillRect(0, 40, 128, 24, WHITE);
     const uint8_t caption = static_cast<uint8_t>((flags_ & CAPTION_MASK) >> CAPTION_SHIFT);
     const int16_t yName = 40, yAction = 48, yDetail = 56;
 
     if (stage_ == PresenterStage::Announce && result_->kind == ResultKind::Attack) {
-        drawTextSprite(3, yName, item_.name, item_.nameWidth);
+        drawText(3, yName, item_.name, item_.nameWidth, FRAME(0));
         if (result_->flags & SELF_HIT)
             drawCaption(CAPTION_SELF_HIT, 3, yAction);
         else if (result_->actor == Side::Player)
-            drawTextSprite(3, yAction, attackText, 90);
+            drawText(3, yAction, attackText, 90, FRAME(0));
         else
-            drawTextSprite(3, yAction, enemyAttackText, 70);
-        drawTextSprite(3, yDetail, item_.detail, item_.detailWidth);
+            drawText(3, yAction, enemyAttackText, 70, FRAME(0));
+        drawText(3, yDetail, item_.detail, item_.detailWidth, FRAME(0));
     } else if (stage_ == PresenterStage::Announce && result_->kind == ResultKind::Switch) {
-        drawTextSprite(3, yName, item_.name, item_.nameWidth);
+        drawText(3, yName, item_.name, item_.nameWidth, FRAME(0));
         drawCaption(caption, 3, yAction);
-        drawTextSprite(3, yDetail, item_.detail, item_.detailWidth);
+        drawText(3, yDetail, item_.detail, item_.detailWidth, FRAME(0));
     } else if (stage_ == PresenterStage::Announce && result_->kind == ResultKind::Gather) {
-        drawTextSprite(3, yName, item_.name, item_.nameWidth);
-        drawTextSprite(3, yAction, item_.detail, item_.detailWidth);
+        drawText(3, yName, item_.name, item_.nameWidth, FRAME(0));
+        drawText(3, yAction, item_.detail, item_.detailWidth, FRAME(0));
         drawNumbersBlack(3, yDetail, result_->progressBefore);
     } else if (stage_ == PresenterStage::Impact && result_->kind == ResultKind::Attack) {
         const uint8_t target = (result_->flags & SELF_HIT)
@@ -548,42 +545,42 @@ void BattlePresenter::draw() const {
         const uint8_t before = result_->hpBefore[target];
         const uint8_t after = result_->hpAfter[target];
         const uint8_t damage = before > after ? before - after : 0;
-        drawTextSprite(3, yName, item_.name, item_.nameWidth);
-        drawTextSprite(16, yAction, damageText, 70);
+        drawText(3, yName, item_.name, item_.nameWidth, FRAME(0));
+        drawText(16, yAction, damageText, 70, FRAME(0));
         drawNumbersBlack(3, yAction, damage);
-        drawTextSprite(3, yDetail, item_.detail, item_.detailWidth);
+        drawText(3, yDetail, item_.detail, item_.detailWidth, FRAME(0));
         drawCaption(caption, 3, yDetail);
     } else if (stage_ == PresenterStage::Impact && result_->kind == ResultKind::Switch) {
-        drawTextSprite(3, yName, item_.name, item_.nameWidth);
-        drawTextSprite(3, yAction, item_.detail, item_.detailWidth);
+        drawText(3, yName, item_.name, item_.nameWidth, FRAME(0));
+        drawText(3, yAction, item_.detail, item_.detailWidth, FRAME(0));
     } else if (stage_ == PresenterStage::Impact && result_->kind == ResultKind::Gather) {
-        drawTextSprite(3, yName, item_.name, item_.nameWidth);
-        drawTextSprite(3, yAction, item_.detail, item_.detailWidth);
+        drawText(3, yName, item_.name, item_.nameWidth, FRAME(0));
+        drawText(3, yAction, item_.detail, item_.detailWidth, FRAME(0));
         drawNumbersBlack(3, yDetail, result_->progressAfter);
     } else if (stage_ == PresenterStage::Impact && result_->kind == ResultKind::EndTurn) {
-        drawTextSprite(3, yName, item_.name, item_.nameWidth);
+        drawText(3, yName, item_.name, item_.nameWidth, FRAME(0));
         drawNumbersBlack(3, yAction, item_.animationWidth);
         drawCaption(caption, 18, yAction);
     } else if (stage_ == PresenterStage::Consequence) {
-        drawTextSprite(3, yName, item_.name, item_.nameWidth);
+        drawText(3, yName, item_.name, item_.nameWidth, FRAME(0));
         const uint8_t prefixWidth = item_.detailWidth;
-        drawTextSprite(3, yAction, item_.detail, prefixWidth);
+        drawText(3, yAction, item_.detail, prefixWidth, FRAME(0));
         drawCaption(caption, static_cast<int16_t>(3 + prefixWidth + (prefixWidth ? 1 : 0)), yAction);
     } else if (stage_ == PresenterStage::Faint) {
-        drawTextSprite(3, yName, item_.name, item_.nameWidth);
-        drawTextSprite(3, yAction, item_.detail, item_.detailWidth);
+        drawText(3, yName, item_.name, item_.nameWidth, FRAME(0));
+        drawText(3, yAction, item_.detail, item_.detailWidth, FRAME(0));
     } else if (stage_ == PresenterStage::Terminal) {
-        drawTextSprite(3, yAction, item_.detail, item_.detailWidth);
+        drawText(3, yAction, item_.detail, item_.detailWidth, FRAME(0));
         drawCaption(caption, 3, yAction);
-        drawTextSprite(3, yName, item_.name, item_.nameWidth);
+        drawText(3, yName, item_.name, item_.nameWidth, FRAME(0));
     }
 
     if (item_.animation != 0 && item_.frames != 0 && stage_ == PresenterStage::Announce) {
         const uint8_t frame = static_cast<uint8_t>(
             static_cast<uint16_t>(elapsed_) * (item_.frames - 1) / (ANNOUNCE_TICKS - 1));
-        SpritesU::drawPlusMaskFX(result_->actor == Side::Player ? 32 : 64, 0,
+        Blit::draw(result_->actor == Side::Player ? 32 : 64, 0,
                                 item_.animationWidth, item_.animationHeight,
-                                item_.animation - 2, FRAME(frame));
+                                item_.animation, FRAME(frame), Blit::PLUSMASK);
     }
 #endif
 }

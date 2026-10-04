@@ -3,6 +3,7 @@
 #include "../lib/Move.hpp"
 // #include "../external/Font4x6.h"
 #include "../common.hpp"
+#include "../lib/Text.hpp"
 #include "../globals.hpp"
 #include "../lib/ReadData.hpp"
 #include "../lib/FxRead.hpp"
@@ -11,7 +12,6 @@
 #include "world/World.hpp"
 #include "battle/BattleSession.hpp"
 #include "battle/BattleView.hpp"
-#include "../external/SpritesABC.hpp"
 
 #include <ArduboyFX.h>
 #include <stdint.h>
@@ -91,61 +91,42 @@ static void fx_read_data_bytes(uint24_t addr, void *dst, size_t num) {
     fx_read_data_bytes_raw(addr, dst, num);
 }
 
-static void drawStringSprite(int16_t x, int16_t y, uint24_t address,
-                             uint8_t width, uint16_t frame) {
-    if (width != 0) {
-        // Generated string symbols point at pixels, not a dimension header.
-        SpritesU::drawOverwriteFX(x, y, width, 8, address - 2, frame);
-    }
-}
-
 // TODO: Refactor to only 1 func call
 static void printType(Type t, uint8_t x, uint8_t y) {
     switch (t) {
     case Type::SPIRIT:
-        drawStringSprite(x, y, spirit, 35, FRAME(0));
+        drawText(x, y, spirit, 35, FRAME(0));
         break;
     case Type::WATER:
-        drawStringSprite(x, y, water, 30, FRAME(0));
+        drawText(x, y, water, 30, FRAME(0));
         break;
     case Type::WIND:
-        drawStringSprite(x, y, wind, 25, FRAME(0));
+        drawText(x, y, wind, 25, FRAME(0));
         break;
     case Type::EARTH:
-        drawStringSprite(x, y, earth, 30, FRAME(0));
+        drawText(x, y, earth, 30, FRAME(0));
         break;
     case Type::FIRE:
-        drawStringSprite(x, y, fire, 25, FRAME(0));
+        drawText(x, y, fire, 25, FRAME(0));
         break;
     case Type::LIGHTNING:
-        drawStringSprite(x, y, lightning, 50, FRAME(0));
+        drawText(x, y, lightning, 50, FRAME(0));
         break;
     case Type::PLANT:
-        drawStringSprite(x, y, plant, 30, FRAME(0));
+        drawText(x, y, plant, 30, FRAME(0));
         break;
     case Type::ELDER:
-        drawStringSprite(x, y, elder, 30, FRAME(0));
+        drawText(x, y, elder, 30, FRAME(0));
         break;
     case Type::STATUS:
-        drawStringSprite(x, y, status, 35, FRAME(0));
+        drawText(x, y, status, 35, FRAME(0));
         break;
     }
 }
 
-static void setTextColorBlack() {
-    FX::setFontMode(dcfWhiteBlack);
-    // font.setTextColor(BLACK);
-}
-
-static void setTextColorWhite() {
-    FX::setFontMode(dcmWhite);
-    // font.setTextColor(WHITE);
-}
-
 static void drawInfoRec(uint8_t x, uint8_t y) {
-    SpritesU::fillRect(x - 3, y - 3, 60, 30, BLACK);
+    Blit::fillRect(x - 3, y - 3, 60, 30, BLACK);
     // Arduboy2::drawRect(x - 2, y - 2, 58, 28, BLACK);
-    FX::drawBitmap(x - 3, y - 3, moveInfo, 0, dbmNormal);
 }
 
 static uint16_t packedMoveInfo(const uint8_t *packed, uint8_t slot) {
@@ -165,15 +146,14 @@ static uint16_t packedMoveInfo(const uint8_t *packed, uint8_t slot) {
 
 static void printMoveInfoValues(uint8_t type, bool isPhysical,
                                 uint8_t movePower, uint8_t x, uint8_t y) {
-    setTextColorBlack();
     drawInfoRec(x, y);
     printType(Type(type), x, y);
     if (isPhysical) {
-        drawStringSprite(x, y + 8, physical, 25, FRAME(0));
+        drawText(x, y + 8, physical, 25, FRAME(0));
     } else {
-        drawStringSprite(x, y + 8, special, 25, FRAME(0));
+        drawText(x, y + 8, special, 25, FRAME(0));
     }
-    drawStringSprite(x, y + 16, power, 35, FRAME(0));
+    drawText(x, y + 16, power, 35, FRAME(0));
     drawStatNumbers(x + 33, y + 17, movePower);
 }
 
@@ -233,21 +213,21 @@ static void printMoveMenu(int8_t index, const battle::MoveSnapshot &moves,
     if (moves.moveIds[selected] < 32) {
         color[selected] = 0;
     }
-    drawStringSprite(6, 45, nameAddresses[0],
+    drawText(6, 45, nameAddresses[0],
                      readMoveNameWidth(moves.moveIds[0]), FRAME(color[0]));
-    drawStringSprite(69, 45, nameAddresses[1],
+    drawText(69, 45, nameAddresses[1],
                      readMoveNameWidth(moves.moveIds[1]), FRAME(color[1]));
-    drawStringSprite(6, 53, nameAddresses[2],
+    drawText(6, 53, nameAddresses[2],
                      readMoveNameWidth(moves.moveIds[2]), FRAME(color[2]));
-    drawStringSprite(69, 53, nameAddresses[3],
+    drawText(69, 53, nameAddresses[3],
                      readMoveNameWidth(moves.moveIds[3]), FRAME(color[3]));
     printPackedMoveInfo(moves.moveIds[selected], selected, 38, 4, moveInfo);
 }
 
 static void printCreatureMenu(const battle::PartySnapshot &party, uint8_t index,
                               const uint24_t *creatureNames) {
-    SpritesU::fillRect(0, 33, 128, 31, WHITE);
-    SpritesU::fillRect(0, 0, 128, 32, BLACK);
+    Blit::fillRect(0, 33, 128, 31, WHITE);
+    Blit::fillRect(0, 0, 128, 32, BLACK);
     if (creatureNames == nullptr || party.count == 0) {
         return;
     }
@@ -256,7 +236,7 @@ static void printCreatureMenu(const battle::PartySnapshot &party, uint8_t index,
     const uint8_t selected = index < count ? index : 0;
     for (uint8_t row = 0; row < count; ++row) {
         const uint8_t id = party.choices[row].id;
-        drawStringSprite(6, static_cast<uint8_t>(49 + row * 7),
+        drawText(6, static_cast<uint8_t>(49 + row * 7),
                          creatureNames[row], readCreatureNameWidth(id),
                          FRAME(row == selected ? 0 : 1));
     }
@@ -274,17 +254,17 @@ static uint8_t battleHpBarWidth(uint8_t hp, uint8_t maxHp) {
 static void drawPlayerHP(const battle::BattleView &view) {
     const battle::ActiveView &creature = view.active[static_cast<uint8_t>(battle::Side::Player)];
     const uint8_t hp = creature.hp;
-    SpritesU::fillRect(88, 34, 34, 6, BLACK);
-    SpritesU::fillRect(90, 36, battleHpBarWidth(hp, creature.maxHp), 2, WHITE);
+    Blit::fillRect(88, 34, 34, 6, BLACK);
+    Blit::fillRect(90, 36, battleHpBarWidth(hp, creature.maxHp), 2, WHITE);
 
-    // SpritesU::fillRect(60, 38, curHealth, 2, WHITE);
+    // Blit::fillRect(60, 38, curHealth, 2, WHITE);
     // drawStatNumbers(110, 34, curHealth);
 }
 
 static void drawOpponentHP(const battle::BattleView &view) {
     const battle::ActiveView &creature = view.active[static_cast<uint8_t>(battle::Side::Opponent)];
-    SpritesU::fillRect(6, 34, 34, 6, BLACK);
-    SpritesU::fillRect(8, 36, battleHpBarWidth(creature.hp, creature.maxHp), 2, WHITE);
+    Blit::fillRect(6, 34, 34, 6, BLACK);
+    Blit::fillRect(8, 36, battleHpBarWidth(creature.hp, creature.maxHp), 2, WHITE);
 }
 
 static constexpr uint8_t kBattleSpeciesCount = 32;
@@ -294,21 +274,21 @@ static void drawOpponent(const battle::BattleView &view) {
     if (creature.id >= kBattleSpeciesCount) {
         return;
     }
-    SpritesU::drawPlusMaskFX(0, 0, 32, 32, NewecreatureSprites - 2, FRAME((creature.id * 2)));
+    Blit::draw(0, 0, 32, 32, NewecreatureSprites, FRAME((creature.id * 2)), Blit::PLUSMASK);
 }
 
 static void drawPlayer(const battle::BattleView &view) {
     const battle::ActiveView &creature = view.active[static_cast<uint8_t>(battle::Side::Player)];
     if (creature.id < kBattleSpeciesCount) {
-        SpritesU::drawPlusMaskFX(96, 0, 32, 32, NewecreatureSprites - 2,
-                                FRAME(((creature.id * 2) + 1)));
+        Blit::draw(96, 0, 32, 32, NewecreatureSprites,
+                                FRAME(((creature.id * 2) + 1)), Blit::PLUSMASK);
     }
 
     drawPlayerHP(view);
 }
 
 static void drawScene(const battle::BattleView &view) {
-    // SpritesU::drawPlusMaskFX(0, 15, fieldBacground, FRAME(0));
+    // Blit::draw(0, 15, fieldBacground, FRAME(0), Blit::PLUSMASK);
     drawPlayer(view);
     drawOpponent(view);
     drawOpponentHP(view);
@@ -395,7 +375,7 @@ static uint8_t drawMapFast(WorldTransient &world) {
             } else if (yShift == -1) {
                 y -= 16;
             }
-            SpritesABC ::drawSizedFX(static_cast<int8_t>(x), static_cast<int8_t>(y), 16, 16, tiles, SpritesABC::MODE_OVERWRITE, FRAME(tileId - 1));
+            Blit::draw(x, y, 16, 16, tiles, FRAME(tileId - 1), Blit::OVERWRITE);
         }
     }
     return rowReads;
@@ -405,5 +385,5 @@ static uint8_t drawMapFast(WorldTransient &world) {
 #define PLAYER_X_OFFSET WIDTH / 2 - PLAYER_SIZE / 2
 #define PLAYER_Y_OFFSET HEIGHT / 2 - PLAYER_SIZE / 2
 static void drawPlayer() {
-    SpritesABC::drawSizedFX(PLAYER_X_OFFSET, PLAYER_Y_OFFSET, 16, 16, characterSheet, SpritesABC::MODE_OVERWRITE, FRAME(0));
+    Blit::draw(PLAYER_X_OFFSET, PLAYER_Y_OFFSET, 16, 16, characterSheet, FRAME(0), Blit::OVERWRITE);
 }

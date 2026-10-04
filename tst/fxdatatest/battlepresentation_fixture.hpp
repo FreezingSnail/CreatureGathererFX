@@ -36,7 +36,7 @@ inline void drawView(const battle::BattleView &view) {
         const uint8_t x = side == static_cast<uint8_t>(battle::Side::Player) ? 96 : 0;
         if (active.id < 32) {
             const uint8_t frame = static_cast<uint8_t>(active.id * 2 + (side == 0 ? 1 : 0));
-            SpritesU::drawPlusMaskFX(x, 0, 32, 32, NewecreatureSprites - 2, FRAME(frame));
+            Blit::draw(x, 0, 32, 32, NewecreatureSprites, FRAME(frame), Blit::PLUSMASK);
         }
         const uint8_t barX = side == 0 ? 90 : 8;
         const uint8_t bgX = side == 0 ? 88 : 6;
@@ -44,8 +44,8 @@ inline void drawView(const battle::BattleView &view) {
             : (active.hp > active.maxHp ? active.maxHp : active.hp);
         const uint8_t width = active.maxHp == 0 ? 0
             : static_cast<uint8_t>(static_cast<uint16_t>(hp) * 30 / active.maxHp);
-        SpritesU::fillRect(bgX, 34, 34, 6, BLACK);
-        SpritesU::fillRect(barX, 36, width, 2, WHITE);
+        Blit::fillRect(bgX, 34, 34, 6, BLACK);
+        Blit::fillRect(barX, 36, width, 2, WHITE);
     }
 }
 

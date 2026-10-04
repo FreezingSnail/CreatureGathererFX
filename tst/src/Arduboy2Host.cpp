@@ -3,21 +3,7 @@
 #include "avr/pgmspace.h"
 #include "../../src/lib/FxRead.hpp"
 
-namespace FxRead {
-struct SpriteHeader {
-    uint8_t width;
-    uint8_t height;
-};
 
-inline SpriteHeader spriteHeader(uint24_t)
-{
-    return {0, 0};
-}
-} // namespace FxRead
-
-#define SPRITESU_IMPLEMENTATION
-#define SPRITESU_RECT
-#include "../../src/external/SpritesU.hpp"
 
 #include <cstring>
 
