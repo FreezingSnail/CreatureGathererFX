@@ -2,8 +2,6 @@
 #include <stdint.h>
 #include "Effect.hpp"
 
-#define dbf __attribute__((optimize("-O0")))
-
 // represented as a nibble 0-15 range
 enum class Type {
     SPIRIT,
