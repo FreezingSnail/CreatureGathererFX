@@ -2214,3 +2214,33 @@ Prerequisite session stage is closed, but item ownership is unavailable: `src/pl
 # CreatureGathererFX-b2a.2 — BLOCKED
 
 Pinned toolchain remains unavailable. `tools/toolchain.lock` requires v0.1.0, macOS ARM64 SHA256 `70576f759f1bc071df3c5416b4d8754cd916f7ac8dcff098f387ca4bab49284f`, and Linux x64 SHA256 `b9536f31ecfd34c6dc3e56324ef52a4f8eef6d0c4bb61563cb5b7d7e751b1489`. Sibling checkout has no v0.1.0 tag/release; PATH tool is v0.2.0 with hash `ffffe7520d0121d19c4a26970e46254ba9275c53d517751dc6b3841723efc61b`. It supports shades, but is not the pinned artifact. No source/generated edits or fake parity pass.
+
+## CreatureGathererFX-jp8.5.18 — BLOCKED
+
+No valid live inventory owner exists for the revised consume-before-read contract. `src/item/Inventory.hpp` exposes only `inventoryTake(Inventory&, ...)`; `Player` still owns legacy private-layout `Item items[10]`, while Player/SaveFile replacement is owned by open `CreatureGathererFX-jp8.5.13`. Adding a fake global or reinterpret-cast would violate save/RAM ownership and make consumption non-persistent. No UseItem source/test changes made; bead remains in progress pending .5.13 or an owner-approved bridge.
+
+Evidence command:
+
+```text
+bd show CreatureGathererFX-jp8.5.13
+# OPEN; owns Player::inventory/keyItems and SaveFile v2 persistence
+```
+
+## CreatureGathererFX-b2a.2 — BLOCKED
+
+Installed `/Users/connorfranc/Applications/CreatureGathererTools/bin/cgfx-tools` reports `0.2.0`, SHA-256 `ffffe7520d0121d19c4a26970e46254ba9275c53d517751dc6b3841723efc61b`; local `../CreatureGathererTools` has no release tag (`git describe --tags --always` = `d61c163`) and a dirty checkout. `tools/toolchain.lock` still pins release `v0.1.0` with different checksums. Local dirty source/binary is not a valid reproducible release pin, so no lock/config/generated edits or fake parity baseline were made.
+
+Commands:
+
+```text
+cgfx-tools --version
+# cgfx-tools 0.2.0
+git -C ../CreatureGathererTools tag --list 'v*'; git -C ../CreatureGathererTools describe --tags --always
+# no tags; d61c163
+git -C ../CreatureGathererTools status --short
+# dirty source/test changes
+```
+
+## CreatureGathererFX-jp8.6 — BLOCKED
+
+World/item/gather seams inspected; no prototype code exists in the worktree. Acceptance requires owner human playtest measurements (turns to acquire, HP cost, six-turn flee-fire rate), tuning, and deletion in one owner commit. Steering forbids GUI/Ardens/hardware, so those measurements and deletion commit cannot be truthfully completed here. No production, SaveFile, generated-data, or throwaway prototype changes made.
