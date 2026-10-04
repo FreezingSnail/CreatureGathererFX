@@ -2275,3 +2275,10 @@ Live steering deviation: no Ardens/fxtest/GUI/hardware; native headless tests au
 Focused review fixed EndTurn-faint replacement cursor reset (`next=COMPLETE` now opens fresh Choice after switch) and `SaveController::captureLiveSaveState` syncs `battleSession()` HP when saving from BATTLE. Final native gates after UseItem/lure edits: `make test` host 2361/0 plus world 190/0; `make testvm` 42/0; `make verify-generated` PASS; `make build` 20664 flash / 1873 static RAM / 287 B free. No generated artifacts changed.
 
 `make ram` final: flash 20700/29696 B (3300 B to shipping limit), static RAM 1873/2560 B (687 B linker free; 287 B to project static budget). `modeState` 191 B; `player` 112 B; `saveState` 130 B.
+
+## Managed four-bead checkpoint (native steering)
+
+- `CreatureGathererFX-jp8.3.11`: CLOSED. BattleSession/ports, snapshots, HP-save sync, replacement cursor sequencing. `make test`: host 2361/0, world 190/0; `make testvm`: 42/0; `make build`: 20,700 flash, 1,873 static RAM, 687 B linker free (287 B to 2,160 B project budget). No Ardens/fxtest/hardware per steering.
+- `CreatureGathererFX-jp8.5.18`: CLOSED. UseItem fast action, consume-before-read, clamped Heal, full-HP zero restore, Cure/Charge no-op, empty-stack no-read tests. BattleItemSuite 25/0 in host total 2361/0; same VM/build gates above. Active-inventory pointer seam intentionally awaits .5.13 Player/Save ownership.
+- `CreatureGathererFX-jp8.6`: IN_PROGRESS. Native prototype/test metrics: plant 3 turns / 0 HP / 0 flee fires; battle-drop 2 turns / 8 HP / 0 flee fires; standalone six-turn timer 1 fire/6 turns. Owner must perform manual playable-feel playtest, record/tune jp8.2, then delete prototype in one commit; no commit/hardware/GUI available here.
+- `CreatureGathererFX-b2a.2`: IN_PROGRESS/BLOCKED. Local `cgfx-tools 0.2.0` supports shades 2 but is dirty, untagged, SHA `ffffe7520d0121d19c4a26970e46254ba9275c53d517751dc6b3841723efc61b`; lock requires reproducible `v0.1.0` release and pinned hashes, absent locally. No generated edits made.
