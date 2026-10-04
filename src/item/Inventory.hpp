@@ -17,6 +17,11 @@ void inventoryClear(Inventory &inv);
 uint8_t inventoryCount(const Inventory &inv, ItemKind kind, uint8_t id);
 uint8_t inventoryAdd(Inventory &inv, ItemKind kind, uint8_t id, uint8_t n);
 bool inventoryTake(Inventory &inv, ItemKind kind, uint8_t id, uint8_t n);
+// Battle resolution consumes the currently wired inventory. Player inventory
+// migration owns installing this pointer; null means the action is refused.
+void setBattleInventory(Inventory *inventory);
+Inventory *battleInventory();
+
 uint8_t inventoryNonZeroCount(const Inventory &inv);
 // O(32), intended for menu open and scrolling, never per frame.
 bool inventoryNthNonZero(const Inventory &inv, uint8_t n, ItemKind &kindOut, uint8_t &idOut);

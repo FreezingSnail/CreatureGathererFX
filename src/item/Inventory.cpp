@@ -3,6 +3,8 @@
 namespace item {
 namespace {
 
+Inventory *activeBattleInventory = nullptr;
+
 uint8_t *countFor(Inventory &inv, ItemKind kind, uint8_t id) {
     switch (kind) {
         case ItemKind::Lure:
@@ -28,6 +30,14 @@ const uint8_t *countFor(const Inventory &inv, ItemKind kind, uint8_t id) {
 }
 
 }  // namespace
+
+void setBattleInventory(Inventory *inventory) {
+    activeBattleInventory = inventory;
+}
+
+Inventory *battleInventory() {
+    return activeBattleInventory;
+}
 
 void inventoryClear(Inventory &inv) {
     for (uint8_t i = 0; i < LURE_COUNT; ++i) inv.lures[i] = 0;

@@ -130,6 +130,7 @@ TEST_SOURCES = tst/src/Arduboy2Host.cpp \
 	src/engine/battle/BattleSetup.cpp \
 	src/engine/battle/BattlePresenter.cpp \
 	src/engine/ModeState.cpp \
+	src/engine/world/LurePrototype.cpp \
 	src/engine/world/World.cpp \
 	src/engine/world/Encounter.cpp \
 	src/engine/world/StepEvent.cpp \

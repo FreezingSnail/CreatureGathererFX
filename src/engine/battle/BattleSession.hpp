@@ -65,7 +65,7 @@ class BattleSession {
     void resetCursor(SessionPhase phase);
     void beginResultIfNeeded();
     bool needsReplacement(Side side) const;
-    bool emitReplacement(Side side, uint8_t originalSlot);
+    bool emitReplacement(Side side, uint8_t originalSlot, bool forced);
     uint8_t firstLiveBenchSlot(Side side) const;
     void captureState(ActionResult &out) const;
     bool submitPlayerAction(BattleAction action);

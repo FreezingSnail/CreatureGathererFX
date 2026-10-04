@@ -10,7 +10,11 @@
 
 namespace battle {
 
-enum class ActionKind : uint8_t { Attack, Switch, Gather, Escape, Skip };
+// UseItem carries a consumable id in index. Append only: serialized action
+// values Attack through Skip remain stable; item kind is implicit.
+enum class ActionKind : uint8_t {
+    Attack, Switch, Gather, Escape, Skip, UseItem
+};
 
 struct BattleAction {
     ActionKind kind;

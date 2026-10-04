@@ -2,6 +2,8 @@
 
 #include "Damage.hpp"
 #include "Effects.hpp"
+#include "../../item/ConsumableDef.hpp"
+#include "../../item/Inventory.hpp"
 #include "../../lib/Type.hpp"
 
 namespace battle {
@@ -95,6 +97,7 @@ uint8_t actionPriority(ActionKind kind)
     case ActionKind::Switch:
     case ActionKind::Gather:
     case ActionKind::Escape:
+    case ActionKind::UseItem:
         return 1;
     case ActionKind::Attack:
     case ActionKind::Skip:
@@ -251,12 +254,57 @@ void resolveGather(BattleState &state, Side actor, Rng &rng,
     }
 }
 
+void resolveUseItem(BattleState &state, Side actor, uint8_t itemId,
+                    ActionResult &out)
+{
+    out.kind = ResultKind::UseItem;
+    out.actor = actor;
+    out.index = itemId;
+
+    item::Inventory *inventory = item::battleInventory();
+    if (actor != Side::Player || inventory == nullptr ||
+        !item::inventoryTake(*inventory, item::ItemKind::Consumable, itemId, 1)) {
+        // A failed take is a refused Skip and deliberately performs no FX read.
+        resolveSkip(state, actor, true, false, out);
+        out.index = 255;
+        return;
+    }
+
+    // Consume before reading the definition. A successful take is therefore
+    // never left in the bag when the transition-time definition is decoded.
+    const item::ConsumableDef definition = item::readConsumableDef(itemId);
+    switch (static_cast<item::ConsumableKind>(definition.kind)) {
+    case item::ConsumableKind::Heal: {
+        Combatant &combatant = state.active[sideIndex(actor)];
+        const uint8_t before = combatant.hp;
+        const uint16_t requested = static_cast<uint16_t>(before) + definition.arg;
+        combatant.hp = requested > combatant.maxHp
+            ? combatant.maxHp : static_cast<uint8_t>(requested);
+        // Existing INFSED carries an HP-after fact; UseItem result kind
+        // disambiguates it from an end-turn status tick. Zero is meaningful:
+        // full-HP Heal is still consumed and reports zero restored.
+        out.consequences[0] = {
+            Effect::INFSED, static_cast<uint8_t>(actor),
+            static_cast<uint8_t>(combatant.hp - before)
+        };
+        break;
+    }
+    case item::ConsumableKind::Cure:
+    case item::ConsumableKind::Charge:
+    case item::ConsumableKind::None:
+    default:
+        // Cure/Charge effects are owned by later item milestones.
+        break;
+    }
+}
+
 ResultKind extensionResult(ActionKind kind)
 {
     switch (kind) {
     case ActionKind::Switch: return ResultKind::Switch;
     case ActionKind::Gather: return ResultKind::Gather;
     case ActionKind::Escape: return ResultKind::Escape;
+    case ActionKind::UseItem: return ResultKind::UseItem;
     case ActionKind::Attack: return ResultKind::Attack;
     case ActionKind::Skip:
     default: return ResultKind::Skip;
@@ -340,6 +388,9 @@ void resolveAction(BattleState &state, Side actor, BattleAction action,
         break;
     case ActionKind::Gather:
         resolveGather(state, actor, rng, out);
+        break;
+    case ActionKind::UseItem:
+        resolveUseItem(state, actor, action.index, out);
         break;
     case ActionKind::Escape:
         out.kind = ResultKind::Escape;

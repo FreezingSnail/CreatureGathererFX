@@ -6,7 +6,9 @@
 
 namespace battle {
 
-enum class ResultKind : uint8_t { None, Attack, Switch, Gather, Escape, Skip, EndTurn };
+enum class ResultKind : uint8_t {
+    None, Attack, Switch, Gather, Escape, Skip, EndTurn, UseItem
+};
 enum class Outcome : uint8_t { None, Win, Lose, Escaped, Gathered, Fled };
 
 enum : uint8_t {

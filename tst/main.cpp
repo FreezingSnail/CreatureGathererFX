@@ -34,6 +34,8 @@
 #include "../src/engine/menu/MenuV2.hpp"
 #include <cstring>
 #include "battle_session_test.hpp"
+#include "battle_item_test.hpp"
+#include "lure_prototype_test.hpp"
 
 Player player = Player();
 GameState gameState;
@@ -187,6 +189,10 @@ int main() {
     std::cout << "BattlePresentationSuite finished" << std::endl;
     BattleSessionSuite(tests);
     std::cout << "BattleSessionSuite finished" << std::endl;
+    BattleItemSuite(tests);
+    std::cout << "BattleItemSuite finished" << std::endl;
+    LurePrototypeSuite(tests);
+    std::cout << "LurePrototypeSuite finished" << std::endl;
     NativeRendererSuite(tests);
     std::cout << "NativeRendererSuite finished" << std::endl;
     std::cout << "Tests Finished" << std::endl;

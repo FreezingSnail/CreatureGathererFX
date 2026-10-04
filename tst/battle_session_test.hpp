@@ -87,6 +87,36 @@ inline void BattleSessionIntegrationTest(TestSuite &suite)
     test.assert(session.awaitingPlayer() || session.exitReady(), true,
                 "one-action sequence returns to choice or terminal");
 
+    // A faint caused by the end-turn tick requires replacement before a new
+    // choice. Once the replacement result is acknowledged, the cursor opens a
+    // fresh choice instead of remaining at the completed end-turn cursor.
+    session.beginWild(4, 1, true, 1);
+    battle::BattleState &fixture = session.stateForTest();
+    fixture.active[0].hp = 1;
+    fixture.active[0].status.effects[0] = Effect::SAPPD;
+    for (uint8_t side = 0; side < 2; ++side) {
+        for (uint8_t slot = 0; slot < 4; ++slot) {
+            fixture.active[side].moveIds[slot] = 255;
+        }
+    }
+    test.assert(session.submitIntent({MenuIntentKind::SelectMove, 0}), true,
+                "tick replacement fixture accepts a choice");
+    for (uint8_t step = 0; step < 5 && !session.awaitingPlayer() &&
+         !session.exitReady(); ++step) {
+        test.assert(session.advance(), true, "fixture emits one acknowledged result");
+        session.finishPresentation();
+    }
+    test.assert(session.awaitingReplacement(), true,
+                "end-turn faint waits for replacement");
+    test.assert(session.submitIntent({MenuIntentKind::SelectParty, 1}), true,
+                "replacement accepts original party slot");
+    test.assert(session.advance(), true, "replacement emits a switch result");
+    test.assert(session.result().kind, ResultKind::Switch,
+                "replacement result remains separate from end turn");
+    session.finishPresentation();
+    test.assert(session.awaitingPlayer(), true,
+                "replacement completion opens a fresh choice");
+
     suite.addTest(test);
 }
 
