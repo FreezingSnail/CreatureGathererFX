@@ -2,6 +2,9 @@
 
 Creature collecting demake game for the Arduboy.
 
+The game uses native `Arduboy2Base` 1bpp rendering at 52 fps. Each loop updates and renders once,
+then presents the frame with `FX::display(CLEAR_BUFFER)`.
+
 Workflow conventions distilled from past waves live in `docs/dev-flow.md`; agent instructions live
 in `AGENTS.md`.
 
@@ -47,6 +50,9 @@ After `make gen`, build the developer demo with the `CGFX_TRAINER_DEMO` flag. It
 trainer battle with the named `opening` player and trainer preset, using the normal battle controls.
 Add `-DCGFX_TRAINER_DEMO_SWITCH_DRILL` to choose the alternate `switch_drill` matchup. A reset
 restarts the selected matchup; ordinary builds omit this bootstrap.
+Add `-DCGFX_TRAINER_DEMO_UTILITY` with `CGFX_TRAINER_DEMO` to try Bell (Sharpen),
+Rock (Ironbody), and Hedge (Rejuvenate/Pollen). Selected move PP appears at the top
+of the move menu; `*` means unlimited. Battles still have one active creature per side.
 
 ```sh
 make build BUILD_DIR=build/trainer-demo \

@@ -1,8 +1,9 @@
 # Agent Instructions
 
-Creature collecting demake for the **Arduboy FX** (ATmega32u4, 4-shade grayscale via ArduboyG
-`L4_Triplane`). Read `README.md` for architecture/status and `docs/dev-flow.md` for the workflow
-conventions distilled from past waves.
+Creature collecting demake for the **Arduboy FX** (ATmega32u4), rendered in 1bpp with native
+`Arduboy2Base` at 52 fps. Each frame updates and renders once, then calls
+`FX::display(CLEAR_BUFFER)`. Read `README.md` for architecture/status and `docs/dev-flow.md` for
+the workflow conventions distilled from past waves.
 
 This project uses **bd** (beads) for issue tracking. Run `bd prime` for full workflow context.
 
