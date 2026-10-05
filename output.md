@@ -4336,8 +4336,11 @@ is requested. Optional `arena_demo` config resolves relative to the manifest.
 Generation and manifest plumbing record both generated files against the TOML
 source and include the font as an external provenance input. Initial compile
 found an iterator type mismatch and one missed Config initializer; both were
-fixed before final commands. Manifest integration proves relative config
-resolution and that TOML/font edits change their recorded provenance and
-generated descriptor digests. Existing `writer/bin.rs` unused-import warning
-remains unrelated. Worker elapsed time approximately 30 minutes (includes
-interrupted patch calls); no packed FX or AVR resource delta in this tool bead.
+fixed before final commands. The new manifest fixture first exposed the legacy
+opponent CSV lowercase-name contract and relative artifact paths; the fixture
+was corrected, then both manifest cases passed. Manifest integration proves
+relative config resolution and that TOML/font edits change their recorded
+provenance and generated descriptor digests. Existing `writer/bin.rs`
+unused-import warning remains unrelated. Worker elapsed time approximately 30
+minutes (includes interrupted patch calls); no packed FX or AVR resource delta
+in this tool bead.
