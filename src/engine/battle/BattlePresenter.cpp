@@ -170,6 +170,16 @@ uint8_t drawCaption(uint8_t caption, int16_t x, int16_t y) {
     return static_cast<uint8_t>(count * 6);
 }
 
+void drawBlackText(uint8_t x, uint8_t y, uint24_t address, uint8_t width) {
+    // Authored battle labels are white glyphs on a black raster. The feedback
+    // panel is white, so invert this opaque 8-pixel row after drawing it to
+    // match the transparent black damage-number sprites.
+    drawText(x, y, address, width, FRAME(0));
+    const uint16_t row = static_cast<uint16_t>(y >> 3) * 128;
+    for (uint8_t column = 0; column < width; ++column)
+        Arduboy2Base::sBuffer[row + x + column] ^= 0xFF;
+}
+
 #endif
 } // namespace
 
@@ -546,7 +556,7 @@ void BattlePresenter::draw() const {
         const uint8_t after = result_->hpAfter[target];
         const uint8_t damage = before > after ? before - after : 0;
         drawText(3, yName, item_.name, item_.nameWidth, FRAME(0));
-        drawText(16, yAction, damageText, 70, FRAME(0));
+        drawBlackText(16, yAction, damageText, 70);
         drawNumbersBlack(3, yAction, damage);
         drawText(3, yDetail, item_.detail, item_.detailWidth, FRAME(0));
         drawCaption(caption, 3, yDetail);

@@ -2,6 +2,7 @@
 
 #include "fxtest.hpp"
 #include "battlepresentation_fixture.hpp"
+#include "src/engine/draw.h"
 #include "src/lib/FxReadCounter.hpp"
 
 namespace battle_presentation_test_detail {
@@ -40,8 +41,40 @@ inline void render(const battle::BattlePresenter &presenter,
     battle::BattleView view = baseView;
     presenter.overlay(view);
     arduboy.clear();
-    battle_presentation_fixture::drawView(view);
+    drawScene(view);
     presenter.draw();
+}
+
+inline void switchedSprites(FxTest &test) {
+    const uint8_t playerBefore = pgm_read_byte(&creatureFixtures->id);
+    const uint8_t opponentBefore = pgm_read_byte(
+        &(creatureFixtures[creatureFixtureCount - 1].id));
+    test.expectEq(playerBefore != opponentBefore, true,
+                  F("switch fixture uses distinct creatures"));
+
+    for (uint8_t side = 0; side < 2; ++side) {
+        battle::BattleView view{};
+        view.active[0] = {playerBefore, 80, 100};
+        view.active[1] = {opponentBefore, 80, 100};
+        const uint8_t x = side == static_cast<uint8_t>(battle::Side::Player) ? 96 : 0;
+        const uint8_t incoming = side == static_cast<uint8_t>(battle::Side::Player)
+            ? opponentBefore : playerBefore;
+        arduboy.clear();
+        drawScene(view);
+        const uint16_t outgoing = signature(x, 0, 32, 4);
+
+        // Model the normal transition redraw: only the active view changes;
+        // the framebuffer still contains the outgoing masked sprite.
+        view.active[side].id = incoming;
+        drawScene(view);
+        const uint16_t switched = signature(x, 0, 32, 4);
+        arduboy.clear();
+        drawScene(view);
+        test.expectEq(switched, signature(x, 0, 32, 4),
+                      F("switch redraw matches incoming sprite on clean canvas"));
+        test.expectEq(switched != outgoing, true,
+                      F("switch replaces outgoing sprite pixels"));
+    }
 }
 
 __attribute__((noinline)) inline void playback(FxTest &test, bool knockout) {
@@ -135,6 +168,7 @@ inline void test_battlepresentation(FxTest &test) {
     using namespace battle_presentation_test_detail;
     playback(test, false);
     playback(test, true);
+    switchedSprites(test);
 
     // Empty and absent move IDs never index the FX name table. Species zero
     // is the generated first fixture and must still render; absent255 does not.
