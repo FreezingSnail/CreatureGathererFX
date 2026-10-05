@@ -44,6 +44,18 @@ inline SaveFile state(uint16_t location, uint8_t fill)
     return result;
 }
 
+inline uint16_t checksumOracle(const SaveFile &in)
+{
+    const uint8_t *bytes = reinterpret_cast<const uint8_t *>(&in);
+    uint16_t sum1 = 0;
+    uint16_t sum2 = 0;
+    for (size_t i = 0; i < offsetof(SaveFile, checksum); ++i) {
+        sum1 = static_cast<uint16_t>((sum1 + bytes[i]) % 255);
+        sum2 = static_cast<uint16_t>((sum2 + sum1) % 255);
+    }
+    return static_cast<uint16_t>((sum2 << 8) | sum1);
+}
+
 inline uint16_t replayOrder = 0;
 inline SaveFile *replayState = nullptr;
 
@@ -199,6 +211,50 @@ inline void SaveFileRoundTripAndValidationTest(TestSuite &suite)
     flashFakeSetBytes(2 + offsetof(SaveFile, inventory), &corrupt, 1);
     test.assert(saveFileLoad(loaded), false, "Corrupted payload checksum is rejected");
 
+    suite.addTest(test);
+}
+
+inline void SaveFileChecksumBoundedReductionTest(TestSuite &suite)
+{
+    Test test = Test(__func__);
+    SaveFile sample = {};
+    uint8_t *payload = reinterpret_cast<uint8_t *>(&sample);
+    constexpr size_t payloadBytes = offsetof(SaveFile, checksum);
+
+    for (uint16_t value = 0; value <= 255; ++value) {
+        memset(&sample, 0, sizeof(sample));
+        memset(payload, static_cast<uint8_t>(value), payloadBytes);
+        test.assert(saveFileChecksum(sample), save_test_detail::checksumOracle(sample),
+                    "uniform payload byte matches modulo oracle " + std::to_string(value));
+    }
+
+    // These prefixes hit the reduction boundaries: 255, 256, 508 and 509.
+    const uint8_t prefixes[][3] = {
+        {0, 0, 0}, {255, 0, 0}, {1, 255, 0},
+        {254, 1, 254}, {254, 255, 0}
+    };
+    for (uint8_t index = 0; index < sizeof(prefixes) / sizeof(prefixes[0]); ++index) {
+        memset(&sample, 0, sizeof(sample));
+        memcpy(payload, prefixes[index], sizeof(prefixes[index]));
+        test.assert(saveFileChecksum(sample), save_test_detail::checksumOracle(sample),
+                    "boundary prefix matches modulo oracle " + std::to_string(index));
+    }
+
+    memset(&sample, 0, sizeof(sample));
+    for (size_t i = 0; i < payloadBytes; ++i) {
+        payload[i] = static_cast<uint8_t>(i * 37u + 11u);
+    }
+    test.assert(saveFileChecksum(sample), save_test_detail::checksumOracle(sample),
+                "nonuniform payload matches modulo oracle");
+
+    flashFakeReset();
+    sample.version = SAVE_VERSION;
+    sample.checksum = save_test_detail::checksumOracle(sample);
+    saveFileCommit(sample);
+    test.assert(memcmp(flashFakeData() + 2, &sample, sizeof(sample)), 0,
+                "bounded checksum preserves every stored save byte");
+    test.assert(saveFileMatchesStored(sample), true,
+                "streaming validator agrees with in-memory checksum");
     suite.addTest(test);
 }
 
@@ -550,6 +606,7 @@ inline void SaveSuite(TestRunner &runner)
     SaveRecordEncodeDecodeTest(suite);
     JournalUnknownOpAndBootTailTest(suite);
     SaveFileRoundTripAndValidationTest(suite);
+    SaveFileChecksumBoundedReductionTest(suite);
     SaveFileLegacyV1DiscardMigrationTest(suite);
     SaveFileStreamingSelectionTest(suite);
     JournalAppendReplayAndEraseTest(suite);

@@ -1,6 +1,10 @@
 #include "../../src/lib/ReadData.hpp"
 #include "../../src/lib/FxRead.hpp"
+#include "../../src/lib/MoveIds.hpp"
+#include <avr/pgmspace.h>
 #include "parseCSV.hpp"
+#include "../fxdatatest/generated/move_data.hpp"
+#include "../fxdatatest/generated/opponent_data.hpp"
 
 uint24_t readCreatureNameAddress(uint8_t id) {
     FxReadCounter::record();
@@ -30,10 +34,8 @@ uint8_t readEffectStringWidth() {
 
 Move readMoveFX(uint8_t index) {
     FxReadCounter::record();
-    Move move;
-    // uint24_t rowAddress = MoveData::movePack + sizeof(MoveBitSet) * index;
-    // FX::readDataObject(rowAddress, move);
-    return move;
+    index = moveRecordIndex(index);
+    return index < moveFixtureCount ? Move(moveFixtures[index]) : Move();
 }
 
 uint8_t getEffectRateFX(uint8_t id) {
@@ -57,11 +59,7 @@ bool selfEffect(Effect effect) {
 }
 
 OpponentSeed readOpponentSeed(uint8_t index) {
-    OpponentSeed seed;
-    std::string line = readLineFromCSV(OPTCSV, index);
-    auto opponent = parseOpponentCSVLine(line);
-    seed = convertToOpponentSeed(opponent);
-    return seed;
+    return index < opponentSeedCount ? opponentSeeds[index] : OpponentSeed{};
 }
 
 CreatureData_t getCreatureFromStore(uint8_t id) {

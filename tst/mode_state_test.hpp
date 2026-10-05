@@ -8,6 +8,9 @@
 #include "../src/engine/ModeState.hpp"
 #include "../src/engine/world/Chunk.hpp"
 #include "../src/engine/world/World.hpp"
+#include "../src/engine/battle/BattleSession.hpp"
+#include "../src/lib/Effect.hpp"
+#include "../src/player/Player.hpp"
 #include "../src/player/Player.hpp"
 
 extern GameState gameState;
@@ -66,6 +69,27 @@ void ModeTransitionPersistentStateTest(TestSuite &suite) {
     suite.addTest(test);
 }
 
+void BattleModeUsesGameRng(TestSuite &suite) {
+    Test test(__func__);
+    player.basic();
+    ModeState state;
+    state.enterBattle();
+    battle::BattleSession &session = state.battle;
+    session.beginTrainer(0);
+    battle::BattleState &prepared = session.stateForTest();
+    prepared.active[0].status.effects[0] = Effect::CONCUSED;
+    prepared.active[0].effectTurns = 1;
+    prepared.active[0].stats.speed = 255;
+
+    test.assert(session.submitIntent({MenuIntentKind::SelectMove, 0}), true,
+                "game battle accepts player attack after mode entry");
+    test.assert(session.advance(), true,
+                "game battle advances the first actor");
+    test.assert((session.result().flags & battle::SELF_HIT) != 0, false,
+                "new game battle uses the seeded game RNG instead of null zero-rolls");
+    suite.addTest(test);
+}
+
 void ModeTransitionClearsTransientTest(TestSuite &suite) {
     Test test(__func__);
     ModeState state;
@@ -109,6 +133,7 @@ void ModeStateSuite(TestRunner &runner) {
     TestSuite suite("ModeState Suite");
     ModeStateLayoutTest(suite);
     ModeTransitionPersistentStateTest(suite);
+    BattleModeUsesGameRng(suite);
     ModeTransitionClearsTransientTest(suite);
     runner.addTestSuite(suite);
 }

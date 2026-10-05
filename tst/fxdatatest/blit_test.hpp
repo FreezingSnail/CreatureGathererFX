@@ -4,6 +4,7 @@
 #include "src/fxdata.h"
 #include "src/lib/Blit.hpp"
 #include "src/lib/FxRead.hpp"
+#include "src/engine/PpGlyph.hpp"
 
 namespace blit_test {
 struct DrawCase { int16_t x, y; uint8_t w, h; uint24_t image; uint16_t frame; uint8_t mode; };
@@ -41,10 +42,19 @@ inline uint16_t crc() {
 const uint16_t drawCrcs[] PROGMEM = {
     54462,54462,54462,54462,54462,54462,54462,
     54462,54462,54462,54462,54462,54462,54462,
-    62304,57228,12025,1293,11519,23821,29400,4863,48110,34405
+    62304,21188,13354,45998,19120,23821,29400,4863,48110,34405
 };
 const uint16_t rectCrcs[] PROGMEM = {45310,33433,2296,16460,26057};
 inline void run(FxTest &test) {
+    memset(Arduboy2Base::sBuffer, 0, sizeof(Arduboy2Base::sBuffer));
+    PpGlyph::digit(10, 4, 0);
+    test.expectEq(Arduboy2Base::getPixel(10, 4), WHITE, F("PP zero first pixel"));
+    test.expectEq(Arduboy2Base::getPixel(11, 4), WHITE, F("PP zero second pixel"));
+    test.expectEq(Arduboy2Base::getPixel(11, 5), BLACK, F("PP zero internal paper"));
+    memset(Arduboy2Base::sBuffer, 0, sizeof(Arduboy2Base::sBuffer));
+    PpGlyph::draw(10, 5, 0b010111010);
+    test.expectEq(Arduboy2Base::getPixel(11, 5), WHITE, F("unlimited star top ink"));
+    test.expectEq(Arduboy2Base::getPixel(10, 6), WHITE, F("unlimited star ink"));
     for (uint8_t i = 0; i < sizeof(draws) / sizeof(draws[0]); ++i) {
         DrawCase c;
         memcpy_P(&c, draws + i, sizeof(c));

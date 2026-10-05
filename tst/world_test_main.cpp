@@ -4,6 +4,7 @@
 #include "../src/GameState.hpp"
 #include "../src/engine/ModeState.hpp"
 #include "../src/plants/PlantGamestate.hpp"
+#include "Arduboy2.h"
 
 GameState gameState;
 ModeState modeState;
@@ -15,7 +16,7 @@ void worldInteractionPopDialog() {}
 void worldInteractionReadScript(uint24_t, uint8_t *, uint8_t) {}
 void worldInteractionRunScript(uint8_t *, uint16_t, uint16_t) {}
 uint24_t worldInteractionScriptsBase() { return 0; }
-bool worldMovementDirection(Direction &) { return false; }
+uint8_t worldMovementButtons() { return 0; }
 
 int main() {
     TestRunner tests;

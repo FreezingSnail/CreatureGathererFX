@@ -29,8 +29,10 @@ bool saveFileRecordValid(uint16_t recordAddr)
             version = bytes[0];
         }
         for (uint8_t i = 0; i < count; ++i) {
-            sum1 = static_cast<uint16_t>((sum1 + bytes[i]) % 255);
-            sum2 = static_cast<uint16_t>((sum2 + sum1) % 255);
+            const uint16_t next1 = static_cast<uint16_t>(sum1 + bytes[i]);
+            sum1 = next1 >= 255 ? static_cast<uint16_t>(next1 - 255) : next1;
+            const uint16_t next2 = static_cast<uint16_t>(sum2 + sum1);
+            sum2 = next2 >= 255 ? static_cast<uint16_t>(next2 - 255) : next2;
         }
     }
 
@@ -83,8 +85,10 @@ uint16_t saveFileChecksum(const SaveFile &in)
     uint16_t sum2 = 0;
 
     for (size_t i = 0; i < offsetof(SaveFile, checksum); ++i) {
-        sum1 = static_cast<uint16_t>((sum1 + bytes[i]) % 255);
-        sum2 = static_cast<uint16_t>((sum2 + sum1) % 255);
+        const uint16_t next1 = static_cast<uint16_t>(sum1 + bytes[i]);
+        sum1 = next1 >= 255 ? static_cast<uint16_t>(next1 - 255) : next1;
+        const uint16_t next2 = static_cast<uint16_t>(sum2 + sum1);
+        sum2 = next2 >= 255 ? static_cast<uint16_t>(next2 - 255) : next2;
     }
 
     return static_cast<uint16_t>((sum2 << 8) | sum1);

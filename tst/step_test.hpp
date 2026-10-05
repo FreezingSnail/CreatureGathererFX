@@ -1,6 +1,7 @@
 #pragma once
 
 #include "test.hpp"
+#include "host/Arduboy2.h"
 
 #include "../src/engine/world/StepEvent.hpp"
 #include "../src/engine/world/TilePropertyWindow.hpp"
@@ -10,6 +11,7 @@
 namespace worldMovementFake {
 void reset();
 void request(Direction direction);
+void requestButtons(uint8_t buttons);
 uint16_t inputCalls();
 }
 
@@ -37,6 +39,54 @@ void StepSuite(TestRunner &runner) {
     worldMovementFake::reset();
     plants = PlantGameState{};
     gameState.playerLocation = 0x0203;
+    WorldEngine::init(worldState());
+    fillStepWindow(worldState(), 3, 2);
+
+    const uint8_t allDirections = LEFT_BUTTON | RIGHT_BUTTON | UP_BUTTON | DOWN_BUTTON;
+    worldMovementFake::requestButtons(allDirections);
+    WorldEngine::input(worldState());
+    test.assert(worldState().motion.directionAndFlags & 0x03,
+                static_cast<uint8_t>(Direction::LEFT),
+                "simultaneous buttons choose left before other directions");
+    test.assert(worldState().motion.directionAndFlags & 0x04, static_cast<uint8_t>(0x04),
+                "held direction starts movement through shared update path");
+
+    worldMovementFake::requestButtons(RIGHT_BUTTON | UP_BUTTON | DOWN_BUTTON);
+    WorldEngine::input(worldState());
+    test.assert(worldState().motion.directionAndFlags & 0x03,
+                static_cast<uint8_t>(Direction::RIGHT),
+                "right has priority over held up and down");
+    worldMovementFake::requestButtons(UP_BUTTON | DOWN_BUTTON);
+    WorldEngine::input(worldState());
+    test.assert(worldState().motion.directionAndFlags & 0x03,
+                static_cast<uint8_t>(Direction::UP), "up has priority over held down");
+    worldMovementFake::requestButtons(DOWN_BUTTON);
+    WorldEngine::input(worldState());
+    test.assert(worldState().motion.directionAndFlags & 0x03,
+                static_cast<uint8_t>(Direction::DOWN), "down remains available alone");
+
+    const uint8_t downFlags = worldState().motion.directionAndFlags;
+    WorldEngine::input(worldState());
+    test.assert(worldState().motion.directionAndFlags & 0x03,
+                static_cast<uint8_t>(Direction::DOWN), "release preserves facing");
+    test.assert(worldState().motion.directionAndFlags & 0x04, static_cast<uint8_t>(0),
+                "release stops movement");
+    test.assert(worldState().motion.directionAndFlags & 0x38, downFlags & 0x38,
+                "release preserves the prior walk mask");
+
+    worldState().motion.directionAndFlags = static_cast<uint8_t>(
+        static_cast<uint8_t>(Direction::UP) | 0x04 | (3u << 3));
+    fillStepWindow(worldState(), 3, 2, true);
+    worldMovementFake::requestButtons(RIGHT_BUTTON);
+    WorldEngine::input(worldState());
+    test.assert(worldState().motion.directionAndFlags & 0x03,
+                static_cast<uint8_t>(Direction::RIGHT),
+                "blocked request still changes facing");
+    test.assert(worldState().motion.directionAndFlags & 0x04, static_cast<uint8_t>(0x04),
+                "blocked request retains existing moving state");
+    test.assert(worldState().motion.directionAndFlags & 0x38, static_cast<uint8_t>(3u << 3),
+                "blocked request retains previous walk mask");
+
     WorldEngine::init(worldState());
     fillStepWindow(worldState(), 3, 2);
 

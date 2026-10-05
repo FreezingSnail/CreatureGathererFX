@@ -1,14 +1,12 @@
 #pragma once
 #include "DialogMenu.hpp"
 #include "../../fxdata.h"
-#include "../../lib/Type.hpp"
 #include "../draw.h"
 #include "../world/Event.hpp"
 #include <ArduboyFX.h>
 #include "../../common.hpp"
 
 #define WHITETEXT 1
-#define BLACKTEXT 0
 
 namespace {
 // Static widths include spaces retained by the legacy strings parser in
@@ -88,112 +86,7 @@ void DialogMenu::drawPopMenu() {
         drawScriptText(scriptText, curMenu.width, curMenu.x + 8, curMenu.y + 2);
         break;
     }
-    case DAMAGE: {
-        drawText(curMenu.x + 12, curMenu.y + 2, damageText, 70, FRAME(WHITETEXT));
-        drawNumbersBlack(curMenu.x + 4, curMenu.y + 3, curMenu.damage);
-        break;
-    }
-    case ENEMY_DAMAGE: {
-        // font.setCursor(curMenu.x + 3, curMenu.y + 3);
-        // font.println(curMenu.damage);
-        drawText(curMenu.x + 12, curMenu.y + 2, damageText, 70, FRAME(WHITETEXT));
-        drawNumbersBlack(curMenu.x + 4, curMenu.y + 3, curMenu.damage);
-        break;
-    }
-    case NAME: {
-        drawText(curMenu.x + 3, curMenu.y + 2, curMenu.textAddress, curMenu.width, FRAME(WHITETEXT));
-        drawText(curMenu.x + 3, curMenu.y + 10, attackText, 90, FRAME(WHITETEXT));
-        if (curMenu.damage != 0) {
-            drawText(curMenu.x + 83, curMenu.y + 10, curMenu.detailAddress, curMenu.height, FRAME(WHITETEXT));
-        }
-        break;
-    }
-    case ENEMY_NAME: {
-        drawText(curMenu.x + 3, curMenu.y, curMenu.textAddress, curMenu.width, FRAME(WHITETEXT));
-        drawText(curMenu.x + 3, curMenu.y + 10, enemyAttackText, 70, FRAME(WHITETEXT));
-        if (curMenu.damage != 0) {
-            drawText(curMenu.x + 83, curMenu.y + 10, curMenu.detailAddress, curMenu.height, FRAME(WHITETEXT));
-        }
-        break;
-    }
-    case FAINT: {
-        drawText(curMenu.x + 3, curMenu.y, curMenu.textAddress, curMenu.width, FRAME(WHITETEXT));
-        drawText(curMenu.x + 3, curMenu.y + 10, Fainted, 45, FRAME(WHITETEXT));
-        break;
-    }
-    case SWITCH: {
-        drawText(curMenu.x + 3, curMenu.y, curMenu.textAddress, curMenu.width, FRAME(WHITETEXT));
-        drawText(curMenu.x + 3, curMenu.y + 10, SwitchIn, 90, FRAME(WHITETEXT));
-        break;
-    }
-    case WIN: {
-        drawText(curMenu.x + 3, curMenu.y + 10, win, 45, FRAME(WHITETEXT));
-        break;
-    }
-    case LOSS: {
-        drawText(curMenu.x + 3, curMenu.y, curMenu.textAddress, curMenu.width, FRAME(WHITETEXT));
-        drawText(curMenu.x + 3, curMenu.y + 10, lose, 60, FRAME(WHITETEXT));
-        break;
-    }
-    case ESCAPE_ENCOUNTER: {
-        drawText(curMenu.x + 3, curMenu.y, escape, 40, FRAME(WHITETEXT));
-        break;
-    }
-    case GATHERING: {
-        // font.setCursor(curMenu.x + 3, curMenu.y + 3);
-        // ////printString(font, "Gathering is not", curMenu.x + 3, curMenu.y + 3);
-        // font.setCursor(curMenu.x + 3, curMenu.y + 13);
-        // ////printString(font, "implemented yet", curMenu.x + 3, curMenu.y + 13);
-        break;
-    }
-    case TEAM_CHANGE: {
-        drawText(curMenu.x + 3, curMenu.y, changedIn, 105, FRAME(WHITETEXT));
-        break;
-    }
-    case EFFECTIVENESS: {
-        Modifier mod = Modifier(curMenu.textAddress);
-        switch (mod) {
-        case Modifier::Quarter:
-            drawText(curMenu.x + 3, curMenu.y, quarter, 95, FRAME(WHITETEXT));
-            break;
-        case Modifier::Half:
-            drawText(curMenu.x + 3, curMenu.y, half, 70, FRAME(WHITETEXT));
-            break;
-        case Modifier::Double:
-            drawText(curMenu.x + 3, curMenu.y, doubled, 75, FRAME(WHITETEXT));
-            break;
-        case Modifier::Quadruple:
-            drawText(curMenu.x + 3, curMenu.y, quad, 95, FRAME(WHITETEXT));
-            break;
-        }
-        drawText(curMenu.x + 3, curMenu.y + 10, damageText, 70, FRAME(WHITETEXT));
-        break;
-    }
-    case PLAYER_EFFECT: {
-        drawText(curMenu.x + 3, curMenu.y, curMenu.textAddress, curMenu.width, FRAME(WHITETEXT));
-        drawText(curMenu.x + 3, curMenu.y + 10, curMenu.detailAddress, curMenu.height, FRAME(WHITETEXT));
-        break;
-    }
-    case ENEMY_EFFECT: {
-        drawText(curMenu.x + 3, curMenu.y, curMenu.textAddress, curMenu.width, FRAME(WHITETEXT));
-        drawText(curMenu.x + 3, curMenu.y + 10, curMenu.detailAddress, curMenu.height, FRAME(WHITETEXT));
-        break;
-    }
     default:
-        break;
-    }
-}
-
-void DialogMenu::pushAnimation() {
-    if (!peek()) {
-        return;
-    }
-    switch (head().type) {
-    case NAME:
-        animator.push(Animation{60, 0, 8, head().animation});
-        break;
-    case ENEMY_NAME:
-        animator.push(Animation{40, 0, 8, head().animation});
         break;
     }
 }

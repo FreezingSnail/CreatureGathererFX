@@ -17,6 +17,5 @@ class DialogMenu {
     void pushMenu(PopUpDialog menuInfo);
     void pushEvent(Event event);
     void popMenu();
-    void pushAnimation();
     void prepareHead();
 };
