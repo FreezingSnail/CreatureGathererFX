@@ -34,6 +34,12 @@ class BattleSession {
 
     void beginWild(uint8_t id, uint8_t level, bool gatherable, uint8_t tierRate);
     void beginTrainer(uint8_t id);
+#ifdef BATTLE_SIMULATOR
+    // Host simulator entry point. Bench HP limits travel with the prepared
+    // state so validation can stay data-driven without adding resident fields.
+    bool beginPrepared(const BattleState &prepared,
+                       const uint8_t (&benchMaxHp)[2][PARTY_SIZE - 1]);
+#endif
 
     void setRng(Rng rng);
     bool submitIntent(MenuIntent intent);
@@ -73,7 +79,7 @@ class BattleSession {
 };
 
 #ifdef __AVR__
-static_assert(sizeof(BattleSession) == 133, "battle session AVR budget");
+static_assert(sizeof(BattleSession) == 163, "battle session AVR budget");
 #endif
 
 } // namespace battle

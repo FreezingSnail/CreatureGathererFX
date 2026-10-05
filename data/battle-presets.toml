@@ -35,3 +35,22 @@ moves = ["dirtburst", "slipfall", "dirtfall", "none"]
 species = "bigsquid"
 level = 31
 moves = ["splash", "squirt", "soak", "none"]
+
+[[preset]]
+name = "utility"
+trainer_species = ["SquableSnail", "ScatterCrab", "bigsquid"]
+
+[[preset.player]]
+species = "bell"
+level = 31
+moves = ["wisper", "Sharpen", "none", "none"]
+
+[[preset.player]]
+species = "rock"
+level = 31
+moves = ["dirtburst", "wisper", "Ironbody", "slipfall"]
+
+[[preset.player]]
+species = "hedge"
+level = 31
+moves = ["root", "rejuvinate", "pollen", "none"]

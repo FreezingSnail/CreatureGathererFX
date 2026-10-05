@@ -56,7 +56,7 @@ inline void test_trainer_setup(FxTest &test)
     battle::ActionResult result;
     FxReadCounter::resetFrame();
     battle::beginTrainer(state, trainerId);
-    test.expectEq(FxReadCounter::count(), 8, F("trainer start reads two row records and six assets"));
+    test.expectEq(FxReadCounter::count(), 11, F("trainer start reads two row records and nine assets"));
     test.expectEq(FxReadCounter::framePassed(), true, F("trainer start transition budget"));
     test.expectEq(state.trainerId, trainerId, F("trainer identity retained"));
     test.expectEq(state.partyCount[1], 3, F("trainer has three party slots"));
@@ -67,7 +67,7 @@ inline void test_trainer_setup(FxTest &test)
     FxReadCounter::resetFrame();
     test.expectEq(battle::applySwitch(state, battle::Side::Opponent, 1, true, result),
                   true, F("trainer slot one replacement"));
-    test.expectEq(FxReadCounter::count(), 4, F("trainer replacement reads row and two assets"));
+    test.expectEq(FxReadCounter::count(), 5, F("trainer replacement reads row and three assets"));
     test.expectEq(FxReadCounter::framePassed(), true, F("trainer replacement transition budget"));
     test.expectEq(state.active[1].hp, 23, F("trainer slot one retained HP"));
     checkTrainerActive(test, state, trainerOriginalSeed(row, 1));
@@ -76,7 +76,7 @@ inline void test_trainer_setup(FxTest &test)
     FxReadCounter::resetFrame();
     test.expectEq(battle::applySwitch(state, battle::Side::Opponent, 2, true, result),
                   true, F("trainer slot two replacement"));
-    test.expectEq(FxReadCounter::count(), 4, F("third slot transition read budget"));
+    test.expectEq(FxReadCounter::count(), 5, F("third slot transition read budget"));
     test.expectEq(FxReadCounter::framePassed(), true, F("third slot transition exact"));
     test.expectEq(state.active[1].hp, 7, F("trainer third slot retained HP"));
     checkTrainerActive(test, state, trainerOriginalSeed(row, 2));
@@ -84,7 +84,7 @@ inline void test_trainer_setup(FxTest &test)
     FxReadCounter::resetFrame();
     test.expectEq(battle::applySwitch(state, battle::Side::Opponent, 0, false, result),
                   true, F("trainer original slot returns"));
-    test.expectEq(FxReadCounter::count(), 4, F("return transition read budget"));
+    test.expectEq(FxReadCounter::count(), 5, F("return transition read budget"));
     test.expectEq(state.active[1].hp, 11, F("original slot HP stayed depleted"));
     checkTrainerActive(test, state, trainerOriginalSeed(row, 0));
 }

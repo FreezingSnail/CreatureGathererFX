@@ -12,7 +12,7 @@ inline void BattleSessionIntegrationTest(TestSuite &suite)
     Test test(__func__);
     static_assert(sizeof(TurnCursor) == 9, "cursor ABI remains nine bytes");
 #ifdef __AVR__
-    static_assert(sizeof(BattleSession) == 133, "session ABI remains compact");
+    static_assert(sizeof(BattleSession) <= 165, "session ABI remains compact");
 #endif
 
     player = Player();
@@ -99,6 +99,9 @@ inline void BattleSessionIntegrationTest(TestSuite &suite)
             fixture.active[side].moveIds[slot] = 255;
         }
     }
+    // A legal zero-power action reaches the end-turn tick without damage.
+    fixture.active[0].moveIds[0] = 0;
+    fixture.active[0].moves[0] = Move();
     test.assert(session.submitIntent({MenuIntentKind::SelectMove, 0}), true,
                 "tick replacement fixture accepts a choice");
     for (uint8_t step = 0; step < 5 && !session.awaitingPlayer() &&

@@ -4,6 +4,7 @@
 #include "../lib/DataTypes.hpp"
 #include "../lib/ReadData.hpp"
 #include "LevelCurve.hpp"
+#include "../lib/MoveIds.hpp"
 
 // This will need to load the creature seed from the progmemstore
 Creature::Creature() {
@@ -71,7 +72,7 @@ void Creature::loadTypes(CreatureData_t seed) {
 void Creature::setMove(uint8_t move, uint8_t slot) {
     this->moves[slot] = move;
     // Trainer rows use 255 for an absent move. Never look beyond move_table.
-    this->moveList[slot] = move == 255 ? Move() : readMoveFX(move);
+    this->moveList[slot] = validMoveId(move) ? readMoveFX(move) : Move();
 }
 
 void Creature::setStats(CreatureData_t seed) {

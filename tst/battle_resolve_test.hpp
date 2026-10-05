@@ -141,7 +141,7 @@ inline void BattleResolveIntegrationTest(TestSuite &suite)
                 "attack result carries STAB effectiveness");
     test.assert(result.hpBefore[1], static_cast<uint8_t>(100),
                 "attack captures opponent HP before impact");
-    test.assert(result.hpAfter[1], static_cast<uint8_t>(20),
+    test.assert(result.hpAfter[1], static_cast<uint8_t>(60),
                 "attack writes opponent damage once");
     test.assert(state.active[0].statMods.getModifier(StatType::ATTACK_M), 1,
                 "first authored effect targets player");
@@ -204,7 +204,7 @@ inline void BattleResolveIntegrationTest(TestSuite &suite)
                 "failed first gate reaches second gate self-hit");
     test.assert((result.flags & SELF_HIT) != 0, true,
                 "CONCUSED sets self-hit flag");
-    test.assert(state.active[0].hp, static_cast<uint8_t>(20),
+    test.assert(state.active[0].hp, static_cast<uint8_t>(60),
                 "self-hit damages actor with selected move");
     test.assert(state.active[1].hp, static_cast<uint8_t>(100),
                 "self-hit leaves opponent untouched");

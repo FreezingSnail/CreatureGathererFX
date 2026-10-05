@@ -83,14 +83,35 @@ inline void BattleEffectsIntegrationTest(TestSuite &suite)
                 "stat effect changes opponent stage");
     test.assert(fact.side, static_cast<uint8_t>(Side::Opponent), "stat fact names target side");
     test.assert(fact.value, 2, "stat fact stores stage plus three");
-    for (uint8_t i = 0; i < 2; ++i) {
+    for (uint8_t i = 0; i < 1; ++i) {
         test.assert(applyEffect(state, Side::Opponent, Effect::ATKDWN, fact), true,
                     "stat stage reaches lower cap");
     }
     test.assert(applyEffect(state, Side::Opponent, Effect::ATKDWN, fact), false,
                 "capped stat emits no successful change");
-    test.assert(state.active[1].statMods.getModifier(StatType::ATTACK_M), -3,
-                "negative stat stage clamps at minus three");
+    test.assert(state.active[1].statMods.getModifier(StatType::ATTACK_M), -2,
+                "negative stat stage clamps at minus two");
+
+    const Effect down[] = {Effect::ATKDWN, Effect::DEFDWN, Effect::SPCADWN,
+                           Effect::SPCDDWN, Effect::SPDDWN};
+    const Effect up[] = {Effect::ATKUP, Effect::DEFUP, Effect::SPCAUP,
+                         Effect::SPCDUP, Effect::SPDUP};
+    const StatType stats[] = {StatType::ATTACK_M, StatType::DEFENSE_M,
+                             StatType::SPECIAL_ATTACK_M, StatType::SPECIAL_DEFENSE_M,
+                             StatType::SPEED_M};
+    for (uint8_t effect = 0; effect < 5; ++effect) {
+        for (uint8_t direction = 0; direction < 2; ++direction) {
+            battle::BattleState mapped = stateFixture();
+            test.assert(applyEffect(mapped, Side::Player,
+                                    direction ? up[effect] : down[effect], fact),
+                        true, "each stat effect applies");
+            for (uint8_t stat = 0; stat < 5; ++stat) {
+                test.assert(mapped.active[0].statMods.getModifier(stats[stat]),
+                            stat == effect ? (direction ? 1 : -1) : 0,
+                            "each effect changes only its authored stat");
+            }
+        }
+    }
 
     test.assert(applyEffect(state, Side::Opponent, Effect::SOAKED, fact), true,
                 "status effect occupies first slot");
@@ -184,7 +205,7 @@ inline void BattleEffectsIntegrationTest(TestSuite &suite)
     tickEffects(state, result);
     test.assert(factCount(result), 3, "zero absorption and death suppress revival fact");
     test.assert(result.consequences[0].value, 2, "small HP damage floors tick to one");
-    test.assert(result.consequences[1].value, 8, "heal observes intermediate damaged HP");
+    test.assert(result.consequences[1].value, 14, "heal observes intermediate damaged HP");
     test.assert(result.consequences[2].value, 0, "damage can absorb final HP to zero");
     test.assert(state.active[1].hp, 0, "zero HP remains absorbing against INFSED");
 
@@ -202,9 +223,9 @@ inline void BattleEffectsIntegrationTest(TestSuite &suite)
     state.active[1].status.effects[0] = Effect::INFSED;
     resetActionResult(result);
     tickEffects(state, result);
-    test.assert(factCount(result), 1, "small HP damage has a minimum while heal floors naturally");
+    test.assert(factCount(result), 2, "small HP damage and one-eighth healing each produce facts");
     test.assert(result.consequences[0].value, 7, "small SAPPD applies one damage");
-    test.assert(state.active[1].hp, 7, "small INFSED does not round zero heal up");
+    test.assert(state.active[1].hp, 8, "one-eighth healing restores one HP at max HP eight");
 
     suite.addTest(test);
 }

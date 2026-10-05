@@ -3,6 +3,8 @@
 #include "ActionResult.hpp"
 #include "BattleState.hpp"
 
+class Creature;
+
 namespace battle {
 
 // BattleSetup owns transition-time creature data. It imports persistent player
@@ -11,6 +13,9 @@ namespace battle {
 void beginWild(BattleState &state, uint8_t creatureId, uint8_t level,
                bool gatherable, uint8_t tierRate);
 void beginTrainer(BattleState &state, uint8_t opponentId);
+
+// Shared active-combatant import for production setup and simulator fixtures.
+void copyCreature(Combatant &destination, const Creature &source, uint8_t hp);
 
 // Switch by original party slot and emit a separate transition result.
 bool applySwitch(BattleState &state, Side side, uint8_t originalSlot,

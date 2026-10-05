@@ -38,19 +38,13 @@ bool validEffect(Effect effect)
 
 bool statForEffect(Effect effect, StatType &stat, int8_t &delta)
 {
-    switch (effect) {
-    case Effect::ATKDWN: stat = StatType::ATTACK_M; delta = -1; return true;
-    case Effect::DEFDWN: stat = StatType::DEFENSE_M; delta = -1; return true;
-    case Effect::SPCADWN: stat = StatType::SPECIAL_ATTACK_M; delta = -1; return true;
-    case Effect::SPCDDWN: stat = StatType::SPECIAL_DEFENSE_M; delta = -1; return true;
-    case Effect::SPDDWN: stat = StatType::SPEED_M; delta = -1; return true;
-    case Effect::ATKUP: stat = StatType::ATTACK_M; delta = 1; return true;
-    case Effect::DEFUP: stat = StatType::DEFENSE_M; delta = 1; return true;
-    case Effect::SPCAUP: stat = StatType::SPECIAL_ATTACK_M; delta = 1; return true;
-    case Effect::SPCDUP: stat = StatType::SPECIAL_DEFENSE_M; delta = 1; return true;
-    case Effect::SPDUP: stat = StatType::SPEED_M; delta = 1; return true;
-    default: return false;
-    }
+    if (!isStatEffect(effect)) return false;
+    uint8_t index = static_cast<uint8_t>(effect) - static_cast<uint8_t>(Effect::ATKDWN);
+    delta = index < 5 ? -1 : 1;
+    if (index >= 5) index -= 5;
+    // Authored order is attack, defense, special attack, special defense, speed.
+    stat = static_cast<StatType>(index < 2 ? index : index == 4 ? 2 : index + 1);
+    return true;
 }
 
 bool appendFact(ActionResult &out, Effect effect, Side side, uint8_t value)
@@ -69,7 +63,8 @@ bool appendFact(ActionResult &out, Effect effect, Side side, uint8_t value)
 
 uint8_t tickAmount(const Combatant &combatant, Effect effect)
 {
-    const uint8_t amount = static_cast<uint8_t>(combatant.maxHp >> 4);
+    const uint8_t amount = static_cast<uint8_t>(combatant.maxHp >>
+                                              (effect == Effect::INFSED ? 3 : 4));
     return effect == Effect::SAPPD && amount == 0 ? 1 : amount;
 }
 
@@ -152,6 +147,11 @@ bool applyEffect(BattleState &state, Side target, Effect effect, Consequence &ou
     if (!combatant.status.applyEffect(effect)) {
         return false;
     }
+    if (effect == Effect::INFSED || effect == Effect::PINNED ||
+        effect == Effect::CONCUSED) {
+        const uint8_t slot = combatant.status.effects[0] == effect ? 0 : 1;
+        combatant.effectTurns |= static_cast<uint8_t>(3u << (slot * 2));
+    }
     out.effect = effect;
     out.side = static_cast<uint8_t>(target);
     out.value = 0;
@@ -190,12 +190,15 @@ void tickEffects(BattleState &state, ActionResult &out)
         const Side side = static_cast<Side>(sideIndex);
         for (uint8_t slot = 0; slot < 2; ++slot) {
             const Effect effect = combatant.status.effects[slot];
-            if (effect != Effect::SAPPD && effect != Effect::INFSED) {
-                continue;
-            }
             uint8_t after = 0;
-            if (applyTick(combatant, effect, after)) {
+            if ((effect == Effect::SAPPD || effect == Effect::INFSED) &&
+                applyTick(combatant, effect, after)) {
                 appendFact(out, effect, side, after);
+            }
+            const uint8_t remaining = (combatant.effectTurns >> (slot * 2)) & 3;
+            if (remaining != 0) {
+                combatant.effectTurns -= static_cast<uint8_t>(1u << (slot * 2));
+                if (remaining == 1) combatant.status.effects[slot] = Effect::NONE;
             }
         }
     }

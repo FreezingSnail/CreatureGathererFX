@@ -7,6 +7,7 @@
 #include "src/creature/Creature.hpp"
 #include "src/lib/FxReadCounter.hpp"
 #include "src/lib/ReadData.hpp"
+#include "src/lib/MoveIds.hpp"
 
 // Teams::StockCreatures::null is the canonical first 5-byte arena row. Each
 // fixture row follows it contiguously in fxdata/data/teams.txt.
@@ -30,8 +31,11 @@ void test_arena(FxTest &test) {
         FxReadCounter::resetFrame();
         arenaLoad(&creature, arenaFixtureBase + arenaFixtureRowSize * row,
                   arenaFixtureLevel);
-        test.expectEq(FxReadCounter::count(), static_cast<uint8_t>(6),
-                      F("arena block, seed, and four move records"));
+        uint8_t expectedReads = 2;
+        for (uint8_t slot = 0; slot < 4; ++slot)
+            if (validMoveId(arenaRow[slot + 1])) ++expectedReads;
+        test.expectEq(FxReadCounter::count(), expectedReads,
+                      F("arena block, seed, and present move records"));
 
         test.expectEqIdx(creature.id, arenaRow[0], F("arena.id"), row);
         test.expectEqIdx(creature.level, arenaFixtureLevel, F("arena.level"), row);

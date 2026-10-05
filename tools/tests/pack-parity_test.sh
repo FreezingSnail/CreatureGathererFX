@@ -12,7 +12,9 @@ perturbed_layout=$fixtures/fxlayout-expand-20-perturbed.toml
 # Baseline includes the eight-sector save region declared by fxlayout.toml.
 # Restored TSX-authored walkability; GIDs, field addresses and save bytes agree
 # with the prior baseline. Semantic map checks run in test-generated-libs.
-expected=55e84620e57745c872e5f9de7a60350f559af90f13bd888861c6bce81071d085
+# Utility prototype adds move names, kits and trainer basic attacks.
+# Runtime/authored matchup chart reconciliation updates the packed lookup table.
+expected=1b09633a00e4d64a26413d67fd62d04c600df3e1b9623d6b8dbe796d1ccd91a3
 
 for layout in "$old_layout" "$new_layout" "$perturbed_layout"; do
     test -f "$layout" || {
@@ -20,8 +22,8 @@ for layout in "$old_layout" "$new_layout" "$perturbed_layout"; do
         exit 2
     }
 done
-test "$(grep -c '^\[\[entry\]\]' "$old_layout")" -eq 305 || {
-    printf 'layout equivalence: old fixture must contain 305 entries\n' >&2
+test "$(grep -c '^\[\[entry\]\]' "$old_layout")" -eq 317 || {
+    printf 'layout equivalence: old fixture must contain 317 entries\n' >&2
     exit 2
 }
 test "$(grep -c '^\[\[entry\]\]' "$new_layout")" -eq 20 || {

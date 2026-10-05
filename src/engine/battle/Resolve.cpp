@@ -1,4 +1,5 @@
 #include "Resolve.hpp"
+#include "MoveUses.hpp"
 
 #include "Damage.hpp"
 #include "Effects.hpp"
@@ -166,6 +167,7 @@ bool appendFact(ActionResult &out, const Consequence &fact)
 void resolveAttack(BattleState &state, Side actor, uint8_t moveSlot,
                    bool selfHit, Rng &rng, ActionResult &out)
 {
+    if (!selfHit) spendMoveUse(state, actor, moveSlot);
     const uint8_t actorIndex = sideIndex(actor);
     const Side targetSide = selfHit ? actor : otherSide(actor);
     const uint8_t targetIndex = sideIndex(targetSide);
@@ -363,7 +365,8 @@ void resolveAction(BattleState &state, Side actor, BattleAction action,
 
     switch (action.kind) {
     case ActionKind::Attack: {
-        if (!validMove(state.active[actorIndex], action.index)) {
+        if (!validMove(state.active[actorIndex], action.index) ||
+            remainingMoveUses(state, actor, action.index) == 0) {
             resolveSkip(state, actor, true, false, out);
             break;
         }

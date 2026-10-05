@@ -6,6 +6,7 @@
 #include "fxtest.hpp"
 #include "generated/creature_data.hpp"
 #include "src/lib/ReadData.hpp"
+#include "src/lib/MoveIds.hpp"
 #include "src/engine/battle/BattleSetup.hpp"
 
 static_assert(sizeof(Effect) == sizeof(uint8_t), "Effect must be one byte on AVR");
@@ -62,10 +63,10 @@ void test_creatures(FxTest &test) {
                          F("encounter.type1"), id);
         test.expectEqIdx(static_cast<uint8_t>(active.types.getType2()), expected.type2,
                          F("encounter.type2"), id);
-        test.expectEqIdx(active.moveIds[0], expected.move1, F("encounter.move1"), id);
-        test.expectEqIdx(active.moveIds[1], expected.move2, F("encounter.move2"), id);
-        test.expectEqIdx(active.moveIds[2], expected.move3, F("encounter.move3"), id);
-        test.expectEqIdx(active.moveIds[3], expected.move4, F("encounter.move4"), id);
+        test.expectEqIdx(active.moveIds[0], battleMoveId(expected.move1), F("encounter.move1"), id);
+        test.expectEqIdx(active.moveIds[1], battleMoveId(expected.move2), F("encounter.move2"), id);
+        test.expectEqIdx(active.moveIds[2], battleMoveId(expected.move3), F("encounter.move3"), id);
+        test.expectEqIdx(active.moveIds[3], battleMoveId(expected.move4), F("encounter.move4"), id);
 
         // The requested level initializes both encounter metadata and creature stats.
         test.expectEqIdx(active.level, encounterLevel, F("encounter.level0"), id);

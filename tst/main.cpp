@@ -39,6 +39,11 @@
 #include "battle_presets_test.hpp"
 #include "battle_item_test.hpp"
 #include "lure_prototype_test.hpp"
+#include "battle_utility_test.hpp"
+#ifdef BATTLE_SIMULATOR
+#include "battle_sim_state_test.hpp"
+#include "battle_sim_runner_test.hpp"
+#endif
 
 Player player = Player();
 GameState gameState;
@@ -78,20 +83,24 @@ void reset() {
 }
 
 namespace worldMovementFake {
-bool hasRequest = false;
-Direction requestedDirection = Direction::DOWN;
+uint8_t pendingButtons = 0;
 uint16_t calls = 0;
 
 void reset() {
-    hasRequest = false;
-    requestedDirection = Direction::DOWN;
+    pendingButtons = 0;
     calls = 0;
 }
 
 void request(Direction direction) {
-    requestedDirection = direction;
-    hasRequest = true;
+    switch (direction) {
+    case Direction::LEFT: pendingButtons = LEFT_BUTTON; break;
+    case Direction::RIGHT: pendingButtons = RIGHT_BUTTON; break;
+    case Direction::UP: pendingButtons = UP_BUTTON; break;
+    case Direction::DOWN: pendingButtons = DOWN_BUTTON; break;
+    }
 }
+
+void requestButtons(uint8_t buttons) { pendingButtons = buttons; }
 
 uint16_t inputCalls() { return calls; }
 }
@@ -100,12 +109,11 @@ bool worldInteractionJustPressedA() { return worldInteractionFake::pressedA; }
 bool worldInteractionDialogActive() { return dialogMenu.peek(); }
 void worldInteractionPopDialog() { dialogMenu.popMenu(); }
 uint24_t worldInteractionScriptsBase() { return worldInteractionFake::scriptsBase; }
-bool worldMovementDirection(Direction &direction) {
+uint8_t worldMovementButtons() {
     ++worldMovementFake::calls;
-    if (!worldMovementFake::hasRequest) return false;
-    worldMovementFake::hasRequest = false;
-    direction = worldMovementFake::requestedDirection;
-    return true;
+    const uint8_t buttons = worldMovementFake::pendingButtons;
+    worldMovementFake::pendingButtons = 0;
+    return buttons;
 }
 void worldInteractionReadScript(uint24_t address, uint8_t *dst, uint8_t length) {
     ++worldInteractionFake::readCount;
@@ -192,6 +200,11 @@ int main() {
     BattleFlowSuite(tests);
     BattlePresetsSuite(tests);
     BattleItemSuite(tests);
+    BattleUtilitySuite(tests);
+#ifdef BATTLE_SIMULATOR
+    BattleSimulatorStateSuite(tests);
+    BattleSimulatorRunnerSuite(tests);
+#endif
     std::cout << "BattleItemSuite finished" << std::endl;
     LurePrototypeSuite(tests);
     std::cout << "LurePrototypeSuite finished" << std::endl;

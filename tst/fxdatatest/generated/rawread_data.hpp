@@ -8,9 +8,9 @@ constexpr uint16_t rawReadMoveTableNext = 0xFFFF;
 
 // fxdata symbol opponent_seeds + 0x000000: parsed opponent seed 0.
 constexpr OpponentSeed rawReadOpponentSeed = {
-    { 0, 31, 0xFFFFFF00UL },
-    { 3, 31, 0xFFFFFF00UL },
-    { 6, 31, 0xFFFFFF00UL },
+    { 0, 31, 0xFFFF0100UL },
+    { 3, 31, 0xFFFF0100UL },
+    { 6, 31, 0xFFFF0100UL },
 };
 
 // fxdata symbol opponent_seeds + 0x000000: first FX data cursor page.

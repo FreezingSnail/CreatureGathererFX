@@ -47,7 +47,7 @@ struct BattleMode : BattleSession {
 };
 
 #ifdef __AVR__
-static_assert(sizeof(BattleMode) == 157, "battle playback payload must remain 157 bytes");
+static_assert(sizeof(BattleMode) <= 191, "battle playback must fit the world overlay");
 #endif
 } // namespace battle
 

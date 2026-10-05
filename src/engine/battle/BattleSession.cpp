@@ -3,6 +3,7 @@
 #include "Ai.hpp"
 #include "BattleSetup.hpp"
 #include "Resolve.hpp"
+#include "MoveUses.hpp"
 #include "../../player/Player.hpp"
 
 extern Player player;
@@ -35,6 +36,66 @@ BattleAction skipAction()
 {
     return {ActionKind::Skip, 255};
 }
+
+#ifdef BATTLE_SIMULATOR
+constexpr uint8_t SIMULATOR_SPECIES_COUNT = 32;
+constexpr uint8_t SIMULATOR_EMPTY_MOVE = 255;
+constexpr uint8_t SIMULATOR_MAX_LEVEL = 31;
+
+bool validMoveSlots(const Combatant &combatant)
+{
+    for (uint8_t slot = 0; slot < 4; ++slot) {
+        if (combatant.moveIds[slot] != SIMULATOR_EMPTY_MOVE) continue;
+        const Move &move = combatant.moves[slot];
+        if (move.move != 0 || move.effect1 != Effect::NONE ||
+            move.effect2 != Effect::NONE) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool validPreparedState(
+    const BattleState &prepared,
+    const uint8_t (&benchMaxHp)[2][PARTY_SIZE - 1])
+{
+    if (prepared.over) return false;
+    for (uint8_t side = 0; side < SIDE_COUNT; ++side) {
+        const uint8_t count = prepared.partyCount[side];
+        const uint8_t activeSlot = prepared.activeSlot[side];
+        const Combatant &active = prepared.active[side];
+        if (count == 0 || count > PARTY_SIZE || activeSlot >= count ||
+            active.id >= SIMULATOR_SPECIES_COUNT || active.level == 0 ||
+            active.level > SIMULATOR_MAX_LEVEL || active.maxHp == 0 ||
+            active.stats.hp != active.maxHp || active.hp == 0 ||
+            active.hp > active.maxHp || !validMoveSlots(active)) {
+            return false;
+        }
+
+        uint8_t bench = 0;
+        for (uint8_t original = 0; original < count; ++original) {
+            if (original == activeSlot) continue;
+            const BenchSlot &member = prepared.bench[side][bench];
+            const uint8_t maxHp = benchMaxHp[side][bench];
+            if (member.id >= SIMULATOR_SPECIES_COUNT || member.level == 0 ||
+                member.level > SIMULATOR_MAX_LEVEL || maxHp == 0 ||
+                member.hp > maxHp) {
+                return false;
+            }
+            ++bench;
+        }
+        while (bench < PARTY_SIZE - 1) {
+            const BenchSlot &unused = prepared.bench[side][bench];
+            if (unused.id != 0 || unused.level != 0 || unused.hp != 0 ||
+                benchMaxHp[side][bench] != 0) {
+                return false;
+            }
+            ++bench;
+        }
+    }
+    return true;
+}
+#endif
 
 } // namespace
 
@@ -77,6 +138,24 @@ void BattleSession::beginTrainer(uint8_t id)
     resetCursor(state_.over ? SessionPhase::Ready : SessionPhase::Choice);
     if (state_.over) cursor_.next = NEXT_COMPLETE;
 }
+
+#ifdef BATTLE_SIMULATOR
+bool BattleSession::beginPrepared(
+    const BattleState &prepared,
+    const uint8_t (&benchMaxHp)[2][PARTY_SIZE - 1])
+{
+    if (!validPreparedState(prepared, benchMaxHp)) return false;
+
+    state_ = prepared;
+    resetMoveUses(state_);
+    for (uint8_t side = 0; side < 2; ++side)
+        for (uint8_t slot = 0; slot < PARTY_SIZE; ++slot)
+            state_.partyModifiers[side][slot] = 0;
+    resetActionResult(result_);
+    resetCursor(SessionPhase::Choice);
+    return true;
+}
+#endif
 
 void BattleSession::captureState(ActionResult &out) const
 {
@@ -155,11 +234,18 @@ bool BattleSession::submitIntent(MenuIntent intent)
         BattleAction action = skipAction();
         switch (intent.kind) {
         case MenuIntentKind::SelectMove:
+            if (intent.index >= 4 ||
+                remainingMoveUses(state_, Side::Player, intent.index) == 0)
+                return false;
             action = {ActionKind::Attack, intent.index};
             break;
         case MenuIntentKind::SelectParty:
             if (!canSwitch(state_, Side::Player, intent.index)) return false;
             action = {ActionKind::Switch, intent.index};
+            break;
+        case MenuIntentKind::Pass:
+            for (uint8_t slot = 0; slot < 4; ++slot)
+                if (remainingMoveUses(state_, Side::Player, slot)) return false;
             break;
         case MenuIntentKind::Gather:
             action = {ActionKind::Gather, 0};
@@ -236,9 +322,12 @@ bool BattleSession::advance()
 
         const BattleAction action = cursor_.plan.action[actorIndex];
         if (action.kind == ActionKind::Switch) {
-            applySwitch(state_, actor, action.index, false, result_);
+            const bool switched = applySwitch(state_, actor, action.index, false, result_);
+            if (switched && actor == Side::Opponent)
+                state_.switchLockMask |= static_cast<uint8_t>(1u << actorIndex);
         } else {
             resolveAction(state_, actor, action, rng_, result_);
+            state_.switchLockMask &= static_cast<uint8_t>(~(1u << actorIndex));
         }
 
         if (result_.flags & PLAYER_FAINTED) {
@@ -377,6 +466,10 @@ BattleView BattleSession::view() const
     for (uint8_t slot = 0; slot < 4; ++slot) {
         out.moveIds[slot] = state_.active[static_cast<uint8_t>(Side::Player)]
             .moveIds[slot];
+        out.remainingUses[slot] = remainingMoveUses(state_, Side::Player, slot);
+        const uint8_t limit = moveUseLimit(state_.active[0].moves[slot]);
+        if (limit != UNLIMITED_MOVE_USES)
+            out.useLimitsPacked |= static_cast<uint8_t>(limit << (slot * 2));
     }
     out.gatherProgress = state_.gather.progress;
     out.gatherNeed = state_.gather.need;
@@ -389,6 +482,10 @@ MoveSnapshot BattleSession::moves() const
     for (uint8_t slot = 0; slot < 4; ++slot) {
         out.moveIds[slot] = state_.active[static_cast<uint8_t>(Side::Player)]
             .moveIds[slot];
+        out.remainingUses[slot] = remainingMoveUses(state_, Side::Player, slot);
+        const uint8_t limit = moveUseLimit(state_.active[0].moves[slot]);
+        if (limit != UNLIMITED_MOVE_USES)
+            out.useLimitsPacked |= static_cast<uint8_t>(limit << (slot * 2));
     }
     return out;
 }

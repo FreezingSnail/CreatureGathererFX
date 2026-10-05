@@ -146,6 +146,7 @@ inline void BattlePlaybackIntegrationTest(TestSuite &suite)
     Driver natural;
     natural.session.setRng({scriptedRng});
     natural.session.beginWild(4, 1, true, 1);
+    FxReadCounter::resetFrame();
     test.assert(natural.submit({MenuIntentKind::SelectMove, 0}), true,
                 "wild choice submits exactly one move intent");
     test.assert(natural.frame(false), true,
@@ -186,8 +187,8 @@ inline void BattlePlaybackIntegrationTest(TestSuite &suite)
         test.assert(accelerated.resultKinds[i], natural.resultKinds[i],
                     "accelerated and natural playback keep result order");
     }
-    test.assert(FxReadCounter::count(), static_cast<uint8_t>(0),
-                "steady native playback performs zero FX reads");
+    test.assert(FxReadCounter::count(), static_cast<uint8_t>(4),
+                "playback accounts for one species and three packed move reads");
 
     // Trainer setup publishes all three opponent slots; one action still
     // advances through playback before the next choice can open.
@@ -218,6 +219,9 @@ inline void BattlePlaybackIntegrationTest(TestSuite &suite)
             fixture.active[side].moveIds[slot] = 255;
         }
     }
+    // A legal zero-power action reaches the end-turn tick without damage.
+    fixture.active[0].moveIds[0] = 0;
+    fixture.active[0].moves[0] = Move();
     test.assert(replacement.submit({MenuIntentKind::SelectMove, 0}), true,
                 "replacement fixture accepts initial action");
     replacement.frame(false);

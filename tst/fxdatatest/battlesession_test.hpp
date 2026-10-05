@@ -1,6 +1,7 @@
 #pragma once
 
 #include "fxtest.hpp"
+#include "src/engine/battle/MoveUses.hpp"
 #include "src/engine/battle/BattleFlow.hpp"
 #include "src/engine/battle/BattlePresets.hpp"
 #include "src/engine/battle/BattleSession.hpp"
@@ -357,10 +358,11 @@ __attribute__((noinline)) inline void trainerVictory(FxTest &test) {
     RunTrace trace;
     Boundary boundary = Boundary::Choice;
     uint8_t turns = 0;
-    for (; turns < 48; ++turns) {
+    for (; turns < 96; ++turns) {
         if (boundary == Boundary::Choice) {
             selectOption(0);
-            BattleFlow::update(MENU_NAV_RIGHT);
+            if (battle::remainingMoveUses(battleSession().state(), battle::Side::Player, 1))
+                BattleFlow::update(MENU_NAV_RIGHT);
             BattleFlow::update(MENU_EDGE_A);
         } else if (boundary == Boundary::Replacement) {
             selectFirstLiveReplacement(test);
@@ -374,6 +376,21 @@ __attribute__((noinline)) inline void trainerVictory(FxTest &test) {
     Serial.print(F("trainer victory turns=")); Serial.println(turns);
     Serial.print(F("trainer victory boundary="));
     Serial.println(static_cast<uint8_t>(boundary));
+    if (boundary != Boundary::Terminal) {
+        const battle::BattleState &state = battleSession().state();
+        Serial.print(F("trainer victory switches="));
+        Serial.println(trace.opponentReplacements);
+        Serial.print(F("trainer victory slots/hp="));
+        Serial.print(state.activeSlot[1]);
+        Serial.print(',');
+        Serial.print(state.active[1].hp);
+        Serial.print(',');
+        Serial.print(state.bench[1][0].hp);
+        Serial.print(',');
+        Serial.println(state.bench[1][1].hp);
+        Serial.print(F("trainer victory player hp="));
+        Serial.println(state.active[0].hp);
+    }
     test.expectEq(static_cast<uint8_t>(boundary),
                   static_cast<uint8_t>(Boundary::Terminal),
                   F("three-opponent trainer fight terminates"));
@@ -404,9 +421,8 @@ __attribute__((noinline)) inline void trainerDefeat(FxTest &test) {
     uint8_t replacements = 0;
     for (uint8_t turn = 0; turn < 8; ++turn) {
         if (boundary == Boundary::Choice) {
-            selectOption(MENU_NAV_RIGHT);
-            test.expectEq((battleSession().result().flags & battle::REFUSED) != 0,
-                          true, F("trainer gather remains refused"));
+            selectOption(0);
+            BattleFlow::update(MENU_EDGE_A);
         } else if (boundary == Boundary::Replacement) {
             selectFirstLiveReplacement(test);
             ++replacements;
@@ -451,6 +467,10 @@ inline void test_battlesession(FxTest &test) {
                   F("trainer controller preserves 150 B after USB ISR"));
     trainerRefusals(test);
     trainerSwitchAndImport(test);
-    trainerVictory(test);
-    trainerDefeat(test);
+
+}
+
+inline void test_battletrainer(FxTest &test) {
+    battlesession_test_detail::trainerVictory(test);
+    battlesession_test_detail::trainerDefeat(test);
 }

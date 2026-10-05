@@ -67,6 +67,18 @@ namespace MoveNames {
     amove30 = "slam"
     amove31 = "elderSlam"
     amove32 = ""
+    amove33 = "Torrent"
+    amove34 = "Sear"
+    amove35 = ""
+    amove36 = "Cyclone"
+    amove37 = "Sharpen"
+    amove38 = "swiften"
+    amove39 = "sweep"
+    amove40 = "terrorize"
+    amove41 = "Ironbody"
+    amove42 = "deepthought"
+    amove43 = "rejuvinate"
+    amove44 = "Deluge"
 }
 
 namespace MenuStrings {

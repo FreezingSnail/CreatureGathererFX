@@ -55,23 +55,12 @@ Modifier typeStatusModifier(const Combatant &attacker,
     return combineModifier(attackerModifier, defenderModifier);
 }
 
-uint32_t applyWide(uint32_t value, Modifier modifier)
+uint16_t applyDamageModifier(uint16_t value, Modifier modifier)
 {
-    switch (modifier) {
-    case Modifier::Same:
-        return value;
-    case Modifier::Quarter:
-        return value >> 2;
-    case Modifier::Half:
-        return value >> 1;
-    case Modifier::Double:
-        return value << 1;
-    case Modifier::Quadruple:
-        return value << 2;
-    case Modifier::None:
-    default:
-        return 0;
-    }
+    // Caller has already rejected immunity; remaining modifiers encode shifts -2..2.
+    const int8_t shift = static_cast<int8_t>(modifier) -
+                         static_cast<int8_t>(Modifier::Same);
+    return shift < 0 ? value >> -shift : value << shift;
 }
 
 } // namespace
@@ -124,7 +113,10 @@ uint8_t computeDamage(const Combatant &attacker, const Combatant &defender,
     const uint16_t defenseTerm =
         applyStage(defenseBase, defender.statMods.getModifier(defenseStat));
     const uint16_t divisor = defenseTerm == 0 ? 1 : defenseTerm;
-    const uint32_t baseDamage = attackTerm / divisor;
+    // Trial balance scale: give utility a turn before strong attacks end fights.
+    // Packed power <=31, attack <=255, stage scale <=3, modifier <=4:
+    // floor(31*255*3/2)*4 <=47428, so every damage intermediate fits uint16_t.
+    const uint16_t baseDamage = attackTerm / divisor / 2;
 
     const Type defenderType1 = defender.types.getType1();
     const Type defenderType2 = defender.types.getType2();
@@ -141,7 +133,7 @@ uint8_t computeDamage(const Combatant &attacker, const Combatant &defender,
         return 0;
     }
 
-    const uint32_t modifiedDamage = applyWide(baseDamage, modifier);
+    const uint16_t modifiedDamage = applyDamageModifier(baseDamage, modifier);
     if (modifiedDamage == 0) {
         return 1;
     }

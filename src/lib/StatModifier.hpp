@@ -7,62 +7,33 @@ class StatModifer {
     // 1 bit wasted (most significant bit is always 0)
     uint16_t modifiers = 0;
 
-    // TODO: This should be rewritten to as a constexpr
+    // Three sign-magnitude bits per stat; StatType fixes their packed order.
     void setModifier(StatType stat, int8_t amount) {
         uint8_t modifier = amount;
         if (amount < 0) {
             modifier = 0b00000100 | ((~amount + 1) & 0b11);
         }
-        switch (stat) {
-        case StatType::ATTACK_M:
-            modifiers = (modifiers & 0xFFF8) | modifier;
-            break;
-        case StatType::DEFENSE_M:
-            modifiers = (modifiers & 0xFFC7) | (modifier << 3);
-            break;
-        case StatType::SPEED_M:
-            modifiers = (modifiers & 0x7E3F) | (modifier << 6);
-            break;
-        case StatType::SPECIAL_ATTACK_M:
-            modifiers = (modifiers & 0x71FF) | (modifier << 9);
-            break;
-        case StatType::SPECIAL_DEFENSE_M:
-            modifiers = (modifiers & 0xFFF) | (modifier << 12);
-            break;
-        }
+        const uint8_t index = static_cast<uint8_t>(stat);
+        if (index >= 5) return;
+        const uint8_t shift = index * 3;
+        modifiers = (modifiers & ~(static_cast<uint16_t>(7u) << shift)) |
+                    (static_cast<uint16_t>(modifier) << shift);
     }
 
     int8_t getModifier(StatType stat) const {
-        int8_t ret = 0;
-        switch (stat) {
-        case StatType::ATTACK_M:
-            ret = modifiers & 0b111;
-            break;
-        case StatType::DEFENSE_M:
-            ret = (modifiers >> 3) & 0b111;
-            break;
-        case StatType::SPEED_M:
-            ret = (modifiers >> 6) & 0b111;
-            break;
-        case StatType::SPECIAL_ATTACK_M:
-            ret = (modifiers >> 9) & 0b111;
-            break;
-        case StatType::SPECIAL_DEFENSE_M:
-            ret = (modifiers >> 12) & 0b111;
-            break;
-        }
-        if (ret & 0b00000100) {
-            return ~((ret & 0b11) - 1);
-        }
-        return ret;
+        const uint8_t index = static_cast<uint8_t>(stat);
+        if (index >= 5) return 0;
+        const uint8_t bits = (modifiers >> (index * 3)) & 7u;
+        return bits & 4u ? -static_cast<int8_t>(bits & 3u)
+                         : static_cast<int8_t>(bits);
     }
 
     void incrementModifier(StatType stat, int8_t amount) {
         int8_t toSet = getModifier(stat) + amount;
-        if (toSet > 3) {
-            toSet = 3;
-        } else if (toSet < -3) {
-            toSet = -3;
+        if (toSet > 2) {
+            toSet = 2;
+        } else if (toSet < -2) {
+            toSet = -2;
         }
 
         setModifier(stat, toSet);

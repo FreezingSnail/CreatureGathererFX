@@ -23,12 +23,16 @@ struct BattleView {
     uint8_t partyCount[2];
     uint8_t activeSlot[2];
     uint8_t moveIds[4];
+    uint8_t remainingUses[4] = {255, 255, 255, 255};
+    uint8_t useLimitsPacked = 0;
     uint8_t gatherProgress;
     uint8_t gatherNeed;
 };
 
 struct MoveSnapshot {
     uint8_t moveIds[4];
+    uint8_t remainingUses[4] = {255, 255, 255, 255};
+    uint8_t useLimitsPacked = 0;
 };
 
 struct PartyChoice {
