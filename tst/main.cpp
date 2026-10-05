@@ -49,7 +49,6 @@ Player player = Player();
 GameState gameState;
 ModeState modeState;
 MenuV2 menu;
-MenuStack menuStack;
 DialogMenu dialogMenu;
 PlantGameState plants;
 uint8_t screenBuffer[128 * 64];

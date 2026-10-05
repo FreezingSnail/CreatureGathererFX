@@ -4,9 +4,6 @@
 #include "player/Player.hpp"
 extern Player player;
 
-#include "lib/MenuStack.hpp"
-extern MenuStack menuStack;
-
 #include "GameState.hpp"
 extern GameState gameState;
 

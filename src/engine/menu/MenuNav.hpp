@@ -2,7 +2,12 @@
 
 #include <stdint.h>
 
-#include "../../lib/MenuStack.hpp"
+enum MenuEnum {
+    BATTLE_MOVE_SELECT,
+    BATTLE_CREATURE_SELECT,
+    BATTLE_OPTIONS,
+    WORLD_OPTIONS,
+};
 
 struct MenuDesc {
     uint8_t itemCount;

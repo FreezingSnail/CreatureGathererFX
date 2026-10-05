@@ -4147,3 +4147,30 @@ capture-window failure and its cause are retained above; the longer-window gate
 is the accepted result. Per owner instruction, manual visual verification was
 waived; automated host, VM, and real-FX device acceptance passed. No packed bytes
 changed. Both beads were closed after this passing gate; no commit or push.
+
+## jp8.4.7 — Collapse to one menu stack (2026-10-05)
+
+```text
+make test
+# PASS: host 154751/0, world 190/0
+make testvm
+# PASS: 42/0
+make build
+# PASS: 27896 B flash, 1841 B static RAM
+make ram
+# PASS: 27896/29696 B flash; 1841/2160 B static RAM (319 B budget headroom)
+# Global MenuStack removal reclaimed its 13 B.
+FXTEST_MS=10000 make check ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS: generation checks, host 154751/0, world 190/0, VM 42/0, all 25 FX suites.
+# Battle options and forced BATTLE_CREATURE_SELECT opening covered on device;
+# test_stack 4/0 with 335 B headroom. Trainer serial capture passed at 10 s.
+git diff --check
+# PASS; no MenuStack/menuStack references remain in src, tst, sketch, or Makefile.
+```
+
+MenuEnum moved unchanged to MenuNav; deleted the redundant MenuStack type/source,
+global declarations/definitions and host source entry. Updated the forced-party
+device assertion and corrected the stale bead design to preserve the live
+MenuV2/BattleFlow architecture. Manual visual verification was not required by
+current AGENTS.md. No generated data changed; no commit or push. Worker and gate
+wall time approximately 5 minutes.

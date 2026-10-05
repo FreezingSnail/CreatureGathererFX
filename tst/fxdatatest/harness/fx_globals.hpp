@@ -27,7 +27,6 @@ MenuV2 menu = MenuV2();
 Player player = Player();
 Animator animator = Animator();
 PlantGameState plants;
-MenuStack menuStack;
 DialogMenu dialogMenu;
 #endif
 
