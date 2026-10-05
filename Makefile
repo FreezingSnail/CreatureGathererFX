@@ -123,7 +123,6 @@ TEST_SOURCES = src/lib/Blit.cpp \
 	src/creature/Creature.cpp \
 	src/player/Player.cpp \
 	src/action/Action.cpp \
-	src/lib/MenuStack.cpp \
 	src/lib/ListView.cpp \
 	src/engine/battle/Ai.cpp \
 	src/engine/battle/Damage.cpp \
