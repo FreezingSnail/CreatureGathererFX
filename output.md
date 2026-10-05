@@ -4413,3 +4413,6 @@ row as the CSV sentinel rather than rejecting the valid table. The focused
 tests and arena generation passed after the fix. Temporary project outputs are
 under `build/arena-tools-opponent-check`; no commit or push. Worker elapsed time
 approximately 12 minutes.
+
+Canonical loader implementation committed in CreatureGathererTools as
+`a9dc640`; unrelated in-progress tools changes remain unstaged.
