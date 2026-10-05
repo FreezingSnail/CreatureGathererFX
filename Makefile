@@ -133,6 +133,7 @@ TEST_SOURCES = src/lib/Blit.cpp \
 	src/engine/battle/BattlePresets.cpp \
 	src/engine/battle/BattleSetup.cpp \
 	src/engine/battle/BattlePresenter.cpp \
+	src/engine/arena/ArenaCatalog.cpp \
 	src/engine/arena/ArenaDemo.cpp \
 	src/engine/arena/ArenaView.cpp \
 	src/engine/ModeState.cpp \
@@ -412,6 +413,9 @@ fxtest-build:
 		cp tst/fxdatatest/*.hpp "$$stage/"; \
 		cp -R tst/fxdatatest/harness "$$stage/harness"; \
 		cp tst/fxdatatest/generated/*.hpp "$$stage/"; \
+		cp fxdata/generated/arena_demo_ids.hpp "$$stage/arena_demo_ids.hpp"; \
+		mkdir -p "$$stage/fxdata/generated"; \
+		cp fxdata/generated/arena_demo_ids.hpp "$$stage/fxdata/generated/arena_demo_ids.hpp"; \
 		mkdir "$$stage/generated"; \
 		for fixture in tst/fxdatatest/generated/*.hpp; do \
 			name="$$(basename "$$fixture")"; \

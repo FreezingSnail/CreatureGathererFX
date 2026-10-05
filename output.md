@@ -4459,3 +4459,32 @@ unsigned cast; both were corrected. The first parity attempt also exposed
 mutable historical fixture paths to the expanded 24-opponent descriptor; a
 frozen legacy fixture restored the historical comparison. Worker elapsed time
 approximately 30 minutes. Full final-gate/budget verification remains .12.
+
+## CreatureGathererFX-2cy.6
+
+Added bounded readers for generated arena player records, trainer IDs, and cached
+team previews. Each output is committed only after a complete successful read;
+invalid screen/team/slot indices, including 255, perform no FX reads and leave
+caller outputs unchanged. Player reads use 18-byte team and six-byte member
+strides; opponent species triples and label address tables use three-byte
+strides. Species zero remains valid; empty move sentinel 32 is preserved.
+
+Observed transition reads on device: `readPlayerMember` 1; `readOpponentId` 1;
+player preview 8 (three member reads plus five labels/names); opponent preview 6
+(species triple, label address/width, and three names). The generated canonical
+name-width table bounds preview species before reading their FX name addresses.
+Device suite image: 9,466 B flash, 1,868 B static, 292 B under the 2,160 B
+budget. Paired `test_stack`: 335 B headroom (reserve threshold 150 B).
+
+```text
+make test
+# PASS: host 154,867/0; world 190/0.
+make verify-generated
+# PASS: no generated drift.
+make fxtest-spike BUILD_DIR=build/arena-6-device FXTEST_SPIKE_INO=tst/fxdatatest/test_arenacatalog.ino FXTEST_MS=10000 ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS: test_arenacatalog 50/0; test_stack 4/0; stack headroom 335 B.
+```
+
+Initial host compile caught FX fake include ordering and the host suite registration
+API; both were fixed before the passing run. Worker elapsed time approximately
+8 minutes. Full gate remains assigned to .12.
