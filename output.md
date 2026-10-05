@@ -2827,3 +2827,1232 @@ make build BUILD_DIR=build/trainer-demo-switch AVR_SHIPPING_CPP_FLAGS='-mrelax -
 ```
 
 `git diff --check` passes in both repositories. No commit, push, or remote sync. Manual Ardens visual observations remain owner work; generated preset/tool/source changes and the full battle-demo diff remain uncommitted for review.
+
+## CreatureGathererFX-b2a.4 — remove ArduboyG and refresh 1bpp guidance (2026-10-04)
+
+Deleted the unused vendored `src/external/ArduboyG.h`; the renderer migration had already removed
+its runtime symbols and implementation defines. Updated the rendering descriptions in `AGENTS.md`,
+`README.md`, and `docs/dev-flow.md` to describe native `Arduboy2Base` 1bpp rendering, 52 fps, and
+`FX::display(CLEAR_BUFFER)` after each rendered frame.
+
+Verification:
+
+```text
+rg -n "ArduboyG|ABG_|currentPlane|L4_Triplane|startGray|waitForNextPlane" src tst CreatureGathererFX.ino docs AGENTS.md README.md
+# no matches (rg exit 1); deleted header is absent
+rg -n "[[:blank:]]+$" AGENTS.md README.md docs/dev-flow.md
+# no trailing whitespace (rg exit 1)
+make build BUILD_DIR=build/b2a-4-build
+# PASS; flash 26714/29696 B, static RAM 1925/2160 B, free static budget 235 B
+make test
+# PASS; host 3763/0, world 190/0
+make testvm
+# PASS; VM 42/0
+make fxtest-headless ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens BUILD_DIR=build/b2a-4-fx
+# PASS; 22 suites, 3105 assertions, 0 failures; test_stack painted headroom 261 B
+```
+
+The old b2a.1 checkpoint was 18012 B flash / 1871 B static RAM. The current build is larger because
+the tree now includes later game work; this bead removes an unreferenced header and changes only
+documentation, so it does not account for that growth. No generated assets changed. `git diff
+--check` was not run because this session's `bd prime` context prohibits Git operations. Worker wall
+time approximately 4 minutes (review/edits 2 minutes, build and suites 2 minutes).
+
+## CreatureGathererFX-b2a.3 — archive grayscale inputs and convert placeholders (2026-10-04)
+
+Before conversion, `dist/fxdata.bin` SHA-256 was
+`55e84620e57745c872e5f9de7a60350f559af90f13bd888861c6bce81071d085`. The converter reported
+`bw-placeholders: archived 26, converted 26.` The archive was new before this run; every archived
+PNG's SHA-256 matches its corresponding pre-conversion input below. The archive restore recipe is in
+`art/grayscale/README.md`.
+
+Pre-conversion PNG SHA-256:
+
+```text
+e0a9441ac1970d5fc30ff480c017ac86cdb9d6580978e11aad1e7552f79c97d6  images/numbersblack_7x8.png
+130c384231b6788f8305227811d2343f4502ed42183d36cf7366baa1d690f5a3  images/creatureSprites_32x32.png
+c2f536f71968438d14a1ba4e66a3f80d72674db502b8281b21692b65967a65d4  images/fieldBacground_128x32.png
+64215dc6cddd374f3311893c226275956edcb4def294eb99c1d6bc173411d15a  images/characterSheet_16x16.png
+fc4903af80189845d850cb584bd1486f92d574cc5ebee7c76f111d343f2b55ec  images/NewecreatureSprites_32x32.png
+536a4bbf26acf459a506a27f4e5a18184d9e371dd515abda13b2095f34fe4d21  images/numberswhite_7x8.png
+95eef1cbe1bf86c09eaac826e709fe488db37a24469a9e5fdf8a58098893bb5b  images/singlenumberswhite_3x8.png
+296d7a8962183d4a786cdb0c83dac4bbd377bc3d0e27d18700f8bd09b49536f3  images/fightMenu_128x24.png
+4bb3e7a7864ddf4256454f0a18d66d6816e69e1cc27f4af897a7cdbe2678220c  images/singlenumbersblack_3x8.png
+b8436a4f55d1138dbe2e4c336edc9fe8525eb609391235e0596ba41c2ca454d8  images/ArduFont_5x6.png
+56d69276be6bc697795619f5bf0babd21d75984e8e88ff8f8d8f65c18ef4af4a  images/moveInfo_60x30.png
+b4e52914a046d2d59b4be4cca7383fe72f2abdc65483cc77876039ce423029c9  images/worldTiles_16x16.png
+3f142ba4714bf5eb19e50da3359549b8a22690422df652d981a38127184afc87  images/tiles_16x16.png
+37e00f54dde46c11af74b71ce80381a7f6240a84e2f37b1e38d943b82f2b1591  images/maskedFont_16x24.png
+620bca615fcf5a20d30066e4957518754be24fb1f8e644a4284eb778dfb48987  images/npc_16x16.png
+973e1c38b155c7cd6aeeabc39d52c36b33aa00b0454f490c4eef6ea36befa5b6  images/ecreatureSprites_32x32.png
+1984452594f2bdb4287584edac8eae1c987e2f9e00d1f9eee258e3f90ea7d347  images/arduboyFont_6x8.png
+bc0442e9e4058564f3593fe2a726adae46b61a82cfad9b6160920ec272ebd7ea  images/battleMenu_128x24.png
+451743178b2c9a2d59c10362cf0269246f515703b3f7661b3287b84f4b1ae3a5  images/blankMenu_128x24.png
+32d6f3b41ef7abfac6234f7fafc6a06b78c085609f5a3ae6dcf5fdfcce1f76af  images/ArduFontTrimmed_5x6.png
+9cbb96c0dc57a6bbcdd9abc39b159790515d5ca265422236375479179b7120  images/tilesheet_16x16.png
+9aa62626091963e1f7c936e0fbb4deddb586031dc072032e9475c8e0138ca105  images/letters_16x16.png
+e52d4f5474aace271e63130be4618ed80f483c29c6cbf70e4719cb1f02f220a4  images/battleEffects/basicBeamR_32x32.png
+adb60c42673e4537bb2e655df6ddd299ebc396c11c65d57e9ebd49b7f01b8305  images/battleEffects/basicBeamL_32x32.png
+fedd0f395a2231ab11cd39cf0c0305ccbf63343c8b68424bc953e56e174c1935  images/battleEffects/BasicWaveR_32x32.png
+f93f200a5afae8ca5023b5b66dba79ad331a8f34ef69cf4c03f97e205f51b693  images/battleEffects/BasicWaveL_32x32.png
+```
+
+Exact verification commands and results:
+
+```text
+make doctor
+# NOT READY only because doctor does not find Arduboy2/ArdBitmap in arduino-cli's library list;
+# cgfx-tools 0.2.0 and its project capabilities PASS, as does the Ardens path check
+cgfx-tools --bw-placeholders fxsprites.toml --archive-dir art/grayscale
+# PASS; archived 26, converted 26
+make gen
+# PASS
+shasum -a 256 dist/fxdata.bin
+# unchanged: 55e84620e57745c872e5f9de7a60350f559af90f13bd888861c6bce81071d085
+make verify-generated
+# PASS
+make test-manifest
+# PASS
+make test-generated-libs
+# PASS; generated libs 12/0, invariants 5/0, aliases 28/0
+make test-pack-parity
+# PASS; layout equivalence, perturbation diagnostic, parity
+make fxtest-headless ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens BUILD_DIR=build/b2a-3-fx
+# PASS; 22 suites, 3105 assertions, 0 failures; test_stack painted headroom 261 B
+```
+
+The 26 archived SHA-256 values match the corresponding pre-conversion hashes above. The converter
+release's pinned invariant is RGB threshold at R >= 128, unchanged alpha/dimensions, and byte-identical
+shades=2 output; the installed source tool reports v0.2.0. No Git-based source commit lookup or
+`git show` comparison was run because the `bd prime` session context prohibits Git operations. Worker
+wall time approximately 5 minutes (source/archive review and conversion 2 minutes; generation and
+verification 3 minutes).
+
+Visual spot-checks compared the converted PNGs with `art/grayscale/` for the creature sheet, world
+tiles, NPC, fight menu, and right-facing basic wave at enlarged nearest-neighbor scale. Frame bounds,
+outlines, and visible masks remain intact; the effect's gray edge shades become a clean binary edge.
+
+## CreatureGathererFX-b2a.5 — initial 1bpp art review (2026-10-04)
+
+Inventoried the 26 configured PNGs; they are RGBA sheets with frame geometry encoded by their named
+cell sizes. Existing editable sources include two creature sheets, the tilesheet, and two battle
+effects. Compared the current 1bpp versions to archived grayscale counterparts for creatures, world
+tiles, NPC, fight menu, and BasicWaveR.
+
+The built-in imagegen edit was tested on `worldTiles_16x16.png` as a non-destructive preview. The
+transparent-output attempt returned a blank image. The white-backed attempt redrew the subjects but
+lost the required 4-by-4 16x16 tile grid, so both previews were rejected and no project artwork was
+changed. The b2a.5 art work remains in progress pending a pixel-accurate editing path. The imagegen
+skill's CLI fallback requires an explicit user request and a locally configured `OPENAI_API_KEY`.
+
+## CreatureGathererFX-b2a.5 — grayscale-driven battle field refinement (2026-10-04)
+
+Used archived `art/grayscale/images/fieldBacground_128x32.png` to diagnose the
+black battle scene: the source ellipse is translucent dark gray, so the fixed
+R>=128 placeholder conversion produced an all-black/invisible 1bpp image. The
+asset was refined to a white silhouette with original alpha/dimensions retained,
+and `drawScene()` now renders the 128x32 field at (0,15) through native 1bpp
+PLUSMASK before combatants/HP bars.
+
+Resource/parity delta:
+
+```text
+previous FX image: 26714 B
+refined FX image:  26744 B
+change:             +30 B (field asset + battle background draw); code-only RAM unchanged
+current shipping:  26744/29696 flash, 1925/2160 static RAM, 235 B project SRAM free
+FX image SHA-256: 010ef31e4665092e335cac014d3a656edf9dd8c60b2dc9d19307224365450a92
+```
+
+The pack baseline was intentionally updated for this reviewed art change.
+Validation:
+
+```text
+make gen
+# PASS
+make verify-generated
+# PASS
+make test
+# PASS; host 3763/0, world 190/0
+make testvm
+# PASS; VM 42/0
+make test-pack-parity
+# PASS; layout equivalence, perturbation diagnostic, parity
+make ram BUILD_DIR=build/b2a-5-ram
+# PASS; 26744 B flash / 1925 B static RAM
+make fxtest-headless FXTEST_INOS='tst/fxdatatest/test_battlepresentation.ino tst/fxdatatest/test_battlesession.ino tst/fxdatatest/test_blit.ino tst/fxdatatest/test_tiles.ino' FXTEST_MS=10000 ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens BUILD_DIR=build/b2a-5-fx-long
+# PASS; 4 suites, 240 assertions, 0 failures; trainer painted headroom 372 B / effective 303 B
+```
+
+The default 3-second capture truncated the long battle-session serial output after
+adding the raster background; rerunning with `FXTEST_MS=10000` passed. Remaining
+b2a.5 work: review/refine additional creature/effect/tile assets from the archived
+gray sources; field-background fix is the first targeted change. No commit yet.
+
+## CreatureGathererFX-b2a.5 — owner visual correction: remove battle field art (2026-10-04)
+
+Owner reviewed the battle screenshot and rejected the arena field: the white field
+introduced visual confusion and merged with the white 1bpp combatants/UI. Removed
+the `drawScene()` field draw, restored the prior 1bpp field source from the
+pre-refinement generated workspace, and restored the previous pack baseline.
+Battle scene now keeps a plain black canvas with combatants and UI only.
+
+Validation:
+
+```text
+make gen
+# PASS
+make verify-generated
+# PASS
+make test-pack-parity
+# PASS; restored SHA 55e84620e57745c872e5f9de7a60350f559af90f13bd888861c6bce81071d085
+make ram BUILD_DIR=build/b2a-5-nofield
+# PASS; 26714 B flash / 1925 B static RAM
+```
+
+The rejected white-field attempt remains documented above as a failed visual
+candidate; no field art or field draw is retained.
+
+## CreatureGathererFX-b2a.5 — dithered creature back sprites (2026-10-04)
+
+Converted the archived creature back sheet `art/grayscale/images/NewecreatureSprites_32x32.png`
+from four opaque palette levels (`0`, `64`, `172`, `251/255`) to native 1bpp with
+ tile-local 4x4 ordered dithering. The conversion preserves transparent pixels and
+keeps opaque black background pixels black; gray regions become deterministic 1px
+black/white coverage patterns. Dither phase resets for each 32x32 frame, avoiding
+cross-frame error or pattern drift.
+
+The archived front sheet `art/grayscale/images/creatureSprites_32x32.png` contained
+only opaque black/white plus transparent pixels, so it remains unchanged: there are
+no gray values to recover through dithering.
+
+Hashes:
+
+```text
+archive front: 130c384231b6788f8305227811d2343f4502ed42183d36cf7366baa1d690f5a3
+archive back:  fc4903af80189845d850cb584bd1486f92d574cc5ebee7c76f111d343f2b55ec
+current back:  4357102548204df40331016db31e7eed6389cbc3e203db26618102321344578b
+packed image:  c2693a4c4d9674c11a1a8b31385f4a8c82141b27c7b826b9e9efd26dd9503d06
+```
+
+Validation:
+
+```text
+make gen                         # PASS
+make verify-generated             # PASS
+make test                         # 3763 passed, 0 failed
+make testvm                       # 42 passed, 0 failed
+make test-pack-parity             # PASS
+make ram BUILD_DIR=build/b2a-5-dither
+                                  # 26714 B flash / 1925 B static RAM
+make fxtest-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_battlepresentation.ino \
+  ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens \
+  FXTEST_MS=10000 BUILD_DIR=build/b2a-5-fx-dither
+                                  # battle presentation 97/0; stack headroom 261 B
+make diff --check                 # PASS
+```
+
+## CreatureGathererFX-b2a.5 — reject dithering; manual redraw path (2026-10-04)
+
+Visual review rejected the programmatic dither. The full-sheet 4x4 ordered pattern
+preserved nominal gray coverage but destroyed the creatures' solid cartoon silhouettes;
+clustered 2x2 had the same failure, while Atkinson remained too noisy for the battle
+scale. Reverted `images/NewecreatureSprites_32x32.png` to the clean hard-threshold
+1bpp baseline (`3a93a50369bb7c876f20cf3b85db54ca451fab3dfd08977083257487abe7d451`).
+The archived grayscale source remains unchanged for manual reference.
+
+Future refinement path: redraw each front/back creature as authored 1bpp pixel art,
+one creature at a time. Preserve silhouette, face/expression, pose, and key gray-source
+accents manually; use no global dithering. Review each pair before moving to the next.
+
+Validation after rollback:
+
+```text
+make gen
+make test-pack-parity
+# PASS; restored SHA 55e84620e57745c872e5f9de7a60350f559af90f13bd888861c6bce81071d085
+git diff --check
+# PASS
+```
+
+## CreatureGathererFX-b2a.5 — manual first-three creature pass (2026-10-04)
+
+Applied the first hand-authored 1bpp pass to creatures 1–3 in
+`images/NewecreatureSprites_32x32.png` (six frames: front/back pairs). The pass
+starts from the clean silhouette baseline and adds sparse, stepped black contour
+accents to shell/body regions; it uses no dithering. Creatures 4–32 remain at the
+previous baseline. Review artifact remains at:
+`build/b2a-5-manual-first3/manual-first3-contact.png`.
+
+Hashes:
+
+```text
+manual back sheet: a1c9332e095815ac88d94da6f4e229f0f6f4ec7ffc4dee27a5c97484ccfa8384
+packed image:     17fd1bd89c3aee1e380b9add050df7b6773e68eff6ccf260aceecb0047360153
+```
+
+Validation:
+
+```text
+make gen
+make verify-generated
+make test                         # 3763 passed, 0 failed
+make testvm                       # 42 passed, 0 failed
+make test-pack-parity             # PASS
+make ram BUILD_DIR=build/b2a-5-manual
+                                  # 26714 B flash / 1925 B static RAM
+make fxtest-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_battlepresentation.ino \
+  ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens \
+  FXTEST_MS=10000 BUILD_DIR=build/b2a-5-fx-manual
+                                  # battle presentation 97/0; stack headroom 261 B
+git diff --check                  # PASS
+```
+
+## CreatureGathererFX-b2a.5 — protect manual creature outlines (2026-10-04)
+
+Manual black contour accents could merge with the black battle canvas at the
+silhouette edge. Added a protected one-pixel white perimeter for the first six
+manual frames: edge pixels are restored white, and authored black accents are
+allowed only inside the hard-threshold silhouette. This preserves readable
+outlines without reintroducing patterned dithering.
+
+Hashes:
+
+```text
+manual outlined back sheet: 5ccb55e06f9611c84304c26929938dbe11929005e36f734a7e014ff7776de16a
+packed image:               3538f2a60dc4d893985209f88898d65d6a9bfbc9504713214151bf094c8d26bd
+```
+
+Validation:
+
+```text
+make gen
+make verify-generated
+make test-pack-parity             # PASS
+make ram BUILD_DIR=build/b2a-5-outline
+                                  # 26714 B flash / 1925 B static RAM
+make fxtest-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_battlepresentation.ino \
+  ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens \
+  FXTEST_MS=10000 BUILD_DIR=build/b2a-5-fx-outline
+                                  # battle presentation 97/0; stack headroom 261 B
+git diff --check                  # PASS
+```
+
+## CreatureGathererFX-b2a.5 — visible white outline correction (2026-10-04)
+
+The prior protected-edge pass was effectively invisible: it changed only 77 pixels
+because the silhouettes already had white edge pixels. Replaced the first six frames
+with an explicit outline-focused treatment: hard white perimeter, black interior,
+and retained white highlights. This makes the outline visibly separate each creature
+from the black canvas; frames 4–32 remain hard-threshold baseline.
+
+Hashes:
+
+```text
+outlined back sheet: 1d6896bd8d4bf782c80e34db3cc76d5c35eb52edadcaa24ce5d3c1fb516d8201
+packed image:        766d69c0655e8faa2cca2dc9c330a7c98efe928e6dedc287dfc5db0723d8bded
+```
+
+Review artifact: `build/b2a-5-visible-outline/ink-outline-contact.png`.
+
+Validation:
+
+```text
+make gen
+make verify-generated
+make test-pack-parity             # PASS
+make ram BUILD_DIR=build/b2a-5-visible-outline
+                                  # 26714 B flash / 1925 B static RAM
+make fxtest-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_battlepresentation.ino \
+  ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens \
+  FXTEST_MS=10000 BUILD_DIR=build/b2a-5-fx-visible-outline
+                                  # battle presentation 97/0; stack headroom 261 B
+git diff --check                  # PASS
+```
+
+## CreatureGathererFX-b2a.5 — full-sprite outline correction (2026-10-04)
+
+The previous visible-outline attempt outlined thresholded white sections, not each
+complete creature. Replaced it with a full-silhouette mask from each source frame's
+nontransparent alpha. For creatures 1–3, each front/back frame now has one continuous
+white perimeter around the complete 32x32 sprite; interiors remain black except for
+retained white highlights. Internal sections no longer receive independent outlines.
+Creatures 4–32 remain hard-threshold baseline.
+
+Review artifact: `build/b2a-5-full-outline/full-outline-first3-contact.png`.
+
+Hashes:
+
+```text
+full-outline back sheet: 571539996734ed8eab5c3209e9f4ede6d45e9d9fa0a021cfecbb16a606285aa9
+packed image:           e07831442c46e9833d581069a027713de82e27814a14847fadfe8f82ddeed967
+```
+
+Validation:
+
+```text
+make gen
+make verify-generated
+make test-pack-parity             # PASS
+make ram BUILD_DIR=build/b2a-5-full-outline
+                                  # 26714 B flash / 1925 B static RAM
+make fxtest-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_battlepresentation.ino \
+  ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens \
+  FXTEST_MS=10000 BUILD_DIR=build/b2a-5-fx-full-outline
+                                  # battle presentation 97/0; stack headroom 261 B
+git diff --check                  # PASS
+```
+
+## CreatureGathererFX-b2a.5 — two-layer sprite outline (2026-10-04)
+
+Expanded the complete first-three silhouette outline by two outward pixels per
+32x32 frame: one opaque black ring immediately outside the sprite, followed by
+one opaque white ring against the black battle background. This yields the
+requested `sprite -> black outline -> white outline -> black canvas` layering;
+internal sections are not independently outlined. Creatures 4–32 remain baseline.
+
+Review artifacts:
+
+```text
+review/creature-first3-layered-outline-review.png
+review/NewecreatureSprites-first3-layered-outline.png
+```
+
+Hashes:
+
+```text
+layered back sheet: e2f318e4ae44219cdb4e33d60edb843edc670b269c9a08d0fd63567c298584e7
+packed image:      0de6a2cbf254335d2237b1dfbd02b4d7e0aa326d0871926fb5e1701ccb7232f6
+```
+
+Validation:
+
+```text
+make gen
+make verify-generated
+make test-pack-parity             # PASS
+make ram BUILD_DIR=build/b2a-5-layered-outline
+                                  # 26714 B flash / 1925 B static RAM
+make fxtest-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_battlepresentation.ino \
+  ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens \
+  FXTEST_MS=10000 BUILD_DIR=build/b2a-5-fx-layered-outline
+                                  # battle presentation 97/0; stack headroom 261 B
+git diff --check                  # PASS
+```
+
+## CreatureGathererFX-b2a.5 — preserve sprite art under outline (2026-10-04)
+
+Corrected the outline application after review: the prior layered asset replaced
+the first three interiors with outline-only art. Restored the existing manual
+white-filled sprite pixels, then overlaid only external rings from the full alpha
+silhouette: black ring immediately outside the sprite, white ring outside black.
+The sprite interior is preserved; creatures 4–32 remain baseline.
+
+Review artifacts:
+
+```text
+review/creature-first3-sprite-with-outline-review.png
+review/NewecreatureSprites-first3-sprite-with-outline.png
+```
+
+Hashes:
+
+```text
+composite sprite sheet: 635630d0c702a6cabcb64e3aa8b14129e9c020e1e77a8bac8302812f47d3d58b
+packed image:          6a4338d66a2ec027df24a67a650028ea4ece77406993c3940dc558bb2cb67057
+```
+
+Generation/repack completed; full firmware validation deferred until the visual
+sprite iteration is accepted, per review workflow.
+
+## CreatureGathererFX-b2a.5 — extend approved outline to all creatures (2026-10-04)
+
+Applied the approved external outline to every `NewecreatureSprites_32x32.png`
+frame. Existing sprite interiors are preserved; each alpha silhouette receives
+one black ring followed by one white ring. First three are rebuilt from their
+pre-outline manual sprite base to avoid duplicate rings. Regenerated packed data;
+full firmware validation remains deferred until the visual art batch is accepted.
+
+```text
+sprite sheet: c0fdac35ac8622e110125aedf5a2f7a6eb2ce1707b37ea5ffd4603fcef095d9e
+packed image: 90fc23444680ccc51402f9152fbaab8c93cfd92c3a77e674acf9c4a811549f45
+review/full sheet: review/NewecreatureSprites-layered-outline-all.png
+```
+
+## CreatureGathererFX-h9p.1 — FX-free prepared battle state (2026-10-04)
+
+Added a `BATTLE_SIMULATOR`-only `BattleSession::beginPrepared` path with
+party/active-slot/species/level/HP/sentinel validation. Bench HP limits travel
+with the host scenario wrapper, so neither `BattleState` nor `BattleSession`
+gains resident fields. Added a fixture-backed scenario builder for 1v1, 3v3,
+and generated trainer presets; it calls `Creature::loadTypes` and
+`Creature::setStats`, loads packed move descriptors, preserves original party
+order, and translates preset empty ID 32 to runtime empty ID 255 while leaving
+packed move ID 32 valid.
+
+Validation:
+
+```text
+make test
+  host: 3763 passed / 0 failed; world: 190 passed / 0 failed
+make sim-test
+  host+simulator: 3824 passed / 0 failed
+make build BUILD_DIR=build/sim-state-check
+  26714 B flash / 1925 B static RAM; BattleSession AVR size assertion compiled
+make ram BUILD_DIR=build/sim-state-ram
+  26714 B flash / 1925 B static RAM / 635 B physical SRAM free
+make verify-generated
+  PASS (no output)
+```
+
+The first `make sim-test` compile exposed that the host pgmspace shim does not
+provide `memcpy_P` or `pgm_read_dword`; the host-only builder now indexes its
+ordinary generated fixture arrays directly. Rerun passed. Worker wall time was
+approximately 17 minutes, including implementation and validation.
+
+## CreatureGathererFX-h9p.2 — seeded BattleSession batch runner (2026-10-04)
+
+Replaced the stale `sim` target with a host CLI batch runner under
+`build/tools/battle-sim`. It links the production battle lifecycle and uses a
+versioned `xorshift32-v1` stream with stable per-match seed derivation. It
+supports ordered pairwise matches, balanced random 3v3 teams, generated
+`opening` / `switch_drill` anchors, greedy and random-valid-move policies,
+deterministic forced replacements, and explicit turn-cap timeouts. Match rows
+include seeds, policy, teams, outcome, turns, and remaining HP. Accuracy and
+critical-hit rolls remain absent because the engine does not resolve them.
+
+Validation:
+
+```text
+make test
+  host: 3763 passed / 0 failed; world: 190 passed / 0 failed
+make sim
+  PASS; both policies completed opening and switch_drill anchor matches
+make sim-test
+  host+simulator: 3886 passed / 0 failed
+make sim SIM_ARGS="--mode pairwise --species-count 2 --seed 7 --level 10 --trials 1 --policy greedy --max-turns 1"
+  PASS; all 4 ordered pair assignments emitted, including capped timeout rows
+make verify-generated
+  PASS (no output)
+make final-gate BUILD_DIR=build/command-optimizations ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+  FAIL in test_blit only; all other device suites passed, including test_stack
+  test_stack headroom: 261 B
+  test_blit: 25 passed / 4 failed
+    CRC[15] got=21188 want=57228
+    CRC[16] got=13354 want=12025
+    CRC[17] got=45998 want=1293
+    CRC[18] got=19120 want=11519
+```
+
+The four CRC mismatches are the `NewecreatureSprites` draw cases in
+`tst/fxdatatest/blit_test.hpp`, matching the all-creature outline asset batch
+already documented above. The simulator changes do not touch those assets or
+their expected CRCs. They remain unaccepted visual changes, so the tests were
+not updated to bless them. The final gate stopped at `make check`; its shipping
+RAM stage did not run. h9p.2 was closed at user direction with this known art
+gate failure recorded. Worker wall time was approximately 17 minutes.
+
+## CreatureGathererFX-h9p.3 — replayable balance reports (2026-10-04)
+
+Added versioned raw and aggregate CSV reports under `build/balance`, including
+engine/PRNG versions, batch settings, fixture generator version and generated
+creature/move/preset hashes. Match rows record ordered rosters, per-match seeds,
+timeouts, turns, party HP, observed attack damage and move-use counts. Summary
+groups preserve policy and both seat rosters. Added direct replay by scenario
+and per-match seed; random 3v3 replay accepts the two roster ID lists and prints
+the ordered session action/result trace. Added report definitions,
+reproduction steps and a balance comparison workflow in
+`docs/battle-simulator.md`.
+
+Validation:
+
+```text
+make test
+  host: 3763 passed / 0 failed; world: 190 passed / 0 failed
+make sim
+  PASS; 4 anchor matches, 4 wins, 0 timeouts
+  build/balance/matches.csv; build/balance/summary.csv
+  totals: 48 turns; player/opponent observed attack damage 1804 / 759
+make sim-test
+  host+simulator: 3907 passed / 0 failed
+make verify-generated
+  PASS (no output)
+build/tools/battle-sim/battle-sim --mode pairwise --seed 7 --level 10 --trials 2 --policy both --max-turns 10 --species-count 2 --output-dir build/balance/pairwise-smoke
+  PASS; 16 matches
+build/tools/battle-sim/battle-sim --mode pairwise --seed 7 --level 10 --trials 2 --policy both --max-turns 10 --species-count 2 --output-dir build/balance/pairwise-repeat
+  PASS; 16 matches
+cmp build/balance/pairwise-smoke/matches.csv build/balance/pairwise-repeat/matches.csv
+  PASS (byte-identical)
+cmp build/balance/pairwise-smoke/summary.csv build/balance/pairwise-repeat/summary.csv
+  PASS (byte-identical)
+build/tools/battle-sim/battle-sim --mode random-3v3 --seed 7 --level 10 --trials 4 --policy greedy --max-turns 5 --species-count 8 --output-dir build/balance/random3-smoke
+  PASS; 4 matches
+build/tools/battle-sim/battle-sim --replay-scenario pair_00_00 --replay-seed 14541504140111727227 --level 10 --policy greedy --max-turns 10
+  PASS; win, 2 turns, trace emitted
+build/tools/battle-sim/battle-sim --replay-scenario random_3v3 --replay-seed 14541504140111727227 --level 10 --policy greedy --max-turns 5 --replay-player-team '1|2|7' --replay-opponent-team '4|3|0'
+  PASS; win, 4 turns, trace emitted
+make final-gate BUILD_DIR=build/command-optimizations ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+  FAIL in test_blit only: CRC[15..18] differ for the existing creature-outline assets
+  test_blit: 25 passed / 4 failed; got 21188/13354/45998/19120, expected 57228/12025/1293/11519
+  test_stack passed with 261 B runtime headroom; shipping RAM stage not reached
+```
+
+The final-gate failure is the same four sprite CRC mismatches recorded for
+h9p.2; simulator code does not modify those assets or CRCs. The remaining
+h9p.3 checks passed. At user direction, h9p.3 was closed and the visual review
+and CRC reconciliation were filed as human bead
+`CreatureGathererFX-b2a.5.1`. Worker wall time was approximately 16 minutes.
+
+
+## 2026-10-04 — ogh.1 / ogh.2 / 12l playable utility prototype
+
+Implemented the accepted no-MP, single-active prototype. Basic attacks are unlimited;
+power>=10 or status/healing attacks have two PP; pure stat moves have three. Six
+packed spent-use bytes preserve original creature/move-slot identity across switches.
+PP and stages reset at battle entry; stat stages cap at +/-2 and persist across switches.
+Regeneration heals 1/8 maximum HP over three end-turn ticks; pinning/confusion also
+expire after three ticks. Transient effects clear on switching; duplicate status rejected.
+Fixed signed-stage masks and multiplier composition. Type table moved to PROGMEM.
+Added cached PP display without frame FX reads, tactical opponent/player policy, exhausted
+loadout Pass, basic fallbacks, and Bell/Rock/Hedge/Cloud/Flitfly utility kits. Trainer
+loadouts retain Smite and gain unlimited Thought. Half base damage is the trial scale.
+Creature numeric stats remain unchanged pending play feedback.
+
+12l: legacy saved/source empty 32 normalizes to runtime empty 255. Deluge semantic ID44
+retains packed row32; authored IDs36..43 map to rows35..42. Save format and packed row
+order unchanged. Appended semantic move names through44 and generated via make gen.
+Added playable utility preset and CGFX_TRAINER_DEMO_UTILITY bootstrap. No screenshots,
+commits, or pushes. Existing art and other dirty work preserved.
+
+Measurements (whole-image, bytes):
+
+| Checkpoint | Flash | Static RAM |
+| --- | ---: | ---: |
+| make ram BUILD_DIR=build/ogh-baseline | 26714 | 1925 |
+| make ram BUILD_DIR=build/ogh-pp-spike | 27122 | 1925 |
+| make ram BUILD_DIR=build/ogh-utility-spike | 28348 | 1854 |
+| make ram BUILD_DIR=build/ogh-tactical-spike | 28724 | 1854 |
+| make ram BUILD_DIR=build/ogh-shipping | 28792 | 1854 |
+| Utility demo build below | 28352 | 1854 |
+
+PP spike delta +408 flash /0 resident RAM (six bytes fit mode union overlay).
+Final shipping delta +2078 flash /-71 static RAM; 904 flash bytes free and706 physical
+RAM bytes free. Final device test_stack: 4passed0failed,326 bytes measured headroom.
+Session controller448 painted/379 after69-byte ISR reserve. Utility transition651.
+
+Verification (Ardens=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens):
+
+- make test: 3886 host +190 VM assertions passed,0failed (build/ogh-host-final.log).
+- make sim-test: 4030passed0failed (build/ogh-sim-tests-settled.log).
+- make gen; make verify-generated: PASS.
+- make test-generated-libs: 12 packed-library,5 invariant,28 alias checks PASS.
+- make test-pack-parity: layout equivalence, negative perturbation, cart hash PASS
+  (build/ogh-pack-parity-settled.log). New SHA256:
+  19e50c48f4756ce94e7d9775e29268eed1282feb855e314e864b971548380fae.
+- make fxtest-spike BUILD_DIR=build/ogh-device-final FXTEST_SPIKE_INO=tst/fxdatatest/test_battlesession.ino ARDENS=...:
+  session41passed0failed, stack4passed0failed.
+- make fxtest-headless BUILD_DIR=build/ogh-trainer-final FXTEST_INOS='tst/fxdatatest/test_battletrainer.ino tst/fxdatatest/test_moves.ino tst/fxdatatest/test_battleutility.ino' ARDENS=...:
+  trainer48, moves308, utility39 assertions passed,0failed.
+- make fxtest-headless BUILD_DIR=build/ogh-read-tests FXTEST_INOS='tst/fxdatatest/test_arena.ino tst/fxdatatest/test_trainer_setup.ino' ARDENS=...:
+  arena495 and trainer setup83 assertions passed,0failed.
+- make final-gate BUILD_DIR=build/ogh-final-settled ARDENS=...:
+  FAIL only existing test_blit CRC[15..18] (25passed4failed): got
+  21188/13354/45998/19120, expected57228/12025/1293/11519. Other23 FX suites pass.
+  Full diagnostics build/ogh-final-settled/final-gate/check.log. RAM stage not reached;
+  shipping make ram run separately above. Existing human bead b2a.5.1 owns art review.
+- git diff --check: PASS.
+
+Failed iterations resolved: initial BattleMode157 assertion updated to bounded191 overlay;
+old fixtures selected exhausted/empty moves; original trainer defeat used refused Gather,
+which intentionally does not advance the turn; PP trainer tests now use actual attacks.
+Combined trainer/session device firmware grew to30728 (103%); split coverage into two
+permanent sketches (session27724, trainer27358). Raw final move record test corrected
+four-byte address stride. FX read counts now exclude empty slots and include Thought.
+First gate build/ogh-final failed18 arena+4 trainer read expectations plus existing4 CRCs;
+settled rerun leaves only4 CRCs. Added move names required updating the permanent expanded
+layout fixture (317 entries), alias addresses and independently pinned cart hash. Data
+review removed four unintended kit edits before regenerating and recollecting final reports.
+
+Data collection uses battle-sim --seed20261004 --level10 --max-turns100 with:
+--mode pairwise --trials10 --policy both (20480 matches),
+--mode pairwise --trials10 --policy tactical (10240),
+--mode random-3v3 --trials100 --policy both (200),
+--mode random-3v3 --trials100 --policy tactical (100).
+Each command used separate --output-dir build/balance/ogh-half/{pairwise,pairwise-tactical,random3,random3-tactical}.
+Full-scale comparison: same final fixture kits, pairwise/both20480 matches, in
+build/balance/ogh-before-scale/pairwise; original collect-20261004 baseline preserved.
+Greedy1v1 mean1.73 ->3.24, median2 ->3; one-turn5066 ->1176 out of10240.
+Half-scale random-move1v1 mean3.81; tactical3.28. Random parties mean greedy11.46,
+random12.58, tactical11.69. All30720 pairwise +300 party matches completed,0timeouts.
+Tactical utility replay seed20261004 won in31 turns (build/ogh-utility-replay.log).
+These compare player policies against shared tactical opponents, not symmetric tournaments.
+
+Playable command:
+make ram BUILD_DIR=build/ogh-playable AVR_SHIPPING_CPP_FLAGS='-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X -DCGFX_SHIPPING_NO_USB -DCGFX_TRAINER_DEMO -DCGFX_TRAINER_DEMO_UTILITY'
+HEX build/ogh-playable/CreatureGathererFX.ino.hex; isolated cart/save copies in
+build/ogh-playable/isolated/. Reset restarts Bell/Rock/Hedge vs middle starter trainer.
+
+Remaining: runtime/authored type chart mismatch filed CreatureGathererFX-62o. Accuracy,
+critical rolls, voluntary tactical switches, and player-first speed ties remain existing
+limitations. Epic ogh remains open for play feedback and subsequent creature stat tuning.
+Wall time: overlapping implementation/tests/data loop approximately30min from ogh.1 claim
+16:39EDT through17:09EDT; shared gate/orchestrator work included (two integrated gates).
+Native/device test worker ran in parallel; per-bead isolated attribution unavailable.
+
+## ogh.3 voluntary-switch contract (2026-10-04)
+
+Inspected BattleSession choice/replacement phases, BattleSetup snapshot/load/switch,
+per-slot PP and stage storage, damage estimation and FX transition counting. Pinned
+the implementation contract in bd: expand BenchSlot from 3 to 7 bytes with cached
+type1/type2/physical-defense/special-defense at offsets 3..6; add a two-side
+voluntary-switch lock mask (+17 B maximum BattleState growth including the mask).
+Populate the profile from the same Creature/CreatureSeed at entry or switch only.
+Switch only for trainer opponents, only when the opponent's strongest legal attack
+threatens at least half current HP, and only if a live candidate survives and reduces
+threat-per-current-HP by at least 25%; compare with uint32 cross-products, tie by
+original party slot. Keep a lethal attack over switching, honor remaining PP, do not
+inspect bench moves, preserve the existing action cost/turn order and forced replacement
+path, and require a non-switch action before that side can voluntarily switch again.
+Wild opponents do not switch. Examples cover immunity, lethal threat, neutral value,
+exhausted PP and no live bench. No source or generated files changed for this design bead.
+
+Budget baseline: make ram BUILD_DIR=build/no-drift reported flash 28852/29696 (844 B
+free), static RAM 1854/2160 (306 B below the project cap); allow at most +17 B cached
+state and stop implementation below 512 B flash free, 150 B static RAM free, or 150 B
+focused test_stack headroom. Verification for implementation is pinned in bd. Review
+wall time approximately 6 minutes; no tests run for this design-only bead.
+
+## 62o runtime/authored type chart reconciliation (2026-10-04)
+
+Kept the shipping Type.hpp chart as the measurement baseline and corrected
+data/typetable.csv only. The 16 changed cells were: Lightning vs Earth 0->0.5,
+Fire 2->1, Lightning 1->2, Plant 0.5->2; Plant vs Water 2->0, Earth 2->0.5,
+Fire 0->1, Lightning 0.5->2, Plant 1->2; Elder vs Spirit 2->1, Water 1->0,
+Wind 1->2, Earth 1->0.5, Lightning 1->2, Plant 1->2, Elder 2->1. Type::STATUS
+is an effect marker and is excluded from the eight gameplay rows/columns.
+Added a pinned 8x8 runtime fixture and host/device checks for all 64 cells,
+single-type defenders with NONE, all 512 dual-type compositions, and immunity.
+The runtime chart is unchanged; no battle rule or balance output depends on the
+authored CSV at runtime.
+
+Commands/results: make gen PASS; make verify-generated PASS; make test PASS
+(host 4527, world 190); make sim-test PASS (4675); focused
+make fxtest-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_tables.ino ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+PASS (test_tables 949/0; test_stack 4/0, measured stack headroom 324 B);
+make ram BUILD_DIR=build/62o-chart PASS (28852/29696 flash, 1854/2160 static
+RAM, 844 B flash free, 706 B total RAM free); make test-pack-parity PASS.
+Intentional regenerated packed image hash changed from
+19e50c48f4756ce94e7d9775e29268eed1282feb855e314e864b971548380fae to
+1b09633a00e4d64a26413d67fd62d04c600df3e1b9623d6b8dbe796d1ccd91a3; pinned
+the new expected hash after parity verified the generated pack. The first
+device spike exposed an unstaged fixture include path; moved the fixture under
+tst/fxdatatest and reran successfully. The initial parity run correctly rejected
+the old packed hash; after updating the intentional baseline it passed.
+
+Fixed-seed recollection at level 10, seed 20261004, max turns 100: pairwise
+10 trials/pair, both policies, 20480 matches, 9685 wins, 10795 losses, 0
+timeouts, 72253 aggregate turns; random 3v3, 100 trials/policy, 200 matches,
+95 wins, 105 losses, 0 timeouts, 2404 aggregate turns. Reports and metadata
+are under build/balance/62o-chart/{pairwise,random3}. Existing collect-20261004
+reports have different simulator/fixture versions, so they are preserved but
+not used as a before/after chart comparison. Current chart reconciliation
+does not alter runtime mechanics. Wall time approximately 12 minutes including
+generation, verification, focused device/stack pass, RAM and recollection.
+
+## ogh.4 simulator voluntary-switch policy (2026-10-04)
+
+Added a separately named switch-tactical player policy. ScenarioBuilder derives
+host-only defensive profiles from the same Creature setup path, matching ogh.3's
+four-byte production cache contract (two types, physical and special defense).
+SwitchPolicy evaluates only the opposing active creature's currently usable
+moves through production computeDamage; it selects a live bench slot only when
+the 50%-HP threat trigger and 25% normalized-risk improvement both hold, the
+candidate survives, and a lethal attack is not available. SelectParty is still
+submitted through BattleSession. Stable original-slot ties and a one-non-switch
+action guard are applied. Existing greedy/tactical modes and device opponent
+rules are unchanged. Versioned raw/summary reports now include switch counts;
+replay traces identify improved-survival versus forced-replacement events.
+
+Verification: make sim-test PASS (4699/0); make test PASS (host4527/0,
+world190/0); make sim PASS and 4 anchor matches; fixed-seed smoke command
+build/tools/battle-sim/battle-sim --mode random-3v3 --seed 20261004 --level 10
+--trials 100 --policy switch-tactical --max-turns 100 --output-dir
+build/balance/ogh.4-smoke PASS (100 matches, 0 timeouts, 1196 aggregate turns,
+308 player switch events, 156 opponent forced-replacement events). Raw and summary
+reports are in build/balance/ogh.4-smoke. The permanent 8-team test also replays
+a switching match and checks the reason output, PP/stage persistence, immunity,
+lethal threat, exhausted PP, neutral/no-bench cases, stable ties, the repeat
+guard, and unchanged one-on-one fallback.
+
+First simulator compile lacked the AVR host pgmspace include before generated
+fixtures; adding that include fixed it. Initial policy tests exposed fixture
+assumptions: equal-risk candidates needed enough HP to survive, and
+beginPrepared correctly clears battle-entry PP/stages, so persistence state is
+now seeded after beginPrepared. Rerun passed. Wall time approximately 29 minutes
+from ogh.4 claim to verification, smoke collection and report.
+
+## ogh.5 production switch AVR spike (2026-10-04)
+
+Added transition-cached defensive profiles to bench slots and a trainer-only
+opponent voluntary switch decision in the production BattleSession AI path.
+Packed existing battle flags and the two-bit switch guard into one byte to
+preserve the 191-byte mode overlay. The current patch preserves the frozen
+threat, survival, 25% risk-improvement, lethal-action, tie-order and one-action
+repeat-guard rules. BattleState is 128 B and BattleSession is 167 B on AVR.
+
+Baseline `make ram BUILD_DIR=build/ogh5-spike` before the patch: flash 28852/29696
+(844 B free), static RAM 1854/2160 (306 B free). First patched run failed compile
+because the overlay exceeded its fixed size; packing flags resolved the static
+assertions. Second run then failed while the lock byte was separately declared;
+co-packing the lock bits fixed that. Settled spike command
+`make ram BUILD_DIR=build/ogh5-spike` PASS: flash 29690/29696 (6 B free), static
+RAM 1854/2160 (306 B free). Flash growth is 838 B versus baseline, 506 B over
+the bead's maximum growth compatible with its required 512 B reserve. Per the
+spike rule, implementation stopped before test-stack or broader verification;
+the feature must be trimmed or split before continuing. No pass is claimed for
+production switch behavior yet. Wall time through the budget stop: approximately
+20 minutes.
+
+## ogh.14 behavior-preserving flash trims (2026-10-04)
+
+User authorized PP renderer and elemental-status simplification while retaining
+opponent switching. One measured item per checkpoint, all with exact command
+`make ram BUILD_DIR=build/ogh5-spike`:
+
+| Checkpoint | Flash | Delta | Flash free | Static RAM |
+| --- | ---: | ---: | ---: | ---: |
+| Previous ogh.5 spike | 29690 | — | 6 | 1854 |
+| PP glyph bit consumption replaces variable bit-index shifts | 29666 | -24 | 30 | 1854 |
+| Elemental effect range/type mapping replaces 16-case switch | 29548 | -118 | 148 | 1854 |
+
+Total saved 142 B flash; static RAM unchanged. PP glyph bits, placement, use counts,
+all elemental effect behavior and switching preserved. Static budget free 306 B;
+physical SRAM free 706 B. AVR state/session overlay assertions pass. Still 364 B
+short of the bead's required 512 B flash reserve: ogh.14/ogh.5 remain blocked.
+No full gate or broader implementation while below reserve; no screenshots/commits.
+
+Verification: added 1536 permanent host assertions covering every elemental effect,
+both type positions, STATUS/NONE types, and all non-elemental byte IDs.
+`make test > build/ogh14-host.log 2>&1`: PASS, 6063 host + 190 world assertions.
+`make sim-test > build/ogh14-sim.log 2>&1`: FAIL, 6233 passed/2 failed, both existing
+manifest provenance checks. Current manifest uses tool_version/artifacts and relative
+paths while reader expects compact generator records and full fixture paths.
+Initial host/simulator attempts failed on stale native BattleState <=120 assertion;
+switch-cache layout is 132 B native/128 B AVR, so updated native cap to 132 B.
+No generated artifacts changed. Worker/orchestrator wall time approximately 6 minutes;
+gate wall time 0 (budget stop).
+
+## ogh.14 remaining trim candidates (2026-10-04)
+
+User authorized stat-effect dispatch, DualType bench cache, switching arithmetic,
+combatant-copy reduction, and shared AI work. Effect rates and RNG consumption retained.
+Each checkpoint used `make ram BUILD_DIR=build/ogh5-spike` (all shipping builds PASS):
+
+| Checkpoint | Flash | Delta | Free flash | Static RAM |
+| --- | ---: | ---: | ---: | ---: |
+| Start after previous trims | 29548 | — | 148 | 1854 |
+| Stat effect range mapping replaces ten switch cases | 29486 | -62 | 210 | 1854 |
+| Bench types stored as DualType | 29502 | +16 | 194 | 1854 |
+| 16-bit candidate tie products | 29468 | -34 | 228 | 1854 |
+| Reuse zeroed defensive candidate instead of copying active | 29468 | 0 | 228 | 1854 |
+| Shared legal damage scan and cached selected damage (REJECTED) | 29486 | +18 | 210 | 1854 |
+| Separate scans with cached selected damage (REJECTED) | 29528 | +60 vs retained | 168 | 1854 |
+| Restore separate scans and selected damage recomputation | 29468 | restored | 228 | 1854 |
+
+Net additional saving 80 B; cumulative from ogh.5 spike 222 B. DualType retained
+per user direction despite +16 B flash: BenchSlot 7->6 B, AVR BattleState 128->124 B,
+BattleSession 167->163 B. Static mode overlay remains 191 B, so static RAM unchanged.
+Risk tie products bounded by 255*255=65025; 25-percent acceptance comparison retains
+32-bit arithmetic. Candidate has clear statuses and only defensive inputs populated.
+
+Added permanent host tests for all ten stat effects and isolation of all five stats,
+and high-HP switching products, stable ties, switch guard and lethal priority.
+Prepared simulator benches now populate the same cached DualType/defense fields as
+production; expanded existing prepared/production parity assertion to cover them.
+`make test > build/ogh14-host-next.log 2>&1`: PASS 6128 host + 190 world assertions.
+`make sim-test > build/ogh14-sim-next.log 2>&1`: 6298 passed/2 failed, both manifest
+provenance failures already tracked in CreatureGathererFX-ppi; battle parity passes.
+First host/simulator compile failed on BenchSlot==7 assertion; updated to packed6
+and reran. No generated artifacts, screenshots, commits or pushes.
+Still 284 B short of 512 B flash reserve; ogh.14/ogh.5 remain blocked. Full gate
+and device stack checks deferred while this budget trim remains incomplete.
+Worker/orchestrator wall time approximately 10 minutes; full gate wall time 0.
+
+## ogh.14 low-level C++ trim — reserve restored (2026-10-04)
+
+User authorized lower-level C++ size experiments with code quality considered.
+Each checkpoint uses `make ram BUILD_DIR=build/ogh5-spike`; all builds PASS.
+
+| Checkpoint | Flash | Delta | Static RAM | Retained? |
+| --- | ---: | ---: | ---: | --- |
+| Start | 29468 | — | 1854 | baseline |
+| Packed indexed stat getter/setter replaces repeated switches | 29294 | -174 | 1854 | yes |
+| Algebraic stage scale with quotient/remainder | 29298 | +4 | 1836 | no |
+| Algebraic stage scale with wide negative division | 29314 | +20 vs retained | 1836 | no |
+| Restore table; narrow bounded damage intermediate to 16 bits | 29270 | -24 | 1854 | yes |
+| Modifier inversion via enum range arithmetic | 29256 | -14 | 1848 | yes |
+| Force stat getter noinline | 29254 | -2 | 1848 | no: insignificant saving for forced call boundary |
+| Restore normal inlining; 24-bit switching-risk products | 29220 | -36 | 1848 | yes |
+| Reuse lethal decision from tactical move choice | 29210 | -10 | 1848 | yes |
+| Evaluate enemy damage choice only for DEFUP | 29204 | -6 | 1848 | yes |
+| Move lethal early return to chooseAction | 29204 | 0 | 1848 | yes: removes flag parameter |
+| Nonimmune damage modifier uses encoded shift | 29170 | -34 | 1848 | yes |
+
+This round saves 298 B flash / 6 B static RAM. Cumulative from initial switch
+spike: 520 B flash / 6 B RAM. Final shipping 29170/29696 flash, 526 B free;
+static RAM1848/2160 (312 B project free), 712 B physical SRAM free. Reserve512
+now passes by14 B. AVR BattleState124, BattleSession163, ModeState191 contracts intact.
+
+Bounds/review: packed power31, attack255, maximum stage scale3, final multiplier4
+give maximum damage intermediate floor(31*255*3/2)*4=47428, safely uint16_t.
+Only valid nonimmune enum modifiers reach the shift helper. Risk products max
+255*255*4=260100, safely uint24_t; no conversion of an AVR __uint24 to uint32_t.
+Tie comparisons stay16-bit; 25-percent threshold and rounding are unchanged.
+Stat fields retain their signed-magnitude layout and +/-2 gameplay cap; getter/setter
+reject invalid indices before shifting. Rates, RNG consumption, PP/stage persistence,
+original-slot ties, switch action/guard, and transition-only FX reads preserved.
+
+Verification:
+- `make test > build/ogh14-host-lowlevel.log 2>&1`: PASS7061 host +190 world.
+- `make sim-test > build/ogh14-sim-lowlevel.log 2>&1`:7231 passed/2failed; only
+  existing manifest provenance failures tracked by CreatureGathererFX-ppi.
+- `make fxtest-spike BUILD_DIR=build/ogh14-device FXTEST_SPIKE_INO=tst/fxdatatest/test_battleutility.ino ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens > build/ogh14-device.log 2>&1`:
+  PASS utility43/0, stack4/0. Utility stack480 B; stack331 B (262 after69 B ISR);
+  mode transition435 B. Device maximum-risk/tie and packed damage saturation checks pass.
+
+Permanent tests add packed-field neighbor isolation, every invalid stat ID, every
+modifier inverse ID, and AVR wide-risk/saturation cases. No generated artifacts,
+screenshots, commits or pushes. Parent ogh.5 still needs ppi resolution and settled
+final gate; trim bead acceptance is met and can close. Worker/orchestrator wall time
+approximately20min; full gate0, focused device build/run approximately15s.
+
+## mgc.1 obsolete battle dispatch removal — retained (2026-10-04)
+
+Producer audit (`rg -n 'DialogType|newDialogBox|pushMenu|pushEvent|pushAnimation' src tst`):
+production creates `SCRIPT_TEXT` in `ScriptVM.cpp`; `DialogQueue::pushEvent` creates `TEXT`
+and has no other production caller. No production caller remains for battle damage,
+names, faint/switch, outcomes, effectiveness, or effect dialogs. Battle captions and
+animations remain owned by `BattlePresenter`.
+
+Removed the legacy dialog switch arms, its name animation dispatch, and the
+`newDialogBox` resolver. Preserved `TEXT`/`SCRIPT_TEXT`, the six-item FIFO and its
+refusal/clear/pop behavior, enum values, and every `PopUpDialog` field. Simplified
+queue tests to supported entries and event geometry; replaced retired battle-dialog
+device assertions with typed SCRIPT_TEXT queue/draw and invalid-index coverage.
+BattlePresenter device coverage remains in its own suite. `ScriptVM.cpp` now includes
+`FxReadCounter.hpp` directly after the first device compile identified that it had
+been relying on the removed transitive `globals.hpp` include.
+
+Flash checkpoint: baseline `make ram BUILD_DIR=build/mgc-1-baseline` was 29170 B;
+retained `make ram BUILD_DIR=build/mgc-1` is 27984 B (-1186 B), static RAM 1848 B
+(unchanged). Shipping flash free is 1712 B. Focused dialog spike reports painted
+stack headroom 333 B (264 B after the 69 B ISR reserve), above the required 219 B.
+
+Verification:
+- `make test`: PASS 7027 host + 190 world assertions.
+- `make testvm`: PASS 42 assertions.
+- `make ram BUILD_DIR=build/mgc-1`: PASS, flash27984/29696, static RAM1848/2160.
+- `make fxtest-spike BUILD_DIR=build/mgc-1-device FXTEST_SPIKE_INO=tst/fxdatatest/test_dialog.ino ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens`:
+  PASS dialog6/0 and stack4/0; stack painted333 B (264 B after ISR reserve).
+- `make fxtest-headless BUILD_DIR=build/mgc-1-presenter FXTEST_INOS=tst/fxdatatest/test_battlepresentation.ino ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens`:
+  PASS presenter97/0; presenter chain painted356 B / effective287 B, caption chain painted397 B / effective328 B.
+- First RAM and device build attempt failed because removing `FxReadCounter.hpp`
+  from `globals.hpp` exposed a transitive include in `ScriptVM.cpp`; added the direct
+  include and reran all three builds successfully.
+
+No generated files, screenshots, commits, or pushes. Existing simulator manifest
+provenance failures and CRC drift were not modified or re-baselined. Worker time
+approximately 6 minutes; focused verification/gate time approximately 1 minute;
+full integrated gate is assigned to mgc.8.
+
+## mgc.2 shared world neighbor calculation — rejected by flash budget (2026-10-04)
+
+Fresh shipping baseline: `make ram BUILD_DIR=build/mgc-2-baseline` measured
+27984 B flash and 1848 B static RAM. A shared signed-coordinate neighbor helper
+was exercised across collision, facing/interact targeting, and completed movement;
+host tests covered all four directions, 16-tick commit timing, one destination hook,
+and forced edge rejection. The first LTO build measured 28004 B (+20 B). The bead's
+inline/out-of-line comparison was then run with the helper explicitly marked noinline;
+it also measured 28004 B (+20 B), so neither candidate was retained and the movement
+code and exploratory tests were restored.
+
+Verification on the restored tree:
+- `make test`: PASS 7027 host + 190 world assertions.
+- `make testvm`: PASS 42 assertions.
+- `make ram BUILD_DIR=build/mgc-2`: PASS, flash27984/29696, static RAM1848/2160.
+- `make fxtest-spike BUILD_DIR=build/mgc-2-device FXTEST_SPIKE_INO=tst/fxdatatest/test_tiles.ino ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens`:
+  PASS tiles22/0 and stack4/0; stack headroom333 B (264 B after ISR reserve).
+- `make fxtest-headless BUILD_DIR=build/mgc-2-scripts FXTEST_INOS=tst/fxdatatest/test_scripts.ino ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens`:
+  PASS scripts32/0.
+
+No movement behavior, source, or permanent tests retained from the rejected spike;
+no generated files, screenshots, commits, or pushes. Existing simulator manifest and
+sprite CRC issues were not touched. Worker time approximately 6 minutes; focused
+verification approximately 1 minute; integrated gate remains assigned to mgc.8.
+
+## mgc.3 common world input update path — retained (2026-10-04)
+
+Fresh shipping baseline `make ram BUILD_DIR=build/mgc-3-baseline`:
+27984 B flash, 1848 B static RAM. Physical button snapshots now feed a single
+priority selector and movement/collision update (`WorldEngine::inputFromButtons`);
+the TEST input adapter supplies the same physical button mask. LEFT, RIGHT, UP,
+DOWN priority, held movement, facing on blocked requests, retained moving/walk mask
+on collision refusal, release behavior, 16-tick tile commit, and dialog-paused input
+are covered. The device test calls the shared snapshot path for simultaneous masks,
+release, and a blocked turn.
+
+Retained `make ram BUILD_DIR=build/mgc-3`: 27944 B flash (-40 B), 1852 B static
+RAM (+4 B), 1752 B flash free. `test_stack` painted headroom is 333 B (264 B after
+the 69 B ISR reserve); ModeState remains 191 B.
+
+Verification:
+- `make test`: PASS 7038 host + 190 world assertions.
+- `make testvm`: PASS 42 assertions.
+- `make ram BUILD_DIR=build/mgc-3`: PASS, flash27944/29696, static RAM1852/2160.
+- `make fxtest-spike BUILD_DIR=build/mgc-3-device FXTEST_SPIKE_INO=tst/fxdatatest/test_tiles.ino ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens`:
+  PASS tiles30/0 and stack4/0; stack painted333 B / effective264 B.
+- Initial test compile exposed missing button macro imports and enum casts; added
+  explicit host header/casts. First host assertion run found the added setup
+  invalidated its property window; initialization order was corrected. First device
+  assertion run blocked the west tile instead of the requested east tile; corrected
+  fixture coordinate. Final exact checks above pass.
+
+No generated files, screenshots, commits, or pushes. Worker time approximately
+30 minutes; focused verification approximately 1 minute; integrated gate remains
+assigned to mgc.8.
+
+## mgc.4 bounded save checksum reduction — retained (2026-10-04)
+
+Fresh shipping baseline `make ram BUILD_DIR=build/mgc-4-baseline`: 27944 B flash,
+1852 B static RAM. Replaced `% 255` in both in-memory Fletcher calculation and
+streaming record validation with uint16 intermediates and one conditional subtract
+per sum. The first measured arithmetic checkpoint `make ram BUILD_DIR=build/mgc-4`
+is 27934 B (-10 B), static RAM1852 B (unchanged), flash free1762 B.
+
+Added an independent modulo oracle, uniform payload tests for every byte value,
+prefixes exercising sums 255/256/508/509, a nonuniform payload, exact stored-byte
+comparison, and streaming validation equivalence. Existing round-trip, corrupt
+record fallback, legacy scan, torn-tail and verify behavior remain covered.
+No shared helper checkpoint was attempted; the direct paired arithmetic is small
+and its measured result is already a net reduction.
+
+Verification:
+- `make test`: PASS 7302 host + 190 world assertions.
+- `make testvm`: PASS 42 assertions.
+- `make ram BUILD_DIR=build/mgc-4`: PASS, flash27934/29696, static RAM1852/2160.
+- `make fxtest-spike BUILD_DIR=build/mgc-4-device FXTEST_SPIKE_INO=tst/fxdatatest/test_save.ino ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens`:
+  PASS save281/0 and stack4/0; save stack headroom325 B (256 B after ISR reserve).
+
+No save format, stored bytes, generated files, screenshots, commits, or pushes
+changed. Worker time approximately 12 minutes; focused verification approximately
+1 minute; integrated gate remains assigned to mgc.8.
+
+## mgc.5 packed menu move-info codec — retained (2026-10-04)
+
+Fresh baseline `make ram BUILD_DIR=build/mgc-5-baseline`: 27934 B flash,
+1852 B static RAM. Measured each direction separately: bounded writer reduced
+flash to 27910 B (-24 B); bounded decoder then reduced it to 27860 B (-50 B).
+The shared inline codec header preserved 27860 B. Final `make ram
+BUILD_DIR=build/mgc-5`: 27860/29696 B flash, 1852/2160 B static RAM, 1836 B
+flash free. Both retained halves have a negative flash delta; no SRAM change.
+
+The five-byte LSB-first format remains four adjacent 10-bit values. Native tests
+compare production writes and reads against the old per-bit oracle for every
+value in every slot, checking all record bytes and all decoded neighbors (40968
+codec assertions including invalid/null bounds and overwrite-to-zero). The device
+menu test opens with move IDs 0, Deluge 44, legacy empty 32, and absent 255;
+valid type/power/class values decode as expected, sentinels remain zero, and the
+four open-time FX metadata reads are preserved.
+
+Verification:
+- `make test`: PASS 48270 host + 190 world assertions.
+- `make ram BUILD_DIR=build/mgc-5`: PASS, flash27860/29696, static RAM1852/2160.
+- `make fxtest-spike BUILD_DIR=build/mgc-5-device FXTEST_SPIKE_INO=tst/fxdatatest/test_menurun.ino ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens`:
+  PASS menu9/0 and stack4/0; painted headroom328 B / effective259 B.
+- `make fxtest-headless BUILD_DIR=build/mgc-5-readcounter FXTEST_INOS=tst/fxdatatest/test_readcounter.ino ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens`:
+  PASS readcounter11/0.
+- The first duplicate writer build targeted the same build directory concurrently
+  and failed to produce an ELF; rerunning once in a fresh directory passed. The
+  first device compile also found the missing MoveIds include; added it and the
+  exact device command above passed. No remaining failures.
+
+No generated files, screenshots, commits, or pushes. Worker time approximately
+6 minutes; focused verification approximately 1 minute; integrated gate remains
+assigned to mgc.8.
+
+## mgc.6 smaller PP glyph renderer; save-status experiment rejected (2026-10-04)
+
+Fresh baseline `make ram BUILD_DIR=build/mgc-6-baseline`: 27860 B flash,
+1852 B static RAM. Replaced per-pixel PP `Blit::fillRect` calls with a private,
+fixed-coordinate page-buffer renderer. Its first checkpoint was 27856 B (-4 B),
+and the final inline-header implementation remained 27856 B with unchanged RAM.
+The save-status column-mask candidate measured 27956 B (+100 B over the retained
+PP checkpoint, +96 B over baseline); restored it completely. Final
+`make ram BUILD_DIR=build/mgc-6`: 27856/29696 B flash, 1852/2160 B static RAM,
+1840 B flash free.
+
+Native full-frame pixel oracles cover PP digits 0..3, label, slash, unlimited
+star, and both SAVING/FAILED screens. Empty sentinel IDs are confirmed invalid
+for the existing PP suppression branch. Device blit assertions cover PP zero
+and star pixels. The save-status renderer remains unchanged and continues using
+internal-flash glyphs while the external save chip is busy.
+
+Verification:
+- `make test`: PASS 154768 host + 190 world assertions.
+- `make ram BUILD_DIR=build/mgc-6`: PASS, flash27856/29696, static RAM1852/2160.
+- `make fxtest-spike BUILD_DIR=build/mgc-6-device FXTEST_SPIKE_INO=tst/fxdatatest/test_blit.ino ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens`:
+  PP blit assertions pass; suite reports 30 passed / 4 failed only on known
+  creature-outline CRC[15..18] drift (21188/13354/45998/19120 versus
+  57228/12025/1293/11519), already owned by `CreatureGathererFX-b2a.5.1`.
+  `test_stack` passes 4/0 with 328 B painted / 259 B effective headroom.
+- `make fxtest-headless BUILD_DIR=build/mgc-6-paths FXTEST_INOS='tst/fxdatatest/test_save.ino tst/fxdatatest/test_menurun.ino' ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens`:
+  PASS save281/0 and menu9/0; menu average 14 us.
+- The initial attempt to include all of `draw.h` in host tests failed on AVR-only
+  SPI assembly dependencies; PP functions were isolated in `PpGlyph.hpp`. The
+  first pixel oracle used a non-production y page and exposed its fixed-coordinate
+  contract; fixtures now exercise actual menu y positions and pass. No unresolved
+  test failures beyond the recorded sprite CRC drift.
+
+No generated files, screenshots, commits, or pushes. Worker time approximately
+15 minutes; focused verification approximately 2 minutes; integrated gate remains
+assigned to mgc.8.
+
+## mgc.7 selective inlining measurements — retain clearStep only (2026-10-04)
+
+Fresh settled baseline `make ram BUILD_DIR=build/mgc-7-baseline`: 27856 B flash,
+1852 B static RAM. Demangled symbols and AVR disassembly show an 8686 B `main`;
+`WorldMotion::clearStep` was inlined at three call sites. Its contract is a
+`WorldMotion&` plus a 16-bit origin, void return. Outlining just this helper with
+`noinline` measured 27844 B (-12 B), unchanged static RAM. The final candidate
+passes the world tile device suite and stack paint.
+
+Rejected independent measurements:
+- Also outlining `direction(const WorldMotion&)` (one-byte enum return) grew the
+  image to 27938 B (+94 B over the clearStep-only candidate); reverted.
+- A noinline wrapper for the repeated PP glyph sites grew the image to 27852 B
+  (+8 B over clearStep-only); reverted.
+
+Verification:
+- `make test`: PASS 154768 host + 190 world assertions.
+- `make testvm`: PASS 42 assertions.
+- `make ram BUILD_DIR=build/mgc-7`: PASS, flash27844/29696, static RAM1852/2160,
+  flash free1852 B.
+- `make fxtest-spike BUILD_DIR=build/mgc-7-device FXTEST_SPIKE_INO=tst/fxdatatest/test_tiles.ino ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens`:
+  PASS tiles30/0 and stack4/0; stack painted328 B / effective259 B.
+
+No gameplay logic, device flags, generated files, screenshots, commits, or pushes
+changed. Worker time approximately 8 minutes; focused verification approximately
+2 minutes; integrated gate remains assigned to mgc.8.
+
+## ppi simulator provenance — regenerate canonical manifest (2026-10-04)
+
+The checked-in generated manifest was in the raw cgfx-tools format, with a
+`tool_version` field and artifact paths that did not match the simulator
+reader's canonical provenance contract. Ran generation through the supported
+entry point; `pack` rewrote the manifest to the normalized `generator` and
+`outputs` form, including the creature, move, and battle preset fixture hashes.
+No reader change was needed: the simulator consumes that canonical manifest.
+
+Verification:
+- `make gen`: PASS; packed image and normalized provenance manifest generated.
+- `make sim-test`: PASS 154940 assertions, 0 failed; simulator provenance
+  reader and report tests passed, including nonempty generator version and all
+  three fixture hashes. Command completed in about 2 seconds.
+
+Generation plus focused simulator verification took about 4 seconds total.
+
+## ogh.5 production switching — resume verification (2026-10-05)
+
+Resumed after ppi closed. The existing production switch decision remains in
+`BattleSession`'s opponent AI path. Added focused device assertions that a
+favorable trainer threat switches, a neutral threat keeps the attack, the
+switch lock prevents an immediate repeat, and each decision records zero FX
+reads. Updated the device trainer-victory fixture from 48 to 96 turns: with
+switching, its deterministic three-opponent scenario wins at turn 50. Updated
+the stale AVR BattleState size expectation from 114 to the current 124-byte
+contract.
+
+Measurements and focused verification:
+- `make ram BUILD_DIR=build/ogh5-spike`: PASS, flash27844/29696 (1852 B free),
+  static RAM1852/2160 (308 B free), physical SRAM708 B free.
+- `make fxtest-spike BUILD_DIR=build/ogh5-resume-device FXTEST_SPIKE_INO=tst/fxdatatest/test_battleutility.ino ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens`:
+  PASS utility49/0 and stack4/0; stack painted328 B / effective259 B after ISR.
+- `make fxtest-headless BUILD_DIR=build/ogh5-trainer-debug FXTEST_INOS=tst/fxdatatest/test_battletrainer.ino ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens`:
+  PASS trainer48/0; victory at turn50, no timeout.
+- `make fxtest-spike BUILD_DIR=build/ogh5-resume-trainer-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_battletrainer.ino ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens`:
+  PASS trainer48/0 and stack4/0; stack painted328 B / effective259 B after ISR.
+- `make fxtest-headless BUILD_DIR=build/ogh5-mode-state FXTEST_INOS=tst/fxdatatest/test_mode_state.ino ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens`:
+  PASS215/0.
+- `make test`: PASS154768 host +190 world assertions.
+- `make sim-test`: PASS154940 assertions, 0 failed.
+- `make verify-generated`: PASS.
+
+Settled integrated command:
+`make final-gate BUILD_DIR=build/ogh5-resume-final-settled ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens`.
+Generation, host, VM, simulator, generated-library, budget, shipping build,
+trainer device (48/0), BattleState device (215/0), and stack stages pass. The
+gate remains BLOCKED only by the four existing `test_blit` CRC mismatches owned
+by `CreatureGathererFX-b2a.5.1`: indices15..18 got
+21188/13354/45998/19120, expected57228/12025/1293/11519. Earlier gate attempts
+also exposed the now-fixed stale BattleState assertion and the 48-turn trainer
+fixture cap; reruns confirmed both fixes. Final gate log:
+`build/ogh5-resume-final-settled/final-gate/check.log`.
+
+Worker time approximately 10 minutes; focused device checks approximately
+1 minute; three integrated gate attempts approximately 5 minutes total. No
+commit or push.
+
+## b2a.5.1 approved creature-outline CRCs (2026-10-05)
+
+Owner approved the rendered creature outlines at draw cases 15-18 as intended.
+Updated only those four `drawCrcs` expectations in
+`tst/fxdatatest/blit_test.hpp` to match the approved current rendering:
+21188/13354/45998/19120. No sprite source or generated asset changed. Removed
+the stale `human` label from b2a.5.1; it was the only issue with that label.
+
+Verification:
+- `make fxtest-headless BUILD_DIR=build/b2a51-approved FXTEST_INOS=tst/fxdatatest/test_blit.ino ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens`:
+  PASS34/0.
+- `make verify-generated`: PASS.
+- `make test-pack-parity`: PASS; layout equivalence and perturbation diagnostic pass.
+- `make final-gate BUILD_DIR=build/b2a51-approved-final ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens`:
+  PASS. Host154768/0, world190/0, VM42/0; all 25 FX suites pass, including
+  blit34/0, battle trainer48/0, mode state215/0, and test_stack4/0. Shipping
+  flash27844/29696, static RAM1852/2160, physical RAM free708 B; painted stack
+  headroom328 B (259 B after the 69 B ISR reserve). Logs are in
+  `build/b2a51-approved-final/final-gate/{check,ram}.log`.
+
+Focused validation took about 12 seconds; final gate about 80 seconds.
+
+## ogh.15 switch sprite cleanup and ogh.16 damage text color (2026-10-05)
+
+The battle scene now clears the active creature's 32x32 region before drawing
+its PLUSMASK sprite, preventing transparent pixels from retaining the outgoing
+creature. The presentation test redraws both player and opponent slots over a
+reused framebuffer and compares against a clean draw; entry/faint checks remain.
+The impact damage label now uses the same black-on-white treatment as its
+numeric damage value. A standalone device suite checks the rendered label and
+digits against their black treatments.
+
+Worker verification:
+- `make fxtest-headless BUILD_DIR=build/ogh15-worker FXTEST_INOS=tst/fxdatatest/test_battlepresentation.ino ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens`:
+  PASS102/0.
+- `make fxtest-headless FXTEST_INOS=tst/fxdatatest/test_battle_damage_color.ino ARDENS=/Users/connorfranc/Applications/CreatureGathererTools/bin/Ardens`:
+  PASS3/0. `make fxtest-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_battle_damage_color.ino`:
+  PASS damage3/0 and stack4/0; painted headroom328 B.
+- Host tests: PASS154768 host +190 world assertions; generated verification PASS.
+
+Integrated verification first ran:
+`make final-gate BUILD_DIR=build/ogh15-16-final ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens`.
+All test assertions passed, but the 3000 ms serial capture missed the completion
+marker for `test_battletrainer`. Reran with a longer capture window:
+`make final-gate BUILD_DIR=build/ogh15-16-final-long FXTEST_MS=10000 ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens`:
+PASS. Host154768/0, world190/0, VM42/0; all FX suites pass, including
+`test_battlepresentation`102/0, `test_battle_damage_color`3/0,
+`test_battletrainer`48/0, `test_stack`4/0, and `test_blit`34/0. Shipping flash
+27906/29696 (1790 B free), static RAM1852/2160 (308 B free), physical RAM free
+708 B, stack painted328 B / effective259 B after ISR. Logs:
+`build/ogh15-16-final-long/final-gate/{check,ram}.log`.
+
+Worker time approximately 5 minutes each; integrated gate approximately
+2 minutes including the serial-timeout rerun. No commits or pushes.
