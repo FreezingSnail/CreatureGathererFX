@@ -14,6 +14,9 @@ inline void operator delete(void *, void *) noexcept {}
 #include "battle/BattlePresenter.hpp"
 #include "battle/BattleSession.hpp"
 #include "world/TilePropertyWindow.hpp"
+#if defined(CGFX_ARENA_DEMO) || defined(TEST) || defined(FX_READ_COUNTER)
+#include "arena/ArenaTypes.hpp"
+#endif
 
 // Script execution pauses tile movement, so the two-byte movement cursor can
 // share the script slot. Coordinates stay in GameState::playerLocation; the
@@ -51,6 +54,18 @@ static_assert(sizeof(BattleMode) <= 191, "battle playback must fit the world ove
 #endif
 } // namespace battle
 
+#if defined(CGFX_ARENA_DEMO) || defined(TEST) || defined(FX_READ_COUNTER)
+namespace arena {
+struct ArenaMode {
+    ArenaUiState ui;
+};
+}
+#ifdef __AVR__
+static_assert(sizeof(arena::ArenaMode) == 24, "arena UI overlay must remain 24 bytes");
+static_assert(alignof(arena::ArenaMode) == 1, "arena UI overlay must remain byte aligned");
+#endif
+#endif
+
 static_assert(sizeof(WorldMotion) == 4, "world motion cursor must fit the script-slot overlay");
 static_assert(alignof(WorldMotion) == 1, "world motion cursor must stay byte aligned");
 static_assert(sizeof(WorldTransient) == 191, "world transient payload must remain 191 bytes");
@@ -61,12 +76,18 @@ static_assert(alignof(WorldTransient) == 1, "world transient payload must stay b
 union ModeState {
     battle::BattleMode battle;
     WorldTransient world;
+#if defined(CGFX_ARENA_DEMO) || defined(TEST) || defined(FX_READ_COUNTER)
+    arena::ArenaMode arena;
+#endif
 
     ModeState() : world{} {}
     ~ModeState() {}
 
     void enterBattle();
     void exitBattle();
+#if defined(CGFX_ARENA_DEMO) || defined(TEST) || defined(FX_READ_COUNTER)
+    void enterArena();
+#endif
 };
 
 static_assert(__has_trivial_destructor(battle::BattleMode),
@@ -90,3 +111,6 @@ inline __attribute__((always_inline)) battle::BattlePresenter &battlePresenter()
 inline __attribute__((always_inline)) WorldTransient &worldState() { return modeState.world; }
 inline __attribute__((always_inline)) void enterBattle() { modeState.enterBattle(); }
 inline __attribute__((always_inline)) void exitBattle() { modeState.exitBattle(); }
+#if defined(CGFX_ARENA_DEMO) || defined(TEST) || defined(FX_READ_COUNTER)
+inline __attribute__((always_inline)) void enterArena() { modeState.enterArena(); }
+#endif

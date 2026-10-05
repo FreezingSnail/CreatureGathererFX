@@ -4,6 +4,7 @@
 
 #include "src/engine/battle/BattleSession.hpp"
 #include "src/engine/battle/BattleFlow.hpp"
+#include "src/engine/arena/ArenaDemo.hpp"
 #include "src/engine/game/Gamestate.hpp"
 #include "src/engine/menu/MenuNav.hpp"
 #include "src/engine/menu/MenuV2.hpp"
@@ -20,6 +21,10 @@
 #if defined(CGFX_TRAINER_DEMO) || defined(CGFX_WILD_DEMO)
 #include "src/engine/battle/BattlePresets.hpp"
 #include "tst/fxdatatest/generated/battle_preset_data.hpp"
+#endif
+
+#if defined(CGFX_ARENA_DEMO) && (defined(CGFX_TRAINER_DEMO) || defined(CGFX_WILD_DEMO))
+#error "CGFX_ARENA_DEMO cannot be combined with another demo bootstrap"
 #endif
 #ifdef CGFX_BATTLE_PRESENTATION_SPIKE
 #include "tst/fxdatatest/battlepresentation_fixture.hpp"
@@ -87,7 +92,7 @@ void setup() {
     //  plants.tick();
 
     FX::begin(FX_DATA_PAGE, FX_SAVE_PAGE);
-#if !defined(CGFX_TRAINER_DEMO) && !defined(CGFX_WILD_DEMO)
+#if !defined(CGFX_TRAINER_DEMO) && !defined(CGFX_WILD_DEMO) && !defined(CGFX_ARENA_DEMO)
     journalInit();
 #endif
     FX::setCursorRange(0, 32767);
@@ -115,6 +120,9 @@ void setup() {
     enterBattle();
     battleSession().beginTrainer(preset.trainerId);
     gameState.state = GameState_t::BATTLE;
+    return;
+#elif defined(CGFX_ARENA_DEMO)
+    arena::boot();
     return;
 #else
 #ifdef CGFX_WILD_DEMO
@@ -162,8 +170,17 @@ uint8_t battleEdgeButtons() {
 void run() {
     switch (gameState.state) {
     case GameState_t::BATTLE:
+#ifdef CGFX_ARENA_DEMO
+        if (BattleFlow::update(battleEdgeButtons(), arena::finishBattle)) return;
+#else
         if (BattleFlow::update(battleEdgeButtons())) return;
+#endif
         break;
+#if defined(CGFX_ARENA_DEMO) || defined(FX_READ_COUNTER) || defined(TEST)
+    case GameState_t::ARENA:
+        arena::update(battleEdgeButtons());
+        return;
+#endif
     case GameState_t::WORLD:
         WorldEngine::runMap(worldState());
         break;
@@ -183,6 +200,11 @@ uint8_t render() {
     // drawScriptText(1);
 
     switch (gameState.state) {
+#if defined(CGFX_ARENA_DEMO) || defined(FX_READ_COUNTER) || defined(TEST)
+    case GameState_t::ARENA:
+        arena::draw();
+        return 0;
+#endif
     case GameState_t::BATTLE: {
         battle::BattleView view = battleSession().view();
         battlePresenter().overlay(view);

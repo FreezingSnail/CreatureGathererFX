@@ -27,3 +27,9 @@ void ModeState::exitBattle() {
     WorldEngine::loadMap(world, 0, 0);
     WorldEngine::syncFromLocation(world);
 }
+
+#if defined(CGFX_ARENA_DEMO) || defined(TEST) || defined(FX_READ_COUNTER)
+void ModeState::enterArena() {
+    ::new (static_cast<void *>(&arena)) arena::ArenaMode{};
+}
+#endif
