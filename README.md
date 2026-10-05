@@ -70,6 +70,31 @@ The demo bypasses save loading and does not auto-save. The copied cart and save 
 separate from any personal Ardens save. Press A to select and accelerate feedback, B to back out of
 optional submenus, and the directions to navigate. Trainer battles refuse Gather and Escape.
 
+## Overworld wild-battle demo (opt-in)
+
+Build with `CGFX_WILD_DEMO` instead of `CGFX_TRAINER_DEMO`. It applies the named `opening`
+player preset, bypasses loading and writing a user save, and starts at the normal overworld entry
+location. Move once with the directions to start a wild battle through the regular world-step,
+encounter selection, `BattleSession`, and playback controller paths. The opt-in build substitutes a
+one-time first-step encounter trigger because the current generated map has no encounter tiles; the
+production map and normal encounter checks are unchanged. Reset to restart the demo.
+
+```sh
+make build BUILD_DIR=build/wild-demo \
+  AVR_SHIPPING_CPP_FLAGS='-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X -DCGFX_SHIPPING_NO_USB -DCGFX_WILD_DEMO'
+mkdir -p build/wild-demo/isolated
+cp -f dist/fxdata.bin build/wild-demo/isolated/fxdata.bin
+cp -f dist/fxdata-save.bin build/wild-demo/isolated/fxdata-save.bin
+/path/to/Ardens fxport=d1 display=ssd1306 \
+  file=build/wild-demo/CreatureGathererFX.ino.hex \
+  file=build/wild-demo/isolated/fxdata.bin \
+  save=build/wild-demo/isolated/fxdata-save.bin
+```
+
+Use the normal controls to attack, switch, wait through faint feedback, select Gather (refused in
+this ordinary wild encounter), and escape. Battle HP returns to the player party when the battle
+exits. The isolated save file prevents this run from using or updating a personal Ardens save.
+
 ## Tooling
 
 CreatureGathererFX uses the native Rust `cgfx-tools` binary from

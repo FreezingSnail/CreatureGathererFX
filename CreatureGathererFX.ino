@@ -17,7 +17,7 @@
 #include "src/engine/draw.h"
 #include "src/vm/ScriptVm.hpp"
 #include "src/lib/FxReadCounter.hpp"
-#ifdef CGFX_TRAINER_DEMO
+#if defined(CGFX_TRAINER_DEMO) || defined(CGFX_WILD_DEMO)
 #include "src/engine/battle/BattlePresets.hpp"
 #include "tst/fxdatatest/generated/battle_preset_data.hpp"
 #endif
@@ -40,7 +40,6 @@ Player player = Player();
 Animator animator = Animator();
 PlantGameState plants;
 
-MenuStack menuStack;
 DialogMenu dialogMenu;
 ScriptVm vm;
 uint8_t *buffer;
@@ -88,7 +87,7 @@ void setup() {
     //  plants.tick();
 
     FX::begin(FX_DATA_PAGE, FX_SAVE_PAGE);
-#ifndef CGFX_TRAINER_DEMO
+#if !defined(CGFX_TRAINER_DEMO) && !defined(CGFX_WILD_DEMO)
     journalInit();
 #endif
     FX::setCursorRange(0, 32767);
@@ -118,7 +117,16 @@ void setup() {
     gameState.state = GameState_t::BATTLE;
     return;
 #else
+#ifdef CGFX_WILD_DEMO
+    // This preset starts in the normal overworld and keeps the demo independent
+    // of a user's save. Its first step is the opt-in encounter trigger.
+    battle::applyPlayerPreset(player, BattlePresets::opening);
+    gameState.playerLocation = static_cast<uint16_t>(3) |
+                               (static_cast<uint16_t>(2) << 8);
+    const bool restored = false;
+#else
     const bool restored = SaveController::load();
+#endif
     if (!restored) {
         gameState.playerLocation = static_cast<uint16_t>(3) |
                                    (static_cast<uint16_t>(2) << 8);
@@ -127,9 +135,11 @@ void setup() {
     exitBattle();
 
     gameState.state = GameState_t::WORLD;
+#ifndef CGFX_WILD_DEMO
     if (!restored) {
         player.basic();
     }
+#endif
 #endif
 
     // buffer = arduboy.sBuffer;

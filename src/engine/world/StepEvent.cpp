@@ -12,6 +12,10 @@ extern Player player;
 extern PlantGameState plants;
 
 namespace {
+#ifdef CGFX_WILD_DEMO
+bool wildDemoEncounterPending = true;
+#endif
+
 void decayLureOnStep(uint16_t tile) {
     (void)tile;
 }
@@ -24,6 +28,16 @@ void rollEncounterOnStep(uint16_t tile) {
     if (gameState.state != GameState_t::WORLD) return;
 
     WorldTransient &world = worldState();
+#ifdef CGFX_WILD_DEMO
+    // Production map data currently has no encounter tiles. The opt-in demo
+    // substitutes one first-step trigger while preserving normal world
+    // movement, encounter selection, and BattleSession setup.
+    if (wildDemoEncounterPending) {
+        wildDemoEncounterPending = false;
+    } else {
+        return;
+    }
+#else
     TilePropertyWindow properties(world.propertyWindow);
     uint8_t tileProperties = 0;
     bool occupied = false;
@@ -33,6 +47,7 @@ void rollEncounterOnStep(uint16_t tile) {
         (tileProperties & TileProps::PROP_ENCOUNTER) == 0) {
         return;
     }
+#endif
 
     Encounter::Decision decision = {};
     if (!Encounter::select(world.zoneTableCache, player.party, nullptr,
