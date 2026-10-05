@@ -4302,3 +4302,42 @@ those were corrected before the final focused run. Formatting was run at crate
 scope and touched other already-modified Rust files; those unrelated edits remain
 unstaged. Worker elapsed time was not recorded; orchestrator final-gate and
 integrated timing remain assigned to later beads.
+
+## CreatureGathererFX-2cy.3 — arena catalog emitter (2026-10-05)
+
+```text
+cargo test -p cgfx-core arena_demo
+# PASS: 7/7 parser unit tests; emitter integration target compiled (filtered).
+cargo test -p cgfx-core --test arena_demo
+# PASS: 2/2 emitter tests: deterministic output/fields/IDs/fixture data and
+# unmapped-glyph rejection.
+cargo test -p cgfx-core --test manifest
+# PASS: 2/2 manifest tests, including arena TOML/font/output provenance and
+# changed output/font hashes after source edits.
+cargo test -p cgfx-core --test fixtures
+# PASS: 1/1 existing fixture test.
+cargo build -p cgfx-core --bin cgfx-tools
+# Initial sandbox attempt blocked writing target/.cargo-build-lock; approved
+# retry passed. Executable: /Users/connorfranc/code/CreatureGathererTools/target/debug/cgfx-tools
+./target/debug/cgfx-tools --version
+# PASS: cgfx-tools 0.2.0.
+cargo test -p cgfx-core config::tests::explicit_blocks_path_is_resolved_from_manifest_dir
+cargo test -p cgfx-core config::tests::load_valid_resolves_relative_paths_and_fixture_dir
+# PASS: configured arena_demo path resolves relative to the manifest; omission
+# remains compatible and resolves to None.
+git diff --check -- crates/core/src/arena_demo.rs crates/core/src/config.rs crates/core/src/lib.rs crates/core/src/builder.rs crates/core/src/store.rs crates/core/tests/go_parity.rs crates/core/tests/map4chunks.rs crates/core/tests/manifest.rs
+# PASS.
+```
+
+Emitter writes `arena_demo.txt` with packed roster/species/trainer data, native
+font-rendered headerless label sheets and geometry-derived width tables, plus
+`arena_demo_ids.hpp`; `arena_demo_data.hpp` is emitted only when fixture output
+is requested. Optional `arena_demo` config resolves relative to the manifest.
+Generation and manifest plumbing record both generated files against the TOML
+source and include the font as an external provenance input. Initial compile
+found an iterator type mismatch and one missed Config initializer; both were
+fixed before final commands. Manifest integration proves relative config
+resolution and that TOML/font edits change their recorded provenance and
+generated descriptor digests. Existing `writer/bin.rs` unused-import warning
+remains unrelated. Worker elapsed time approximately 30 minutes (includes
+interrupted patch calls); no packed FX or AVR resource delta in this tool bead.
