@@ -38,6 +38,7 @@
 #include "battle_playback_test.hpp"
 #include "battle_flow_test.hpp"
 #include "arena_lifecycle_test.hpp"
+#include "arena_catalog_test.hpp"
 #include "battle_presets_test.hpp"
 #include "battle_item_test.hpp"
 #include "lure_prototype_test.hpp"
@@ -202,6 +203,7 @@ int main() {
     std::cout << "BattlePlaybackSuite finished" << std::endl;
     BattleFlowSuite(tests);
     ArenaLifecycleSuite(tests);
+    ArenaCatalogSuite(tests);
     BattlePresetsSuite(tests);
     BattleItemSuite(tests);
     BattleUtilitySuite(tests);
