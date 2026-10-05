@@ -9,6 +9,8 @@
 #include "src/lib/ReadData.hpp"
 #include "src/engine/world/Chunk.hpp"
 #include "src/vm/opcodes.hpp"
+#include "src/lib/Type.hpp"
+#include "type_chart_fixture.hpp"
 
 /*
  * Read-path contracts for the generated tables, asserted on hardware because
@@ -123,6 +125,33 @@ inline void test_indexed_bytes(FxTest &test) {
     for (uint8_t index = 0; index < sizeof(raw); ++index) {
         test.expectEqIdx(FX::readIndexedUInt8(type_table, index), raw[index],
                          F("type_table byte"), index);
+    }
+}
+
+inline void test_type_chart(FxTest &test) {
+    for (uint8_t attack = 0; attack < 8; ++attack) {
+        for (uint8_t defend = 0; defend < 8; ++defend) {
+            const Type attackType = static_cast<Type>(attack);
+            const Type defendType = static_cast<Type>(defend);
+            const uint8_t expected = type_chart_fixture::cell(attack, defend);
+            test.expectEqIdx(static_cast<uint8_t>(getModifier(attackType, defendType)),
+                             expected, F("single-type chart cell"),
+                             static_cast<uint8_t>(attack * 8 + defend));
+            test.expectEqIdx(
+                static_cast<uint8_t>(getModifier(attackType,
+                                                 DualType(defendType, Type::NONE))),
+                expected, F("single type with NONE"),
+                static_cast<uint8_t>(attack * 8 + defend));
+            for (uint8_t second = 0; second < 8; ++second) {
+                const uint8_t combined = type_chart_fixture::combined(
+                    expected, type_chart_fixture::cell(attack, second));
+                test.expectEqIdx(
+                    static_cast<uint8_t>(getModifier(
+                        attackType, DualType(defendType, static_cast<Type>(second)))),
+                    combined, F("dual-type chart composition including immunity"),
+                    static_cast<uint8_t>((attack * 64 + defend * 8 + second) & 0xff));
+            }
+        }
     }
 }
 
@@ -255,6 +284,7 @@ inline void test_tables(FxTest &test) {
     test_address_table(test);
     test_high_address_table(test);
     test_indexed_bytes(test);
+    test_type_chart(test);
     test_indexed_u32_stride(test);
     test_text_block(test);
     test_chunk_layout(test);
