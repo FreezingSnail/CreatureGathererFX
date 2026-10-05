@@ -3,6 +3,9 @@
 #include <string.h>
 
 #include "fxtest.hpp"
+#include "generated/map_data.hpp"
+#include "generated/script_data.hpp"
+#include "src/engine/world/Chunk.hpp"
 #include "src/GameState.hpp"
 #include "src/engine/world/TilePropertyWindow.hpp"
 #include "src/engine/world/World.hpp"
@@ -10,6 +13,7 @@
 #include "src/fxdata.h"
 #include "src/lib/ReadData.hpp"
 #include "src/lib/FxRead.hpp"
+#include "src/lib/FxReadCounter.hpp"
 
 extern GameState gameState;
 
@@ -22,11 +26,126 @@ uint16_t rawTileWordAt(uint8_t x, uint8_t y) {
     return ReadFXu16(address);
 }
 
+uint16_t rawTileWordAtIndex(uint16_t index) {
+    const uint24_t address = raw_map_data + static_cast<uint24_t>(index) * 2u;
+    return ReadFXu16(address);
+}
+
+void expectAddressBytes(FxTest &test, uint24_t actual, uint24_t expected,
+                        const __FlashStringHelper *label) {
+    uint8_t actualBytes[3];
+    uint8_t expectedBytes[3];
+    memcpy(actualBytes, &actual, sizeof(actualBytes));
+    memcpy(expectedBytes, &expected, sizeof(expectedBytes));
+    for (uint8_t byte = 0; byte < 3; ++byte) {
+        test.expectEq(actualBytes[byte], expectedBytes[byte], label);
+    }
+}
+
 } // namespace
 
-// The configured real map reaches GID 298, so the device image can validate
-// its authored property bits and collision path only with those real entries.
-// Higher GIDs such as 527 are covered by the generator and host tests.
+inline void test_map_words(FxTest &test) {
+    bool sawHighId = false;
+    bool sawWalkable = false;
+    bool sawWater = false;
+    bool sawEncounter = false;
+    for (uint8_t index = 0; index < mapWordFixtureCount; ++index) {
+        const uint16_t cell = pgm_read_word(&mapWordFixtures[index].index);
+        const uint16_t expected = pgm_read_word(&mapWordFixtures[index].word);
+        const uint16_t actual = rawTileWordAtIndex(cell);
+        test.expectEq(actual, expected, F("model raw map word"));
+        test.expectEq(TileProps::tileId(actual), expected & TileProps::TILE_ID_MASK,
+                      F("decoded map tile id"));
+        test.expectEq(TileProps::tileProps(actual),
+                      (expected & TileProps::TILE_PROP_MASK) >> TileProps::TILE_PROP_SHIFT,
+                      F("decoded map properties"));
+        sawHighId = sawHighId || TileProps::tileId(actual) > 511;
+        sawWalkable = sawWalkable || TileProps::hasTileProp(actual, TileProps::PROP_WALKABLE);
+        sawWater = sawWater || TileProps::hasTileProp(actual, TileProps::PROP_WATER);
+        sawEncounter = sawEncounter || TileProps::hasTileProp(actual, TileProps::PROP_ENCOUNTER);
+    }
+    test.expectEq(sawHighId, true, F("fixture includes tile id above 511"));
+    test.expectEq(sawWalkable, true, F("fixture includes walkable property"));
+    test.expectEq(sawWater, true, F("fixture includes water property"));
+    test.expectEq(sawEncounter, true, F("fixture includes encounter property"));
+}
+
+inline void test_chunk_slots(FxTest &test) {
+    constexpr uint16_t chunks[] = {0, 3, 512, 2047};
+    constexpr uint32_t mapOffsets[] = {0, 192, 32768, 131008};
+    for (uint8_t index = 0; index < 4; ++index) {
+        const uint16_t chunk = chunks[index];
+        const uint24_t expectedMap = map_data + static_cast<uint24_t>(mapOffsets[index]);
+        expectAddressBytes(test, Chunk::mapChunkAddr(map_data, chunk), expectedMap,
+                           F("map chunk address bytes"));
+    }
+
+    bool sawChunk0 = false;
+    bool sawChunk32 = false;
+    bool sawChunk33 = false;
+    for (uint16_t index = 0; index < scriptSlotFixtureCount; ++index) {
+        const uint16_t chunk = pgm_read_word(&scriptSlotFixtures[index].chunk);
+        sawChunk0 = sawChunk0 || chunk == 0;
+        sawChunk32 = sawChunk32 || chunk == 32;
+        sawChunk33 = sawChunk33 || chunk == 33;
+        const uint24_t address = Chunk::scriptSlotAddr(scripts, chunk);
+        uint8_t prefix[4];
+        FxRead::bytes(address, prefix, sizeof(prefix));
+        for (uint8_t byte = 0; byte < sizeof(prefix); ++byte) {
+            test.expectEq(prefix[byte], pgm_read_byte(&scriptSlotFixtures[index].prefix[byte]),
+                          F("real script prefix"));
+        }
+    }
+    test.expectEq(sawChunk0, true, F("real script blob chunk 0"));
+    test.expectEq(sawChunk32, true, F("real script blob chunk 32"));
+    test.expectEq(sawChunk33, true, F("real script blob chunk 33"));
+
+    for (uint8_t index = 0; index < scriptAddressFixtureCount; ++index) {
+        const uint16_t chunk = pgm_read_word(&scriptAddressFixtures[index].chunk);
+        const uint8_t low = pgm_read_byte(&scriptAddressFixtures[index].offset[0]);
+        const uint8_t middle = pgm_read_byte(&scriptAddressFixtures[index].offset[1]);
+        const uint8_t high = pgm_read_byte(&scriptAddressFixtures[index].offset[2]);
+        const uint32_t offset = static_cast<uint32_t>(low) |
+                                (static_cast<uint32_t>(middle) << 8) |
+                                (static_cast<uint32_t>(high) << 16);
+        const uint24_t expected = scripts + static_cast<uint24_t>(offset);
+        expectAddressBytes(test, Chunk::scriptSlotAddr(scripts, chunk), expected,
+                           F("synthetic script slot address bytes"));
+        test.expectEq(offset, static_cast<uint32_t>(chunk) * 128u,
+                      F("script slot offset math"));
+        test.expectEq(offset + 128u <= 262144u, true,
+                      F("script slot remains in script region"));
+    }
+}
+
+inline void test_read_budget(FxTest &test) {
+    gameState.state = GameState_t::WORLD;
+    gameState.playerLocation = static_cast<uint16_t>((2u << 8) | 3u);
+    WorldTransient &world = worldState();
+    WorldEngine::init(world);
+    world.motion.directionAndFlags = static_cast<uint8_t>(0x04u |
+        static_cast<uint8_t>(Direction::RIGHT));
+    world.motion.step = 0;
+
+    FxReadCounter::resetFrame();
+    for (uint8_t frame = 0; frame < 16; ++frame) WorldEngine::moveChar(world);
+    test.expectEq(gameState.playerLocation,
+                  static_cast<uint16_t>((2u << 8) | 4u),
+                  F("completed step commits destination tile"));
+    test.expectEq(FxReadCounter::exact(0), true,
+                  F("completed step dispatch uses zero FX reads"));
+    test.expectEq(FxReadCounter::markUpdate(), true,
+                  F("step update passes exact FX budget"));
+    test.expectEq(FxReadCounter::updateExactZero(), true,
+                  F("step update has no additional FX reads"));
+    test.expectEq(FxReadCounter::renderExact(0), true,
+                  F("step frame render has no FX reads"));
+    test.expectEq(FxReadCounter::framePassed(), true,
+                  F("step frame satisfies FX read contract"));
+}
+
+// The map includes high-ID property fixtures on the sealed south border; the
+// ordinary collision samples below remain on the reachable starting path.
 inline void test_tiles(FxTest &test) {
     // Tile frame count follows the generated packed fields, not a record index.
     const uint16_t lastFrame = (maskedFont - tiles) / 32 - 1;
@@ -155,4 +274,8 @@ inline void test_tiles(FxTest &test) {
     TilePropertyWindow::invalidate(storage);
     test.expectEq(WorldCollision::canEnter(12, 7, 256, 256, storage), false,
                   F("invalidated cache collision"));
+
+    test_map_words(test);
+    test_chunk_slots(test);
+    test_read_budget(test);
 }
