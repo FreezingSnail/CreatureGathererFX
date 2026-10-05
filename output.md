@@ -4084,3 +4084,66 @@ The `.16` worker's integrated figures were 27906 B / 1852 B; this post-cleanup
 build measures 27896 B / 1841 B. Parent rerun of the integrated final gate is
 still required before bead closure. Worker implementation and focused-command
 time: approximately **6 min total**; commands above took about **25 s**.
+
+## CreatureGathererFX-jp8.3.16 — overworld wild demo checkpoint (2026-10-05)
+
+Added an opt-in `CGFX_WILD_DEMO` bootstrap. It starts with the named `opening`
+player preset in the normal overworld, skips save loading/writing, and triggers
+one battle on the first completed world step. The development-only hook routes
+through normal encounter selection and `BattleSession::beginWild`; standard
+builds retain the encounter-tile check. `maps/world_map.json` currently has no
+marked encounter tiles (`jq '[.encounters[][] | select(. >= 0)] | length'
+maps/world_map.json` prints `0`), so README documents the simulated trigger.
+Added real FX BattleFlow coverage for wild Gather refusal, Escape feedback,
+world return, and persistent party HP. Existing trainer scenarios cover normal
+playback, switching, faints, and forced replacement.
+
+Verification:
+
+```text
+make test
+# PASS; host 154751/0, world 190/0
+make testvm
+# PASS; 42/0
+make verify-generated
+# PASS
+make build BUILD_DIR=build/jp8.3.16
+# PASS; shipping 27896 B flash / 1841 B static RAM
+make ram BUILD_DIR=build/jp8.3.16-ram
+# PASS; 27896/29696 B flash (1800 B free), 1841/2160 B static RAM (319 B free)
+make build BUILD_DIR=build/jp8.3.16-wild-demo AVR_SHIPPING_CPP_FLAGS='-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X -DCGFX_SHIPPING_NO_USB -DCGFX_WILD_DEMO'
+# PASS; wild demo 27074 B flash / 1841 B static RAM
+make fxtest-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_battlesession.ino ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens BUILD_DIR=build/jp8.3.16-device FXTEST_MS=10000
+# PASS; battlesession 57/0, painted/effective stack 386/317 B;
+# test_stack 4/0, measured headroom 335 B
+git diff --check
+# PASS
+```
+
+The first device compile caught `Outcome::Escape` (the enum is `Escaped`); fixed
+and reran the focused spike successfully. No packed data/generated artifacts
+changed, so pack parity was not needed. Manual Ardens controls were unavailable
+to this worker; the owner later waived manual visual verification. The shared
+automated final gate is recorded below. No commit or push. Worker time
+approximately 13 minutes.
+
+Integrated owner verification (2026-10-05):
+
+```text
+make final-gate BUILD_DIR=build/jp8.3.12-16-final ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# First attempt: host/VM/generated checks and 24 FX suites passed; test_battletrainer
+# completed its deterministic 50-turn scenario but default serial capture ended
+# before its P/F marker. No assertion failure; reran with the established 10 s window.
+make final-gate BUILD_DIR=build/jp8.3.12-16-final-long FXTEST_MS=10000 ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS: host 154751/0, world 190/0, VM 42/0, all 25 FX suites PASS.
+# BattleSession 57/0; trainer 48/0; presentation 102/0; test_stack 4/0.
+# test_stack headroom 335 B; mode transition headroom 448 B.
+# Shipping flash 27896/29696 B (1800 B free), static RAM 1841/2160 B
+# (319 B project headroom; 719 B physical headroom).
+```
+
+Logs: `build/jp8.3.12-16-final-long/final-gate/{check,ram}.log`. The initial
+capture-window failure and its cause are retained above; the longer-window gate
+is the accepted result. Per owner instruction, manual visual verification was
+waived; automated host, VM, and real-FX device acceptance passed. No packed bytes
+changed. Both beads were closed after this passing gate; no commit or push.

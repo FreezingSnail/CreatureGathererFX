@@ -176,6 +176,9 @@ inline void selectFirstLiveReplacement(FxTest &test) {
     BattleFlow::update(0);
     test.expectEq(battleSession().awaitingReplacement(), true,
                   F("faint waits for player replacement"));
+    test.expectEq(menu.menuPointer >= 0 &&
+                  menu.stack[menu.menuPointer] == BATTLE_CREATURE_SELECT,
+                  true, F("forced replacement opens player party menu"));
     BattleFlow::update(MENU_EDGE_B);
     test.expectEq(battleSession().awaitingReplacement(), true,
                   F("Back cannot cancel forced replacement"));
@@ -353,6 +356,43 @@ __attribute__((noinline)) inline void trainerSwitchAndImport(FxTest &test) {
     endPreset();
 }
 
+__attribute__((noinline)) inline void wildControllerReturn(FxTest &test) {
+    battle::applyPlayerPreset(player, BattlePresets::opening);
+    gameState.playerLocation = static_cast<uint16_t>(3) |
+                               (static_cast<uint16_t>(2) << 8);
+    menu.clear();
+    dialogMenu.clear();
+    enterBattle();
+    gameState.state = GameState_t::BATTLE;
+    rngDraws = 0;
+    battleSession().setRng({scriptedRng});
+    FxReadCounter::resetFrame();
+    battleSession().beginWild(4, 1, false, 0);
+    test.expectEq(battleSession().state().trainer, false,
+                  F("wild encounter uses wild rules"));
+    test.expectEq(battleSession().state().partyCount[1], 1,
+                  F("wild encounter has one opponent"));
+
+    selectOption(MENU_NAV_RIGHT);
+    test.expectEq(static_cast<uint8_t>(battleSession().result().kind),
+                  static_cast<uint8_t>(battle::ResultKind::Gather),
+                  F("wild Gather uses production choice controller"));
+    test.expectEq((battleSession().result().flags & battle::REFUSED) != 0,
+                  true, F("ordinary wild Gather reports refusal"));
+    uint16_t signature = foldResult(1, battleSession().result());
+    test.expectEq(runToChoice(true, signature), true,
+                  F("wild Gather feedback returns to choice"));
+
+    selectOption(static_cast<uint8_t>(MENU_NAV_DOWN | MENU_NAV_RIGHT));
+    test.expectEq(static_cast<uint8_t>(battleSession().result().kind),
+                  static_cast<uint8_t>(battle::ResultKind::Escape),
+                  F("wild Escape uses production choice controller"));
+    test.expectEq(static_cast<uint8_t>(battleSession().result().outcome),
+                  static_cast<uint8_t>(battle::Outcome::Escaped),
+                  F("wild Escape becomes terminal"));
+    finishTerminal(test);
+}
+
 __attribute__((noinline)) inline void trainerVictory(FxTest &test) {
     beginPreset(BattlePresets::switch_drill);
     RunTrace trace;
@@ -459,14 +499,15 @@ inline void test_battlesession(FxTest &test) {
     using namespace battlesession_test_detail;
     const uint16_t top = paintStack();
     trainerSpike(test);
-    const uint16_t measured = headroom(top);
-    Serial.print(F("trainer controller painted headroom=")); Serial.println(measured);
-    Serial.print(F("trainer controller effective headroom="));
-    Serial.println(measured >= 69 ? measured - 69 : 0);
-    test.expectEq(measured >= 219, true,
-                  F("trainer controller preserves 150 B after USB ISR"));
     trainerRefusals(test);
     trainerSwitchAndImport(test);
+    wildControllerReturn(test);
+    const uint16_t measured = headroom(top);
+    Serial.print(F("battle controller painted headroom=")); Serial.println(measured);
+    Serial.print(F("battle controller effective headroom="));
+    Serial.println(measured >= 69 ? measured - 69 : 0);
+    test.expectEq(measured >= 219, true,
+                  F("battle controller preserves 150 B after USB ISR"));
 
 }
 

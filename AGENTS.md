@@ -41,6 +41,7 @@ It always runs every FX suite, even if a focused `FXTEST_INOS` override is prese
 
 ## Hard rules
 
+- **Visual verification**: Manual visual checks and Ardens observations are not required for acceptance unless the user explicitly requests them. Use automated tests and device-suite results as verification.
 - **Testing**: use each language's native framework; tests are permanent and co-located (`tst/`,
   `tst/script_tests/`, `tst/fxdatatest/`, `tools/tests/`); never write test code to `/tmp`; never
   use Python/perl/ruby as a harness to drive C++ tests.
