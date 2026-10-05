@@ -4488,3 +4488,44 @@ make fxtest-spike BUILD_DIR=build/arena-6-device FXTEST_SPIKE_INO=tst/fxdatatest
 Initial host compile caught FX fake include ordering and the host suite registration
 API; both were fixed before the passing run. Worker elapsed time approximately
 8 minutes. Full gate remains assigned to .12.
+
+## CreatureGathererFX-2cy.7
+
+Replaced the two spike presets in the arena lifecycle with the generated FX
+catalog. `applyPlayerTeam` validates the generated player bound, reads one
+six-byte member at a time, rebuilds each Creature from canonical species/move
+records, treats legacy move ID 32 as an empty slot, clears status/modifiers,
+and restores maximum HP. Arena boot now uses the generated three-team/five-
+opponent counts and caches the first player preview. Match start validates
+both selections and resolves the trainer before mutating the party or battle
+mode. Terminal playback still returns directly to ARENA and preserves the
+selected indices and outcome. Invalid selections leave arena/player/menu state
+unchanged. Normal shipping has no linked arena reader/controller.
+
+```text
+make test
+# PASS: host 154,925/0; world 190/0.
+make testvm
+# PASS: VM 42/0.
+make ram BUILD_DIR=build/arena-7-normal
+# PASS: 27,894 flash / 1,841 static; unchanged from pre-bead normal image.
+make ram BUILD_DIR=build/arena-7-demo AVR_FLASH_BUDGET=29184 AVR_SHIPPING_CPP_FLAGS='-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X -DCGFX_SHIPPING_NO_USB -DCGFX_ARENA_DEMO'
+# PASS: 28,520 flash / 1,852 static; 664 B under arena flash ceiling and
+# 308 B under static budget. Pre-bead arena image was 28,080 / 1,852.
+make fxtest-spike BUILD_DIR=build/arena-7-device FXTEST_SPIKE_INO=tst/fxdatatest/test_arenademo.ino FXTEST_MS=10000 ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS: test_arenademo 490/0, 10 start/return cycles, trainer species 0,
+# first/last catalog entries, transition-only reads; painted start/callback
+# effective stack headroom 228 B. Paired test_stack 4/0, headroom 335 B.
+git diff --check
+# PASS.
+```
+
+Iteration notes: the first host run exposed a test fixture offset error for
+team 2; the fake cart now places records at the generated 18-byte team stride.
+The first device compile needed explicit enum casts, and the first device link
+exceeded flash because unique assertion labels consumed space; compact shared
+labels brought the test image to 28,444 B. The next run caught two incorrect
+test expectations (trainer side and Deluge slot); both were corrected before
+the passing focused gate. Worker elapsed time approximately 20 minutes; final
+acceptance commands took about 28 seconds of command wall time. Full integrated
+gate remains assigned to .12; no commit made.
