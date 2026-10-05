@@ -9,6 +9,7 @@ enum class MenuIntentKind : uint8_t {
     Gather,
     Escape,
     Back,
+    Pass,
 };
 
 struct MenuIntent {

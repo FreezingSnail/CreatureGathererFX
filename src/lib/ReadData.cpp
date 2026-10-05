@@ -1,5 +1,6 @@
 #include "ReadData.hpp"
 #include "FxRead.hpp"
+#include "MoveIds.hpp"
 #include <avr/pgmspace.h>
 #include "../fxdata.h"
 
@@ -13,6 +14,7 @@ const uint8_t creatureNameLengths[] PROGMEM = {
 const uint8_t moveNameLengths[] PROGMEM = {
     5, 7, 6, 5, 6, 6, 4, 7, 6, 6, 7, 4, 8, 8, 8, 7, 4,
     4, 5, 5, 4, 6, 4, 3, 6, 10, 8, 4, 4, 9, 4, 9, 0,
+    7, 4, 0, 7, 7, 7, 5, 9, 8, 11, 10, 6,
 };
 
 uint8_t bitmapWidth(const uint8_t *lengths, uint8_t count, uint16_t id) {
@@ -53,6 +55,8 @@ uint8_t getEffectRateFX(uint8_t id) {
     return 100;
 }
 Move readMoveFX(uint8_t index) {
+    index = moveRecordIndex(index);
+    if (index == EMPTY_MOVE_ID) return Move();
     uint32_t buffer;
     Move move;
     auto offset = sizeof(uint32_t) * index;
@@ -92,7 +96,10 @@ void arenaLoad(Creature *creature, uint24_t addr, uint8_t lvl) {
     }
     // One record block, one creature seed, and the four packed move records
     // resolved by Creature::setMove() form this load transition.
-    FxReadCounter::transitionExact(6);
+    uint8_t reads = 2;
+    for (uint8_t slot = 0; slot < 4; ++slot)
+        if (validMoveId(record[slot + 1])) ++reads;
+    FxReadCounter::transitionExact(reads);
 }
 
 uint16_t ReadFXu16(uint24_t addr) {

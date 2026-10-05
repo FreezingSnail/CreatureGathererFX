@@ -26,6 +26,7 @@ class WorldEngine {
   public:
     static void init(WorldTransient &world);
     static void input(WorldTransient &world);
+    static void inputFromButtons(WorldTransient &world, uint8_t buttons);
     static void runMap(WorldTransient &world);
     static void moveChar(WorldTransient &world);
     static uint8_t getTile();

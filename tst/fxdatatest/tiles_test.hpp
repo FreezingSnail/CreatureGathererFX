@@ -108,6 +108,50 @@ inline void test_tiles(FxTest &test) {
     test.expectEq(WorldEngine::moveable(world), false,
                   F("world engine blocks wall target"));
 
+    TilePropertyWindow movementWindow(storage);
+    movementWindow.begin(9, 5);
+    for (uint8_t rowIndex = 0; rowIndex < TilePropertyWindow::WINDOW_HEIGHT; ++rowIndex) {
+        for (uint8_t col = 0; col < TilePropertyWindow::WINDOW_WIDTH; ++col) {
+            row[col] = TileProps::packTile(1, TileProps::PROP_WALKABLE);
+        }
+        movementWindow.writeRow(rowIndex, row);
+    }
+    memcpy(world.propertyWindow, storage, sizeof(storage));
+    gameState.playerLocation = static_cast<uint16_t>((7u << 8) | 12u);
+    world.motion.directionAndFlags = 0;
+    WorldEngine::inputFromButtons(world, LEFT_BUTTON | RIGHT_BUTTON |
+                                         UP_BUTTON | DOWN_BUTTON);
+    test.expectEq(world.motion.directionAndFlags & 0x03,
+                  static_cast<uint8_t>(Direction::LEFT),
+                  F("device snapshot priority selects left"));
+    test.expectEq(world.motion.directionAndFlags & 0x04, 0x04,
+                  F("device snapshot starts held movement"));
+
+    WorldEngine::inputFromButtons(world, RIGHT_BUTTON | UP_BUTTON | DOWN_BUTTON);
+    test.expectEq(world.motion.directionAndFlags & 0x03,
+                  static_cast<uint8_t>(Direction::RIGHT),
+                  F("device snapshot priority selects right"));
+    WorldEngine::inputFromButtons(world, 0);
+    test.expectEq(world.motion.directionAndFlags & 0x03,
+                  static_cast<uint8_t>(Direction::RIGHT),
+                  F("button release keeps facing"));
+    test.expectEq(world.motion.directionAndFlags & 0x04, 0,
+                  F("button release stops movement"));
+
+    row[4] = TileProps::packTile(2, 0);
+    movementWindow.writeRow(2, row);
+    memcpy(world.propertyWindow, storage, sizeof(storage));
+    world.motion.directionAndFlags = static_cast<uint8_t>(
+        static_cast<uint8_t>(Direction::UP) | 0x04 | (3u << 3));
+    WorldEngine::inputFromButtons(world, RIGHT_BUTTON);
+    test.expectEq(world.motion.directionAndFlags & 0x03,
+                  static_cast<uint8_t>(Direction::RIGHT),
+                  F("blocked snapshot still changes facing"));
+    test.expectEq(world.motion.directionAndFlags & 0x04, 0x04,
+                  F("blocked snapshot retains moving state"));
+    test.expectEq(world.motion.directionAndFlags & 0x38, 3u << 3,
+                  F("blocked snapshot retains prior walk mask"));
+
     TilePropertyWindow::invalidate(storage);
     test.expectEq(WorldCollision::canEnter(12, 7, 256, 256, storage), false,
                   F("invalidated cache collision"));

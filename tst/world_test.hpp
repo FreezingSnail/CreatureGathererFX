@@ -57,6 +57,7 @@ void WorldTest(TestSuite &suite) {
     test.assert(view.x, static_cast<int8_t>(0), "teleport sync clears x offset");
     test.assert(view.y, static_cast<int8_t>(0), "teleport sync clears y offset");
     test.assert(view.mask, static_cast<uint8_t>(0), "teleport sync clears walk mask");
+
     suite.addTest(test);
 }
 

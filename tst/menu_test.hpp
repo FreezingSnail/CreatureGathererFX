@@ -1,6 +1,7 @@
 #include "test.hpp"
 #include "../src/engine/menu/MenuNav.hpp"
 #include "../src/engine/menu/MenuV2.hpp"
+#include "../src/engine/menu/PackedMoveInfo.hpp"
 #include "../src/lib/FxReadCounter.hpp"
 
 void MenuNavTest(TestSuite &suite) {
@@ -61,11 +62,74 @@ void MenuNavTest(TestSuite &suite) {
 void MenuIntentTest(TestSuite &suite);
 void MenuSnapshotIntegrationTest(TestSuite &suite);
 
+static void writeMoveInfoOracle(uint8_t *packed, uint8_t slot, uint16_t info) {
+    for (uint8_t bit = 0; bit < 10; ++bit) {
+        const uint8_t offset = static_cast<uint8_t>(slot * 10 + bit);
+        const uint8_t mask = static_cast<uint8_t>(1u << (offset & 7));
+        if (info & (1u << bit)) packed[offset >> 3] |= mask;
+        else packed[offset >> 3] &= static_cast<uint8_t>(~mask);
+    }
+}
+
+static uint16_t readMoveInfoOracle(const uint8_t *packed, uint8_t slot) {
+    uint16_t info = 0;
+    for (uint8_t bit = 0; bit < 10; ++bit) {
+        const uint8_t offset = static_cast<uint8_t>(slot * 10 + bit);
+        if (packed[offset >> 3] & (1u << (offset & 7))) info |= 1u << bit;
+    }
+    return info;
+}
+
+void PackedMoveInfoCodecTest(TestSuite &suite) {
+    Test test(__func__);
+    uint8_t actual[PackedMoveInfo::BYTE_COUNT] = {0xa5, 0x5a, 0xc3, 0x3c, 0x96};
+    uint8_t expected[PackedMoveInfo::BYTE_COUNT];
+    for (uint8_t byte = 0; byte < PackedMoveInfo::BYTE_COUNT; ++byte) {
+        expected[byte] = actual[byte];
+    }
+
+    for (uint8_t slot = 0; slot < PackedMoveInfo::SLOT_COUNT; ++slot) {
+        for (uint16_t info = 0; info < 1024; ++info) {
+            PackedMoveInfo::write(actual, slot, info);
+            writeMoveInfoOracle(expected, slot, info);
+            for (uint8_t byte = 0; byte < PackedMoveInfo::BYTE_COUNT; ++byte) {
+                test.assert(actual[byte], expected[byte], "writer matches bitwise oracle");
+            }
+            test.assert(PackedMoveInfo::read(actual, slot), info,
+                        "reader returns each ten-bit value");
+            for (uint8_t other = 0; other < PackedMoveInfo::SLOT_COUNT; ++other) {
+                test.assert(PackedMoveInfo::read(actual, other),
+                            readMoveInfoOracle(expected, other),
+                            "neighbor slots remain isolated");
+            }
+        }
+    }
+
+    PackedMoveInfo::write(actual, 0, 1023);
+    PackedMoveInfo::write(actual, 0, 0);
+    writeMoveInfoOracle(expected, 0, 1023);
+    writeMoveInfoOracle(expected, 0, 0);
+    test.assert(PackedMoveInfo::read(actual, 0), static_cast<uint16_t>(0),
+                "overwrite maximum with zero clears slot");
+    test.assert(PackedMoveInfo::read(nullptr, 0), static_cast<uint16_t>(0),
+                "null packed record reads as zero");
+    const uint8_t beforeInvalid[PackedMoveInfo::BYTE_COUNT] = {
+        actual[0], actual[1], actual[2], actual[3], actual[4]};
+    PackedMoveInfo::write(actual, PackedMoveInfo::SLOT_COUNT, 1023);
+    test.assert(PackedMoveInfo::read(actual, PackedMoveInfo::SLOT_COUNT),
+                static_cast<uint16_t>(0), "invalid slot reads as zero");
+    for (uint8_t byte = 0; byte < PackedMoveInfo::BYTE_COUNT; ++byte) {
+        test.assert(actual[byte], beforeInvalid[byte], "invalid write leaves record intact");
+    }
+    suite.addTest(test);
+}
+
 void MenuNavSuite(TestRunner &runner) {
     TestSuite suite("Menu navigation suite");
     MenuNavTest(suite);
     MenuIntentTest(suite);
     MenuSnapshotIntegrationTest(suite);
+    PackedMoveInfoCodecTest(suite);
     runner.addTestSuite(suite);
 }
 

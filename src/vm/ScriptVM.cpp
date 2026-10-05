@@ -1,6 +1,7 @@
 #include "ScriptVM.hpp"
 #include "opcodes.hpp"
 #include "../macros.hpp"
+#include "../lib/FxReadCounter.hpp"
 #include "../globals.hpp"
 #include "../flags/flag_bit_array.hpp"
 #include <stdint.h>

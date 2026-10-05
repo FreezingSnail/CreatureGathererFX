@@ -2,5 +2,4 @@
 
 void DialogMenu::drawPopMenu() {}
 
-void DialogMenu::pushAnimation() {}
 void DialogMenu::prepareHead() {}

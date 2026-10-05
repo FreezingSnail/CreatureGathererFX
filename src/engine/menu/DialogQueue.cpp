@@ -43,7 +43,4 @@ void DialogMenu::popMenu() {
     --dialogCount;
     popDialogStack[dialogCount] = PopUpDialog{0, 0, 0, 0, 0, 0, 0, TEXT, 0};
     if (peek()) prepareHead();
-    if (peek() && head().animation != 0) {
-        pushAnimation();
-    }
 }

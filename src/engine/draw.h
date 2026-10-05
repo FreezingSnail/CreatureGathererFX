@@ -1,11 +1,14 @@
 #pragma once
 #include "../creature/Creature.hpp"
 #include "../lib/Move.hpp"
+#include "../lib/MoveIds.hpp"
 // #include "../external/Font4x6.h"
 #include "../common.hpp"
 #include "../lib/Text.hpp"
 #include "../globals.hpp"
 #include "../lib/ReadData.hpp"
+#include "PpGlyph.hpp"
+#include "menu/PackedMoveInfo.hpp"
 #include "../lib/FxRead.hpp"
 #include "world/Chunk.hpp"
 #include "world/TilePropertyWindow.hpp"
@@ -130,18 +133,7 @@ static void drawInfoRec(uint8_t x, uint8_t y) {
 }
 
 static uint16_t packedMoveInfo(const uint8_t *packed, uint8_t slot) {
-    if (packed == nullptr || slot >= 4) {
-        return 0;
-    }
-    const uint8_t bitOffset = static_cast<uint8_t>(slot * 10);
-    uint16_t info = 0;
-    for (uint8_t bit = 0; bit < 10; ++bit) {
-        const uint8_t offset = static_cast<uint8_t>(bitOffset + bit);
-        if ((packed[offset >> 3] & (1u << (offset & 7))) != 0) {
-            info |= static_cast<uint16_t>(1u << bit);
-        }
-    }
-    return info;
+    return PackedMoveInfo::read(packed, slot);
 }
 
 static void printMoveInfoValues(uint8_t type, bool isPhysical,
@@ -158,7 +150,7 @@ static void printMoveInfoValues(uint8_t type, bool isPhysical,
 }
 
 static void printMoveInfo(uint8_t index, uint8_t x, uint8_t y, Move m) {
-    if (index == 32) {
+    if (!validMoveId(index)) {
         return;
     }
     printMoveInfoValues(m.getMoveType(), m.isPhysical(), m.getMovePower(), x, y);
@@ -166,7 +158,7 @@ static void printMoveInfo(uint8_t index, uint8_t x, uint8_t y, Move m) {
 
 static void printPackedMoveInfo(uint8_t moveId, uint8_t slot, uint8_t x,
                                 uint8_t y, const uint8_t *packed) {
-    if (moveId >= 32 || slot >= 4) {
+    if (!validMoveId(moveId) || slot >= 4) {
         return;
     }
     const uint16_t info = packedMoveInfo(packed, slot);
@@ -210,7 +202,7 @@ static void printMoveMenu(int8_t index, const battle::MoveSnapshot &moves,
         selected = 3;
     }
     uint8_t color[4] = {1, 1, 1, 1};
-    if (moves.moveIds[selected] < 32) {
+    if (validMoveId(moves.moveIds[selected])) {
         color[selected] = 0;
     }
     drawText(6, 45, nameAddresses[0],
@@ -222,6 +214,17 @@ static void printMoveMenu(int8_t index, const battle::MoveSnapshot &moves,
     drawText(69, 53, nameAddresses[3],
                      readMoveNameWidth(moves.moveIds[3]), FRAME(color[3]));
     printPackedMoveInfo(moves.moveIds[selected], selected, 38, 4, moveInfo);
+    if (validMoveId(moves.moveIds[selected])) {
+        PpGlyph::draw(101, 4, 0b001001111101111);
+        PpGlyph::draw(105, 4, 0b001001111101111);
+        if (moves.remainingUses[selected] == 255) {
+            PpGlyph::draw(113, 5, 0b010111010);
+        } else {
+            PpGlyph::digit(111, 4, moves.remainingUses[selected]);
+            PpGlyph::draw(115, 4, 0b001001010100100);
+            PpGlyph::digit(119, 4, (moves.useLimitsPacked >> (selected * 2)) & 3);
+        }
+    }
 }
 
 static void printCreatureMenu(const battle::PartySnapshot &party, uint8_t index,
@@ -296,7 +299,7 @@ static void drawPlayer(const battle::BattleView &view) {
 }
 
 static void drawScene(const battle::BattleView &view) {
-    // Blit::draw(0, 15, fieldBacground, FRAME(0), Blit::PLUSMASK);
+    // No battle field art: keep combatants and UI legible on the black canvas.
     drawPlayer(view);
     drawOpponent(view);
     drawOpponentHP(view);

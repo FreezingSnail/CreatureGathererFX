@@ -8,6 +8,7 @@
 #include "../../globals.hpp"
 #include "../../lib/FxRead.hpp"
 #else
+#include <Arduboy2.h>
 #include "../../GameState.hpp"
 extern GameState gameState;
 extern bool worldInteractionJustPressedA();
@@ -16,7 +17,7 @@ extern void worldInteractionPopDialog();
 extern void worldInteractionReadScript(uint24_t address, uint8_t *buffer, uint8_t length);
 extern void worldInteractionRunScript(uint8_t *script, uint16_t currentTile, uint16_t targetTile);
 extern uint24_t worldInteractionScriptsBase();
-extern bool worldMovementDirection(Direction &value);
+extern uint8_t worldMovementButtons();
 #endif
 
 namespace {
@@ -88,7 +89,7 @@ void setOrigin(WorldMotion &motion, uint16_t value) {
     motion.originHigh = static_cast<uint8_t>(value >> 8);
 }
 
-void clearStep(WorldMotion &motion, uint16_t newOrigin) {
+__attribute__((noinline)) void clearStep(WorldMotion &motion, uint16_t newOrigin) {
     motion.step = 0;
     setMoving(motion, false);
     setWalkMask(motion, WALK_NONE);
@@ -161,6 +162,19 @@ bool facedTile(uint16_t playerLocation, Direction facing, uint16_t &target) {
                                    static_cast<uint16_t>(x));
     return true;
 }
+
+uint8_t movementButtons() {
+#ifdef TEST
+    return worldMovementButtons();
+#else
+    uint8_t buttons = 0;
+    if (arduboy.pressed(LEFT_BUTTON)) buttons |= LEFT_BUTTON;
+    if (arduboy.pressed(RIGHT_BUTTON)) buttons |= RIGHT_BUTTON;
+    if (arduboy.pressed(UP_BUTTON)) buttons |= UP_BUTTON;
+    if (arduboy.pressed(DOWN_BUTTON)) buttons |= DOWN_BUTTON;
+    return buttons;
+#endif
+}
 }
 
 void WorldEngine::init(WorldTransient &world) {
@@ -220,47 +234,34 @@ void WorldEngine::syncFromLocation(WorldTransient &world) {
 }
 
 void WorldEngine::input(WorldTransient &world) {
-#ifdef TEST
+    inputFromButtons(world, movementButtons());
+}
+
+void WorldEngine::inputFromButtons(WorldTransient &world, uint8_t buttons) {
     Direction requested;
-    if (worldMovementDirection(requested)) {
-        setDirection(world.motion, requested);
-        if (moveable(world)) {
-            setMoving(world.motion, true);
-            setWalkMask(world.motion, walkMaskFor(requested));
-        }
+    bool hasRequest = true;
+    if (buttons & LEFT_BUTTON) {
+        requested = Direction::LEFT;
+    } else if (buttons & RIGHT_BUTTON) {
+        requested = Direction::RIGHT;
+    } else if (buttons & UP_BUTTON) {
+        requested = Direction::UP;
+    } else if (buttons & DOWN_BUTTON) {
+        requested = Direction::DOWN;
     } else {
-        setMoving(world.motion, false);
+        hasRequest = false;
     }
-#else
+
     WorldMotion &motion = world.motion;
-    if (arduboy.pressed(LEFT_BUTTON)) {
-        setDirection(motion, Direction::LEFT);
-        if (moveable(world)) {
-            setMoving(motion, true);
-            setWalkMask(motion, walkMaskFor(Direction::LEFT));
-        }
-    } else if (arduboy.pressed(RIGHT_BUTTON)) {
-        setDirection(motion, Direction::RIGHT);
-        if (moveable(world)) {
-            setMoving(motion, true);
-            setWalkMask(motion, walkMaskFor(Direction::RIGHT));
-        }
-    } else if (arduboy.pressed(UP_BUTTON)) {
-        setDirection(motion, Direction::UP);
-        if (moveable(world)) {
-            setMoving(motion, true);
-            setWalkMask(motion, walkMaskFor(Direction::UP));
-        }
-    } else if (arduboy.pressed(DOWN_BUTTON)) {
-        setDirection(motion, Direction::DOWN);
-        if (moveable(world)) {
-            setMoving(motion, true);
-            setWalkMask(motion, walkMaskFor(Direction::DOWN));
-        }
-    } else {
+    if (!hasRequest) {
         setMoving(motion, false);
+        return;
     }
-#endif
+    setDirection(motion, requested);
+    if (moveable(world)) {
+        setMoving(motion, true);
+        setWalkMask(motion, walkMaskFor(requested));
+    }
 }
 
 void WorldEngine::runMap(WorldTransient &world) {

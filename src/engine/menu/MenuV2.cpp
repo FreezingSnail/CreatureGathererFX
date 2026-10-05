@@ -1,6 +1,8 @@
 #include "MenuV2.hpp"
 
 #include "MenuNav.hpp"
+#include "PackedMoveInfo.hpp"
+#include "../../lib/MoveIds.hpp"
 #include "DialogMenu.hpp"
 #include "../battle/BattleSession.hpp"
 #include "../../lib/FxReadCounter.hpp"
@@ -12,8 +14,7 @@ namespace {
 constexpr uint8_t MENU_PARTY_SLOT_COUNT = 3;
 constexpr uint8_t MENU_PARTY_CHOICE_COUNT = 2;
 constexpr uint8_t MENU_MOVE_COUNT = 4;
-constexpr uint8_t MOVE_INFO_BITS = 10;
-constexpr uint8_t MOVE_INFO_BYTES = 5;
+constexpr uint8_t MOVE_INFO_BYTES = PackedMoveInfo::BYTE_COUNT;
 constexpr uint8_t MOVE_ID_EMPTY = 32;
 constexpr uint8_t MOVE_ID_ABSENT = 255;
 constexpr uint8_t CREATURE_ID_COUNT = 32;
@@ -61,16 +62,7 @@ uint16_t compactMoveInfo(const Move &move) {
 }
 
 void storeMoveInfo(uint8_t *packed, uint8_t slot, uint16_t info) {
-    const uint8_t bitOffset = static_cast<uint8_t>(slot * MOVE_INFO_BITS);
-    for (uint8_t bit = 0; bit < MOVE_INFO_BITS; ++bit) {
-        const uint8_t byte = static_cast<uint8_t>((bitOffset + bit) >> 3);
-        const uint8_t mask = static_cast<uint8_t>(1u << ((bitOffset + bit) & 7));
-        if ((info & (static_cast<uint16_t>(1u) << bit)) != 0) {
-            packed[byte] |= mask;
-        } else {
-            packed[byte] &= static_cast<uint8_t>(~mask);
-        }
-    }
+    PackedMoveInfo::write(packed, slot, info);
 }
 } // namespace
 
@@ -89,16 +81,17 @@ void MenuV2::openMenu(MenuEnum menu, const battle::BattleView &view) {
         moveSnapshot = {};
         for (uint8_t slot = 0; slot < MENU_MOVE_COUNT; ++slot) {
             moveSnapshot.moveIds[slot] = view.moveIds[slot];
+            moveSnapshot.remainingUses[slot] = view.remainingUses[slot];
             moveNameAddresses[slot] = 0;
         }
         for (uint8_t byte = 0; byte < MOVE_INFO_BYTES; ++byte) {
             moveInfoPacked[byte] = 0;
         }
+        moveSnapshot.useLimitsPacked = view.useLimitsPacked;
         uint8_t reads = 0;
         for (uint8_t slot = 0; slot < MENU_MOVE_COUNT; ++slot) {
             const uint8_t id = moveSnapshot.moveIds[slot];
-            if (id == MOVE_ID_EMPTY || id == MOVE_ID_ABSENT ||
-                id >= CREATURE_ID_COUNT) {
+            if (!validMoveId(id)) {
                 continue;
             }
             moveNameAddresses[slot] = readMoveNameAddress(id);
@@ -258,7 +251,14 @@ MenuIntent MenuV2::update(uint8_t edgeButtons) {
         }
 
     case BATTLE_MOVE_SELECT:
-        if (cursor >= 4) return noIntent();
+        {
+            bool available = false;
+            for (uint8_t slot = 0; slot < 4; ++slot)
+                if (moveSnapshot.remainingUses[slot]) available = true;
+            if (!available) { pop(); return intent(MenuIntentKind::Pass); }
+        }
+        if (cursor >= 4 || !validMoveId(moveSnapshot.moveIds[cursor]) ||
+            moveSnapshot.remainingUses[cursor] == 0) return noIntent();
         pop();
         return intent(MenuIntentKind::SelectMove, cursor);
 
