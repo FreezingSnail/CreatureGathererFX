@@ -4416,3 +4416,46 @@ approximately 12 minutes.
 
 Canonical loader implementation committed in CreatureGathererTools as
 `a9dc640`; unrelated in-progress tools changes remain unstaged.
+
+## CreatureGathererFX-2cy.5
+
+Registered `data/arena-demo.toml` in the project and appended its expanded
+descriptor after `scripts`, preserving the previous 22 layout entries and all
+save-sector offsets. `make gen` emits the arena IDs, packed descriptor and test
+fixture; the manifest now tracks the catalog/font inputs and all generated
+outputs. The native generated-image suite independently checks three exact
+18-byte player records, canonical source species/moves, five generated trainer
+IDs against `opts` and `opponents.csv`, opponent species, big-endian 24-bit
+label address tables, 5-pixel font widths, two headerless 8-pixel frames, and
+payload bounds. No production PROGMEM catalog is present.
+
+The historical layout comparison now reads a frozen 19-opponent descriptor
+fixture, keeping its 20-entry and 317-field historical parity contract despite
+the new authored opponent rows. The alias regression checks current packed
+addresses while preserving the first-declaration and distinct-global-symbol
+assertions. Pack SHA updated for the appended arena data/labels.
+
+```text
+PATH=/Users/connorfranc/code/CreatureGathererTools/target/debug:$PATH make gen
+# PASS; cgfx-tools 0.2.0; arena descriptor 3,451 B, fixture 853 B.
+make verify-generated
+# PASS.
+make test-manifest
+# PASS: fxdata-manifest PASS.
+make test-generated-libs
+# PASS: generated-libs 40/0; generated-libs invariants 5/0;
+# arena-demo-data provenance PASS; first-unqualified-alias 28/0.
+PATH=/Users/connorfranc/code/CreatureGathererTools/target/debug:$PATH make test-pack-parity
+# PASS: old/expand layout equivalence; perturbation diagnostic; pack SHA.
+shasum -a 256 dist/fxdata.bin
+# 5d7aca52e44d95da45ed16bf7a88c096b16fb155d3f958b7ca88e2b513329af1
+```
+
+Early failures and fixes: the packer rejects `name` on an `expand` entry, so
+the arena entry is unnamed and uses the generated `ArenaDemoData` namespace.
+The first semantic test draft exposed that its named byte-array decoder kept
+reading subsequent arrays and that binary `char` comparisons need an explicit
+unsigned cast; both were corrected. The first parity attempt also exposed
+mutable historical fixture paths to the expanded 24-opponent descriptor; a
+frozen legacy fixture restored the historical comparison. Worker elapsed time
+approximately 30 minutes. Full final-gate/budget verification remains .12.

@@ -12,83 +12,83 @@ source = { carray = { path = "../../../fxdata/data/encounters.txt", symbol = "ta
 
 [[entry]]
 name = "opponent_seeds"
-source = { carray = { path = "../../../fxdata/generated/opponents.txt", symbol = "opponent_seeds" } }
+source = { carray = { path = "opponents-legacy-19.txt", symbol = "opponent_seeds" } }
 
 [[entry]]
 name = "opponent_seed_1"
-source = { carray = { path = "../../../fxdata/generated/opponents.txt", symbol = "opponent_seed_1" } }
+source = { carray = { path = "opponents-legacy-19.txt", symbol = "opponent_seed_1" } }
 
 [[entry]]
 name = "opponent_seed_2"
-source = { carray = { path = "../../../fxdata/generated/opponents.txt", symbol = "opponent_seed_2" } }
+source = { carray = { path = "opponents-legacy-19.txt", symbol = "opponent_seed_2" } }
 
 [[entry]]
 name = "opponent_seed_3"
-source = { carray = { path = "../../../fxdata/generated/opponents.txt", symbol = "opponent_seed_3" } }
+source = { carray = { path = "opponents-legacy-19.txt", symbol = "opponent_seed_3" } }
 
 [[entry]]
 name = "opponent_seed_4"
-source = { carray = { path = "../../../fxdata/generated/opponents.txt", symbol = "opponent_seed_4" } }
+source = { carray = { path = "opponents-legacy-19.txt", symbol = "opponent_seed_4" } }
 
 [[entry]]
 name = "opponent_seed_5"
-source = { carray = { path = "../../../fxdata/generated/opponents.txt", symbol = "opponent_seed_5" } }
+source = { carray = { path = "opponents-legacy-19.txt", symbol = "opponent_seed_5" } }
 
 [[entry]]
 name = "opponent_seed_6"
-source = { carray = { path = "../../../fxdata/generated/opponents.txt", symbol = "opponent_seed_6" } }
+source = { carray = { path = "opponents-legacy-19.txt", symbol = "opponent_seed_6" } }
 
 [[entry]]
 name = "opponent_seed_7"
-source = { carray = { path = "../../../fxdata/generated/opponents.txt", symbol = "opponent_seed_7" } }
+source = { carray = { path = "opponents-legacy-19.txt", symbol = "opponent_seed_7" } }
 
 [[entry]]
 name = "opponent_seed_8"
-source = { carray = { path = "../../../fxdata/generated/opponents.txt", symbol = "opponent_seed_8" } }
+source = { carray = { path = "opponents-legacy-19.txt", symbol = "opponent_seed_8" } }
 
 [[entry]]
 name = "opponent_seed_9"
-source = { carray = { path = "../../../fxdata/generated/opponents.txt", symbol = "opponent_seed_9" } }
+source = { carray = { path = "opponents-legacy-19.txt", symbol = "opponent_seed_9" } }
 
 [[entry]]
 name = "opponent_seed_10"
-source = { carray = { path = "../../../fxdata/generated/opponents.txt", symbol = "opponent_seed_10" } }
+source = { carray = { path = "opponents-legacy-19.txt", symbol = "opponent_seed_10" } }
 
 [[entry]]
 name = "opponent_seed_11"
-source = { carray = { path = "../../../fxdata/generated/opponents.txt", symbol = "opponent_seed_11" } }
+source = { carray = { path = "opponents-legacy-19.txt", symbol = "opponent_seed_11" } }
 
 [[entry]]
 name = "opponent_seed_12"
-source = { carray = { path = "../../../fxdata/generated/opponents.txt", symbol = "opponent_seed_12" } }
+source = { carray = { path = "opponents-legacy-19.txt", symbol = "opponent_seed_12" } }
 
 [[entry]]
 name = "opponent_seed_13"
-source = { carray = { path = "../../../fxdata/generated/opponents.txt", symbol = "opponent_seed_13" } }
+source = { carray = { path = "opponents-legacy-19.txt", symbol = "opponent_seed_13" } }
 
 [[entry]]
 name = "opponent_seed_14"
-source = { carray = { path = "../../../fxdata/generated/opponents.txt", symbol = "opponent_seed_14" } }
+source = { carray = { path = "opponents-legacy-19.txt", symbol = "opponent_seed_14" } }
 
 [[entry]]
 name = "opponent_seed_15"
-source = { carray = { path = "../../../fxdata/generated/opponents.txt", symbol = "opponent_seed_15" } }
+source = { carray = { path = "opponents-legacy-19.txt", symbol = "opponent_seed_15" } }
 
 [[entry]]
 name = "opponent_seed_16"
-source = { carray = { path = "../../../fxdata/generated/opponents.txt", symbol = "opponent_seed_16" } }
+source = { carray = { path = "opponents-legacy-19.txt", symbol = "opponent_seed_16" } }
 
 [[entry]]
 name = "opponent_seed_17"
-source = { carray = { path = "../../../fxdata/generated/opponents.txt", symbol = "opponent_seed_17" } }
+source = { carray = { path = "opponents-legacy-19.txt", symbol = "opponent_seed_17" } }
 
 [[entry]]
 name = "opponent_seed_18"
-source = { carray = { path = "../../../fxdata/generated/opponents.txt", symbol = "opponent_seed_18" } }
+source = { carray = { path = "opponents-legacy-19.txt", symbol = "opponent_seed_18" } }
 
 [[entry]]
 name = "opts"
-source = { symbol = { path = "../../../fxdata/generated/opponents.txt", symbol = "opts" } }
+source = { symbol = { path = "opponents-legacy-19.txt", symbol = "opts" } }
 
 [[entry]]
 name = "creatureData"

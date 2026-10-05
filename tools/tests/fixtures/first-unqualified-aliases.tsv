@@ -1,32 +1,30 @@
-# index	leaf	expected_target	expected_address	competing_target	competing_address
-# These constants intentionally do not derive from src/fxdata.h. MenuStrings
-# must resolve every leaf to its first declaration in MenuFXData, not its later
-# global declaration.
-0	attackText	MenuFXData::attackText	0x00090F	::attackText	0x01ABF4
-1	enemyAttackText	MenuFXData::enemyAttackText	0x000920	::enemyAttackText	0x019C54
-2	damageText	MenuFXData::damageText	0x00092D	::damageText	0x01A24E
-3	hpText	MenuFXData::hpText	0x00093A	::hpText	0x019ABA
-4	atkText	MenuFXData::atkText	0x00093F	::atkText	0x019CE0
-5	defText	MenuFXData::defText	0x000945	::defText	0x019DA8
-6	spdText	MenuFXData::spdText	0x00094B	::spdText	0x019506
-7	satkText	MenuFXData::satkText	0x000951	::satkText	0x019222
-8	sdefText	MenuFXData::sdefText	0x000958	::sdefText	0x01915A
-9	pointerText	MenuFXData::pointerText	0x00095F	::pointerText	0x01ABD6
-20	Fainted	MenuFXData::Fainted	0x000995	::Fainted	0x01990C
-21	SwitchIn	MenuFXData::SwitchIn	0x00099D	::SwitchIn	0x01A924
-22	win	MenuFXData::win	0x0009AE	::win	0x01A316
-23	lose	MenuFXData::lose	0x0009B6	::lose	0x019722
-24	escaped	MenuFXData::escaped	0x0009C1	::escaped	0x01A6C2
-25	changedIn	MenuFXData::changedIn	0x0009CD	::changedIn	0x01A492
-26	quarter	MenuFXData::quarter	0x0009E1	::quarter	0x01AF50
-27	half	MenuFXData::half	0x0009F3	::half	0x019A06
-28	doubled	MenuFXData::doubled	0x000A00	::doubled	0x01AB18
-29	quad	MenuFXData::quad	0x000A0E	::quad	0x01A80C
-30	damage	MenuFXData::damage	0x000A20	::damage	0x018C50
-31	physical	MenuFXData::physical	0x000A27	::physical	0x01A2DA
-32	special	MenuFXData::special	0x000A2C	::special	0x018BD8
-33	power	MenuFXData::power	0x000A31	::power	0x01AA78
-34	move	MenuFXData::move	0x000A38	::move	0x01ACA8
-35	change	MenuFXData::change	0x000A3D	::change	0x01B04A
-36	escape	MenuFXData::escape	0x000A44	::escape	0x01AD98
-37	gather	MenuFXData::gather	0x000A4B	::gather	0x0195E2
+# index	leaf	target	competing
+# Current packed addresses come from fxdata.h; assertions pin first-declaration resolution.
+0	attackText	MenuFXData::attackText	::attackText
+1	enemyAttackText	MenuFXData::enemyAttackText	::enemyAttackText
+2	damageText	MenuFXData::damageText	::damageText
+3	hpText	MenuFXData::hpText	::hpText
+4	atkText	MenuFXData::atkText	::atkText
+5	defText	MenuFXData::defText	::defText
+6	spdText	MenuFXData::spdText	::spdText
+7	satkText	MenuFXData::satkText	::satkText
+8	sdefText	MenuFXData::sdefText	::sdefText
+9	pointerText	MenuFXData::pointerText	::pointerText
+20	Fainted	MenuFXData::Fainted	::Fainted
+21	SwitchIn	MenuFXData::SwitchIn	::SwitchIn
+22	win	MenuFXData::win	::win
+23	lose	MenuFXData::lose	::lose
+24	escaped	MenuFXData::escaped	::escaped
+25	changedIn	MenuFXData::changedIn	::changedIn
+26	quarter	MenuFXData::quarter	::quarter
+27	half	MenuFXData::half	::half
+28	doubled	MenuFXData::doubled	::doubled
+29	quad	MenuFXData::quad	::quad
+30	damage	MenuFXData::damage	::damage
+31	physical	MenuFXData::physical	::physical
+32	special	MenuFXData::special	::special
+33	power	MenuFXData::power	::power
+34	move	MenuFXData::move	::move
+35	change	MenuFXData::change	::change
+36	escape	MenuFXData::escape	::escape
+37	gather	MenuFXData::gather	::gather

@@ -16,6 +16,9 @@
 //
 // Usage: generated_libs_test <repo-root> [layout] [header] [image]
 
+#include <algorithm>
+#include <array>
+#include <cctype>
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
@@ -23,6 +26,7 @@
 #include <iostream>
 #include <map>
 #include <optional>
+#include <regex>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -69,6 +73,272 @@ std::optional<std::string> readFile(const std::string &path) {
     std::ostringstream buffer;
     buffer << input.rdbuf();
     return buffer.str();
+}
+
+std::map<std::string, uint8_t> canonicalIds(const std::string &path, bool moves) {
+    const auto contents = readFile(path);
+    if (!contents) return {};
+    std::map<std::string, uint8_t> result;
+    int depth = 0;
+    bool inString = false, escaped = false;
+    std::size_t start = 0;
+    for (std::size_t i = 0; i < contents->size(); ++i) {
+        const char c = (*contents)[i];
+        if (inString) {
+            if (escaped) escaped = false;
+            else if (c == '\\') escaped = true;
+            else if (c == '"') inString = false;
+            continue;
+        }
+        if (c == '"') { inString = true; continue; }
+        if (c == '{') {
+            if (depth++ == 0) start = i;
+        } else if (c == '}' && --depth == 0) {
+            const std::string object = contents->substr(start, i - start + 1);
+            std::smatch name, id;
+            const std::regex namePattern("\\\"name\\\"\\s*:\\s*\\\"([^\\\"]+)\\\"");
+            const std::regex idPattern("\\\"id\\\"\\s*:\\s*([0-9]+)");
+            if (std::regex_search(object, name, namePattern) &&
+                std::regex_search(object, id, idPattern)) {
+                result.emplace(name[1].str(), static_cast<uint8_t>(std::stoul(id[1].str())));
+            }
+        }
+    }
+    (void)moves;
+    return result;
+}
+
+std::vector<std::vector<std::string>> csvRows(const std::string &path) {
+    const auto contents = readFile(path);
+    std::vector<std::vector<std::string>> rows;
+    if (!contents) return rows;
+    std::istringstream lines(*contents);
+    std::string line;
+    while (std::getline(lines, line)) {
+        std::vector<std::string> row;
+        std::istringstream columns(line);
+        std::string cell;
+        while (std::getline(columns, cell, ',')) row.push_back(cell);
+        rows.push_back(std::move(row));
+    }
+    return rows;
+}
+
+std::optional<uint8_t> canonicalLookup(const std::map<std::string, uint8_t> &ids,
+                                       const std::string &name, bool species) {
+    auto exact = ids.find(name);
+    if (exact != ids.end()) return exact->second;
+    if (!species) return std::nullopt;
+    for (const auto &[canonical, id] : ids) {
+        if (canonical.size() != name.size()) continue;
+        bool same = true;
+        for (std::size_t i = 0; i < name.size(); ++i)
+            if (std::tolower(static_cast<unsigned char>(canonical[i])) !=
+                std::tolower(static_cast<unsigned char>(name[i]))) same = false;
+        if (same) return id;
+    }
+    return std::nullopt;
+}
+
+struct AddressTable;
+std::optional<uint32_t> resolve(const AddressTable &table, const std::string &name,
+                                const std::string &space);
+
+template <typename DecoderT>
+void checkArenaCatalog(Report &report, const std::string &root, const AddressTable &addresses,
+                       const std::string &image) {
+    const auto descriptor = readFile(root + "/fxdata/generated/arena_demo.txt");
+    const auto idsHeader = readFile(root + "/fxdata/generated/arena_demo_ids.hpp");
+    if (!descriptor || !idsHeader) {
+        report.fail("arena catalog", "missing generated descriptor or symbolic IDs; run make gen");
+        return;
+    }
+    DecoderT decoder(*descriptor);
+    const auto creatures = canonicalIds(root + "/data/json/creatures.json", false);
+    const auto moves = canonicalIds(root + "/data/json/moves.json", true);
+    if (creatures.empty() || moves.empty()) {
+        report.fail("arena catalog", "canonical creature or move source is missing/empty");
+        return;
+    }
+    auto idConstant = [&](const std::string &name) -> std::optional<uint8_t> {
+        std::smatch match;
+        const std::regex pattern("constexpr uint8_t " + name + " = ([0-9]+);");
+        if (!std::regex_search(*idsHeader, match, pattern)) return std::nullopt;
+        return static_cast<uint8_t>(std::stoul(match[1].str()));
+    };
+    auto getArray = [&](const std::string &name) -> std::optional<std::vector<uint8_t>> {
+        return decoder.carrayBytes(name);
+    };
+    auto checkImageRecord = [&](const std::string &symbol, const std::vector<uint8_t> &bytes) {
+        const auto address = resolve(addresses, symbol, "ArenaDemoData");
+        if (!address || *address + bytes.size() > image.size()) {
+            report.fail("arena packed " + symbol, "missing address or record runs past payload");
+            return;
+        }
+        if (!std::equal(bytes.begin(), bytes.end(), image.begin() + *address,
+                        [](uint8_t expected, char actual) {
+                            return expected == static_cast<uint8_t>(actual);
+                        })) {
+            report.fail("arena packed " + symbol, "descriptor bytes differ from packed image");
+            return;
+        }
+        report.pass();
+    };
+    const std::array<std::string, 3> playerKeys{"blitz", "bulwark", "utility"};
+    const std::array<std::array<std::array<const char *, 5>, 3>, 3> players{{
+        {{{"ScrambleSnail","breeze","bellow","torrent","seedfall"}, {"ScatterCrab","dirtburst","slipfall","dirtfall","none"}, {"bigsquid","splash","squirt","soak","none"}}},
+        {{{"rock","dirtburst","wisper","Ironbody","slipfall"}, {"ShatterCrab","slipfall","bolt","plasma","dirtburst"}, {"item2","wisper","burst","splash","slam"}}},
+        {{{"bell","wisper","Sharpen","none","none"}, {"hedge","root","rejuvinate","pollen","none"}, {"cloud","blow","zap","sweep","torrent"}}}
+    }};
+    std::vector<uint8_t> playerBytes;
+    for (std::size_t t = 0; t < playerKeys.size(); ++t) {
+        const auto symbolic = idConstant("player_" + playerKeys[t]);
+        if (!symbolic || *symbolic != t) report.fail("arena player IDs", "symbolic player IDs are not contiguous");
+        for (const auto &member : players[t]) {
+            const auto species = canonicalLookup(creatures, member[0], true);
+            if (!species) { report.fail("arena roster", "unknown canonical species " + std::string(member[0])); continue; }
+            playerBytes.push_back(*species);
+            playerBytes.push_back(31);
+            for (std::size_t m = 1; m < member.size(); ++m) {
+                const auto move = std::string(member[m]) == "none"
+                                      ? std::optional<uint8_t>(32)
+                                      : canonicalLookup(moves, member[m], false);
+                if (!move) report.fail("arena roster", "unknown canonical move " + std::string(member[m]));
+                playerBytes.push_back(move.value_or(0));
+            }
+        }
+    }
+    if (playerBytes.size() != 3 * 18) report.fail("arena player shape", "expected exactly three 18-byte player records");
+    auto packedPlayers = getArray("playerMembers");
+    if (!packedPlayers || *packedPlayers != playerBytes) report.fail("arena player order", "authored species/moves/level order differs from six-byte records");
+    else report.pass();
+    checkImageRecord("playerMembers", playerBytes);
+
+    const std::array<std::string, 5> opponentKeys{"starter", "speed", "fortress", "tricks", "champion"};
+    const std::array<std::array<const char *, 3>, 5> opponentSpecies{{
+        {{"SkitterCrab","squid","SquibbleSnail"}}, {{"skimray","waggleworm","flitfly"}},
+        {{"rock","ShatterCrab","BiggestSquid"}}, {{"bell","hedge","cloud"}},
+        {{"ardu","dragon","skull"}}
+    }};
+    const auto csv = csvRows(root + "/data/opponents.csv");
+    const auto opponentsDescriptor = readFile(root + "/fxdata/generated/opponents.txt");
+    std::optional<DecoderT> opponentDecoder;
+    if (opponentsDescriptor) opponentDecoder.emplace(*opponentsDescriptor);
+    const auto opts = opponentDecoder ? opponentDecoder->symbolBytes("opts", "", addresses) : std::nullopt;
+    const auto packedTrainerIds = getArray("opponentTrainerIds");
+    std::vector<uint8_t> trainers, speciesRows;
+    for (std::size_t t = 0; t < opponentKeys.size(); ++t) {
+        const auto teamId = idConstant("opponent_" + opponentKeys[t]);
+        const auto trainerId = idConstant("trainer_" + opponentKeys[t]);
+        if (!teamId || *teamId != t || !trainerId) report.fail("arena opponent IDs", "missing/noncontiguous generated symbolic opponent IDs");
+        const uint8_t trainer = trainerId.value_or(255);
+        trainers.push_back(trainer);
+        std::array<uint8_t, 3> speciesIds{};
+        for (std::size_t s = 0; s < 3; ++s) {
+            const auto id = canonicalLookup(creatures, opponentSpecies[t][s], true);
+            if (!id) report.fail("arena opponent species", "unknown canonical species " + std::string(opponentSpecies[t][s]));
+            speciesIds[s] = id.value_or(0);
+            speciesRows.push_back(speciesIds[s]);
+        }
+        auto sourceRow = csv.end();
+        for (auto row = csv.begin() + std::min<std::size_t>(1, csv.size()); row != csv.end(); ++row) {
+            if (row->size() < 19) continue;
+            bool match = true;
+            for (std::size_t s = 0; s < 3; ++s) {
+                const auto rowSpecies = canonicalLookup(creatures, (*row)[s], true);
+                if (!rowSpecies || *rowSpecies != speciesIds[s]) match = false;
+            }
+            if (match) {
+                if (sourceRow != csv.end()) report.fail("arena trainer row", "species triple is not unique in opponents.csv");
+                sourceRow = row;
+            }
+        }
+        if (sourceRow == csv.end()) {
+            report.fail("arena trainer row", "catalog species triple has no authored opponents.csv row");
+            continue;
+        }
+        std::vector<uint8_t> expected;
+        for (std::size_t s = 0; s < 3; ++s) {
+            const auto id = canonicalLookup(creatures, (*sourceRow)[s], true);
+            if (!id || *id != speciesIds[s]) report.fail("arena trainer species", "CSV trainer species differs from catalog order");
+            expected.push_back(speciesIds[s]);
+            if ((*sourceRow)[s + 3] != "31") report.fail("arena trainer level", "arena opponent is not level 31");
+            expected.push_back(31);
+            for (std::size_t m = 0; m < 4; ++m) {
+                const std::string &moveName = (*sourceRow)[7 + s * 4 + m];
+                const auto move = moveName == "none" ? std::optional<uint8_t>(255)
+                                                       : canonicalLookup(moves, moveName, false);
+                if (!move) report.fail("arena trainer move", "unknown canonical move " + moveName);
+                expected.push_back(move.value_or(255));
+            }
+        }
+        const auto seed = opponentDecoder ? opponentDecoder->carrayBytes(trainer == 0 ? "opponent_seeds" : "opponent_seed_" + std::to_string(trainer)) : std::nullopt;
+        if (!seed || *seed != expected) report.fail("arena trainer record", "resolved opts row differs from canonical CSV records");
+        else report.pass();
+        if (opts && (static_cast<std::size_t>(trainer) + 1) * 3 <= opts->size()) {
+            const std::size_t at = static_cast<std::size_t>(trainer) * 3;
+            const uint32_t packedAddress = (uint32_t((*opts)[at]) << 16) | (uint32_t((*opts)[at + 1]) << 8) | (*opts)[at + 2];
+            const std::string target = trainer == 0 ? "opponent_seeds" : "opponent_seed_" + std::to_string(trainer);
+            const auto expectedAddress = resolve(addresses, target, "");
+            if (!expectedAddress || packedAddress != *expectedAddress) report.fail("arena opts resolution", "trainer ID does not resolve the existing opts address table");
+            else report.pass();
+        } else report.fail("arena opts resolution", "trainer index exceeds existing opts table");
+    }
+    if (!packedTrainerIds || *packedTrainerIds != trainers) report.fail("arena trainer IDs", "catalog trainer IDs differ from symbolic IDs");
+    else report.pass();
+    if (speciesRows.size() != 15) report.fail("arena species shape", "expected five three-species opponent rows");
+    auto packedSpecies = getArray("opponentSpecies");
+    if (!packedSpecies || *packedSpecies != speciesRows) report.fail("arena species rows", "opponentSpecies does not match canonical roster rows");
+    else report.pass();
+    checkImageRecord("opponentTrainerIds", trainers);
+    checkImageRecord("opponentSpecies", speciesRows);
+
+    const std::array<std::string, 3> playerLabels{"Blitz", "Bulwark", "Utility"};
+    const std::array<std::string, 5> opponentLabels{"Starter", "Speed", "Fortress", "Tricks", "Champion"};
+    auto checkLabels = [&](const std::string &table, const std::vector<std::string> &labels,
+                           const std::string &widthTable) {
+        const auto addressTable = decoder.symbolBytes(table, "ArenaDemoData", addresses);
+        const auto widths = getArray(widthTable);
+        if (!addressTable || addressTable->size() != labels.size() * 3 || !widths || widths->size() != labels.size()) {
+            report.fail("arena labels " + table, "label address/width table cardinality mismatch");
+            return;
+        }
+        for (std::size_t i = 0; i < labels.size(); ++i) {
+            const std::string key = (table == "playerLabels" ? "player_" : "opponent_") +
+                                    (table == "playerLabels" ? playerKeys[i] : opponentKeys[i]);
+            const auto labelAddress = resolve(addresses, key, "ArenaDemoData");
+            const uint32_t encoded = (uint32_t((*addressTable)[i * 3]) << 16) |
+                                     (uint32_t((*addressTable)[i * 3 + 1]) << 8) |
+                                     (*addressTable)[i * 3 + 2];
+            const std::string labelSymbol = (table == "playerLabels" ? "player_" : "opponent_") +
+                                            (table == "playerLabels" ? playerKeys[i] : opponentKeys[i]);
+            const auto bitmap = getArray(labelSymbol);
+            const uint8_t expectedWidth = static_cast<uint8_t>(labels[i].size() * 5);
+            if (!labelAddress || encoded != *labelAddress || (*widths)[i] != expectedWidth ||
+                !bitmap || bitmap->size() != static_cast<std::size_t>(expectedWidth) * 2) {
+                report.fail("arena label " + labels[i], "symbol address, 5-pixel glyph width, or two headerless 8px frames mismatch");
+                continue;
+            }
+            if (*labelAddress + bitmap->size() > image.size() ||
+                !std::equal(bitmap->begin(), bitmap->end(), image.begin() + *labelAddress,
+                            [](uint8_t expected, char actual) {
+                                return expected == static_cast<uint8_t>(actual);
+                            })) {
+                std::size_t mismatch = 0;
+                while (mismatch < bitmap->size() && *labelAddress + mismatch < image.size() &&
+                       (*bitmap)[mismatch] == static_cast<uint8_t>(image[*labelAddress + mismatch])) ++mismatch;
+                report.fail("arena label " + labels[i], "bitmap mismatch at " + std::to_string(mismatch) +
+                    " address=" + std::to_string(*labelAddress) + " bytes=" + std::to_string(bitmap->size()) +
+                    " image=" + std::to_string(image.size()));
+                continue;
+            }
+            report.pass();
+        }
+        checkImageRecord(table, *addressTable);
+        checkImageRecord(widthTable, *widths);
+    };
+    checkLabels("playerLabels", {playerLabels.begin(), playerLabels.end()}, "playerLabelWidths");
+    checkLabels("opponentLabels", {opponentLabels.begin(), opponentLabels.end()}, "opponentLabelWidths");
 }
 
 // ---------------------------------------------------------------------------
@@ -254,7 +524,10 @@ class Decoder {
             }
             if (isIdentifierStart(current())) {
                 const std::string identifier = readIdentifier();
-                if (identifier == "uint8_t" && !carrayDeclaration(symbol)) return std::nullopt;
+                if (identifier == "uint8_t") {
+                    if (!carrayDeclaration(symbol)) return std::nullopt;
+                    if (!symbol.empty() && found_) return bytes_;
+                }
                 continue;
             }
             ++position_;
@@ -800,6 +1073,8 @@ int main(int argc, char **argv) {
         }
         report.fail(label, describeMismatch(expected, *image, address));
     }
+
+    checkArenaCatalog<Decoder>(report, root, addresses, *image);
 
     std::cout << "generated-libs: " << images << " image entries covered by pack parity\n";
     return report.finish("generated-libs");
