@@ -313,6 +313,7 @@ test-generated-libs:
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) tst/generated/generated_libs_test.cpp -o "$(GENERATED_TEST_BIN)"
 	"$(GENERATED_TEST_BIN)" . "$(FX_LAYOUT)" src/fxdata.h "$(FXDATA_DIST_DIR)/fxdata-data.bin"
 	./tools/tests/generated-libs_test.sh
+	./tools/tests/arena-demo-data_test.sh
 	./tools/tests/first-unqualified-alias_test.sh
 
 test-doctor:

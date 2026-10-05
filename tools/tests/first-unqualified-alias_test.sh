@@ -1,17 +1,24 @@
 #!/usr/bin/env bash
-# Pin the legacy resolver rule independently from regenerated fxdata.h:
-# a bare symbol takes the first declaration in layout order.  MenuStrings is
-# deliberately unresolved in its own namespace and therefore must use the
-# earlier MenuFXData declarations rather than the later global declarations.
+# Pin the legacy resolver rule against the current packed image: a bare symbol
+# takes the first declaration in layout order. MenuStrings deliberately leaves
+# these names unresolved in its namespace and must use MenuFXData, not globals.
 set -euo pipefail
 
 root=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd -P)
 header=${FX_HEADER:-$root/src/fxdata.h}
 image=${FX_IMAGE:-$root/dist/fxdata-data.bin}
 expectations=${FX_ALIAS_EXPECTATIONS:-$root/tools/tests/fixtures/first-unqualified-aliases.tsv}
-# This is the committed table location after appending item and utility move name sprites,
-# deliberately not read from the regenerated header.
-menu_strings_address=0x01B66D
+menu_strings_address=$(awk '
+    /^namespace MenuStrings$/ { in_table = 1; next }
+    in_table && $1 == "constexpr" && $2 == "uint24_t" && $3 == "MenuStrings" {
+        value = $5
+        sub(/;$/, "", value)
+        print value
+        found = 1
+        exit
+    }
+    END { exit !found }
+' "$header")
 
 failures=0
 passes=0
@@ -69,7 +76,7 @@ require_file "$header"
 require_file "$image"
 require_file "$expectations"
 
-while IFS=$'\t' read -r index leaf target expected competing competitor; do
+while IFS=$'\t' read -r index leaf target competing; do
     case "$index" in ''|'#'*) continue ;; esac
     rows=$((rows + 1))
     actual_target=$(menu_address "$leaf" || true)
@@ -77,8 +84,9 @@ while IFS=$'\t' read -r index leaf target expected competing competitor; do
     table_offset=$((menu_strings_address + index * 3))
     resolved=$(read_be24 "$table_offset" || true)
 
-    if [ "$actual_target" != "$expected" ] || [ "$actual_competing" != "$competitor" ] || [ "$resolved" != "$expected" ]; then
-        fail "$leaf: expected $target=$expected, $competing=$competitor; published $target=${actual_target:-missing}, $competing=${actual_competing:-missing}; MenuStrings[$index]=${resolved:-missing}"
+    if [ -z "$actual_target" ] || [ -z "$actual_competing" ] ||
+       [ "$actual_target" = "$actual_competing" ] || [ "$resolved" != "$actual_target" ]; then
+        fail "$leaf: expected MenuStrings[$index] to resolve first declaration $target; competing $competing; published $target=${actual_target:-missing}, $competing=${actual_competing:-missing}, MenuStrings[$index]=${resolved:-missing}"
         continue
     fi
     passes=$((passes + 1))

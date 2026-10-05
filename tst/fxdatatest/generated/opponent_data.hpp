@@ -99,5 +99,30 @@ const OpponentSeed opponentSeeds[] PROGMEM = {
         { 30, 31, 0xFFFF0100UL },
         { 31, 31, 0xFFFF0100UL },
     },
+    {
+        { 3, 31, 0xFFFF0C0DUL },
+        { 6, 31, 0xFFFF0504UL },
+        { 0, 31, 0xFFFF0908UL },
+    },
+    {
+        { 18, 31, 0x1B061804UL },
+        { 16, 31, 0xFF09110CUL },
+        { 28, 31, 0x2A110910UL },
+    },
+    {
+        { 14, 31, 0x0D29020CUL },
+        { 5, 31, 0x0C15140DUL },
+        { 8, 31, 0x06110704UL },
+    },
+    {
+        { 9, 31, 0xFFFF2502UL },
+        { 12, 31, 0xFF182B1BUL },
+        { 13, 31, 0x0A27170BUL },
+    },
+    {
+        { 31, 31, 0x1B0F171FUL },
+        { 29, 31, 0x1C030A1DUL },
+        { 30, 31, 0x000C111DUL },
+    },
 };
-constexpr uint8_t opponentSeedCount = 19;
+constexpr uint8_t opponentSeedCount = 24;

@@ -4,7 +4,7 @@
 source = { expand = { path = "../../../fxdata/data/encounters.txt", exclude = ["zoneDefs", "tables"] } }
 
 [[entry]]
-source = { expand = { path = "../../../fxdata/generated/opponents.txt" } }
+source = { expand = { path = "opponents-legacy-19.txt" } }
 
 [[entry]]
 source = { expand = { path = "../../../fxdata/data/creatureData.txt" } }

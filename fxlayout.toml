@@ -75,6 +75,9 @@ source = { raw = "fxdata/generated/tool_version.bin" }
 name = "scripts"
 source = { raw = "fxdata/generated/scripts.bin" }
 
+[[entry]]
+source = { expand = { path = "fxdata/generated/arena_demo.txt" } }
+
 [save]
 sectors = 8
 
