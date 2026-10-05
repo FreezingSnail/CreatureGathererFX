@@ -4344,3 +4344,34 @@ provenance and generated descriptor digests. Existing `writer/bin.rs`
 unused-import warning remains unrelated. Worker elapsed time approximately 30
 minutes (includes interrupted patch calls); no packed FX or AVR resource delta
 in this tool bead.
+
+## CreatureGathererFX-2cy.4
+
+Authored `data/arena-demo.toml` with 3 player teams and 5 opponent teams, and
+appended five matching level-31 `jimbo` rows to `data/opponents.csv`. Every
+species and move spelling, including case-sensitive `torrent`/`Torrent`,
+`Sharpen`, `Ironbody`, `deepthought`, `rejuvinate`, `elderBurst`, and
+`elderSlam`, appears in the canonical JSON name lists. Existing CSV rows and
+their order were preserved; the old final row gained the newline required
+before appending.
+
+```text
+jq -r '.[].name' data/json/creatures.json
+jq -r '.[].name' data/json/moves.json
+rg -n '^' data/opponents.csv data/arena-demo.toml
+# PASS: all authored names found; 25 CSV lines total (header + 20 old + 5 new).
+awk -F, 'NR >= 21 { if (NF != 19 || $4 != 31 || $5 != 31 || $6 != 31) bad=1 } END { if (NR != 25) bad=1; if (!bad) print "PASS: five rows, 19 columns, all levels 31"; exit bad }' data/opponents.csv
+# PASS: 5/5 rows have 19 fields and three level-31 members.
+diff -u <(git show HEAD:data/opponents.csv) <(head -n 20 data/opponents.csv)
+# PASS: existing row text/order identical; only prior missing EOF newline normalized.
+cd /Users/connorfranc/code/CreatureGathererTools && cargo build -p cgfx-core --bin cgfx-tools
+# PASS; existing unrelated writer/bin.rs unused-import warning.
+target/debug/cgfx-tools --opponents-csv /Users/connorfranc/code/CreatureGathererFX/data/opponents.csv --opponents-output /private/tmp/arena-roster-catalog
+# BLOCKED at line 22: unknown move "deepthought". The loader also lacks mappings
+# for requested canonical opponent moves Ironbody, Sharpen, and rejuvinate.
+```
+
+The loader mismatch is assigned for a separate fix before catalog integration
+bead .5; no requested species or move was substituted. Source acceptance passed.
+Worker elapsed time approximately 8 minutes; no generation, packed-image, or
+AVR budget measurements in this data-only bead.
