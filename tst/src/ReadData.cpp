@@ -70,17 +70,3 @@ CreatureData_t getCreatureFromStore(uint8_t id) {
     cseed = CSVCreatureConvert(csvCreature);
     return cseed;
 }
-
-void arenaLoad(Creature *creature, uint24_t addr, uint8_t lvl) {
-    uint8_t record[5];
-    FxRead::bytes(addr, record, sizeof(record));
-    creature->id = record[0];
-    CreatureData_t cSeed = getCreatureFromStore(creature->id);
-
-    creature->loadTypes(cSeed);
-    creature->level = lvl;
-    creature->setStats(cSeed);
-    for (uint8_t slot = 0; slot < 4; ++slot) {
-        creature->setMove(record[slot + 1], slot);
-    }
-}

@@ -34,21 +34,6 @@ void MenuNavTest(TestSuite &suite) {
         }
     }
 
-    const MenuDesc &arena = menuDescFor(ARENA_MENU);
-    test.assert(arena.itemCount, static_cast<uint8_t>(31), "arena item count");
-    test.assert(arena.cols, static_cast<uint8_t>(1), "arena column count");
-    test.assert(arena.wrap, static_cast<uint8_t>(0), "arena does not wrap");
-    test.assert(menuNavMove(arena, 0, MENU_NAV_LEFT), static_cast<uint8_t>(0),
-                 "arena left edge clamps");
-    test.assert(menuNavMove(arena, 0, MENU_NAV_UP), static_cast<uint8_t>(0),
-                 "arena upper edge clamps");
-    test.assert(menuNavMove(arena, 30, MENU_NAV_RIGHT), static_cast<uint8_t>(30),
-                 "arena right edge does not wrap");
-    test.assert(menuNavMove(arena, 30, MENU_NAV_DOWN), static_cast<uint8_t>(30),
-                 "arena lower edge does not wrap");
-    test.assert(menuNavMove(arena, 5, MENU_NAV_DOWN), static_cast<uint8_t>(6),
-                 "arena moves by one row");
-
     const MenuDesc one = {1, 2, 1};
     test.assert(menuNavMove(one, 0, MENU_NAV_LEFT | MENU_NAV_RIGHT | MENU_NAV_UP |
                                       MENU_NAV_DOWN),

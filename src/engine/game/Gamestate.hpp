@@ -3,7 +3,6 @@
 typedef enum State {
     WORLD = 0,
     BATTLE = 1,
-    ARENA = 2,
     SAVING = 3,
 } GameState_t;
 

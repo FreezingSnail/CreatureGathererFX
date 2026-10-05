@@ -274,7 +274,6 @@ MenuIntent MenuV2::update(uint8_t edgeButtons) {
         }
 
     case WORLD_OPTIONS:
-    case ARENA_MENU:
     default:
         return noIntent();
     }

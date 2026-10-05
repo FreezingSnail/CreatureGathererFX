@@ -4056,3 +4056,31 @@ PASS. Host154768/0, world190/0, VM42/0; all FX suites pass, including
 
 Worker time approximately 5 minutes each; integrated gate approximately
 2 minutes including the serial-timeout rerun. No commits or pushes.
+
+## CreatureGathererFX-jp8.3.12 — stale arena cleanup checkpoint (2026-10-05)
+
+Removed the remaining `arenaLoad` declaration/implementation and host/device
+callers, the arena menu/state entries, and unused rental helpers/state from
+`MenuV2`. Kept generated `arena_data.hpp` because `tools/emit-rust-teams.sh`
+uses it to assemble team data. Kept `readOpponentSeed` and its permanent FX
+opponent suite. Source/test audit found no `BattleEngine`, event-stack/player,
+`legacyBattle`, `arenaLoad`, arena menu, or rental helper references; remaining
+legacy names are historical contract text in `docs/battle-action-contract.md`.
+
+Focused verification after the parallel `.16` edits settled:
+- `make test`: PASS, host **154751 / 0**, world **190 / 0**.
+- `make build`: PASS, flash **27896 B**, static RAM **1841 B**, project static
+  headroom **319 B**; physical free SRAM **719 B**.
+- `make ram`: PASS, same shipping figures.
+- `make fxtest-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_battlepresentation.ino ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens`:
+  presenter **102 / 0**, painted headroom **354 B**, effective **285 B**;
+  `test_stack` **4 / 0**, painted stack headroom **335 B**. ActionResult **28 B**,
+  BattlePresenter **24 B**; AVR static mode size remains compile-time bounded to
+  the **191 B** world overlay.
+
+Combined current image versus recorded committed `.16` baseline
+(32152 B flash / 2015 B static RAM): **-4256 B flash / -174 B static RAM**.
+The `.16` worker's integrated figures were 27906 B / 1852 B; this post-cleanup
+build measures 27896 B / 1841 B. Parent rerun of the integrated final gate is
+still required before bead closure. Worker implementation and focused-command
+time: approximately **6 min total**; commands above took about **25 s**.
