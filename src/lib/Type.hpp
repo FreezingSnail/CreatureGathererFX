@@ -1,6 +1,12 @@
 #pragma once
 #include <stdint.h>
 #include "Effect.hpp"
+#ifdef __AVR__
+#include <avr/pgmspace.h>
+#define TYPE_TABLE_STORAGE PROGMEM
+#else
+#define TYPE_TABLE_STORAGE
+#endif
 
 // represented as a nibble 0-15 range
 enum class Type {
@@ -81,7 +87,7 @@ static uint16_t applyMod(uint16_t value, Modifier modifier) {
 }
 
 // TODO: Move to FX data
-const Modifier typeTable[TypeCount][TypeCount] = {
+const Modifier typeTable[TypeCount][TypeCount] TYPE_TABLE_STORAGE = {
     // Spirit
     {
         Modifier::Same,   // Spirit
@@ -182,37 +188,21 @@ static Modifier getModifier(Type attackType, Type defendingType) {
     if (defendingType == Type::NONE) {
         return Modifier::Same;
     }
-    return (attackType == Type::NONE) ? Modifier::None : static_cast<Modifier>((typeTable[static_cast<uint8_t>(attackType)][static_cast<uint8_t>(defendingType)]));
+    if (attackType == Type::NONE) return Modifier::None;
+#ifdef __AVR__
+    return static_cast<Modifier>(pgm_read_byte(
+        &typeTable[static_cast<uint8_t>(attackType)][static_cast<uint8_t>(defendingType)]));
+#else
+    return typeTable[static_cast<uint8_t>(attackType)][static_cast<uint8_t>(defendingType)];
+#endif
 }
 
 static Modifier combineModifier(Modifier a, Modifier b) {
-    if (a == Modifier::None || b == Modifier::None) {
-        return Modifier::None;
-    }
-    switch (a) {
-    case Modifier::Same:
-        return b;
-    case Modifier::Half:
-        switch (b) {
-        case Modifier::Double:
-            return Modifier::Same;
-        case Modifier::Half:
-            return Modifier::Quarter;
-        default:
-            return Modifier::Half;
-        }
-    case Modifier::Double:
-        switch (b) {
-        case Modifier::Double:
-            return Modifier::Quadruple;
-        case Modifier::Half:
-            return Modifier::Same;
-        default:
-            return Modifier::Double;
-        }
-    }
-
-    return Modifier::None;
+    if (a == Modifier::None || b == Modifier::None) return Modifier::None;
+    int8_t exponent = static_cast<int8_t>(a) + static_cast<int8_t>(b) - 6;
+    if (exponent < -2) exponent = -2;
+    if (exponent > 2) exponent = 2;
+    return static_cast<Modifier>(exponent + 3);
 }
 
 static Modifier getModifier(Type attackType, DualType defendingType) {
@@ -227,103 +217,20 @@ static uint16_t applyModifier(uint16_t baseValue, Type attackType, DualType defe
     return baseValue;
 }
 
+// Elemental suppression/boost effects follow the eight elemental types in order.
 static Modifier typeEffectModifier(Effect effect, DualType type) {
-    DualType modType = DualType(Type::NONE, Type::NONE);
-    bool increase;
-    switch (effect) {
-    case Effect::NONE:
-        return Modifier::Same;
-    case Effect::DPRSD:
-        increase = false;
-        modType = DualType(Type::SPIRIT, Type::NONE);
-        break;
-    case Effect::SOAKED:
-        increase = false;
-        modType = DualType(Type::WATER, Type::NONE);
-        break;
-    case Effect::BUFTD:
-        increase = false;
-        modType = DualType(Type::WIND, Type::NONE);
-        break;
-    case Effect::SOILED:
-        increase = false;
-        modType = DualType(Type::EARTH, Type::NONE);
-        break;
-    case Effect::SCRCHD:
-        increase = false;
-        modType = DualType(Type::FIRE, Type::NONE);
-        break;
-    case Effect::ZAPPED:
-        increase = false;
-        modType = DualType(Type::LIGHTNING, Type::NONE);
-        break;
-    case Effect::TANGLD:
-        increase = false;
-        modType = DualType(Type::PLANT, Type::NONE);
-        break;
-    case Effect::REDCD:
-        increase = false;
-        modType = DualType(Type::ELDER, Type::NONE);
-        break;
-    case Effect::ENLTND:
-        increase = true;
-        modType = DualType(Type::SPIRIT, Type::NONE);
-        break;
-    case Effect::DRNCHD:
-        increase = true;
-        modType = DualType(Type::WATER, Type::NONE);
-        break;
-    case Effect::AIRSWPT:
-        increase = true;
-        modType = DualType(Type::WIND, Type::NONE);
-        break;
-    case Effect::GRNDED:
-        increase = true;
-        modType = DualType(Type::EARTH, Type::NONE);
-        break;
-    case Effect::KINDLD:
-        increase = true;
-        modType = DualType(Type::FIRE, Type::NONE);
-        break;
-    case Effect::CHRGD:
-        increase = true;
-        modType = DualType(Type::LIGHTNING, Type::NONE);
-        break;
-    case Effect::ENRCHD:
-        increase = true;
-        modType = DualType(Type::PLANT, Type::NONE);
-        break;
-    case Effect::EVOLVD:
-        increase = true;
-        modType = DualType(Type::ELDER, Type::NONE);
-        break;
-    default:
+    const uint8_t id = static_cast<uint8_t>(effect);
+    if (id > static_cast<uint8_t>(Effect::EVOLVD) ||
+        !type.hasType(static_cast<Type>(id & 7u))) {
         return Modifier::Same;
     }
-
-    if (!type.hasType(modType.getType1())) {
-        return Modifier::Same;
-    }
-    if (increase) {
-        return Modifier::Double;
-    } else {
-        return Modifier::Half;
-    }
+    return id < static_cast<uint8_t>(Effect::ENLTND)
+        ? Modifier::Half : Modifier::Double;
 }
 
 static Modifier inverseModifier(Modifier mod) {
-    switch (mod) {
-    case Modifier::Same:
-        return Modifier::Same;
-    case Modifier::Half:
-        return Modifier::Double;
-    case Modifier::Double:
-        return Modifier::Half;
-    case Modifier::Quarter:
-        return Modifier::Quadruple;
-    case Modifier::Quadruple:
-        return Modifier::Quarter;
-    default:
-        return Modifier::None;
-    }
+    const uint8_t value = static_cast<uint8_t>(mod);
+    return value >= static_cast<uint8_t>(Modifier::Quarter) &&
+           value <= static_cast<uint8_t>(Modifier::Quadruple)
+        ? static_cast<Modifier>(6u - value) : Modifier::None;
 }

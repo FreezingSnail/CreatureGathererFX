@@ -35,10 +35,13 @@ struct Combatant {
     uint8_t moveIds[4];
     StatusEffect status;
     StatModifer statMods;
+    uint8_t effectTurns = 0; // Two bits per status slot; zero is untimed.
 };
 
 struct BenchSlot {
     uint8_t id, level, hp;
+    DualType types;
+    uint8_t defense, specialDefense;
 };
 
 struct GatherState {
@@ -49,14 +52,20 @@ struct BattleState {
     Combatant active[2];
     BenchSlot bench[2][PARTY_SIZE - 1];
     uint8_t partyCount[2], activeSlot[2];
+    // Two bits per move slot, indexed by original party slot (not bench order).
+    uint8_t moveUsesSpent[2][PARTY_SIZE] = {};
+    uint16_t partyModifiers[2][PARTY_SIZE] = {};
     GatherState gather;
-    bool gatherable, trainer, over;
+    uint8_t gatherable : 1;
+    uint8_t trainer : 1;
+    uint8_t over : 1;
+    uint8_t switchLockMask : 2;
     uint8_t trainerId;
 };
 
 #ifdef __AVR__
-static_assert(sizeof(Combatant) == 35, "active combatant AVR contract");
-static_assert(sizeof(BattleState) == 94, "battle state AVR contract");
+static_assert(sizeof(Combatant) == 36, "active combatant AVR contract");
+static_assert(sizeof(BattleState) == 124, "battle state AVR contract");
 #endif
 
 } // namespace battle

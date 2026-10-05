@@ -1144,6 +1144,54 @@ name = "amove32"
 source = { carray = { path = "../../../fxdata/generated/Sprites.txt", symbol = "amove32" } }
 
 [[entry]]
+name = "amove33"
+source = { carray = { path = "../../../fxdata/generated/Sprites.txt", symbol = "amove33" } }
+
+[[entry]]
+name = "amove34"
+source = { carray = { path = "../../../fxdata/generated/Sprites.txt", symbol = "amove34" } }
+
+[[entry]]
+name = "amove35"
+source = { carray = { path = "../../../fxdata/generated/Sprites.txt", symbol = "amove35" } }
+
+[[entry]]
+name = "amove36"
+source = { carray = { path = "../../../fxdata/generated/Sprites.txt", symbol = "amove36" } }
+
+[[entry]]
+name = "amove37"
+source = { carray = { path = "../../../fxdata/generated/Sprites.txt", symbol = "amove37" } }
+
+[[entry]]
+name = "amove38"
+source = { carray = { path = "../../../fxdata/generated/Sprites.txt", symbol = "amove38" } }
+
+[[entry]]
+name = "amove39"
+source = { carray = { path = "../../../fxdata/generated/Sprites.txt", symbol = "amove39" } }
+
+[[entry]]
+name = "amove40"
+source = { carray = { path = "../../../fxdata/generated/Sprites.txt", symbol = "amove40" } }
+
+[[entry]]
+name = "amove41"
+source = { carray = { path = "../../../fxdata/generated/Sprites.txt", symbol = "amove41" } }
+
+[[entry]]
+name = "amove42"
+source = { carray = { path = "../../../fxdata/generated/Sprites.txt", symbol = "amove42" } }
+
+[[entry]]
+name = "amove43"
+source = { carray = { path = "../../../fxdata/generated/Sprites.txt", symbol = "amove43" } }
+
+[[entry]]
+name = "amove44"
+source = { carray = { path = "../../../fxdata/generated/Sprites.txt", symbol = "amove44" } }
+
+[[entry]]
 name = "damageText"
 source = { carray = { path = "../../../fxdata/generated/Sprites.txt", symbol = "damageText" } }
 

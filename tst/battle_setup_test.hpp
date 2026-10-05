@@ -1,6 +1,7 @@
 #pragma once
 
 #include "test.hpp"
+#include "../src/lib/MoveIds.hpp"
 #include "../src/engine/battle/BattleSetup.hpp"
 #include "../src/lib/ReadData.hpp"
 #include "../src/player/Player.hpp"
@@ -31,8 +32,8 @@ void assertAuthoredTrainer(Test &test, const battle::BattleState &state,
         const uint8_t expected = packedMoveByte(seed.moves, position);
         test.assert(parseOpponentCreatureSeedMove(seed.moves, position), expected,
                     "decoder matches independent 32-bit byte extraction");
-        test.assert(active.moveIds[position], expected, context);
-        if (expected == 255) {
+        test.assert(active.moveIds[position], battleMoveId(expected), context);
+        if (!validMoveId(expected)) {
             test.assert(active.moves[position].move, static_cast<uint16_t>(0),
                         "empty trainer move has a zero descriptor");
             test.assert(active.moves[position].effect1, Effect::NONE,

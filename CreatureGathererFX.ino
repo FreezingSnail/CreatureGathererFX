@@ -98,7 +98,11 @@ void setup() {
 #ifdef CGFX_TRAINER_DEMO
     gameState.playerLocation = static_cast<uint16_t>(3) |
                                (static_cast<uint16_t>(2) << 8);
-#ifdef CGFX_TRAINER_DEMO_SWITCH_DRILL
+#if defined(CGFX_TRAINER_DEMO_UTILITY)
+    battle::applyPlayerPreset(player, BattlePresets::utility);
+    const BattlePresets::Preset preset =
+        BattlePresets::copyPreset(BattlePresets::utility);
+#elif defined(CGFX_TRAINER_DEMO_SWITCH_DRILL)
     battle::applyPlayerPreset(player, BattlePresets::switch_drill);
     const BattlePresets::Preset preset =
         BattlePresets::copyPreset(BattlePresets::switch_drill);

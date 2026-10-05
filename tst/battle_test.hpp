@@ -9,8 +9,8 @@
 
 static_assert(sizeof(Move) == 4, "packed move must remain four bytes");
 static_assert(sizeof(StatusEffect) == 2, "two status slots must remain two bytes");
-static_assert(sizeof(battle::BenchSlot) == 3, "bench carries only ID, level and HP");
-static_assert(sizeof(battle::BattleState) <= 100, "native state stays compact");
+static_assert(sizeof(battle::BenchSlot) == 6, "bench caches defensive profile");
+static_assert(sizeof(battle::BattleState) <= 128, "native state includes cached switch defense profiles");
 static_assert(sizeof(battle::BattleAction) == 2, "action is kind and index");
 static_assert(sizeof(battle::TurnPlan) == 4, "two actions only");
 static_assert(sizeof(battle::GatherState) == 4, "gather facts are byte sized");
@@ -115,8 +115,8 @@ void BattleDamageIntegrationTest(TestSuite &suite)
 
     Combatant attacker = combatant(Type::WIND);
     Combatant defender = combatant(Type::SPIRIT);
-    test.addToLog("known damage expected=80 from power10 attack40 defense20 STAB");
-    test.assert(computeDamage(attacker, defender, 0), static_cast<uint8_t>(80),
+    test.addToLog("known damage expected=40 from power10 attack40 defense20 half-base STAB");
+    test.assert(computeDamage(attacker, defender, 0), static_cast<uint8_t>(40),
                 "known damage value");
 
     attacker = combatant(Type::SPIRIT);
@@ -124,7 +124,7 @@ void BattleDamageIntegrationTest(TestSuite &suite)
     attacker.stats.spcAtk = 12;
     defender.stats.spcDef = 6;
     attacker.moves[0] = makeMove(Type::FIRE, 10, false);
-    test.assert(computeDamage(attacker, defender, 0), static_cast<uint8_t>(40),
+    test.assert(computeDamage(attacker, defender, 0), static_cast<uint8_t>(20),
                 "special move selects special attack and defense");
 
     attacker = combatant(Type::SPIRIT);
@@ -133,7 +133,7 @@ void BattleDamageIntegrationTest(TestSuite &suite)
     test.assert(computeDamage(attacker, defender, 0), static_cast<uint8_t>(0),
                 "type immunity returns zero");
     defender.types = DualType(Type::WIND, Type::NONE);
-    test.assert(computeDamage(attacker, defender, 0), static_cast<uint8_t>(80),
+    test.assert(computeDamage(attacker, defender, 0), static_cast<uint8_t>(40),
                 "type double modifier applies");
     defender.types = DualType(Type::WIND, Type::WATER);
     test.assert(computeDamage(attacker, defender, 0), static_cast<uint8_t>(0),
@@ -142,21 +142,21 @@ void BattleDamageIntegrationTest(TestSuite &suite)
     attacker = combatant(Type::WIND);
     defender = combatant(Type::SPIRIT);
     attacker.status.effects[0] = Effect::BUFTD;
-    test.assert(computeDamage(attacker, defender, 0), static_cast<uint8_t>(40),
+    test.assert(computeDamage(attacker, defender, 0), static_cast<uint8_t>(20),
                 "attacker type-down cancels same-type bonus");
     attacker.status.clearEffects();
     defender.status.effects[0] = Effect::DPRSD;
-    test.assert(computeDamage(attacker, defender, 0), static_cast<uint8_t>(160),
+    test.assert(computeDamage(attacker, defender, 0), static_cast<uint8_t>(80),
                 "defender type-down is inverted for damage");
 
     attacker = combatant(Type::WIND);
     defender = combatant(Type::SPIRIT);
     attacker.statMods.setModifier(StatType::ATTACK_M, 1);
-    test.assert(computeDamage(attacker, defender, 0), static_cast<uint8_t>(120),
+    test.assert(computeDamage(attacker, defender, 0), static_cast<uint8_t>(60),
                 "attacker stage scales attack term");
     attacker.statMods.clearModifiers();
     defender.statMods.setModifier(StatType::DEFENSE_M, 1);
-    test.assert(computeDamage(attacker, defender, 0), static_cast<uint8_t>(52),
+    test.assert(computeDamage(attacker, defender, 0), static_cast<uint8_t>(26),
                 "defender stage scales defense term");
 
     attacker = combatant(Type::SPIRIT);
@@ -167,8 +167,13 @@ void BattleDamageIntegrationTest(TestSuite &suite)
     test.assert(computeDamage(attacker, defender, 0), static_cast<uint8_t>(1),
                 "nonimmune damage floors at one");
     defender.stats.defense = 1;
-    test.assert(computeDamage(attacker, defender, 0), static_cast<uint8_t>(2),
+    test.assert(computeDamage(attacker, defender, 0), static_cast<uint8_t>(1),
                 "defense one clamps divisor instead of dividing by zero");
+
+    attacker.stats.attack = 3;
+    attacker.moves[0] = makeMove(Type::SPIRIT, 5, true);
+    test.assert(computeDamage(attacker, defender, 0), static_cast<uint8_t>(14),
+                "half-base rounds down before same-type multiplier");
 
     attacker = combatant(Type::NONE);
     attacker.stats.attack = 255;

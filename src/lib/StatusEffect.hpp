@@ -6,6 +6,8 @@ class StatusEffect {
     Effect effects[2] = {Effect::NONE, Effect::NONE};
 
     bool applyEffect(Effect effect) {
+        if (effect == Effect::NONE || effects[0] == effect || effects[1] == effect)
+            return false;
         if (effects[0] == Effect::NONE) {
             effects[0] = effect;
             return true;

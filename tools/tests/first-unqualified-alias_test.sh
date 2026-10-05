@@ -9,9 +9,9 @@ root=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd -P)
 header=${FX_HEADER:-$root/src/fxdata.h}
 image=${FX_IMAGE:-$root/dist/fxdata-data.bin}
 expectations=${FX_ALIAS_EXPECTATIONS:-$root/tools/tests/fixtures/first-unqualified-aliases.tsv}
-# This is the committed table location after appending item name sprites,
+# This is the committed table location after appending item and utility move name sprites,
 # deliberately not read from the regenerated header.
-menu_strings_address=0x01B2A7
+menu_strings_address=0x01B66D
 
 failures=0
 passes=0

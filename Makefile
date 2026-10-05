@@ -1,4 +1,4 @@
-.PHONY: help setup doctor plant test test-debug testvm testvm-debug gen gen-data gen-sprites gen-fixtures pack full build mini ram run dev check final-gate verify-generated test-manifest test-generated-libs test-doctor test-fxtest-ram test-avr-build-budget fxtest fxtest-headless fxtest-spike fxtest-preflight fxtest-headless-preflight fxtest-build fxtest-run new-fxtest
+.PHONY: help setup doctor plant test test-debug testvm testvm-debug sim sim-test gen gen-data gen-sprites gen-fixtures pack full build mini ram run dev check final-gate verify-generated test-manifest test-generated-libs test-doctor test-fxtest-ram test-avr-build-budget fxtest fxtest-headless fxtest-spike fxtest-preflight fxtest-headless-preflight fxtest-build fxtest-run new-fxtest
 
 # Public command API. Override tool, board, and output variables per workspace/CI.
 CXX ?= g++
@@ -38,12 +38,15 @@ RUN_DISPLAY ?= ssd1306
 FX_LAYOUT ?= fxlayout.toml
 FXDATA_MANIFEST ?= fxdata/generated/manifest.json
 FXDATA_DIST_DIR ?= $(DIST_DIR)
-ARDENS ?=
+ARDENS ?= $(shell command -v Ardens 2>/dev/null)
 FXTEST_MS ?= 3000
 FXTEST_RAM_BUDGET ?= 2160
 FXTEST_BUILD_DIR ?= $(BUILD_DIR)/fxtest
 FINAL_GATE_LOG_DIR ?= $(BUILD_DIR)/final-gate
 HOST_TEST_BIN ?= $(BUILD_DIR)/tests/host
+SIM_TEST_BIN ?= $(BUILD_DIR)/tests/battle-sim-state
+BATTLE_SIM_BIN ?= $(BUILD_DIR)/tools/battle-sim/battle-sim
+SIM_ARGS ?= --mode anchors --seed 1 --trials 1 --policy both --max-turns 100
 WORLD_TEST_BIN ?= $(BUILD_DIR)/tests/world
 VM_TEST_BIN ?= $(BUILD_DIR)/tests/vm
 GENERATED_TEST_BIN ?= $(BUILD_DIR)/tests/generated
@@ -64,6 +67,8 @@ help:
 		'  doctor   report local tool readiness; prerequisite: tools/doctor.sh' \
 		'  gen      package committed/generated FX inputs; prerequisite: cgfx-tools; output: $(DIST_DIR)/fxdata.bin' \
 		'  test     run fast host C++ tests; prerequisite: $(CXX); output: $(HOST_TEST_BIN)' \
+		'  sim      compile and run the host BattleSession batch simulator; output: $(BATTLE_SIM_BIN)' \
+		'  sim-test run host C++ tests with the fixture-backed BATTLE_SIMULATOR seam; output: $(SIM_TEST_BIN)' \
 		'  testvm   run fast ScriptVM C++ tests; prerequisite: $(CXX); output: $(VM_TEST_BIN)' \
 		'  build    compile Arduboy FX sketch; prerequisite: $(ARDUINO_CLI); output: $(BUILD_DIR)' \
 		'  ram      build and report FX flash/RAM plus largest static symbols; prerequisite: $(ARDUINO_CLI), avr-size, avr-nm' \
@@ -215,7 +220,30 @@ run: build
 	    file="$(FXDATA_DATA_BIN)" \
 	    save="$(FXDATA_SAVE_BIN)"
 
-# Full interactive loop: fresh FX data, fresh sketch, then Ardens. Sequenced
+# Opt-in trainer battle demo. Keeps demo firmware/cart/save isolated from the
+# normal development build and launches graphical Ardens directly.
+BATTLE_TEST_BUILD_DIR ?= build/trainer-demo
+BATTLE_TEST_CART_DIR ?= $(BATTLE_TEST_BUILD_DIR)/isolated
+BATTLE_TEST_CPP_FLAGS ?= $(AVR_RELAX_FLAGS) -DCGFX_SHIPPING_NO_USB -DCGFX_TRAINER_DEMO
+ifeq ($(BATTLE_TEST_SWITCH_DRILL),1)
+BATTLE_TEST_CPP_FLAGS += -DCGFX_TRAINER_DEMO_SWITCH_DRILL
+endif
+
+.PHONY: battle-test
+battle-test: gen
+	@test -n "$(ARDENS)" || { echo "battle-test: ARDENS is unset; set ARDENS=/path/to/Ardens" >&2; exit 1; }
+	@test -x "$(ARDENS)" || { echo "battle-test: Ardens executable not found at $(ARDENS)" >&2; exit 1; }
+	@$(MAKE) --no-print-directory build BUILD_DIR="$(BATTLE_TEST_BUILD_DIR)" AVR_SHIPPING_CPP_FLAGS="$(BATTLE_TEST_CPP_FLAGS)"
+	@mkdir -p "$(BATTLE_TEST_CART_DIR)"
+	@cp -f "$(FXDATA_DATA_BIN)" "$(BATTLE_TEST_CART_DIR)/fxdata-data.bin"
+	@cp -f "$(FXDATA_SAVE_BIN)" "$(BATTLE_TEST_CART_DIR)/fxdata-save.bin"
+	"$(ARDENS)" \
+	    fxport=$(RUN_FXPORT) display=$(RUN_DISPLAY) \
+	    file="$(BATTLE_TEST_BUILD_DIR)/CreatureGathererFX.ino.hex" \
+	    file="$(BATTLE_TEST_CART_DIR)/fxdata-data.bin" \
+	    save="$(BATTLE_TEST_CART_DIR)/fxdata-save.bin"
+
+# Full interactive loop: fresh FX data, normal sketch, then Ardens. Sequenced
 # through a sub-make so `make -j dev` cannot launch before generation finishes.
 dev: gen
 	@$(MAKE) --no-print-directory run
@@ -295,8 +323,32 @@ test-fxtest-ram:
 test-avr-build-budget:
 	./tools/tests/avr-build-budget_test.sh
 
+SIMULATOR_SOURCES = \
+	src/creature/Creature.cpp \
+	src/player/Player.cpp \
+	src/item/Inventory.cpp \
+	src/engine/battle/Ai.cpp \
+	src/engine/battle/Damage.cpp \
+	src/engine/battle/Effects.cpp \
+	src/engine/battle/Resolve.cpp \
+	src/engine/battle/BattleSession.cpp \
+	src/engine/battle/BattleSetup.cpp \
+	tools/battle-sim/SwitchPolicy.cpp \
+	tools/battle-sim/ScenarioBuilder.cpp \
+	tools/battle-sim/FixtureData.cpp \
+	tools/battle-sim/BatchRunner.cpp \
+	tools/battle-sim/SimulatorReports.cpp \
+	tools/battle-sim/main.cpp
+
 sim:
-	g++  -g -std=c++17 simulator/creature/Creature.cpp simulator/opponent/Opponent.cpp simulator/player/Player.cpp src/action/Action.cpp simulator/Battle.cpp simulator/main.cpp  -o simulator/simu.o
+	@mkdir -p "$(dir $(BATTLE_SIM_BIN))"
+	$(CXX) $(CPPFLAGS) -I tst/host $(CXXFLAGS) -DBATTLE_SIMULATOR $(SIMULATOR_SOURCES) -o "$(BATTLE_SIM_BIN)"
+	"$(BATTLE_SIM_BIN)" $(SIM_ARGS)
+
+# Reuse the permanent native suite with the simulator-only prepared-state API
+# enabled. The shipping build never receives BATTLE_SIMULATOR.
+sim-test:
+	$(call run_test,-DBATTLE_SIMULATOR,$(TEST_FLAGS),$(TEST_SOURCES) tools/battle-sim/SwitchPolicy.cpp tools/battle-sim/ScenarioBuilder.cpp tools/battle-sim/BatchRunner.cpp tools/battle-sim/SimulatorReports.cpp,$(SIM_TEST_BIN))
 
 test-pack-parity:
 	./tools/tests/pack-parity_test.sh

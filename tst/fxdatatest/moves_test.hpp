@@ -6,6 +6,8 @@
 #include "fxtest.hpp"
 #include "generated/move_data.hpp"
 #include "src/lib/ReadData.hpp"
+#include "src/lib/MoveIds.hpp"
+#include "src/lib/FxRead.hpp"
 
 /*
  * Empirical Ardens capture: generated moves.bin begins 05 00 FF FF and
@@ -21,7 +23,11 @@ void test_moves(FxTest &test) {
         MoveFixtureExpectation expected;
         memcpy_P(&expected, &moveFixtureExpectations[index], sizeof(expected));
 
-        Move move = readMoveFX(index);
+        const uint8_t id = index == 32 ? DELUGE_MOVE_ID :
+                           index >= 35 ? index + 1 : index;
+        Move move = index == 43
+                        ? Move(FxRead::indexed32(move_table + 4UL * index, 0))
+                        : readMoveFX(id);
         test.expectEqIdx(move.move, raw >> 16, F("move"), index);
         test.expectEqIdx(move.getMoveType(), expected.type, F("type"), index);
         test.expectEqIdx(move.getMovePower(), expected.power, F("power"), index);

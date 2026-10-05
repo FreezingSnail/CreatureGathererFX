@@ -141,9 +141,41 @@ void BattleAiIntegrationTest(TestSuite &suite)
     suite.addTest(test);
 }
 
+void BattleAiSwitchRiskTest(TestSuite &suite)
+{
+    using namespace battle;
+    using namespace battle_ai_test_detail;
+    Test test(__func__);
+    battle::BattleState state = stateFixture();
+    state.trainer = true;
+    state.partyCount[1] = 3;
+    state.active[0].hp = state.active[0].maxHp = 255;
+    state.active[1].hp = state.active[1].maxHp = 255;
+    state.active[1].stats.defense = 2;
+    setMove(state, Side::Player, 0, 10, Type::SPIRIT, 31);
+    setMove(state, Side::Opponent, 0, 20, Type::SPIRIT, 1);
+    state.bench[1][0] = {3, 1, 255, DualType(Type::SPIRIT), 14, 14};
+    state.bench[1][1] = {4, 1, 254, DualType(Type::SPIRIT), 14, 14};
+    BattleAction action = chooseAction(state, Side::Opponent);
+    test.assert(action.kind, ActionKind::Switch, "high-HP trainer switches to surviving defense");
+    test.assert(action.index, 1, "risk products above signed 16-bit range retain best candidate");
+    state.bench[1][1].hp = 255;
+    test.assert(chooseAction(state, Side::Opponent).index, 1,
+                "equal high-HP risk preserves original slot tie order");
+    state.switchLockMask = 2;
+    test.assert(chooseAction(state, Side::Opponent).kind, ActionKind::Attack,
+                "switch lock preserves required intervening attack");
+    state.switchLockMask = 0;
+    state.active[0].hp = 1;
+    test.assert(chooseAction(state, Side::Opponent).kind, ActionKind::Attack,
+                "lethal action still takes priority over defensive switching");
+    suite.addTest(test);
+}
+
 void BattleAiSuite(TestRunner &runner)
 {
     TestSuite suite("Battle AI integration");
     BattleAiIntegrationTest(suite);
+    BattleAiSwitchRiskTest(suite);
     runner.addTestSuite(suite);
 }

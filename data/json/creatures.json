@@ -294,7 +294,7 @@
     "hp": 4,
     "spd": 2,
     "move1": 13,
-    "move2": 32,
+    "move2": 12,
     "move3": 32,
     "move4": 32,
     "moveList": [
@@ -884,8 +884,8 @@
     "spcdef": 3,
     "hp": 9,
     "spd": 6,
-    "move1": 1,
-    "move2": 32,
+    "move1": 2,
+    "move2": 37,
     "move3": 32,
     "move4": 32,
     "moveList": [
@@ -985,7 +985,7 @@
     "hp": 4,
     "spd": 9,
     "move1": 19,
-    "move2": 32,
+    "move2": 16,
     "move3": 32,
     "move4": 32,
     "moveList": [
@@ -1202,9 +1202,9 @@
     "spcdef": 3,
     "hp": 6,
     "spd": 4,
-    "move1": 8,
-    "move2": 32,
-    "move3": 32,
+    "move1": 27,
+    "move2": 43,
+    "move3": 24,
     "move4": 32,
     "moveList": [
       {
@@ -1329,10 +1329,10 @@
     "spcdef": 3,
     "hp": 8,
     "spd": 8,
-    "move1": 10,
+    "move1": 11,
     "move2": 23,
-    "move3": 32,
-    "move4": 32,
+    "move3": 39,
+    "move4": 10,
     "moveList": [
       {
         "id": 1,
@@ -1456,10 +1456,10 @@
     "spcdef": 12,
     "hp": 11,
     "spd": 2,
-    "move1": 13,
+    "move1": 12,
     "move2": 2,
-    "move3": 32,
-    "move4": 32,
+    "move3": 41,
+    "move4": 13,
     "moveList": [
       {
         "id": 0,
@@ -1558,7 +1558,7 @@
     "spd": 8,
     "move1": 13,
     "move2": 17,
-    "move3": 32,
+    "move3": 12,
     "move4": 32,
     "moveList": [
       {
@@ -3343,9 +3343,9 @@
     "hp": 8,
     "spd": 13,
     "move1": 16,
-    "move2": 8,
+    "move2": 9,
     "move3": 17,
-    "move4": 10,
+    "move4": 42,
     "moveList": [
       {
         "id": 0,
@@ -3490,7 +3490,7 @@
     "move1": 29,
     "move2": 10,
     "move3": 3,
-    "move4": 25,
+    "move4": 28,
     "moveList": [
       {
         "id": 0,

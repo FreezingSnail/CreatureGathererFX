@@ -1,5 +1,7 @@
 // CreatureGathererFX-ffm: this TU is the sole battle setup FX-reader boundary.
 #include "BattleSetup.hpp"
+#include "MoveUses.hpp"
+#include "../../lib/MoveIds.hpp"
 #include "../../lib/ReadData.hpp"
 #include "../../lib/FxReadCounter.hpp"
 #include "../../player/Player.hpp"
@@ -31,16 +33,20 @@ void clearCombatant(Combatant &combatant)
     }
     combatant.status.clearEffects();
     combatant.statMods.clearModifiers();
+    combatant.effectTurns = 0;
 }
 
 void clearState(BattleState &state)
 {
+    resetMoveUses(state);
+    state.switchLockMask = 0;
+    for (uint8_t side = 0; side < 2; ++side)
+        for (uint8_t slot = 0; slot < PARTY_SIZE; ++slot)
+            state.partyModifiers[side][slot] = 0;
     for (uint8_t side = 0; side < 2; ++side) {
         clearCombatant(state.active[side]);
         for (uint8_t slot = 0; slot < PARTY_SIZE - 1; ++slot) {
-            state.bench[side][slot].id = 0;
-            state.bench[side][slot].level = 0;
-            state.bench[side][slot].hp = 0;
+            state.bench[side][slot] = {};
         }
         state.partyCount[side] = 0;
         state.activeSlot[side] = 0;
@@ -53,21 +59,6 @@ void clearState(BattleState &state)
     state.trainer = false;
     state.over = false;
     state.trainerId = 255;
-}
-
-void copyCreature(Combatant &destination, const Creature &source, uint8_t hp)
-{
-    clearCombatant(destination);
-    destination.id = source.id;
-    destination.types = source.types;
-    destination.level = source.level;
-    destination.hp = hp;
-    destination.maxHp = source.statlist.hp;
-    destination.stats = source.statlist;
-    for (uint8_t slot = 0; slot < 4; ++slot) {
-        destination.moves[slot] = source.moveList[slot];
-        destination.moveIds[slot] = source.moves[slot];
-    }
 }
 
 void loadSpecies(Creature &creature, uint8_t id, uint8_t level)
@@ -142,6 +133,12 @@ bool initializePlayer(BattleState &state)
             player.party[slot].level;
         state.bench[static_cast<uint8_t>(Side::Player)][benchSlot].hp =
             player.creatureHPs[slot];
+        const Creature &creature = player.party[slot];
+        state.bench[static_cast<uint8_t>(Side::Player)][benchSlot].types = creature.types;
+        state.bench[static_cast<uint8_t>(Side::Player)][benchSlot].defense =
+            creature.statlist.defense;
+        state.bench[static_cast<uint8_t>(Side::Player)][benchSlot].specialDefense =
+            creature.statlist.spcDef;
         ++benchSlot;
     }
     return true;
@@ -162,11 +159,19 @@ void setWildState(BattleState &state, bool gatherable, uint8_t tierRate,
     state.gather.tierRate = gatherable ? tierRate : 0;
 }
 
+uint8_t speciesCreatureReads(const Creature &creature)
+{
+    uint8_t reads = 1;
+    for (uint8_t slot = 0; slot < 4; ++slot)
+        if (validMoveId(creature.moves[slot])) ++reads;
+    return reads;
+}
+
 uint8_t trainerCreatureReads(const CreatureSeed &seed)
 {
     uint8_t reads = 1; // Species record.
     for (uint8_t move = 0; move < 4; ++move) {
-        if (parseOpponentCreatureSeedMove(seed.moves, move) != EMPTY_MOVE) {
+        if (validMoveId(parseOpponentCreatureSeedMove(seed.moves, move))) {
             ++reads;
         }
     }
@@ -193,6 +198,10 @@ uint8_t fillTrainer(BattleState &state, const OpponentSeed &seed, uint8_t count)
             creature.level;
         state.bench[static_cast<uint8_t>(Side::Opponent)][benchSlot].hp =
             creature.statlist.hp;
+        BenchSlot &cached = state.bench[static_cast<uint8_t>(Side::Opponent)][benchSlot];
+        cached.types = creature.types;
+        cached.defense = creature.statlist.defense;
+        cached.specialDefense = creature.statlist.spcDef;
     }
     return reads;
 }
@@ -209,6 +218,9 @@ void snapshotParty(const BattleState &state, Side side,
             slots[originalSlot].id = state.active[sideIndex].id;
             slots[originalSlot].level = state.active[sideIndex].level;
             slots[originalSlot].hp = state.active[sideIndex].hp;
+            slots[originalSlot].types = state.active[sideIndex].types;
+            slots[originalSlot].defense = state.active[sideIndex].stats.defense;
+            slots[originalSlot].specialDefense = state.active[sideIndex].stats.spcDef;
         } else {
             slots[originalSlot] = state.bench[sideIndex][benchSlot];
             ++benchSlot;
@@ -272,7 +284,7 @@ bool loadIncoming(const BattleState &state, Side side, uint8_t originalSlot,
     }
 
     loadSpecies(creature, slot.id, slot.level);
-    reads = 5;
+    reads = speciesCreatureReads(creature);
     copyCreature(incoming, creature, slot.hp);
     return true;
 }
@@ -289,6 +301,21 @@ bool validSwitchRequest(const BattleState &state, Side side,
 
 } // namespace
 
+void copyCreature(Combatant &destination, const Creature &source, uint8_t hp)
+{
+    clearCombatant(destination);
+    destination.id = source.id;
+    destination.types = source.types;
+    destination.level = source.level;
+    destination.hp = hp;
+    destination.maxHp = source.statlist.hp;
+    destination.stats = source.statlist;
+    for (uint8_t slot = 0; slot < 4; ++slot) {
+        destination.moves[slot] = source.moveList[slot];
+        destination.moveIds[slot] = battleMoveId(source.moves[slot]);
+    }
+}
+
 void beginWild(BattleState &state, uint8_t creatureId, uint8_t level,
                bool gatherable, uint8_t tierRate)
 {
@@ -303,7 +330,7 @@ void beginWild(BattleState &state, uint8_t creatureId, uint8_t level,
     loadSpecies(creature, creatureId, level);
     copyCreature(state.active[static_cast<uint8_t>(Side::Opponent)],
                  creature, creature.statlist.hp);
-    FxReadCounter::transitionExact(5);
+    FxReadCounter::transitionExact(speciesCreatureReads(creature));
     state.partyCount[static_cast<uint8_t>(Side::Opponent)] = 1;
     state.activeSlot[static_cast<uint8_t>(Side::Opponent)] = 0;
     state.trainer = false;
@@ -375,6 +402,9 @@ bool applySwitch(BattleState &state, Side side, uint8_t originalSlot,
     }
     FxReadCounter::transitionExact(reads);
 
+    state.partyModifiers[sideIndex][state.activeSlot[sideIndex]] =
+        state.active[sideIndex].statMods.modifiers;
+    incoming.statMods.modifiers = state.partyModifiers[sideIndex][originalSlot];
     state.active[sideIndex] = incoming;
     state.activeSlot[sideIndex] = originalSlot;
     uint8_t benchSlot = 0;
@@ -385,9 +415,7 @@ bool applySwitch(BattleState &state, Side side, uint8_t originalSlot,
         ++benchSlot;
     }
     while (benchSlot < PARTY_SIZE - 1) {
-        state.bench[sideIndex][benchSlot].id = 0;
-        state.bench[sideIndex][benchSlot].level = 0;
-        state.bench[sideIndex][benchSlot].hp = 0;
+        state.bench[sideIndex][benchSlot] = {};
         ++benchSlot;
     }
 

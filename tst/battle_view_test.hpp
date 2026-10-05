@@ -9,8 +9,8 @@
 static_assert(sizeof(battle::Side) == 1, "battle side must fit in one byte");
 static_assert(sizeof(battle::ActiveView) == 3, "active view size is part of the contract");
 static_assert(sizeof(battle::PartySummary) == 3, "party summary size is part of the contract");
-static_assert(sizeof(battle::BattleView) == 34, "battle view size is part of the contract");
-static_assert(sizeof(battle::MoveSnapshot) == 4, "move snapshot size is part of the contract");
+static_assert(sizeof(battle::BattleView) == 39, "battle view size is part of the contract");
+static_assert(sizeof(battle::MoveSnapshot) == 9, "move snapshot size is part of the contract");
 static_assert(sizeof(battle::PartyChoice) == 3, "party choice size is part of the contract");
 static_assert(sizeof(battle::PartySnapshot) == 8, "party snapshot size is part of the contract");
 static_assert(sizeof(MenuIntentKind) == 1, "menu intent kind must fit in one byte");

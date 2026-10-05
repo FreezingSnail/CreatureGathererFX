@@ -29,6 +29,14 @@ const Preset switch_drill BATTLE_PRESET_STORAGE = {
     },
     1
 };
+const Preset utility BATTLE_PRESET_STORAGE = {
+    {
+        { 9, 31, { 2, 37, 32, 32 } },
+        { 14, 31, { 12, 2, 41, 13 } },
+        { 12, 31, { 27, 43, 24, 32 } },
+    },
+    1
+};
 inline Preset copyPreset(const Preset &source) {
 Preset value;
 #ifdef __AVR__
