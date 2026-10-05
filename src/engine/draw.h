@@ -269,8 +269,15 @@ static void drawOpponentHP(const battle::BattleView &view) {
 
 static constexpr uint8_t kBattleSpeciesCount = 32;
 
+static void clearBattleSprite(uint8_t x) {
+    // Creature art is masked, so transparent pixels do not replace pixels
+    // left by the outgoing creature when a switch redraws the scene.
+    Blit::fillRect(x, 0, 32, 32, BLACK);
+}
+
 static void drawOpponent(const battle::BattleView &view) {
     const battle::ActiveView &creature = view.active[static_cast<uint8_t>(battle::Side::Opponent)];
+    clearBattleSprite(0);
     if (creature.id >= kBattleSpeciesCount) {
         return;
     }
@@ -279,6 +286,7 @@ static void drawOpponent(const battle::BattleView &view) {
 
 static void drawPlayer(const battle::BattleView &view) {
     const battle::ActiveView &creature = view.active[static_cast<uint8_t>(battle::Side::Player)];
+    clearBattleSprite(96);
     if (creature.id < kBattleSpeciesCount) {
         Blit::draw(96, 0, 32, 32, NewecreatureSprites,
                                 FRAME(((creature.id * 2) + 1)), Blit::PLUSMASK);
