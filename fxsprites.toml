@@ -38,7 +38,7 @@ order = [
   "spdText", "creature26", "amove14", "gather", "amove30", "amove24", "fire", "creature19", "lose",
   "creature8", "creature5", "creature4", "Fainted", "amove27", "creature15", "half", "creature23", "hpText",
   "amove2", "elder", "plant", "amove1", "water", "enemyAttackText", "atkText", "amove9", "amove8", "defText",
-  "none", "earth", "creature10", "amove32", "damageText", "physical", "win", "amove21", "amove19", "amove18",
+  "none", "earth", "creature10", "amove32", "amove33", "amove34", "amove35", "amove36", "amove37", "amove38", "amove39", "amove40", "amove41", "amove42", "amove43", "amove44", "damageText", "physical", "win", "amove21", "amove19", "amove18",
   "creature14", "amove28", "changedIn", "amove16", "creature2", "amove17", "amove22", "amove0", "escaped",
   "creature17", "creature20", "creature21", "quad", "creature7", "SwitchIn", "amove11", "creature16", "power",
   "spirit", "doubled", "amove23", "pointerText", "attackText", "move", "creature18", "amove31", "escape", "creature1",

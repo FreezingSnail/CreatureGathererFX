@@ -84,4 +84,5 @@ agent. `AGENTS.md` carries the short list.
   paths exercised.
 - FX reads: transitions only; the device suite asserts zero reads on the touched path once jp8.1.7
   lands.
-- Render: `L4_Triplane` shade/plane handling; erase frames clear every plane.
+- Render: 1bpp only (`BLACK`/`WHITE`); `FRAME(x)` is the logical frame, with no FX reads between
+  render and `FX::display(CLEAR_BUFFER)`.
