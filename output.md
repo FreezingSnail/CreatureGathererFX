@@ -4375,3 +4375,41 @@ The loader mismatch is assigned for a separate fix before catalog integration
 bead .5; no requested species or move was substituted. Source acceptance passed.
 Worker elapsed time approximately 8 minutes; no generation, packed-image, or
 AVR budget measurements in this data-only bead.
+
+## CreatureGathererFX-2cy.13
+
+Added `load_opponents_csv_with_moves` for project generation, using exact-case
+canonical move-name resolution, `u8` IDs, little-endian move slots, and the
+`none` sentinel value 255. Shared CSV row parsing keeps the old
+`load_opponents_csv` mapping available to CLI/Python parity. `run_project` now
+uses the canonical move table. Errors identify the CSV path, line, party
+member, and move slot. Tests cover the authored moves `deepthought`,
+`Ironbody`, `Sharpen`, and `rejuvinate`, the sentinel, ambiguous/invalid IDs,
+unknown names, and byte-for-byte legacy fixture parity.
+
+```text
+cargo fmt -p cgfx-core -- crates/core/src/builder.rs crates/core/src/lib.rs
+cargo test -p cgfx-core canonical_opponent_loader --lib
+# PASS: 4/4.
+cargo test -p cgfx-core load_opponents_csv_uses_python_name_maps --lib
+# PASS: 1/1 legacy loader mapping.
+cargo build -p cgfx-core --bin cgfx-tools
+# PASS; pre-existing writer/bin.rs unused-import warning.
+git diff --check
+# PASS.
+genroot=/Users/connorfranc/code/CreatureGathererFX/build/arena-tools-opponent-check
+target/debug/cgfx-tools --project "$genroot/creature-tools.json"
+# PASS: full arena project generation; 24 opponent seed rows (432 packed bytes),
+# three player teams and five opponent teams (trainer IDs 19–23).
+target/debug/cgfx-tools --opponents-csv "$genroot/data/opponents-legacy.csv" --opponents-output "$genroot/legacy"
+awk '/uint8_t opponent_seed/ {i++} i<=20 && /0x/ { line=$0; while (match(line, /0x[0-9A-Fa-f][0-9A-Fa-f]/)) { printf "%s", substr(line, RSTART+2, 2); line=substr(line, RSTART+4) } }' "$genroot/output/opponents.txt" | xxd -r -p > "$genroot/canonical-first20.bin"
+cmp "$genroot/canonical-first20.bin" "$genroot/legacy/opponents.bin"
+# PASS: all 20 rows supported by the legacy mapping match exactly (360 bytes).
+```
+
+The first full project-generation attempt found that canonical `moves.json`
+contains a `none` placeholder record with ID 255; the loader now handles that
+row as the CSV sentinel rather than rejecting the valid table. The focused
+tests and arena generation passed after the fix. Temporary project outputs are
+under `build/arena-tools-opponent-check`; no commit or push. Worker elapsed time
+approximately 12 minutes.
