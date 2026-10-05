@@ -8,8 +8,12 @@
 #include "../../globals.hpp"
 #include "../../player/Player.hpp"
 #include "../menu/MenuNav.hpp"
-#include "../battle/BattlePresets.hpp"
 #include "../battle/BattleSetup.hpp"
+#include "../../lib/FxReadCounter.hpp"
+#include "../../lib/MoveIds.hpp"
+#include "../../lib/ReadData.hpp"
+#include "../../../fxdata/generated/arena_demo_ids.hpp"
+#include "ArenaCatalog.hpp"
 #include "ArenaView.hpp"
 
 namespace arena {
@@ -17,16 +21,6 @@ namespace arena {
 ArenaContext arenaContext = {};
 
 namespace {
-
-const BattlePresets::Preset &playerPreset(uint8_t index)
-{
-    return index == 0 ? BattlePresets::opening : BattlePresets::switch_drill;
-}
-
-const BattlePresets::Preset &opponentPreset(uint8_t index)
-{
-    return index == 0 ? BattlePresets::opening : BattlePresets::switch_drill;
-}
 
 uint8_t edgeDirection(uint8_t buttons)
 {
@@ -44,6 +38,46 @@ void moveCursor(uint8_t direction, uint8_t count)
 
 } // namespace
 
+bool applyPlayerTeam(uint8_t team, Player &target)
+{
+    if (team >= ArenaDemoIds::playerCount) return false;
+
+    for (uint8_t slot = 0; slot < 3; ++slot) {
+        Member member{};
+        if (!readPlayerMember(team, slot, member)) return false;
+
+        const CreatureData_t seed = getCreatureFromStore(member.species);
+        uint8_t reads = 0;
+#ifdef __AVR__
+        ++reads; // The canonical creature record is one FX lookup.
+#endif
+
+        Creature &creature = target.party[slot];
+        creature.id = seed.id;
+        creature.level = member.level;
+        creature.loadTypes(seed);
+        creature.setStats(seed);
+        for (uint8_t moveSlot = 0; moveSlot < 4; ++moveSlot) {
+            const uint8_t moveId = member.moveIds[moveSlot];
+            if (moveId == LEGACY_EMPTY_MOVE_ID) {
+                creature.moves[moveSlot] = LEGACY_EMPTY_MOVE_ID;
+                creature.moveList[moveSlot] = Move();
+            } else {
+                creature.setMove(moveId, moveSlot);
+                ++reads;
+            }
+        }
+        creature.status.clearEffects();
+        creature.statMods.clearModifiers();
+        target.creatureHPs[slot] = creature.statlist.hp;
+
+        // The member reader owns its six-byte FX read. Approve the canonical
+        // creature and authored move records at this per-member boundary.
+        FxReadCounter::transitionExact(reads);
+    }
+    return true;
+}
+
 void boot()
 {
     arenaContext = {0, 0, battle::Outcome::None};
@@ -51,25 +85,30 @@ void boot()
     ArenaUiState &ui = modeState.arena.ui;
     ui = {};
     ui.screen = ArenaScreen::PlayerTeam;
-    ui.list = {2, 1, 0, 0};
+    ui.list = {ArenaDemoIds::playerCount, 1, 0, 0};
+    loadPreview(ArenaScreen::PlayerTeam, 0, ui.preview);
     gameState.state = GameState_t::ARENA;
 }
 
 bool startMatch()
 {
-    if (arenaContext.playerTeam >= 2 || arenaContext.opponentTeam >= 2) return false;
+    if (arenaContext.playerTeam >= ArenaDemoIds::playerCount ||
+        arenaContext.opponentTeam >= ArenaDemoIds::opponentCount) return false;
 
-    const BattlePresets::Preset &storedPlayer = playerPreset(arenaContext.playerTeam);
-    const BattlePresets::Preset &storedOpponent = opponentPreset(arenaContext.opponentTeam);
-    const BattlePresets::Preset opponent = BattlePresets::copyPreset(storedOpponent);
+    uint8_t trainerId;
+    if (!readOpponentId(arenaContext.opponentTeam, trainerId)) return false;
+    if (!applyPlayerTeam(arenaContext.playerTeam, player)) return false;
 
     menu.clear();
     dialogMenu.clear();
-    battle::applyPlayerPreset(player, storedPlayer);
     enterBattle();
-    battleSession().beginTrainer(opponent.trainerId);
-    if (!battleSession().isActive()) {
+    battleSession().beginTrainer(trainerId);
+    if (!battleSession().isActive() || battleSession().state().over) {
         enterArena();
+        ArenaUiState &ui = modeState.arena.ui;
+        ui.screen = ArenaScreen::PlayerTeam;
+        ui.list = {ArenaDemoIds::playerCount, 1, 0, arenaContext.playerTeam};
+        loadPreview(ArenaScreen::PlayerTeam, arenaContext.playerTeam, ui.preview);
         gameState.state = GameState_t::ARENA;
         return false;
     }
@@ -101,7 +140,7 @@ void update(uint8_t edgeButtons)
     if (ui.screen == ArenaScreen::PlayerTeam) {
         arenaContext.playerTeam = ui.list.cursor;
         ui.screen = ArenaScreen::OpponentTeam;
-        ui.list = {2, 1, 0, arenaContext.opponentTeam};
+        ui.list = {ArenaDemoIds::opponentCount, 1, 0, arenaContext.opponentTeam};
         return;
     }
     if (ui.screen == ArenaScreen::OpponentTeam) {
@@ -115,11 +154,11 @@ void update(uint8_t edgeButtons)
         return;
     case 1:
         ui.screen = ArenaScreen::OpponentTeam;
-        ui.list = {2, 1, 0, arenaContext.opponentTeam};
+        ui.list = {ArenaDemoIds::opponentCount, 1, 0, arenaContext.opponentTeam};
         return;
     default:
         ui.screen = ArenaScreen::PlayerTeam;
-        ui.list = {2, 1, 0, arenaContext.playerTeam};
+        ui.list = {ArenaDemoIds::playerCount, 1, 0, arenaContext.playerTeam};
         return;
     }
 }
