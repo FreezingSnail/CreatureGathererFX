@@ -34,7 +34,7 @@ void beginResult(battle::BattleSession &session,
 
 } // namespace
 
-bool update(uint8_t edgeButtons) {
+bool update(uint8_t edgeButtons, TerminalCallback onFinished) {
     battle::BattleSession &session = battleSession();
     battle::BattlePresenter &presenter = battlePresenter();
 
@@ -47,8 +47,13 @@ bool update(uint8_t edgeButtons) {
             session.finishPresentation();
             presenter.reset();
             if (session.exitReady()) {
+                const battle::Outcome outcome = session.result().outcome;
                 menu.clear();
                 dialogMenu.clear();
+                if (onFinished != nullptr) {
+                    onFinished(outcome);
+                    return true;
+                }
                 exitBattle();
                 gameState.state = GameState_t::WORLD;
                 return true;

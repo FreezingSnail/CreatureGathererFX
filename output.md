@@ -4238,3 +4238,45 @@ FXTEST_MS=10000 make final-gate BUILD_DIR=build/jp8-1-12-gate-long
 
 Logs: `build/jp8-1-12-gate-long/final-gate/{check,ram}.log`. Bead acceptance
 is complete; ready for closure and commit.
+
+## CreatureGathererFX-2cy.1 — arena lifecycle and budget spike (2026-10-05)
+
+```text
+make ram BUILD_DIR=build/arena-1-normal
+# PASS baseline: 27896 B flash / 1841 B static; 1800 B physical flash free,
+# 319 B project static headroom.
+make ram BUILD_DIR=build/arena-1-trainer AVR_FLASH_BUDGET=29184 AVR_SHIPPING_CPP_FLAGS='-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X -DCGFX_SHIPPING_NO_USB -DCGFX_TRAINER_DEMO'
+# PASS comparison: 27736 B flash / 1841 B static. Existing trainer flag is
+# not the arena measurement; it retains the same shipping RAM.
+make test
+# Initial compile found the stub renderer using unsupported Arduboy2Base text
+# calls; replaced it with a 1bpp marker. PASS: host 154832/0, world 190/0.
+make testvm
+# PASS: 42/0.
+make ram BUILD_DIR=build/arena-1-post-normal
+# PASS: 27896 B flash / 1841 B static; ordinary build unchanged.
+make ram BUILD_DIR=build/arena-1-demo AVR_FLASH_BUDGET=29184 AVR_SHIPPING_CPP_FLAGS='-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X -DCGFX_SHIPPING_NO_USB -DCGFX_ARENA_DEMO'
+# PASS: 28082 B flash / 1852 B static; +186 B flash/+11 B static from
+# ordinary baseline, 1102 B flash and 308 B project-static headroom remain.
+make fxtest-spike BUILD_DIR=build/arena-1-device FXTEST_SPIKE_INO=tst/fxdatatest/test_arenademo.ino FXTEST_MS=10000 ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# First device compile needed explicit BattleFlow/MoveUses includes; corrected.
+# PASS: test_arenademo 28/0 and test_stack 4/0. A real deterministic 3v3
+# trainer match completed after 2573 frames, terminal callback returned to the
+# arena, same-selection rematch started, then second player/opponent pairing
+# started. Exercised arena setup/return painted headroom 282 B, effective 213 B
+# after 69 B ISR allowance. Device test ELF static RAM 1937 B / 2160 B.
+git diff --check
+# PASS.
+```
+
+`BattleFlow::update` now copies the terminal outcome before invoking an optional
+destination callback; the default still restores WORLD and keeps existing HP
+behavior. Added a 3 B persistent arena context, a 24 B AVR UI overlay, and
+entry into the arena overlay without world initialization. The sketch has an
+opt-in arena bootstrap and a temporary two-by-two selector using existing
+generated developer presets. `ArenaView` is deliberately a one-pixel lifecycle
+stub for the spike; the renderer bead replaces it. The FX fixture's first
+match uses the real terminal callback; the alternate pairing is setup evidence,
+not a second completed battle. No generated data or save code changed. Worker
+elapsed time approximately 18 minutes; no integrated gate or orchestrator time
+in this bead. Bead close wall time negligible.

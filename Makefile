@@ -133,6 +133,8 @@ TEST_SOURCES = src/lib/Blit.cpp \
 	src/engine/battle/BattlePresets.cpp \
 	src/engine/battle/BattleSetup.cpp \
 	src/engine/battle/BattlePresenter.cpp \
+	src/engine/arena/ArenaDemo.cpp \
+	src/engine/arena/ArenaView.cpp \
 	src/engine/ModeState.cpp \
 	src/engine/world/LurePrototype.cpp \
 	src/engine/world/World.cpp \
