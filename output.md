@@ -4280,3 +4280,25 @@ match uses the real terminal callback; the alternate pairing is setup evidence,
 not a second completed battle. No generated data or save code changed. Worker
 elapsed time approximately 18 minutes; no integrated gate or orchestrator time
 in this bead. Bead close wall time negligible.
+
+## CreatureGathererFX-2cy.2 — strict arena catalog parser (2026-10-05)
+
+```text
+cargo fmt -p cgfx-core -- crates/core/src/arena_demo.rs
+# PASS after permitted formatting escalation.
+cargo test -p cgfx-core arena_demo
+# PASS: 7/7 parser unit tests; one pre-existing unused-import warning.
+cargo test -p cgfx-core battle_presets
+# PASS: 3/3 existing preset unit tests.
+git diff --check -- crates/core/src/arena_demo.rs crates/core/src/lib.rs
+# PASS.
+```
+
+Parser adds strict unknown-field rejection, canonical case-sensitive move and
+case-insensitive species resolution, bounded counts, 3-member teams, reserved
+sentinel and trainer-index checks, packed opponent validation, and source-relative
+font paths. First parser assertion run exposed four fixture assertion issues;
+those were corrected before the final focused run. Formatting was run at crate
+scope and touched other already-modified Rust files; those unrelated edits remain
+unstaged. Worker elapsed time was not recorded; orchestrator final-gate and
+integrated timing remain assigned to later beads.
