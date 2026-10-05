@@ -14,7 +14,7 @@ perturbed_layout=$fixtures/fxlayout-expand-20-perturbed.toml
 # with the prior baseline. Semantic map checks run in test-generated-libs.
 # Utility prototype adds move names, kits and trainer basic attacks.
 # Runtime/authored matchup chart reconciliation updates the packed lookup table.
-expected=1b09633a00e4d64a26413d67fd62d04c600df3e1b9623d6b8dbe796d1ccd91a3
+expected=47124687ee92add4cb35047d5e260db0df9a89ebafeb3ecaf5006f1ed7f827c0
 
 for layout in "$old_layout" "$new_layout" "$perturbed_layout"; do
     test -f "$layout" || {

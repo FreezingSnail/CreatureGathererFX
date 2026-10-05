@@ -4174,3 +4174,67 @@ device assertion and corrected the stale bead design to preserve the live
 MenuV2/BattleFlow architecture. Manual visual verification was not required by
 current AGENTS.md. No generated data changed; no commit or push. Worker and gate
 wall time approximately 5 minutes.
+
+## CreatureGathererFX-jp8.1.12 — map/chunk/transition FX coverage (2026-10-05)
+
+```text
+make test
+# PASS: host 154822/0, world 190/0
+make testvm
+# PASS: 42/0
+PATH=/private/tmp/jp8-1-12-tools-build/debug:$PATH make gen
+# PASS: generated map/script FX fixtures with current cgfx-tools emitter
+make verify-generated
+# PASS
+make test-generated-libs
+# PASS: 12 generated-library assertions, 5 invariants, 28 first-alias checks
+make test-pack-parity
+# Initial expected-hash mismatch after reserved map cells; updated native baseline.
+# PASS: SHA-256 47124687ee92add4cb35047d5e260db0df9a89ebafeb3ecaf5006f1ed7f827c0
+cargo test -p cgfx-core --test fixtures
+# PASS: 1 fixture test
+ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens \
+  FXTEST_INOS=tst/fxdatatest/test_tiles.ino make fxtest-headless
+# PASS: test_tiles 100/0; 13660 B flash, 1852 B global RAM, 308 B project headroom
+ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens \
+  FXTEST_SPIKE_INO=tst/fxdatatest/test_tiles.ino make fxtest-spike
+# PASS: test_tiles 100/0; test_stack 4/0, stack headroom 335 B,
+# mode-transition headroom 448 B
+git diff --check
+# PASS
+```
+
+The focused device coverage validates real map words and chunk/blob prefixes,
+synthetic script offsets, and zero FX reads over a 16-frame tile movement. The
+four reserved map cells are row 255, columns 252–255: GID 530 (ordinary), 527
+(water), 528 (walkable + water), 529 (walkable + encounter). The walkable test
+cells are shielded from normal movement by blocked cells at row 254, columns
+252–253. The pack-parity baseline changed because these authentic raw-map words
+are now included.
+
+Sibling fixture-emitter changes were reviewed and applied by the parent in the
+CreatureGathererTools checkout; that checkout's `git diff --check` passed after
+the syntax repair. Its Cargo test above passed. A first `make check` run with
+`FXTEST_MS=10000` passed the host, VM, generation, and shipping build/RAM stages;
+the captured serial tail reached `test_battle_damage_color`, but the command
+session ended before the complete device result was captured. The parent will
+run the single integrated final gate. Shipping figures from that run: 27896 B
+flash, 1841 B static RAM, 319 B project headroom. Worker elapsed time about 23
+minutes. No visual verification.
+
+Parent final gate:
+
+```text
+make final-gate BUILD_DIR=build/jp8-1-12-gate
+# Initial attempt: all suites passed except test_battletrainer's missing serial
+# marker at the default capture window; no assertion failures.
+FXTEST_MS=10000 make final-gate BUILD_DIR=build/jp8-1-12-gate-long
+# PASS: host 154822/0, world 190/0, VM 42/0, generated checks PASS,
+# all 25 FX suites PASS (test_tiles 100/0, test_battletrainer 51/0), RAM PASS.
+# Shipping flash 27896/29696 B, static RAM 1841/2160 B,
+# 319 B project headroom / 719 B physical headroom; test_stack 4/0,
+# stack headroom 335 B, mode-transition headroom 448 B.
+```
+
+Logs: `build/jp8-1-12-gate-long/final-gate/{check,ram}.log`. Bead acceptance
+is complete; ready for closure and commit.

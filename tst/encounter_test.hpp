@@ -136,22 +136,19 @@ void EncounterDecisionTest(TestSuite &suite) {
     uint8_t cache[Encounter::CACHE_BYTES];
     seedCache(cache, 0, 2, 8);
     Encounter::Decision decision = {};
-    forcedRoll = 0;
     rngCalls = 0;
-    test.assert(Encounter::select(cache, party, forcedRng, decision), true,
-                "ordinary cached table selects a wild creature");
-    test.assert(decision.slot, static_cast<uint8_t>(0), "slot zero boundary");
-    test.assert(decision.creatureId, static_cast<uint8_t>(0), "slot zero ID");
-    test.assert(decision.level, static_cast<uint8_t>(5), "ordinary level");
-    test.assert(rngCalls, static_cast<uint8_t>(1), "one RNG call");
+    for (uint8_t slot = 0; slot < Encounter::SLOT_COUNT; ++slot) {
+        forcedRoll = slot;
+        test.assert(Encounter::select(cache, party, forcedRng, decision), true,
+                    "injected roll selects a valid table slot");
+        test.assert(decision.slot, slot, "injected roll reaches its table slot");
+        test.assert(decision.creatureId, slot, "selected slot supplies creature ID");
+        test.assert(decision.level, static_cast<uint8_t>(5), "ordinary level");
+    }
+    test.assert(rngCalls, static_cast<uint8_t>(Encounter::SLOT_COUNT),
+                "one injected RNG call per table slot");
     test.assert(lastLower, static_cast<uint8_t>(0), "RNG lower bound");
     test.assert(lastUpper, static_cast<uint8_t>(9), "RNG inclusive upper bound");
-
-    forcedRoll = 9;
-    test.assert(Encounter::select(cache, party, forcedRng, decision), true,
-                "slot nine boundary selects without an eleven-value roll");
-    test.assert(decision.slot, static_cast<uint8_t>(9), "slot nine");
-    test.assert(decision.creatureId, static_cast<uint8_t>(9), "slot nine ID");
 
     seedCache(cache, -20, 2, 8);
     forcedRoll = 0;

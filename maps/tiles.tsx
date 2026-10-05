@@ -27,4 +27,9 @@
  <tile id="291"><properties><property name="walkable" type="bool" value="false"/></properties></tile>
  <tile id="296"><properties><property name="walkable" type="bool" value="false"/></properties></tile>
  <tile id="297"><properties><property name="walkable" type="bool" value="false"/></properties></tile>
+ <!-- Authored device fixtures live on the sealed south border. The neighboring
+      empty cells keep this region outside normal overworld movement. -->
+ <tile id="526"><properties><property name="water" type="bool" value="true"/></properties></tile>
+ <tile id="527"><properties><property name="walkable" type="bool" value="true"/><property name="water" type="bool" value="true"/></properties></tile>
+ <tile id="528"><properties><property name="walkable" type="bool" value="true"/><property name="encounter" type="bool" value="true"/></properties></tile>
 </tileset>

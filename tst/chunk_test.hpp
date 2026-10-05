@@ -16,6 +16,14 @@ void ChunkTest(TestSuite &suite) {
     test.assert(Chunk::CHUNKS_PER_COLUMN, static_cast<uint8_t>(64), "chunks per column");
     test.assert(Chunk::CHUNK_COUNT, static_cast<uint16_t>(2048), "chunk count");
 
+    test.assert(Chunk::chunkAt(0, 0), static_cast<uint16_t>(0), "origin chunk");
+    test.assert(Chunk::chunkAt(24, 0), static_cast<uint16_t>(3), "fourth chunk across");
+    test.assert(Chunk::chunkAt(0, 4), static_cast<uint16_t>(32), "second chunk row");
+    test.assert(Chunk::chunkAt(24, 4), static_cast<uint16_t>(35), "second row fourth chunk");
+    test.assert(Chunk::chunkAt(0, 8), static_cast<uint16_t>(64), "third chunk row");
+    test.assert(Chunk::chunkAt(24, 8), static_cast<uint16_t>(67), "third row fourth chunk");
+    test.assert(Chunk::chunkAt(0, 12), static_cast<uint16_t>(96), "fourth chunk row");
+    test.assert(Chunk::chunkAt(24, 12), static_cast<uint16_t>(99), "fourth row fourth chunk");
     test.assert(Chunk::chunkAt(7, 3), static_cast<uint16_t>(0), "last tile in first chunk");
     test.assert(Chunk::chunkAt(8, 3), static_cast<uint16_t>(1), "x boundary");
     test.assert(Chunk::chunkAt(7, 4), static_cast<uint16_t>(32), "y boundary");
