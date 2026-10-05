@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 
-#include "../../lib/MenuStack.hpp"
+#include "MenuNav.hpp"
 #include "../../lib/uint24.h"
 #include "../battle/BattleView.hpp"
 #include "MenuIntent.hpp"
@@ -25,18 +25,8 @@ class MenuV2 {
     battle::MoveSnapshot moveSnapshot = {};
     uint24_t moveNameAddresses[4] = {};
     uint24_t creatureNameAddresses[2] = {};
-    uint8_t cachedRentalId = 255;
-    // Battle move metadata and arena rental name never coexist. Five bytes
-    // hold four ten-bit (type, power, physical) move descriptors.
-    union {
-        uint24_t rentalNameAddress = 0;
-        uint8_t moveInfoPacked[5];
-    };
-    struct RentalStats {
-        uint8_t type1, type2;
-        uint8_t hpSeed, atkSeed, defSeed;
-        uint8_t spcAtkSeed, spcDefSeed, spdSeed;
-    } rentalSeed = {};
+    // Four ten-bit move descriptors fit in five bytes.
+    uint8_t moveInfoPacked[5] = {};
 
     MenuV2();
 
@@ -61,8 +51,6 @@ class MenuV2 {
     MenuIntent run(battle::BattleSession &session);
     MenuIntent run(battle::BattleSession &session, uint8_t edgeButtons);
     void printMenu(const battle::BattleView &view);
-    void prepareCreatureRental();
-    void creatureRental();
 
   private:
     battle::PartySnapshot partyChoicesSnapshot = {};

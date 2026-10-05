@@ -6,17 +6,16 @@ constexpr MenuDesc MENU_DESCS[] = {
     {4, 2, 1},  // BATTLE_CREATURE_SELECT
     {4, 2, 1},  // BATTLE_OPTIONS
     {4, 2, 1},  // WORLD_OPTIONS
-    {31, 1, 0}, // ARENA_MENU
 };
 
-static_assert(static_cast<uint8_t>(ARENA_MENU) + 1u ==
-                  sizeof(MENU_DESCS) / sizeof(MENU_DESCS[0]),
+static_assert(sizeof(MENU_DESCS) / sizeof(MENU_DESCS[0]) ==
+                  static_cast<uint8_t>(WORLD_OPTIONS) + 1u,
               "menu descriptor table must cover every MenuEnum value");
 }
 
 const MenuDesc &menuDescFor(MenuEnum menu) {
     const uint8_t index = static_cast<uint8_t>(menu);
-    if (index > static_cast<uint8_t>(ARENA_MENU)) {
+    if (index > static_cast<uint8_t>(WORLD_OPTIONS)) {
         return MENU_DESCS[static_cast<uint8_t>(BATTLE_OPTIONS)];
     }
     return MENU_DESCS[index];

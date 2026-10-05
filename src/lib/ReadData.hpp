@@ -23,6 +23,4 @@ OpponentSeed readOpponentSeed(uint8_t index);
 
 CreatureData_t getCreatureFromStore(uint8_t id);
 
-void arenaLoad(Creature *creature, uint24_t addr, uint8_t lvl);
-
 uint16_t ReadFXu16(uint24_t addr);

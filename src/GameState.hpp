@@ -7,8 +7,6 @@ class GameState {
     // PlantGameState plants;
     // Player player;
     GameState_t state;
-    // BattleEngine engine;
-    // Arena arena;
     // WorldEngine world;
     // Animator animator;
     // tile index on 1d flattened map

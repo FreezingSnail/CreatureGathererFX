@@ -80,28 +80,6 @@ CreatureData_t getCreatureFromStore(uint8_t id) {
     return cseed;
 }
 
-// 00,id1,lvl1,move11,move12,move13,move14,
-
-void arenaLoad(Creature *creature, uint24_t addr, uint8_t lvl) {
-    uint8_t record[5];
-    FxRead::bytes(addr, record, sizeof(record));
-    creature->id = record[0];
-    CreatureData_t cSeed = getCreatureFromStore(creature->id);
-
-    creature->loadTypes(cSeed);
-    creature->level = lvl;
-    creature->setStats(cSeed);
-    for (uint8_t slot = 0; slot < 4; ++slot) {
-        creature->setMove(record[slot + 1], slot);
-    }
-    // One record block, one creature seed, and the four packed move records
-    // resolved by Creature::setMove() form this load transition.
-    uint8_t reads = 2;
-    for (uint8_t slot = 0; slot < 4; ++slot)
-        if (validMoveId(record[slot + 1])) ++reads;
-    FxReadCounter::transitionExact(reads);
-}
-
 uint16_t ReadFXu16(uint24_t addr) {
     return FxRead::littleEndian16(addr);
 }

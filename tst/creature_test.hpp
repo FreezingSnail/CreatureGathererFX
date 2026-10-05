@@ -69,36 +69,6 @@ void CreatureStoredRecordTest(TestSuite &t) {
     t.addTest(test);
 }
 
-void CreatureArenaBulkLoadTest(TestSuite &t) {
-    Test test = Test(__func__);
-    constexpr uint24_t recordAddress = 0x1ABCDUL;
-    fxDataFake::dataBase = recordAddress;
-    fxDataFake::readCount = 0;
-    fxDataFake::lastDataAddress = 0;
-    fxDataFake::lastDataLength = 0;
-    fxDataFake::dataBytes[0] = 0;
-    fxDataFake::dataBytes[1] = 8;
-    fxDataFake::dataBytes[2] = 32;
-    fxDataFake::dataBytes[3] = 32;
-    fxDataFake::dataBytes[4] = 32;
-
-    Creature creature;
-    arenaLoad(&creature, recordAddress, 17);
-    test.assert(fxDataFake::lastDataAddress, recordAddress,
-                "arena record read keeps 24-bit address");
-    test.assert(fxDataFake::lastDataLength, static_cast<size_t>(5),
-                "arena loader reads the full five-byte record");
-    test.assert(fxDataFake::readCount, static_cast<uint32_t>(1),
-                "arena record is one logical transaction");
-    test.assert(creature.id, 0, "arena record id");
-    test.assert(creature.level, 17, "arena level");
-    test.assert(creature.moves[0], 8, "arena move zero");
-    test.assert(creature.moves[1], 32, "arena move one");
-    test.assert(creature.moves[2], 32, "arena move two");
-    test.assert(creature.moves[3], 32, "arena move three");
-    t.addTest(test);
-}
-
 void CreatureLevelCurveTest(TestSuite &t) {
     Test test = Test(__func__);
     test.assert(levelFromExp(0), 1, "Zero experience has minimum level");
@@ -126,7 +96,6 @@ void CreatureSuite(TestRunner &r) {
     CreatureLoadTest(t);
     CreatureLoadFromOpponnetSeed(t);
     CreatureStoredRecordTest(t);
-    CreatureArenaBulkLoadTest(t);
     CreatureLevelCurveTest(t);
     r.addTestSuite(t);
 }
