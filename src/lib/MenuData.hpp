@@ -8,7 +8,7 @@ struct MenuData {
     uint8_t indicies[4][2];
 };
 
-enum DialogType {
+enum DialogType : uint8_t {
     TEXT,               // 0
     DAMAGE,             // 1
     NAME,               // 2

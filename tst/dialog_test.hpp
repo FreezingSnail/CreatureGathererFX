@@ -5,7 +5,7 @@
 #include "../src/globals.hpp"
 
 inline PopUpDialog dialogFixture(uint24_t text, DialogType type = SCRIPT_TEXT) {
-    return PopUpDialog{0, 43, 128, 24, text, 0, 0, type, 0};
+    return PopUpDialog{0, 43, 128, 24, text, type};
 }
 
 void DialogTest(TestSuite &suite) {
@@ -38,7 +38,6 @@ void DialogTest(TestSuite &suite) {
     dialog.pushEvent(event);
     test.assert(dialog.head().type, TEXT, "event is TEXT");
     test.assert(dialog.head().textAddress, event.textAddress, "event text address");
-    test.assert(dialog.head().damage, static_cast<uint16_t>(0), "event damage is zero");
     test.assert(dialog.head().x, static_cast<uint8_t>(0), "event origin x");
     test.assert(dialog.head().y, static_cast<uint8_t>(34), "event origin y");
     test.assert(dialog.head().width, static_cast<uint8_t>(120), "event width");
@@ -48,7 +47,6 @@ void DialogTest(TestSuite &suite) {
     test.assert(dialog.peek(), false, "clear empties queue");
     test.assert(dialog.popDialogStack[0].textAddress, static_cast<uint24_t>(0), "clear erases payload");
     test.assert(dialog.popDialogStack[0].type, TEXT, "clear resets type");
-    test.assert(dialog.popDialogStack[0].animation, static_cast<uint24_t>(0), "layout animation field reset");
     suite.addTest(test);
 }
 

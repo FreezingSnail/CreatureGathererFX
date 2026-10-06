@@ -30,7 +30,7 @@ inline void expectScriptTextMatches(FxTest &test, const uint8_t *text,
                                     uint8_t length,
                                     const __FlashStringHelper *label) {
     dialogMenu.clear();
-    const PopUpDialog scriptText{0, 40, 128, 24, 0, 0, 0, SCRIPT_TEXT, 0};
+    const PopUpDialog scriptText{0, 40, 128, 24, 0, SCRIPT_TEXT};
     dialogMenu.pushMenu(scriptText);
     if (length) memcpy(dialogMenu.scriptText, text, length);
     dialogMenu.head().width = length;
@@ -66,8 +66,7 @@ inline void test_dialogs(FxTest &test) {
         test, twoRowText, 0, F("empty script text draws no glyphs"));
     dialogMenu.clear();
 
-    const PopUpDialog invalidScriptText{0, 43, 128, 24, 0xFFFF, 0, 0,
-                                        SCRIPT_TEXT, 0};
+    const PopUpDialog invalidScriptText{0, 43, 128, 24, 0xFFFF, SCRIPT_TEXT};
     test.expectEq(dialogMenu.push(invalidScriptText), true,
                   F("script text dialog queued"));
     test.expectEq(dialogMenu.head().type, SCRIPT_TEXT,

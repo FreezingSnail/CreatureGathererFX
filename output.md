@@ -5135,3 +5135,63 @@ make final-gate BUILD_DIR=build/text-unification-final FXTEST_MS=10000 FINAL_GAT
 Full gate wall time: 210 s. Orchestrator review/report/commit preparation:
 approximately 1 minute. No unexpected generated changes. Closed bead committed
 before dispatching the compact dialog queue.
+
+## CreatureGathererFX-a4b — compact dialog descriptor
+
+Made `DialogType` an explicitly `uint8_t` enum while preserving `TEXT=0` and
+`SCRIPT_TEXT=15`. Reduced `PopUpDialog` to `x`, `y`, `width`, `height`,
+`textAddress`, and `type`, with an AVR-only `sizeof(PopUpDialog)==8` assertion
+and compile-time type-ID assertion. Removed the unused `detailAddress`,
+`damage`, and `animation` fields; updated production and test aggregates and
+removed native assertions that only checked those deleted zeroed fields. Queue
+capacity six, TEXT event address/dimensions, script index/cache behavior, and
+head preparation remain intact.
+
+The first focused device/whole-image spike, before broadening to host suites:
+
+```text
+make fxtest-spike BUILD_DIR=build/text-a4b-dialog-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_dialog.ino ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens FXTEST_MS=10000
+# PASS: dialog 9/0; test_stack 4/0, painted headroom 420 B (effective 351 B after 69 B USB ISR allowance).
+make fxtest-spike BUILD_DIR=build/text-a4b-script-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_scripts.ino ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens FXTEST_MS=10000
+# PASS: scripts 32/0; test_stack 4/0, painted headroom 420 B / effective 351 B.
+make ram BUILD_DIR=build/text-a4b-ram-spike
+# PASS: 27,894 B flash / 1,787 B static RAM; delta -84 B flash / -54 B static RAM from n11 baseline 27,978 / 1,841.
+```
+
+The device descriptor assertion compiled successfully in both affected suites.
+Shipping ELF sections confirm `.data` stayed at 90 B and `.bss` fell from
+1,751 B (`build/text-n11-ram/CreatureGathererFX.ino.elf`) to 1,697 B
+(`build/text-a4b-ram-spike/CreatureGathererFX.ino.elf`), so initializer data did
+not erase the saving. Device dialog globals were 1,888 B; stack suite globals
+were 1,867 B.
+
+Follow-up suites:
+
+```text
+make test BUILD_DIR=build/text-a4b-host
+# PASS: host 155,550/0; world 190/0 (two removed obsolete-field assertions).
+make testvm BUILD_DIR=build/text-a4b-vm
+# PASS: VM 42/0.
+```
+
+No failed attempts. Focused implementation and verification took approximately
+5 minutes. The integrated final gate remains for the orchestrator.
+
+Orchestrator integrated checkpoint — CreatureGathererFX-a4b:
+
+```text
+make final-gate BUILD_DIR=build/text-unification-final FXTEST_MS=10000 FINAL_GATE_LOG_DIR=build/text-unification-final/gate-a4b ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS: host 155,550/0; world 190/0; VM 42/0; generated checks PASS;
+# every FX suite PASS, dialog 9/0, presentation 210/0; stack 420 B;
+# arena start/callback effective reserve 238 B; shipping flash 27,894 B /
+# static RAM 1,787 B. Cumulative savings: 156 B flash / 54 B static RAM.
+git diff --check
+# PASS; no unexpected generated changes.
+```
+
+Full gate wall time: 218 s. Orchestrator review/report/commit preparation:
+approximately 1 minute. Updated historical descriptor comments to describe its
+remaining TEXT/SCRIPT_TEXT semantics and recorded implementation measurements
+in docs/text-rendering-research.md. All three Luna beads are closed, with a full
+gate and commit between each checkpoint. Total wave elapsed through final gate:
+979 s. No push performed.

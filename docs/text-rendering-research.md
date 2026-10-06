@@ -89,3 +89,37 @@ or overlaying dialog storage with battle storage requires separate data-format,
 SPI and lifetime contracts. This research provides no measured savings for
 those larger changes. The two existing font copies occupy FX cart storage;
 deduplicating them alone would not save static SRAM or MCU application flash.
+
+## Implementation measurements
+
+The owner requested a gpt-6-luna worker to implement the follow-ups. The script
+font correction (CreatureGathererFX-3ds), shared glyph primitive
+(CreatureGathererFX-n11), and compact dialog descriptor (CreatureGathererFX-a4b)
+are implemented. The larger shared text loop remains a research comparison.
+
+| Checkpoint | Shipping flash | Static RAM |
+| --- | ---: | ---: |
+| Research baseline | 28,050 B | 1,841 B |
+| Corrected script font offset | 28,050 B | 1,841 B |
+| Shared glyph primitive | 27,978 B | 1,841 B |
+| Compact dialog queue | 27,894 B | 1,787 B |
+| Total saving | **156 B** | **54 B** |
+
+The compact queue saves an additional 84 B flash and confirms the 54 B SRAM
+estimate. Its descriptor is eight bytes on AVR, enforced at compile time;
+DialogMenu falls from 139 to 85 B. Shipping `.data` stays at 90 B while `.bss`
+falls by 54 B, so constant initializer storage does not offset the savings.
+TEXT and SCRIPT_TEXT keep IDs 0 and 15, queue capacity remains six, and the
+cached text buffer remains 36 bytes.
+
+The script device suite now exercises actual SRAM text through
+`DialogMenu::drawPopMenu()` and compares against the independent raw font. It
+covers nonempty and empty text, full two-row wrapping, supported endpoints,
+unsupported characters, spaces, digits and letter case. The existing independent
+battle caption/damage regressions pass. General painted stack headroom improves
+from 335 to 420 B (266 to 351 B effective after the 69 B ISR allowance).
+
+The full integrated gate passed after each bead. Final host/world/VM counts are
+155,550/0, 190/0 and 42/0; every FX suite passes, including presentation 210/0,
+dialog 9/0 and arena 1,864/0. Arena callback effective reserve improves from
+184 to 238 B. Generation leaves the packed assets unchanged.
