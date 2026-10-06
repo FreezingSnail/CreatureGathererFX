@@ -14,7 +14,6 @@ enum class ArenaIntent : uint8_t { None, PreviewChanged, StartBattle };
 struct ArenaContext {
     uint8_t playerTeam;
     uint8_t opponentTeam;
-    battle::Outcome outcome;
 };
 
 struct ArenaPreview {
@@ -31,7 +30,7 @@ struct ArenaUiState {
     ArenaPreview preview;
 };
 
-static_assert(sizeof(ArenaContext) == 3, "arena selection context must remain three bytes");
+static_assert(sizeof(ArenaContext) == 2, "arena selection context must remain two bytes");
 #ifdef __AVR__
 static_assert(sizeof(ArenaPreview) == 19, "arena preview must remain 19 bytes");
 static_assert(sizeof(ArenaUiState) == 24, "arena UI state must remain 24 bytes");

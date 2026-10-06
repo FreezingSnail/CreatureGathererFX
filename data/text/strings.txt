@@ -153,3 +153,9 @@ namespace ConsumableNames {
     consumable6 = "essence"
     consumable7 = "crystal"
 }
+
+namespace ArenaUiText {
+    arenaChooseTeam = "Choose Team"
+    arenaChooseOpponent = "Choose Opponent"
+    arenaControls = "A:Pick B:Back"
+}

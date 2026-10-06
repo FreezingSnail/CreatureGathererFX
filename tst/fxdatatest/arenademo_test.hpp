@@ -64,8 +64,6 @@ inline bool finishTrainer(FxTest &test)
     test.expectEq(returned, true,
                   F("arena"));
     test.expectEq(frames < 25000, true, F("arena"));
-    Serial.print(F("arena trainer outcome="));
-    Serial.println(static_cast<uint8_t>(arena::arenaContext.outcome));
     Serial.print(F("arena trainer frames="));
     Serial.println(frames);
     return returned;
@@ -226,7 +224,7 @@ inline void test_arenademo(FxTest &test)
     arena::boot();
     test.expectEq(gameState.state, GameState_t::ARENA,
                   F("arena"));
-    test.expectEq(sizeof(arena::ArenaContext), static_cast<size_t>(3),
+    test.expectEq(sizeof(arena::ArenaContext), static_cast<size_t>(2),
                   F("arena"));
     test.expectEq(sizeof(arena::ArenaUiState), static_cast<size_t>(24),
                   F("arena"));
@@ -300,15 +298,12 @@ inline void test_arenademo(FxTest &test)
     test.expectEq(completed, true, F("arena"));
     test.expectEq(gameState.state, GameState_t::ARENA,
                   F("arena"));
-    test.expectEq(arena::arenaContext.outcome == battle::Outcome::Win ||
-                      arena::arenaContext.outcome == battle::Outcome::Lose,
-                  true, F("arena"));
     test.expectEq(arena::arenaContext.playerTeam, ArenaDemoIds::player_blitz,
                   F("arena"));
     test.expectEq(arena::arenaContext.opponentTeam, ArenaDemoIds::opponent_starter,
                   F("arena"));
     test.expectEq(static_cast<uint8_t>(modeState.arena.ui.screen),
-                  static_cast<uint8_t>(arena::ArenaScreen::Result),
+                  static_cast<uint8_t>(arena::ArenaScreen::PlayerTeam),
                   F("arena"));
 
     arena::arenaContext.playerTeam = ArenaDemoIds::player_utility;

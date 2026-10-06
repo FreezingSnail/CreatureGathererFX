@@ -4557,4 +4557,48 @@ git diff --check
 
 The first host compile caught an incorrect relative include for `MenuV2.hpp`;
 corrected before the passing run. Worker time approximately 10 minutes.
+
+## CreatureGathererFX-2cy.9
+
+Implemented cached 1bpp team/opponent selection previews. Owner scope correction
+2026-10-06 removed the post-battle Win/Loss screen, its three actions, and arena
+outcome storage. Terminal playback returns directly to the selected player-team
+preview; a player confirms the team and then chooses an opponent again. Only the
+three selection labels remain generated. Drawing clears once and uses cached
+addresses/widths without mutating UI or performing logical metadata reads.
+
+```text
+PATH=/Users/connorfranc/code/CreatureGathererTools/target/debug:$PATH make gen
+# PASS: generated FX image and symbols. Default cgfx-tools 0.2.0 rejects
+# deepthought from opponents.csv; the sibling checkout's current binary is required.
+make test
+# PASS after scope correction: host 154,963/0; world 190/0.
+make verify-generated
+# PASS: generated artifacts match.
+make test-generated-libs
+# PASS: 40 image checks, 5 generated invariants, arena provenance, and 28 aliases.
+PATH=/Users/connorfranc/code/CreatureGathererTools/target/debug:$PATH make test-pack-parity
+# PASS: legacy layout equivalence and perturbation diagnostic; SHA-256
+# a9f43cfb320c50f7e6834f2947819e58a6e46906f88a25065ae2b20b6c48c610.
+make fxtest-spike BUILD_DIR=build/arena-resultless-view FXTEST_SPIKE_INO=tst/fxdatatest/test_arenaview.ino FXTEST_MS=10000 ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS: arena view 70/0; test_stack 4/0; headroom 335 B.
+make fxtest-spike BUILD_DIR=build/arena-resultless-device FXTEST_SPIKE_INO=tst/fxdatatest/test_arenademo.ino FXTEST_MS=10000 ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS after correcting stale three-byte context assertion: arena lifecycle
+# 489/0, 10 replay cycles, painted effective stack 240 B; test_stack 4/0, 335 B.
+PATH=/Users/connorfranc/code/CreatureGathererTools/target/debug:$PATH make ram BUILD_DIR=build/arena-resultless-demo AVR_FLASH_BUDGET=29184 AVR_SHIPPING_CPP_FLAGS='-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X -DCGFX_SHIPPING_NO_USB -DCGFX_ARENA_DEMO'
+# PASS: 28,898 flash / 1,847 static; 286 B below arena flash ceiling.
+git diff --check
+# PASS.
 ```
+
+The first host build needed `src/lib/Text.cpp` in the host source list. The first
+device build needed an AVR-compatible `memcmp`; the first view device run also
+double-approved preview reads, fixed by asserting the reader's transition
+boundary. Initial parity exposed the historical fixture consuming newly
+appended UI strings; excluding the new symbols restored the legacy layout
+proof. Before the owner correction, the result menu image was 29,298 B, 114 B
+over budget. Removing result rendering, its five generated labels, navigation
+branches, and the stored outcome reduced the final image to 28,898 B (a 400 B
+reduction from that build); normal image remained 27,894 B / 1,841 static in
+the prior measurement. Orchestrator scope correction and verification took
+approximately 15 minutes. `.9` is ready for close under the corrected scope.

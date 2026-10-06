@@ -11,7 +11,7 @@ inline void ArenaNavigationSuite(TestRunner &runner)
     Test test("arena screen transitions, bounds, and selection ownership");
     using namespace arena;
 
-    ArenaContext context = {1, 3, battle::Outcome::Win};
+    ArenaContext context = {1, 3};
     ArenaUiState ui = {};
     ui.screen = ArenaScreen::PlayerTeam;
     ui.list = {3, 1, 0, 0};
@@ -23,8 +23,6 @@ inline void ArenaNavigationSuite(TestRunner &runner)
                 "first A opens opponent screen");
     test.assert(ui.list.cursor, static_cast<uint8_t>(3),
                 "saved opponent selection is restored");
-    test.assert(context.outcome, battle::Outcome::Win,
-                "selection transition preserves outcome");
 
     test.assert(navigate(ui, context, MENU_EDGE_A, 3, 5), ArenaIntent::StartBattle,
                 "second A starts battle");
@@ -72,37 +70,6 @@ inline void ArenaNavigationSuite(TestRunner &runner)
                 "last opponent can be confirmed");
     test.assert(context.opponentTeam, static_cast<uint8_t>(4),
                 "last opponent selection is committed");
-
-    ui.screen = ArenaScreen::Result;
-    ui.list = {3, 3, 0, 0};
-    test.assert(navigate(ui, context, MENU_NAV_DOWN, 3, 5), ArenaIntent::None,
-                "result cursor moves without preview intent");
-    test.assert(ui.list.cursor, static_cast<uint8_t>(1), "result reaches change opponent");
-    test.assert(navigate(ui, context, MENU_EDGE_A, 3, 5),
-                ArenaIntent::PreviewChanged, "change opponent opens opponent screen");
-    test.assert(ui.list.cursor, static_cast<uint8_t>(4),
-                "change opponent restores saved opponent");
-    test.assert(navigate(ui, context, MENU_EDGE_B, 3, 5),
-                ArenaIntent::PreviewChanged, "opponent B returns to saved team");
-    test.assert(ui.list.cursor, static_cast<uint8_t>(2), "team index remains saved");
-    ui.screen = ArenaScreen::Result;
-    ui.list = {3, 3, 0, 0};
-    test.assert(navigate(ui, context, MENU_EDGE_B, 3, 5),
-                ArenaIntent::PreviewChanged, "result B opens opponent selection");
-
-    ui.screen = ArenaScreen::Result;
-    ui.list = {3, 3, 0, 0};
-    test.assert(navigate(ui, context, MENU_EDGE_A, 3, 5), ArenaIntent::StartBattle,
-                "rematch starts using saved context");
-    test.assert(context.playerTeam, static_cast<uint8_t>(2),
-                "rematch preserves player team");
-    test.assert(context.opponentTeam, static_cast<uint8_t>(4),
-                "rematch preserves opponent team");
-    test.assert(context.outcome, battle::Outcome::Win, "rematch preserves outcome");
-    ui.list.cursor = 2;
-    test.assert(navigate(ui, context, MENU_EDGE_A, 3, 5),
-                ArenaIntent::PreviewChanged, "change team opens player screen");
-    test.assert(ui.list.cursor, static_cast<uint8_t>(2), "change team restores saved team");
 
     ui.screen = ArenaScreen::PlayerTeam;
     ui.list = {255, 1, 200, 254};

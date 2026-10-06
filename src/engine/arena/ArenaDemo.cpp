@@ -81,7 +81,7 @@ bool applyPlayerTeam(uint8_t team, Player &target)
 
 void boot()
 {
-    arenaContext = {0, 0, battle::Outcome::None};
+    arenaContext = {0, 0};
     enterArena();
     ArenaUiState &ui = modeState.arena.ui;
     ui = {};
@@ -117,14 +117,14 @@ bool startMatch()
     return true;
 }
 
-void finishBattle(battle::Outcome outcome)
+void finishBattle(battle::Outcome)
 {
-    arenaContext.outcome = outcome;
     enterArena();
     ArenaUiState &ui = modeState.arena.ui;
-    ui = {};
-    ui.screen = ArenaScreen::Result;
-    ui.list = {3, 3, 0, 0};
+    ui.screen = ArenaScreen::PlayerTeam;
+    ui.list = {ArenaDemoIds::playerCount, 1, arenaContext.playerTeam,
+               arenaContext.playerTeam};
+    loadPreview(ArenaScreen::PlayerTeam, arenaContext.playerTeam, ui.preview);
     gameState.state = GameState_t::ARENA;
 }
 
@@ -148,7 +148,7 @@ void update(uint8_t edgeButtons)
 
 void draw()
 {
-    draw(modeState.arena.ui, arenaContext);
+    draw(modeState.arena.ui);
 }
 
 } // namespace arena
