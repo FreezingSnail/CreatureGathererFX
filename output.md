@@ -5074,7 +5074,43 @@ No resource delta from baseline. Focused compile also reports 1,924 B globals fo
 the dialog suite and 1,921 B for test_stack (both within the 2,160 B suite cap).
 Worker implementation and focused verification took approximately 5 minutes.
 
-Orchestrator integrated checkpoint:
+## CreatureGathererFX-n11 — shared glyph primitive
+
+Added `drawGlyph(int16_t, int16_t, uint8_t, uint8_t)` in `src/lib/Text.hpp/.cpp`.
+It rejects bytes outside `'0'..'z'`, reads pixels from `fontTrimmed + 4`, selects
+frame `character - '0'`, and forwards the caller's `Blit` mode. The script text
+loop still owns its 18-column/two-row layout; battle captions and damage digits
+still own their separate iteration and six-pixel advances. No buffers,
+transitions, queue behavior, or metadata reads changed.
+
+Expanded `tst/fxdatatest/dialogs_test.hpp` to compare actual production
+`drawPopMenu()` output against independent raw `ArduFontTrimmed` glyphs for
+nonempty SRAM text, 36 characters over two rows, empty text, spaces, digits,
+uppercase/lowercase, valid endpoints `'0'`/`'z'`, and unsupported `'!'`/`'{'`.
+Existing battle caption/damage raw-font references remain unchanged.
+
+Focused verification:
+
+```text
+make test BUILD_DIR=build/text-n11-host
+# PASS: host 155,552/0; world 190/0.
+make testvm BUILD_DIR=build/text-n11-vm
+# PASS: VM 42/0.
+make fxtest-spike BUILD_DIR=build/text-n11-dialog-final FXTEST_SPIKE_INO=tst/fxdatatest/test_dialog.ino ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens FXTEST_MS=10000
+# PASS: dialog 9/0; test_stack 4/0, 335 B headroom.
+make fxtest-spike BUILD_DIR=build/text-n11-battle-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_battlepresentation.ino ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens FXTEST_MS=10000
+# PASS: battle presentation 210/0; test_stack 4/0, 335 B headroom; presenter/caption effective reserves 255/302 B.
+make ram BUILD_DIR=build/text-n11-ram
+# PASS: shipping 27,978 B flash / 1,841 B static RAM; -72 B flash and no static-RAM change from 3ds baseline.
+```
+
+The first dialog spike failed one pre-existing invalid-index head assertion
+because the new cases left their queue entry in place. Clearing the queue before
+that assertion fixed the fixture; rerun passed. Wall time for this bead's
+implementation and focused checks was approximately 4 minutes. The integrated
+final gate remains for the orchestrator.
+
+Orchestrator integrated checkpoint — CreatureGathererFX-3ds:
 
 ```text
 make final-gate BUILD_DIR=build/text-unification-final FXTEST_MS=10000 FINAL_GATE_LOG_DIR=build/text-unification-final/gate-3ds ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
@@ -5086,3 +5122,16 @@ make final-gate BUILD_DIR=build/text-unification-final FXTEST_MS=10000 FINAL_GAT
 Full gate wall time: 201 s. Orchestrator review/report/commit preparation:
 approximately 1 minute. No unexpected generated changes. Closed bead committed
 before dispatching the glyph extraction.
+
+Orchestrator integrated checkpoint — CreatureGathererFX-n11:
+
+```text
+make final-gate BUILD_DIR=build/text-unification-final FXTEST_MS=10000 FINAL_GATE_LOG_DIR=build/text-unification-final/gate-n11 ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS: host 155,552/0; world 190/0; VM 42/0; generated checks PASS;
+# every FX suite PASS, dialog 9/0, presentation 210/0; stack 335 B;
+# shipping flash 27,978 B (-72) / static RAM 1,841 B (unchanged).
+```
+
+Full gate wall time: 210 s. Orchestrator review/report/commit preparation:
+approximately 1 minute. No unexpected generated changes. Closed bead committed
+before dispatching the compact dialog queue.

@@ -25,28 +25,45 @@ inline void drawRawReference(const uint8_t *text, uint8_t length) {
                        ArduFontTrimmed, FRAME(character - '0'), Blit::OVERWRITE);
     }
 }
+
+inline void expectScriptTextMatches(FxTest &test, const uint8_t *text,
+                                    uint8_t length,
+                                    const __FlashStringHelper *label) {
+    dialogMenu.clear();
+    const PopUpDialog scriptText{0, 40, 128, 24, 0, 0, 0, SCRIPT_TEXT, 0};
+    dialogMenu.pushMenu(scriptText);
+    if (length) memcpy(dialogMenu.scriptText, text, length);
+    dialogMenu.head().width = length;
+
+    arduboy.clear();
+    dialogMenu.drawPopMenu();
+    const uint16_t actual = textSignature();
+
+    arduboy.clear();
+    Blit::draw(0, 40, 128, 24, battleMenu, FRAME(0), Blit::OVERWRITE);
+    drawRawReference(text, length);
+    test.expectEq(actual, textSignature(), label);
+}
 } // namespace dialogs_test_detail
 
 inline void test_dialogs(FxTest &test) {
-    dialogMenu.clear();
-
     // Exercise the production renderer with SRAM text, using the independent
     // legacy raw glyph declaration for the expected framebuffer.
     static const uint8_t text[] = "Ab0 cD9 eFgHiJkLmNoPqR";
     const uint8_t textLength = sizeof(text) - 1;
-    const PopUpDialog scriptText{0, 40, 128, 24, 0, 0, 0, SCRIPT_TEXT, 0};
-    dialogMenu.pushMenu(scriptText);
-    memcpy(dialogMenu.scriptText, text, textLength);
-    dialogMenu.head().width = textLength;
-    arduboy.clear();
-    dialogMenu.drawPopMenu();
-    const uint16_t actual = dialogs_test_detail::textSignature();
+    dialogs_test_detail::expectScriptTextMatches(
+        test, text, textLength, F("script glyphs match raw font across wrap"));
 
-    arduboy.clear();
-    Blit::draw(0, 40, 128, 24, battleMenu, FRAME(0), Blit::OVERWRITE);
-    dialogs_test_detail::drawRawReference(text, textLength);
-    test.expectEq(actual, dialogs_test_detail::textSignature(),
-                  F("script glyphs match independent raw font across wrap"));
+    static const uint8_t twoRowText[36] = {
+        '0', 'z', '!', '{', ' ', 'A', '0', 'z', '!', '{', ' ', 'A',
+        '0', 'z', '!', '{', ' ', 'A', '0', 'z', '!', '{', ' ', 'A',
+        '0', 'z', '!', '{', ' ', 'A', '0', 'z', '!', '{', ' ', 'A'
+    };
+    dialogs_test_detail::expectScriptTextMatches(
+        test, twoRowText, sizeof(twoRowText),
+        F("script glyph endpoints and unsupported bytes match raw font over two rows"));
+    dialogs_test_detail::expectScriptTextMatches(
+        test, twoRowText, 0, F("empty script text draws no glyphs"));
     dialogMenu.clear();
 
     const PopUpDialog invalidScriptText{0, 43, 128, 24, 0xFFFF, 0, 0,

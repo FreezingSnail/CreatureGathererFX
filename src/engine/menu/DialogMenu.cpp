@@ -5,6 +5,7 @@
 #include "../world/Event.hpp"
 #include <ArduboyFX.h>
 #include "../../common.hpp"
+#include "../../lib/Text.hpp"
 
 #define WHITETEXT 1
 
@@ -46,11 +47,7 @@ void drawScriptText(const uint8_t *text, uint8_t renderedLength, int16_t x, int1
         const uint8_t line = i / 18;
         const uint8_t column = i % 18;
         const uint8_t character = text[i];
-        if (character >= '0' && character <= 'z') {
-            const uint8_t glyph = character - '0';
-            Blit::draw(x + column * 6, y + line * 8,
-                                      5, 6, fontTrimmed + 4, FRAME(glyph), Blit::OVERWRITE);
-        }
+        drawGlyph(x + column * 6, y + line * 8, character, Blit::OVERWRITE);
     }
 }
 } // namespace
