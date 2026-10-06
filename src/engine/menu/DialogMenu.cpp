@@ -49,7 +49,7 @@ void drawScriptText(const uint8_t *text, uint8_t renderedLength, int16_t x, int1
         if (character >= '0' && character <= 'z') {
             const uint8_t glyph = character - '0';
             Blit::draw(x + column * 6, y + line * 8,
-                                      5, 6, fontTrimmed, FRAME(glyph), Blit::OVERWRITE);
+                                      5, 6, fontTrimmed + 4, FRAME(glyph), Blit::OVERWRITE);
         }
     }
 }

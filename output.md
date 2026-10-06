@@ -5039,3 +5039,50 @@ git diff --check
 Restored-source final gate took approximately 4 minutes; orchestrator reporting
 and bead/commit work approximately 1 minute. Research complete; implementation
 follow-ups remain open.
+
+## CreatureGathererFX-3ds — script dialog glyph offset
+
+Changed `src/engine/menu/DialogMenu.cpp` to pass `fontTrimmed + 4` to `Blit::draw`,
+matching the existing battle glyph callers. `tst/fxdatatest/dialogs_test.hpp` now
+drives the production `DialogMenu::drawPopMenu()` using resident SRAM text and
+compares the framebuffer against glyphs drawn independently from raw
+`ArduFontTrimmed`. Coverage includes uppercase, lowercase, digits, spaces, and a
+wrap to the second row. The generated map text table remains empty. Reviewed all
+production `fontTrimmed` uses: the two battle uses already include `+ 4`.
+
+Before the production correction:
+
+```text
+make fxtest-headless BUILD_DIR=build/text-3ds-before FXTEST_INOS=tst/fxdatatest/test_dialog.ino ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens FXTEST_MS=10000
+# Expected regression: test_dialog FAILED; script glyph framebuffer signature got=805 want=77.
+```
+
+After correction:
+
+```text
+make test BUILD_DIR=build/text-3ds-host
+# PASS: host 155,552/0; world 190/0.
+make testvm BUILD_DIR=build/text-3ds-vm
+# PASS: VM 42/0.
+make fxtest-spike BUILD_DIR=build/text-3ds-device-final FXTEST_SPIKE_INO=tst/fxdatatest/test_dialog.ino ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens FXTEST_MS=10000
+# PASS: dialog 7/0; test_stack 4/0, 335 B headroom (effective reserve 266 B after 69 B USB ISR allowance).
+make ram BUILD_DIR=build/text-3ds-ram
+# PASS: shipping 28,050 B flash / 1,841 B static RAM; 1,646 B flash free / 319 B static RAM free.
+```
+
+No resource delta from baseline. Focused compile also reports 1,924 B globals for
+the dialog suite and 1,921 B for test_stack (both within the 2,160 B suite cap).
+Worker implementation and focused verification took approximately 5 minutes.
+
+Orchestrator integrated checkpoint:
+
+```text
+make final-gate BUILD_DIR=build/text-unification-final FXTEST_MS=10000 FINAL_GATE_LOG_DIR=build/text-unification-final/gate-3ds ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS: host 155,552/0; world 190/0; VM 42/0; generated checks PASS;
+# every FX suite PASS, dialog 7/0, presentation 210/0; stack 335 B;
+# shipping flash 28,050 B / static RAM 1,841 B, unchanged.
+```
+
+Full gate wall time: 201 s. Orchestrator review/report/commit preparation:
+approximately 1 minute. No unexpected generated changes. Closed bead committed
+before dispatching the glyph extraction.
