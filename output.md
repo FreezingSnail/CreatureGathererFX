@@ -5195,3 +5195,51 @@ remaining TEXT/SCRIPT_TEXT semantics and recorded implementation measurements
 in docs/text-rendering-research.md. All three Luna beads are closed, with a full
 gate and commit between each checkpoint. Total wave elapsed through final gate:
 979 s. No push performed.
+
+## CreatureGathererFX-syd — further VM delegation research (2026-10-06)
+
+Audited VM execution/validation, compiler DSL and emitters, authored map scripts,
+WorldTransient lifetime, encounter caches, menu navigation, battle presentation,
+plant/lure code and legacy Animator callers. Report: docs/vm-delegation-research.md.
+No production migration landed; both reversible prototypes were restored.
+
+```text
+make ram BUILD_DIR=build/vm-delegation-research/baseline
+# PASS: flash 27,894 B / static SRAM 1,787 B; VM 27 B, Animator 28 B.
+make ram BUILD_DIR=build/vm-delegation-research/vm-trim
+# PASS: flash 27,894 B / static SRAM 1,771 B; VM 11 B (-16 B).
+make fxtest-spike BUILD_DIR=build/vm-delegation-research/vm-trim-device FXTEST_SPIKE_INO=tst/fxdatatest/test_scripts.ino FXTEST_MS=10000 ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS: scripts 32/0; stack 4/0; painted 434 B / effective 365 B;
+# mode transition 545 B. Device script globals 1,825 B; stack globals 1,851 B.
+make testvm BUILD_DIR=build/vm-delegation-research/vm-trim-host
+# PASS: VM 42/0.
+make ram BUILD_DIR=build/vm-delegation-research/animator-trim
+# PASS: flash 27,744 B / static SRAM 1,759 B (-150 / -28 B).
+# Independent prototype; VM restored first. Animator prototype build only.
+git diff -- src/vm/ScriptVM.hpp CreatureGathererFX.ino
+# Empty after restoration.
+```
+
+Filed 2ua (unused VM arrays) and hdc (unused Animator path), with separate
+verification contracts. Added research notes to existing GiveItem bead jp8.5.17.
+Existing scripted dialogue/flags/teleports and a future GiveItem native helper
+are strongest candidates; new opcodes have no demonstrated net saving yet.
+Battle entry must be deferred to the world caller because the transition
+overwrites the borrowed script buffer. Core mechanics and cached per-step work
+remain native. Independent deltas are not a measured combined image.
+
+Research/measurement wall time: approximately 20 minutes including report.
+Integrated gate and close/commit evidence follows below.
+
+```text
+make final-gate BUILD_DIR=build/vm-delegation-research/final FXTEST_MS=10000 ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS: host 155,550/0; world 190/0; VM 42/0; generated checks PASS;
+# every FX suite PASS; scripts 32/0; presentation 210/0; stack 4/0,
+# painted headroom 420 B; arena start/callback effective reserve 238 B.
+# Restored shipping flash 27,894 B / static SRAM 1,787 B.
+git diff --check
+# PASS; no unexpected generated or production source changes.
+```
+
+Final gate wall time: approximately 5 minutes. Orchestrator report/close/commit
+preparation: approximately 2 minutes. No push performed.
