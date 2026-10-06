@@ -41,16 +41,15 @@ typedef struct CreatureD {
 
 struct PopUpDialog {
     uint8_t x, y;
-    // TEXT keeps its box dimensions. Indexed dialogs use width for the first
-    // string bitmap and height for the move/effect bitmap; draw positions stay fixed.
+    // TEXT keeps its raster dimensions; SCRIPT_TEXT uses width as the prepared
+    // character count for the resident two-row text buffer.
     uint8_t width, height;
-    // TEXT holds an event address; SCRIPT_TEXT holds a raw_map_text index;
-    // name dialogs hold a resolved creature name. EFFECTIVENESS holds a Modifier.
-    // Other types do not draw this field.
+    // TEXT holds an event address; SCRIPT_TEXT holds a raw_map_text index.
     uint24_t textAddress;
-    // Resolved move name for NAME/ENEMY_NAME, or effect text for effect dialogs.
-    uint24_t detailAddress;
-    uint16_t damage;
     DialogType type;
-    uint24_t animation;
 };
+
+static_assert(TEXT == 0 && SCRIPT_TEXT == 15, "dialog type IDs remain stable");
+#ifdef __AVR__
+static_assert(sizeof(PopUpDialog) == 8, "AVR dialog descriptor must remain 8 bytes");
+#endif
