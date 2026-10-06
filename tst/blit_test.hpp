@@ -14,9 +14,9 @@ inline void BlitSuite(TestRunner &runner) {
     uint8_t expected[1024];
     for (uint8_t i = 0; i < sizeof(fxDataFake::dataBytes); ++i)
         fxDataFake::dataBytes[i] = static_cast<uint8_t>(i * 37 + 0xD3);
-    for (uint8_t mode = 0; mode < 2; ++mode) {
+    for (uint8_t mode = 0; mode < 3; ++mode) {
         for (uint8_t h : heights) {
-            const uint8_t w = 5, pages = (h + 7) / 8, bpp = mode ? 2 : 1;
+            const uint8_t w = 5, pages = (h + 7) / 8, bpp = mode == Blit::PLUSMASK ? 2 : 1;
             const uint24_t image = 0x123456;
             const uint16_t frame = 4096; // frame * stride exceeds 16 bits.
             fxDataFake::dataBase = image + static_cast<uint24_t>(frame) * w * pages * bpp;
@@ -28,10 +28,12 @@ inline void BlitSuite(TestRunner &runner) {
                     const int32_t dy = static_cast<int32_t>(y) + sy;
                     if (dx < 0 || dx >= 128 || dy < 0 || dy >= 64) continue;
                     const uint8_t offset = ((sy / 8) * w + sx) * bpp;
-                    if (mode && !(fxDataFake::dataBytes[offset + 1] & (1 << (sy & 7)))) continue;
+                    if (mode == Blit::PLUSMASK &&
+                        !(fxDataFake::dataBytes[offset + 1] & (1 << (sy & 7)))) continue;
                     uint8_t &dest = expected[(dy / 8) * 128 + dx];
                     const uint8_t bit = 1 << (dy & 7);
-                    if (fxDataFake::dataBytes[offset] & (1 << (sy & 7))) dest |= bit;
+                    const bool sourcePixel = fxDataFake::dataBytes[offset] & (1 << (sy & 7));
+                    if (sourcePixel != (mode == Blit::NEGATIVE)) dest |= bit;
                     else dest &= ~bit;
                 }
                 Blit::draw(x,y,w,h,image,frame,mode);

@@ -72,7 +72,7 @@ help:
 		'  testvm   run fast ScriptVM C++ tests; prerequisite: $(CXX); output: $(VM_TEST_BIN)' \
 		'  build    compile Arduboy FX sketch; prerequisite: $(ARDUINO_CLI); output: $(BUILD_DIR)' \
 		'  ram      build and report FX flash/RAM plus largest static symbols; prerequisite: $(ARDUINO_CLI), avr-size, avr-nm' \
-		'  arena-demo generate FX data, then build the opt-in arena firmware with its reserved flash budget' \
+		'  arena-demo generate FX data, build the opt-in arena firmware, then launch Ardens' \
 		'  test-avr-build-budget exercise the fail-closed shipping flash/RAM parser' \
 		'  final-gate  run the full check then the shipping RAM report; requires ARDENS' \
 		'  run      launch Ardens with the sketch, FX data, and FX save images; prerequisite: ARDENS' \
@@ -87,7 +87,7 @@ help:
 		'  fxtest-headless  run every FX device sketch through Ardens serial capture; blocks unsupported Ardens' \
 		'  fxtest-spike  run one selected FX suite plus test_stack; set FXTEST_SPIKE_INO and ARDENS' \
 		'' \
-		'Overrides: CXX, ARDUINO_CLI, FQBN, BUILD_DIR, ARDUINO_BUILD_PATH, ARDUINO_BUILD_CACHE_PATH, DIST_DIR, FXDATA_BIN, ARDENS, FXTEST_MS, FXTEST_RAM_BUDGET, AVR_FLASH_BUDGET, AVR_STATIC_RAM_BUDGET, RAM_ELF, AVR_SIZE, AVR_NM, AVR_RELAX_FLAGS, AVR_FXTEST_BUILD_PROPERTIES, AVR_FXTEST_CPP_FLAGS, AVR_SHIPPING_BUILD_PROPERTIES, AVR_SHIPPING_CPP_FLAGS, ARENA_DEMO_BUILD_DIR, ARENA_DEMO_CPP_FLAGS, ARENA_DEMO_FLASH_BUDGET.'
+		'Overrides: CXX, ARDUINO_CLI, FQBN, BUILD_DIR, ARDUINO_BUILD_PATH, ARDUINO_BUILD_CACHE_PATH, DIST_DIR, FXDATA_BIN, ARDENS, FXTEST_MS, FXTEST_RAM_BUDGET, AVR_FLASH_BUDGET, AVR_STATIC_RAM_BUDGET, RAM_ELF, AVR_SIZE, AVR_NM, AVR_RELAX_FLAGS, AVR_FXTEST_BUILD_PROPERTIES, AVR_FXTEST_CPP_FLAGS, AVR_SHIPPING_BUILD_PROPERTIES, AVR_SHIPPING_CPP_FLAGS, ARENA_DEMO_BUILD_DIR, ARENA_DEMO_CART_DIR, ARENA_DEMO_CPP_FLAGS, ARENA_DEMO_FLASH_BUDGET.'
 
 setup:
 	@printf '%s\n' \
@@ -253,15 +253,29 @@ battle-test: gen
 dev: gen
 	@$(MAKE) --no-print-directory run
 
-# Opt-in arena demo firmware build. Generate the cart first, then run the same
-# shipping RAM/flash report in an isolated output tree with a demo-only define.
+# Opt-in arena demo. Generate the cart, build/report the isolated firmware, copy
+# the split FX data/save inputs beside it, then launch Ardens.
 ARENA_DEMO_BUILD_DIR ?= build/arena-demo
+ARENA_DEMO_CART_DIR ?= $(ARENA_DEMO_BUILD_DIR)/isolated
 ARENA_DEMO_CPP_FLAGS ?= $(AVR_SHIPPING_CPP_FLAGS) -DCGFX_ARENA_DEMO
 ARENA_DEMO_FLASH_BUDGET ?= 29184
 
 arena-demo:
+	@test -n "$(ARDENS)" || { echo "arena-demo: ARDENS is unset; set ARDENS=/path/to/Ardens" >&2; exit 1; }
+	@test -x "$(ARDENS)" || { echo "arena-demo: Ardens executable not found at $(ARDENS)" >&2; exit 1; }
 	@$(MAKE) --no-print-directory gen
 	@$(MAKE) --no-print-directory ram BUILD_DIR="$(ARENA_DEMO_BUILD_DIR)" AVR_SHIPPING_CPP_FLAGS="$(ARENA_DEMO_CPP_FLAGS)" AVR_FLASH_BUDGET="$(ARENA_DEMO_FLASH_BUDGET)"
+	@test -f "$(ARENA_DEMO_BUILD_DIR)/CreatureGathererFX.ino.hex" || { echo "arena-demo: sketch hex missing from $(ARENA_DEMO_BUILD_DIR)" >&2; exit 1; }
+	@test -f "$(FXDATA_DATA_BIN)" || { echo "arena-demo: FX data image missing at $(FXDATA_DATA_BIN); run make gen" >&2; exit 1; }
+	@test -f "$(FXDATA_SAVE_BIN)" || { echo "arena-demo: FX save image missing at $(FXDATA_SAVE_BIN); run make gen" >&2; exit 1; }
+	@mkdir -p "$(ARENA_DEMO_CART_DIR)"
+	@cp -f "$(FXDATA_DATA_BIN)" "$(ARENA_DEMO_CART_DIR)/fxdata-data.bin"
+	@cp -f "$(FXDATA_SAVE_BIN)" "$(ARENA_DEMO_CART_DIR)/fxdata-save.bin"
+	"$(ARDENS)" \
+	    fxport=$(RUN_FXPORT) display=$(RUN_DISPLAY) \
+	    file="$(ARENA_DEMO_BUILD_DIR)/CreatureGathererFX.ino.hex" \
+	    file="$(ARENA_DEMO_CART_DIR)/fxdata-data.bin" \
+	    save="$(ARENA_DEMO_CART_DIR)/fxdata-save.bin"
 
 gen: gen-data gen-sprites gen-fixtures pack
 

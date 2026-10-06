@@ -208,7 +208,9 @@ uint8_t render() {
     case GameState_t::BATTLE: {
         battle::BattleView view = battleSession().view();
         battlePresenter().overlay(view);
-        drawScene(view);
+        int8_t shakeX, shakeY;
+        battlePresenter().sceneOffset(shakeX, shakeY);
+        drawScene(view, shakeX, shakeY);
         battlePresenter().draw();
         return 0;
     }

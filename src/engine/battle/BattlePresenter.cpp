@@ -16,6 +16,28 @@ uint8_t readMoveNameWidth(uint16_t id);
 
 namespace battle {
 namespace {
+// The first eight impact ticks use a deterministic 2-pixel cross shake.
+// Deriving offsets from stage time keeps state bounded and guarantees settling.
+void impactOffset(const ActionResult *result, PresenterStage stage, uint8_t elapsed,
+                  int8_t &x, int8_t &y) {
+    x = y = 0;
+    if (result == nullptr || stage != PresenterStage::Impact ||
+        result->kind != ResultKind::Attack) return;
+    const uint8_t target = (result->flags & SELF_HIT)
+        ? static_cast<uint8_t>(result->actor)
+        : static_cast<uint8_t>(result->actor) ^ 1u;
+    if (result->hpAfter[target] >= result->hpBefore[target] || elapsed >= 8) return;
+    switch (elapsed) {
+    case 0: x = -2; break;
+    case 1: x = 2; break;
+    case 2: x = 1; y = -1; break;
+    case 3: x = -1; y = 1; break;
+    case 4: x = 1; y = 1; break;
+    case 5: x = -1; y = -1; break;
+    default: break;
+    }
+}
+
 enum : uint8_t {
     HIDDEN_MASK = 0x03,
     CAPTION_SHIFT = 2,
@@ -82,11 +104,14 @@ TextSprite statSprite(Effect effect) {
 }
 
 TextSprite effectivenessSprite(Modifier modifier) {
+    // Match 5 * (character count + the legacy leading space) used by the
+    // generated string bitmaps. A one-byte overread pulls unrelated packed
+    // sprite data into the effectiveness label and makes it appear garbled.
     switch (modifier) {
-    case Modifier::Quarter: return {quarter, 95};
-    case Modifier::Half: return {half, 70};
-    case Modifier::Double: return {doubled, 75};
-    case Modifier::Quadruple: return {quad, 95};
+    case Modifier::Quarter: return {quarter, 90};
+    case Modifier::Half: return {half, 65};
+    case Modifier::Double: return {doubled, 70};
+    case Modifier::Quadruple: return {quad, 90};
     default: return {0, 0};
     }
 }
@@ -129,55 +154,42 @@ void cacheMoveName(PreparedBattleItem &item, uint8_t id, uint8_t &lookups) {
 }
 
 #ifndef TEST
-__attribute__((optimize("no-tree-switch-conversion")))
+const char captionTextData[] PROGMEM =
+    "\0hits itself\0could not act\0cannot do that\0did nothing\0switching\0"
+    "rose\0fell\0strengthened\0weakened\0lost hp\0healed hp\0gathered\0"
+    "fled\0no effect\0status applied";
+const uint8_t captionOffsets[] PROGMEM = {
+    0, 1, 12, 25, 39, 50, 59, 64, 69, 82, 91, 99, 109, 118, 123, 133
+};
 const char *captionText(uint8_t caption) {
-    switch (caption) {
-    case CAPTION_SELF_HIT: return PSTR("hits itself");
-    case CAPTION_STATUS_SKIP: return PSTR("could not act");
-    case CAPTION_REFUSED: return PSTR("cannot do that");
-    case CAPTION_NO_ACTION: return PSTR("did nothing");
-    case CAPTION_SWITCHING: return PSTR("switching");
-    case CAPTION_STAT_UP: return PSTR("rose");
-    case CAPTION_STAT_DOWN: return PSTR("fell");
-    case CAPTION_TYPE_UP: return PSTR("strengthened");
-    case CAPTION_TYPE_DOWN: return PSTR("weakened");
-    case CAPTION_HP_LOST: return PSTR("lost hp");
-    case CAPTION_HP_HEALED: return PSTR("healed hp");
-    case CAPTION_GATHERED: return PSTR("gathered");
-    case CAPTION_FLED: return PSTR("fled");
-    case CAPTION_NO_EFFECT: return PSTR("no effect");
-    case CAPTION_STATUS_APPLIED: return PSTR("status applied");
-    default: return nullptr;
-    }
+    if (caption > CAPTION_STATUS_APPLIED) caption = CAPTION_NONE;
+    return captionTextData + pgm_read_byte(&captionOffsets[caption]);
 }
 
-uint8_t drawCaption(uint8_t caption, int16_t x, int16_t y) {
+void drawCaption(uint8_t caption, uint8_t x, uint8_t y) {
     const char *text = captionText(caption);
-    if (text == nullptr) return 0;
-    uint8_t count = 0;
-    // Every authored caption is at most 14 characters and uses the supported
-    // '0'..'z' glyph range in the existing 5x6 FX font.
-    while (count < 20) {
-        const uint8_t character = pgm_read_byte(text + count);
+    uint8_t glyphX = x;
+    // Authored captions are NUL-terminated, at most 14 characters, and use
+    // lowercase letters/spaces in the existing 5x6 FX font.
+    for (;;) {
+        const uint8_t character = pgm_read_byte(text++);
         if (character == 0) break;
-        if (character >= '0' && character <= 'z') {
-            Blit::draw(x + static_cast<int16_t>(count) * 6, y,
-                                      5, 6, fontTrimmed,
-                                      FRAME(character - '0'), Blit::OVERWRITE);
+        if (character != ' ') {
+            Blit::draw(glyphX, y, 5, 6, fontTrimmed,
+                       FRAME(character - '0'), Blit::NEGATIVE);
         }
-        ++count;
+        glyphX += 6;
     }
-    return static_cast<uint8_t>(count * 6);
 }
 
 void drawBlackText(uint8_t x, uint8_t y, uint24_t address, uint8_t width) {
-    // Authored battle labels are white glyphs on a black raster. The feedback
-    // panel is white, so invert this opaque 8-pixel row after drawing it to
-    // match the transparent black damage-number sprites.
-    drawText(x, y, address, width, FRAME(0));
-    const uint16_t row = static_cast<uint16_t>(y >> 3) * 128;
-    for (uint8_t column = 0; column < width; ++column)
-        Arduboy2Base::sBuffer[row + x + column] ^= 0xFF;
+    // Negative blitting maps the white-on-black FX raster directly onto the
+    // white panel, including rows that cross an 8-pixel page boundary.
+    Blit::draw(x, y, width, 8, address, FRAME(0), Blit::NEGATIVE);
+}
+
+void drawBlackCaption(uint8_t caption, uint8_t x, uint8_t y) {
+    drawCaption(caption, x, y);
 }
 
 #endif
@@ -297,8 +309,13 @@ void BattlePresenter::prepare() {
             loadName(actor);
             cacheMoveName(item_, result_->index, lookups);
 #ifndef TEST
-            item_.animation = actor == static_cast<uint8_t>(Side::Player)
-                ? basicBeamL : basicBeamR;
+            const bool physical = (result_->flags & PHYSICAL_MOVE) != 0;
+            const bool player = actor == static_cast<uint8_t>(Side::Player);
+            // Physical moves use the paired wave art; special moves use the
+            // beam art. Each animation has a mirrored asset for the actor side.
+            item_.animation = player
+                ? (physical ? BasicWaveL : basicBeamL)
+                : (physical ? BasicWaveR : basicBeamR);
 #endif
             item_.animationWidth = item_.animationHeight = 32;
             item_.frames = 8;
@@ -520,33 +537,37 @@ void BattlePresenter::overlay(BattleView &view) const {
     }
 }
 
+void BattlePresenter::sceneOffset(int8_t &x, int8_t &y) const {
+    impactOffset(result_, stage_, elapsed_, x, y);
+}
+
 void BattlePresenter::draw() const {
 #ifndef TEST
     if (result_ == nullptr || stage_ == PresenterStage::Idle ||
         stage_ == PresenterStage::Done) return;
 
-    // Scene sprites and HP bars are rendered once by drawScene(overlay(view)).
-    // This layer owns only the bounded feedback panel and attack animation.
+    // Scene sprites and HP bars shake through drawScene; keep the feedback
+    // panel and its text stationary so damage remains easy to read.
     Blit::fillRect(0, 40, 128, 24, WHITE);
     const uint8_t caption = static_cast<uint8_t>((flags_ & CAPTION_MASK) >> CAPTION_SHIFT);
     const int16_t yName = 40, yAction = 48, yDetail = 56;
 
     if (stage_ == PresenterStage::Announce && result_->kind == ResultKind::Attack) {
-        drawText(3, yName, item_.name, item_.nameWidth, FRAME(0));
+        drawBlackText(3, yName, item_.name, item_.nameWidth);
         if (result_->flags & SELF_HIT)
-            drawCaption(CAPTION_SELF_HIT, 3, yAction);
+            drawBlackCaption(CAPTION_SELF_HIT, 3, yAction);
         else if (result_->actor == Side::Player)
-            drawText(3, yAction, attackText, 90, FRAME(0));
+            drawBlackText(3, yAction, attackText, 90);
         else
-            drawText(3, yAction, enemyAttackText, 70, FRAME(0));
-        drawText(3, yDetail, item_.detail, item_.detailWidth, FRAME(0));
+            drawBlackText(3, yAction, enemyAttackText, 70);
+        drawBlackText(3, yDetail, item_.detail, item_.detailWidth);
     } else if (stage_ == PresenterStage::Announce && result_->kind == ResultKind::Switch) {
-        drawText(3, yName, item_.name, item_.nameWidth, FRAME(0));
-        drawCaption(caption, 3, yAction);
-        drawText(3, yDetail, item_.detail, item_.detailWidth, FRAME(0));
+        drawBlackText(3, yName, item_.name, item_.nameWidth);
+        drawBlackCaption(caption, 3, yAction);
+        drawBlackText(3, yDetail, item_.detail, item_.detailWidth);
     } else if (stage_ == PresenterStage::Announce && result_->kind == ResultKind::Gather) {
-        drawText(3, yName, item_.name, item_.nameWidth, FRAME(0));
-        drawText(3, yAction, item_.detail, item_.detailWidth, FRAME(0));
+        drawBlackText(3, yName, item_.name, item_.nameWidth);
+        drawBlackText(3, yAction, item_.detail, item_.detailWidth);
         drawNumbersBlack(3, yDetail, result_->progressBefore);
     } else if (stage_ == PresenterStage::Impact && result_->kind == ResultKind::Attack) {
         const uint8_t target = (result_->flags & SELF_HIT)
@@ -555,34 +576,34 @@ void BattlePresenter::draw() const {
         const uint8_t before = result_->hpBefore[target];
         const uint8_t after = result_->hpAfter[target];
         const uint8_t damage = before > after ? before - after : 0;
-        drawText(3, yName, item_.name, item_.nameWidth, FRAME(0));
+        drawBlackText(3, yName, item_.name, item_.nameWidth);
         drawBlackText(16, yAction, damageText, 70);
         drawNumbersBlack(3, yAction, damage);
-        drawText(3, yDetail, item_.detail, item_.detailWidth, FRAME(0));
-        drawCaption(caption, 3, yDetail);
+        drawBlackText(3, yDetail, item_.detail, item_.detailWidth);
+        drawBlackCaption(caption, 3, yDetail);
     } else if (stage_ == PresenterStage::Impact && result_->kind == ResultKind::Switch) {
-        drawText(3, yName, item_.name, item_.nameWidth, FRAME(0));
-        drawText(3, yAction, item_.detail, item_.detailWidth, FRAME(0));
+        drawBlackText(3, yName, item_.name, item_.nameWidth);
+        drawBlackText(3, yAction, item_.detail, item_.detailWidth);
     } else if (stage_ == PresenterStage::Impact && result_->kind == ResultKind::Gather) {
-        drawText(3, yName, item_.name, item_.nameWidth, FRAME(0));
-        drawText(3, yAction, item_.detail, item_.detailWidth, FRAME(0));
+        drawBlackText(3, yName, item_.name, item_.nameWidth);
+        drawBlackText(3, yAction, item_.detail, item_.detailWidth);
         drawNumbersBlack(3, yDetail, result_->progressAfter);
     } else if (stage_ == PresenterStage::Impact && result_->kind == ResultKind::EndTurn) {
-        drawText(3, yName, item_.name, item_.nameWidth, FRAME(0));
+        drawBlackText(3, yName, item_.name, item_.nameWidth);
         drawNumbersBlack(3, yAction, item_.animationWidth);
-        drawCaption(caption, 18, yAction);
+        drawBlackCaption(caption, 18, yAction);
     } else if (stage_ == PresenterStage::Consequence) {
-        drawText(3, yName, item_.name, item_.nameWidth, FRAME(0));
+        drawBlackText(3, yName, item_.name, item_.nameWidth);
         const uint8_t prefixWidth = item_.detailWidth;
-        drawText(3, yAction, item_.detail, prefixWidth, FRAME(0));
-        drawCaption(caption, static_cast<int16_t>(3 + prefixWidth + (prefixWidth ? 1 : 0)), yAction);
+        drawBlackText(3, yAction, item_.detail, prefixWidth);
+        drawBlackCaption(caption, static_cast<uint8_t>(3 + prefixWidth + (prefixWidth ? 1 : 0)), yAction);
     } else if (stage_ == PresenterStage::Faint) {
-        drawText(3, yName, item_.name, item_.nameWidth, FRAME(0));
-        drawText(3, yAction, item_.detail, item_.detailWidth, FRAME(0));
+        drawBlackText(3, yName, item_.name, item_.nameWidth);
+        drawBlackText(3, yAction, item_.detail, item_.detailWidth);
     } else if (stage_ == PresenterStage::Terminal) {
-        drawText(3, yAction, item_.detail, item_.detailWidth, FRAME(0));
-        drawCaption(caption, 3, yAction);
-        drawText(3, yName, item_.name, item_.nameWidth, FRAME(0));
+        drawBlackText(3, yAction, item_.detail, item_.detailWidth);
+        drawBlackCaption(caption, 3, yAction);
+        drawBlackText(3, yName, item_.name, item_.nameWidth);
     }
 
     if (item_.animation != 0 && item_.frames != 0 && stage_ == PresenterStage::Announce) {

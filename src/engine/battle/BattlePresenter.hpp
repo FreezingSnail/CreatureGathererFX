@@ -17,6 +17,12 @@ enum class PresenterStage : uint8_t {
     Idle, Announce, Impact, Consequence, Faint, Terminal, Done
 };
 
+enum class AttackTreatment : uint8_t { Projectile, PhysicalWave };
+
+constexpr AttackTreatment attackTreatment(bool physical) {
+    return physical ? AttackTreatment::PhysicalWave : AttackTreatment::Projectile;
+}
+
 // Only the current display item is prepared. FX symbols point at raw pixels;
 // dimensions are separate and the renderer compensates its +2-byte prefix.
 struct PreparedBattleItem {
@@ -33,6 +39,7 @@ public:
     void draw() const;
     bool done() const { return stage_ == PresenterStage::Done; }
     PresenterStage stage() const { return stage_; }
+    void sceneOffset(int8_t &x, int8_t &y) const;
     void overlay(BattleView &view) const;
 
 private:

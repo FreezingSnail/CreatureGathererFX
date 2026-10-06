@@ -173,12 +173,14 @@ void resolveAttack(BattleState &state, Side actor, uint8_t moveSlot,
     const uint8_t targetIndex = sideIndex(targetSide);
     Combatant &attacker = state.active[actorIndex];
     Combatant &target = state.active[targetIndex];
+    const Move &move = attacker.moves[moveSlot];
 
     out.kind = ResultKind::Attack;
     out.actor = actor;
     out.index = attacker.moveIds[moveSlot];
     out.effectiveness = attackEffectiveness(attacker, target, moveSlot);
     if (selfHit) out.flags |= SELF_HIT;
+    if (move.isPhysical()) out.flags |= PHYSICAL_MOVE;
 
     if (target.hp != 0) {
         const uint8_t damage = computeDamage(attacker, target, moveSlot);
@@ -194,7 +196,6 @@ void resolveAttack(BattleState &state, Side actor, uint8_t moveSlot,
     // Effects resolve in authored slot order, after damage, and only while
     // their explicit target remains live. A faint target cannot receive a
     // status from the same move that defeated it.
-    const Move &move = attacker.moves[moveSlot];
     const Effect effects[2] = {move.effect1, move.effect2};
     for (uint8_t slot = 0; slot < 2; ++slot) {
         const Effect effect = effects[slot];

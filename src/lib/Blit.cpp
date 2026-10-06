@@ -39,6 +39,7 @@ void draw(int16_t x, int16_t y, uint8_t w, uint8_t h, uint24_t image,
             if (mode == PLUSMASK) mask = FX::readPendingUInt8();
 #endif
             mask &= heightMask;
+            if (mode == NEGATIVE) pixels = static_cast<uint8_t>(~pixels);
             const uint16_t bits = static_cast<uint16_t>(pixels & mask) << shift;
             const uint16_t masks = static_cast<uint16_t>(mask) << shift;
             const uint8_t column = x + c;

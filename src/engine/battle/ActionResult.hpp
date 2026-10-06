@@ -13,7 +13,8 @@ enum class Outcome : uint8_t { None, Win, Lose, Escaped, Gathered, Fled };
 
 enum : uint8_t {
     SELF_HIT = 1u << 0, REFUSED = 1u << 1, STATUS_SKIPPED = 1u << 2,
-    PLAYER_FAINTED = 1u << 3, OPPONENT_FAINTED = 1u << 4, FORCED_SWITCH = 1u << 5
+    PLAYER_FAINTED = 1u << 3, OPPONENT_FAINTED = 1u << 4, FORCED_SWITCH = 1u << 5,
+    PHYSICAL_MOVE = 1u << 6
 };
 
 // Successful effect facts, or sequential post-tick HP facts. Unused facts

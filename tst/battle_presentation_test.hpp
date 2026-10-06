@@ -56,6 +56,11 @@ inline void BattlePresentationSuite(TestRunner &runner) {
     BattlePresenter presenter;
     BattleView view = presentationAfterView(result);
 
+    test.assert(attackTreatment(false), AttackTreatment::Projectile,
+                "special moves select the distinct beam treatment");
+    test.assert(attackTreatment(true), AttackTreatment::PhysicalWave,
+                "physical moves select the distinct wave treatment");
+
     presenter.begin(result);
     presenter.overlay(view);
     test.assert(presenter.stage(), PresenterStage::Announce, "attack begins with announcement");
@@ -73,11 +78,30 @@ inline void BattlePresentationSuite(TestRunner &runner) {
     test.assert(presenter.stage(), PresenterStage::Impact, "exact announce boundary enters impact");
     test.assert(view.active[1].hp, 35, "attack HP changes at impact entry");
     test.assert(view.active[0].hp, 80, "unaffected actor keeps current HP");
+    int8_t shakeX, shakeY;
+    presenter.sceneOffset(shakeX, shakeY);
+    test.assert(shakeX, -2, "damaging impact begins with bounded shake");
+    test.assert(shakeY, 0, "first impact offset is horizontal");
+    presentationTicks(presenter, 8);
+    view = presentationAfterView(result); presenter.overlay(view);
+    presenter.sceneOffset(shakeX, shakeY);
+    test.assert(shakeX, 0, "impact shake settles before feedback ends");
+    test.assert(shakeY, 0, "vertical shake settles before feedback ends");
     presentationTicks(presenter, IMPACT_TICKS);
     test.assert(presenter.done(), true, "ordinary attack completes without input");
     presenter.update(true); presenter.draw();
     view = presentationAfterView(result); presenter.overlay(view);
     test.assert(view.active[1].hp, 35, "completed attack retains final HP");
+    presenter.sceneOffset(shakeX, shakeY);
+    test.assert(shakeX, 0, "completed action has no presentation offset");
+
+    ActionResult noDamage = presentationHostResult();
+    noDamage.hpAfter[1] = noDamage.hpBefore[1];
+    presenter.begin(noDamage);
+    presentationTicks(presenter, ANNOUNCE_TICKS);
+    view = presentationAfterView(noDamage); presenter.overlay(view);
+    presenter.sceneOffset(shakeX, shakeY);
+    test.assert(shakeX, 0, "zero-damage impact does not shake");
 
     // Fresh A shortens each stage once, but held/no-edge updates do nothing.
     ActionResult naturalResult = presentationHostResult(true);

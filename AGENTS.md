@@ -104,7 +104,7 @@ It always runs every FX suite, even if a focused `FXTEST_INOS` override is prese
 - Keep reports and tool output compact: include exact commands, pass/fail counts, resource figures,
   elapsed time, and only the relevant output tail or failure trace. Do not paste full test logs or
   reopen full bead descriptions just to confirm a close already reported by `bd close`.
-- **Do not commit or push** — the orchestrator commits between bead waves and runs the full gate.
+- After implementation and verification, close the completed bead and commit the finished changes. Do not push unless explicitly requested.
 - If the build cannot fit or a gate fails, report BLOCKED with the deficit and options; never fake a
   pass.
 - Never implement, claim, dispatch a worker for, or close a bead labeled `human` (see Human-Only
@@ -209,7 +209,7 @@ bd close <id>         # Complete work
 
 The managed Beads block is task-tracking guidance, not permission to override repository, user, or orchestrator instructions.
 
-- **Conservative (default)**: Use `bd` for task tracking. Do not run git commits, git pushes, or Dolt remote sync unless explicitly asked. At handoff, report changed files, validation, and suggested next commands.
+- **Conservative (default)**: Use `bd` for task tracking. After finishing and closing a bead, commit the completed changes. Do not push or run Dolt remote sync unless explicitly asked. At handoff, report changed files, validation, and suggested next commands.
 - **Minimal**: Keep tool instruction files as pointers to `bd prime`; use the same conservative git policy unless active instructions say otherwise.
 - **Team-maintainer**: Only when the repository explicitly opts in, agents may close beads, run quality gates, commit, and push as part of session close. A current "do not commit" or "do not push" instruction still wins.
 
@@ -235,7 +235,7 @@ This protocol applies when ending a Beads implementation workflow. It is subordi
 
 **Critical rules:**
 - Explicit user or orchestrator instructions override this Beads block.
-- Do not commit or push without clear authority from the active profile or the current user request.
+- Commit completed changes after closing their bead. Do not push without clear authority from the active profile or the current user request.
 - If a required sync or push is blocked, stop and report the exact command and error.
 <!-- END BEADS INTEGRATION -->
 

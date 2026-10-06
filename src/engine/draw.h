@@ -254,56 +254,59 @@ static uint8_t battleHpBarWidth(uint8_t hp, uint8_t maxHp) {
     return static_cast<uint8_t>((static_cast<uint16_t>(boundedHp) * 30) / maxHp);
 }
 
-static void drawPlayerHP(const battle::BattleView &view) {
+static void drawPlayerHP(const battle::BattleView &view, int8_t shakeX = 0, int8_t shakeY = 0) {
     const battle::ActiveView &creature = view.active[static_cast<uint8_t>(battle::Side::Player)];
     const uint8_t hp = creature.hp;
-    Blit::fillRect(88, 34, 34, 6, BLACK);
-    Blit::fillRect(90, 36, battleHpBarWidth(hp, creature.maxHp), 2, WHITE);
+    Blit::fillRect(88 + shakeX, 34 + shakeY, 34, 6, BLACK);
+    Blit::fillRect(90 + shakeX, 36 + shakeY,
+                   battleHpBarWidth(hp, creature.maxHp), 2, WHITE);
 
     // Blit::fillRect(60, 38, curHealth, 2, WHITE);
     // drawStatNumbers(110, 34, curHealth);
 }
 
-static void drawOpponentHP(const battle::BattleView &view) {
+static void drawOpponentHP(const battle::BattleView &view, int8_t shakeX = 0, int8_t shakeY = 0) {
     const battle::ActiveView &creature = view.active[static_cast<uint8_t>(battle::Side::Opponent)];
-    Blit::fillRect(6, 34, 34, 6, BLACK);
-    Blit::fillRect(8, 36, battleHpBarWidth(creature.hp, creature.maxHp), 2, WHITE);
+    Blit::fillRect(6 + shakeX, 34 + shakeY, 34, 6, BLACK);
+    Blit::fillRect(8 + shakeX, 36 + shakeY,
+                   battleHpBarWidth(creature.hp, creature.maxHp), 2, WHITE);
 }
 
 static constexpr uint8_t kBattleSpeciesCount = 32;
 
-static void clearBattleSprite(uint8_t x) {
+static void clearBattleSprite(int16_t x, int16_t y) {
     // Creature art is masked, so transparent pixels do not replace pixels
     // left by the outgoing creature when a switch redraws the scene.
-    Blit::fillRect(x, 0, 32, 32, BLACK);
+    Blit::fillRect(x, y, 32, 32, BLACK);
 }
 
-static void drawOpponent(const battle::BattleView &view) {
+static void drawOpponent(const battle::BattleView &view, int8_t shakeX, int8_t shakeY) {
     const battle::ActiveView &creature = view.active[static_cast<uint8_t>(battle::Side::Opponent)];
-    clearBattleSprite(0);
+    clearBattleSprite(shakeX, shakeY);
     if (creature.id >= kBattleSpeciesCount) {
         return;
     }
-    Blit::draw(0, 0, 32, 32, NewecreatureSprites, FRAME((creature.id * 2)), Blit::PLUSMASK);
+    Blit::draw(shakeX, shakeY, 32, 32, NewecreatureSprites,
+               FRAME((creature.id * 2)), Blit::PLUSMASK);
 }
 
-static void drawPlayer(const battle::BattleView &view) {
+static void drawPlayer(const battle::BattleView &view, int8_t shakeX, int8_t shakeY) {
     const battle::ActiveView &creature = view.active[static_cast<uint8_t>(battle::Side::Player)];
-    clearBattleSprite(96);
+    clearBattleSprite(96 + shakeX, shakeY);
     if (creature.id < kBattleSpeciesCount) {
-        Blit::draw(96, 0, 32, 32, NewecreatureSprites,
+        Blit::draw(96 + shakeX, shakeY, 32, 32, NewecreatureSprites,
                                 FRAME(((creature.id * 2) + 1)), Blit::PLUSMASK);
     }
 
-    drawPlayerHP(view);
+    drawPlayerHP(view, shakeX, shakeY);
 }
 
-static void drawScene(const battle::BattleView &view) {
+static void drawScene(const battle::BattleView &view, int8_t shakeX = 0, int8_t shakeY = 0) {
     // No battle field art: keep combatants and UI legible on the black canvas.
-    drawPlayer(view);
-    drawOpponent(view);
-    drawOpponentHP(view);
-    drawPlayerHP(view);
+    drawPlayer(view, shakeX, shakeY);
+    drawOpponent(view, shakeX, shakeY);
+    drawOpponentHP(view, shakeX, shakeY);
+    drawPlayerHP(view, shakeX, shakeY);
 }
 
 static uint8_t drawMapFast(WorldTransient &world) {

@@ -28,10 +28,11 @@ inline bool hasInk(uint8_t x, uint8_t y, uint8_t width, uint8_t height, bool ink
     return false;
 }
 
-inline bool barEquals(uint8_t hp) {
+inline bool barEquals(uint8_t hp, int8_t shakeX = 0, int8_t shakeY = 0) {
     const uint8_t width = static_cast<uint16_t>(hp) * 30 / 100;
     for (uint8_t col = 0; col < 30; ++col)
-        if (pixel(8 + col, 36) != (col < width) || pixel(8 + col, 37) != (col < width))
+        if (pixel(8 + shakeX + col, 36 + shakeY) != (col < width) ||
+            pixel(8 + shakeX + col, 37 + shakeY) != (col < width))
             return false;
     return true;
 }
@@ -41,7 +42,9 @@ inline void render(const battle::BattlePresenter &presenter,
     battle::BattleView view = baseView;
     presenter.overlay(view);
     arduboy.clear();
-    drawScene(view);
+    int8_t shakeX, shakeY;
+    presenter.sceneOffset(shakeX, shakeY);
+    drawScene(view, shakeX, shakeY);
     presenter.draw();
 }
 
@@ -85,7 +88,8 @@ __attribute__((noinline)) inline void playback(FxTest &test, bool knockout) {
     const BattleView baseView = battle_presentation_fixture::afterView(result);
     FxReadCounter::resetFrame();
     presenter.begin(result);
-    test.expectEq(FxReadCounter::count(), 2, F("begin resolves real creature and move names"));
+    test.expectEq(FxReadCounter::count(), 2,
+                  F("begin resolves creature and move names at the transition"));
     test.expectEq(FxReadCounter::markUpdate(), true, F("begin metadata is transition-only"));
     render(presenter, baseView);
     test.expectEq(FxReadCounter::count(), 2, F("draw streams pixels without metadata reads"));
@@ -108,14 +112,33 @@ __attribute__((noinline)) inline void playback(FxTest &test, bool knockout) {
     presenter.update(false);
     test.expectEq(FxReadCounter::markUpdate(), true, F("impact update has no metadata reads"));
     render(presenter, baseView);
-    test.expectEq(barEquals(knockout ? 0 : 35), true, F("actual bar changes at impact"));
-    test.expectEq(signature(0, 0, 32, 4), sprite, F("impact retains faintable creature sprite"));
+    int8_t shakeX, shakeY;
+    presenter.sceneOffset(shakeX, shakeY);
+    test.expectEq(barEquals(knockout ? 0 : 35, shakeX, shakeY), true,
+                  F("actual bar changes at shaken impact"));
+    test.expectEq(shakeX, -2, F("impact starts with bounded scene offset"));
+    test.expectEq(shakeY, 0, F("impact shake offset is deterministic"));
     test.expectEq(signature(0, 0, 128, 8) != ordinaryFrame, true, F("impact has distinct visible output"));
-    for (uint8_t tick = 0; tick < IMPACT_TICKS; ++tick) {
+    for (uint8_t tick = 0; tick < 2; ++tick) {
+        FxReadCounter::resetFrame();
+        presenter.update(false);
+        test.expectEq(FxReadCounter::markUpdate(), true, F("shake updates have no FX reads"));
+    }
+    render(presenter, baseView);
+    test.expectEq(hasInk(3, 40, 75, 8, false), true,
+                  F("post-damage name retains black glyph pixels during shake"));
+    test.expectEq(hasInk(3, 40, 75, 8, true), true,
+                  F("post-damage name retains white background during shake"));
+    for (uint8_t tick = 2; tick < IMPACT_TICKS; ++tick) {
         FxReadCounter::resetFrame();
         presenter.update(false);
         test.expectEq(FxReadCounter::markUpdate(), true, F("playback reads only at prepared transitions"));
     }
+    presenter.sceneOffset(shakeX, shakeY);
+    test.expectEq(shakeX, 0, F("impact offset settles by end of effect"));
+    test.expectEq(shakeY, 0, F("vertical offset settles by end of effect"));
+    render(presenter, baseView);
+    test.expectEq(signature(0, 0, 32, 4), sprite, F("impact settles back to creature sprite position"));
     if (knockout) {
         test.expectEq(static_cast<uint8_t>(presenter.stage()), static_cast<uint8_t>(PresenterStage::Faint),
                       F("KO has separate faint presentation"));
@@ -129,6 +152,7 @@ __attribute__((noinline)) inline void playback(FxTest &test, bool knockout) {
         test.expectEq(hasInk(0, 0, 32, 32, true), false, F("completed faint erases sprite"));
     }
     test.expectEq(presenter.done(), true, F("fixture playback completes with no input"));
+    render(presenter, baseView);
     test.expectEq(barEquals(knockout ? 0 : 35), true, F("natural playback final HP exact"));
 
     // A presses accelerate display only; final state and sprite rules survive.
