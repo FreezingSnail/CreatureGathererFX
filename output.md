@@ -4661,3 +4661,38 @@ current sibling tools checkout into `/private/tmp/cgfx-tools-arena11` (offline,
 with cached dependencies) and reran the required arena build successfully using
 that executable through PATH. Worker implementation/verification took about
 15 minutes. No GUI was launched and no commit was made.
+
+## CreatureGathererFX-2cy.12
+
+Final review confirmed the result-free flow and production catalog integration.
+The ordinary final gate and separately selected arena firmware build passed.
+ArenaContext is 2 B (selection indices only); ModeState remains 191 B. Arena
+firmware is 28,898 B flash / 1,847 B static RAM against 29,184 / 2,160 limits;
+the minimum exercised battle start/return stack headroom was 188 B. The complete
+device suite passed, including 1,864 arena lifecycle checks, 50 catalog checks,
+70 view checks, 4 stack guard checks, all15 setup pairings, deterministic Win
+and Lose playback, and10 fresh-state cycles. No personal save path or production
+roster table was added.
+
+```text
+make sim-test
+# PASS: 155,205/0.
+PATH=/private/tmp/cgfx-tools-arena11/release:$PATH make test-pack-parity
+# PASS: legacy layout equivalence, perturbation diagnostic, and packed SHA.
+PATH=/private/tmp/cgfx-tools-arena11/release:$PATH make final-gate BUILD_DIR=build/arena-final FXTEST_MS=10000 ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS: check log build/arena-final/final-gate/check.log; RAM log
+# build/arena-final/final-gate/ram.log. Host155,033/0; world190/0; VM42/0;
+# generated checks PASS; all28 FX suites PASS, arena demo 1,864/0, 188 B stack;
+# normal firmware 27,894 B flash /1,841 B static.
+PATH=/private/tmp/cgfx-tools-arena11/release:$PATH make arena-demo ARENA_DEMO_BUILD_DIR=build/arena-release
+# PASS: 28,898 B flash /29,184 limit (286 B free); 1,847 B static /2,160 limit
+# (313 B free).
+/private/tmp/cgfx-tools-arena11/release/cgfx-tools --version
+# cgfx-tools 0.2.0, built from CreatureGathererTools commit a9dc640.
+git diff --check
+# PASS.
+```
+
+The default installed cgfx-tools binary rejected `deepthought`; both integrated
+commands selected the current sibling-tools build at `/private/tmp/cgfx-tools-arena11/release`.
+The full gate plus opt-in arena build took approximately 2m30s orchestrator wall time.
