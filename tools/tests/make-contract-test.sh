@@ -6,7 +6,7 @@ ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd -P)
 cd "$ROOT"
 
 help=$(make --no-print-directory help)
-for target in setup doctor gen test testvm build ram run dev check final-gate fxtest fxtest-headless fxtest-spike test-fxtest-ram test-avr-build-budget; do
+for target in setup doctor gen test testvm build ram run dev arena-demo check final-gate fxtest fxtest-headless fxtest-spike test-fxtest-ram test-avr-build-budget; do
     printf '%s\n' "$help" | grep -Fq "  $target " || {
         printf 'missing help entry: %s\n' "$target" >&2
         exit 1
@@ -72,6 +72,39 @@ for stage in check ram; do
         test "$(wc -l <"$GATE_CALL_LOG" | tr -d ' ')" -eq 1
     fi
 done
+
+# Arena target phases are sequential, keep flags/budget/output isolated, and
+# stop before building if generation fails.
+: >"$GATE_CALL_LOG"
+make --no-print-directory arena-demo MAKE="$fixture_make" \
+    ARENA_DEMO_BUILD_DIR=build/arena-contract \
+    AVR_SHIPPING_CPP_FLAGS='-mrelax -DCGFX_SHIPPING_NO_USB -DLOCAL_EXTRA' >/dev/null
+test "$(awk '{print $2}' "$GATE_CALL_LOG")" = "$(printf 'gen\nram')"
+grep -Fq 'BUILD_DIR=build/arena-contract' "$GATE_CALL_LOG"
+grep -Fq 'AVR_SHIPPING_CPP_FLAGS=-mrelax -DCGFX_SHIPPING_NO_USB -DLOCAL_EXTRA -DCGFX_ARENA_DEMO' "$GATE_CALL_LOG"
+grep -Fq 'AVR_FLASH_BUDGET=29184' "$GATE_CALL_LOG"
+: >"$GATE_CALL_LOG"
+if GATE_FAIL_STAGE=gen make --no-print-directory arena-demo MAKE="$fixture_make" \
+    ARENA_DEMO_BUILD_DIR=build/arena-contract >"$gate_dir/error.log" 2>&1; then
+    echo 'arena-demo swallowed generation failure' >&2
+    exit 1
+fi
+test "$(wc -l <"$GATE_CALL_LOG" | tr -d ' ')" -eq 1
+grep -Fq 'fixture failure detail' "$gate_dir/error.log"
+: >"$GATE_CALL_LOG"
+if GATE_FAIL_STAGE=ram make --no-print-directory arena-demo MAKE="$fixture_make" \
+    ARENA_DEMO_BUILD_DIR=build/arena-contract >"$gate_dir/error.log" 2>&1; then
+    echo 'arena-demo swallowed RAM/build failure' >&2
+    exit 1
+fi
+test "$(wc -l <"$GATE_CALL_LOG" | tr -d ' ')" -eq 2
+grep -Fq 'fixture failure detail' "$gate_dir/error.log"
+
+arena_dry=$(make --no-print-directory -n arena-demo BUILD_DIR=build/ignored \
+    ARENA_DEMO_BUILD_DIR=build/arena-contract)
+printf '%s\n' "$arena_dry" | grep -Fq 'gen'
+printf '%s\n' "$arena_dry" | grep -Fq 'ram BUILD_DIR="build/arena-contract"'
+printf '%s\n' "$arena_dry" | grep -Fq 'AVR_FLASH_BUDGET="29184"'
 
 build=$(make --no-print-directory -n build \
     ARDUINO_CLI=fixture-arduino FQBN=fixture:fx BUILD_DIR=build/contract)

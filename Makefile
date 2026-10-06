@@ -1,4 +1,4 @@
-.PHONY: help setup doctor plant test test-debug testvm testvm-debug sim sim-test gen gen-data gen-sprites gen-fixtures pack full build mini ram run dev check final-gate verify-generated test-manifest test-generated-libs test-doctor test-fxtest-ram test-avr-build-budget fxtest fxtest-headless fxtest-spike fxtest-preflight fxtest-headless-preflight fxtest-build fxtest-run new-fxtest
+.PHONY: help setup doctor plant test test-debug testvm testvm-debug sim sim-test gen gen-data gen-sprites gen-fixtures pack full build mini ram run dev arena-demo check final-gate verify-generated test-manifest test-generated-libs test-doctor test-fxtest-ram test-avr-build-budget fxtest fxtest-headless fxtest-spike fxtest-preflight fxtest-headless-preflight fxtest-build fxtest-run new-fxtest
 
 # Public command API. Override tool, board, and output variables per workspace/CI.
 CXX ?= g++
@@ -72,6 +72,7 @@ help:
 		'  testvm   run fast ScriptVM C++ tests; prerequisite: $(CXX); output: $(VM_TEST_BIN)' \
 		'  build    compile Arduboy FX sketch; prerequisite: $(ARDUINO_CLI); output: $(BUILD_DIR)' \
 		'  ram      build and report FX flash/RAM plus largest static symbols; prerequisite: $(ARDUINO_CLI), avr-size, avr-nm' \
+		'  arena-demo generate FX data, then build the opt-in arena firmware with its reserved flash budget' \
 		'  test-avr-build-budget exercise the fail-closed shipping flash/RAM parser' \
 		'  final-gate  run the full check then the shipping RAM report; requires ARDENS' \
 		'  run      launch Ardens with the sketch, FX data, and FX save images; prerequisite: ARDENS' \
@@ -86,7 +87,7 @@ help:
 		'  fxtest-headless  run every FX device sketch through Ardens serial capture; blocks unsupported Ardens' \
 		'  fxtest-spike  run one selected FX suite plus test_stack; set FXTEST_SPIKE_INO and ARDENS' \
 		'' \
-		'Overrides: CXX, ARDUINO_CLI, FQBN, BUILD_DIR, ARDUINO_BUILD_PATH, ARDUINO_BUILD_CACHE_PATH, DIST_DIR, FXDATA_BIN, ARDENS, FXTEST_MS, FXTEST_RAM_BUDGET, AVR_FLASH_BUDGET, AVR_STATIC_RAM_BUDGET, RAM_ELF, AVR_SIZE, AVR_NM, AVR_RELAX_FLAGS, AVR_FXTEST_BUILD_PROPERTIES, AVR_FXTEST_CPP_FLAGS, AVR_SHIPPING_BUILD_PROPERTIES, AVR_SHIPPING_CPP_FLAGS.'
+		'Overrides: CXX, ARDUINO_CLI, FQBN, BUILD_DIR, ARDUINO_BUILD_PATH, ARDUINO_BUILD_CACHE_PATH, DIST_DIR, FXDATA_BIN, ARDENS, FXTEST_MS, FXTEST_RAM_BUDGET, AVR_FLASH_BUDGET, AVR_STATIC_RAM_BUDGET, RAM_ELF, AVR_SIZE, AVR_NM, AVR_RELAX_FLAGS, AVR_FXTEST_BUILD_PROPERTIES, AVR_FXTEST_CPP_FLAGS, AVR_SHIPPING_BUILD_PROPERTIES, AVR_SHIPPING_CPP_FLAGS, ARENA_DEMO_BUILD_DIR, ARENA_DEMO_CPP_FLAGS, ARENA_DEMO_FLASH_BUDGET.'
 
 setup:
 	@printf '%s\n' \
@@ -251,6 +252,16 @@ battle-test: gen
 # through a sub-make so `make -j dev` cannot launch before generation finishes.
 dev: gen
 	@$(MAKE) --no-print-directory run
+
+# Opt-in arena demo firmware build. Generate the cart first, then run the same
+# shipping RAM/flash report in an isolated output tree with a demo-only define.
+ARENA_DEMO_BUILD_DIR ?= build/arena-demo
+ARENA_DEMO_CPP_FLAGS ?= $(AVR_SHIPPING_CPP_FLAGS) -DCGFX_ARENA_DEMO
+ARENA_DEMO_FLASH_BUDGET ?= 29184
+
+arena-demo:
+	@$(MAKE) --no-print-directory gen
+	@$(MAKE) --no-print-directory ram BUILD_DIR="$(ARENA_DEMO_BUILD_DIR)" AVR_SHIPPING_CPP_FLAGS="$(ARENA_DEMO_CPP_FLAGS)" AVR_FLASH_BUDGET="$(ARENA_DEMO_FLASH_BUDGET)"
 
 gen: gen-data gen-sprites gen-fixtures pack
 

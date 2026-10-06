@@ -4,7 +4,7 @@ set -eu
 printf '%s\n' "$*" >>"$GATE_CALL_LOG"
 for argument do
     case "$argument" in
-        check|ram|fxtest-headless) stage=$argument ;;
+        check|gen|ram|fxtest-headless) stage=$argument ;;
     esac
 done
 printf 'fixture full diagnostics for %s\n' "$stage"
