@@ -23,13 +23,29 @@ constexpr AttackTreatment attackTreatment(bool physical) {
     return physical ? AttackTreatment::PhysicalWave : AttackTreatment::Projectile;
 }
 
+// Generated string rasters retain one leading blank glyph slot. Keep their
+// pixel widths tied to authored character counts so blits stop at the asset.
+constexpr uint8_t generatedTextWidth(uint8_t characters) {
+    return static_cast<uint8_t>((characters + 1u) * 5u);
+}
+
+constexpr uint8_t attackTextWidth = generatedTextWidth(16);
+constexpr uint8_t enemyAttackTextWidth = generatedTextWidth(12);
+constexpr uint8_t damageTextWidth = generatedTextWidth(12);
+constexpr uint8_t switchInTextWidth = generatedTextWidth(16);
+constexpr uint8_t faintedTextWidth = generatedTextWidth(7);
+constexpr uint8_t winTextWidth = generatedTextWidth(7);
+constexpr uint8_t loseTextWidth = generatedTextWidth(10);
+constexpr uint8_t escapedTextWidth = generatedTextWidth(11);
+constexpr uint8_t gatherTextWidth = generatedTextWidth(6);
+
 // Generated effectiveness labels use the 5x6 font with one leading blank
 // glyph slot retained by the string packer.
 constexpr uint8_t effectivenessTextWidth(Modifier modifier) {
-    return modifier == Modifier::Quarter ? 90 :
-           modifier == Modifier::Half ? 65 :
-           modifier == Modifier::Double ? 70 :
-           modifier == Modifier::Quadruple ? 90 : 0;
+    return modifier == Modifier::Quarter ? generatedTextWidth(17) :
+           modifier == Modifier::Half ? generatedTextWidth(12) :
+           modifier == Modifier::Double ? generatedTextWidth(13) :
+           modifier == Modifier::Quadruple ? generatedTextWidth(17) : 0;
 }
 
 // Only the current display item is prepared. FX symbols point at raw pixels;

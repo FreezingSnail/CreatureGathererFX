@@ -60,6 +60,17 @@ inline void BattlePresentationSuite(TestRunner &runner) {
                 "special moves select the distinct beam treatment");
     test.assert(attackTreatment(true), AttackTreatment::PhysicalWave,
                 "physical moves select the distinct wave treatment");
+    test.assert(generatedTextWidth(16), attackTextWidth,
+                "player attack announcement matches generated raster width");
+    test.assert(attackTextWidth, 85, "player attack announcement has no trailing overread");
+    test.assert(enemyAttackTextWidth, 65, "opponent attack announcement has no trailing overread");
+    test.assert(damageTextWidth, 65, "complete post-damage label uses its generated width");
+    test.assert(switchInTextWidth, 85, "incoming switch caption has no trailing overread");
+    test.assert(faintedTextWidth, 40, "faint label has no trailing overread");
+    test.assert(winTextWidth, 40, "win label has no trailing overread");
+    test.assert(loseTextWidth, 55, "loss label has no trailing overread");
+    test.assert(escapedTextWidth, 60, "escape label has no trailing overread");
+    test.assert(gatherTextWidth, 35, "gather label includes its final glyph");
     test.assert(effectivenessTextWidth(Modifier::Quarter), 90,
                 "quarter effectiveness width matches 18 packed 5-pixel cells");
     test.assert(effectivenessTextWidth(Modifier::Half), 65,

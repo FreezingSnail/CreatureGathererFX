@@ -14,8 +14,8 @@ inline void test_battle_damage_color(FxTest &test) {
     test.expectEq(static_cast<uint8_t>(presenter.stage()),
                   static_cast<uint8_t>(PresenterStage::Impact), F("damage enters impact"));
 
-    // Six 5px letters plus the generated leading blank cell.
-    uint8_t expectedLabel[35];
+    // Full "Damage delt!" bitmap: twelve glyphs plus the generated leading blank.
+    uint8_t expectedLabel[damageTextWidth];
     uint8_t expectedNumber[11];
     arduboy.clear();
     Blit::fillRect(0, 40, 128, 24, WHITE);
@@ -43,7 +43,7 @@ inline void test_battle_damage_color(FxTest &test) {
                   F("damage label is inverted to black text on white panel"));
 
     bool noAdjacentPackedPixels = true;
-    for (uint8_t column = 16 + sizeof(expectedLabel); column < 86; ++column) {
+    for (uint8_t column = 16 + sizeof(expectedLabel); column < 112; ++column) {
         if (Arduboy2Base::sBuffer[6 * 128 + column] != 0xFF) {
             noAdjacentPackedPixels = false;
             break;
