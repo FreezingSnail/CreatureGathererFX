@@ -7,6 +7,10 @@
 
 namespace battle_presentation_test_detail {
 extern "C" uint8_t __bss_end;
+const char captionRegressionText[] PROGMEM =
+    "\0hits itself\0could not act\0cannot do that\0did nothing\0switching\0"
+    "rose\0fell\0strengthened\0weakened\0lost hp\0healed hp\0gathered\0"
+    "fled\0no effect\0status applied";
 
 inline bool pixel(uint8_t x, uint8_t y) {
     return (arduboy.getBuffer()[x + static_cast<uint16_t>(y / 8) * 128]
@@ -87,6 +91,25 @@ inline bool whiteFrom(uint8_t x, uint8_t y, uint8_t endX) {
     return true;
 }
 
+inline bool captionMatches(const battle::BattlePresenter &presenter,
+                           const battle::BattleView &view, const char *text,
+                           uint8_t x, uint8_t y, uint8_t width) {
+    arduboy.clear();
+    Blit::fillRect(0, 40, 128, 24, WHITE);
+    uint8_t glyphX = x;
+    for (;;) {
+        const uint8_t character = pgm_read_byte(text++);
+        if (character == 0) break;
+        if (character != ' ')
+            Blit::draw(glyphX, y, 5, 6, fontTrimmed,
+                       FRAME(character - '0'), Blit::NEGATIVE);
+        glyphX += 6;
+    }
+    const uint16_t expected = signature(x, y / 8, width, 1);
+    render(presenter, view);
+    return expected == signature(x, y / 8, width, 1);
+}
+
 inline void effectivenessFeedback(FxTest &test, Modifier modifier,
                                  uint8_t expectedWidth, const __FlashStringHelper *label) {
     battle::ActionResult result{};
@@ -105,10 +128,192 @@ inline void effectivenessFeedback(FxTest &test, Modifier modifier,
                   F("effectiveness text retains white background"));
     test.expectEq(whiteFrom(static_cast<uint8_t>(3 + expectedWidth), 56, 128), true,
                   F("effectiveness blit stops at generated asset width"));
-    test.expectEq(hasInk(16, 48, 35, 8, false), true,
+    if (modifier == Modifier::None)
+        test.expectEq(captionMatches(presenter, battle_presentation_fixture::afterView(result),
+                                 captionRegressionText + 128, 3, 56, 54), true,
+                      F("no-effect caption matches exact glyphs"));
+    test.expectEq(hasInk(16, 48, battle::damageTextWidth, 8, false), true,
                   F("post-damage label renders complete damage bitmap"));
-    test.expectEq(whiteFrom(51, 48, 86), true,
+    test.expectEq(whiteFrom(81, 48, 112), true,
                   F("post-damage blit does not read adjacent packed assets"));
+}
+
+inline void feedbackCategories(FxTest &test) {
+    using namespace battle;
+    ActionResult result{};
+    BattlePresenter presenter;
+    const uint8_t first = pgm_read_byte(&creatureFixtures->id);
+    const uint8_t last = pgm_read_byte(&(creatureFixtures[creatureFixtureCount - 1].id));
+
+    resetActionResult(result);
+    result.kind = ResultKind::Switch;
+    result.actor = Side::Player;
+    result.index = last;
+    result.speciesBefore[0] = first;
+    result.speciesBefore[1] = last;
+    result.maxHpBefore[0] = result.maxHpBefore[1] = 100;
+    result.hpBefore[0] = result.hpAfter[0] = 80;
+    result.hpBefore[1] = result.hpAfter[1] = 60;
+    presenter.begin(result);
+    render(presenter, battle_presentation_fixture::afterView(result));
+    test.expectEq(hasInk(3, 40, 70, 8, false), true,
+                  F("switch announcement draws outgoing creature name"));
+    test.expectEq(hasInk(3, 48, 55, 6, false), true,
+                  F("switch announcement draws switching caption"));
+    test.expectEq(captionMatches(presenter, battle_presentation_fixture::afterView(result),
+                                 captionRegressionText + 54, 3, 48, 54), true,
+                  F("switch announcement caption matches its exact glyphs"));
+    test.expectEq(hasInk(3, 56, 70, 8, false), true,
+                  F("switch announcement draws incoming creature name"));
+    test.expectEq(pixel(127, 48), true, F("switch caption stays within framebuffer"));
+    for (uint8_t tick = 0; tick < ANNOUNCE_TICKS; ++tick) presenter.update(false);
+    render(presenter, battle_presentation_fixture::afterView(result));
+    test.expectEq(hasInk(3, 48, switchInTextWidth, 8, false), true,
+                  F("switch impact draws complete incoming message"));
+    test.expectEq(whiteFrom(static_cast<uint8_t>(3 + switchInTextWidth), 48, 128), true,
+                  F("switch impact stops at generated raster width"));
+    test.expectEq(pixel(127, 56), true, F("switch text leaves the right edge white"));
+
+    // The longest type prefix plus its positive caption cannot fit on one row.
+    resetActionResult(result);
+    result.kind = ResultKind::EndTurn;
+    result.speciesBefore[0] = first;
+    result.speciesBefore[1] = last;
+    result.maxHpBefore[0] = result.maxHpBefore[1] = 100;
+    result.hpBefore[0] = result.hpAfter[0] = 80;
+    result.hpBefore[1] = result.hpAfter[1] = 60;
+    result.consequences[0] = {Effect::CHRGD, 0, 0};
+    presenter.begin(result);
+    render(presenter, battle_presentation_fixture::afterView(result));
+    test.expectEq(hasInk(3, 48, 50, 8, false), true,
+                  F("long consequence prefix renders on its own row"));
+    test.expectEq(hasInk(3, 56, 78, 6, false), true,
+                  F("long consequence caption wraps to the final panel row"));
+    test.expectEq(captionMatches(presenter, battle_presentation_fixture::afterView(result),
+                                 captionRegressionText + 74, 3, 56, 78), true,
+                  F("wrapped type-up caption matches its exact glyphs"));
+    test.expectEq(pixel(127, 56), true, F("wrapped consequence stays within framebuffer"));
+
+    // Terminal raster variants exercise each fixed outcome width at draw time.
+    for (uint8_t i = 0; i < 5; ++i) {
+        resetActionResult(result);
+        result.kind = ResultKind::EndTurn;
+        result.outcome = i == 0 ? Outcome::Win : i == 1 ? Outcome::Lose
+            : i == 2 ? Outcome::Escaped : i == 3 ? Outcome::Gathered : Outcome::Fled;
+        result.speciesBefore[0] = first;
+        result.speciesBefore[1] = last;
+        result.maxHpBefore[0] = result.maxHpBefore[1] = 100;
+        presenter.begin(result);
+        render(presenter, battle_presentation_fixture::afterView(result));
+        const uint8_t terminalWidth = i == 0 ? winTextWidth : i == 1 ? loseTextWidth
+            : i == 2 ? escapedTextWidth : 0;
+        if (terminalWidth != 0) {
+            test.expectEq(hasInk(3, 48, terminalWidth, 8, false), true,
+                          F("terminal text draws its complete generated raster"));
+            test.expectEq(whiteFrom(static_cast<uint8_t>(3 + terminalWidth), 48, 128), true,
+                          F("terminal text stops at generated raster width"));
+        } else {
+            test.expectEq(hasInk(3, 48, 55, 6, false), true,
+                          F("gather and flee terminal captions render"));
+            test.expectEq(captionMatches(presenter, battle_presentation_fixture::afterView(result),
+                                         captionRegressionText + (i == 3 ? 114 : 123), 3, 48,
+                                         i == 3 ? 48 : 24), true,
+                          F("gather and flee captions match their exact glyphs"));
+        }
+        test.expectEq(pixel(127, 48), true, F("terminal text leaves the right edge white"));
+    }
+
+    for (uint8_t i = 0; i < 3; ++i) {
+        resetActionResult(result);
+        result.kind = ResultKind::Skip;
+        result.actor = Side::Player;
+        result.speciesBefore[0] = first;
+        result.speciesBefore[1] = last;
+        result.maxHpBefore[0] = result.maxHpBefore[1] = 100;
+        result.hpBefore[0] = result.hpAfter[0] = 80;
+        result.hpBefore[1] = result.hpAfter[1] = 60;
+        if (i == 0) result.flags = STATUS_SKIPPED;
+        else if (i == 1) result.flags = REFUSED;
+        presenter.begin(result);
+        render(presenter, battle_presentation_fixture::afterView(result));
+        const __FlashStringHelper *label = i == 0 ? F("status-skip caption renders")
+            : i == 1 ? F("refused caption renders") : F("no-action caption renders");
+        test.expectEq(hasInk(3, 48, 55, 6, false), true, label);
+        const uint8_t captionWidth = i == 0 ? 78 : i == 1 ? 84 : 66;
+        const uint8_t captionOffset = i == 0 ? 13 : i == 1 ? 27 : 42;
+        test.expectEq(captionMatches(presenter, battle_presentation_fixture::afterView(result),
+                                     captionRegressionText + captionOffset, 3, 48, captionWidth), true,
+                      F("consequence caption matches exact generated-font glyphs"));
+        test.expectEq(pixel(127, 48), true,
+                      F("consequence captions stay within framebuffer"));
+    }
+
+    for (uint8_t i = 0; i < 2; ++i) {
+        resetActionResult(result);
+        result.kind = ResultKind::EndTurn;
+        result.speciesBefore[0] = first;
+        result.speciesBefore[1] = last;
+        result.maxHpBefore[0] = result.maxHpBefore[1] = 100;
+        result.hpBefore[0] = result.hpAfter[0] = 80;
+        result.hpBefore[1] = result.hpAfter[1] = 60;
+        result.consequences[0] = {i == 0 ? Effect::SAPPD : Effect::INFSED,
+                                  0, static_cast<uint8_t>(i == 0 ? 70 : 90)};
+        presenter.begin(result);
+        render(presenter, battle_presentation_fixture::afterView(result));
+        test.expectEq(hasInk(3, 48, 45, 6, false), true,
+                      F("end-turn loss and healing captions render"));
+        test.expectEq(captionMatches(presenter, battle_presentation_fixture::afterView(result),
+                                     captionRegressionText + (i == 0 ? 96 : 104), 18, 48,
+                                     i == 0 ? 42 : 54), true,
+                      F("end-turn caption matches its exact glyphs"));
+        test.expectEq(pixel(127, 48), true,
+                      F("end-turn captions stay within framebuffer"));
+    }
+
+    for (uint8_t i = 0; i < 5; ++i) {
+        const Effect effect = i == 0 ? Effect::ATKUP : i == 1 ? Effect::ATKDWN
+            : i == 2 ? Effect::DPRSD : i == 3 ? Effect::PINNED : Effect::CONCUSED;
+        const uint8_t captionOffset = i == 0 ? 64 : i == 1 ? 69 : i == 2 ? 87
+            : i == 3 ? 138 : 1;
+        const uint8_t captionX = i < 2 ? 29 : i == 2 ? 39 : 3;
+        const uint8_t captionWidth = i == 0 || i == 1 ? 24 : i == 2 ? 48
+            : i == 3 ? 84 : 66;
+        resetActionResult(result);
+        result.kind = i == 3 ? ResultKind::Attack : ResultKind::EndTurn;
+        result.speciesBefore[0] = first;
+        result.speciesBefore[1] = last;
+        result.maxHpBefore[0] = result.maxHpBefore[1] = 100;
+        result.hpBefore[0] = result.hpAfter[0] = 80;
+        result.hpBefore[1] = result.hpAfter[1] = 60;
+        result.consequences[0] = {effect, 0, 0};
+        presenter.begin(result);
+        if (result.kind == ResultKind::Attack) {
+            for (uint8_t tick = 0; tick < ANNOUNCE_TICKS + IMPACT_TICKS; ++tick)
+                presenter.update(false);
+        }
+        render(presenter, battle_presentation_fixture::afterView(result));
+        const __FlashStringHelper *captionLabel = i == 0 ? F("stat-up caption exact")
+            : i == 1 ? F("stat-down caption exact") : i == 2 ? F("type-down caption exact")
+            : i == 3 ? F("status-applied caption exact") : F("self-hit caption exact");
+        test.expectEq(captionMatches(presenter, battle_presentation_fixture::afterView(result),
+                                     captionRegressionText + captionOffset, captionX, 48,
+                                     captionWidth), true, captionLabel);
+    }
+
+    resetActionResult(result);
+    result.kind = ResultKind::Gather;
+    result.actor = Side::Player;
+    result.speciesBefore[0] = first;
+    result.speciesBefore[1] = last;
+    result.maxHpBefore[0] = result.maxHpBefore[1] = 100;
+    result.hpBefore[0] = result.hpAfter[0] = 80;
+    result.hpBefore[1] = result.hpAfter[1] = 60;
+    presenter.begin(result);
+    render(presenter, battle_presentation_fixture::afterView(result));
+    test.expectEq(hasInk(3, 48, gatherTextWidth, 8, false), true,
+                  F("gather action draws its complete generated raster"));
+    test.expectEq(whiteFrom(static_cast<uint8_t>(3 + gatherTextWidth), 48, 128), true,
+                  F("gather action stops at generated raster width"));
 }
 
 __attribute__((noinline)) inline void playback(FxTest &test, bool knockout) {
@@ -234,6 +439,7 @@ inline void test_battlepresentation(FxTest &test) {
                           F("devastating bitmap renders"));
     effectivenessFeedback(test, Modifier::None, 90,
                           F("no-effect caption renders"));
+    feedbackCategories(test);
 
     // Empty and absent move IDs never index the FX name table. Species zero
     // is the generated first fixture and must still render; absent255 does not.

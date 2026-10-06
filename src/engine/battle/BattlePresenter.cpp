@@ -158,8 +158,9 @@ const char captionTextData[] PROGMEM =
     "\0hits itself\0could not act\0cannot do that\0did nothing\0switching\0"
     "rose\0fell\0strengthened\0weakened\0lost hp\0healed hp\0gathered\0"
     "fled\0no effect\0status applied";
+// These byte offsets include every preceding NUL, including the initial one.
 const uint8_t captionOffsets[] PROGMEM = {
-    0, 1, 12, 25, 39, 50, 59, 64, 69, 82, 91, 99, 109, 118, 123, 133
+    0, 1, 13, 27, 42, 54, 64, 69, 74, 87, 96, 104, 114, 123, 128, 138
 };
 const char *captionText(uint8_t caption) {
     if (caption > CAPTION_STATUS_APPLIED) caption = CAPTION_NONE;
@@ -326,7 +327,7 @@ void BattlePresenter::prepare() {
             setCaption(CAPTION_SWITCHING);
         } else if (result_->kind == ResultKind::Gather) {
             loadName(static_cast<uint8_t>(result_->actor));
-            setDetail({gather, 30});
+            setDetail({gather, gatherTextWidth});
         }
         break;
     case PresenterStage::Impact:
@@ -341,10 +342,10 @@ void BattlePresenter::prepare() {
                 setDetail(effectivenessSprite(result_->effectiveness));
         } else if (result_->kind == ResultKind::Switch) {
             cacheCreatureName(item_, result_->index, lookups);
-            setDetail({SwitchIn, 90});
+            setDetail({SwitchIn, switchInTextWidth});
         } else if (result_->kind == ResultKind::Gather) {
             loadName(static_cast<uint8_t>(result_->actor));
-            setDetail({gather, 30});
+            setDetail({gather, gatherTextWidth});
         } else if (result_->kind == ResultKind::EndTurn && fact_ < 4) {
             const Consequence &fact = result_->consequences[fact_];
             const uint8_t side = fact.side;
@@ -401,14 +402,14 @@ void BattlePresenter::prepare() {
     case PresenterStage::Faint: {
         const uint8_t side = fact_ == 0 ? 0 : static_cast<uint8_t>(fact_ - 1);
         loadName(side);
-        setDetail({Fainted, 45});
+        setDetail({Fainted, faintedTextWidth});
         break;
     }
     case PresenterStage::Terminal:
         switch (result_->outcome) {
-        case Outcome::Win: setDetail({win, 45}); break;
-        case Outcome::Lose: setDetail({lose, 60}); break;
-        case Outcome::Escaped: setDetail({escaped, 65}); break;
+        case Outcome::Win: setDetail({win, winTextWidth}); break;
+        case Outcome::Lose: setDetail({lose, loseTextWidth}); break;
+        case Outcome::Escaped: setDetail({escaped, escapedTextWidth}); break;
         case Outcome::Gathered:
             loadName(static_cast<uint8_t>(result_->actor));
             setCaption(CAPTION_GATHERED);
@@ -557,9 +558,9 @@ void BattlePresenter::draw() const {
         if (result_->flags & SELF_HIT)
             drawBlackCaption(CAPTION_SELF_HIT, 3, yAction);
         else if (result_->actor == Side::Player)
-            drawBlackText(3, yAction, attackText, 90);
+            drawBlackText(3, yAction, attackText, attackTextWidth);
         else
-            drawBlackText(3, yAction, enemyAttackText, 70);
+            drawBlackText(3, yAction, enemyAttackText, enemyAttackTextWidth);
         drawBlackText(3, yDetail, item_.detail, item_.detailWidth);
     } else if (stage_ == PresenterStage::Announce && result_->kind == ResultKind::Switch) {
         drawBlackText(3, yName, item_.name, item_.nameWidth);
@@ -577,8 +578,8 @@ void BattlePresenter::draw() const {
         const uint8_t after = result_->hpAfter[target];
         const uint8_t damage = before > after ? before - after : 0;
         drawBlackText(3, yName, item_.name, item_.nameWidth);
-        // "damage" is six 5-pixel glyphs plus the packed leading blank slot.
-        drawBlackText(16, yAction, damageText, 35);
+        // "Damage delt!" is twelve 5-pixel glyphs plus a leading blank slot.
+        drawBlackText(16, yAction, damageText, damageTextWidth);
         drawNumbersBlack(3, yAction, damage);
         drawBlackText(3, yDetail, item_.detail, item_.detailWidth);
         drawBlackCaption(caption, 3, yDetail);
@@ -597,7 +598,13 @@ void BattlePresenter::draw() const {
         drawBlackText(3, yName, item_.name, item_.nameWidth);
         const uint8_t prefixWidth = item_.detailWidth;
         drawBlackText(3, yAction, item_.detail, prefixWidth);
-        drawBlackCaption(caption, static_cast<uint8_t>(3 + prefixWidth + (prefixWidth ? 1 : 0)), yAction);
+        const uint8_t captionX = static_cast<uint8_t>(3 + prefixWidth + (prefixWidth ? 1 : 0));
+        // A long type name followed by "strengthened" exceeds one 128px row.
+        // Put the caption on the last panel row instead of overrunning it.
+        if (static_cast<uint16_t>(captionX) + 14u * 6u <= 128u)
+            drawBlackCaption(caption, captionX, yAction);
+        else
+            drawBlackCaption(caption, 3, yDetail);
     } else if (stage_ == PresenterStage::Faint) {
         drawBlackText(3, yName, item_.name, item_.nameWidth);
         drawBlackText(3, yAction, item_.detail, item_.detailWidth);

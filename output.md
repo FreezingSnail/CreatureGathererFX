@@ -4860,3 +4860,51 @@ PATH=/private/tmp/cgfx-tools-arena11/release:$PATH make final-gate BUILD_DIR=bui
 
 The integrated final-gate rerun took about 2m20s. Bead implementation and
 verification are complete.
+
+CreatureGathererFX-jp8.3.20 worker implementation: audited all presenter paths.
+Found the caption offset table drifted into preceding NUL terminators after
+"hits itself" (for example, "could not act" was blank). Recomputed every
+offset from the authored caption string and corrected them. The same audit
+found fixed raster widths consistently 5 px too wide for player/opponent
+attack text, switch-in, faint, and terminal labels; `damageText` was 30 px too
+narrow and `gather` was 5 px too narrow. Widths now derive from character
+counts including the generator's leading blank. Long type-up consequences wrap
+their caption to the final panel row to stay within the 128 px framebuffer.
+
+Permanent host coverage checks all fixed raster widths. Focused device coverage
+renders switch announcement/impact, gather, damage/effectiveness, all terminal
+outcomes, status/refused/no-action, stat/type consequences, HP loss/heal, and
+self-hit; exact 5x6 glyph comparisons guard the caption offsets. White-panel
+and right-edge assertions catch packed-data leaks and framebuffer overruns.
+
+```text
+make test
+# PASS: host 155,552/0; world 190/0.
+make fxtest-headless FXTEST_INOS=tst/fxdatatest/test_battlepresentation.ino ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS: 194/0; device test image 21,616 B; static RAM 1,892/2,160
+# (268 B free); painted stack 360 B / effective 291 B, caption 407 B /
+# effective 338 B (effective subtracts 69 B USB ISR allowance).
+make ram
+# PASS: shipping image 27,916/29,696 B flash (1,780 B free); static RAM
+# 1,841/2,160 B (319 B free); 719 B total SRAM remains for stack/locals.
+git diff --check
+# PASS.
+```
+
+Focused test iterations initially exposed the bad caption offsets (178/1), then
+remaining stale offsets and a test fixture that consumed SRAM with ordinary
+string literals (186/8 and 191/3). Moved reference captions to PROGMEM, corrected
+the offsets from actual NUL-terminated string lengths, and corrected expected
+text coordinates for end-turn captions. Final focused suite passes with the
+headroom figures above. Per-command wall time: `make test` about 2 s, focused
+device suite about 4 s, `make ram` about 11 s. Bead remains in progress for
+orchestrator review/final gate.
+
+```text
+PATH=/private/tmp/cgfx-tools-arena11/release:$PATH make final-gate BUILD_DIR=build/jp8.3.20-final FXTEST_MS=10000 ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS: host 155,552/0; world 190/0; VM 42/0; generated checks PASS;
+# all 28 FX suites PASS, battle presentation 194/0; test_stack 335 B;
+# shipping image 27,916 B flash / 1,841 B static RAM.
+```
+
+The integrated final-gate run took about 2m35s; the bead is complete.
