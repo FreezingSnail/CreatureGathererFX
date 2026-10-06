@@ -176,7 +176,8 @@ void drawCaption(uint8_t caption, uint8_t x, uint8_t y) {
         const uint8_t character = pgm_read_byte(text++);
         if (character == 0) break;
         if (character != ' ') {
-            Blit::draw(glyphX, y, 5, 6, fontTrimmed,
+            // Native image entries carry a four-byte width/height header.
+            Blit::draw(glyphX, y, 5, 6, fontTrimmed + 4,
                        FRAME(character - '0'), Blit::NEGATIVE);
         }
         glyphX += 6;
