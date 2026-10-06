@@ -4778,3 +4778,85 @@ make ram BUILD_DIR=build/jp8.3.17-reserve8
 
 Arena device suite took about 6 s, presentation spike 12 s, and shipping RAM
 build 15 s. Bead remains open for the orchestrator's integrated final gate.
+
+## CreatureGathererFX-jp8.3.19 — Effectiveness feedback text bounds
+
+Font spike (all screen dimensions are native Arduboy 1bpp pixels): the widest
+complete effectiveness label is 18 five-pixel cells including the generated
+leading blank, or 90 px. It starts at x=3 in the 128 px panel and leaves 35 px
+to the right edge. The available ArduFont 5x6 sheet is 615x6 (123 cells); it
+matches the generated effectiveness raster and is readable at the current
+layout. ArduFontTrimmed 5x6 is 375x6 (75 cells), with the same 5x6 glyph size
+and appearance; it does not improve legibility, and drawing each glyph would
+replace one packed blit with many. ArduboyFont 6x8 is 1536x8 (256 cells); the
+18-cell label would use 108 px and fit, with larger glyphs, but requires
+per-character packed reads. Internal Font4x6 is 4x8 glyph data with
+letter-spacing from internal flash; it uses fewer pixels and fits, but is the
+smallest and least legible option. Chosen: ArduFont 5x6, already used to
+generate all effectiveness rasters. The strings are packed as mask plus image
+planes at two bytes per pixel-column: quarter/double-outcomes use 90/70 px
+widths as declared, and the `damage` label uses 35 px (six letters plus one
+leading blank cell). No generated data changes are needed.
+
+The screenshot's post-damage corruption was the separate `damageText` blit:
+`drawBlackText(..., damageText, 70)` read 140 packed bytes from a 70-byte
+generated raster. Its width is now 35 px. This was the adjacent packed-data
+overread; the four effectiveness raster widths remain exact. Added permanent
+host checks for the effectiveness widths and focused device checks that draw
+Quarter, Half, Double, Quadruple, and None, verify black ink on white, and
+verify no ink outside each generated bound or after the post-damage label.
+
+```text
+make test
+# PASS: host 155,542/0; world 190/0.
+ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens make fxtest-headless FXTEST_INOS=tst/fxdatatest/test_battlepresentation.ino
+# Initial build failed: AVR C++11 constexpr rejects switch body; the test also
+# qualified global Modifier as battle::Modifier. Replaced with a single-return
+# constexpr expression and corrected the test type.
+ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens make fxtest-headless FXTEST_INOS=tst/fxdatatest/test_battlepresentation.ino
+# PASS: 144/0; test image 17,600 B flash; static RAM 1,892/2,160 (268 B free).
+# Painted stack: presenter 362 B / effective 293 B; caption 409 B / effective
+# 340 B. Effective values subtract the 69 B USB ISR reserve.
+make ram
+# PASS: 27,902 B flash / 29,696 (1,794 B free); static RAM 1,841/2,160
+# (319 B free), 719 B total SRAM remaining for stack and locals.
+git diff --check
+# PASS.
+```
+
+Focused device and shipping RAM builds completed in about 5 s and 6 s;
+`make test` completed in about 1.3 s. The bead remains in progress for the
+orchestrator's final gate.
+
+Orchestrator final-gate follow-up: its first run failed only in
+`test_battle_damage_color`: the fixture still rendered `damageText` at 70 px
+and compared 70 bytes after the production blit had been corrected to 35 px.
+Updated the fixture's reference render and expected span to 35 px, and added a
+white-panel assertion from the end of the label through x=85 to catch adjacent
+packed-data pixels.
+
+```text
+ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens make fxtest-headless FXTEST_INOS=tst/fxdatatest/test_battle_damage_color.ino
+# PASS: 4/0; test image 11,326 B flash; static RAM 1,892/2,160 (268 B free).
+ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens make fxtest-headless FXTEST_INOS=tst/fxdatatest/test_battlepresentation.ino
+# PASS: 144/0; test image 17,600 B flash; static RAM 1,892/2,160 (268 B free).
+# Painted stack unchanged: presenter 362 B / effective 293 B; caption 409 B /
+# effective 340 B.
+git diff --check
+# PASS.
+```
+
+`make test` and `make ram` were not rerun for this fixture-only correction; the
+previous worker run passed at 155,542 host / 190 world and 27,902 B flash /
+1,841 B static RAM. The orchestrator reran the full integrated gate after this
+change:
+
+```text
+PATH=/private/tmp/cgfx-tools-arena11/release:$PATH make final-gate BUILD_DIR=build/jp8.3.19-final-fixed FXTEST_MS=10000 ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS: host 155,542/0; world 190/0; VM 42/0; generated checks PASS;
+# all 28 FX suites PASS, including damage-color 4/0 and presentation 144/0;
+# test_stack 335 B headroom; shipping image 27,902 B flash / 1,841 B static.
+```
+
+The integrated final-gate rerun took about 2m20s. Bead implementation and
+verification are complete.

@@ -14,11 +14,12 @@ inline void test_battle_damage_color(FxTest &test) {
     test.expectEq(static_cast<uint8_t>(presenter.stage()),
                   static_cast<uint8_t>(PresenterStage::Impact), F("damage enters impact"));
 
-    uint8_t expectedLabel[70];
+    // Six 5px letters plus the generated leading blank cell.
+    uint8_t expectedLabel[35];
     uint8_t expectedNumber[11];
     arduboy.clear();
     Blit::fillRect(0, 40, 128, 24, WHITE);
-    Blit::draw(16, 48, 70, 8, damageText, FRAME(0), Blit::OVERWRITE);
+    Blit::draw(16, 48, sizeof(expectedLabel), 8, damageText, FRAME(0), Blit::OVERWRITE);
     for (uint8_t column = 0; column < sizeof(expectedLabel); ++column)
         expectedLabel[column] = static_cast<uint8_t>(~Arduboy2Base::sBuffer[6 * 128 + 16 + column]);
 
@@ -40,6 +41,16 @@ inline void test_battle_damage_color(FxTest &test) {
     }
     test.expectEq(labelMatchesBlackTreatment, true,
                   F("damage label is inverted to black text on white panel"));
+
+    bool noAdjacentPackedPixels = true;
+    for (uint8_t column = 16 + sizeof(expectedLabel); column < 86; ++column) {
+        if (Arduboy2Base::sBuffer[6 * 128 + column] != 0xFF) {
+            noAdjacentPackedPixels = false;
+            break;
+        }
+    }
+    test.expectEq(noAdjacentPackedPixels, true,
+                  F("damage label stops before adjacent packed asset data"));
 
     bool numberMatchesBlackTreatment = true;
     for (uint8_t column = 0; column < sizeof(expectedNumber); ++column) {

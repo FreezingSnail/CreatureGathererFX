@@ -23,6 +23,15 @@ constexpr AttackTreatment attackTreatment(bool physical) {
     return physical ? AttackTreatment::PhysicalWave : AttackTreatment::Projectile;
 }
 
+// Generated effectiveness labels use the 5x6 font with one leading blank
+// glyph slot retained by the string packer.
+constexpr uint8_t effectivenessTextWidth(Modifier modifier) {
+    return modifier == Modifier::Quarter ? 90 :
+           modifier == Modifier::Half ? 65 :
+           modifier == Modifier::Double ? 70 :
+           modifier == Modifier::Quadruple ? 90 : 0;
+}
+
 // Only the current display item is prepared. FX symbols point at raw pixels;
 // dimensions are separate and the renderer compensates its +2-byte prefix.
 struct PreparedBattleItem {
