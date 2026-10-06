@@ -14,27 +14,24 @@ inline void test_battle_damage_color(FxTest &test) {
     test.expectEq(static_cast<uint8_t>(presenter.stage()),
                   static_cast<uint8_t>(PresenterStage::Impact), F("damage enters impact"));
 
-    // Full "Damage delt!" bitmap: twelve glyphs plus the generated leading blank.
-    uint8_t expectedLabel[damageTextWidth];
-    uint8_t expectedNumber[11];
+    // Independent raw font reference for this fixture's 60-to-35 HP delta.
+    uint8_t expectedLine[90];
     arduboy.clear();
     Blit::fillRect(0, 40, 128, 24, WHITE);
-    Blit::draw(16, 48, sizeof(expectedLabel), 8, damageText, FRAME(0), Blit::OVERWRITE);
-    for (uint8_t column = 0; column < sizeof(expectedLabel); ++column)
-        expectedLabel[column] = static_cast<uint8_t>(~Arduboy2Base::sBuffer[6 * 128 + 16 + column]);
-
-    arduboy.clear();
-    Blit::fillRect(0, 40, 128, 24, WHITE);
-    const uint8_t damage = result.hpBefore[1] - result.hpAfter[1];
-    drawNumbersBlack(3, 48, damage);
-    for (uint8_t column = 0; column < sizeof(expectedNumber); ++column)
-        expectedNumber[column] = Arduboy2Base::sBuffer[6 * 128 + 3 + column];
+    const char *text = PSTR("25 damage dealt");
+    uint8_t x = 3;
+    for (uint8_t character; (character = pgm_read_byte(text++)) != 0; x += 6)
+        if (character != ' ')
+            Blit::draw(x, 48, 5, 6, ArduFontTrimmed,
+                       FRAME(character - '0'), Blit::NEGATIVE);
+    for (uint8_t column = 0; column < sizeof(expectedLine); ++column)
+        expectedLine[column] = Arduboy2Base::sBuffer[6 * 128 + 3 + column];
 
     battle_presentation_fixture::drawView(baseView);
     presenter.draw();
     bool labelMatchesBlackTreatment = true;
-    for (uint8_t column = 0; column < sizeof(expectedLabel); ++column) {
-        if (Arduboy2Base::sBuffer[6 * 128 + 16 + column] != expectedLabel[column]) {
+    for (uint8_t column = 18; column < sizeof(expectedLine); ++column) {
+        if (Arduboy2Base::sBuffer[6 * 128 + 3 + column] != expectedLine[column]) {
             labelMatchesBlackTreatment = false;
             break;
         }
@@ -43,7 +40,7 @@ inline void test_battle_damage_color(FxTest &test) {
                   F("damage label is inverted to black text on white panel"));
 
     bool noAdjacentPackedPixels = true;
-    for (uint8_t column = 16 + sizeof(expectedLabel); column < 112; ++column) {
+    for (uint8_t column = 3 + sizeof(expectedLine); column < 128; ++column) {
         if (Arduboy2Base::sBuffer[6 * 128 + column] != 0xFF) {
             noAdjacentPackedPixels = false;
             break;
@@ -53,12 +50,12 @@ inline void test_battle_damage_color(FxTest &test) {
                   F("damage label stops before adjacent packed asset data"));
 
     bool numberMatchesBlackTreatment = true;
-    for (uint8_t column = 0; column < sizeof(expectedNumber); ++column) {
-        if (Arduboy2Base::sBuffer[6 * 128 + 3 + column] != expectedNumber[column]) {
+    for (uint8_t column = 0; column < 18; ++column) {
+        if (Arduboy2Base::sBuffer[6 * 128 + 3 + column] != expectedLine[column]) {
             numberMatchesBlackTreatment = false;
             break;
         }
     }
     test.expectEq(numberMatchesBlackTreatment, true,
-                  F("damage value retains black number sprite"));
+                  F("damage value uses black caption-font digits inline"));
 }

@@ -134,10 +134,40 @@ inline void effectivenessFeedback(FxTest &test, Modifier modifier,
         test.expectEq(captionMatches(presenter, battle_presentation_fixture::afterView(result),
                                  captionRegressionText + 128, 3, 56, 54), true,
                       F("no-effect caption matches exact glyphs"));
-    test.expectEq(hasInk(16, 48, battle::damageTextWidth, 8, false), true,
-                  F("post-damage label renders complete damage bitmap"));
-    test.expectEq(whiteFrom(81, 48, 112), true,
-                  F("post-damage blit does not read adjacent packed assets"));
+    test.expectEq(hasInk(3, 48, 96, 6, false), true,
+                  F("post-damage line renders in caption font"));
+    test.expectEq(whiteFrom(105, 48, 128), true,
+                  F("post-damage line stays within the panel"));
+}
+
+inline void damageLines(FxTest &test) {
+    using namespace battle;
+    const uint8_t amounts[] = {0, 1, 9, 10, 99, 100, 255, 25};
+    const char *const lines[] = {
+        PSTR("0 damage dealt"), PSTR("1 damage dealt"), PSTR("9 damage dealt"),
+        PSTR("10 damage dealt"), PSTR("99 damage dealt"),
+        PSTR("100 damage dealt"), PSTR("255 damage dealt"), PSTR("25 damage dealt")
+    };
+    for (uint8_t i = 0; i < sizeof(amounts); ++i) {
+        ActionResult result{};
+        battle_presentation_fixture::fill(result, false);
+        if (i & 1u) result.flags |= SELF_HIT;
+        const uint8_t target = (result.flags & SELF_HIT)
+            ? static_cast<uint8_t>(result.actor) : static_cast<uint8_t>(result.actor) ^ 1u;
+        result.maxHpBefore[target] = 255;
+        result.hpBefore[target] = i == 7 ? 60 : amounts[i];
+        result.hpAfter[target] = i == 7 ? 35 : 0;
+        BattlePresenter presenter;
+        presenter.begin(result);
+        for (uint8_t tick = 0; tick < ANNOUNCE_TICKS; ++tick)
+            presenter.update(false);
+        test.expectEq(captionMatches(presenter,
+                          battle_presentation_fixture::afterView(result), lines[i],
+                          3, 48, 102), true,
+                      F("damage digits and wording share exact font and baseline"));
+        test.expectEq(whiteFrom(105, 48, 128), true,
+                      F("damage line leaves right edge white"));
+    }
 }
 
 inline void feedbackCategories(FxTest &test) {
@@ -431,6 +461,7 @@ inline void test_battlepresentation(FxTest &test) {
     playback(test, false);
     playback(test, true);
     switchedSprites(test);
+    damageLines(test);
     effectivenessFeedback(test, Modifier::Quarter, 90,
                           F("barely damages bitmap renders"));
     effectivenessFeedback(test, Modifier::Half, 65,
