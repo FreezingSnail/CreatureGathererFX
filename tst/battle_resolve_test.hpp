@@ -137,6 +137,8 @@ inline void BattleResolveIntegrationTest(TestSuite &suite)
     test.assert(result.actor, Side::Player, "ordinary attack names player actor");
     test.assert(result.index, static_cast<uint8_t>(7),
                 "attack result names semantic player move ID");
+    test.assert((result.flags & PHYSICAL_MOVE) != 0, true,
+                "attack result carries its visual move class");
     test.assert(result.effectiveness, Modifier::Double,
                 "attack result carries STAB effectiveness");
     test.assert(result.hpBefore[1], static_cast<uint8_t>(100),

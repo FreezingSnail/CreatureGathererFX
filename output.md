@@ -4696,3 +4696,85 @@ git diff --check
 The default installed cgfx-tools binary rejected `deepthought`; both integrated
 commands selected the current sibling-tools build at `/private/tmp/cgfx-tools-arena11/release`.
 The full gate plus opt-in arena build took approximately 2m30s orchestrator wall time.
+
+## CreatureGathererFX-jp8.3.17
+
+Pinned battle animation mapping: physical moves use mirrored `BasicWaveL/R`
+assets and special moves use mirrored `basicBeamL/R` assets. Both pairs share
+the 32x32, eight-frame ABI. Resolution tags the existing action result with
+`PHYSICAL_MOVE` from its cached move data; the presenter performs no new FX
+metadata lookup. Positive damage (including self-hit) shakes the battlefield
+sprites and HP bars for eight impact ticks with deterministic offsets
+`(-2,0),(2,0),(1,-1),(-1,1),(1,1),(-1,-1),(0,0),(0,0)`. Offsets come from
+stage time, stay within two pixels, and settle to zero. The feedback panel
+stays still for readability.
+
+```text
+make ram
+# Baseline PASS: 27,942 B flash / 29,696; 1,841 B static / 2,160 (319 B free).
+make fxtest-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_battlepresentation.ino ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# Baseline PASS: presenter painted headroom 346 B / effective 277 B;
+# caption painted 394 B / effective 325 B; test_stack headroom 335 B.
+make test
+# Initial PASS: host 155,041/0; world 190/0.
+# The first device spike failed four pixel assertions because the fixture assumed
+# fixed battle-scene coordinates. Updated checks cover shifted bars and settling.
+# After the direct-negative blitter change, the focused suite passes with black
+# glyph and white background pixels during shake.
+make fxtest-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_battlepresentation.ino BUILD_DIR=build/jp8.3.17-refactor9 ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS: focused suite 114/0; presenter painted headroom 362 B / effective
+# 293 B; caption painted 404 B / effective 335 B; test_stack headroom 335 B.
+make fxtest-headless FXTEST_INOS=tst/fxdatatest/test_arenademo.ino FXTEST_MS=10000 BUILD_DIR=build/jp8.3.17-refactor9 ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS: test_arenademo 1,864/0; 29,688/29,696 B flash, 1,960/2,160 B static,
+# 188 B effective exercised stack. Ten rematch cycles completed.
+make ram
+# PASS: 28,040 B flash / 29,696 (1,656 B free); 1,841 B static / 2,160
+# (319 B free). Delta from baseline: +98 B flash, 0 B static RAM.
+make test
+# PASS: host 155,537/0; world 190/0.
+git diff --check
+# PASS.
+```
+
+The orchestrator's integrated gate initially failed compiling `test_arenademo`
+at 30,304 B / 29,696 B. Replacing post-draw inversion with reusable
+`Blit::NEGATIVE` rendering and keeping the text panel stationary reduced the
+test firmware below its limit while preserving black-on-white text and the
+six-pixel caption mask. Intermediate focused builds measured 30,000 B
+(`refactor`), 30,002 B (`refactor2`), 29,710 B (`refactor3`), 29,720 B
+(`refactor4`), 29,720 B (`refactor5`), 29,716 B (`refactor6`), 29,710 B
+(`refactor7`), and 29,714 B (`refactor8`); each exceeded the board limit.
+`refactor9` passes at 29,688 B. The original `arena-final` test ELF was
+29,654 B, so the overflow came from combined in-flight presentation changes.
+Final focused spike took about 8 s, arena device suite/build about 8 s, shipping
+RAM build about 8 s, and host suite about 2 s. Final gate remains with the
+orchestrator; keep the bead in progress until then.
+
+Orchestrator integrated gate attempt (2026-10-06): `make final-gate
+BUILD_DIR=build/jp8.3.17-final ...` initially stopped while compiling
+`test_arenademo`: 30,304 B / 29,696 B (608 B over). The original
+`build/arena-final` test ELF was 29,654 B; combined in-flight presentation
+changes caused the overflow. Follow-up reused `Blit::NEGATIVE` for the black-on-
+white text path, retaining its six-pixel caption mask; the focused arena build
+now fits at 29,688 B (8 B free), and its device suite passes. Shipping image
+still fits at 28,040 B / 29,696 B. The orchestrator will rerun the final gate.
+
+Reserve follow-up requested after integrated gate passed at only 8 B free:
+caption strings now use a packed PROGMEM text block and byte offset table, and
+caption glyph drawing uses bounded 8-bit coordinates. This preserves every
+caption and the six-pixel mask while reducing the combined arena test image to
+29,500 B / 29,696 (196 B free).
+
+```text
+make fxtest-headless FXTEST_INOS=tst/fxdatatest/test_arenademo.ino FXTEST_MS=10000 BUILD_DIR=build/jp8.3.17-reserve8 ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS 1,864/0; 29,500 B flash, 1,960 B static; 188 B effective stack;
+# 10 trainer replay cycles.
+make fxtest-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_battlepresentation.ino BUILD_DIR=build/jp8.3.17-reserve8 ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS presentation 114/0; presenter effective stack 293 B, caption 340 B;
+# test_stack headroom 335 B.
+make ram BUILD_DIR=build/jp8.3.17-reserve8
+# PASS 27,850 B flash / 29,696; 1,841 B static / 2,160 (319 B free).
+```
+
+Arena device suite took about 6 s, presentation spike 12 s, and shipping RAM
+build 15 s. Bead remains open for the orchestrator's integrated final gate.

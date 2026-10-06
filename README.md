@@ -72,18 +72,20 @@ optional submenus, and the directions to navigate. Trainer battles refuse Gather
 
 ## Arena demo (opt-in)
 
-Build the arena firmware and get its flash/RAM report with:
+Build and launch the arena demo with:
 
 ```sh
-make arena-demo
+make arena-demo ARDENS=/path/to/Ardens
 ```
 
-The target runs `make gen` first, then builds into `build/arena-demo` using the opt-in
-`CGFX_ARENA_DEMO` define and a 29,184-byte arena flash ceiling. Override the output path or flags
-with `ARENA_DEMO_BUILD_DIR`, `ARENA_DEMO_CPP_FLAGS`, and `ARENA_DEMO_FLASH_BUDGET`. It requires
-the normal `cgfx-tools`, Arduino CLI, and AVR size tools used by `make gen` and `make ram`.
+The target runs `make gen`, builds into `build/arena-demo` using the opt-in `CGFX_ARENA_DEMO`
+define and a 29,184-byte arena flash ceiling, then launches Ardens with isolated FX data and save
+files. Override the output path, isolated cart path, or flags with `ARENA_DEMO_BUILD_DIR`,
+`ARENA_DEMO_CART_DIR`, `ARENA_DEMO_CPP_FLAGS`, and `ARENA_DEMO_FLASH_BUDGET`. It requires Ardens
+plus the normal `cgfx-tools`, Arduino CLI, and AVR size tools used by `make gen` and `make ram`.
 
-For an Ardens run, keep the split emulator data and save images beside the arena build:
+The target launches Ardens with the split data and save images from the isolated cart directory.
+To launch that already-built demo again without rebuilding, run:
 
 ```sh
 mkdir -p build/arena-demo/isolated
