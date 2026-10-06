@@ -175,9 +175,7 @@ void drawCaptionText(const char *text, uint8_t x, uint8_t y) {
         const uint8_t character = pgm_read_byte(text++);
         if (character == 0) break;
         if (character != ' ') {
-            // Native image entries carry a four-byte width/height header.
-            Blit::draw(glyphX, y, 5, 6, fontTrimmed + 4,
-                       FRAME(character - '0'), Blit::NEGATIVE);
+            drawGlyph(glyphX, y, character, Blit::NEGATIVE);
         }
         glyphX += 6;
     }
@@ -190,8 +188,7 @@ void drawCaption(uint8_t caption, uint8_t x, uint8_t y) {
 void drawDamageLine(uint8_t damage, uint8_t x, uint8_t y) {
     uint8_t divisor = damage >= 100 ? 100 : damage >= 10 ? 10 : 1;
     do {
-        Blit::draw(x, y, 5, 6, fontTrimmed + 4,
-                   FRAME(damage / divisor), Blit::NEGATIVE);
+        drawGlyph(x, y, static_cast<uint8_t>('0' + damage / divisor), Blit::NEGATIVE);
         x += 6;
         damage %= divisor;
         divisor /= 10;
