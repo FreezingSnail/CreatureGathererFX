@@ -80,6 +80,37 @@ inline void switchedSprites(FxTest &test) {
     }
 }
 
+inline bool whiteFrom(uint8_t x, uint8_t y, uint8_t endX) {
+    for (; x < endX; ++x)
+        for (uint8_t row = y; row < y + 8; ++row)
+            if (!pixel(x, row)) return false;
+    return true;
+}
+
+inline void effectivenessFeedback(FxTest &test, Modifier modifier,
+                                 uint8_t expectedWidth, const __FlashStringHelper *label) {
+    battle::ActionResult result{};
+    battle_presentation_fixture::fill(result, false);
+    result.effectiveness = modifier;
+    battle::BattlePresenter presenter;
+    presenter.begin(result);
+    for (uint8_t tick = 0; tick < battle::ANNOUNCE_TICKS; ++tick)
+        presenter.update(false);
+    test.expectEq(static_cast<uint8_t>(presenter.stage()),
+                  static_cast<uint8_t>(battle::PresenterStage::Impact),
+                  F("effectiveness enters impact feedback"));
+    render(presenter, battle_presentation_fixture::afterView(result));
+    test.expectEq(hasInk(3, 56, expectedWidth, 8, false), true, label);
+    test.expectEq(hasInk(3, 56, expectedWidth, 8, true), true,
+                  F("effectiveness text retains white background"));
+    test.expectEq(whiteFrom(static_cast<uint8_t>(3 + expectedWidth), 56, 128), true,
+                  F("effectiveness blit stops at generated asset width"));
+    test.expectEq(hasInk(16, 48, 35, 8, false), true,
+                  F("post-damage label renders complete damage bitmap"));
+    test.expectEq(whiteFrom(51, 48, 86), true,
+                  F("post-damage blit does not read adjacent packed assets"));
+}
+
 __attribute__((noinline)) inline void playback(FxTest &test, bool knockout) {
     using namespace battle;
     ActionResult result{};
@@ -193,6 +224,16 @@ inline void test_battlepresentation(FxTest &test) {
     playback(test, false);
     playback(test, true);
     switchedSprites(test);
+    effectivenessFeedback(test, Modifier::Quarter, 90,
+                          F("barely damages bitmap renders"));
+    effectivenessFeedback(test, Modifier::Half, 65,
+                          F("does some bitmap renders"));
+    effectivenessFeedback(test, Modifier::Double, 70,
+                          F("does great bitmap renders"));
+    effectivenessFeedback(test, Modifier::Quadruple, 90,
+                          F("devastating bitmap renders"));
+    effectivenessFeedback(test, Modifier::None, 90,
+                          F("no-effect caption renders"));
 
     // Empty and absent move IDs never index the FX name table. Species zero
     // is the generated first fixture and must still render; absent255 does not.

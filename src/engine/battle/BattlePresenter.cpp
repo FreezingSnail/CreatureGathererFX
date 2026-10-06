@@ -108,10 +108,10 @@ TextSprite effectivenessSprite(Modifier modifier) {
     // generated string bitmaps. A one-byte overread pulls unrelated packed
     // sprite data into the effectiveness label and makes it appear garbled.
     switch (modifier) {
-    case Modifier::Quarter: return {quarter, 90};
-    case Modifier::Half: return {half, 65};
-    case Modifier::Double: return {doubled, 70};
-    case Modifier::Quadruple: return {quad, 90};
+    case Modifier::Quarter: return {quarter, effectivenessTextWidth(modifier)};
+    case Modifier::Half: return {half, effectivenessTextWidth(modifier)};
+    case Modifier::Double: return {doubled, effectivenessTextWidth(modifier)};
+    case Modifier::Quadruple: return {quad, effectivenessTextWidth(modifier)};
     default: return {0, 0};
     }
 }
@@ -577,7 +577,8 @@ void BattlePresenter::draw() const {
         const uint8_t after = result_->hpAfter[target];
         const uint8_t damage = before > after ? before - after : 0;
         drawBlackText(3, yName, item_.name, item_.nameWidth);
-        drawBlackText(16, yAction, damageText, 70);
+        // "damage" is six 5-pixel glyphs plus the packed leading blank slot.
+        drawBlackText(16, yAction, damageText, 35);
         drawNumbersBlack(3, yAction, damage);
         drawBlackText(3, yDetail, item_.detail, item_.detailWidth);
         drawBlackCaption(caption, 3, yDetail);

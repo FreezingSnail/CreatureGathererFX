@@ -60,6 +60,16 @@ inline void BattlePresentationSuite(TestRunner &runner) {
                 "special moves select the distinct beam treatment");
     test.assert(attackTreatment(true), AttackTreatment::PhysicalWave,
                 "physical moves select the distinct wave treatment");
+    test.assert(effectivenessTextWidth(Modifier::Quarter), 90,
+                "quarter effectiveness width matches 18 packed 5-pixel cells");
+    test.assert(effectivenessTextWidth(Modifier::Half), 65,
+                "half effectiveness width matches 13 packed 5-pixel cells");
+    test.assert(effectivenessTextWidth(Modifier::Double), 70,
+                "double effectiveness width matches 14 packed 5-pixel cells");
+    test.assert(effectivenessTextWidth(Modifier::Quadruple), 90,
+                "quadruple effectiveness width matches 18 packed 5-pixel cells");
+    test.assert(effectivenessTextWidth(Modifier::Same), 0,
+                "neutral effectiveness does not select a label bitmap");
 
     presenter.begin(result);
     presenter.overlay(view);
