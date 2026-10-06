@@ -182,13 +182,11 @@ inline void ArenaLifecycleSuite(TestRunner &runner)
                 "result return preserves player selection");
     test.assert(arena::arenaContext.opponentTeam, ArenaDemoIds::opponent_champion,
                 "result return preserves opponent selection");
-    test.assert(arena::arenaContext.outcome, battle::Outcome::Win,
-                "result return copies only the battle outcome");
     test.assert(static_cast<uint8_t>(modeState.arena.ui.screen),
-                static_cast<uint8_t>(arena::ArenaScreen::Result),
-                "terminal callback opens the result actions");
-    test.assert(modeState.arena.ui.list.itemCount, static_cast<uint8_t>(3),
-                "result actions use the three-entry list");
+                static_cast<uint8_t>(arena::ArenaScreen::PlayerTeam),
+                "terminal callback returns to team selection");
+    test.assert(modeState.arena.ui.list.itemCount, ArenaDemoIds::playerCount,
+                "terminal return restores all player teams");
 
     suite.addTest(test);
     runner.addTestSuite(suite);

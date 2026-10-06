@@ -11,7 +11,6 @@ uint8_t countFor(ArenaScreen screen, uint8_t playerCount,
     switch (screen) {
     case ArenaScreen::PlayerTeam: return playerCount;
     case ArenaScreen::OpponentTeam: return opponentCount;
-    case ArenaScreen::Result: return 3;
     }
     return 0;
 }
@@ -27,9 +26,9 @@ void setScreen(ArenaUiState &ui, ArenaScreen screen, uint8_t cursor,
     ui.screen = screen;
     const uint8_t count = countFor(screen, playerCount, opponentCount);
     ui.list.itemCount = count;
-    ui.list.rows = screen == ArenaScreen::Result ? 3 : 1;
+    ui.list.rows = 1;
     ui.list.cursor = clampIndex(cursor, count);
-    ui.list.windowStart = screen == ArenaScreen::Result ? 0 : ui.list.cursor;
+    ui.list.windowStart = ui.list.cursor;
 }
 
 } // namespace
@@ -45,12 +44,6 @@ ArenaIntent navigate(ArenaUiState &ui, ArenaContext &context,
                       playerCount, opponentCount);
             return playerCount == 0 ? ArenaIntent::None
                                     : ArenaIntent::PreviewChanged;
-        }
-        if (ui.screen == ArenaScreen::Result) {
-            if (opponentCount == 0) return ArenaIntent::None;
-            setScreen(ui, ArenaScreen::OpponentTeam, context.opponentTeam,
-                      playerCount, opponentCount);
-            return ArenaIntent::PreviewChanged;
         }
         return ArenaIntent::None;
     }
@@ -78,22 +71,7 @@ ArenaIntent navigate(ArenaUiState &ui, ArenaContext &context,
             return ArenaIntent::StartBattle;
         }
 
-        switch (ui.list.cursor) {
-        case 0:
-            if (playerCount == 0 || opponentCount == 0)
-                return ArenaIntent::None;
-            return ArenaIntent::StartBattle;
-        case 1:
-            if (opponentCount == 0) return ArenaIntent::None;
-            setScreen(ui, ArenaScreen::OpponentTeam, context.opponentTeam,
-                      playerCount, opponentCount);
-            return ArenaIntent::PreviewChanged;
-        default:
-            if (playerCount == 0) return ArenaIntent::None;
-            setScreen(ui, ArenaScreen::PlayerTeam, context.playerTeam,
-                      playerCount, opponentCount);
-            return ArenaIntent::PreviewChanged;
-        }
+        return ArenaIntent::None;
     }
 
     const uint8_t direction = (edgeButtons & MENU_NAV_UP) ? 0
@@ -103,22 +81,18 @@ ArenaIntent navigate(ArenaUiState &ui, ArenaContext &context,
 
     const uint8_t count = countFor(ui.screen, playerCount, opponentCount);
     if (count == 0) {
-        ui.list = {0, static_cast<uint8_t>(ui.screen == ArenaScreen::Result ? 3 : 1), 0, 0};
+        ui.list = {0, 1, 0, 0};
         return ArenaIntent::None;
     }
 
     ui.list.itemCount = count;
-    ui.list.rows = ui.screen == ArenaScreen::Result ? 3 : 1;
+    ui.list.rows = 1;
     ui.list.cursor = clampIndex(ui.list.cursor, count);
-    if (ui.list.rows >= count) ui.list.windowStart = 0;
-    else if (ui.list.windowStart > ui.list.cursor ||
-             ui.list.windowStart + ui.list.rows <= ui.list.cursor)
-        ui.list.windowStart = ui.list.cursor;
+    ui.list.windowStart = ui.list.cursor;
     const uint8_t oldCursor = ui.list.cursor;
     listViewMove(ui.list, direction == 0 ? -1 : 1);
     if (ui.list.cursor == oldCursor) return ArenaIntent::None;
-    return ui.screen == ArenaScreen::Result ? ArenaIntent::None
-                                            : ArenaIntent::PreviewChanged;
+    return ArenaIntent::PreviewChanged;
 }
 
 } // namespace arena

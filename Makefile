@@ -101,6 +101,7 @@ doctor:
 
 # Common source files for main tests
 TEST_SOURCES = src/lib/Blit.cpp \
+	src/lib/Text.cpp \
 	tst/src/Arduboy2Host.cpp \
 	tst/src/ReadData.cpp \
 	tst/src/DialogMenu.cpp \

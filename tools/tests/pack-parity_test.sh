@@ -15,7 +15,8 @@ perturbed_layout=$fixtures/fxlayout-expand-20-perturbed.toml
 # Utility prototype adds move names, kits and trainer basic attacks.
 # Runtime/authored matchup chart reconciliation updates the packed lookup table.
 # Arena demo appends 3 player records, 5 opponent previews, and 8 paired labels.
-expected=5d7aca52e44d95da45ed16bf7a88c096b16fb155d3f958b7ca88e2b513329af1
+# Arena UI appends three fixed bitmap labels after the existing text symbols.
+expected=a9f43cfb320c50f7e6834f2947819e58a6e46906f88a25065ae2b20b6c48c610
 
 for layout in "$old_layout" "$new_layout" "$perturbed_layout"; do
     test -f "$layout" || {

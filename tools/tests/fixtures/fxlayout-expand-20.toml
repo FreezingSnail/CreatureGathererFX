@@ -36,7 +36,7 @@ source = { expand = { path = "../../../fxdata/Sprites.txt" } }
 # Keep this migration proof at its original 304 declarations. Item names were
 # added later to the generated source and belong to the live layout instead.
 [[entry]]
-source = { expand = { path = "../../../fxdata/generated/Sprites.txt", exclude = ["lureTier0", "lureTier1", "lureTier2", "lureType0", "lureType1", "lureType2", "lureType3", "lureType4", "lureType5", "lureType6", "lureType7", "consumable0", "consumable1", "consumable2", "consumable3", "consumable4", "consumable5", "consumable6", "consumable7", "LureTierNames", "LureTypeNames", "ConsumableNames"] } }
+source = { expand = { path = "../../../fxdata/generated/Sprites.txt", exclude = ["lureTier0", "lureTier1", "lureTier2", "lureType0", "lureType1", "lureType2", "lureType3", "lureType4", "lureType5", "lureType6", "lureType7", "consumable0", "consumable1", "consumable2", "consumable3", "consumable4", "consumable5", "consumable6", "consumable7", "LureTierNames", "LureTypeNames", "ConsumableNames", "arenaChooseTeam", "arenaChooseOpponent", "arenaControls", "ArenaUiText"] } }
 
 [[entry]]
 source = { expand = { path = "../../../fxdata/battleEffects/Sprites.txt" } }
