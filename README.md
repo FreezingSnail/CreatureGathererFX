@@ -70,6 +70,40 @@ The demo bypasses save loading and does not auto-save. The copied cart and save 
 separate from any personal Ardens save. Press A to select and accelerate feedback, B to back out of
 optional submenus, and the directions to navigate. Trainer battles refuse Gather and Escape.
 
+## Arena demo (opt-in)
+
+Build the arena firmware and get its flash/RAM report with:
+
+```sh
+make arena-demo
+```
+
+The target runs `make gen` first, then builds into `build/arena-demo` using the opt-in
+`CGFX_ARENA_DEMO` define and a 29,184-byte arena flash ceiling. Override the output path or flags
+with `ARENA_DEMO_BUILD_DIR`, `ARENA_DEMO_CPP_FLAGS`, and `ARENA_DEMO_FLASH_BUDGET`. It requires
+the normal `cgfx-tools`, Arduino CLI, and AVR size tools used by `make gen` and `make ram`.
+
+For an Ardens run, keep the split emulator data and save images beside the arena build:
+
+```sh
+mkdir -p build/arena-demo/isolated
+cp -f dist/fxdata-data.bin build/arena-demo/isolated/fxdata-data.bin
+cp -f dist/fxdata-save.bin build/arena-demo/isolated/fxdata-save.bin
+/path/to/Ardens fxport=d1 display=ssd1306 \
+  file=build/arena-demo/CreatureGathererFX.ino.hex \
+  file=build/arena-demo/isolated/fxdata-data.bin \
+  save=build/arena-demo/isolated/fxdata-save.bin
+```
+
+`dist/fxdata.bin` is the flashable FX cart image; Ardens takes its FX data and save regions as
+separate inputs as shown above. The demo offers the three level-31 premade teams (Blitz, Bulwark,
+Utility) and five premade opponents (Starter, Speed, Fortress, Tricks, Champion). Choose a team,
+then an opponent, and play through the ordinary battle flow. After terminal battle feedback, the
+demo returns directly to the cached team choice, where A confirms the next choice, B goes back, and
+Up/Down change the highlighted entry. Every match starts with fresh HP, status, modifiers, and move uses.
+The demo bypasses player save loading and writing and does not add arena records, rewards, or
+progression.
+
 ## Overworld wild-battle demo (opt-in)
 
 Build with `CGFX_WILD_DEMO` instead of `CGFX_TRAINER_DEMO`. It applies the named `opening`

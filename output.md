@@ -4634,3 +4634,30 @@ pointers stayed live across setup; computing expectations after setup restored
 stack headroom. A later run caught and fixed an enum comparison compile error.
 Final worker time approximately 35 minutes; exact acceptance commands passed.
 No production/data files changed; no commit made.
+
+## CreatureGathererFX-2cy.11
+
+Added `make arena-demo`, which sequences FX generation before an isolated arena
+firmware/RAM build, forwards caller shipping flags plus `CGFX_ARENA_DEMO`, and
+defaults to the 29,184-byte arena budget. The public help and contract fixture
+cover target availability, phase order, build directory, flags, budget, and
+failure propagation. README now describes all eight presets, direct terminal
+return to cached team choice, fresh match state, and the split Ardens data/save
+inputs while identifying `dist/fxdata.bin` as the flashable cart image.
+
+```text
+sh tools/tests/make-contract-test.sh
+# PASS: make contract.
+PATH=/private/tmp/cgfx-tools-arena11/release:$PATH make arena-demo ARENA_DEMO_BUILD_DIR=build/arena-11-demo
+# PASS: cgfx-tools generation, AVR arena build, and RAM report; 28,898 flash /
+# 29,184 arena ceiling (286 B free); 1,847 static RAM / 2,160 budget (313 B free).
+make verify-generated
+# PASS: generated artifacts match.
+```
+
+The installed cgfx-tools 0.2.0 and available cached binaries initially failed
+generation on `data/opponents.csv:22` (`deepthought`). Built cgfx-tools from the
+current sibling tools checkout into `/private/tmp/cgfx-tools-arena11` (offline,
+with cached dependencies) and reran the required arena build successfully using
+that executable through PATH. Worker implementation/verification took about
+15 minutes. No GUI was launched and no commit was made.
