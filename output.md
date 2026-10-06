@@ -4908,3 +4908,36 @@ PATH=/private/tmp/cgfx-tools-arena11/release:$PATH make final-gate BUILD_DIR=bui
 ```
 
 The integrated final-gate run took about 2m35s; the bead is complete.
+
+CreatureGathererFX-jp8.3.20 reopened investigation (2026-10-06): the owner's
+5:07:11 PM screenshot shows the outgoing switch caption garbled between readable
+creature names. `fontTrimmed` is a native image entry whose address points to
+the four-byte width/height header, not pixels. Its packed prefix is `00 05 00 06`.
+`Blit::draw` requires headerless pixels; battle captions now use `fontTrimmed + 4`.
+The previous regression reference repeated the production address error. It now
+uses the independent legacy `ArduFontTrimmed` raw glyph declaration. All fifteen
+caption comparisons fail with the original production address, including the
+switching caption, and pass with the corrected pixel address. The same defect
+in script dialogs is tracked separately as CreatureGathererFX-3ds.
+
+```text
+make fxtest-headless FXTEST_INOS=tst/fxdatatest/test_battlepresentation.ino BUILD_DIR=build/jp8.3.20-header-regression FXTEST_MS=10000 ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# Original renderer with independent reference: 179 passed / 15 failed.
+# Corrected renderer: 194 passed / 0 failed; flash 21,616 B / static 1,892 B.
+# Presenter painted/effective headroom 360/291 B; caption chain 406/337 B.
+git diff --check
+# PASS.
+```
+
+Investigation, negative regression demonstration, and focused verification took
+about 4 minutes. No packed assets or generated sources changed.
+
+```text
+make final-gate BUILD_DIR=build/jp8.3.20-header-final FXTEST_MS=10000 ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS: host 155,552/0; world 190/0; VM 42/0; generated checks PASS;
+# every FX suite PASS; presentation 194/0; test_stack 335 B;
+# shipping flash 27,916 B / static RAM 1,841 B (both unchanged).
+```
+
+Integrated gate took approximately 4 minutes. Reopened bead verified and closed;
+the independent reference prevents the former matching-garbage false pass.

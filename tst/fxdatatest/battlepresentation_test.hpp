@@ -101,7 +101,9 @@ inline bool captionMatches(const battle::BattlePresenter &presenter,
         const uint8_t character = pgm_read_byte(text++);
         if (character == 0) break;
         if (character != ' ')
-            Blit::draw(glyphX, y, 5, 6, fontTrimmed,
+            // The legacy declaration contains raw glyph pixels, independently
+            // of the native fontTrimmed image's four-byte header.
+            Blit::draw(glyphX, y, 5, 6, ArduFontTrimmed,
                        FRAME(character - '0'), Blit::NEGATIVE);
         glyphX += 6;
     }
