@@ -4602,3 +4602,35 @@ branches, and the stored outcome reduced the final image to 28,898 B (a 400 B
 reduction from that build); normal image remained 27,894 B / 1,841 static in
 the prior measurement. Orchestrator scope correction and verification took
 approximately 15 minutes. `.9` is ready for close under the corrected scope.
+
+## CreatureGathererFX-2cy.10
+
+Added host acceptance for the two-confirm team/opponent entry flow and all 15
+selection pairs. Lifecycle coverage now checks that terminal return restores
+the selected team, requires a released edge, and only starts replay on another
+fresh confirm. The real-FX suite starts all 15 authored combinations and runs
+one bounded normal BattleFlow turn through presentation for each. Separate
+deterministic playback fixtures reach Win and Lose through resolution and
+BattleFlow's terminal callback; each returns directly to the cached team list.
+
+```text
+make test
+# PASS: host 155,033/0; world 190/0.
+make testvm
+# PASS: VM 42/0.
+make sim-test
+# PASS: simulator-enabled host 155,205/0.
+make fxtest-spike BUILD_DIR=build/arena-10-device FXTEST_SPIKE_INO=tst/fxdatatest/test_arenademo.ino FXTEST_MS=10000 ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS: test_arenademo 1,864/0; 15 setup and one-turn playback pairs;
+# deterministic Win/Lose callbacks; 10 freshness cycles. Device test image
+# 29,654/29,696 flash, 1,960/2,160 static; effective exercised stack 188 B.
+# Paired test_stack 4/0, headroom 335 B.
+```
+
+Iteration notes: an initial standalone smoke helper exceeded physical device
+flash by 10 B; consolidating it into the existing playback driver reduced
+flash. That draft also measured only 117 B effective stack because two fixture
+pointers stayed live across setup; computing expectations after setup restored
+stack headroom. A later run caught and fixed an enum comparison compile error.
+Final worker time approximately 35 minutes; exact acceptance commands passed.
+No production/data files changed; no commit made.

@@ -19,7 +19,16 @@
 extern "C" uint8_t __bss_end;
 
 namespace arena_spike_test {
+inline battle::Outcome lastCallbackOutcome = battle::Outcome::None;
+inline uint8_t terminalCallbackCount = 0;
 inline uint8_t randomValue(uint8_t) { return 0; }
+
+inline void finishAndRecord(battle::Outcome outcome)
+{
+    lastCallbackOutcome = outcome;
+    ++terminalCallbackCount;
+    arena::finishBattle(outcome);
+}
 
 inline void renderBattle()
 {
@@ -30,24 +39,30 @@ inline void renderBattle()
     battlePresenter().draw();
 }
 
-inline bool finishTrainer(FxTest &test)
+inline bool finishTrainer(FxTest &test, bool stopAfterAction = false,
+                          uint16_t frameLimit = 25000)
 {
     uint16_t frames = 0;
+    uint8_t actions = 0;
     battle::PresenterStage previous = battle::PresenterStage::Idle;
     bool returned = false;
-    while (frames < 25000 && !returned) {
+    while (frames < frameLimit && !returned) {
+        if (stopAfterAction && actions != 0 &&
+            battlePresenter().stage() == battle::PresenterStage::Idle &&
+            battleSession().awaitingPlayer()) break;
         FxReadCounter::resetFrame();
         if (battlePresenter().stage() == battle::PresenterStage::Idle &&
             battleSession().awaitingPlayer()) {
-            BattleFlow::update(0, arena::finishBattle);
-            BattleFlow::update(MENU_EDGE_A, arena::finishBattle);
+        BattleFlow::update(0, finishAndRecord);
+        BattleFlow::update(MENU_EDGE_A, finishAndRecord);
+            ++actions;
             if (battle::remainingMoveUses(battleSession().state(),
                                           battle::Side::Player, 1))
-                BattleFlow::update(MENU_NAV_RIGHT, arena::finishBattle);
-            BattleFlow::update(MENU_EDGE_A, arena::finishBattle);
+                BattleFlow::update(MENU_NAV_RIGHT, finishAndRecord);
+            BattleFlow::update(MENU_EDGE_A, finishAndRecord);
         } else {
             returned = BattleFlow::update((frames % 11u) == 0 ? MENU_EDGE_A : 0,
-                                          arena::finishBattle);
+                                          finishAndRecord);
         }
         if (returned) break;
         const bool updatePassed = FxReadCounter::markUpdate();
@@ -61,12 +76,13 @@ inline bool finishTrainer(FxTest &test)
         }
         ++frames;
     }
-    test.expectEq(returned, true,
-                  F("arena"));
-    test.expectEq(frames < 25000, true, F("arena"));
+    const bool progressed = returned ||
+        (stopAfterAction && actions != 0 && battleSession().awaitingPlayer());
+    test.expectEq(progressed, true, F("arena"));
+    test.expectEq(frames < frameLimit, true, F("arena"));
     Serial.print(F("arena trainer frames="));
     Serial.println(frames);
-    return returned;
+    return progressed;
 }
 
 inline void paintStack(uint16_t top)
@@ -212,6 +228,35 @@ inline void expectFreshState(FxTest &test)
         }
     }
 }
+
+inline const uint8_t *playerRecords(uint8_t team)
+{
+    if (team == ArenaDemoIds::player_bulwark) return ArenaDemoFixture::player_bulwark;
+    if (team == ArenaDemoIds::player_utility) return ArenaDemoFixture::player_utility;
+    return ArenaDemoFixture::player_blitz;
+}
+
+inline const uint8_t *opponentSpecies(uint8_t opponent)
+{
+    switch (opponent) {
+    case ArenaDemoIds::opponent_speed: return ArenaDemoFixture::opponent_speed;
+    case ArenaDemoIds::opponent_fortress: return ArenaDemoFixture::opponent_fortress;
+    case ArenaDemoIds::opponent_tricks: return ArenaDemoFixture::opponent_tricks;
+    case ArenaDemoIds::opponent_champion: return ArenaDemoFixture::opponent_champion;
+    default: return ArenaDemoFixture::opponent_starter;
+    }
+}
+
+inline uint8_t trainerId(uint8_t opponent)
+{
+    switch (opponent) {
+    case ArenaDemoIds::opponent_speed: return ArenaDemoIds::trainer_speed;
+    case ArenaDemoIds::opponent_fortress: return ArenaDemoIds::trainer_fortress;
+    case ArenaDemoIds::opponent_tricks: return ArenaDemoIds::trainer_tricks;
+    case ArenaDemoIds::opponent_champion: return ArenaDemoIds::trainer_champion;
+    default: return ArenaDemoIds::trainer_starter;
+    }
+}
 } // namespace arena_spike_test
 
 inline void test_arenademo(FxTest &test)
@@ -296,6 +341,10 @@ inline void test_arenademo(FxTest &test)
     const bool completed = arena_spike_test::finishTrainer(test);
     arena_spike_test::recordMinimum(top, minimumStack);
     test.expectEq(completed, true, F("arena"));
+    test.expectEq(arena_spike_test::terminalCallbackCount,
+                  static_cast<uint8_t>(1), F("arena"));
+    test.expectEq(static_cast<uint8_t>(arena_spike_test::lastCallbackOutcome),
+                  static_cast<uint8_t>(battle::Outcome::Win), F("arena"));
     test.expectEq(gameState.state, GameState_t::ARENA,
                   F("arena"));
     test.expectEq(arena::arenaContext.playerTeam, ArenaDemoIds::player_blitz,
@@ -304,6 +353,33 @@ inline void test_arenademo(FxTest &test)
                   F("arena"));
     test.expectEq(static_cast<uint8_t>(modeState.arena.ui.screen),
                   static_cast<uint8_t>(arena::ArenaScreen::PlayerTeam),
+                  F("arena"));
+
+    // Deterministic loss fixture: the player has one poisoned HP and no live
+    // bench; a harmless player action reaches real end-turn faint resolution.
+    arena_spike_test::verifyPlayerTeam(test, ArenaDemoIds::player_blitz);
+    arena::arenaContext.playerTeam = ArenaDemoIds::player_blitz;
+    arena::arenaContext.opponentTeam = ArenaDemoIds::opponent_starter;
+    arena_spike_test::paintStack(top);
+    FxReadCounter::resetFrame();
+    test.expectEq(arena::startMatch(), true, F("arena"));
+    arena_spike_test::recordMinimum(top, minimumStack);
+    test.expectEq(FxReadCounter::markUpdate(), true, F("arena"));
+    battle::BattleState &lossFixture =
+        const_cast<battle::BattleState &>(battleSession().state());
+    lossFixture.active[0].hp = 1;
+    lossFixture.active[0].status.effects[0] = Effect::SAPPD;
+    lossFixture.active[0].moveIds[0] = 0;
+    lossFixture.active[0].moves[0] = Move();
+    lossFixture.bench[0][0].hp = 0;
+    lossFixture.bench[0][1].hp = 0;
+    battleSession().setRng({arena_spike_test::randomValue});
+    const bool lossCompleted = arena_spike_test::finishTrainer(test);
+    test.expectEq(lossCompleted, true, F("arena"));
+    test.expectEq(static_cast<uint8_t>(arena_spike_test::lastCallbackOutcome),
+                  static_cast<uint8_t>(battle::Outcome::Lose), F("arena"));
+    test.expectEq(gameState.state, GameState_t::ARENA, F("arena"));
+    test.expectEq(modeState.arena.ui.list.cursor, ArenaDemoIds::player_blitz,
                   F("arena"));
 
     arena::arenaContext.playerTeam = ArenaDemoIds::player_utility;
@@ -336,6 +412,44 @@ inline void test_arenademo(FxTest &test)
         test.expectEq(FxReadCounter::markUpdate(), true,
                       F("arena"));
         arena_spike_test::expectFreshState(test);
+    }
+
+    // Exercise every authored team/trainer pairing through the real FX setup
+    // path. The starter battle above proves actual terminal feedback and the
+    // ArenaDemo callback; these bounded setup passes cover all 15 pairings.
+    for (uint8_t team = 0; team < ArenaDemoIds::playerCount; ++team) {
+        for (uint8_t opponent = 0; opponent < ArenaDemoIds::opponentCount;
+             ++opponent) {
+            arena::arenaContext.playerTeam = team;
+            arena::arenaContext.opponentTeam = opponent;
+            arena_spike_test::verifyPlayerTeam(test, team);
+            arena_spike_test::paintStack(top);
+            FxReadCounter::resetFrame();
+            test.expectEq(arena::startMatch(), true, F("arena"));
+            arena_spike_test::recordMinimum(top, minimumStack);
+            test.expectEq(FxReadCounter::markUpdate(), true, F("arena"));
+            const battle::BattleState &state = battleSession().state();
+            test.expectEq(state.partyCount[0], static_cast<uint8_t>(3), F("arena"));
+            test.expectEq(state.partyCount[1], static_cast<uint8_t>(3), F("arena"));
+            test.expectEq(state.trainerId, arena_spike_test::trainerId(opponent), F("arena"));
+            test.expectEq(player.party[0].id,
+                          arena_spike_test::playerRecords(team)[0], F("arena"));
+            test.expectEq(state.active[0].id,
+                          arena_spike_test::playerRecords(team)[0], F("arena"));
+            test.expectEq(state.active[1].id,
+                          arena_spike_test::opponentSpecies(opponent)[0], F("arena"));
+            test.expectEq(state.bench[1][0].id,
+                          arena_spike_test::opponentSpecies(opponent)[1], F("arena"));
+            test.expectEq(state.bench[1][1].id,
+                          arena_spike_test::opponentSpecies(opponent)[2], F("arena"));
+            const bool smokeProgressed = arena_spike_test::finishTrainer(test, true, 3000);
+            test.expectEq(smokeProgressed, true, F("arena"));
+            if (gameState.state == GameState_t::BATTLE)
+                arena::finishBattle(battle::Outcome::None);
+            test.expectEq(gameState.state, GameState_t::ARENA, F("arena"));
+            test.expectEq(modeState.arena.ui.list.cursor, team, F("arena"));
+            test.expectEq(arena::arenaContext.opponentTeam, opponent, F("arena"));
+        }
     }
 
     test.expectEq(minimumStack >= 219, true,
