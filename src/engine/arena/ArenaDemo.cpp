@@ -14,6 +14,7 @@
 #include "../../lib/ReadData.hpp"
 #include "../../../fxdata/generated/arena_demo_ids.hpp"
 #include "ArenaCatalog.hpp"
+#include "ArenaNavigation.hpp"
 #include "ArenaView.hpp"
 
 namespace arena {
@@ -130,35 +131,17 @@ void finishBattle(battle::Outcome outcome)
 void update(uint8_t edgeButtons)
 {
     ArenaUiState &ui = modeState.arena.ui;
-    const uint8_t direction = edgeDirection(edgeButtons);
-    if (direction != 0xff) {
-        moveCursor(direction, ui.list.itemCount);
+    const ArenaIntent intent = navigate(ui, arenaContext, edgeButtons,
+                                        ArenaDemoIds::playerCount,
+                                        ArenaDemoIds::opponentCount);
+    if (intent == ArenaIntent::PreviewChanged) {
+        ArenaPreview preview = {};
+        if (loadPreview(ui.screen, ui.list.cursor, preview))
+            ui.preview = preview;
         return;
     }
-    if ((edgeButtons & MENU_EDGE_A) == 0) return;
-
-    if (ui.screen == ArenaScreen::PlayerTeam) {
-        arenaContext.playerTeam = ui.list.cursor;
-        ui.screen = ArenaScreen::OpponentTeam;
-        ui.list = {ArenaDemoIds::opponentCount, 1, 0, arenaContext.opponentTeam};
-        return;
-    }
-    if (ui.screen == ArenaScreen::OpponentTeam) {
-        arenaContext.opponentTeam = ui.list.cursor;
+    if (intent == ArenaIntent::StartBattle) {
         startMatch();
-        return;
-    }
-    switch (ui.list.cursor) {
-    case 0:
-        startMatch();
-        return;
-    case 1:
-        ui.screen = ArenaScreen::OpponentTeam;
-        ui.list = {ArenaDemoIds::opponentCount, 1, 0, arenaContext.opponentTeam};
-        return;
-    default:
-        ui.screen = ArenaScreen::PlayerTeam;
-        ui.list = {ArenaDemoIds::playerCount, 1, 0, arenaContext.playerTeam};
         return;
     }
 }
