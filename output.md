@@ -4529,3 +4529,32 @@ test expectations (trainer side and Deluge slot); both were corrected before
 the passing focused gate. Worker elapsed time approximately 20 minutes; final
 acceptance commands took about 28 seconds of command wall time. Full integrated
 gate remains assigned to .12; no commit made.
+
+## CreatureGathererFX-2cy.8
+
+Added pure byte-sized arena navigation with B/A/Up/Down priority, clamped
+selection movement, explicit player/opponent/result transitions, and guarded
+empty-catalog behavior. `ArenaDemo::update` now routes one intent per input edge,
+loads a cached preview only on `PreviewChanged`, and starts the battle only on
+`StartBattle`. Host transition tests cover selection preservation, first/last
+bounds, simultaneous inputs, ignored left/right, zero and 255 counts, and the
+two-confirm entry path.
+
+```text
+make test
+# PASS: host 154,974/0; world 190/0.
+make testvm
+# PASS: VM 42/0.
+make fxtest-headless BUILD_DIR=build/arena-8-device FXTEST_INOS=tst/fxdatatest/test_arenademo.ino FXTEST_MS=10000 ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS: test_arenademo 490/0, 10 replay cycles; effective painted stack 228 B.
+make ram BUILD_DIR=build/arena-8-normal
+# PASS: 27,894 flash / 1,841 static; 1,802 B flash and 319 B static below limits.
+make ram BUILD_DIR=build/arena-8-demo AVR_FLASH_BUDGET=29184 AVR_SHIPPING_CPP_FLAGS='-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X -DCGFX_SHIPPING_NO_USB -DCGFX_ARENA_DEMO'
+# PASS: 28,826 flash / 1,852 static; 358 B below arena flash ceiling.
+git diff --check
+# PASS.
+```
+
+The first host compile caught an incorrect relative include for `MenuV2.hpp`;
+corrected before the passing run. Worker time approximately 10 minutes.
+```
