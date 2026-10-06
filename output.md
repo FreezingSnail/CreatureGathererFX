@@ -4992,3 +4992,50 @@ make final-gate BUILD_DIR=build/jp8.3.21-final FXTEST_MS=10000 FINAL_GATE_LOG_DI
 First gate took approximately 4 minutes; fixture correction/focused recovery
 about 1 minute; successful recovery gate approximately 4 minutes. Orchestrator
 reporting and close/commit preparation took about 1 minute. Bead complete.
+
+CreatureGathererFX-7xq: owner requested research on reusing VM screen writing
+for battle text and saving resources. Findings and reproducible measurements
+are in docs/text-rendering-research.md. VM queues dialogs; DialogMenu draws
+cached SRAM text, while BattlePresenter draws PROGMEM captions and numeric
+glyphs. Both use the trimmed 5x6 font. Measured two reversible extraction
+prototypes and a header-fix-only control, then restored all production sources.
+
+```text
+make ram BUILD_DIR=build/text-sharing-research/baseline
+# 28,050 B flash / 1,841 B static RAM.
+make ram BUILD_DIR=build/text-sharing-research/glyph
+# 27,978 B flash (-72) / 1,841 B static (unchanged).
+make fxtest-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_battlepresentation.ino BUILD_DIR=build/text-sharing-research/glyph-device ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS: presentation 210/0; test_stack 4/0, 335 B headroom.
+# Presenter painted/effective reserve 324/255 B; captions 371/302 B.
+make ram BUILD_DIR=build/text-sharing-research/run
+# 28,038 B flash (-12) / 1,841 B static (unchanged).
+make fxtest-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_battlepresentation.ino BUILD_DIR=build/text-sharing-research/run-device ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS: presentation 210/0; test_stack 4/0, 340 B headroom.
+# Presenter painted/effective reserve 320/251 B; captions 367/298 B.
+make ram BUILD_DIR=build/text-sharing-research/header-control
+# Dialog font header correction only: 28,050 B / 1,841 B; no delta.
+```
+
+Recommend the primitive extraction (CreatureGathererFX-n11, blocked on known
+script-font defect CreatureGathererFX-3ds). Larger shared text loop saves less.
+Filed separate queue cleanup spike CreatureGathererFX-a4b: removing unused
+battle fields and narrowing the dialog enum gives a structural 54 B SRAM
+estimate, not a measured result. Current script dialog device suite only tests
+an empty invalid-index case; independent nonempty glyph coverage is required
+before extraction acceptance. Research and prototype work took approximately
+7 minutes. Production source restoration was verified by an empty scoped diff;
+final gate runs on restored sources before committing the research deliverables.
+
+```text
+make final-gate BUILD_DIR=build/text-sharing-research/final FXTEST_MS=10000 ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS: host 155,552/0; world 190/0; VM 42/0; generated checks PASS;
+# all FX suites PASS, battle presentation 210/0; test_stack 335 B;
+# restored shipping image 28,050 B flash / 1,841 B static RAM.
+git diff --check
+# PASS; no production/generated changes remain.
+```
+
+Restored-source final gate took approximately 4 minutes; orchestrator reporting
+and bead/commit work approximately 1 minute. Research complete; implementation
+follow-ups remain open.
