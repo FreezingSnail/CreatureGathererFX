@@ -41,6 +41,7 @@
 #include "arena_catalog_test.hpp"
 #include "arena_navigation_test.hpp"
 #include "arena_view_test.hpp"
+#include "arena_flow_test.hpp"
 #include "battle_presets_test.hpp"
 #include "battle_item_test.hpp"
 #include "lure_prototype_test.hpp"
@@ -208,6 +209,7 @@ int main() {
     ArenaCatalogSuite(tests);
     ArenaNavigationSuite(tests);
     ArenaViewSuite(tests);
+    ArenaFlowSuite(tests);
     BattlePresetsSuite(tests);
     BattleItemSuite(tests);
     BattleUtilitySuite(tests);

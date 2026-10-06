@@ -6,7 +6,9 @@
 #include "src/FXDataFake.hpp"
 #include "src/engine/arena/ArenaCatalog.hpp"
 #include "src/engine/arena/ArenaDemo.hpp"
+#include "src/engine/arena/ArenaNavigation.hpp"
 #include "src/engine/ModeState.hpp"
+#include "src/engine/menu/MenuV2.hpp"
 #include "src/engine/battle/BattleFlow.hpp"
 #include "src/fxdata.h"
 #include "src/lib/FxReadCounter.hpp"
@@ -187,6 +189,24 @@ inline void ArenaLifecycleSuite(TestRunner &runner)
                 "terminal callback returns to team selection");
     test.assert(modeState.arena.ui.list.itemCount, ArenaDemoIds::playerCount,
                 "terminal return restores all player teams");
+    test.assert(modeState.arena.ui.list.cursor, ArenaDemoIds::player_utility,
+                "terminal return selects the previously chosen team");
+
+    test.assert(arena::navigate(modeState.arena.ui, arena::arenaContext,
+                                MENU_EDGE_A, ArenaDemoIds::playerCount,
+                                ArenaDemoIds::opponentCount),
+                arena::ArenaIntent::PreviewChanged,
+                "post-battle first fresh A opens opponent selection");
+    test.assert(arena::navigate(modeState.arena.ui, arena::arenaContext, 0,
+                                ArenaDemoIds::playerCount,
+                                ArenaDemoIds::opponentCount),
+                arena::ArenaIntent::None,
+                "released A edge does not start a replay");
+    test.assert(arena::navigate(modeState.arena.ui, arena::arenaContext,
+                                MENU_EDGE_A, ArenaDemoIds::playerCount,
+                                ArenaDemoIds::opponentCount),
+                arena::ArenaIntent::StartBattle,
+                "replay starts only on a second fresh A edge");
 
     suite.addTest(test);
     runner.addTestSuite(suite);
