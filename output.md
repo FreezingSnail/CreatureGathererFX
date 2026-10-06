@@ -4941,3 +4941,54 @@ make final-gate BUILD_DIR=build/jp8.3.20-header-final FXTEST_MS=10000 ARDENS=/Us
 
 Integrated gate took approximately 4 minutes. Reopened bead verified and closed;
 the independent reference prevents the former matching-garbage false pass.
+
+CreatureGathererFX-jp8.3.21: damage impact previously combined tiny number
+sprites with a fixed-position, larger raster label authored as "Damage delt!".
+It now draws unpadded decimal digits and " damage dealt" with the same trimmed
+5x6 font, six-pixel advance, and common y=48 baseline. The label follows the
+actual digit count. The amount remains the actual HP delta, including self-hit.
+No generated asset changes are needed. Punctuation is omitted because the
+trimmed font begins at ASCII '0' and does not include '!'.
+
+Independent raw-font device references verify complete rows for 0, 1, 9, 10,
+99, 100, 255, and 60-to-35 HP, alternating ordinary attacks and self-hits. White
+panel bounds remain checked. First spike and resource measurements:
+
+```text
+make fxtest-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_battlepresentation.ino BUILD_DIR=build/jp8.3.21-spike ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS: presentation 210/0; test_stack 4/0, headroom 335 B.
+# Presentation image 22,450 B flash / 1,900 B static RAM.
+# Presenter painted/effective headroom 324/255 B; caption chain 369/300 B.
+make ram BUILD_DIR=build/jp8.3.21-spike
+# PASS: shipping flash 28,050 B (+134); static RAM 1,841 B (unchanged).
+# Physical flash free 1,646 B; total SRAM free 719 B.
+git diff --check
+# PASS.
+```
+
+Implementation and focused verification took approximately 3 minutes; final
+integrated verification follows.
+
+The first full gate with the default 3,000 ms capture failed: the damage-color
+fixture still expected the old raster label and tiny number sprites (1/3),
+and the trainer suite produced no serial in that window. Updated the color
+fixture to an independent raw-font reference for the complete "25 damage dealt"
+line, preserving separate digit, label, and white-boundary checks. No production
+changes followed the spike. Focused recovery:
+
+```text
+make fxtest-headless 'FXTEST_INOS=tst/fxdatatest/test_battle_damage_color.ino tst/fxdatatest/test_battletrainer.ino' BUILD_DIR=build/jp8.3.21-final FXTEST_MS=10000 ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS: damage color 4/0; trainer 51/0.
+```
+
+```text
+make final-gate BUILD_DIR=build/jp8.3.21-final FXTEST_MS=10000 FINAL_GATE_LOG_DIR=build/jp8.3.21-final/final-gate-recovery ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS: host 155,552/0; world 190/0; VM 42/0; generated checks PASS;
+# all FX suites PASS, presentation 210/0, damage color 4/0, trainer 51/0.
+# Stack 335 B; arena effective stack 184 B; shipping 28,050 B flash /
+# 1,841 B static RAM. Generation left no tracked artifact changes.
+```
+
+First gate took approximately 4 minutes; fixture correction/focused recovery
+about 1 minute; successful recovery gate approximately 4 minutes. Orchestrator
+reporting and close/commit preparation took about 1 minute. Bead complete.

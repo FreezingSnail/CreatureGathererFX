@@ -167,8 +167,7 @@ const char *captionText(uint8_t caption) {
     return captionTextData + pgm_read_byte(&captionOffsets[caption]);
 }
 
-void drawCaption(uint8_t caption, uint8_t x, uint8_t y) {
-    const char *text = captionText(caption);
+void drawCaptionText(const char *text, uint8_t x, uint8_t y) {
     uint8_t glyphX = x;
     // Authored captions are NUL-terminated, at most 14 characters, and use
     // lowercase letters/spaces in the existing 5x6 FX font.
@@ -182,6 +181,22 @@ void drawCaption(uint8_t caption, uint8_t x, uint8_t y) {
         }
         glyphX += 6;
     }
+}
+
+void drawCaption(uint8_t caption, uint8_t x, uint8_t y) {
+    drawCaptionText(captionText(caption), x, y);
+}
+
+void drawDamageLine(uint8_t damage, uint8_t x, uint8_t y) {
+    uint8_t divisor = damage >= 100 ? 100 : damage >= 10 ? 10 : 1;
+    do {
+        Blit::draw(x, y, 5, 6, fontTrimmed + 4,
+                   FRAME(damage / divisor), Blit::NEGATIVE);
+        x += 6;
+        damage %= divisor;
+        divisor /= 10;
+    } while (divisor != 0);
+    drawCaptionText(PSTR("damage dealt"), x + 6, y);
 }
 
 void drawBlackText(uint8_t x, uint8_t y, uint24_t address, uint8_t width) {
@@ -579,9 +594,7 @@ void BattlePresenter::draw() const {
         const uint8_t after = result_->hpAfter[target];
         const uint8_t damage = before > after ? before - after : 0;
         drawBlackText(3, yName, item_.name, item_.nameWidth);
-        // "Damage delt!" is twelve 5-pixel glyphs plus a leading blank slot.
-        drawBlackText(16, yAction, damageText, damageTextWidth);
-        drawNumbersBlack(3, yAction, damage);
+        drawDamageLine(damage, 3, yAction);
         drawBlackText(3, yDetail, item_.detail, item_.detailWidth);
         drawBlackCaption(caption, 3, yDetail);
     } else if (stage_ == PresenterStage::Impact && result_->kind == ResultKind::Switch) {
