@@ -104,6 +104,10 @@ Up/Down change the highlighted entry. Every match starts with fresh HP, status, 
 The demo bypasses player save loading and writing and does not add arena records, rewards, or
 progression.
 
+Measured arena firmware: 28,898 B flash against the 29,184 B arena ceiling, 1,847 B static RAM
+against the 2,160 B limit, and 188 B minimum exercised effective stack headroom (the stack guard
+reports 335 B before its 69 B ISR allowance).
+
 ## Overworld wild-battle demo (opt-in)
 
 Build with `CGFX_WILD_DEMO` instead of `CGFX_TRAINER_DEMO`. It applies the named `opening`
