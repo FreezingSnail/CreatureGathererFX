@@ -5695,3 +5695,45 @@ Wall time approximate: worker/art/focused checks4min; integrated gate4min
 (overlapped artifact work); report/close/commit1min; total9min.
 Closed dg1 and committed the completed preview/report after passing the gate.
 No push. No firmware or cart space consumed by this documentation mockup.
+
+## CreatureGathererFX-tot — chunky readable battle menu mockup (2026-10-06)
+
+Delivered docs/battle-menu-refinement.md and five battle-menu-refined preview
+assets under docs/assets/: native128x64 screen,8x screen, pixel SVG,128x96
+four-state sheet and4x sheet. Previous spike document links the refinement.
+The owner steered the first revision toward chunkier lettering and reported
+white text in a black selection box hard to read. Final art uses6x7 glyphs,
+2px vertical strokes,7px advance and black text on white throughout. Selection
+uses an outline and arrow. Labels retain MOVE/GATHER/CHANGE/ESCAPE order,
+local x16 and y3/13; six-letter labels occupy41px, fitting inside both cells.
+Outline local x4..61,y2..11/12..21. Every state visually checked in the preview.
+Upper40 screen rows exactly match the previous mockup. HP layout unchanged.
+
+Preview only: no canonical sprites, generated data, device code or packed cart
+changes. Actual redraw remains86e. These mockup anchors/case are proposals;
+production contract must pin them before packing. No imagegen needed for this
+code-native pixel visualization. Native and enlarged PNGs are true1bpp.
+
+```text
+node (read-only PNG/IHDR/inflate pixel audit)
+# PASS:128x64 screen,128x96 state sheet,1bit grayscale; unchanged upper40 rows,
+# exact8x pixel replication; full screen lower24 rows match menu state0.
+xmllint --noout docs/assets/battle-menu-refined.svg
+# PASS.
+shasum -a 256 dist/fxdata.bin
+# Unchanged c4bdcce2309064a2fbc56274f5a3ecf58a29d110ffa81ef0108dbbf91cf229e8.
+make final-gate BUILD_DIR=build/battle-menu-refinement/final FXTEST_MS=10000 ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS: host157573/0, world190/0, VM42/0, generated checks and all28 FX suites.
+# Shipping27482 B flash/1787 B static RAM/773 B physical SRAM free.
+# Stack423 B painted; arena238 B effective. No failed gate attempts.
+# Logs build/battle-menu-refinement/final/final-gate/{check,ram}.log.
+cmp build/battle-bw-mockup/final/CreatureGathererFX.ino.hex build/battle-menu-refinement/final/CreatureGathererFX.ino.hex
+# PASS: byte-identical firmware, delta0 B flash/static RAM.
+git diff --check
+# PASS. No unexpected generated or canonical asset changes.
+```
+
+Wall time approximate: worker/mockup/audit3min; gate4min (overlapped refinement
+and report); report/close/commit1min; total6min. Closed tot and committed the
+preview after passing gate. No push. Device tests exercise unchanged game,
+not the proposed preview graphics.
