@@ -131,20 +131,16 @@ Modifier attackEffectiveness(const Combatant &attacker,
     }
     Modifier modifier = getModifier(moveType, defender.types);
 
-    const Modifier attackerFirst =
-        typeEffectModifier(attacker.status.effects[0], attacker.types);
-    const Modifier attackerSecond =
-        typeEffectModifier(attacker.status.effects[1], attacker.types);
     modifier = combineModifier(modifier,
-                               combineModifier(attackerFirst, attackerSecond));
+                               typeEffectPairModifier(attacker.status.effects[0],
+                                                     attacker.status.effects[1],
+                                                     attacker.types));
 
-    const Modifier defenderFirst =
-        typeEffectModifier(defender.status.effects[0], defender.types);
-    const Modifier defenderSecond =
-        typeEffectModifier(defender.status.effects[1], defender.types);
     modifier = combineModifier(
         modifier,
-        inverseModifier(combineModifier(defenderFirst, defenderSecond)));
+        inverseModifier(typeEffectPairModifier(defender.status.effects[0],
+                                               defender.status.effects[1],
+                                               defender.types)));
 
     if (attacker.types.hasType(moveType)) {
         modifier = combineModifier(modifier, Modifier::Double);

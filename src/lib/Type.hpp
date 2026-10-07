@@ -86,103 +86,7 @@ static uint16_t applyMod(uint16_t value, Modifier modifier) {
     }
 }
 
-// TODO: Move to FX data
-const Modifier typeTable[TypeCount][TypeCount] TYPE_TABLE_STORAGE = {
-    // Spirit
-    {
-        Modifier::Same,   // Spirit
-        Modifier::Same,   // Water
-        Modifier::Same,   // Wind
-        Modifier::Same,   // Earth
-        Modifier::Same,   // Fire
-        Modifier::Same,   // Lightning
-        Modifier::Same,   // Plant
-        Modifier::None,   // Elder
-
-    },
-    // Water
-    {
-        Modifier::Same,     // Spirit
-        Modifier::Same,     // Water
-        Modifier::Double,   // Wind
-        Modifier::Half,     // Earth
-        Modifier::Double,   // Fire
-        Modifier::Same,     // Lightning
-        Modifier::Half,     // Plant
-        Modifier::Half,     // Elder
-    },
-    // wind
-    {
-        Modifier::Same,     // Spirit
-        Modifier::Same,     // Water
-        Modifier::Same,     // Wind
-        Modifier::Double,   // Earth
-        Modifier::Half,     // Fire
-        Modifier::Half,     // Lightning
-        Modifier::Double,   // Plant
-        Modifier::Half,     // Elder
-    },
-    // Earth
-    {
-        Modifier::Same,     // Spirit
-        Modifier::Double,   // Water
-        Modifier::Half,     // Wind
-        Modifier::Same,     // Earth
-        Modifier::Same,     // Fire
-        Modifier::Double,   // Lightning
-        Modifier::Half,     // Plant
-        Modifier::Half,     // Elder
-    },
-    // Fire
-    {
-        Modifier::Same,     // Spirit
-        Modifier::None,     // Water
-        Modifier::Double,   // Wind
-        Modifier::Half,     // Earth
-        Modifier::Same,     // Fire
-        Modifier::Double,   // Lightning
-        Modifier::Double,   // Plant
-        Modifier::Same,     // Elder
-
-    },
-    // Lightning
-    {
-        Modifier::Same,     // Spirit
-        Modifier::Double,   // Water
-        Modifier::Double,   // Wind
-        Modifier::Half,     // Earth
-        Modifier::Same,     // Fire
-        Modifier::Double,   // Lightning
-        Modifier::Double,   // Plant
-        Modifier::Same,     // Elder
-
-    },
-    // Plant
-    {
-        Modifier::Same,     // Spirit
-        Modifier::None,     // Water
-        Modifier::Double,   // Wind
-        Modifier::Half,     // Earth
-        Modifier::Same,     // Fire
-        Modifier::Double,   // Lightning
-        Modifier::Double,   // Plant
-        Modifier::Same,     // Elder
-
-    },
-    // Elder
-    {
-        Modifier::Same,     // Spirit
-        Modifier::None,     // Water
-        Modifier::Double,   // Wind
-        Modifier::Half,     // Earth
-        Modifier::Same,     // Fire
-        Modifier::Double,   // Lightning
-        Modifier::Double,   // Plant
-        Modifier::Same,     // Elder
-
-    },
-
-};
+extern const Modifier typeTable[TypeCount][TypeCount] TYPE_TABLE_STORAGE;
 
 static Modifier getModifier(Type attackType, Type defendingType) {
     if (defendingType == Type::NONE) {
@@ -226,6 +130,12 @@ static Modifier typeEffectModifier(Effect effect, DualType type) {
     }
     return id < static_cast<uint8_t>(Effect::ENLTND)
         ? Modifier::Half : Modifier::Double;
+}
+
+static Modifier typeEffectPairModifier(Effect first, Effect second,
+                                      DualType type) {
+    return combineModifier(typeEffectModifier(first, type),
+                           typeEffectModifier(second, type));
 }
 
 static Modifier inverseModifier(Modifier mod) {

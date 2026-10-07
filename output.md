@@ -5299,3 +5299,58 @@ git diff --check
 
 Final gate approximately5 minutes; report/close/commit preparation approximately2
 additional minutes. Research886 closed after parent review. No push performed.
+
+## CreatureGathererFX-ecu — canonical battle chart and paired status helper
+
+Implemented the reviewed prototype. The chart now has one PROGMEM definition in
+Type.cpp; Damage and Resolve use the paired helper while retaining their
+different saturation grouping. Added checks for the STATUS row/column and NONE
+sentinels, plus a permanent reachable damage/caption discrepancy case owned by
+CreatureGathererFX-46z.
+
+```text
+make ram BUILD_DIR=build/battle-sharing-ecu/ram
+# PASS: 27,672 B flash / 1,787 B static SRAM; -222 B flash from baseline.
+/Users/connorfranc/Library/Arduino15/packages/arduino/tools/avr-gcc/7.3.0-atmel3.6.1-arduino7/bin/avr-nm --print-size --size-sort --radix=d build/battle-sharing-ecu/ram/CreatureGathererFX.ino.elf
+# PASS: exactly one typeTable symbol, 0x51 B.
+make test BUILD_DIR=build/battle-sharing-ecu/host-rerun
+# PASS: host 155,573/0; world 190/0.
+make testvm BUILD_DIR=build/battle-sharing-ecu/vm
+# PASS: VM 42/0.
+make sim BUILD_DIR=build/battle-sharing-ecu/sim
+# PASS: simulator builds and runs 4 anchor matches.
+make sim-test BUILD_DIR=build/battle-sharing-ecu/sim-test-rerun
+# PASS: 155,745/0.
+make verify-generated
+# PASS.
+make fxtest-spike BUILD_DIR=build/battle-sharing-ecu/presentation FXTEST_SPIKE_INO=tst/fxdatatest/test_battlepresentation.ino FXTEST_MS=10000 ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS: presentation 210/0; stack 4/0; painted 418 B / effective 349 B.
+make fxtest-headless BUILD_DIR=build/battle-sharing-ecu/session FXTEST_INOS=tst/fxdatatest/test_battlesession.ino FXTEST_MS=10000 ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS: session 57/0; painted 440 B / effective 371 B.
+git diff --check
+# PASS.
+```
+
+An earlier implementation test run exposed duplicate copies of the
+characterization fixture and its include after prototype reuse. Removed the
+duplicates and reran `make test` and `make sim-test`; both passed with the counts
+above. No shipping build, generated check, or device test failed. Verification
+took approximately 8 minutes. No full gate, bead close, commit, or push was run;
+parent review and gate remain.
+
+Orchestrator checkpoint — ecu:
+
+```text
+make final-gate BUILD_DIR=build/battle-sharing-ecu/final FXTEST_MS=10000 ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS: host155,573/0; world190/0; VM42/0; all generated checks and27 FX
+# suites PASS; shipping27,672 B flash /1,787 B static SRAM; stack418 B;
+# arena callback effective reserve233 B.
+git diff --check
+# PASS; generation left no unexpected tracked changes.
+```
+
+Reviewed byte-preserving chart move, source-list wiring, helper grouping and
+sentinel tests. Requested removal of duplicate test/include, then reviewed the
+corrected reruns before gate. Full gate approximately5 minutes; parent review,
+report and commit preparation approximately2 minutes. ecu closed and committed
+before dispatching46z. No push performed.

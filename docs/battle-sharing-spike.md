@@ -64,3 +64,23 @@ effect-rate, stage-table, row-packing and presentation changes were excluded.
 Local ignored evidence is under build/battle-sharing-spike: baseline/table/helpers
 ELFs, reviewed-full.patch and Type.cpp.prototype. These are local spike artifacts,
 not durable implementation deliverables. Exact commands are recorded in output.md.
+
+## ecu implementation checkpoint
+
+The reviewed chart and paired helper were implemented in CreatureGathererFX-ecu.
+The shipping ELF measured 27,672 B flash / 1,787 B static SRAM, matching the
+prototype's -222 B flash / unchanged SRAM delta. `avr-nm` found exactly one
+0x51-byte `typeTable`. Permanent native coverage checks all fixture-backed
+elemental cells, the STATUS row and column, NONE sentinel handling, and the
+reachable damage/result saturation difference. That difference remains owned
+by CreatureGathererFX-46z.
+
+The ecu checkpoint passed host 155,573/0 and world 190/0, VM 42/0, simulator
+prepared-state tests 155,745/0, and simulator anchor mode (4 matches). Generated
+verification passed. Presentation passed 210/0; stack passed 4/0 with 418 B
+painted / 349 B effective headroom. Session passed 57/0 with 440 B painted /
+371 B effective headroom. The parent owns the integrated final gate and commit.
+
+The ecu full gate passed: host155,573/0, world190/0, VM42/0, all27 FX suites and
+generated checks. Shipping27672/1787 B; stack418 B and arena callback effective
+reserve233 B. Parent reviewed and committed ecu before starting46z.
