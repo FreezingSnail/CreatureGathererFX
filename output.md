@@ -5588,3 +5588,64 @@ Wall time approximate: worker research/implementation/focused validation5min;
 integrated gate4min (overlapped documentation); orchestrator/report/issue/commit
 1min. Total elapsed about9min. Closed11u and committed finished research/code/
 tests after successful gate; no push.
+
+## CreatureGathererFX-6yj — art-only battle-feel spike (2026-10-06)
+
+Delivered docs/battle-art-only-spike.md and the original-game-art concept
+board docs/assets/battle-art-only-concept.png (1536x1024). Built-in imagegen
+used existing creature/menu/wave/beam PNGs as references; exact prompt and
+preview limitations are preserved in the research document. No canonical
+source PNG, renderer, timing, generated header or cart payload was changed.
+The board's CURRENT panel is illustrative, not an emulator screenshot; its
+final particle cells are not the frozen production empty-frame7 contract.
+
+Inspected draw.h, MenuV2Legacy.cpp, BattlePresenter.cpp, fxsprites.toml and
+the native sprite encoder/source emitter. Checked source dimensions with
+sips and generated C-array lengths with a read-only Node audit. Creature
+sheet64x1024 =>64 masked32x32 frames/16384 B; every effect256x32 =>8 masked
+frames/2048 B; fight menu128x96 =>4 opaque128x24 states/1536 B; battle menu
+128x24 =>384 B. Mask mode, lengths, symbol order and frame selection are
+fixed-size replacement contracts. Frame mapping floor(elapsed*7/41) gives
+six ticks for0..5, five for6, one for7; A can jump into5. Effect impact must
+be drawn at the target-facing edge of the existing middle-strip slot.
+
+Recommended zero-device-code changes: expressive existing effect frames,
+menu selection/rules, stronger original creature silhouette/volume and ground
+baked inside32x32 tiles. Asset-only edits cannot add numeric HP, outlined
+tracks, drain, victim reaction timing, an undrawn field background or a border
+to the presenter's directly filled white feedback panel. These remain separate
+budgeted code work. Filed86e for actual effect/menu redraw with unchanged
+payload sizes/header addresses and byte-identical shipping HEX acceptance.
+
+```text
+cgfx-tools --help
+# Confirmed native --sprite-config and --pack workflow; no alternate resolver.
+sips -g pixelWidth -g pixelHeight images/fightMenu_128x24.png images/battleMenu_128x24.png images/battleEffects/BasicWaveL_32x32.png images/battleEffects/basicBeamL_32x32.png
+# PASS: dimensions match contracts above; creature64x1024 inspected previously.
+cp -f /Users/connorfranc/.codex/generated_images/01a11420-e36c-7332-8699-d66e58787a2b/exec-cec37689-2f14-4e60-8a7c-1e4bdfe59b7c.png docs/assets/battle-art-only-concept.png
+# Project copy saved; source reference PNGs untouched.
+make final-gate BUILD_DIR=build/battle-art-only/final FXTEST_MS=10000 ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS: host157573/0, world190/0, VM42/0; generated checks, all28 FX suites.
+# Shipping27482 B flash /1787 B static RAM /773 B physical SRAM free.
+# Presenter269, caption314, session373, arena238 effective stack reserve;
+# HP spike379 effective; test_stack423 painted. No firmware/resource delta.
+# Logs: build/battle-art-only/final/final-gate/{check,ram}.log.
+cmp build/battle-feel/final/CreatureGathererFX.ino.hex build/battle-art-only/final/CreatureGathererFX.ino.hex
+# PASS: byte-identical current shipping firmware, concept work adds0 B.
+shasum -a 256 dist/fxdata.bin
+# Unchanged c4bdcce2309064a2fbc56274f5a3ecf58a29d110ffa81ef0108dbbf91cf229e8.
+git diff --check
+# PASS. No tracked generated or canonical asset changes.
+```
+
+No new test harness was added for concept artwork. A real redraw must add
+framebuffer/asset coverage, regenerate via make gen, verify zero firmware
+growth, then update the intentional cart-pixel parity SHA and run pack parity.
+Zero-cost replacement is a frozen acceptance requirement; this research has
+not packed the generated board as sprite assets or measured a production
+redraw. No manual Ardens check required; no failed gate attempts.
+
+Wall time approximate: research/art/format audit4min; integrated gate4min
+(overlapped report/design); orchestrator/report/close/commit1min; total7min.
+Closed6yj and committed the research, preview and issue records after passing
+the gate. No push.
