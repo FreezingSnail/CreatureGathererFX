@@ -5649,3 +5649,49 @@ Wall time approximate: research/art/format audit4min; integrated gate4min
 (overlapped report/design); orchestrator/report/close/commit1min; total7min.
 Closed6yj and committed the research, preview and issue records after passing
 the gate. No push.
+
+## CreatureGathererFX-dg1 — strict black-white mockup spike (2026-10-06)
+
+Delivered docs/battle-bw-mockup-spike.md and battle-bw-native.svg/.png/-8x.png
+in docs/assets/. Native preview is exactly128x64, PNG bit depth1 grayscale,
+with397 white integer-coordinate runs; enlargement replicates pixels8x.
+Original-inspired snail silhouettes, shell negative space and baked ground
+stay inside the existing32x32 slots. HP fills retain existing geometry;
+menu pixels are decoded from the current fightMenu state. An initial selected
+capsule enlargement clipped the tiny move text; restored the original menu
+pixels before acceptance. The enlarged imagegen sketch battle-bw-mockup.png
+is explicitly a sketch, not a native-grid production source. Prompt retained.
+
+This is a preview spike, not a packed asset implementation or emulator capture.
+Canonical art, generated files, game code and cart bytes are unchanged.86e
+remains open for actual fixed-format redraw. Device tests verify the existing
+renderer and its resource headroom, not the proposed preview pixels.
+
+```text
+make fxtest-spike BUILD_DIR=build/battle-bw-mockup/spike FXTEST_SPIKE_INO=tst/fxdatatest/test_battlepresentation.ino FXTEST_MS=10000 ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS: presentation268/0, stack4/0; suite static1858 B.
+# Presenter338 painted/269 effective; caption383/314 B; stack423 painted.
+make ram BUILD_DIR=build/battle-bw-mockup/ram
+# PASS: shipping27482 B flash/1787 B static RAM; physical SRAM free773 B.
+# Physical flash free2214 B; static budget free373 B. Delta0/0 B.
+cmp build/battle-art-only/final/CreatureGathererFX.ino.hex build/battle-bw-mockup/ram/CreatureGathererFX.ino.hex
+# PASS: identical firmware.
+xmllint --noout docs/assets/battle-bw-native.svg
+# PASS; Node read-only grid audit:397 integral bounded height1 white runs.
+# PNG IHDR:128x64 and1024x512, bit depth1, grayscale type0.
+make final-gate BUILD_DIR=build/battle-bw-mockup/final FXTEST_MS=10000 ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS: host157573/0, world190/0, VM42/0; generated checks, all28 FX suites.
+# Shipping27482 B flash/1787 B static/773 B physical SRAM free.
+# Logs build/battle-bw-mockup/final/final-gate/{check,ram}.log.
+cmp build/battle-art-only/final/CreatureGathererFX.ino.hex build/battle-bw-mockup/final/CreatureGathererFX.ino.hex
+# PASS: identical firmware after full gate.
+shasum -a 256 dist/fxdata.bin
+# Unchanged c4bdcce2309064a2fbc56274f5a3ecf58a29d110ffa81ef0108dbbf91cf229e8.
+git diff --check
+# PASS; no unexpected generated changes; no failed gate attempts.
+```
+
+Wall time approximate: worker/art/focused checks4min; integrated gate4min
+(overlapped artifact work); report/close/commit1min; total9min.
+Closed dg1 and committed the completed preview/report after passing the gate.
+No push. No firmware or cart space consumed by this documentation mockup.
