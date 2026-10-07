@@ -6,7 +6,8 @@ battle views as the reference for stronger silhouette, negative space and
 coarse monochrome detail. Names below come from data/json/creatures.json;
 the source artwork, rather than assumptions about names, anchors identity.
 
-[Open the visual gallery](creature-roster-mockups.html)
+[Open the visual gallery](creature-roster-mockups.html) ·
+[Proposed gathering roster](creature-expansion-mockups.html)
 
 These are imagegen art-direction sketches. Their enlarged pixels, cell
 boundaries and palette are not validated 32x32 production sprites. Actual

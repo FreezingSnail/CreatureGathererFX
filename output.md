@@ -5791,3 +5791,55 @@ Wall time approximate: worker/reference/art/review6min; gate4min overlapped
 art; report/close/commit1min; total8min. Closed dcj and committed all mockups,
 references, gallery and report; no push. Device tests exercise unchanged game,
 not these proposed art boards.0 bytes consumed on the device or cart.
+
+## CreatureGathererFX-63v — gathering-focused expansion mockups (2026-10-06)
+
+Delivered32 additional concepts in docs/creature-expansion-mockups.html/.md;
+docs/assets/creature-expansion contains four expansion-N.png boards,
+concepts.json and verbatim prompts.json. Existing roster gallery links the new
+set. Proposal numbers32..63 are not allocated game IDs. Each concept includes
+name, existing types, family, silhouette, gathered material, lure, habitat and
+local inspiration source. All32 new names are unique against the current32.
+
+Read Notes/Generated Ideas.md, Creatures.md, Design Notes.md, Gathering.md,
+Gathering Materials.md, Plant Gathering.md, Fossil Gathering.md, lure zones.md,
+Gameplay Loop.md, Area themes.md, Items.md, Encounters.md and Maps.md.
+Applied explicit weevil/fossil animal ideas and gathering-to-lure ecology:
+meadow/harvest32..39, shore/fossils40..47, minerals/weather48..55 and
+shrines/groves56..63. Existing shell/crab/squid/plant/insect/abstract spirit art
+anchors style; proposed families and materials are not implemented rules.
+
+Built-in imagegen generated4 boards with paired front/back sketches using
+current roster boards1/4 as style references. All4 calls fulfilled and all32
+cells/64 views inspected. Owner asked whether size requirements are met:
+answered no; these1145x1374 RGB8 boards are art sketches, not validated32x32
+binary/masked sprites. Floating effects and finer features require a native
+pixel pass. Compliance table and gallery footer explicitly state that boundary.
+No claim that a full production roster expansion costs0 firmware bytes.
+
+```text
+node (read-only concepts/prompt/source audit)
+# PASS32 unique names/labels32..63; existing types; materials/lures;
+# source files exist; each of4 prompts includes its exact8 concepts.
+cp -f /Users/connorfranc/.codex/generated_images/01a11420-e36c-7332-8699-d66e58787a2b/exec-58c6e2fe-1622-4ddf-a9e3-563588a59029.png docs/assets/creature-expansion/expansion-1.png
+cp -f /Users/connorfranc/.codex/generated_images/01a11420-e36c-7332-8699-d66e58787a2b/exec-54e9f66e-a7fb-4cf3-9d71-f77d299b4d31.png docs/assets/creature-expansion/expansion-2.png
+cp -f /Users/connorfranc/.codex/generated_images/01a11420-e36c-7332-8699-d66e58787a2b/exec-7d4cae44-8284-487c-a8e9-6169f6f6a858.png docs/assets/creature-expansion/expansion-3.png
+cp -f /Users/connorfranc/.codex/generated_images/01a11420-e36c-7332-8699-d66e58787a2b/exec-16d705e4-647a-4e73-83c4-a8297740753c.png docs/assets/creature-expansion/expansion-4.png
+node (read-only gallery links/coverage/PNG-IHDR audit)
+# PASS all linked files exist;4 boards,32 unique concepts,1145x1374 RGB8 PNGs.
+make final-gate BUILD_DIR=build/creature-expansion-mockup/final FXTEST_MS=10000 ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS host157573/0, world190/0, VM42/0, generated checks and all28 FX suites.
+# Flash27482 B/static1787 B/free SRAM773 B; stack423painted, arena238effective.
+# Logs build/creature-expansion-mockup/final/final-gate/{check,ram}.log.
+cmp build/creature-roster-mockup/final/CreatureGathererFX.ino.hex build/creature-expansion-mockup/final/CreatureGathererFX.ino.hex
+# PASS byte-identical current shipping firmware; actual preview delta0/0 B.
+shasum -a 256 dist/fxdata.bin
+# Unchanged c4bdcce2309064a2fbc56274f5a3ecf58a29d110ffa81ef0108dbbf91cf229e8.
+git diff --check
+# PASS; canonical PNG/game JSON/generated assets unchanged. No failed gates.
+```
+
+Wall time approximate: worker/research/design/art6min; gate4min overlapping
+art/gallery work; report/close/commit1min; total9min. Closed63v and committed
+the mockups, gallery and report. No push. All concepts remain outside the game;
+checks exercise unchanged renderer/firmware, not the new art boards.
