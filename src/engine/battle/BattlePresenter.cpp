@@ -549,6 +549,43 @@ void BattlePresenter::overlay(BattleView &view) const {
                               (result_->flags & REFUSED)
             ? result_->progressBefore : result_->progressAfter;
     }
+#ifdef CGFX_BATTLE_HP_SPIKE
+    overlayHpSpike(view);
+#endif
+}
+
+void BattlePresenter::overlayHpSpike(BattleView &view) const {
+    if (result_ == nullptr || stage_ != PresenterStage::Impact) return;
+    uint8_t side, before, after;
+    if (result_->kind == ResultKind::Attack) {
+        side = static_cast<uint8_t>(result_->actor);
+        if (!(result_->flags & SELF_HIT)) side ^= 1u;
+        if (side >= 2) return;
+        before = result_->hpBefore[side];
+        after = result_->hpAfter[side];
+    } else if (result_->kind == ResultKind::EndTurn && fact_ < 4) {
+        const Consequence &fact = result_->consequences[fact_];
+        if (fact.side >= 2 || (fact.effect != Effect::SAPPD &&
+                             fact.effect != Effect::INFSED)) return;
+        side = fact.side;
+        before = result_->hpBefore[side];
+        // Previous tick endpoints are resident facts, not a new replay queue.
+        for (uint8_t i = 0; i < fact_; ++i) {
+            const Consequence &prior = result_->consequences[i];
+            if (prior.side == side && (prior.effect == Effect::SAPPD ||
+                                      prior.effect == Effect::INFSED))
+                before = prior.value;
+        }
+        after = fact.value;
+    } else return;
+    const uint8_t maximum = view.active[side].maxHp;
+    if (before > maximum) before = maximum;
+    if (after > maximum) after = maximum;
+    // Hold through tick 6; settle at tick 20, before Impact can finish.
+    const uint8_t step = elapsed_ <= 6 ? 0 : elapsed_ >= 20 ? 14 : elapsed_ - 6;
+    const uint8_t delta = before > after ? before - after : after - before;
+    const uint8_t moved = static_cast<uint16_t>(delta) * step / 14;
+    view.active[side].hp = before > after ? before - moved : before + moved;
 }
 
 void BattlePresenter::sceneOffset(int8_t &x, int8_t &y) const {

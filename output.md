@@ -5523,3 +5523,68 @@ Full gate approximately5 minutes; final review/report/close/commit approximately
 1 minute. The deliberate restored-cap failure and initial fixture failure are
 documented above; the settled final gate passed on its first run. Bead closed
 and completed changes committed after the gate; no push performed.
+
+## CreatureGathererFX-11u — battle presentation research spike (2026-10-06)
+
+Delivered docs/battle-presentation-research.md and an original-art SVG comparing
+two128x64 layouts. Selected stationary outlined/numeric HP, a small diagonal
+composition, code-drawn grounding and target-only reactions. Frozen geometry,
+timings, long-name/sentinel cases, low-health behavior, switch identity and
+six-byte future HUD cache budget. References distinguish observed Pokemon
+presentation from proposed52fps timing. Production slices filed as1ou ->1vk
+->nif; jp8.3.18 remains the separate animation-group feature.
+
+Retained a bounded opt-in CGFX_BATTLE_HP_SPIKE and testable overlayHpSpike
+method: old HP through elapsed6, fourteen drain/refill steps through20; prior
+tick starts reconstructed from existing facts. No result mutation or new
+resident byte. Default shipping behavior remains unchanged. Permanent host
+and device tests cover normal/1HP/255HP/zero-damage/self-hit, clamped endpoints,
+healing/net-zero facts, metadata reads and accelerated KO. Dedicated device
+chain paints around actual presenter/view/FX draw calls.
+
+```text
+make ram BUILD_DIR=build/battle-feel/baseline
+# PASS: flash27482 B, static1787 B; physical flash free2214 B;
+# static ceiling2160 B leaves373 B, physical SRAM free773 B before stack.
+make ram BUILD_DIR=build/battle-feel/candidate AVR_SHIPPING_CPP_FLAGS='-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X -DCGFX_SHIPPING_NO_USB -DCGFX_BATTLE_HP_SPIKE'
+# PASS: flash27828 B (+346), static1787 B (+0), physical flash free1868 B.
+make test BUILD_DIR=build/battle-feel/host
+# PASS after fixture corrections: host157573/0, world190/0.
+make testvm BUILD_DIR=build/battle-feel/host
+# PASS: VM42/0.
+make fxtest-spike BUILD_DIR=build/battle-feel/spike FXTEST_SPIKE_INO=tst/fxdatatest/test_battle_hp_spike.ino FXTEST_MS=10000 ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS after fixture correction: HP spike255/0, stack4/0.
+# Spike static1844 B; painted448 B/effective379 B; test_stack423 B painted.
+make fxtest-headless BUILD_DIR=build/battle-feel/optin FXTEST_INOS=tst/fxdatatest/test_battle_hp_spike.ino FXTEST_MS=10000 AVR_FXTEST_CPP_FLAGS='-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X -DFX_READ_COUNTER -DCGFX_BATTLE_HP_SPIKE' ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS: HP spike255/0, painted448/effective379 B (including automatic opt-in).
+make verify-generated
+# PASS: All tests passed!
+make final-gate BUILD_DIR=build/battle-feel/final FXTEST_MS=10000 ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS: host157573/0, world190/0, VM42/0, generated checks, all28 FX suites.
+# Full presentation268/0, presenter338 painted/269 effective B;
+# caption383/314 B, session442/373 B, arena callback238 effective B;
+# HP spike255/0,448/379 B, test_stack4/0 and423 B painted.
+# Shipping remains27482 B flash /1787 B static RAM /773 B physical free.
+# Logs: build/battle-feel/final/final-gate/{check,ram}.log.
+xmllint --noout docs/battle-presentation-layouts.svg
+git diff --check
+# PASS. No tracked generated changes or packed-byte changes; parity not needed.
+```
+
+Initial host compilation exposed the new fixture's wrong helper name and
+TestRunner API (presentationAttack/addSuite); corrected to
+presentationHostResult/addTestSuite. Initial device compilation exposed the
+namespace-qualified __bss_end declaration; corrected the painted-chain access.
+These were fixture compile failures, not a failing firmware gate. The final
+gate passed on its first settled run. No manual Ardens verification required.
+
+Limits: full scene/HUD remains a frozen follow-up, not implemented here.
+Dedicated spike's smaller linked test image means379 B is not evidence of a
+production stack improvement over269 B. No cycle/frame-time instrument added;
+production layout must measure19.23ms frame budget. Six-byte HUD cache is a
+future budget, not part of the measured +0 static result.
+
+Wall time approximate: worker research/implementation/focused validation5min;
+integrated gate4min (overlapped documentation); orchestrator/report/issue/commit
+1min. Total elapsed about9min. Closed11u and committed finished research/code/
+tests after successful gate; no push.

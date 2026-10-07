@@ -66,6 +66,9 @@ public:
     PresenterStage stage() const { return stage_; }
     void sceneOffset(int8_t &x, int8_t &y) const;
     void overlay(BattleView &view) const;
+    // Research-only HP treatment; default shipping playback is unchanged.
+    // Call after overlay, or enable CGFX_BATTLE_HP_SPIKE for normal playback.
+    void overlayHpSpike(BattleView &view) const;
 
 private:
     const ActionResult *result_ = nullptr;
