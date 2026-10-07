@@ -53,6 +53,9 @@ restarts the selected matchup; ordinary builds omit this bootstrap.
 Add `-DCGFX_TRAINER_DEMO_UTILITY` with `CGFX_TRAINER_DEMO` to try Bell (Sharpen),
 Rock (Ironbody), and Hedge (Rejuvenate/Pollen). Selected move PP appears at the top
 of the move menu; `*` means unlimited. Battles still have one active creature per side.
+To preview the gathering expansion roster, run `make battle-test BATTLE_TEST_EXPANSION=1`
+with `ARDENS=/path/to/Ardens`. This isolated build uses creatures 32–63 for its player and trainer
+parties; the normal encounter catalog and save format remain at 32 creatures.
 
 ```sh
 make build BUILD_DIR=build/trainer-demo \

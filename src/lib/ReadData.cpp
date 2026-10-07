@@ -11,6 +11,14 @@ const uint8_t creatureNameLengths[] PROGMEM = {
     13, 12, 13, 11, 11, 11, 5, 8, 12, 4, 5, 8, 5, 5, 4, 10,
     10, 9, 7, 6, 4, 4, 5, 3, 3, 8, 6, 10, 7, 7, 5, 4,
 };
+#ifdef CGFX_TRAINER_DEMO_EXPANSION
+const uint8_t expansionCreatureNameLengths[] PROGMEM = {
+    9, 10, 13, 6, 11, 9, 11, 8,
+    7, 10, 9, 10, 9, 10, 8, 10,
+    8, 12, 13, 9, 10, 8, 8, 10,
+    9, 9, 9, 9, 11, 11, 11, 10,
+};
+#endif
 const uint8_t moveNameLengths[] PROGMEM = {
     5, 7, 6, 5, 6, 6, 4, 7, 6, 6, 7, 4, 9, 8, 8, 7, 4,
     4, 5, 5, 4, 6, 4, 3, 6, 11, 8, 4, 5, 10, 4, 9, 0,
@@ -27,6 +35,11 @@ uint8_t bitmapWidth(const uint8_t *lengths, uint8_t count, uint16_t id) {
 } // namespace
 
 uint8_t readCreatureNameWidth(uint8_t id) {
+#ifdef CGFX_TRAINER_DEMO_EXPANSION
+    if (id >= 32 && id < 64)
+        return bitmapWidth(expansionCreatureNameLengths,
+                           sizeof(expansionCreatureNameLengths), id - 32);
+#endif
     return bitmapWidth(creatureNameLengths, sizeof(creatureNameLengths), id);
 }
 

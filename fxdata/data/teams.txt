@@ -33,6 +33,38 @@ namespace Teams {
         uint8_t dragon[] = {29,31,29,25,6};
         uint8_t skull[] = {30,29,17,0,12}; 
         uint8_t ardu[] = {31,3,31,22,10}; 
+        uint8_t NibWeevil[] = {32,26,32,32,32};
+        uint8_t HuskWeevil[] = {33,26,12,32,32};
+        uint8_t GranaryWeevil[] = {34,26,12,32,32};
+        uint8_t DewBud[] = {35,26,4,32,32};
+        uint8_t NectarBloom[] = {36,26,4,32,32};
+        uint8_t Sporeling[] = {37,26,1,32,32};
+        uint8_t SporeKeeper[] = {38,26,1,32,32};
+        uint8_t MossMole[] = {39,12,26,32,32};
+        uint8_t Conelet[] = {40,4,12,32,32};
+        uint8_t SpireSquid[] = {41,4,29,32,32};
+        uint8_t Horseshoe[] = {42,4,12,32,32};
+        uint8_t Shieldshoe[] = {43,12,29,32,32};
+        uint8_t SiltSkorp[] = {44,4,12,32,32};
+        uint8_t ReefReaper[] = {45,4,29,32,32};
+        uint8_t Platefin[] = {46,4,12,32,32};
+        uint8_t AncientJaw[] = {47,4,29,32,32};
+        uint8_t CoalGrub[] = {48,16,12,32,32};
+        uint8_t CinderCocoon[] = {49,16,12,32,32};
+        uint8_t FurnaceBeetle[] = {50,16,12,32,32};
+        uint8_t Flintling[] = {51,12,20,32,32};
+        uint8_t GeodeGuard[] = {52,12,20,32,32};
+        uint8_t Tuftling[] = {53,8,26,32,32};
+        uint8_t GustTuft[] = {54,8,26,32,32};
+        uint8_t StaticMite[] = {55,20,26,32,32};
+        uint8_t ChimeSeed[] = {56,1,26,32,32};
+        uint8_t BoughBell[] = {57,1,26,32,32};
+        uint8_t ShardWisp[] = {58,1,12,32,32};
+        uint8_t Reliquary[] = {59,1,29,32,32};
+        uint8_t SaplingSage[] = {60,26,29,32,32};
+        uint8_t GroveKeeper[] = {61,29,26,32,32};
+        uint8_t FossilBloom[] = {62,29,26,32,32};
+        uint8_t OrbitRelic[] = {63,29,1,32,32};
     } namespace_end
 
     namespace Names {

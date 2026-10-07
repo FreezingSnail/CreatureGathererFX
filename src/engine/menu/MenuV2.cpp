@@ -17,7 +17,11 @@ constexpr uint8_t MENU_MOVE_COUNT = 4;
 constexpr uint8_t MOVE_INFO_BYTES = PackedMoveInfo::BYTE_COUNT;
 constexpr uint8_t MOVE_ID_EMPTY = 32;
 constexpr uint8_t MOVE_ID_ABSENT = 255;
+#ifdef CGFX_TRAINER_DEMO_EXPANSION
+constexpr uint8_t CREATURE_ID_COUNT = 64;
+#else
 constexpr uint8_t CREATURE_ID_COUNT = 32;
+#endif
 
 MenuIntent noIntent() {
     return {MenuIntentKind::None, 0};

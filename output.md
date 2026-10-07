@@ -5911,3 +5911,43 @@ Wall time approximate: worker/tooling/atlas/export/verification7min;
 gate4min overlapped gallery/archives/report; close/commit1min; total12min.
 Closed n5f and committed finished exports/tool/tests/docs after successful gate.
 No push. Device tests verify unchanged game; native asset tests verify new PNGs.
+
+## Creature expansion battle demo (CreatureGathererFX-5rs)
+
+Added creature IDs 32–63 to the canonical JSON/packed FX records, name bitmaps, and
+the existing 32x32 two-view sprite sheet. The opt-in `BATTLE_TEST_EXPANSION=1`
+trainer demo maps its authored 3-on-3 player/opponent parties onto expansion IDs;
+regular encounters and saves still cap at 32. Added the matching stock team rows
+required by generated FX fixtures and extended the flattened layout parity fixture.
+
+Commands and results:
+
+```sh
+make ram BUILD_DIR=build/expand-demo-baseline AVR_SHIPPING_CPP_FLAGS='-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X -DCGFX_SHIPPING_NO_USB -DCGFX_TRAINER_DEMO'
+# PASS 27,310 B flash; 1,787 B static RAM; 2,386 B flash and 773 B stack free.
+make ram BUILD_DIR=build/expand-demo AVR_SHIPPING_CPP_FLAGS='-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X -DCGFX_SHIPPING_NO_USB -DCGFX_TRAINER_DEMO -DCGFX_TRAINER_DEMO_EXPANSION'
+# PASS 27,498 B flash; 1,793 B static RAM; expansion delta +188 B flash / +6 B static RAM.
+make fxtest-headless FXTEST_INOS=tst/fxdatatest/test_creatures.ino ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens BUILD_DIR=build/expand-demo-fxtest
+# PASS 918/0; verifies all 64 packed records; FX test static headroom 346 B.
+make test-pack-parity
+# PASS layout equivalence and perturbation diagnostic; SHA-256 dd560eb66447e015a368d777e8ee994891c6b5d74c2a6b1f2754b08e153a56a0.
+make final-gate BUILD_DIR=build/creature-expansion ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens FXTEST_MS=4000
+# PASS host 157573/0, world 190/0, VM 42/0, all generated checks, 28 FX suites.
+# Final shipping RAM: 27,480 B flash; 1,787 B static; 773 B free. test_stack 423 B headroom.
+git diff --check
+# PASS.
+```
+
+The first full gate at the default 3,000 ms serial window reported no output for
+`test_battletrainer`; the focused suite passed 51/0 at 4,000 ms, and the complete
+gate passed with that same 4,000 ms capture setting. Early generation iterations
+also exposed the tool's 32-species trainer-name resolver and stock-fixture row
+contract; the demo now reuses its authored trainer row and maps it to expansion
+IDs only under the opt-in flag, while generated stock rows keep fixture counts
+consistent. The initial sprite-name insertion had a malformed `MoveNames`
+namespace and was corrected before the successful build/gate. Layout parity's
+first run then identified the missing appended fixture rows; after adding those
+rows, layout equivalence passed and the packed SHA baseline was updated.
+
+Measured command wall time: baseline/demo RAM builds about 35 s each; focused FX
+suite about 7 s; successful full final gate about 179 s. No push performed.

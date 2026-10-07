@@ -3963,5 +3963,1180 @@
         "effect": "CONCUSED"
       }
     ]
+  },
+  {
+    "id": 32,
+    "name": "NibWeevil",
+    "type1": "plant",
+    "type2": "none",
+    "evelevel": 16,
+    "atk": 7,
+    "deff": 9,
+    "spcatk": 9,
+    "spcdef": 11,
+    "hp": 8,
+    "spd": 8,
+    "move1": 26,
+    "move2": 32,
+    "move3": 32,
+    "move4": 32,
+    "moveList": [
+      {
+        "id": 26,
+        "name": "seedfall",
+        "type": "plant",
+        "power": 12,
+        "physical": 1,
+        "accuracy": 100,
+        "effect": "NONE"
+      }
+    ]
+  },
+  {
+    "id": 33,
+    "name": "HuskWeevil",
+    "type1": "plant",
+    "type2": "earth",
+    "evelevel": 24,
+    "atk": 8,
+    "deff": 10,
+    "spcatk": 10,
+    "spcdef": 8,
+    "hp": 9,
+    "spd": 9,
+    "move1": 26,
+    "move2": 12,
+    "move3": 32,
+    "move4": 32,
+    "moveList": [
+      {
+        "id": 26,
+        "name": "seedfall",
+        "type": "plant",
+        "power": 12,
+        "physical": 1,
+        "accuracy": 100,
+        "effect": "NONE"
+      },
+      {
+        "id": 12,
+        "name": "dirtburst",
+        "type": "earth",
+        "power": 7,
+        "physical": 0,
+        "accuracy": 100,
+        "effect": "NONE"
+      }
+    ]
+  },
+  {
+    "id": 34,
+    "name": "GranaryWeevil",
+    "type1": "plant",
+    "type2": "earth",
+    "evelevel": 0,
+    "atk": 9,
+    "deff": 11,
+    "spcatk": 7,
+    "spcdef": 9,
+    "hp": 10,
+    "spd": 10,
+    "move1": 26,
+    "move2": 12,
+    "move3": 32,
+    "move4": 32,
+    "moveList": [
+      {
+        "id": 26,
+        "name": "seedfall",
+        "type": "plant",
+        "power": 12,
+        "physical": 1,
+        "accuracy": 100,
+        "effect": "NONE"
+      },
+      {
+        "id": 12,
+        "name": "dirtburst",
+        "type": "earth",
+        "power": 7,
+        "physical": 0,
+        "accuracy": 100,
+        "effect": "NONE"
+      }
+    ]
+  },
+  {
+    "id": 35,
+    "name": "DewBud",
+    "type1": "plant",
+    "type2": "water",
+    "evelevel": 16,
+    "atk": 10,
+    "deff": 8,
+    "spcatk": 8,
+    "spcdef": 10,
+    "hp": 11,
+    "spd": 7,
+    "move1": 26,
+    "move2": 4,
+    "move3": 32,
+    "move4": 32,
+    "moveList": [
+      {
+        "id": 26,
+        "name": "seedfall",
+        "type": "plant",
+        "power": 12,
+        "physical": 1,
+        "accuracy": 100,
+        "effect": "NONE"
+      },
+      {
+        "id": 4,
+        "name": "splash",
+        "type": "water",
+        "power": 5,
+        "physical": 0,
+        "accuracy": 100,
+        "effect": "NONE"
+      }
+    ]
+  },
+  {
+    "id": 36,
+    "name": "NectarBloom",
+    "type1": "plant",
+    "type2": "water",
+    "evelevel": 0,
+    "atk": 7,
+    "deff": 9,
+    "spcatk": 9,
+    "spcdef": 11,
+    "hp": 8,
+    "spd": 8,
+    "move1": 26,
+    "move2": 4,
+    "move3": 32,
+    "move4": 32,
+    "moveList": [
+      {
+        "id": 26,
+        "name": "seedfall",
+        "type": "plant",
+        "power": 12,
+        "physical": 1,
+        "accuracy": 100,
+        "effect": "NONE"
+      },
+      {
+        "id": 4,
+        "name": "splash",
+        "type": "water",
+        "power": 5,
+        "physical": 0,
+        "accuracy": 100,
+        "effect": "NONE"
+      }
+    ]
+  },
+  {
+    "id": 37,
+    "name": "Sporeling",
+    "type1": "plant",
+    "type2": "spirit",
+    "evelevel": 16,
+    "atk": 8,
+    "deff": 10,
+    "spcatk": 10,
+    "spcdef": 8,
+    "hp": 9,
+    "spd": 9,
+    "move1": 26,
+    "move2": 1,
+    "move3": 32,
+    "move4": 32,
+    "moveList": [
+      {
+        "id": 26,
+        "name": "seedfall",
+        "type": "plant",
+        "power": 12,
+        "physical": 1,
+        "accuracy": 100,
+        "effect": "NONE"
+      },
+      {
+        "id": 1,
+        "name": "thought",
+        "type": "spirit",
+        "power": 5,
+        "physical": 1,
+        "accuracy": 100,
+        "effect": "NONE"
+      }
+    ]
+  },
+  {
+    "id": 38,
+    "name": "SporeKeeper",
+    "type1": "plant",
+    "type2": "spirit",
+    "evelevel": 0,
+    "atk": 9,
+    "deff": 11,
+    "spcatk": 7,
+    "spcdef": 9,
+    "hp": 10,
+    "spd": 10,
+    "move1": 26,
+    "move2": 1,
+    "move3": 32,
+    "move4": 32,
+    "moveList": [
+      {
+        "id": 26,
+        "name": "seedfall",
+        "type": "plant",
+        "power": 12,
+        "physical": 1,
+        "accuracy": 100,
+        "effect": "NONE"
+      },
+      {
+        "id": 1,
+        "name": "thought",
+        "type": "spirit",
+        "power": 5,
+        "physical": 1,
+        "accuracy": 100,
+        "effect": "NONE"
+      }
+    ]
+  },
+  {
+    "id": 39,
+    "name": "MossMole",
+    "type1": "earth",
+    "type2": "plant",
+    "evelevel": 0,
+    "atk": 10,
+    "deff": 8,
+    "spcatk": 8,
+    "spcdef": 10,
+    "hp": 11,
+    "spd": 7,
+    "move1": 12,
+    "move2": 26,
+    "move3": 32,
+    "move4": 32,
+    "moveList": [
+      {
+        "id": 12,
+        "name": "dirtburst",
+        "type": "earth",
+        "power": 7,
+        "physical": 0,
+        "accuracy": 100,
+        "effect": "NONE"
+      },
+      {
+        "id": 26,
+        "name": "seedfall",
+        "type": "plant",
+        "power": 12,
+        "physical": 1,
+        "accuracy": 100,
+        "effect": "NONE"
+      }
+    ]
+  },
+  {
+    "id": 40,
+    "name": "Conelet",
+    "type1": "water",
+    "type2": "earth",
+    "evelevel": 16,
+    "atk": 7,
+    "deff": 9,
+    "spcatk": 9,
+    "spcdef": 11,
+    "hp": 8,
+    "spd": 8,
+    "move1": 4,
+    "move2": 12,
+    "move3": 32,
+    "move4": 32,
+    "moveList": [
+      {
+        "id": 4,
+        "name": "splash",
+        "type": "water",
+        "power": 5,
+        "physical": 0,
+        "accuracy": 100,
+        "effect": "NONE"
+      },
+      {
+        "id": 12,
+        "name": "dirtburst",
+        "type": "earth",
+        "power": 7,
+        "physical": 0,
+        "accuracy": 100,
+        "effect": "NONE"
+      }
+    ]
+  },
+  {
+    "id": 41,
+    "name": "SpireSquid",
+    "type1": "water",
+    "type2": "elder",
+    "evelevel": 0,
+    "atk": 8,
+    "deff": 10,
+    "spcatk": 10,
+    "spcdef": 8,
+    "hp": 9,
+    "spd": 9,
+    "move1": 4,
+    "move2": 29,
+    "move3": 32,
+    "move4": 32,
+    "moveList": [
+      {
+        "id": 4,
+        "name": "splash",
+        "type": "water",
+        "power": 5,
+        "physical": 0,
+        "accuracy": 100,
+        "effect": "NONE"
+      },
+      {
+        "id": 29,
+        "name": "elderBurst",
+        "type": "elder",
+        "power": 12,
+        "physical": 0,
+        "accuracy": 100,
+        "effect": "NONE"
+      }
+    ]
+  },
+  {
+    "id": 42,
+    "name": "Horseshoe",
+    "type1": "water",
+    "type2": "earth",
+    "evelevel": 16,
+    "atk": 9,
+    "deff": 11,
+    "spcatk": 7,
+    "spcdef": 9,
+    "hp": 10,
+    "spd": 10,
+    "move1": 4,
+    "move2": 12,
+    "move3": 32,
+    "move4": 32,
+    "moveList": [
+      {
+        "id": 4,
+        "name": "splash",
+        "type": "water",
+        "power": 5,
+        "physical": 0,
+        "accuracy": 100,
+        "effect": "NONE"
+      },
+      {
+        "id": 12,
+        "name": "dirtburst",
+        "type": "earth",
+        "power": 7,
+        "physical": 0,
+        "accuracy": 100,
+        "effect": "NONE"
+      }
+    ]
+  },
+  {
+    "id": 43,
+    "name": "Shieldshoe",
+    "type1": "earth",
+    "type2": "elder",
+    "evelevel": 0,
+    "atk": 10,
+    "deff": 8,
+    "spcatk": 8,
+    "spcdef": 10,
+    "hp": 11,
+    "spd": 7,
+    "move1": 12,
+    "move2": 29,
+    "move3": 32,
+    "move4": 32,
+    "moveList": [
+      {
+        "id": 12,
+        "name": "dirtburst",
+        "type": "earth",
+        "power": 7,
+        "physical": 0,
+        "accuracy": 100,
+        "effect": "NONE"
+      },
+      {
+        "id": 29,
+        "name": "elderBurst",
+        "type": "elder",
+        "power": 12,
+        "physical": 0,
+        "accuracy": 100,
+        "effect": "NONE"
+      }
+    ]
+  },
+  {
+    "id": 44,
+    "name": "SiltSkorp",
+    "type1": "water",
+    "type2": "earth",
+    "evelevel": 16,
+    "atk": 7,
+    "deff": 9,
+    "spcatk": 9,
+    "spcdef": 11,
+    "hp": 8,
+    "spd": 8,
+    "move1": 4,
+    "move2": 12,
+    "move3": 32,
+    "move4": 32,
+    "moveList": [
+      {
+        "id": 4,
+        "name": "splash",
+        "type": "water",
+        "power": 5,
+        "physical": 0,
+        "accuracy": 100,
+        "effect": "NONE"
+      },
+      {
+        "id": 12,
+        "name": "dirtburst",
+        "type": "earth",
+        "power": 7,
+        "physical": 0,
+        "accuracy": 100,
+        "effect": "NONE"
+      }
+    ]
+  },
+  {
+    "id": 45,
+    "name": "ReefReaper",
+    "type1": "water",
+    "type2": "elder",
+    "evelevel": 0,
+    "atk": 8,
+    "deff": 10,
+    "spcatk": 10,
+    "spcdef": 8,
+    "hp": 9,
+    "spd": 9,
+    "move1": 4,
+    "move2": 29,
+    "move3": 32,
+    "move4": 32,
+    "moveList": [
+      {
+        "id": 4,
+        "name": "splash",
+        "type": "water",
+        "power": 5,
+        "physical": 0,
+        "accuracy": 100,
+        "effect": "NONE"
+      },
+      {
+        "id": 29,
+        "name": "elderBurst",
+        "type": "elder",
+        "power": 12,
+        "physical": 0,
+        "accuracy": 100,
+        "effect": "NONE"
+      }
+    ]
+  },
+  {
+    "id": 46,
+    "name": "Platefin",
+    "type1": "water",
+    "type2": "earth",
+    "evelevel": 0,
+    "atk": 9,
+    "deff": 11,
+    "spcatk": 7,
+    "spcdef": 9,
+    "hp": 10,
+    "spd": 10,
+    "move1": 4,
+    "move2": 12,
+    "move3": 32,
+    "move4": 32,
+    "moveList": [
+      {
+        "id": 4,
+        "name": "splash",
+        "type": "water",
+        "power": 5,
+        "physical": 0,
+        "accuracy": 100,
+        "effect": "NONE"
+      },
+      {
+        "id": 12,
+        "name": "dirtburst",
+        "type": "earth",
+        "power": 7,
+        "physical": 0,
+        "accuracy": 100,
+        "effect": "NONE"
+      }
+    ]
+  },
+  {
+    "id": 47,
+    "name": "AncientJaw",
+    "type1": "water",
+    "type2": "elder",
+    "evelevel": 0,
+    "atk": 10,
+    "deff": 8,
+    "spcatk": 8,
+    "spcdef": 10,
+    "hp": 11,
+    "spd": 7,
+    "move1": 4,
+    "move2": 29,
+    "move3": 32,
+    "move4": 32,
+    "moveList": [
+      {
+        "id": 4,
+        "name": "splash",
+        "type": "water",
+        "power": 5,
+        "physical": 0,
+        "accuracy": 100,
+        "effect": "NONE"
+      },
+      {
+        "id": 29,
+        "name": "elderBurst",
+        "type": "elder",
+        "power": 12,
+        "physical": 0,
+        "accuracy": 100,
+        "effect": "NONE"
+      }
+    ]
+  },
+  {
+    "id": 48,
+    "name": "CoalGrub",
+    "type1": "fire",
+    "type2": "earth",
+    "evelevel": 16,
+    "atk": 7,
+    "deff": 9,
+    "spcatk": 9,
+    "spcdef": 11,
+    "hp": 8,
+    "spd": 8,
+    "move1": 16,
+    "move2": 12,
+    "move3": 32,
+    "move4": 32,
+    "moveList": [
+      {
+        "id": 16,
+        "name": "burn",
+        "type": "fire",
+        "power": 8,
+        "physical": 0,
+        "accuracy": 100,
+        "effect": "NONE"
+      },
+      {
+        "id": 12,
+        "name": "dirtburst",
+        "type": "earth",
+        "power": 7,
+        "physical": 0,
+        "accuracy": 100,
+        "effect": "NONE"
+      }
+    ]
+  },
+  {
+    "id": 49,
+    "name": "CinderCocoon",
+    "type1": "fire",
+    "type2": "earth",
+    "evelevel": 24,
+    "atk": 8,
+    "deff": 10,
+    "spcatk": 10,
+    "spcdef": 8,
+    "hp": 9,
+    "spd": 9,
+    "move1": 16,
+    "move2": 12,
+    "move3": 32,
+    "move4": 32,
+    "moveList": [
+      {
+        "id": 16,
+        "name": "burn",
+        "type": "fire",
+        "power": 8,
+        "physical": 0,
+        "accuracy": 100,
+        "effect": "NONE"
+      },
+      {
+        "id": 12,
+        "name": "dirtburst",
+        "type": "earth",
+        "power": 7,
+        "physical": 0,
+        "accuracy": 100,
+        "effect": "NONE"
+      }
+    ]
+  },
+  {
+    "id": 50,
+    "name": "FurnaceBeetle",
+    "type1": "fire",
+    "type2": "earth",
+    "evelevel": 0,
+    "atk": 9,
+    "deff": 11,
+    "spcatk": 7,
+    "spcdef": 9,
+    "hp": 10,
+    "spd": 10,
+    "move1": 16,
+    "move2": 12,
+    "move3": 32,
+    "move4": 32,
+    "moveList": [
+      {
+        "id": 16,
+        "name": "burn",
+        "type": "fire",
+        "power": 8,
+        "physical": 0,
+        "accuracy": 100,
+        "effect": "NONE"
+      },
+      {
+        "id": 12,
+        "name": "dirtburst",
+        "type": "earth",
+        "power": 7,
+        "physical": 0,
+        "accuracy": 100,
+        "effect": "NONE"
+      }
+    ]
+  },
+  {
+    "id": 51,
+    "name": "Flintling",
+    "type1": "earth",
+    "type2": "lightning",
+    "evelevel": 16,
+    "atk": 10,
+    "deff": 8,
+    "spcatk": 8,
+    "spcdef": 10,
+    "hp": 11,
+    "spd": 7,
+    "move1": 12,
+    "move2": 20,
+    "move3": 32,
+    "move4": 32,
+    "moveList": [
+      {
+        "id": 12,
+        "name": "dirtburst",
+        "type": "earth",
+        "power": 7,
+        "physical": 0,
+        "accuracy": 100,
+        "effect": "NONE"
+      },
+      {
+        "id": 20,
+        "name": "bolt",
+        "type": "lightning",
+        "power": 7,
+        "physical": 0,
+        "accuracy": 100,
+        "effect": "NONE"
+      }
+    ]
+  },
+  {
+    "id": 52,
+    "name": "GeodeGuard",
+    "type1": "earth",
+    "type2": "lightning",
+    "evelevel": 0,
+    "atk": 7,
+    "deff": 9,
+    "spcatk": 9,
+    "spcdef": 11,
+    "hp": 8,
+    "spd": 8,
+    "move1": 12,
+    "move2": 20,
+    "move3": 32,
+    "move4": 32,
+    "moveList": [
+      {
+        "id": 12,
+        "name": "dirtburst",
+        "type": "earth",
+        "power": 7,
+        "physical": 0,
+        "accuracy": 100,
+        "effect": "NONE"
+      },
+      {
+        "id": 20,
+        "name": "bolt",
+        "type": "lightning",
+        "power": 7,
+        "physical": 0,
+        "accuracy": 100,
+        "effect": "NONE"
+      }
+    ]
+  },
+  {
+    "id": 53,
+    "name": "Tuftling",
+    "type1": "wind",
+    "type2": "plant",
+    "evelevel": 16,
+    "atk": 8,
+    "deff": 10,
+    "spcatk": 10,
+    "spcdef": 8,
+    "hp": 9,
+    "spd": 9,
+    "move1": 8,
+    "move2": 26,
+    "move3": 32,
+    "move4": 32,
+    "moveList": [
+      {
+        "id": 8,
+        "name": "breeze",
+        "type": "wind",
+        "power": 5,
+        "physical": 0,
+        "accuracy": 100,
+        "effect": "NONE"
+      },
+      {
+        "id": 26,
+        "name": "seedfall",
+        "type": "plant",
+        "power": 12,
+        "physical": 1,
+        "accuracy": 100,
+        "effect": "NONE"
+      }
+    ]
+  },
+  {
+    "id": 54,
+    "name": "GustTuft",
+    "type1": "wind",
+    "type2": "plant",
+    "evelevel": 0,
+    "atk": 9,
+    "deff": 11,
+    "spcatk": 7,
+    "spcdef": 9,
+    "hp": 10,
+    "spd": 10,
+    "move1": 8,
+    "move2": 26,
+    "move3": 32,
+    "move4": 32,
+    "moveList": [
+      {
+        "id": 8,
+        "name": "breeze",
+        "type": "wind",
+        "power": 5,
+        "physical": 0,
+        "accuracy": 100,
+        "effect": "NONE"
+      },
+      {
+        "id": 26,
+        "name": "seedfall",
+        "type": "plant",
+        "power": 12,
+        "physical": 1,
+        "accuracy": 100,
+        "effect": "NONE"
+      }
+    ]
+  },
+  {
+    "id": 55,
+    "name": "StaticMite",
+    "type1": "lightning",
+    "type2": "plant",
+    "evelevel": 0,
+    "atk": 10,
+    "deff": 8,
+    "spcatk": 8,
+    "spcdef": 10,
+    "hp": 11,
+    "spd": 7,
+    "move1": 20,
+    "move2": 26,
+    "move3": 32,
+    "move4": 32,
+    "moveList": [
+      {
+        "id": 20,
+        "name": "bolt",
+        "type": "lightning",
+        "power": 7,
+        "physical": 0,
+        "accuracy": 100,
+        "effect": "NONE"
+      },
+      {
+        "id": 26,
+        "name": "seedfall",
+        "type": "plant",
+        "power": 12,
+        "physical": 1,
+        "accuracy": 100,
+        "effect": "NONE"
+      }
+    ]
+  },
+  {
+    "id": 56,
+    "name": "ChimeSeed",
+    "type1": "spirit",
+    "type2": "plant",
+    "evelevel": 16,
+    "atk": 7,
+    "deff": 9,
+    "spcatk": 9,
+    "spcdef": 11,
+    "hp": 8,
+    "spd": 8,
+    "move1": 1,
+    "move2": 26,
+    "move3": 32,
+    "move4": 32,
+    "moveList": [
+      {
+        "id": 1,
+        "name": "thought",
+        "type": "spirit",
+        "power": 5,
+        "physical": 1,
+        "accuracy": 100,
+        "effect": "NONE"
+      },
+      {
+        "id": 26,
+        "name": "seedfall",
+        "type": "plant",
+        "power": 12,
+        "physical": 1,
+        "accuracy": 100,
+        "effect": "NONE"
+      }
+    ]
+  },
+  {
+    "id": 57,
+    "name": "BoughBell",
+    "type1": "spirit",
+    "type2": "plant",
+    "evelevel": 0,
+    "atk": 8,
+    "deff": 10,
+    "spcatk": 10,
+    "spcdef": 8,
+    "hp": 9,
+    "spd": 9,
+    "move1": 1,
+    "move2": 26,
+    "move3": 32,
+    "move4": 32,
+    "moveList": [
+      {
+        "id": 1,
+        "name": "thought",
+        "type": "spirit",
+        "power": 5,
+        "physical": 1,
+        "accuracy": 100,
+        "effect": "NONE"
+      },
+      {
+        "id": 26,
+        "name": "seedfall",
+        "type": "plant",
+        "power": 12,
+        "physical": 1,
+        "accuracy": 100,
+        "effect": "NONE"
+      }
+    ]
+  },
+  {
+    "id": 58,
+    "name": "ShardWisp",
+    "type1": "spirit",
+    "type2": "earth",
+    "evelevel": 16,
+    "atk": 9,
+    "deff": 11,
+    "spcatk": 7,
+    "spcdef": 9,
+    "hp": 10,
+    "spd": 10,
+    "move1": 1,
+    "move2": 12,
+    "move3": 32,
+    "move4": 32,
+    "moveList": [
+      {
+        "id": 1,
+        "name": "thought",
+        "type": "spirit",
+        "power": 5,
+        "physical": 1,
+        "accuracy": 100,
+        "effect": "NONE"
+      },
+      {
+        "id": 12,
+        "name": "dirtburst",
+        "type": "earth",
+        "power": 7,
+        "physical": 0,
+        "accuracy": 100,
+        "effect": "NONE"
+      }
+    ]
+  },
+  {
+    "id": 59,
+    "name": "Reliquary",
+    "type1": "spirit",
+    "type2": "elder",
+    "evelevel": 0,
+    "atk": 10,
+    "deff": 8,
+    "spcatk": 8,
+    "spcdef": 10,
+    "hp": 11,
+    "spd": 7,
+    "move1": 1,
+    "move2": 29,
+    "move3": 32,
+    "move4": 32,
+    "moveList": [
+      {
+        "id": 1,
+        "name": "thought",
+        "type": "spirit",
+        "power": 5,
+        "physical": 1,
+        "accuracy": 100,
+        "effect": "NONE"
+      },
+      {
+        "id": 29,
+        "name": "elderBurst",
+        "type": "elder",
+        "power": 12,
+        "physical": 0,
+        "accuracy": 100,
+        "effect": "NONE"
+      }
+    ]
+  },
+  {
+    "id": 60,
+    "name": "SaplingSage",
+    "type1": "plant",
+    "type2": "elder",
+    "evelevel": 16,
+    "atk": 7,
+    "deff": 9,
+    "spcatk": 9,
+    "spcdef": 11,
+    "hp": 8,
+    "spd": 8,
+    "move1": 26,
+    "move2": 29,
+    "move3": 32,
+    "move4": 32,
+    "moveList": [
+      {
+        "id": 26,
+        "name": "seedfall",
+        "type": "plant",
+        "power": 12,
+        "physical": 1,
+        "accuracy": 100,
+        "effect": "NONE"
+      },
+      {
+        "id": 29,
+        "name": "elderBurst",
+        "type": "elder",
+        "power": 12,
+        "physical": 0,
+        "accuracy": 100,
+        "effect": "NONE"
+      }
+    ]
+  },
+  {
+    "id": 61,
+    "name": "GroveKeeper",
+    "type1": "elder",
+    "type2": "plant",
+    "evelevel": 0,
+    "atk": 8,
+    "deff": 10,
+    "spcatk": 10,
+    "spcdef": 8,
+    "hp": 9,
+    "spd": 9,
+    "move1": 29,
+    "move2": 26,
+    "move3": 32,
+    "move4": 32,
+    "moveList": [
+      {
+        "id": 29,
+        "name": "elderBurst",
+        "type": "elder",
+        "power": 12,
+        "physical": 0,
+        "accuracy": 100,
+        "effect": "NONE"
+      },
+      {
+        "id": 26,
+        "name": "seedfall",
+        "type": "plant",
+        "power": 12,
+        "physical": 1,
+        "accuracy": 100,
+        "effect": "NONE"
+      }
+    ]
+  },
+  {
+    "id": 62,
+    "name": "FossilBloom",
+    "type1": "elder",
+    "type2": "plant",
+    "evelevel": 16,
+    "atk": 9,
+    "deff": 11,
+    "spcatk": 7,
+    "spcdef": 9,
+    "hp": 10,
+    "spd": 10,
+    "move1": 29,
+    "move2": 26,
+    "move3": 32,
+    "move4": 32,
+    "moveList": [
+      {
+        "id": 29,
+        "name": "elderBurst",
+        "type": "elder",
+        "power": 12,
+        "physical": 0,
+        "accuracy": 100,
+        "effect": "NONE"
+      },
+      {
+        "id": 26,
+        "name": "seedfall",
+        "type": "plant",
+        "power": 12,
+        "physical": 1,
+        "accuracy": 100,
+        "effect": "NONE"
+      }
+    ]
+  },
+  {
+    "id": 63,
+    "name": "OrbitRelic",
+    "type1": "elder",
+    "type2": "spirit",
+    "evelevel": 0,
+    "atk": 10,
+    "deff": 8,
+    "spcatk": 8,
+    "spcdef": 10,
+    "hp": 11,
+    "spd": 7,
+    "move1": 29,
+    "move2": 1,
+    "move3": 32,
+    "move4": 32,
+    "moveList": [
+      {
+        "id": 29,
+        "name": "elderBurst",
+        "type": "elder",
+        "power": 12,
+        "physical": 0,
+        "accuracy": 100,
+        "effect": "NONE"
+      },
+      {
+        "id": 1,
+        "name": "thought",
+        "type": "spirit",
+        "power": 5,
+        "physical": 1,
+        "accuracy": 100,
+        "effect": "NONE"
+      }
+    ]
   }
 ]

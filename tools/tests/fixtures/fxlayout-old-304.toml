@@ -786,6 +786,165 @@ namespace = "Teams::StockCreatures"
 source = { carray = { path = "../../../fxdata/generated/teams.txt", symbol = "ardu" } }
 
 [[entry]]
+name = "NibWeevil"
+namespace = "Teams::StockCreatures"
+source = { carray = { path = "../../../fxdata/generated/teams.txt", symbol = "NibWeevil" } }
+
+[[entry]]
+name = "HuskWeevil"
+namespace = "Teams::StockCreatures"
+source = { carray = { path = "../../../fxdata/generated/teams.txt", symbol = "HuskWeevil" } }
+
+[[entry]]
+name = "GranaryWeevil"
+namespace = "Teams::StockCreatures"
+source = { carray = { path = "../../../fxdata/generated/teams.txt", symbol = "GranaryWeevil" } }
+
+[[entry]]
+name = "DewBud"
+namespace = "Teams::StockCreatures"
+source = { carray = { path = "../../../fxdata/generated/teams.txt", symbol = "DewBud" } }
+
+[[entry]]
+name = "NectarBloom"
+namespace = "Teams::StockCreatures"
+source = { carray = { path = "../../../fxdata/generated/teams.txt", symbol = "NectarBloom" } }
+
+[[entry]]
+name = "Sporeling"
+namespace = "Teams::StockCreatures"
+source = { carray = { path = "../../../fxdata/generated/teams.txt", symbol = "Sporeling" } }
+
+[[entry]]
+name = "SporeKeeper"
+namespace = "Teams::StockCreatures"
+source = { carray = { path = "../../../fxdata/generated/teams.txt", symbol = "SporeKeeper" } }
+
+[[entry]]
+name = "MossMole"
+namespace = "Teams::StockCreatures"
+source = { carray = { path = "../../../fxdata/generated/teams.txt", symbol = "MossMole" } }
+
+[[entry]]
+name = "Conelet"
+namespace = "Teams::StockCreatures"
+source = { carray = { path = "../../../fxdata/generated/teams.txt", symbol = "Conelet" } }
+
+[[entry]]
+name = "SpireSquid"
+namespace = "Teams::StockCreatures"
+source = { carray = { path = "../../../fxdata/generated/teams.txt", symbol = "SpireSquid" } }
+
+[[entry]]
+name = "Horseshoe"
+namespace = "Teams::StockCreatures"
+source = { carray = { path = "../../../fxdata/generated/teams.txt", symbol = "Horseshoe" } }
+
+[[entry]]
+name = "Shieldshoe"
+namespace = "Teams::StockCreatures"
+source = { carray = { path = "../../../fxdata/generated/teams.txt", symbol = "Shieldshoe" } }
+
+[[entry]]
+name = "SiltSkorp"
+namespace = "Teams::StockCreatures"
+source = { carray = { path = "../../../fxdata/generated/teams.txt", symbol = "SiltSkorp" } }
+
+[[entry]]
+name = "ReefReaper"
+namespace = "Teams::StockCreatures"
+source = { carray = { path = "../../../fxdata/generated/teams.txt", symbol = "ReefReaper" } }
+
+[[entry]]
+name = "Platefin"
+namespace = "Teams::StockCreatures"
+source = { carray = { path = "../../../fxdata/generated/teams.txt", symbol = "Platefin" } }
+
+[[entry]]
+name = "AncientJaw"
+namespace = "Teams::StockCreatures"
+source = { carray = { path = "../../../fxdata/generated/teams.txt", symbol = "AncientJaw" } }
+
+[[entry]]
+name = "CoalGrub"
+namespace = "Teams::StockCreatures"
+source = { carray = { path = "../../../fxdata/generated/teams.txt", symbol = "CoalGrub" } }
+
+[[entry]]
+name = "CinderCocoon"
+namespace = "Teams::StockCreatures"
+source = { carray = { path = "../../../fxdata/generated/teams.txt", symbol = "CinderCocoon" } }
+
+[[entry]]
+name = "FurnaceBeetle"
+namespace = "Teams::StockCreatures"
+source = { carray = { path = "../../../fxdata/generated/teams.txt", symbol = "FurnaceBeetle" } }
+
+[[entry]]
+name = "Flintling"
+namespace = "Teams::StockCreatures"
+source = { carray = { path = "../../../fxdata/generated/teams.txt", symbol = "Flintling" } }
+
+[[entry]]
+name = "GeodeGuard"
+namespace = "Teams::StockCreatures"
+source = { carray = { path = "../../../fxdata/generated/teams.txt", symbol = "GeodeGuard" } }
+
+[[entry]]
+name = "Tuftling"
+namespace = "Teams::StockCreatures"
+source = { carray = { path = "../../../fxdata/generated/teams.txt", symbol = "Tuftling" } }
+
+[[entry]]
+name = "GustTuft"
+namespace = "Teams::StockCreatures"
+source = { carray = { path = "../../../fxdata/generated/teams.txt", symbol = "GustTuft" } }
+
+[[entry]]
+name = "StaticMite"
+namespace = "Teams::StockCreatures"
+source = { carray = { path = "../../../fxdata/generated/teams.txt", symbol = "StaticMite" } }
+
+[[entry]]
+name = "ChimeSeed"
+namespace = "Teams::StockCreatures"
+source = { carray = { path = "../../../fxdata/generated/teams.txt", symbol = "ChimeSeed" } }
+
+[[entry]]
+name = "BoughBell"
+namespace = "Teams::StockCreatures"
+source = { carray = { path = "../../../fxdata/generated/teams.txt", symbol = "BoughBell" } }
+
+[[entry]]
+name = "ShardWisp"
+namespace = "Teams::StockCreatures"
+source = { carray = { path = "../../../fxdata/generated/teams.txt", symbol = "ShardWisp" } }
+
+[[entry]]
+name = "Reliquary"
+namespace = "Teams::StockCreatures"
+source = { carray = { path = "../../../fxdata/generated/teams.txt", symbol = "Reliquary" } }
+
+[[entry]]
+name = "SaplingSage"
+namespace = "Teams::StockCreatures"
+source = { carray = { path = "../../../fxdata/generated/teams.txt", symbol = "SaplingSage" } }
+
+[[entry]]
+name = "GroveKeeper"
+namespace = "Teams::StockCreatures"
+source = { carray = { path = "../../../fxdata/generated/teams.txt", symbol = "GroveKeeper" } }
+
+[[entry]]
+name = "FossilBloom"
+namespace = "Teams::StockCreatures"
+source = { carray = { path = "../../../fxdata/generated/teams.txt", symbol = "FossilBloom" } }
+
+[[entry]]
+name = "OrbitRelic"
+namespace = "Teams::StockCreatures"
+source = { carray = { path = "../../../fxdata/generated/teams.txt", symbol = "OrbitRelic" } }
+[[entry]]
 name = "jimbo"
 namespace = "Teams::Names"
 source = { carray = { path = "../../../fxdata/generated/teams.txt", symbol = "jimbo" } }
@@ -1351,6 +1510,133 @@ source = { carray = { path = "../../../fxdata/generated/Sprites.txt", symbol = "
 name = "creature31"
 source = { carray = { path = "../../../fxdata/generated/Sprites.txt", symbol = "creature31" } }
 
+[[entry]]
+name = "creature32"
+source = { carray = { path = "../../../fxdata/generated/Sprites.txt", symbol = "creature32" } }
+
+[[entry]]
+name = "creature33"
+source = { carray = { path = "../../../fxdata/generated/Sprites.txt", symbol = "creature33" } }
+
+[[entry]]
+name = "creature34"
+source = { carray = { path = "../../../fxdata/generated/Sprites.txt", symbol = "creature34" } }
+
+[[entry]]
+name = "creature35"
+source = { carray = { path = "../../../fxdata/generated/Sprites.txt", symbol = "creature35" } }
+
+[[entry]]
+name = "creature36"
+source = { carray = { path = "../../../fxdata/generated/Sprites.txt", symbol = "creature36" } }
+
+[[entry]]
+name = "creature37"
+source = { carray = { path = "../../../fxdata/generated/Sprites.txt", symbol = "creature37" } }
+
+[[entry]]
+name = "creature38"
+source = { carray = { path = "../../../fxdata/generated/Sprites.txt", symbol = "creature38" } }
+
+[[entry]]
+name = "creature39"
+source = { carray = { path = "../../../fxdata/generated/Sprites.txt", symbol = "creature39" } }
+
+[[entry]]
+name = "creature40"
+source = { carray = { path = "../../../fxdata/generated/Sprites.txt", symbol = "creature40" } }
+
+[[entry]]
+name = "creature41"
+source = { carray = { path = "../../../fxdata/generated/Sprites.txt", symbol = "creature41" } }
+
+[[entry]]
+name = "creature42"
+source = { carray = { path = "../../../fxdata/generated/Sprites.txt", symbol = "creature42" } }
+
+[[entry]]
+name = "creature43"
+source = { carray = { path = "../../../fxdata/generated/Sprites.txt", symbol = "creature43" } }
+
+[[entry]]
+name = "creature44"
+source = { carray = { path = "../../../fxdata/generated/Sprites.txt", symbol = "creature44" } }
+
+[[entry]]
+name = "creature45"
+source = { carray = { path = "../../../fxdata/generated/Sprites.txt", symbol = "creature45" } }
+
+[[entry]]
+name = "creature46"
+source = { carray = { path = "../../../fxdata/generated/Sprites.txt", symbol = "creature46" } }
+
+[[entry]]
+name = "creature47"
+source = { carray = { path = "../../../fxdata/generated/Sprites.txt", symbol = "creature47" } }
+
+[[entry]]
+name = "creature48"
+source = { carray = { path = "../../../fxdata/generated/Sprites.txt", symbol = "creature48" } }
+
+[[entry]]
+name = "creature49"
+source = { carray = { path = "../../../fxdata/generated/Sprites.txt", symbol = "creature49" } }
+
+[[entry]]
+name = "creature50"
+source = { carray = { path = "../../../fxdata/generated/Sprites.txt", symbol = "creature50" } }
+
+[[entry]]
+name = "creature51"
+source = { carray = { path = "../../../fxdata/generated/Sprites.txt", symbol = "creature51" } }
+
+[[entry]]
+name = "creature52"
+source = { carray = { path = "../../../fxdata/generated/Sprites.txt", symbol = "creature52" } }
+
+[[entry]]
+name = "creature53"
+source = { carray = { path = "../../../fxdata/generated/Sprites.txt", symbol = "creature53" } }
+
+[[entry]]
+name = "creature54"
+source = { carray = { path = "../../../fxdata/generated/Sprites.txt", symbol = "creature54" } }
+
+[[entry]]
+name = "creature55"
+source = { carray = { path = "../../../fxdata/generated/Sprites.txt", symbol = "creature55" } }
+
+[[entry]]
+name = "creature56"
+source = { carray = { path = "../../../fxdata/generated/Sprites.txt", symbol = "creature56" } }
+
+[[entry]]
+name = "creature57"
+source = { carray = { path = "../../../fxdata/generated/Sprites.txt", symbol = "creature57" } }
+
+[[entry]]
+name = "creature58"
+source = { carray = { path = "../../../fxdata/generated/Sprites.txt", symbol = "creature58" } }
+
+[[entry]]
+name = "creature59"
+source = { carray = { path = "../../../fxdata/generated/Sprites.txt", symbol = "creature59" } }
+
+[[entry]]
+name = "creature60"
+source = { carray = { path = "../../../fxdata/generated/Sprites.txt", symbol = "creature60" } }
+
+[[entry]]
+name = "creature61"
+source = { carray = { path = "../../../fxdata/generated/Sprites.txt", symbol = "creature61" } }
+
+[[entry]]
+name = "creature62"
+source = { carray = { path = "../../../fxdata/generated/Sprites.txt", symbol = "creature62" } }
+
+[[entry]]
+name = "creature63"
+source = { carray = { path = "../../../fxdata/generated/Sprites.txt", symbol = "creature63" } }
 [[entry]]
 name = "CreatureNames"
 namespace = "CreatureNames"

@@ -8,7 +8,7 @@ namespace battle_presentation_fixture {
 inline void fill(battle::ActionResult &result, bool knockout) {
     battle::resetActionResult(result);
     const uint8_t playerSpecies = pgm_read_byte(&creatureFixtures->id);
-    const CreatureData_t *opponent = creatureFixtures + creatureFixtureCount - 1;
+    const CreatureData_t *opponent = creatureFixtures + 31;
     const uint8_t opponentSpecies = pgm_read_byte(&opponent->id);
     result.kind = battle::ResultKind::Attack;
     result.index = pgm_read_byte(&creatureFixtures->move1);

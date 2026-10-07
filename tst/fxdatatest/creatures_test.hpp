@@ -41,7 +41,9 @@ void test_creatures(FxTest &test) {
     }
 
     constexpr uint8_t encounterLevel = 5;
-    const uint8_t encounterIds[] = {0, static_cast<uint8_t>(creatureFixtureCount - 1)};
+    // The shipped encounter table remains limited to the original roster;
+    // exercise its upper edge while the loop above checks all packed records.
+    const uint8_t encounterIds[] = {0, 31};
     for (uint8_t fixtureIndex = 0; fixtureIndex < sizeof(encounterIds); ++fixtureIndex) {
         const uint8_t id = encounterIds[fixtureIndex];
         CreatureData_t expected;

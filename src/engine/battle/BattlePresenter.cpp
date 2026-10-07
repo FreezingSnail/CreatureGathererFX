@@ -16,6 +16,11 @@ uint8_t readMoveNameWidth(uint16_t id);
 
 namespace battle {
 namespace {
+#ifdef CGFX_TRAINER_DEMO_EXPANSION
+constexpr uint8_t PRESENTED_SPECIES_COUNT = 64;
+#else
+constexpr uint8_t PRESENTED_SPECIES_COUNT = 32;
+#endif
 // The first eight impact ticks use a deterministic 2-pixel cross shake.
 // Deriving offsets from stage time keeps state bounded and guarantees settling.
 void impactOffset(const ActionResult *result, PresenterStage stage, uint8_t elapsed,
@@ -129,7 +134,7 @@ bool typeRaised(Effect effect) {
 void cacheCreatureName(PreparedBattleItem &item, uint8_t id, uint8_t &lookups) {
     item.nameWidth = readCreatureNameWidth(id);
     item.nameHeight = 8;
-    if (item.nameWidth != 0 && id < 32) {
+    if (item.nameWidth != 0 && id < PRESENTED_SPECIES_COUNT) {
         item.name = readCreatureNameAddress(id);
         ++lookups;
     }
@@ -138,7 +143,7 @@ void cacheCreatureName(PreparedBattleItem &item, uint8_t id, uint8_t &lookups) {
 void cacheCreatureDetail(PreparedBattleItem &item, uint8_t id, uint8_t &lookups) {
     item.detailWidth = readCreatureNameWidth(id);
     item.detailHeight = 8;
-    if (item.detailWidth != 0 && id < 32) {
+    if (item.detailWidth != 0 && id < PRESENTED_SPECIES_COUNT) {
         item.detail = readCreatureNameAddress(id);
         ++lookups;
     }

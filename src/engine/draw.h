@@ -276,7 +276,11 @@ static void drawOpponentHP(const battle::BattleView &view, int8_t shakeX = 0, in
                    battleHpBarWidth(creature.hp, creature.maxHp), 2, WHITE);
 }
 
+#ifdef CGFX_TRAINER_DEMO_EXPANSION
+static constexpr uint8_t kBattleSpeciesCount = 64;
+#else
 static constexpr uint8_t kBattleSpeciesCount = 32;
+#endif
 
 static void clearBattleSprite(int16_t x, int16_t y) {
     // Creature art is masked, so transparent pixels do not replace pixels
