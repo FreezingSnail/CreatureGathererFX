@@ -68,6 +68,17 @@ void TypeTest(TestSuite &t) {
         }
     }
 
+    for (uint8_t type = 0; type < TypeCount; ++type) {
+        test.assert(typeTable[static_cast<uint8_t>(Type::STATUS)][type],
+                    Modifier::None, "STATUS attack row retains zero cells");
+        test.assert(typeTable[type][static_cast<uint8_t>(Type::STATUS)],
+                    Modifier::None, "STATUS defender column retains zero cells");
+    }
+    test.assert(getModifier(Type::WATER, Type::NONE), Modifier::Same,
+                "NONE defender sentinel remains neutral");
+    test.assert(getModifier(Type::NONE, Type::WATER), Modifier::None,
+                "NONE attacker sentinel remains immune");
+
     t.addTest(test);
 }
 

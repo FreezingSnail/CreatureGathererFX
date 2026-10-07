@@ -2,6 +2,7 @@
 
 #include "test.hpp"
 #include "../src/engine/battle/Resolve.hpp"
+#include "../src/engine/battle/Damage.hpp"
 #include "../src/engine/battle/BattleSetup.hpp"
 #include "../src/lib/FxReadCounter.hpp"
 
@@ -157,6 +158,24 @@ inline void BattleResolveIntegrationTest(TestSuite &suite)
                 "second effect fact uses explicit opposing side");
     test.assert(scriptedCalls, static_cast<uint8_t>(2),
                 "ordinary attack rolls each effect exactly once");
+
+    state = stateFixture();
+    state.active[0].types = DualType(Type::WATER, Type::WIND);
+    state.active[0].moves[0] = makeMove(Type::WATER, 10);
+    state.active[1].types = DualType(Type::EARTH, Type::PLANT);
+    state.active[0].status.applyEffect(Effect::DRNCHD);
+    state.active[0].status.applyEffect(Effect::AIRSWPT);
+    state.active[1].status.applyEffect(Effect::SOILED);
+    state.active[1].status.applyEffect(Effect::TANGLD);
+    test.assert(computeDamage(state.active[0], state.active[1], 0),
+                static_cast<uint8_t>(40),
+                "damage keeps grouped saturation and STAB behavior");
+    script(0, 0);
+    resolveAction(state, Side::Player, {ActionKind::Attack, 0}, rng, result);
+    test.assert(result.effectiveness, Modifier::Quadruple,
+                "resolution keeps sequential saturation and STAB behavior");
+    test.assert(state.active[1].hp, static_cast<uint8_t>(60),
+                "resolution damage keeps grouped damage behavior");
 
     state = stateFixture();
     state.active[1].hp = 1;

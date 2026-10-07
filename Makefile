@@ -103,6 +103,7 @@ doctor:
 # Common source files for main tests
 TEST_SOURCES = src/lib/Blit.cpp \
 	src/lib/Text.cpp \
+	src/lib/Type.cpp \
 	tst/src/Arduboy2Host.cpp \
 	tst/src/ReadData.cpp \
 	tst/src/DialogMenu.cpp \
@@ -354,6 +355,7 @@ test-avr-build-budget:
 	./tools/tests/avr-build-budget_test.sh
 
 SIMULATOR_SOURCES = \
+	src/lib/Type.cpp \
 	src/creature/Creature.cpp \
 	src/player/Player.cpp \
 	src/item/Inventory.cpp \

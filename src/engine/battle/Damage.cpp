@@ -38,19 +38,14 @@ bool validTableType(Type type)
 Modifier typeStatusModifier(const Combatant &attacker,
                             const Combatant &defender)
 {
-    const Modifier attackerFirst =
-        typeEffectModifier(attacker.status.effects[0], attacker.types);
-    const Modifier attackerSecond =
-        typeEffectModifier(attacker.status.effects[1], attacker.types);
     const Modifier attackerModifier =
-        combineModifier(attackerFirst, attackerSecond);
+        typeEffectPairModifier(attacker.status.effects[0],
+                               attacker.status.effects[1], attacker.types);
 
-    const Modifier defenderFirst =
-        typeEffectModifier(defender.status.effects[0], defender.types);
-    const Modifier defenderSecond =
-        typeEffectModifier(defender.status.effects[1], defender.types);
     const Modifier defenderModifier =
-        inverseModifier(combineModifier(defenderFirst, defenderSecond));
+        inverseModifier(typeEffectPairModifier(defender.status.effects[0],
+                                               defender.status.effects[1],
+                                               defender.types));
 
     return combineModifier(attackerModifier, defenderModifier);
 }
