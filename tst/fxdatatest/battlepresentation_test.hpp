@@ -11,6 +11,8 @@ const char captionRegressionText[] PROGMEM =
     "\0hits itself\0could not act\0cannot do that\0did nothing\0switching\0"
     "rose\0fell\0strengthened\0weakened\0lost hp\0healed hp\0gathered\0"
     "fled\0no effect\0status applied";
+const char moveRegressionNames[] PROGMEM = "smite\0Sharpen\0deepthought\0Deluge";
+const char renamedMoveNames[] PROGMEM = "dirtburst\0pollenburst\0burst\0elderBurst";
 
 inline bool pixel(uint8_t x, uint8_t y) {
     return (arduboy.getBuffer()[x + static_cast<uint16_t>(y / 8) * 128]
@@ -30,6 +32,114 @@ inline bool hasInk(uint8_t x, uint8_t y, uint8_t width, uint8_t height, bool ink
         for (uint8_t col = x; col < x + width; ++col)
             if (pixel(col, row) == ink) return true;
     return false;
+}
+
+// Compare every displayed pixel to independent font glyphs, rather than
+// redrawing through the name renderer (which would repeat its stride bug).
+inline bool moveLabelMatches(uint8_t slot, const char *text, bool selected) {
+    const uint8_t x = (slot & 1u) ? 68 : 6;
+    const uint8_t y = slot < 2 ? 45 : 53;
+    uint8_t column = 0;
+    uint8_t character = ' '; // The string asset includes a leading space.
+    do {
+        for (uint8_t c = 0; c < 5; ++c) {
+            uint8_t glyph = 0;
+            if (character != ' ')
+                FX::readDataBytes(ArduFontTrimmed +
+                    static_cast<uint24_t>(character - '0') * 5 + c, &glyph, 1);
+            for (uint8_t row = 0; row < 8; ++row) {
+                const bool ink = (glyph & (1u << row)) != 0;
+                if (pixel(x + column, y + row) != (selected ? ink : !ink))
+                    return false;
+            }
+            ++column;
+        }
+        character = pgm_read_byte(text++);
+    } while (character);
+    return true;
+}
+
+inline uint16_t rowSignature(uint8_t x, uint8_t y) {
+    uint16_t hash = 1;
+    for (uint8_t row = y; row < y + 8; ++row)
+        for (uint8_t col = x; col < x + 60; ++col)
+            hash = static_cast<uint16_t>(hash * 33u + pixel(col, row));
+    return hash;
+}
+
+inline void moveLabels(FxTest &test) {
+    // Different lengths, both columns/rows, ID zero, and the longest name.
+    const uint8_t offsets[] = {0, 6, 14, 26};
+    battle::BattleView view{};
+    view.moveIds[0] = 0;
+    view.moveIds[1] = 37;
+    view.moveIds[2] = 42;
+    view.moveIds[3] = DELUGE_MOVE_ID;
+    view.remainingUses[0] = 1;
+    view.remainingUses[1] = 2;
+    view.remainingUses[2] = 0;
+    view.remainingUses[3] = 255;
+    view.useLimitsPacked = 2u | (3u << 2) | (1u << 4);
+    menu.clear();
+    menu.openMenu(BATTLE_MOVE_SELECT, view);
+    test.expectEq(menu.moveNameAddresses[0] == amove0, true,
+                  F("slot zero caches published smite bitmap"));
+    test.expectEq(menu.moveNameAddresses[1] == amove37, true,
+                  F("slot one caches published Sharpen bitmap"));
+    test.expectEq(menu.moveNameAddresses[2] == amove42, true,
+                  F("slot two caches published deepthought bitmap"));
+    test.expectEq(menu.moveNameAddresses[3] == amove44, true,
+                  F("slot three caches published Deluge bitmap"));
+    for (uint8_t selected = 0; selected < 4; ++selected) {
+        menu.cursorIndex = selected;
+        arduboy.clear();
+        FxReadCounter::resetFrame();
+        menu.printMenu(view);
+        test.expectEq(FxReadCounter::count(), 0,
+                      F("move label drawing performs no metadata reads"));
+        for (uint8_t slot = 0; slot < 4; ++slot)
+            test.expectEq(moveLabelMatches(slot, moveRegressionNames + offsets[slot], slot == selected),
+                          true, F("move label matches full slot name and color"));
+        // Build the expected selected PP independently in an unused area.
+        Blit::fillRect(0, 0, 11, 5, BLACK);
+        if (view.remainingUses[selected] == 255) {
+            PpGlyph::draw(2, 1, 0b010111010);
+        } else {
+            PpGlyph::digit(0, 0, view.remainingUses[selected]);
+            PpGlyph::draw(4, 0, 0b001001010100100);
+            PpGlyph::digit(8, 0, (view.useLimitsPacked >> (selected * 2)) & 3);
+        }
+        bool ppMatches = true;
+        for (uint8_t row = 0; row < 5; ++row)
+            for (uint8_t col = 0; col < 11; ++col)
+                if (pixel(col, row) != pixel(111 + col, 4 + row)) ppMatches = false;
+        test.expectEq(ppMatches, true, F("selected PP matches the same move slot"));
+    }
+    // The raster labels must follow the authored move names after renames.
+    view.moveIds[0] = 12;
+    view.moveIds[1] = 25;
+    view.moveIds[2] = 28;
+    view.moveIds[3] = 29;
+    const uint8_t renamedOffsets[] = {0, 10, 22, 28};
+    menu.openMenu(BATTLE_MOVE_SELECT, view);
+    test.expectEq(menu.moveNameAddresses[0] == amove12, true,
+                  F("dirtburst caches its published bitmap"));
+    test.expectEq(menu.moveNameAddresses[1] == amove25, true,
+                  F("pollenburst caches its published bitmap"));
+    test.expectEq(menu.moveNameAddresses[2] == amove28, true,
+                  F("burst caches its published bitmap"));
+    test.expectEq(menu.moveNameAddresses[3] == amove29, true,
+                  F("elderBurst caches its published bitmap"));
+    for (uint8_t selected = 0; selected < 4; ++selected) {
+        menu.cursorIndex = selected;
+        arduboy.clear();
+        menu.printMenu(view);
+        for (uint8_t slot = 0; slot < 4; ++slot)
+            test.expectEq(moveLabelMatches(slot, renamedMoveNames + renamedOffsets[slot],
+                                          slot == selected), true,
+                          F("renamed move displays its authored name"));
+    }
+    menu.clear();
 }
 
 inline bool barEquals(uint8_t hp, int8_t shakeX = 0, int8_t shakeY = 0) {
@@ -473,8 +583,9 @@ inline void test_battlepresentation(FxTest &test) {
     effectivenessFeedback(test, Modifier::None, 90,
                           F("no-effect caption renders"));
     feedbackCategories(test);
+    moveLabels(test);
 
-    // The move list carries PP beside every populated name; empty slots stay blank.
+    // Only populated slots cache metadata; selected PP remains visible above.
     {
         battle::BattleView moveView{};
         moveView.moveIds[0] = 0;
@@ -497,12 +608,21 @@ inline void test_battlepresentation(FxTest &test) {
         test.expectEq(menu.movesSnapshot().remainingUses[1], static_cast<uint8_t>(255),
                       F("move PP display retains unlimited uses"));
         arduboy.clear();
+        Blit::draw(0, 40, 128, 24, battleMenu, FRAME(0), Blit::OVERWRITE);
+        const uint16_t emptyLeft = rowSignature(6, 53);
+        const uint16_t emptyRight = rowSignature(68, 53);
         FxReadCounter::resetFrame();
         menu.printMenu(moveView);
-        test.expectEq(hasInk(43, 45, 11, 5, true), true,
-                      F("first move current/max PP renders beside name"));
-        test.expectEq(hasInk(106, 45, 3, 5, true), true,
-                      F("unlimited move PP renders beside name"));
+        test.expectEq(rowSignature(6, 53), emptyLeft,
+                      F("legacy empty move slot keeps blank backing art"));
+        test.expectEq(rowSignature(68, 53), emptyRight,
+                      F("absent move slot keeps blank backing art"));
+        test.expectEq(moveLabelMatches(0, PSTR("smite"), true), true,
+                      F("zero move ID renders its complete selected name"));
+        test.expectEq(moveLabelMatches(1, PSTR("Deluge"), false), true,
+                      F("unlimited move renders its complete name"));
+        test.expectEq(hasInk(111, 4, 11, 5, true), true,
+                      F("first move current/max PP renders in selected panel"));
         test.expectEq(FxReadCounter::count(), 0,
                       F("drawing move PP performs no FX reads"));
     }

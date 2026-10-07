@@ -5457,3 +5457,69 @@ FXTEST_MS=10000 make final-gate ARDENS=/Users/connorfranc/code/Ardens/build/Arde
 The first two commands confirm the known Ardens serial capture timeout; the
 documented 10-second capture setting recovered the suite and the full gate.
 Integrated gate took approximately7 minutes. No generated tracked changes.
+
+CreatureGathererFX-jp8.3.23 — Correct battle move labels and cover displayed text:
+
+The active combatant -> BattleView -> MenuV2 snapshot/name-address mapping was
+correct. The recent per-row PP display clamped bitmap width to32, which also
+changed Blit's packed color-frame stride. Unselected long names consequently
+read unrelated pixels; selected names were truncated. Restore actual widths,
+use the full columns (right starts at68 so the longest60-pixel name fits), and
+retain current/max or unlimited PP in the selected-move panel. Remove per-row
+PP to give full names room. Move IDs, slot order and selection code are unchanged.
+
+Source inspection also found four raster labels lagging authored JSON names:
+dirtbeam/pollenbeam/beam/elderBeam -> dirtburst/pollenburst/burst/elderBurst.
+Updated strings and PROGMEM length entries, regenerated exclusively with
+`make gen`, and updated the packed-image baseline for the additional40 bytes
+(four names, five extra columns each, two color frames). Declaration order is
+preserved; regenerated header addresses account for the shifted text assets.
+
+Permanent device coverage compares every label pixel against independent font
+glyphs across four selected positions, both rows/columns, ID0, long names and
+all four renamed labels. It pins cached addresses to generated symbolic bitmap
+constants, checks selected PP from distinct slot values (including0 and255),
+checks omitted legacy-empty/absent rows against backing art, and asserts zero
+metadata reads during drawing.
+
+```text
+make test
+# PASS: host157376/0; world190/0.
+make fxtest-spike BUILD_DIR=build/move-text FXTEST_SPIKE_INO=tst/fxdatatest/test_battlepresentation.ino FXTEST_MS=10000 ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS before final address assertions: presentation260/0; stack4/0.
+# Presenter painted336 B / effective267 B; caption383/314 B;
+# test_stack painted423 B; presentation suite static1858 B.
+make fxtest-headless BUILD_DIR=build/move-text/regression FXTEST_INOS=tst/fxdatatest/test_battlepresentation.ino FXTEST_MS=10000 ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# Expected FAIL with width32 cap temporarily restored:229 passed/13 failed.
+# Removed cap again; regression proves coverage detects incorrect label pixels.
+make gen
+# PASS; only expected tracked generated change is src/fxdata.h.
+make test-pack-parity
+# PASS: layout equivalence, negative perturbation diagnostic, packed SHA256
+# c4bdcce2309064a2fbc56274f5a3ecf58a29d110ffa81ef0108dbbf91cf229e8.
+git diff --check
+# PASS.
+```
+
+Initial new fixture failed16 label checks because an automatic local PROGMEM
+string is not placed in flash by AVR-GCC. Moved it to namespace scope;242/0
+passed, then expanded renamed/empty coverage to260/0. These fixture failures
+were separate from the deliberate width-cap regression. Worker investigation,
+implementation and focused checks approximately8 minutes; no manual visual
+check requested or required.
+
+```text
+make final-gate BUILD_DIR=build/move-text/final FXTEST_MS=10000 ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS: host157376/0, world190/0, VM42/0; generated checks and all27 FX suites.
+# Presentation268/0, session63/0, stack4/0; presenter338 painted/269 effective,
+# caption383/314, session442/373, arena callback238 effective, stack423 painted.
+# Shipping flash27482 B (-132 from jp8.3.22), static1787 B (unchanged), free773 B.
+# Logs: build/move-text/final/final-gate/{check,ram}.log.
+git diff --check
+# PASS; generation left only the expected src/fxdata.h address changes.
+```
+
+Full gate approximately5 minutes; final review/report/close/commit approximately
+1 minute. The deliberate restored-cap failure and initial fixture failure are
+documented above; the settled final gate passed on its first run. Bead closed
+and completed changes committed after the gate; no push performed.
