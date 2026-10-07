@@ -129,23 +129,7 @@ Modifier attackEffectiveness(const Combatant &attacker,
          static_cast<uint8_t>(defenderType2) >= TypeCount)) {
         return Modifier::Same;
     }
-    Modifier modifier = getModifier(moveType, defender.types);
-
-    modifier = combineModifier(modifier,
-                               typeEffectPairModifier(attacker.status.effects[0],
-                                                     attacker.status.effects[1],
-                                                     attacker.types));
-
-    modifier = combineModifier(
-        modifier,
-        inverseModifier(typeEffectPairModifier(defender.status.effects[0],
-                                               defender.status.effects[1],
-                                               defender.types)));
-
-    if (attacker.types.hasType(moveType)) {
-        modifier = combineModifier(modifier, Modifier::Double);
-    }
-    return modifier;
+    return attackModifier(attacker, defender, moveType);
 }
 
 bool appendFact(ActionResult &out, const Consequence &fact)

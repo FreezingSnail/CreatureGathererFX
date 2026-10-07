@@ -35,21 +35,6 @@ bool validTableType(Type type)
     return type == Type::NONE || static_cast<uint8_t>(type) < TypeCount;
 }
 
-Modifier typeStatusModifier(const Combatant &attacker,
-                            const Combatant &defender)
-{
-    const Modifier attackerModifier =
-        typeEffectPairModifier(attacker.status.effects[0],
-                               attacker.status.effects[1], attacker.types);
-
-    const Modifier defenderModifier =
-        inverseModifier(typeEffectPairModifier(defender.status.effects[0],
-                                               defender.status.effects[1],
-                                               defender.types));
-
-    return combineModifier(attackerModifier, defenderModifier);
-}
-
 uint16_t applyDamageModifier(uint16_t value, Modifier modifier)
 {
     // Caller has already rejected immunity; remaining modifiers encode shifts -2..2.
@@ -67,6 +52,26 @@ uint16_t applyStage(uint16_t value, int8_t stage)
     const uint32_t scaled =
         (static_cast<uint32_t>(value) * scale.numerator) / scale.denominator;
     return scaled > 0xffffU ? 0xffffU : static_cast<uint16_t>(scaled);
+}
+
+Modifier attackModifier(const Combatant &attacker, const Combatant &defender,
+                        Type moveType)
+{
+    const Modifier attackerModifier =
+        typeEffectPairModifier(attacker.status.effects[0],
+                               attacker.status.effects[1], attacker.types);
+    const Modifier defenderModifier =
+        inverseModifier(typeEffectPairModifier(defender.status.effects[0],
+                                               defender.status.effects[1],
+                                               defender.types));
+    const Modifier statusModifier =
+        combineModifier(attackerModifier, defenderModifier);
+    Modifier modifier = getModifier(moveType, defender.types);
+    modifier = combineModifier(modifier, statusModifier);
+    if (attacker.types.hasType(moveType)) {
+        modifier = combineModifier(modifier, Modifier::Double);
+    }
+    return modifier;
 }
 
 uint8_t computeDamage(const Combatant &attacker, const Combatant &defender,
@@ -119,11 +124,7 @@ uint8_t computeDamage(const Combatant &attacker, const Combatant &defender,
         return 0;
     }
 
-    Modifier modifier = getModifier(moveType, defender.types);
-    modifier = combineModifier(modifier, typeStatusModifier(attacker, defender));
-    if (attacker.types.hasType(moveType)) {
-        modifier = combineModifier(modifier, Modifier::Double);
-    }
+    const Modifier modifier = attackModifier(attacker, defender, moveType);
     if (modifier == Modifier::None) {
         return 0;
     }
