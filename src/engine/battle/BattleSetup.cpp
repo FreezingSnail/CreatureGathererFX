@@ -12,7 +12,11 @@ namespace battle {
 namespace {
 
 constexpr uint8_t EMPTY_MOVE = 255;
+#ifdef CGFX_TRAINER_DEMO_EXPANSION
+constexpr uint8_t SPECIES_COUNT = 64;
+#else
 constexpr uint8_t SPECIES_COUNT = 32;
+#endif
 
 void clearCombatant(Combatant &combatant)
 {
@@ -73,9 +77,35 @@ void loadSpecies(Creature &creature, uint8_t id, uint8_t level)
     creature.statMods.clearModifiers();
 }
 
-void loadTrainerCreature(Creature &creature, const CreatureSeed &seed)
+uint8_t trainerSpeciesForSlot(uint8_t slot, uint8_t sourceSpecies)
 {
+#ifdef CGFX_TRAINER_DEMO_EXPANSION
+    static const uint8_t expansionSpecies[3] = {33, 56, 63};
+    return slot < 3 ? expansionSpecies[slot] : sourceSpecies;
+#else
+    static_cast<void>(slot);
+    return sourceSpecies;
+#endif
+}
+
+void loadTrainerCreature(Creature &creature, const CreatureSeed &seed,
+                        uint8_t partySlot)
+{
+#ifdef CGFX_TRAINER_DEMO_EXPANSION
+    const uint8_t species = trainerSpeciesForSlot(partySlot, seed.id);
+    if (species != seed.id) {
+        const CreatureData_t data = getCreatureFromStore(species);
+        creature.id = data.id;
+        creature.level = seed.lvl;
+        creature.loadTypes(data);
+        creature.setStats(data);
+        creature.loadMoves(data);
+    } else {
+        creature.loadFromOpponentSeed(seed);
+    }
+#else
     creature.loadFromOpponentSeed(seed);
+#endif
     creature.status.clearEffects();
     creature.statMods.clearModifiers();
 }
@@ -184,7 +214,7 @@ uint8_t fillTrainer(BattleState &state, const OpponentSeed &seed, uint8_t count)
     for (uint8_t slot = 0; slot < count; ++slot) {
         Creature creature;
         const CreatureSeed &authored = trainerSeed(seed, slot);
-        loadTrainerCreature(creature, authored);
+        loadTrainerCreature(creature, authored, slot);
         reads = static_cast<uint8_t>(reads + trainerCreatureReads(authored));
         if (slot == 0) {
             copyCreature(state.active[static_cast<uint8_t>(Side::Opponent)],
@@ -273,11 +303,12 @@ bool loadIncoming(const BattleState &state, Side side, uint8_t originalSlot,
     if (side == Side::Opponent && state.trainer) {
         const OpponentSeed trainer = readOpponentSeed(state.trainerId);
         const CreatureSeed &authored = trainerSeed(trainer, originalSlot);
-        if (!validCreatureSeed(authored) || authored.id != slot.id ||
+        if (!validCreatureSeed(authored) ||
+            trainerSpeciesForSlot(originalSlot, authored.id) != slot.id ||
             authored.lvl != slot.level) {
             return false;
         }
-        loadTrainerCreature(creature, authored);
+        loadTrainerCreature(creature, authored, originalSlot);
         reads = static_cast<uint8_t>(2 + trainerCreatureReads(authored));
         copyCreature(incoming, creature, slot.hp);
         return true;

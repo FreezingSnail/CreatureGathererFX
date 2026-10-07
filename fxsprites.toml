@@ -47,4 +47,5 @@ order = [
   "lureType0", "lureType1", "lureType2", "lureType3", "lureType4", "lureType5", "lureType6", "lureType7",
   "consumable0", "consumable1", "consumable2", "consumable3", "consumable4", "consumable5", "consumable6", "consumable7",
   "arenaChooseTeam", "arenaChooseOpponent", "arenaControls",
+  "creature32", "creature33", "creature34", "creature35", "creature36", "creature37", "creature38", "creature39", "creature40", "creature41", "creature42", "creature43", "creature44", "creature45", "creature46", "creature47", "creature48", "creature49", "creature50", "creature51", "creature52", "creature53", "creature54", "creature55", "creature56", "creature57", "creature58", "creature59", "creature60", "creature61", "creature62", "creature63"
 ]

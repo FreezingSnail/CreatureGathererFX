@@ -165,7 +165,7 @@ inline void render(const battle::BattlePresenter &presenter,
 inline void switchedSprites(FxTest &test) {
     const uint8_t playerBefore = pgm_read_byte(&creatureFixtures->id);
     const uint8_t opponentBefore = pgm_read_byte(
-        &(creatureFixtures[creatureFixtureCount - 1].id));
+        &(creatureFixtures[31].id));
     test.expectEq(playerBefore != opponentBefore, true,
                   F("switch fixture uses distinct creatures"));
 
@@ -285,7 +285,7 @@ inline void feedbackCategories(FxTest &test) {
     ActionResult result{};
     BattlePresenter presenter;
     const uint8_t first = pgm_read_byte(&creatureFixtures->id);
-    const uint8_t last = pgm_read_byte(&(creatureFixtures[creatureFixtureCount - 1].id));
+    const uint8_t last = pgm_read_byte(&(creatureFixtures[31].id));
 
     resetActionResult(result);
     result.kind = ResultKind::Switch;

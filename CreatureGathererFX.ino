@@ -106,6 +106,10 @@ void setup() {
     battle::applyPlayerPreset(player, BattlePresets::utility);
     const BattlePresets::Preset preset =
         BattlePresets::copyPreset(BattlePresets::utility);
+#elif defined(CGFX_TRAINER_DEMO_EXPANSION)
+    battle::applyPlayerPreset(player, BattlePresets::opening);
+    const BattlePresets::Preset preset =
+        BattlePresets::copyPreset(BattlePresets::opening);
 #elif defined(CGFX_TRAINER_DEMO_SWITCH_DRILL)
     battle::applyPlayerPreset(player, BattlePresets::switch_drill);
     const BattlePresets::Preset preset =

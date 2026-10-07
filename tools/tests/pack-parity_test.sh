@@ -17,7 +17,8 @@ perturbed_layout=$fixtures/fxlayout-expand-20-perturbed.toml
 # Arena demo appends 3 player records, 5 opponent previews, and 8 paired labels.
 # Arena UI appends three fixed bitmap labels after the existing text symbols.
 # Battle labels follow the four authored burst renames (five extra pixels each).
-expected=c4bdcce2309064a2fbc56274f5a3ecf58a29d110ffa81ef0108dbbf91cf229e8
+# Expansion roster adds 32 creature rows, names, and paired sprite frames.
+expected=dd560eb66447e015a368d777e8ee994891c6b5d74c2a6b1f2754b08e153a56a0
 
 for layout in "$old_layout" "$new_layout" "$perturbed_layout"; do
     test -f "$layout" || {
@@ -25,8 +26,8 @@ for layout in "$old_layout" "$new_layout" "$perturbed_layout"; do
         exit 2
     }
 done
-test "$(grep -c '^\[\[entry\]\]' "$old_layout")" -eq 317 || {
-    printf 'layout equivalence: old fixture must contain 317 entries\n' >&2
+test "$(grep -c '^\[\[entry\]\]' "$old_layout")" -eq 381 || {
+    printf 'layout equivalence: old fixture must contain 381 entries\n' >&2
     exit 2
 }
 test "$(grep -c '^\[\[entry\]\]' "$new_layout")" -eq 20 || {
