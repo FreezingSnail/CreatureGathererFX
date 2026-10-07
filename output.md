@@ -5243,3 +5243,59 @@ git diff --check
 
 Final gate wall time: approximately 5 minutes. Orchestrator report/close/commit
 preparation: approximately 2 minutes. No push performed.
+
+## CreatureGathererFX-886 — battle sharing spike (2026-10-06)
+
+GPT-6-Luna worker measured a canonical chart and paired status helper in separate
+checkpoints. Parent reviewed chart rows, helper grouping, host characterization
+and independently inspected ELF symbols. Production and test changes restored;
+tracked deliverable: docs/battle-sharing-spike.md. Local prototype evidence is in
+build/battle-sharing-spike/reviewed-full.patch and Type.cpp.prototype.
+
+```text
+make ram BUILD_DIR=build/battle-sharing-spike/baseline
+# PASS: 27,894 B flash / 1,787 B static SRAM; two81-byte typeTable symbols.
+make ram BUILD_DIR=build/battle-sharing-spike/table
+# PASS: 27,712 B / 1,787 B; one81-byte chart; -182 B flash from baseline.
+make ram BUILD_DIR=build/battle-sharing-spike/helpers
+# PASS: 27,672 B / 1,787 B; -40 B flash from A; -222 B total.
+make test BUILD_DIR=build/battle-sharing-spike/table-host
+# PASS: host155,553/0; world190/0.
+make test BUILD_DIR=build/battle-sharing-spike/helpers-host
+# PASS: host155,553/0; world190/0.
+make testvm BUILD_DIR=build/battle-sharing-spike/helpers-vm
+# PASS: VM42/0.
+make fxtest-spike BUILD_DIR=build/battle-sharing-spike/helpers-presentation FXTEST_SPIKE_INO=tst/fxdatatest/test_battlepresentation.ino FXTEST_MS=10000 ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS: presentation210/0; stack4/0; painted418 B / effective349 B.
+make fxtest-headless BUILD_DIR=build/battle-sharing-spike/helpers-session FXTEST_INOS=tst/fxdatatest/test_battlesession.ino FXTEST_MS=10000 ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS: session57/0; painted440 B / effective371 B.
+/Users/connorfranc/Library/Arduino15/packages/arduino/tools/avr-gcc/7.3.0-atmel3.6.1-arduino7/bin/avr-nm -S --size-sort -C build/battle-sharing-spike/baseline/CreatureGathererFX.ino.elf
+# Parent: two distinct typeTable symbols of size0x51.
+# Same command for table/helpers: one typeTable of size0x51.
+# Helpers: paired helper LTO symbols share code address0x190c, size0x24.
+```
+
+Failed host compile attempt: characterization used nonexistent addEffect;
+corrected to applyEffect, both checkpoints rerun green. No full gate or simulator
+build was run on prototypes. The implementation bead includes both requirements.
+Research gate below uses restored baseline code.
+
+Characterization confirmed a reachable saturation mismatch:40 damage with
+Quadruple result versus Double damage modifier. Filed bug46z. Reviewed paired
+helper preserves this existing behavior; canonical ordering is a separate fix.
+Filed ecu for production chart/helper implementation with checkpoint measurements
+and permanent tests. No FX/generated/VM/state changes. Prototype worker elapsed
+approximately12 minutes including handoff; parent review/report approximately3
+minutes, partially concurrent. Parent took over restoration/report after measurements.
+
+```text
+make final-gate BUILD_DIR=build/battle-sharing-spike/final FXTEST_MS=10000 ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS on restored sources: host155,550/0; world190/0; VM42/0;
+# generated checks and all27 FX suites PASS; stack420 B;
+# arena start/callback effective reserve238 B; shipping27,894/1,787 B.
+git diff --check
+# PASS; no production/test/generated changes remain.
+```
+
+Final gate approximately5 minutes; report/close/commit preparation approximately2
+additional minutes. Research886 closed after parent review. No push performed.
