@@ -3,6 +3,9 @@
 CreatureGathererFX-dg1, 2026-10-06. The owner asked to run the spike and present
 a mockup after clarifying the black/white-only hardware.
 
+The [subsequent menu refinement](battle-menu-refinement.md) uses chunkier
+letters and arrow/outline selection following further owner feedback.
+
 ![Exact 128x64 logical pixel mockup, enlarged 8x](assets/battle-bw-native-8x.png)
 
 [Native 128x64 PNG](assets/battle-bw-native.png) · [SVG source](assets/battle-bw-native.svg)
