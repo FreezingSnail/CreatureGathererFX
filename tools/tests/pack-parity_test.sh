@@ -16,7 +16,8 @@ perturbed_layout=$fixtures/fxlayout-expand-20-perturbed.toml
 # Runtime/authored matchup chart reconciliation updates the packed lookup table.
 # Arena demo appends 3 player records, 5 opponent previews, and 8 paired labels.
 # Arena UI appends three fixed bitmap labels after the existing text symbols.
-expected=a9f43cfb320c50f7e6834f2947819e58a6e46906f88a25065ae2b20b6c48c610
+# Battle labels follow the four authored burst renames (five extra pixels each).
+expected=c4bdcce2309064a2fbc56274f5a3ecf58a29d110ffa81ef0108dbbf91cf229e8
 
 for layout in "$old_layout" "$new_layout" "$perturbed_layout"; do
     test -f "$layout" || {
