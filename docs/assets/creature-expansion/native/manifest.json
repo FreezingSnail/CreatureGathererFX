@@ -1,0 +1,2313 @@
+{
+  "method": "imagegen atlas cleanup; area coverage sampling; binary RGB/alpha",
+  "sizes": [
+    32,
+    48
+  ],
+  "sprites": [
+    {
+      "conceptId": 32,
+      "name": "NibWeevil",
+      "view": "front",
+      "size": 32,
+      "file": "32x32/32-nibweevil-front_32x32.png",
+      "sourceAtlas": "atlas-1.png",
+      "crop": {
+        "x": 36,
+        "y": 97,
+        "width": 252,
+        "height": 208
+      },
+      "pairExtent": 252,
+      "opaque": 530,
+      "transparent": 494,
+      "white": 229
+    },
+    {
+      "conceptId": 32,
+      "name": "NibWeevil",
+      "view": "back",
+      "size": 32,
+      "file": "32x32/32-nibweevil-back_32x32.png",
+      "sourceAtlas": "atlas-1.png",
+      "crop": {
+        "x": 366,
+        "y": 99,
+        "width": 230,
+        "height": 209
+      },
+      "pairExtent": 252,
+      "opaque": 472,
+      "transparent": 552,
+      "white": 233
+    },
+    {
+      "conceptId": 32,
+      "name": "NibWeevil",
+      "view": "front",
+      "size": 48,
+      "file": "48x48/32-nibweevil-front_48x48.png",
+      "sourceAtlas": "atlas-1.png",
+      "crop": {
+        "x": 36,
+        "y": 97,
+        "width": 252,
+        "height": 208
+      },
+      "pairExtent": 252,
+      "opaque": 1194,
+      "transparent": 1110,
+      "white": 546
+    },
+    {
+      "conceptId": 32,
+      "name": "NibWeevil",
+      "view": "back",
+      "size": 48,
+      "file": "48x48/32-nibweevil-back_48x48.png",
+      "sourceAtlas": "atlas-1.png",
+      "crop": {
+        "x": 366,
+        "y": 99,
+        "width": 230,
+        "height": 209
+      },
+      "pairExtent": 252,
+      "opaque": 1028,
+      "transparent": 1276,
+      "white": 505
+    },
+    {
+      "conceptId": 33,
+      "name": "HuskWeevil",
+      "view": "front",
+      "size": 32,
+      "file": "32x32/33-huskweevil-front_32x32.png",
+      "sourceAtlas": "atlas-1.png",
+      "crop": {
+        "x": 631,
+        "y": 38,
+        "width": 298,
+        "height": 271
+      },
+      "pairExtent": 298,
+      "opaque": 591,
+      "transparent": 433,
+      "white": 287
+    },
+    {
+      "conceptId": 33,
+      "name": "HuskWeevil",
+      "view": "back",
+      "size": 32,
+      "file": "32x32/33-huskweevil-back_32x32.png",
+      "sourceAtlas": "atlas-1.png",
+      "crop": {
+        "x": 975,
+        "y": 44,
+        "width": 251,
+        "height": 265
+      },
+      "pairExtent": 298,
+      "opaque": 519,
+      "transparent": 505,
+      "white": 234
+    },
+    {
+      "conceptId": 33,
+      "name": "HuskWeevil",
+      "view": "front",
+      "size": 48,
+      "file": "48x48/33-huskweevil-front_48x48.png",
+      "sourceAtlas": "atlas-1.png",
+      "crop": {
+        "x": 631,
+        "y": 38,
+        "width": 298,
+        "height": 271
+      },
+      "pairExtent": 298,
+      "opaque": 1326,
+      "transparent": 978,
+      "white": 652
+    },
+    {
+      "conceptId": 33,
+      "name": "HuskWeevil",
+      "view": "back",
+      "size": 48,
+      "file": "48x48/33-huskweevil-back_48x48.png",
+      "sourceAtlas": "atlas-1.png",
+      "crop": {
+        "x": 975,
+        "y": 44,
+        "width": 251,
+        "height": 265
+      },
+      "pairExtent": 298,
+      "opaque": 1110,
+      "transparent": 1194,
+      "white": 534
+    },
+    {
+      "conceptId": 34,
+      "name": "GranaryWeevil",
+      "view": "front",
+      "size": 32,
+      "file": "32x32/34-granaryweevil-front_32x32.png",
+      "sourceAtlas": "atlas-1.png",
+      "crop": {
+        "x": 23,
+        "y": 346,
+        "width": 286,
+        "height": 271
+      },
+      "pairExtent": 286,
+      "opaque": 604,
+      "transparent": 420,
+      "white": 301
+    },
+    {
+      "conceptId": 34,
+      "name": "GranaryWeevil",
+      "view": "back",
+      "size": 32,
+      "file": "32x32/34-granaryweevil-back_32x32.png",
+      "sourceAtlas": "atlas-1.png",
+      "crop": {
+        "x": 342,
+        "y": 354,
+        "width": 281,
+        "height": 263
+      },
+      "pairExtent": 286,
+      "opaque": 606,
+      "transparent": 418,
+      "white": 328
+    },
+    {
+      "conceptId": 34,
+      "name": "GranaryWeevil",
+      "view": "front",
+      "size": 48,
+      "file": "48x48/34-granaryweevil-front_48x48.png",
+      "sourceAtlas": "atlas-1.png",
+      "crop": {
+        "x": 23,
+        "y": 346,
+        "width": 286,
+        "height": 271
+      },
+      "pairExtent": 286,
+      "opaque": 1321,
+      "transparent": 983,
+      "white": 669
+    },
+    {
+      "conceptId": 34,
+      "name": "GranaryWeevil",
+      "view": "back",
+      "size": 48,
+      "file": "48x48/34-granaryweevil-back_48x48.png",
+      "sourceAtlas": "atlas-1.png",
+      "crop": {
+        "x": 342,
+        "y": 354,
+        "width": 281,
+        "height": 263
+      },
+      "pairExtent": 286,
+      "opaque": 1299,
+      "transparent": 1005,
+      "white": 701
+    },
+    {
+      "conceptId": 35,
+      "name": "DewBud",
+      "view": "front",
+      "size": 32,
+      "file": "32x32/35-dewbud-front_32x32.png",
+      "sourceAtlas": "atlas-1.png",
+      "crop": {
+        "x": 685,
+        "y": 353,
+        "width": 225,
+        "height": 279
+      },
+      "pairExtent": 279,
+      "opaque": 459,
+      "transparent": 565,
+      "white": 209
+    },
+    {
+      "conceptId": 35,
+      "name": "DewBud",
+      "view": "back",
+      "size": 32,
+      "file": "32x32/35-dewbud-back_32x32.png",
+      "sourceAtlas": "atlas-1.png",
+      "crop": {
+        "x": 979,
+        "y": 358,
+        "width": 221,
+        "height": 274
+      },
+      "pairExtent": 279,
+      "opaque": 421,
+      "transparent": 603,
+      "white": 201
+    },
+    {
+      "conceptId": 35,
+      "name": "DewBud",
+      "view": "front",
+      "size": 48,
+      "file": "48x48/35-dewbud-front_48x48.png",
+      "sourceAtlas": "atlas-1.png",
+      "crop": {
+        "x": 685,
+        "y": 353,
+        "width": 225,
+        "height": 279
+      },
+      "pairExtent": 279,
+      "opaque": 1003,
+      "transparent": 1301,
+      "white": 467
+    },
+    {
+      "conceptId": 35,
+      "name": "DewBud",
+      "view": "back",
+      "size": 48,
+      "file": "48x48/35-dewbud-back_48x48.png",
+      "sourceAtlas": "atlas-1.png",
+      "crop": {
+        "x": 979,
+        "y": 358,
+        "width": 221,
+        "height": 274
+      },
+      "pairExtent": 279,
+      "opaque": 944,
+      "transparent": 1360,
+      "white": 451
+    },
+    {
+      "conceptId": 36,
+      "name": "NectarBloom",
+      "view": "front",
+      "size": 32,
+      "file": "32x32/36-nectarbloom-front_32x32.png",
+      "sourceAtlas": "atlas-1.png",
+      "crop": {
+        "x": 28,
+        "y": 647,
+        "width": 258,
+        "height": 286
+      },
+      "pairExtent": 293,
+      "opaque": 465,
+      "transparent": 559,
+      "white": 229
+    },
+    {
+      "conceptId": 36,
+      "name": "NectarBloom",
+      "view": "back",
+      "size": 32,
+      "file": "32x32/36-nectarbloom-back_32x32.png",
+      "sourceAtlas": "atlas-1.png",
+      "crop": {
+        "x": 370,
+        "y": 640,
+        "width": 247,
+        "height": 293
+      },
+      "pairExtent": 293,
+      "opaque": 453,
+      "transparent": 571,
+      "white": 218
+    },
+    {
+      "conceptId": 36,
+      "name": "NectarBloom",
+      "view": "front",
+      "size": 48,
+      "file": "48x48/36-nectarbloom-front_48x48.png",
+      "sourceAtlas": "atlas-1.png",
+      "crop": {
+        "x": 28,
+        "y": 647,
+        "width": 258,
+        "height": 286
+      },
+      "pairExtent": 293,
+      "opaque": 1030,
+      "transparent": 1274,
+      "white": 493
+    },
+    {
+      "conceptId": 36,
+      "name": "NectarBloom",
+      "view": "back",
+      "size": 48,
+      "file": "48x48/36-nectarbloom-back_48x48.png",
+      "sourceAtlas": "atlas-1.png",
+      "crop": {
+        "x": 370,
+        "y": 640,
+        "width": 247,
+        "height": 293
+      },
+      "pairExtent": 293,
+      "opaque": 987,
+      "transparent": 1317,
+      "white": 486
+    },
+    {
+      "conceptId": 37,
+      "name": "Sporeling",
+      "view": "front",
+      "size": 32,
+      "file": "32x32/37-sporeling-front_32x32.png",
+      "sourceAtlas": "atlas-1.png",
+      "crop": {
+        "x": 655,
+        "y": 693,
+        "width": 268,
+        "height": 240
+      },
+      "pairExtent": 268,
+      "opaque": 559,
+      "transparent": 465,
+      "white": 263
+    },
+    {
+      "conceptId": 37,
+      "name": "Sporeling",
+      "view": "back",
+      "size": 32,
+      "file": "32x32/37-sporeling-back_32x32.png",
+      "sourceAtlas": "atlas-1.png",
+      "crop": {
+        "x": 963,
+        "y": 689,
+        "width": 263,
+        "height": 240
+      },
+      "pairExtent": 268,
+      "opaque": 536,
+      "transparent": 488,
+      "white": 293
+    },
+    {
+      "conceptId": 37,
+      "name": "Sporeling",
+      "view": "front",
+      "size": 48,
+      "file": "48x48/37-sporeling-front_48x48.png",
+      "sourceAtlas": "atlas-1.png",
+      "crop": {
+        "x": 655,
+        "y": 693,
+        "width": 268,
+        "height": 240
+      },
+      "pairExtent": 268,
+      "opaque": 1251,
+      "transparent": 1053,
+      "white": 603
+    },
+    {
+      "conceptId": 37,
+      "name": "Sporeling",
+      "view": "back",
+      "size": 48,
+      "file": "48x48/37-sporeling-back_48x48.png",
+      "sourceAtlas": "atlas-1.png",
+      "crop": {
+        "x": 963,
+        "y": 689,
+        "width": 263,
+        "height": 240
+      },
+      "pairExtent": 268,
+      "opaque": 1217,
+      "transparent": 1087,
+      "white": 677
+    },
+    {
+      "conceptId": 38,
+      "name": "SporeKeeper",
+      "view": "front",
+      "size": 32,
+      "file": "32x32/38-sporekeeper-front_32x32.png",
+      "sourceAtlas": "atlas-1.png",
+      "crop": {
+        "x": 24,
+        "y": 956,
+        "width": 283,
+        "height": 269
+      },
+      "pairExtent": 283,
+      "opaque": 638,
+      "transparent": 386,
+      "white": 324
+    },
+    {
+      "conceptId": 38,
+      "name": "SporeKeeper",
+      "view": "back",
+      "size": 32,
+      "file": "32x32/38-sporekeeper-back_32x32.png",
+      "sourceAtlas": "atlas-1.png",
+      "crop": {
+        "x": 344,
+        "y": 957,
+        "width": 267,
+        "height": 268
+      },
+      "pairExtent": 283,
+      "opaque": 587,
+      "transparent": 437,
+      "white": 293
+    },
+    {
+      "conceptId": 38,
+      "name": "SporeKeeper",
+      "view": "front",
+      "size": 48,
+      "file": "48x48/38-sporekeeper-front_48x48.png",
+      "sourceAtlas": "atlas-1.png",
+      "crop": {
+        "x": 24,
+        "y": 956,
+        "width": 283,
+        "height": 269
+      },
+      "pairExtent": 283,
+      "opaque": 1400,
+      "transparent": 904,
+      "white": 727
+    },
+    {
+      "conceptId": 38,
+      "name": "SporeKeeper",
+      "view": "back",
+      "size": 48,
+      "file": "48x48/38-sporekeeper-back_48x48.png",
+      "sourceAtlas": "atlas-1.png",
+      "crop": {
+        "x": 344,
+        "y": 957,
+        "width": 267,
+        "height": 268
+      },
+      "pairExtent": 283,
+      "opaque": 1325,
+      "transparent": 979,
+      "white": 705
+    },
+    {
+      "conceptId": 39,
+      "name": "MossMole",
+      "view": "front",
+      "size": 32,
+      "file": "32x32/39-mossmole-front_32x32.png",
+      "sourceAtlas": "atlas-1.png",
+      "crop": {
+        "x": 635,
+        "y": 986,
+        "width": 296,
+        "height": 243
+      },
+      "pairExtent": 296,
+      "opaque": 458,
+      "transparent": 566,
+      "white": 231
+    },
+    {
+      "conceptId": 39,
+      "name": "MossMole",
+      "view": "back",
+      "size": 32,
+      "file": "32x32/39-mossmole-back_32x32.png",
+      "sourceAtlas": "atlas-1.png",
+      "crop": {
+        "x": 959,
+        "y": 978,
+        "width": 272,
+        "height": 247
+      },
+      "pairExtent": 296,
+      "opaque": 435,
+      "transparent": 589,
+      "white": 237
+    },
+    {
+      "conceptId": 39,
+      "name": "MossMole",
+      "view": "front",
+      "size": 48,
+      "file": "48x48/39-mossmole-front_48x48.png",
+      "sourceAtlas": "atlas-1.png",
+      "crop": {
+        "x": 635,
+        "y": 986,
+        "width": 296,
+        "height": 243
+      },
+      "pairExtent": 296,
+      "opaque": 1014,
+      "transparent": 1290,
+      "white": 536
+    },
+    {
+      "conceptId": 39,
+      "name": "MossMole",
+      "view": "back",
+      "size": 48,
+      "file": "48x48/39-mossmole-back_48x48.png",
+      "sourceAtlas": "atlas-1.png",
+      "crop": {
+        "x": 959,
+        "y": 978,
+        "width": 272,
+        "height": 247
+      },
+      "pairExtent": 296,
+      "opaque": 975,
+      "transparent": 1329,
+      "white": 545
+    },
+    {
+      "conceptId": 40,
+      "name": "Conelet",
+      "view": "front",
+      "size": 32,
+      "file": "32x32/40-conelet-front_32x32.png",
+      "sourceAtlas": "atlas-2.png",
+      "crop": {
+        "x": 46,
+        "y": 106,
+        "width": 224,
+        "height": 247
+      },
+      "pairExtent": 258,
+      "opaque": 416,
+      "transparent": 608,
+      "white": 204
+    },
+    {
+      "conceptId": 40,
+      "name": "Conelet",
+      "view": "back",
+      "size": 32,
+      "file": "32x32/40-conelet-back_32x32.png",
+      "sourceAtlas": "atlas-2.png",
+      "crop": {
+        "x": 355,
+        "y": 94,
+        "width": 233,
+        "height": 258
+      },
+      "pairExtent": 258,
+      "opaque": 440,
+      "transparent": 584,
+      "white": 232
+    },
+    {
+      "conceptId": 40,
+      "name": "Conelet",
+      "view": "front",
+      "size": 48,
+      "file": "48x48/40-conelet-front_48x48.png",
+      "sourceAtlas": "atlas-2.png",
+      "crop": {
+        "x": 46,
+        "y": 106,
+        "width": 224,
+        "height": 247
+      },
+      "pairExtent": 258,
+      "opaque": 911,
+      "transparent": 1393,
+      "white": 443
+    },
+    {
+      "conceptId": 40,
+      "name": "Conelet",
+      "view": "back",
+      "size": 48,
+      "file": "48x48/40-conelet-back_48x48.png",
+      "sourceAtlas": "atlas-2.png",
+      "crop": {
+        "x": 355,
+        "y": 94,
+        "width": 233,
+        "height": 258
+      },
+      "pairExtent": 258,
+      "opaque": 987,
+      "transparent": 1317,
+      "white": 530
+    },
+    {
+      "conceptId": 41,
+      "name": "SpireSquid",
+      "view": "front",
+      "size": 32,
+      "file": "32x32/41-spiresquid-front_32x32.png",
+      "sourceAtlas": "atlas-2.png",
+      "crop": {
+        "x": 645,
+        "y": 38,
+        "width": 268,
+        "height": 314
+      },
+      "pairExtent": 316,
+      "opaque": 385,
+      "transparent": 639,
+      "white": 189
+    },
+    {
+      "conceptId": 41,
+      "name": "SpireSquid",
+      "view": "back",
+      "size": 32,
+      "file": "32x32/41-spiresquid-back_32x32.png",
+      "sourceAtlas": "atlas-2.png",
+      "crop": {
+        "x": 961,
+        "y": 36,
+        "width": 258,
+        "height": 316
+      },
+      "pairExtent": 316,
+      "opaque": 373,
+      "transparent": 651,
+      "white": 196
+    },
+    {
+      "conceptId": 41,
+      "name": "SpireSquid",
+      "view": "front",
+      "size": 48,
+      "file": "48x48/41-spiresquid-front_48x48.png",
+      "sourceAtlas": "atlas-2.png",
+      "crop": {
+        "x": 645,
+        "y": 38,
+        "width": 268,
+        "height": 314
+      },
+      "pairExtent": 316,
+      "opaque": 854,
+      "transparent": 1450,
+      "white": 440
+    },
+    {
+      "conceptId": 41,
+      "name": "SpireSquid",
+      "view": "back",
+      "size": 48,
+      "file": "48x48/41-spiresquid-back_48x48.png",
+      "sourceAtlas": "atlas-2.png",
+      "crop": {
+        "x": 961,
+        "y": 36,
+        "width": 258,
+        "height": 316
+      },
+      "pairExtent": 316,
+      "opaque": 815,
+      "transparent": 1489,
+      "white": 458
+    },
+    {
+      "conceptId": 42,
+      "name": "Horseshoe",
+      "view": "front",
+      "size": 32,
+      "file": "32x32/42-horseshoe-front_32x32.png",
+      "sourceAtlas": "atlas-2.png",
+      "crop": {
+        "x": 30,
+        "y": 421,
+        "width": 256,
+        "height": 242
+      },
+      "pairExtent": 256,
+      "opaque": 456,
+      "transparent": 568,
+      "white": 229
+    },
+    {
+      "conceptId": 42,
+      "name": "Horseshoe",
+      "view": "back",
+      "size": 32,
+      "file": "32x32/42-horseshoe-back_32x32.png",
+      "sourceAtlas": "atlas-2.png",
+      "crop": {
+        "x": 342,
+        "y": 411,
+        "width": 250,
+        "height": 252
+      },
+      "pairExtent": 256,
+      "opaque": 481,
+      "transparent": 543,
+      "white": 254
+    },
+    {
+      "conceptId": 42,
+      "name": "Horseshoe",
+      "view": "front",
+      "size": 48,
+      "file": "48x48/42-horseshoe-front_48x48.png",
+      "sourceAtlas": "atlas-2.png",
+      "crop": {
+        "x": 30,
+        "y": 421,
+        "width": 256,
+        "height": 242
+      },
+      "pairExtent": 256,
+      "opaque": 1031,
+      "transparent": 1273,
+      "white": 520
+    },
+    {
+      "conceptId": 42,
+      "name": "Horseshoe",
+      "view": "back",
+      "size": 48,
+      "file": "48x48/42-horseshoe-back_48x48.png",
+      "sourceAtlas": "atlas-2.png",
+      "crop": {
+        "x": 342,
+        "y": 411,
+        "width": 250,
+        "height": 252
+      },
+      "pairExtent": 256,
+      "opaque": 1054,
+      "transparent": 1250,
+      "white": 580
+    },
+    {
+      "conceptId": 43,
+      "name": "Shieldshoe",
+      "view": "front",
+      "size": 32,
+      "file": "32x32/43-shieldshoe-front_32x32.png",
+      "sourceAtlas": "atlas-2.png",
+      "crop": {
+        "x": 635,
+        "y": 374,
+        "width": 288,
+        "height": 294
+      },
+      "pairExtent": 294,
+      "opaque": 475,
+      "transparent": 549,
+      "white": 238
+    },
+    {
+      "conceptId": 43,
+      "name": "Shieldshoe",
+      "view": "back",
+      "size": 32,
+      "file": "32x32/43-shieldshoe-back_32x32.png",
+      "sourceAtlas": "atlas-2.png",
+      "crop": {
+        "x": 951,
+        "y": 379,
+        "width": 282,
+        "height": 289
+      },
+      "pairExtent": 294,
+      "opaque": 474,
+      "transparent": 550,
+      "white": 237
+    },
+    {
+      "conceptId": 43,
+      "name": "Shieldshoe",
+      "view": "front",
+      "size": 48,
+      "file": "48x48/43-shieldshoe-front_48x48.png",
+      "sourceAtlas": "atlas-2.png",
+      "crop": {
+        "x": 635,
+        "y": 374,
+        "width": 288,
+        "height": 294
+      },
+      "pairExtent": 294,
+      "opaque": 1078,
+      "transparent": 1226,
+      "white": 564
+    },
+    {
+      "conceptId": 43,
+      "name": "Shieldshoe",
+      "view": "back",
+      "size": 48,
+      "file": "48x48/43-shieldshoe-back_48x48.png",
+      "sourceAtlas": "atlas-2.png",
+      "crop": {
+        "x": 951,
+        "y": 379,
+        "width": 282,
+        "height": 289
+      },
+      "pairExtent": 294,
+      "opaque": 1011,
+      "transparent": 1293,
+      "white": 536
+    },
+    {
+      "conceptId": 44,
+      "name": "SiltSkorp",
+      "view": "front",
+      "size": 32,
+      "file": "32x32/44-siltskorp-front_32x32.png",
+      "sourceAtlas": "atlas-2.png",
+      "crop": {
+        "x": 38,
+        "y": 716,
+        "width": 244,
+        "height": 266
+      },
+      "pairExtent": 266,
+      "opaque": 449,
+      "transparent": 575,
+      "white": 196
+    },
+    {
+      "conceptId": 44,
+      "name": "SiltSkorp",
+      "view": "back",
+      "size": 32,
+      "file": "32x32/44-siltskorp-back_32x32.png",
+      "sourceAtlas": "atlas-2.png",
+      "crop": {
+        "x": 343,
+        "y": 716,
+        "width": 249,
+        "height": 260
+      },
+      "pairExtent": 266,
+      "opaque": 429,
+      "transparent": 595,
+      "white": 185
+    },
+    {
+      "conceptId": 44,
+      "name": "SiltSkorp",
+      "view": "front",
+      "size": 48,
+      "file": "48x48/44-siltskorp-front_48x48.png",
+      "sourceAtlas": "atlas-2.png",
+      "crop": {
+        "x": 38,
+        "y": 716,
+        "width": 244,
+        "height": 266
+      },
+      "pairExtent": 266,
+      "opaque": 996,
+      "transparent": 1308,
+      "white": 450
+    },
+    {
+      "conceptId": 44,
+      "name": "SiltSkorp",
+      "view": "back",
+      "size": 48,
+      "file": "48x48/44-siltskorp-back_48x48.png",
+      "sourceAtlas": "atlas-2.png",
+      "crop": {
+        "x": 343,
+        "y": 716,
+        "width": 249,
+        "height": 260
+      },
+      "pairExtent": 266,
+      "opaque": 949,
+      "transparent": 1355,
+      "white": 424
+    },
+    {
+      "conceptId": 45,
+      "name": "ReefReaper",
+      "view": "front",
+      "size": 32,
+      "file": "32x32/45-reefreaper-front_32x32.png",
+      "sourceAtlas": "atlas-2.png",
+      "crop": {
+        "x": 643,
+        "y": 687,
+        "width": 275,
+        "height": 296
+      },
+      "pairExtent": 296,
+      "opaque": 487,
+      "transparent": 537,
+      "white": 208
+    },
+    {
+      "conceptId": 45,
+      "name": "ReefReaper",
+      "view": "back",
+      "size": 32,
+      "file": "32x32/45-reefreaper-back_32x32.png",
+      "sourceAtlas": "atlas-2.png",
+      "crop": {
+        "x": 973,
+        "y": 687,
+        "width": 259,
+        "height": 295
+      },
+      "pairExtent": 296,
+      "opaque": 485,
+      "transparent": 539,
+      "white": 227
+    },
+    {
+      "conceptId": 45,
+      "name": "ReefReaper",
+      "view": "front",
+      "size": 48,
+      "file": "48x48/45-reefreaper-front_48x48.png",
+      "sourceAtlas": "atlas-2.png",
+      "crop": {
+        "x": 643,
+        "y": 687,
+        "width": 275,
+        "height": 296
+      },
+      "pairExtent": 296,
+      "opaque": 1083,
+      "transparent": 1221,
+      "white": 510
+    },
+    {
+      "conceptId": 45,
+      "name": "ReefReaper",
+      "view": "back",
+      "size": 48,
+      "file": "48x48/45-reefreaper-back_48x48.png",
+      "sourceAtlas": "atlas-2.png",
+      "crop": {
+        "x": 973,
+        "y": 687,
+        "width": 259,
+        "height": 295
+      },
+      "pairExtent": 296,
+      "opaque": 1063,
+      "transparent": 1241,
+      "white": 517
+    },
+    {
+      "conceptId": 46,
+      "name": "Platefin",
+      "view": "front",
+      "size": 32,
+      "file": "32x32/46-platefin-front_32x32.png",
+      "sourceAtlas": "atlas-2.png",
+      "crop": {
+        "x": 22,
+        "y": 1014,
+        "width": 274,
+        "height": 223
+      },
+      "pairExtent": 274,
+      "opaque": 471,
+      "transparent": 553,
+      "white": 247
+    },
+    {
+      "conceptId": 46,
+      "name": "Platefin",
+      "view": "back",
+      "size": 32,
+      "file": "32x32/46-platefin-back_32x32.png",
+      "sourceAtlas": "atlas-2.png",
+      "crop": {
+        "x": 335,
+        "y": 1007,
+        "width": 254,
+        "height": 230
+      },
+      "pairExtent": 274,
+      "opaque": 451,
+      "transparent": 573,
+      "white": 240
+    },
+    {
+      "conceptId": 46,
+      "name": "Platefin",
+      "view": "front",
+      "size": 48,
+      "file": "48x48/46-platefin-front_48x48.png",
+      "sourceAtlas": "atlas-2.png",
+      "crop": {
+        "x": 22,
+        "y": 1014,
+        "width": 274,
+        "height": 223
+      },
+      "pairExtent": 274,
+      "opaque": 1039,
+      "transparent": 1265,
+      "white": 568
+    },
+    {
+      "conceptId": 46,
+      "name": "Platefin",
+      "view": "back",
+      "size": 48,
+      "file": "48x48/46-platefin-back_48x48.png",
+      "sourceAtlas": "atlas-2.png",
+      "crop": {
+        "x": 335,
+        "y": 1007,
+        "width": 254,
+        "height": 230
+      },
+      "pairExtent": 274,
+      "opaque": 996,
+      "transparent": 1308,
+      "white": 521
+    },
+    {
+      "conceptId": 47,
+      "name": "AncientJaw",
+      "view": "front",
+      "size": 32,
+      "file": "32x32/47-ancientjaw-front_32x32.png",
+      "sourceAtlas": "atlas-2.png",
+      "crop": {
+        "x": 622,
+        "y": 998,
+        "width": 337,
+        "height": 239
+      },
+      "pairExtent": 337,
+      "opaque": 434,
+      "transparent": 590,
+      "white": 241
+    },
+    {
+      "conceptId": 47,
+      "name": "AncientJaw",
+      "view": "back",
+      "size": 32,
+      "file": "32x32/47-ancientjaw-back_32x32.png",
+      "sourceAtlas": "atlas-2.png",
+      "crop": {
+        "x": 973,
+        "y": 996,
+        "width": 259,
+        "height": 241
+      },
+      "pairExtent": 337,
+      "opaque": 329,
+      "transparent": 695,
+      "white": 184
+    },
+    {
+      "conceptId": 47,
+      "name": "AncientJaw",
+      "view": "front",
+      "size": 48,
+      "file": "48x48/47-ancientjaw-front_48x48.png",
+      "sourceAtlas": "atlas-2.png",
+      "crop": {
+        "x": 622,
+        "y": 998,
+        "width": 337,
+        "height": 239
+      },
+      "pairExtent": 337,
+      "opaque": 969,
+      "transparent": 1335,
+      "white": 516
+    },
+    {
+      "conceptId": 47,
+      "name": "AncientJaw",
+      "view": "back",
+      "size": 48,
+      "file": "48x48/47-ancientjaw-back_48x48.png",
+      "sourceAtlas": "atlas-2.png",
+      "crop": {
+        "x": 973,
+        "y": 996,
+        "width": 259,
+        "height": 241
+      },
+      "pairExtent": 337,
+      "opaque": 705,
+      "transparent": 1599,
+      "white": 373
+    },
+    {
+      "conceptId": 48,
+      "name": "CoalGrub",
+      "view": "front",
+      "size": 32,
+      "file": "32x32/48-coalgrub-front_32x32.png",
+      "sourceAtlas": "atlas-3.png",
+      "crop": {
+        "x": 29,
+        "y": 96,
+        "width": 289,
+        "height": 226
+      },
+      "pairExtent": 289,
+      "opaque": 483,
+      "transparent": 541,
+      "white": 159
+    },
+    {
+      "conceptId": 48,
+      "name": "CoalGrub",
+      "view": "back",
+      "size": 32,
+      "file": "32x32/48-coalgrub-back_32x32.png",
+      "sourceAtlas": "atlas-3.png",
+      "crop": {
+        "x": 343,
+        "y": 96,
+        "width": 261,
+        "height": 226
+      },
+      "pairExtent": 289,
+      "opaque": 406,
+      "transparent": 618,
+      "white": 123
+    },
+    {
+      "conceptId": 48,
+      "name": "CoalGrub",
+      "view": "front",
+      "size": 48,
+      "file": "48x48/48-coalgrub-front_48x48.png",
+      "sourceAtlas": "atlas-3.png",
+      "crop": {
+        "x": 29,
+        "y": 96,
+        "width": 289,
+        "height": 226
+      },
+      "pairExtent": 289,
+      "opaque": 1072,
+      "transparent": 1232,
+      "white": 383
+    },
+    {
+      "conceptId": 48,
+      "name": "CoalGrub",
+      "view": "back",
+      "size": 48,
+      "file": "48x48/48-coalgrub-back_48x48.png",
+      "sourceAtlas": "atlas-3.png",
+      "crop": {
+        "x": 343,
+        "y": 96,
+        "width": 261,
+        "height": 226
+      },
+      "pairExtent": 289,
+      "opaque": 914,
+      "transparent": 1390,
+      "white": 304
+    },
+    {
+      "conceptId": 49,
+      "name": "CinderCocoon",
+      "view": "front",
+      "size": 32,
+      "file": "32x32/49-cindercocoon-front_32x32.png",
+      "sourceAtlas": "atlas-3.png",
+      "crop": {
+        "x": 656,
+        "y": 30,
+        "width": 228,
+        "height": 293
+      },
+      "pairExtent": 293,
+      "opaque": 439,
+      "transparent": 585,
+      "white": 165
+    },
+    {
+      "conceptId": 49,
+      "name": "CinderCocoon",
+      "view": "back",
+      "size": 32,
+      "file": "32x32/49-cindercocoon-back_32x32.png",
+      "sourceAtlas": "atlas-3.png",
+      "crop": {
+        "x": 995,
+        "y": 54,
+        "width": 229,
+        "height": 269
+      },
+      "pairExtent": 293,
+      "opaque": 415,
+      "transparent": 609,
+      "white": 146
+    },
+    {
+      "conceptId": 49,
+      "name": "CinderCocoon",
+      "view": "front",
+      "size": 48,
+      "file": "48x48/49-cindercocoon-front_48x48.png",
+      "sourceAtlas": "atlas-3.png",
+      "crop": {
+        "x": 656,
+        "y": 30,
+        "width": 228,
+        "height": 293
+      },
+      "pairExtent": 293,
+      "opaque": 965,
+      "transparent": 1339,
+      "white": 393
+    },
+    {
+      "conceptId": 49,
+      "name": "CinderCocoon",
+      "view": "back",
+      "size": 48,
+      "file": "48x48/49-cindercocoon-back_48x48.png",
+      "sourceAtlas": "atlas-3.png",
+      "crop": {
+        "x": 995,
+        "y": 54,
+        "width": 229,
+        "height": 269
+      },
+      "pairExtent": 293,
+      "opaque": 928,
+      "transparent": 1376,
+      "white": 339
+    },
+    {
+      "conceptId": 50,
+      "name": "FurnaceBeetle",
+      "view": "front",
+      "size": 32,
+      "file": "32x32/50-furnacebeetle-front_32x32.png",
+      "sourceAtlas": "atlas-3.png",
+      "crop": {
+        "x": 26,
+        "y": 345,
+        "width": 293,
+        "height": 305
+      },
+      "pairExtent": 305,
+      "opaque": 490,
+      "transparent": 534,
+      "white": 192
+    },
+    {
+      "conceptId": 50,
+      "name": "FurnaceBeetle",
+      "view": "back",
+      "size": 32,
+      "file": "32x32/50-furnacebeetle-back_32x32.png",
+      "sourceAtlas": "atlas-3.png",
+      "crop": {
+        "x": 350,
+        "y": 345,
+        "width": 264,
+        "height": 305
+      },
+      "pairExtent": 305,
+      "opaque": 433,
+      "transparent": 591,
+      "white": 218
+    },
+    {
+      "conceptId": 50,
+      "name": "FurnaceBeetle",
+      "view": "front",
+      "size": 48,
+      "file": "48x48/50-furnacebeetle-front_48x48.png",
+      "sourceAtlas": "atlas-3.png",
+      "crop": {
+        "x": 26,
+        "y": 345,
+        "width": 293,
+        "height": 305
+      },
+      "pairExtent": 305,
+      "opaque": 1075,
+      "transparent": 1229,
+      "white": 458
+    },
+    {
+      "conceptId": 50,
+      "name": "FurnaceBeetle",
+      "view": "back",
+      "size": 48,
+      "file": "48x48/50-furnacebeetle-back_48x48.png",
+      "sourceAtlas": "atlas-3.png",
+      "crop": {
+        "x": 350,
+        "y": 345,
+        "width": 264,
+        "height": 305
+      },
+      "pairExtent": 305,
+      "opaque": 965,
+      "transparent": 1339,
+      "white": 490
+    },
+    {
+      "conceptId": 51,
+      "name": "Flintling",
+      "view": "front",
+      "size": 32,
+      "file": "32x32/51-flintling-front_32x32.png",
+      "sourceAtlas": "atlas-3.png",
+      "crop": {
+        "x": 653,
+        "y": 381,
+        "width": 234,
+        "height": 265
+      },
+      "pairExtent": 265,
+      "opaque": 444,
+      "transparent": 580,
+      "white": 200
+    },
+    {
+      "conceptId": 51,
+      "name": "Flintling",
+      "view": "back",
+      "size": 32,
+      "file": "32x32/51-flintling-back_32x32.png",
+      "sourceAtlas": "atlas-3.png",
+      "crop": {
+        "x": 1000,
+        "y": 390,
+        "width": 224,
+        "height": 256
+      },
+      "pairExtent": 265,
+      "opaque": 419,
+      "transparent": 605,
+      "white": 207
+    },
+    {
+      "conceptId": 51,
+      "name": "Flintling",
+      "view": "front",
+      "size": 48,
+      "file": "48x48/51-flintling-front_48x48.png",
+      "sourceAtlas": "atlas-3.png",
+      "crop": {
+        "x": 653,
+        "y": 381,
+        "width": 234,
+        "height": 265
+      },
+      "pairExtent": 265,
+      "opaque": 975,
+      "transparent": 1329,
+      "white": 471
+    },
+    {
+      "conceptId": 51,
+      "name": "Flintling",
+      "view": "back",
+      "size": 48,
+      "file": "48x48/51-flintling-back_48x48.png",
+      "sourceAtlas": "atlas-3.png",
+      "crop": {
+        "x": 1000,
+        "y": 390,
+        "width": 224,
+        "height": 256
+      },
+      "pairExtent": 265,
+      "opaque": 944,
+      "transparent": 1360,
+      "white": 481
+    },
+    {
+      "conceptId": 52,
+      "name": "GeodeGuard",
+      "view": "front",
+      "size": 32,
+      "file": "32x32/52-geodeguard-front_32x32.png",
+      "sourceAtlas": "atlas-3.png",
+      "crop": {
+        "x": 26,
+        "y": 671,
+        "width": 300,
+        "height": 270
+      },
+      "pairExtent": 300,
+      "opaque": 561,
+      "transparent": 463,
+      "white": 236
+    },
+    {
+      "conceptId": 52,
+      "name": "GeodeGuard",
+      "view": "back",
+      "size": 32,
+      "file": "32x32/52-geodeguard-back_32x32.png",
+      "sourceAtlas": "atlas-3.png",
+      "crop": {
+        "x": 345,
+        "y": 690,
+        "width": 280,
+        "height": 251
+      },
+      "pairExtent": 300,
+      "opaque": 484,
+      "transparent": 540,
+      "white": 268
+    },
+    {
+      "conceptId": 52,
+      "name": "GeodeGuard",
+      "view": "front",
+      "size": 48,
+      "file": "48x48/52-geodeguard-front_48x48.png",
+      "sourceAtlas": "atlas-3.png",
+      "crop": {
+        "x": 26,
+        "y": 671,
+        "width": 300,
+        "height": 270
+      },
+      "pairExtent": 300,
+      "opaque": 1270,
+      "transparent": 1034,
+      "white": 561
+    },
+    {
+      "conceptId": 52,
+      "name": "GeodeGuard",
+      "view": "back",
+      "size": 48,
+      "file": "48x48/52-geodeguard-back_48x48.png",
+      "sourceAtlas": "atlas-3.png",
+      "crop": {
+        "x": 345,
+        "y": 690,
+        "width": 280,
+        "height": 251
+      },
+      "pairExtent": 300,
+      "opaque": 1106,
+      "transparent": 1198,
+      "white": 620
+    },
+    {
+      "conceptId": 53,
+      "name": "Tuftling",
+      "view": "front",
+      "size": 32,
+      "file": "32x32/53-tuftling-front_32x32.png",
+      "sourceAtlas": "atlas-3.png",
+      "crop": {
+        "x": 662,
+        "y": 662,
+        "width": 230,
+        "height": 279
+      },
+      "pairExtent": 279,
+      "opaque": 351,
+      "transparent": 673,
+      "white": 165
+    },
+    {
+      "conceptId": 53,
+      "name": "Tuftling",
+      "view": "back",
+      "size": 32,
+      "file": "32x32/53-tuftling-back_32x32.png",
+      "sourceAtlas": "atlas-3.png",
+      "crop": {
+        "x": 986,
+        "y": 663,
+        "width": 232,
+        "height": 278
+      },
+      "pairExtent": 279,
+      "opaque": 352,
+      "transparent": 672,
+      "white": 174
+    },
+    {
+      "conceptId": 53,
+      "name": "Tuftling",
+      "view": "front",
+      "size": 48,
+      "file": "48x48/53-tuftling-front_48x48.png",
+      "sourceAtlas": "atlas-3.png",
+      "crop": {
+        "x": 662,
+        "y": 662,
+        "width": 230,
+        "height": 279
+      },
+      "pairExtent": 279,
+      "opaque": 798,
+      "transparent": 1506,
+      "white": 377
+    },
+    {
+      "conceptId": 53,
+      "name": "Tuftling",
+      "view": "back",
+      "size": 48,
+      "file": "48x48/53-tuftling-back_48x48.png",
+      "sourceAtlas": "atlas-3.png",
+      "crop": {
+        "x": 986,
+        "y": 663,
+        "width": 232,
+        "height": 278
+      },
+      "pairExtent": 279,
+      "opaque": 789,
+      "transparent": 1515,
+      "white": 404
+    },
+    {
+      "conceptId": 54,
+      "name": "GustTuft",
+      "view": "front",
+      "size": 32,
+      "file": "32x32/54-gusttuft-front_32x32.png",
+      "sourceAtlas": "atlas-3.png",
+      "crop": {
+        "x": 32,
+        "y": 949,
+        "width": 258,
+        "height": 280
+      },
+      "pairExtent": 280,
+      "opaque": 477,
+      "transparent": 547,
+      "white": 241
+    },
+    {
+      "conceptId": 54,
+      "name": "GustTuft",
+      "view": "back",
+      "size": 32,
+      "file": "32x32/54-gusttuft-back_32x32.png",
+      "sourceAtlas": "atlas-3.png",
+      "crop": {
+        "x": 360,
+        "y": 949,
+        "width": 236,
+        "height": 280
+      },
+      "pairExtent": 280,
+      "opaque": 393,
+      "transparent": 631,
+      "white": 209
+    },
+    {
+      "conceptId": 54,
+      "name": "GustTuft",
+      "view": "front",
+      "size": 48,
+      "file": "48x48/54-gusttuft-front_48x48.png",
+      "sourceAtlas": "atlas-3.png",
+      "crop": {
+        "x": 32,
+        "y": 949,
+        "width": 258,
+        "height": 280
+      },
+      "pairExtent": 280,
+      "opaque": 1059,
+      "transparent": 1245,
+      "white": 556
+    },
+    {
+      "conceptId": 54,
+      "name": "GustTuft",
+      "view": "back",
+      "size": 48,
+      "file": "48x48/54-gusttuft-back_48x48.png",
+      "sourceAtlas": "atlas-3.png",
+      "crop": {
+        "x": 360,
+        "y": 949,
+        "width": 236,
+        "height": 280
+      },
+      "pairExtent": 280,
+      "opaque": 850,
+      "transparent": 1454,
+      "white": 446
+    },
+    {
+      "conceptId": 55,
+      "name": "StaticMite",
+      "view": "front",
+      "size": 32,
+      "file": "32x32/55-staticmite-front_32x32.png",
+      "sourceAtlas": "atlas-3.png",
+      "crop": {
+        "x": 637,
+        "y": 973,
+        "width": 268,
+        "height": 258
+      },
+      "pairExtent": 268,
+      "opaque": 516,
+      "transparent": 508,
+      "white": 239
+    },
+    {
+      "conceptId": 55,
+      "name": "StaticMite",
+      "view": "back",
+      "size": 32,
+      "file": "32x32/55-staticmite-back_32x32.png",
+      "sourceAtlas": "atlas-3.png",
+      "crop": {
+        "x": 977,
+        "y": 973,
+        "width": 258,
+        "height": 258
+      },
+      "pairExtent": 268,
+      "opaque": 494,
+      "transparent": 530,
+      "white": 223
+    },
+    {
+      "conceptId": 55,
+      "name": "StaticMite",
+      "view": "front",
+      "size": 48,
+      "file": "48x48/55-staticmite-front_48x48.png",
+      "sourceAtlas": "atlas-3.png",
+      "crop": {
+        "x": 637,
+        "y": 973,
+        "width": 268,
+        "height": 258
+      },
+      "pairExtent": 268,
+      "opaque": 1132,
+      "transparent": 1172,
+      "white": 531
+    },
+    {
+      "conceptId": 55,
+      "name": "StaticMite",
+      "view": "back",
+      "size": 48,
+      "file": "48x48/55-staticmite-back_48x48.png",
+      "sourceAtlas": "atlas-3.png",
+      "crop": {
+        "x": 977,
+        "y": 973,
+        "width": 258,
+        "height": 258
+      },
+      "pairExtent": 268,
+      "opaque": 1072,
+      "transparent": 1232,
+      "white": 508
+    },
+    {
+      "conceptId": 56,
+      "name": "ChimeSeed",
+      "view": "front",
+      "size": 32,
+      "file": "32x32/56-chimeseed-front_32x32.png",
+      "sourceAtlas": "atlas-4.png",
+      "crop": {
+        "x": 64,
+        "y": 83,
+        "width": 221,
+        "height": 261
+      },
+      "pairExtent": 261,
+      "opaque": 442,
+      "transparent": 582,
+      "white": 183
+    },
+    {
+      "conceptId": 56,
+      "name": "ChimeSeed",
+      "view": "back",
+      "size": 32,
+      "file": "32x32/56-chimeseed-back_32x32.png",
+      "sourceAtlas": "atlas-4.png",
+      "crop": {
+        "x": 376,
+        "y": 83,
+        "width": 210,
+        "height": 260
+      },
+      "pairExtent": 261,
+      "opaque": 429,
+      "transparent": 595,
+      "white": 187
+    },
+    {
+      "conceptId": 56,
+      "name": "ChimeSeed",
+      "view": "front",
+      "size": 48,
+      "file": "48x48/56-chimeseed-front_48x48.png",
+      "sourceAtlas": "atlas-4.png",
+      "crop": {
+        "x": 64,
+        "y": 83,
+        "width": 221,
+        "height": 261
+      },
+      "pairExtent": 261,
+      "opaque": 984,
+      "transparent": 1320,
+      "white": 413
+    },
+    {
+      "conceptId": 56,
+      "name": "ChimeSeed",
+      "view": "back",
+      "size": 48,
+      "file": "48x48/56-chimeseed-back_48x48.png",
+      "sourceAtlas": "atlas-4.png",
+      "crop": {
+        "x": 376,
+        "y": 83,
+        "width": 210,
+        "height": 260
+      },
+      "pairExtent": 261,
+      "opaque": 931,
+      "transparent": 1373,
+      "white": 431
+    },
+    {
+      "conceptId": 57,
+      "name": "BoughBell",
+      "view": "front",
+      "size": 32,
+      "file": "32x32/57-boughbell-front_32x32.png",
+      "sourceAtlas": "atlas-4.png",
+      "crop": {
+        "x": 637,
+        "y": 66,
+        "width": 293,
+        "height": 286
+      },
+      "pairExtent": 293,
+      "opaque": 564,
+      "transparent": 460,
+      "white": 229
+    },
+    {
+      "conceptId": 57,
+      "name": "BoughBell",
+      "view": "back",
+      "size": 32,
+      "file": "32x32/57-boughbell-back_32x32.png",
+      "sourceAtlas": "atlas-4.png",
+      "crop": {
+        "x": 942,
+        "y": 69,
+        "width": 267,
+        "height": 282
+      },
+      "pairExtent": 293,
+      "opaque": 523,
+      "transparent": 501,
+      "white": 226
+    },
+    {
+      "conceptId": 57,
+      "name": "BoughBell",
+      "view": "front",
+      "size": 48,
+      "file": "48x48/57-boughbell-front_48x48.png",
+      "sourceAtlas": "atlas-4.png",
+      "crop": {
+        "x": 637,
+        "y": 66,
+        "width": 293,
+        "height": 286
+      },
+      "pairExtent": 293,
+      "opaque": 1278,
+      "transparent": 1026,
+      "white": 534
+    },
+    {
+      "conceptId": 57,
+      "name": "BoughBell",
+      "view": "back",
+      "size": 48,
+      "file": "48x48/57-boughbell-back_48x48.png",
+      "sourceAtlas": "atlas-4.png",
+      "crop": {
+        "x": 942,
+        "y": 69,
+        "width": 267,
+        "height": 282
+      },
+      "pairExtent": 293,
+      "opaque": 1131,
+      "transparent": 1173,
+      "white": 513
+    },
+    {
+      "conceptId": 58,
+      "name": "ShardWisp",
+      "view": "front",
+      "size": 32,
+      "file": "32x32/58-shardwisp-front_32x32.png",
+      "sourceAtlas": "atlas-4.png",
+      "crop": {
+        "x": 67,
+        "y": 374,
+        "width": 215,
+        "height": 267
+      },
+      "pairExtent": 272,
+      "opaque": 393,
+      "transparent": 631,
+      "white": 167
+    },
+    {
+      "conceptId": 58,
+      "name": "ShardWisp",
+      "view": "back",
+      "size": 32,
+      "file": "32x32/58-shardwisp-back_32x32.png",
+      "sourceAtlas": "atlas-4.png",
+      "crop": {
+        "x": 374,
+        "y": 374,
+        "width": 205,
+        "height": 272
+      },
+      "pairExtent": 272,
+      "opaque": 392,
+      "transparent": 632,
+      "white": 193
+    },
+    {
+      "conceptId": 58,
+      "name": "ShardWisp",
+      "view": "front",
+      "size": 48,
+      "file": "48x48/58-shardwisp-front_48x48.png",
+      "sourceAtlas": "atlas-4.png",
+      "crop": {
+        "x": 67,
+        "y": 374,
+        "width": 215,
+        "height": 267
+      },
+      "pairExtent": 272,
+      "opaque": 886,
+      "transparent": 1418,
+      "white": 373
+    },
+    {
+      "conceptId": 58,
+      "name": "ShardWisp",
+      "view": "back",
+      "size": 48,
+      "file": "48x48/58-shardwisp-back_48x48.png",
+      "sourceAtlas": "atlas-4.png",
+      "crop": {
+        "x": 374,
+        "y": 374,
+        "width": 205,
+        "height": 272
+      },
+      "pairExtent": 272,
+      "opaque": 880,
+      "transparent": 1424,
+      "white": 459
+    },
+    {
+      "conceptId": 59,
+      "name": "Reliquary",
+      "view": "front",
+      "size": 32,
+      "file": "32x32/59-reliquary-front_32x32.png",
+      "sourceAtlas": "atlas-4.png",
+      "crop": {
+        "x": 623,
+        "y": 377,
+        "width": 294,
+        "height": 262
+      },
+      "pairExtent": 294,
+      "opaque": 498,
+      "transparent": 526,
+      "white": 225
+    },
+    {
+      "conceptId": 59,
+      "name": "Reliquary",
+      "view": "back",
+      "size": 32,
+      "file": "32x32/59-reliquary-back_32x32.png",
+      "sourceAtlas": "atlas-4.png",
+      "crop": {
+        "x": 943,
+        "y": 381,
+        "width": 277,
+        "height": 258
+      },
+      "pairExtent": 294,
+      "opaque": 464,
+      "transparent": 560,
+      "white": 238
+    },
+    {
+      "conceptId": 59,
+      "name": "Reliquary",
+      "view": "front",
+      "size": 48,
+      "file": "48x48/59-reliquary-front_48x48.png",
+      "sourceAtlas": "atlas-4.png",
+      "crop": {
+        "x": 623,
+        "y": 377,
+        "width": 294,
+        "height": 262
+      },
+      "pairExtent": 294,
+      "opaque": 1111,
+      "transparent": 1193,
+      "white": 554
+    },
+    {
+      "conceptId": 59,
+      "name": "Reliquary",
+      "view": "back",
+      "size": 48,
+      "file": "48x48/59-reliquary-back_48x48.png",
+      "sourceAtlas": "atlas-4.png",
+      "crop": {
+        "x": 943,
+        "y": 381,
+        "width": 277,
+        "height": 258
+      },
+      "pairExtent": 294,
+      "opaque": 1058,
+      "transparent": 1246,
+      "white": 549
+    },
+    {
+      "conceptId": 60,
+      "name": "SaplingSage",
+      "view": "front",
+      "size": 32,
+      "file": "32x32/60-saplingsage-front_32x32.png",
+      "sourceAtlas": "atlas-4.png",
+      "crop": {
+        "x": 38,
+        "y": 671,
+        "width": 273,
+        "height": 258
+      },
+      "pairExtent": 273,
+      "opaque": 530,
+      "transparent": 494,
+      "white": 208
+    },
+    {
+      "conceptId": 60,
+      "name": "SaplingSage",
+      "view": "back",
+      "size": 32,
+      "file": "32x32/60-saplingsage-back_32x32.png",
+      "sourceAtlas": "atlas-4.png",
+      "crop": {
+        "x": 343,
+        "y": 668,
+        "width": 272,
+        "height": 261
+      },
+      "pairExtent": 273,
+      "opaque": 541,
+      "transparent": 483,
+      "white": 216
+    },
+    {
+      "conceptId": 60,
+      "name": "SaplingSage",
+      "view": "front",
+      "size": 48,
+      "file": "48x48/60-saplingsage-front_48x48.png",
+      "sourceAtlas": "atlas-4.png",
+      "crop": {
+        "x": 38,
+        "y": 671,
+        "width": 273,
+        "height": 258
+      },
+      "pairExtent": 273,
+      "opaque": 1217,
+      "transparent": 1087,
+      "white": 478
+    },
+    {
+      "conceptId": 60,
+      "name": "SaplingSage",
+      "view": "back",
+      "size": 48,
+      "file": "48x48/60-saplingsage-back_48x48.png",
+      "sourceAtlas": "atlas-4.png",
+      "crop": {
+        "x": 343,
+        "y": 668,
+        "width": 272,
+        "height": 261
+      },
+      "pairExtent": 273,
+      "opaque": 1181,
+      "transparent": 1123,
+      "white": 509
+    },
+    {
+      "conceptId": 61,
+      "name": "GroveKeeper",
+      "view": "front",
+      "size": 32,
+      "file": "32x32/61-grovekeeper-front_32x32.png",
+      "sourceAtlas": "atlas-4.png",
+      "crop": {
+        "x": 630,
+        "y": 656,
+        "width": 278,
+        "height": 282
+      },
+      "pairExtent": 282,
+      "opaque": 591,
+      "transparent": 433,
+      "white": 259
+    },
+    {
+      "conceptId": 61,
+      "name": "GroveKeeper",
+      "view": "back",
+      "size": 32,
+      "file": "32x32/61-grovekeeper-back_32x32.png",
+      "sourceAtlas": "atlas-4.png",
+      "crop": {
+        "x": 942,
+        "y": 658,
+        "width": 275,
+        "height": 280
+      },
+      "pairExtent": 282,
+      "opaque": 567,
+      "transparent": 457,
+      "white": 253
+    },
+    {
+      "conceptId": 61,
+      "name": "GroveKeeper",
+      "view": "front",
+      "size": 48,
+      "file": "48x48/61-grovekeeper-front_48x48.png",
+      "sourceAtlas": "atlas-4.png",
+      "crop": {
+        "x": 630,
+        "y": 656,
+        "width": 278,
+        "height": 282
+      },
+      "pairExtent": 282,
+      "opaque": 1306,
+      "transparent": 998,
+      "white": 564
+    },
+    {
+      "conceptId": 61,
+      "name": "GroveKeeper",
+      "view": "back",
+      "size": 48,
+      "file": "48x48/61-grovekeeper-back_48x48.png",
+      "sourceAtlas": "atlas-4.png",
+      "crop": {
+        "x": 942,
+        "y": 658,
+        "width": 275,
+        "height": 280
+      },
+      "pairExtent": 282,
+      "opaque": 1285,
+      "transparent": 1019,
+      "white": 581
+    },
+    {
+      "conceptId": 62,
+      "name": "FossilBloom",
+      "view": "front",
+      "size": 32,
+      "file": "32x32/62-fossilbloom-front_32x32.png",
+      "sourceAtlas": "atlas-4.png",
+      "crop": {
+        "x": 53,
+        "y": 945,
+        "width": 257,
+        "height": 277
+      },
+      "pairExtent": 277,
+      "opaque": 444,
+      "transparent": 580,
+      "white": 173
+    },
+    {
+      "conceptId": 62,
+      "name": "FossilBloom",
+      "view": "back",
+      "size": 32,
+      "file": "32x32/62-fossilbloom-back_32x32.png",
+      "sourceAtlas": "atlas-4.png",
+      "crop": {
+        "x": 347,
+        "y": 945,
+        "width": 259,
+        "height": 277
+      },
+      "pairExtent": 277,
+      "opaque": 429,
+      "transparent": 595,
+      "white": 182
+    },
+    {
+      "conceptId": 62,
+      "name": "FossilBloom",
+      "view": "front",
+      "size": 48,
+      "file": "48x48/62-fossilbloom-front_48x48.png",
+      "sourceAtlas": "atlas-4.png",
+      "crop": {
+        "x": 53,
+        "y": 945,
+        "width": 257,
+        "height": 277
+      },
+      "pairExtent": 277,
+      "opaque": 979,
+      "transparent": 1325,
+      "white": 392
+    },
+    {
+      "conceptId": 62,
+      "name": "FossilBloom",
+      "view": "back",
+      "size": 48,
+      "file": "48x48/62-fossilbloom-back_48x48.png",
+      "sourceAtlas": "atlas-4.png",
+      "crop": {
+        "x": 347,
+        "y": 945,
+        "width": 259,
+        "height": 277
+      },
+      "pairExtent": 277,
+      "opaque": 962,
+      "transparent": 1342,
+      "white": 414
+    },
+    {
+      "conceptId": 63,
+      "name": "OrbitRelic",
+      "view": "front",
+      "size": 32,
+      "file": "32x32/63-orbitrelic-front_32x32.png",
+      "sourceAtlas": "atlas-4.png",
+      "crop": {
+        "x": 638,
+        "y": 955,
+        "width": 279,
+        "height": 256
+      },
+      "pairExtent": 279,
+      "opaque": 406,
+      "transparent": 618,
+      "white": 165
+    },
+    {
+      "conceptId": 63,
+      "name": "OrbitRelic",
+      "view": "back",
+      "size": 32,
+      "file": "32x32/63-orbitrelic-back_32x32.png",
+      "sourceAtlas": "atlas-4.png",
+      "crop": {
+        "x": 950,
+        "y": 952,
+        "width": 271,
+        "height": 255
+      },
+      "pairExtent": 279,
+      "opaque": 381,
+      "transparent": 643,
+      "white": 195
+    },
+    {
+      "conceptId": 63,
+      "name": "OrbitRelic",
+      "view": "front",
+      "size": 48,
+      "file": "48x48/63-orbitrelic-front_48x48.png",
+      "sourceAtlas": "atlas-4.png",
+      "crop": {
+        "x": 638,
+        "y": 955,
+        "width": 279,
+        "height": 256
+      },
+      "pairExtent": 279,
+      "opaque": 908,
+      "transparent": 1396,
+      "white": 357
+    },
+    {
+      "conceptId": 63,
+      "name": "OrbitRelic",
+      "view": "back",
+      "size": 48,
+      "file": "48x48/63-orbitrelic-back_48x48.png",
+      "sourceAtlas": "atlas-4.png",
+      "crop": {
+        "x": 950,
+        "y": 952,
+        "width": 271,
+        "height": 255
+      },
+      "pairExtent": 279,
+      "opaque": 831,
+      "transparent": 1473,
+      "white": 412
+    }
+  ]
+}

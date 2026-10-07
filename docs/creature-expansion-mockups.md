@@ -4,6 +4,7 @@ CreatureGathererFX-63v, 2026-10-06. **32 new creature concepts**, numbered32–6
 for discussing the boards. These are proposal labels, not assigned game IDs.
 
 [Open the expansion gallery](creature-expansion-mockups.html) ·
+[Validated32x32 and48x48 size instances](creature-native-sprites.html) ·
 [Existing roster gallery](creature-roster-mockups.html)
 
 The notes describe gathering materials from fields and creatures, placing them

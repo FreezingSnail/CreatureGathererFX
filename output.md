@@ -5843,3 +5843,71 @@ Wall time approximate: worker/research/design/art6min; gate4min overlapping
 art/gallery work; report/close/commit1min; total9min. Closed63v and committed
 the mockups, gallery and report. No push. All concepts remain outside the game;
 checks exercise unchanged renderer/firmware, not the new art boards.
+
+## CreatureGathererFX-n5f —32x32/48x48 sprite instances (2026-10-06)
+
+Delivered128 individual PNGs:32 proposed creatures32..63 xfront/back x32/48px,
+under docs/assets/creature-expansion/native/{32x32,48x48}. Paired sheets are
+64x1024 and96x1536; eight native contact sheets and eight pixel-replicated
+previews, per-size archives, source atlases, exact prompts and manifest included.
+Gallery docs/creature-native-sprites.html has size/zoom/background controls,
+name filtering and128 individual download links; companion .md explains formats.
+Existing expansion gallery links these native instances.
+
+Used built-in imagegen to edit four original boards into transparent16-view
+atlases. All4 calls fulfilled. Generated atlases1254x1254 have uneven placement:
+exporter uses transparent gutters rather than assuming4equal cells, preserving
+all64 source views and refusing cuts through opaque content. Provenance/crops
+are in manifest.json. Tool tools/creature-sprite-export.mjs uses native Node
+PNG decode/export and area coverage sampling independently for both sizes;
+visible RGB and alpha quantized to0/255. Common scale for paired views keeps
+relative proportions.2px/3px transparent margins verified for all128.
+Opaque black pixels retained (32px aggregate16038black/14081white/35417transparent;
+48px34705black/32102white/80649transparent). RGBA8 container stores binary
+artwork plus mask; not falsely described as1bit grayscale PNG. These are resized
+pixel instances of cleaned atlas edits, not manually retouched pixel art.
+All eight native preview contacts visually inspected;32px loses somefine detail.
+48px assets require a different game layout; neither set is packed into cart.
+Proposal labels do not allocate real game IDs.
+
+Permanent Node tests in tools/tests/creature-sprite-export_test.mjs cover PNG
+CRC/alpha, blackbody crops, binary export, proportions, gutters, invalid masks,
+all128 files/coverage/margins, and exact paired-sheet ordering. Test additions
+settled while final game gate was running; device/source code remained unchanged.
+
+```text
+cp -f /Users/connorfranc/.codex/generated_images/01a11420-e36c-7332-8699-d66e58787a2b/exec-4f2c2687-155a-4150-9afd-a1bd997a073a.png docs/assets/creature-expansion/native/atlas-1.png
+cp -f /Users/connorfranc/.codex/generated_images/01a11420-e36c-7332-8699-d66e58787a2b/exec-c2ea7261-d265-4c8b-9f07-d39b76f940e1.png docs/assets/creature-expansion/native/atlas-2.png
+cp -f /Users/connorfranc/.codex/generated_images/01a11420-e36c-7332-8699-d66e58787a2b/exec-8513b06d-75bd-4c66-8199-ae9ce3cdebec.png docs/assets/creature-expansion/native/atlas-3.png
+cp -f /Users/connorfranc/.codex/generated_images/01a11420-e36c-7332-8699-d66e58787a2b/exec-78dd2723-cd51-403a-b2ef-9f3a5552cb2f.png docs/assets/creature-expansion/native/atlas-4.png
+node tools/creature-sprite-export.mjs
+# PASS128 binary transparent PNGs,32concepts x2views x2sizes.
+node --test tools/tests/creature-sprite-export_test.mjs
+# Final PASS8/0, including asset margins and sheet ordering.
+sips -g pixelWidth -g pixelHeight docs/assets/creature-expansion/native/32x32/32-nibweevil-front_32x32.png docs/assets/creature-expansion/native/48x48/63-orbitrelic-back_48x48.png
+# Independent metadata PASS32x32 and48x48.
+node (read-only gallery-link/coverage/browser-script syntax audit)
+# PASS32cards,128 linked sprite images, all links resolve, script parses.
+# In docs/assets/creature-expansion/native:
+zip -q -r sprites-32x32.zip 32x32 expansion_32x32.png
+zip -q -r sprites-48x48.zip 48x48 expansion_48x48.png
+unzip -t sprites-32x32.zip
+unzip -t sprites-48x48.zip
+# PASS both archives; initial zip attempted from repo root: Nothing to do,
+# corrected working directory before creating final archives. No asset lost.
+make final-gate BUILD_DIR=build/creature-native-sprites/final FXTEST_MS=10000 ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS host157573/0, world190/0, VM42/0, generated checks and all28 FX suites.
+# Flash27482 B/static1787 B/free SRAM773 B; stack423painted/arena238effective.
+# Logs build/creature-native-sprites/final/final-gate/{check,ram}.log.
+cmp build/creature-expansion-mockup/final/CreatureGathererFX.ino.hex build/creature-native-sprites/final/CreatureGathererFX.ino.hex
+# PASS byte-identical firmware; no program flash/static RAM growth.
+shasum -a 256 dist/fxdata.bin
+# Unchanged c4bdcce2309064a2fbc56274f5a3ecf58a29d110ffa81ef0108dbbf91cf229e8.
+git diff --check
+# PASS; canonical game and generated data unchanged; no failed gate attempts.
+```
+
+Wall time approximate: worker/tooling/atlas/export/verification7min;
+gate4min overlapped gallery/archives/report; close/commit1min; total12min.
+Closed n5f and committed finished exports/tool/tests/docs after successful gate.
+No push. Device tests verify unchanged game; native asset tests verify new PNGs.
