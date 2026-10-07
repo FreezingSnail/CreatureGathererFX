@@ -28,6 +28,7 @@
 #include "battle_resolve_test.hpp"
 #include "battle_faint_test.hpp"
 #include "battle_presentation_test.hpp"
+#include "battle_hp_spike_test.hpp"
 #include "renderer_test.hpp"
 #include "blit_test.hpp"
 
@@ -199,6 +200,7 @@ int main() {
     BattleFaintSwitchSuite(tests);
     std::cout << "BattleFaintSwitchSuite finished" << std::endl;
     BattlePresentationSuite(tests);
+    BattleHpSpikeSuite(tests);
     std::cout << "BattlePresentationSuite finished" << std::endl;
     BattleSessionSuite(tests);
     std::cout << "BattleSessionSuite finished" << std::endl;
