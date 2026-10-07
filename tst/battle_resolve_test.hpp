@@ -93,6 +93,74 @@ void assertSentinels(Test &test, const battle::ActionResult &result)
     }
 }
 
+Modifier damageGroupingReference(const battle::Combatant &attacker,
+                                 const battle::Combatant &defender,
+                                 Type moveType)
+{
+    const Modifier attackerPair = combineModifier(
+        typeEffectModifier(attacker.status.effects[0], attacker.types),
+        typeEffectModifier(attacker.status.effects[1], attacker.types));
+    const Modifier defenderPair = inverseModifier(combineModifier(
+        typeEffectModifier(defender.status.effects[0], defender.types),
+        typeEffectModifier(defender.status.effects[1], defender.types)));
+    const Modifier statusModifier = combineModifier(attackerPair, defenderPair);
+    Modifier modifier = combineModifier(
+        getModifier(moveType, defender.types), statusModifier);
+    if (attacker.types.hasType(moveType))
+        modifier = combineModifier(modifier, Modifier::Double);
+    return modifier;
+}
+
+void AttackModifierReferenceTest(TestSuite &suite)
+{
+    Test test(__func__);
+    const Type moves[] = {Type::SPIRIT, Type::WATER, Type::WIND,
+                          Type::EARTH, Type::FIRE, Type::ELDER,
+                          Type::NONE};
+    const DualType attackerTypes[] = {
+        DualType(Type::SPIRIT), DualType(Type::WATER, Type::WIND),
+        DualType(Type::EARTH, Type::PLANT), DualType(),
+    };
+    const DualType defenderTypes[] = {
+        DualType(Type::WATER), DualType(Type::EARTH, Type::PLANT),
+        DualType(Type::ELDER), DualType(Type::NONE, Type::NONE),
+    };
+    const Effect statusPairs[][2] = {
+        {Effect::NONE, Effect::NONE},
+        {Effect::DRNCHD, Effect::AIRSWPT},
+        {Effect::SOILED, Effect::TANGLD},
+        {Effect::SOAKED, Effect::DRNCHD},
+    };
+    for (uint8_t move = 0; move < sizeof(moves) / sizeof(moves[0]); ++move) {
+        for (uint8_t attackerType = 0;
+             attackerType < sizeof(attackerTypes) / sizeof(attackerTypes[0]);
+             ++attackerType) {
+            for (uint8_t defenderType = 0;
+                 defenderType < sizeof(defenderTypes) / sizeof(defenderTypes[0]);
+                 ++defenderType) {
+                battle::Combatant attacker = {};
+                battle::Combatant defender = {};
+                attacker.types = attackerTypes[attackerType];
+                defender.types = defenderTypes[defenderType];
+                for (uint8_t attackerPair = 0; attackerPair < 4; ++attackerPair) {
+                    attacker.status.effects[0] = statusPairs[attackerPair][0];
+                    attacker.status.effects[1] = statusPairs[attackerPair][1];
+                    for (uint8_t defenderPair = 0; defenderPair < 4; ++defenderPair) {
+                        defender.status.effects[0] = statusPairs[defenderPair][0];
+                        defender.status.effects[1] = statusPairs[defenderPair][1];
+                        test.assert(battle::attackModifier(attacker, defender,
+                                                          moves[move]),
+                                    damageGroupingReference(attacker, defender,
+                                                            moves[move]),
+                                    "shared result modifier matches original damage grouping");
+                    }
+                }
+            }
+        }
+    }
+    suite.addTest(test);
+}
+
 } // namespace battle_resolve_test_detail
 
 inline void BattleResolveIntegrationTest(TestSuite &suite)
@@ -172,10 +240,58 @@ inline void BattleResolveIntegrationTest(TestSuite &suite)
                 "damage keeps grouped saturation and STAB behavior");
     script(0, 0);
     resolveAction(state, Side::Player, {ActionKind::Attack, 0}, rng, result);
-    test.assert(result.effectiveness, Modifier::Quadruple,
-                "resolution keeps sequential saturation and STAB behavior");
+    test.assert(result.effectiveness, Modifier::Double,
+                "resolution effectiveness matches grouped damage saturation");
     test.assert(state.active[1].hp, static_cast<uint8_t>(60),
                 "resolution damage keeps grouped damage behavior");
+
+    state = stateFixture();
+    state.active[0].types = DualType(Type::WATER, Type::WIND);
+    state.active[0].moves[0] = makeMove(Type::WATER, 31);
+    state.active[0].stats.attack = 255;
+    state.active[0].status.applyEffect(Effect::DRNCHD);
+    state.active[0].status.applyEffect(Effect::SOAKED);
+    state.active[1].types = DualType(Type::NONE, Type::NONE);
+    state.active[1].stats.defense = 1;
+    test.assert(computeDamage(state.active[0], state.active[1], 0),
+                static_cast<uint8_t>(255), "damage retains saturation at 255");
+
+    state.active[0].moves[0] = makeMove(static_cast<Type>(9), 10);
+    test.assert(computeDamage(state.active[0], state.active[1], 0),
+                static_cast<uint8_t>(0), "invalid move type remains rejected by damage");
+    script(0, 0);
+    resolveAction(state, Side::Player, {ActionKind::Attack, 0}, rng, result);
+    test.assert(result.effectiveness, Modifier::Same,
+                "invalid move type remains neutral in result query");
+    state.active[0].moves[0] = makeMove(Type::WATER, 0);
+    state.active[1].types = DualType(Type::WATER);
+    test.assert(computeDamage(state.active[0], state.active[1], 0),
+                static_cast<uint8_t>(0), "zero-power move remains damage-free");
+    script(0, 0);
+    resolveAction(state, Side::Player, {ActionKind::Attack, 0}, rng, result);
+    test.assert(result.effectiveness, Modifier::Double,
+                "zero-power move retains effectiveness query");
+    test.assert(computeDamage(state.active[0], state.active[1], 4),
+                static_cast<uint8_t>(0), "out-of-range damage slot remains rejected");
+    script(0, 0);
+    resolveAction(state, Side::Player, {ActionKind::Attack, 4}, rng, result);
+    test.assert(result.effectiveness, Modifier::Same,
+                "out-of-range result slot retains neutral fallback");
+    state.active[0].moves[0] = makeMove(Type::NONE, 10);
+    test.assert(computeDamage(state.active[0], state.active[1], 0),
+                static_cast<uint8_t>(0), "NONE move retains immunity");
+    script(0, 0);
+    resolveAction(state, Side::Player, {ActionKind::Attack, 0}, rng, result);
+    test.assert(result.effectiveness, Modifier::None,
+                "NONE move result retains immunity");
+    state.active[0].moves[0] = makeMove(Type::WATER, 10);
+    state.active[1].types = DualType(static_cast<Type>(9), Type::NONE);
+    test.assert(computeDamage(state.active[0], state.active[1], 0),
+                static_cast<uint8_t>(0), "invalid defender type remains rejected by damage");
+    script(0, 0);
+    resolveAction(state, Side::Player, {ActionKind::Attack, 0}, rng, result);
+    test.assert(result.effectiveness, Modifier::Same,
+                "invalid defender type retains neutral fallback");
 
     state = stateFixture();
     state.active[1].hp = 1;
@@ -702,6 +818,7 @@ inline void BattleResolveSuite(TestRunner &runner)
 {
     TestSuite suite("Battle resolution integration");
     BattleResolveIntegrationTest(suite);
+    battle_resolve_test_detail::AttackModifierReferenceTest(suite);
     BattleEscapeIntegrationTest(suite);
     BattleGatherIntegrationTest(suite);
     runner.addTestSuite(suite);

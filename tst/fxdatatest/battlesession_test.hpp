@@ -294,6 +294,44 @@ __attribute__((noinline)) inline void trainerSpike(FxTest &test) {
     endPreset();
 }
 
+__attribute__((noinline)) inline void typeStatusEffectiveness(FxTest &test) {
+    beginPreset(BattlePresets::opening);
+    battle::BattleState &state =
+        const_cast<battle::BattleState &>(battleSession().state());
+    state.active[0].types = DualType(Type::WATER, Type::WIND);
+    state.active[0].moves[0] = Move(MoveBitSet{
+        static_cast<uint8_t>(Type::WATER), 10, 1, 0, 0
+    });
+    state.active[0].stats.attack = 40;
+    state.active[0].stats.speed = 255;
+    state.active[0].status.effects[0] = Effect::DRNCHD;
+    state.active[0].status.effects[1] = Effect::AIRSWPT;
+    state.active[0].statMods.clearModifiers();
+    state.active[1].types = DualType(Type::EARTH, Type::PLANT);
+    state.active[1].hp = state.active[1].maxHp = 100;
+    state.active[1].stats.hp = 100;
+    state.active[1].stats.defense = 20;
+    state.active[1].stats.speed = 0;
+    state.active[1].status.effects[0] = Effect::SOILED;
+    state.active[1].status.effects[1] = Effect::TANGLD;
+    state.active[1].statMods.clearModifiers();
+
+    test.expectEq(battleSession().submitIntent({MenuIntentKind::SelectMove, 0}),
+                  true, F("stacked-status move submits through session"));
+    test.expectEq(battleSession().advance(), true,
+                  F("stacked-status player attack resolves"));
+    test.expectEq(static_cast<uint8_t>(battleSession().result().effectiveness),
+                  static_cast<uint8_t>(Modifier::Double),
+                  F("session effectiveness matches actual damage modifier"));
+    test.expectEq(battleSession().result().hpBefore[1], 100,
+                  F("stacked-status target starts at pinned HP"));
+    test.expectEq(battleSession().result().hpAfter[1], 60,
+                  F("stacked-status target loses exactly 40 HP"));
+    test.expectEq(battleSession().state().active[1].hp, 60,
+                  F("stacked-status attack preserves 40 damage"));
+    endPreset();
+}
+
 __attribute__((noinline)) inline void trainerRefusals(FxTest &test) {
     beginPreset(BattlePresets::opening);
     const uint8_t hpBefore = battleSession().state().active[0].hp;
@@ -499,6 +537,7 @@ inline void test_battlesession(FxTest &test) {
     using namespace battlesession_test_detail;
     const uint16_t top = paintStack();
     trainerSpike(test);
+    typeStatusEffectiveness(test);
     trainerRefusals(test);
     trainerSwitchAndImport(test);
     wildControllerReturn(test);

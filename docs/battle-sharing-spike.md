@@ -81,6 +81,31 @@ verification passed. Presentation passed 210/0; stack passed 4/0 with 418 B
 painted / 349 B effective headroom. Session passed 57/0 with 440 B painted /
 371 B effective headroom. The parent owns the integrated final gate and commit.
 
+## 46z implementation checkpoint
+
+`attackModifier` now supplies both damage and result effectiveness after each
+caller performs its existing input checks. It groups attacker and inverse
+defender status modifiers first, combines that with the type matchup, then
+applies STAB. The reproduced WATER/WIND case now reports Double while damage
+and the target HP loss remain 40. The host reference matrix compares the helper
+with the original damage grouping across selected move/defender types and
+status pairs; additional checks cover immunity, modifier saturation, zero
+power, invalid types/slots and NONE sentinels.
+
+The 46z checkpoint passed host 157,376/0 and world 190/0, VM 42/0, simulator
+prepared-state tests 157,548/0 and simulator anchor mode (4 matches). Generated
+verification passed. Presentation passed 210/0; stack passed 4/0 with 418 B
+painted / 349 B effective. Session passed 63/0 with the regression and 442 B
+painted / 373 B effective headroom. Shipping measured 27,512 B flash /
+1,787 B static SRAM, -160 B flash and no SRAM change from ecu; `avr-nm` still
+shows one 0x51-byte chart. Parent owns the integrated gate and commit.
+
 The ecu full gate passed: host155,573/0, world190/0, VM42/0, all27 FX suites and
 generated checks. Shipping27672/1787 B; stack418 B and arena callback effective
 reserve233 B. Parent reviewed and committed ecu before starting46z.
+
+The46z full gate passed host157,376/0, world190/0, VM42/0, generated checks and
+all27FX suites, including session63/0 and presentation210/0. Final shipping
+27,512 B flash /1,787 B static SRAM saves382 B flash from the original baseline.
+Effective stack349 B, session373 B and arena callback238 B exceed reserve.
+Both implementation beads were reviewed, closed and committed separately.

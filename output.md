@@ -5354,3 +5354,68 @@ sentinel tests. Requested removal of duplicate test/include, then reviewed the
 corrected reruns before gate. Full gate approximately5 minutes; parent review,
 report and commit preparation approximately2 minutes. ecu closed and committed
 before dispatching46z. No push performed.
+
+## CreatureGathererFX-46z — shared damage/effectiveness modifier order
+
+Added `battle::attackModifier` in Damage.cpp/.hpp. Both callers retain their
+existing input checks; the helper applies the damage path's grouped status
+modifiers, then matchup and STAB. The reachable case now reports Double and
+still deals 40 damage. Host tests compare against an independent expression of
+the original damage grouping across representative types/status pairs, and pin
+immunity, saturation, cancellation, zero-power, invalid input and NONE cases.
+The device session test uses the existing session-owned state with pinned HP,
+then asserts result Double and HP 100→60.
+
+```text
+make fxtest-spike BUILD_DIR=build/battle-effectiveness-spike/presentation FXTEST_SPIKE_INO=tst/fxdatatest/test_battlesession.ino FXTEST_MS=10000 ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS after fixture correction: session63/0; stack4/0, painted418 B / effective349 B.
+make test BUILD_DIR=build/battle-effectiveness/host
+# PASS: host157,376/0; world190/0.
+make testvm BUILD_DIR=build/battle-effectiveness/vm
+# PASS: VM42/0.
+make sim BUILD_DIR=build/battle-effectiveness/sim
+# PASS: simulator built and ran4 anchor matches.
+make sim-test BUILD_DIR=build/battle-effectiveness/sim-test
+# PASS: 157,548/0.
+make verify-generated
+# PASS.
+make fxtest-spike BUILD_DIR=build/battle-effectiveness/presentation FXTEST_SPIKE_INO=tst/fxdatatest/test_battlepresentation.ino FXTEST_MS=10000 ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS: presentation210/0; stack4/0, painted418 B / effective349 B.
+make fxtest-headless BUILD_DIR=build/battle-effectiveness/session FXTEST_INOS=tst/fxdatatest/test_battlesession.ino FXTEST_MS=10000 ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS: session63/0; painted442 B / effective373 B.
+make ram BUILD_DIR=build/battle-effectiveness/final-ram
+# PASS: flash27,512 B / static SRAM1,787 B; -160 B flash from ecu.
+/Users/connorfranc/Library/Arduino15/packages/arduino/tools/avr-gcc/7.3.0-atmel3.6.1-arduino7/bin/avr-nm --print-size --size-sort --radix=d build/battle-effectiveness/final-ram/CreatureGathererFX.ino.elf
+# PASS: one typeTable symbol of size0x51; no SRAM change; static free773 B.
+git diff --check
+# PASS.
+```
+
+Failed attempts and corrections: first device compile passed an enum directly
+to FxTest's uint32_t assertion; cast to uint8_t and rebuilt. Next device run
+reported target HP82 vs expected60 because the preset's target started at122;
+pinned hp/maxHp/stats.hp to100 and asserted hpBefore100, hpAfter60. One host
+compile referenced private `attackEffectiveness` without a declaration; tests
+now exercise invalid/zero-power result behavior through `resolveAction`.
+Verification elapsed approximately5 minutes. Cumulative flash reduction from
+the original 27,894 B baseline is382 B; static SRAM remains1,787 B. Parent
+review accepted the source/tests and is running the integrated gate. No close,
+commit or push by worker.
+
+Orchestrator checkpoint —46z:
+
+```text
+make final-gate BUILD_DIR=build/battle-effectiveness/final-gate FXTEST_MS=10000 ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS: host157,376/0; world190/0; VM42/0; generated checks and all27FX
+# suites PASS, session63/0, presentation210/0, stack4/0 at418 B;
+# arena callback effective reserve238 B; shipping27,512/1,787 B.
+git diff --check
+# PASS; generation left no unexpected tracked changes.
+```
+
+Parent reviewed helper's literal original damage order, preserved caller guards,
+reference matrix and pinned device session assertions. Effective stack349 B,
+session373 B and arena238 B remain above reserve. Final gate approximately5
+minutes; parent review/report/close/commit preparation approximately2 minutes.
+46z closed and committed after gate; cumulative flash saving382 B, no static
+SRAM change. No push performed.
