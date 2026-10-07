@@ -474,6 +474,39 @@ inline void test_battlepresentation(FxTest &test) {
                           F("no-effect caption renders"));
     feedbackCategories(test);
 
+    // The move list carries PP beside every populated name; empty slots stay blank.
+    {
+        battle::BattleView moveView{};
+        moveView.moveIds[0] = 0;
+        moveView.moveIds[1] = DELUGE_MOVE_ID;
+        moveView.moveIds[2] = 32;
+        moveView.moveIds[3] = 255;
+        moveView.remainingUses[0] = 1;
+        moveView.remainingUses[1] = 255;
+        moveView.remainingUses[2] = 0;
+        moveView.useLimitsPacked = static_cast<uint8_t>(2u | (3u << 4));
+        menu.clear();
+        FxReadCounter::resetFrame();
+        menu.openMenu(BATTLE_MOVE_SELECT, moveView);
+        test.expectEq(FxReadCounter::count(), static_cast<uint8_t>(4),
+                      F("menu caches only valid move metadata"));
+        test.expectEq(menu.movesSnapshot().moveIds[0], static_cast<uint8_t>(0),
+                      F("move PP display retains first move ID"));
+        test.expectEq(menu.movesSnapshot().remainingUses[0], static_cast<uint8_t>(1),
+                      F("move PP display retains current uses"));
+        test.expectEq(menu.movesSnapshot().remainingUses[1], static_cast<uint8_t>(255),
+                      F("move PP display retains unlimited uses"));
+        arduboy.clear();
+        FxReadCounter::resetFrame();
+        menu.printMenu(moveView);
+        test.expectEq(hasInk(43, 45, 11, 5, true), true,
+                      F("first move current/max PP renders beside name"));
+        test.expectEq(hasInk(106, 45, 3, 5, true), true,
+                      F("unlimited move PP renders beside name"));
+        test.expectEq(FxReadCounter::count(), 0,
+                      F("drawing move PP performs no FX reads"));
+    }
+
     // Empty and absent move IDs never index the FX name table. Species zero
     // is the generated first fixture and must still render; absent255 does not.
     {

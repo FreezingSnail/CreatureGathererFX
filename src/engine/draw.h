@@ -205,14 +205,29 @@ static void printMoveMenu(int8_t index, const battle::MoveSnapshot &moves,
     if (validMoveId(moves.moveIds[selected])) {
         color[selected] = 0;
     }
-    drawText(6, 45, nameAddresses[0],
-                     readMoveNameWidth(moves.moveIds[0]), FRAME(color[0]));
-    drawText(69, 45, nameAddresses[1],
-                     readMoveNameWidth(moves.moveIds[1]), FRAME(color[1]));
-    drawText(6, 53, nameAddresses[2],
-                     readMoveNameWidth(moves.moveIds[2]), FRAME(color[2]));
-    drawText(69, 53, nameAddresses[3],
-                     readMoveNameWidth(moves.moveIds[3]), FRAME(color[3]));
+    for (uint8_t slot = 0; slot < 4; ++slot) {
+        const uint8_t moveId = moves.moveIds[slot];
+        if (!validMoveId(moveId)) continue;
+        const bool rightColumn = (slot & 1u) != 0;
+        const uint8_t nameX = rightColumn ? 69 : 6;
+        const uint8_t nameY = slot < 2 ? 45 : 53;
+        const uint8_t ppX = rightColumn ? 106 : 43;
+        uint8_t nameWidth = readMoveNameWidth(moveId);
+        if (nameWidth > 32) nameWidth = 32;
+        drawText(nameX, nameY, nameAddresses[slot], nameWidth,
+                 FRAME(color[slot]));
+
+        const uint8_t remaining = moves.remainingUses[slot];
+        if (remaining == 255) {
+            PpGlyph::draw(ppX, nameY, 0b010111010);
+        } else {
+            const uint8_t limit = (moves.useLimitsPacked >> (slot * 2)) & 3;
+            PpGlyph::digit(ppX, nameY, remaining);
+            PpGlyph::draw(static_cast<uint8_t>(ppX + 4), nameY,
+                          0b001001010100100);
+            PpGlyph::digit(static_cast<uint8_t>(ppX + 8), nameY, limit);
+        }
+    }
     printPackedMoveInfo(moves.moveIds[selected], selected, 38, 4, moveInfo);
     if (validMoveId(moves.moveIds[selected])) {
         PpGlyph::draw(101, 4, 0b001001111101111);

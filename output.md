@@ -5419,3 +5419,41 @@ session373 B and arena238 B remain above reserve. Final gate approximately5
 minutes; parent review/report/close/commit preparation approximately2 minutes.
 46z closed and committed after gate; cumulative flash saving382 B, no static
 SRAM change. No push performed.
+
+CreatureGathererFX-jp8.3.22 — Render move PP in the battle display:
+
+```text
+make test
+# PASS: host157,376/0; world190/0.
+make fxtest-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_battlepresentation.ino ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS: test_battlepresentation217/0; test_stack4/0; painted headroom342 B,
+# effective headroom273 B; suite global RAM1,850 B, shipping flash24,876 B.
+git diff --check
+# PASS.
+```
+
+Focused spike took approximately20 seconds; host tests approximately2 seconds;
+worker implementation/report approximately15 minutes. Earlier focused attempts
+failed pixel assertions because direct drawing omitted the move-menu backing
+art, and empty-slot pixel regions contained backing-art pixels. Updated coverage
+uses the real `MenuV2::printMenu` path, checks the visible PP regions, verifies
+only valid move metadata is cached, and confirms drawing performs zero FX reads.
+No generated data changed.
+
+Parent integrated gate:
+
+```text
+make final-gate ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# FAIL: all device suites except test_battletrainer passed; it produced no
+# serial response at the default capture window. No assertion failures.
+make fxtest-headless FXTEST_INOS=tst/fxdatatest/test_battletrainer.ino ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# FAIL: same no-serial result when run alone at the default capture window.
+FXTEST_MS=10000 make final-gate ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+# PASS: host157376/0, world190/0, VM42/0, generated checks PASS; all 26 FX
+# suites PASS, including presentation217/0 and trainer51/0; test_stack4/0,
+# stack headroom417 B. Shipping flash27614 B, static RAM1787 B, free773 B.
+```
+
+The first two commands confirm the known Ardens serial capture timeout; the
+documented 10-second capture setting recovered the suite and the full gate.
+Integrated gate took approximately7 minutes. No generated tracked changes.
