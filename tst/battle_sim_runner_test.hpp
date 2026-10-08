@@ -479,6 +479,37 @@ void namedPresetAnchors(TestSuite &suite)
     suite.addTest(test);
 }
 
+void expandedRosterBoundaries(TestSuite &suite)
+{
+    Test test(__func__);
+    battle_sim::Options options;
+    options.mode = battle_sim::Mode::Pairwise;
+    options.speciesCount = 64;
+    options.seed = 20261007;
+    options.trials = 1;
+    options.policy = battle_sim::Policy::Greedy;
+    options.maxTurns = 40;
+    battle_sim::BatchSummary summary;
+    std::string error;
+    test.assert(battle_sim::runBatch(options, summary, error), true,
+                "pairwise runner accepts all 64 canonical species");
+    test.assert(summary.matches.size(), static_cast<size_t>(64 * 64),
+                "expanded pairwise matrix covers every ordered matchup");
+    test.assert(summary.matches.back().scenario == "pair_63_63", true,
+                "expanded matrix reaches boundary species 63");
+
+    battle_sim::ReplayRequest request;
+    request.scenario = "pair_63_63";
+    request.seed = 99;
+    request.policy = battle_sim::Policy::Greedy;
+    battle_sim::ReplayResult replay;
+    test.assert(battle_sim::runReplay(request, replay, error), true,
+                "boundary pair with species 63 replays through BattleSession");
+    test.assert(replay.match.playerSpecies[0], static_cast<uint8_t>(63),
+                "replay preserves species 63 in the player roster");
+    suite.addTest(test);
+}
+
 void stableReportsAndAggregates(TestSuite &suite)
 {
     Test test(__func__);
@@ -556,6 +587,7 @@ inline void BattleSimulatorRunnerSuite(TestRunner &runner)
     battle_sim_runner_test::pairwiseAssignmentsAndReplay(suite);
     battle_sim_runner_test::randomThreeVsThreeBalanceAndTimeout(suite);
     battle_sim_runner_test::namedPresetAnchors(suite);
+    battle_sim_runner_test::expandedRosterBoundaries(suite);
     battle_sim_runner_test::stableReportsAndAggregates(suite);
     runner.addTestSuite(suite);
 }

@@ -220,6 +220,7 @@ bool driveMatch(const Scenario &scenario, Policy policy, uint64_t seed,
     uint16_t completedTurns = 0;
     bool playerSwitchLocked = false;
     SwitchReason pendingSwitchReason = SwitchReason::None;
+    battle::ActionResult lastResult{};
     const uint32_t actionLimit = static_cast<uint32_t>(maxTurns) * 16u + 32u;
     for (uint32_t actions = 0; actions < actionLimit; ++actions) {
         if (session.awaitingPlayer()) {
@@ -259,6 +260,7 @@ bool driveMatch(const Scenario &scenario, Policy policy, uint64_t seed,
         }
 
         const battle::ActionResult result = session.result();
+        lastResult = result;
         observeResult(result, record, trace, pendingSwitchReason,
                       playerSwitchLocked);
         if (result.actor == battle::Side::Player &&
@@ -308,7 +310,22 @@ bool driveMatch(const Scenario &scenario, Policy policy, uint64_t seed,
         }
     }
 
-    error = "BattleSession exceeded its bounded action count";
+    const battle::BattleState &stalled = session.state();
+    error = "BattleSession exceeded its bounded action count after " +
+            std::to_string(completedTurns) + " turns (phase result " +
+            std::to_string(static_cast<unsigned>(lastResult.kind)) +
+            ", active " + std::to_string(stalled.active[0].id) + "/" +
+            std::to_string(stalled.active[0].hp) + " vs " +
+            std::to_string(stalled.active[1].id) + "/" +
+            std::to_string(stalled.active[1].hp) + ", benches " +
+            std::to_string(stalled.bench[0][0].id) + "/" +
+            std::to_string(stalled.bench[0][0].hp) + "," +
+            std::to_string(stalled.bench[0][1].id) + "/" +
+            std::to_string(stalled.bench[0][1].hp) + " vs " +
+            std::to_string(stalled.bench[1][0].id) + "/" +
+            std::to_string(stalled.bench[1][0].hp) + "," +
+            std::to_string(stalled.bench[1][1].id) + "/" +
+            std::to_string(stalled.bench[1][1].hp) + ")";
     return false;
 }
 
@@ -328,6 +345,18 @@ void appendRecord(const Options &options, const Scenario &scenario,
     captureTeamIds(scenario, record);
     if (!driveMatch(scenario, policy, record.seed, options.maxTurns,
                     record, error)) {
+        std::string roster = " player=";
+        for (uint8_t slot = 0; slot < record.playerCount; ++slot) {
+            if (slot != 0) roster += '|';
+            roster += std::to_string(record.playerSpecies[slot]);
+        }
+        roster += " opponent=";
+        for (uint8_t slot = 0; slot < record.opponentCount; ++slot) {
+            if (slot != 0) roster += '|';
+            roster += std::to_string(record.opponentSpecies[slot]);
+        }
+        error = "scenario " + name + " trial " + std::to_string(trial) +
+                " policy " + policyName(policy) + roster + ": " + error;
         return;
     }
     summary.matches.push_back(std::move(record));
@@ -347,7 +376,7 @@ void addAppearances(BatchSummary &summary, const PartySpec &playerParty,
 void chooseBalancedSix(uint8_t speciesCount, uint32_t &selectionState,
                        BatchSummary &summary, uint8_t (&selected)[6])
 {
-    bool used[32] = {};
+    bool used[64] = {};
     for (uint8_t pick = 0; pick < 6; ++pick) {
         uint32_t minimum = std::numeric_limits<uint32_t>::max();
         for (uint8_t species = 0; species < speciesCount; ++species) {
@@ -356,7 +385,7 @@ void chooseBalancedSix(uint8_t speciesCount, uint32_t &selectionState,
                     summary.speciesAppearances[species]);
             }
         }
-        uint8_t candidates[32];
+        uint8_t candidates[64];
         uint8_t count = 0;
         for (uint8_t species = 0; species < speciesCount; ++species) {
             if (!used[species] &&
@@ -454,8 +483,8 @@ bool runBatch(const Options &options, BatchSummary &summary,
         error = "trials and maximum turns must be nonzero";
         return false;
     }
-    if (options.speciesCount == 0 || options.speciesCount > 32) {
-        error = "species count must be in [1, 32]";
+    if (options.speciesCount == 0 || options.speciesCount > 64) {
+        error = "species count must be in [1, 64]";
         return false;
     }
     if (options.mode != Mode::Pairwise && options.mode != Mode::Random3v3 &&
@@ -602,7 +631,7 @@ bool parsePairName(const std::string &name, uint8_t &playerSpecies,
                                                 opponent);
     if (parsedPlayer.ec != std::errc{} || parsedPlayer.ptr != endPlayer ||
         parsedOpponent.ec != std::errc{} || parsedOpponent.ptr != endOpponent ||
-        player >= 32 || opponent >= 32) {
+        player >= 64 || opponent >= 64) {
         return false;
     }
     playerSpecies = static_cast<uint8_t>(player);

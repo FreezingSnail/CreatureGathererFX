@@ -16,12 +16,12 @@ turn cap. It replaces `build/balance/matches.csv` and
 make sim
 ```
 
-To collect an exhaustive ordered 1v1 matrix for all 32 generated species at
+To collect an exhaustive ordered 1v1 matrix for all 64 generated species at
 level 10, with ten trials per matchup and both player policies:
 
 ```sh
 build/tools/battle-sim/battle-sim \
-  --mode pairwise --species-count 32 --level 10 --trials 10 \
+  --mode pairwise --species-count 64 --level 10 --trials 10 \
   --seed 20261004 --policy both --max-turns 100 \
   --output-dir build/balance/pairwise-level10
 ```
@@ -34,7 +34,7 @@ balanced. Both player policies for one trial use the same teams.
 
 ```sh
 build/tools/battle-sim/battle-sim \
-  --mode random-3v3 --species-count 32 --level 10 --trials 100 \
+  --mode random-3v3 --species-count 64 --level 10 --trials 100 \
   --seed 20261004 --policy both --max-turns 100 \
   --output-dir build/balance/random3-level10
 ```
