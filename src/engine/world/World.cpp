@@ -223,6 +223,12 @@ ViewOffset WorldEngine::view(const WorldTransient &world) {
     return result;
 }
 
+uint8_t WorldEngine::playerFrame(const WorldTransient &world) {
+    const WorldMotion &motion = world.motion;
+    const uint8_t base = static_cast<uint8_t>(direction(motion)) * 3;
+    return base + (motion.step == 0 ? 0 : motion.step < 8 ? 1 : 2);
+}
+
 void WorldEngine::syncFromLocation(WorldTransient &world) {
     const uint16_t published = gameState.playerLocation;
     if (published == origin(world.motion)) return;

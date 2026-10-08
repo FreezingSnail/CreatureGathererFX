@@ -135,6 +135,25 @@ void WorldCollisionTest(TestSuite &suite) {
     suite.addTest(test);
 }
 
+void WorldPlayerFrameTest(TestSuite &suite) {
+    Test test("World player frame selection");
+    WorldTransient world{};
+    for (uint8_t d = 0; d < 4; ++d) {
+        const Direction facing = static_cast<Direction>(d);
+        world.motion.directionAndFlags = d;
+        test.assert(WorldEngine::playerFrame(world), static_cast<uint8_t>(d * 3), "idle follows facing");
+        WorldEngine::setPos(world, 10, 10);
+        WorldEngine::beginMoveForTest(world, facing);
+        for (uint8_t step = 1; step < 16; ++step) {
+            WorldEngine::moveChar(world);
+            test.assert(WorldEngine::playerFrame(world), static_cast<uint8_t>(d * 3 + (step < 8 ? 1 : 2)), "gait follows actual camera step");
+        }
+        WorldEngine::moveChar(world);
+        test.assert(WorldEngine::playerFrame(world), static_cast<uint8_t>(d * 3), "completed step resumes directional idle");
+    }
+    suite.addTest(test);
+}
+
 void WorldSuite(TestRunner &runner) {
     TestSuite suite("World Suite");
     TilePropsEncodingTest(suite);
@@ -142,5 +161,6 @@ void WorldSuite(TestRunner &runner) {
     TileCollisionHelperTest(suite);
     WorldTest(suite);
     WorldCollisionTest(suite);
+    WorldPlayerFrameTest(suite);
     runner.addTestSuite(suite);
 }

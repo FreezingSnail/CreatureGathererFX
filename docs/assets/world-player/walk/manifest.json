@@ -1,0 +1,173 @@
+{
+  "reviewOnly": true,
+  "palette": [
+    "#000000",
+    "#ffffff"
+  ],
+  "background": "transparent",
+  "outline": {
+    "color": "#ffffff",
+    "pixels": 1,
+    "neighbors": 8
+  },
+  "sheet": [
+    64,
+    32
+  ],
+  "facing": [
+    "DOWN_A",
+    "DOWN_B",
+    "UP_A",
+    "UP_B",
+    "LEFT_A",
+    "LEFT_B",
+    "RIGHT_A",
+    "RIGHT_B"
+  ],
+  "sprites": [
+    {
+      "name": "DOWN_A",
+      "file": "down_a.png",
+      "cell": [
+        0,
+        0
+      ],
+      "size": [
+        16,
+        16
+      ],
+      "sourceBounds": [
+        16,
+        212,
+        284,
+        357
+      ]
+    },
+    {
+      "name": "DOWN_B",
+      "file": "down_b.png",
+      "cell": [
+        1,
+        0
+      ],
+      "size": [
+        16,
+        16
+      ],
+      "sourceBounds": [
+        329,
+        212,
+        284,
+        357
+      ]
+    },
+    {
+      "name": "UP_A",
+      "file": "up_a.png",
+      "cell": [
+        2,
+        0
+      ],
+      "size": [
+        16,
+        16
+      ],
+      "sourceBounds": [
+        638,
+        212,
+        285,
+        347
+      ]
+    },
+    {
+      "name": "UP_B",
+      "file": "up_b.png",
+      "cell": [
+        3,
+        0
+      ],
+      "size": [
+        16,
+        16
+      ],
+      "sourceBounds": [
+        951,
+        212,
+        286,
+        356
+      ]
+    },
+    {
+      "name": "LEFT_A",
+      "file": "left_a.png",
+      "cell": [
+        0,
+        1
+      ],
+      "size": [
+        16,
+        16
+      ],
+      "sourceBounds": [
+        16,
+        681,
+        277,
+        326
+      ]
+    },
+    {
+      "name": "LEFT_B",
+      "file": "left_b.png",
+      "cell": [
+        1,
+        1
+      ],
+      "size": [
+        16,
+        16
+      ],
+      "sourceBounds": [
+        323,
+        681,
+        280,
+        329
+      ]
+    },
+    {
+      "name": "RIGHT_A",
+      "file": "right_a.png",
+      "cell": [
+        2,
+        1
+      ],
+      "size": [
+        16,
+        16
+      ],
+      "sourceBounds": [
+        649,
+        681,
+        282,
+        329
+      ]
+    },
+    {
+      "name": "RIGHT_B",
+      "file": "right_b.png",
+      "cell": [
+        3,
+        1
+      ],
+      "size": [
+        16,
+        16
+      ],
+      "sourceBounds": [
+        962,
+        681,
+        275,
+        326
+      ]
+    }
+  ]
+}

@@ -1,0 +1,129 @@
+{
+  "reviewOnly": true,
+  "tileSize": 16,
+  "atlasSize": [
+    256,
+    256
+  ],
+  "tileCount": 256,
+  "biomes": [
+    {
+      "name": "Meadow",
+      "x": 0,
+      "y": 0,
+      "width": 16,
+      "height": 8,
+      "atlasRow": 0
+    },
+    {
+      "name": "Woodland",
+      "x": 16,
+      "y": 0,
+      "width": 16,
+      "height": 8,
+      "atlasRow": 1
+    },
+    {
+      "name": "Coast",
+      "x": 0,
+      "y": 8,
+      "width": 16,
+      "height": 8,
+      "atlasRow": 2
+    },
+    {
+      "name": "Marsh",
+      "x": 16,
+      "y": 8,
+      "width": 16,
+      "height": 8,
+      "atlasRow": 3
+    },
+    {
+      "name": "Mountain",
+      "x": 0,
+      "y": 16,
+      "width": 16,
+      "height": 8,
+      "atlasRow": 4
+    },
+    {
+      "name": "Snow",
+      "x": 16,
+      "y": 16,
+      "width": 16,
+      "height": 8,
+      "atlasRow": 5
+    },
+    {
+      "name": "Village",
+      "x": 0,
+      "y": 24,
+      "width": 16,
+      "height": 8,
+      "atlasRow": 6
+    },
+    {
+      "name": "Ruins",
+      "x": 16,
+      "y": 24,
+      "width": 16,
+      "height": 8,
+      "atlasRow": 7
+    }
+  ],
+  "buildings": [
+    "Cottage",
+    "Woodland cabin",
+    "Village shop",
+    "Stone tower"
+  ],
+  "rooms": [
+    "Cottage room",
+    "Shop room",
+    "Ruined shrine",
+    "Crystal cave"
+  ],
+  "conceptSize": [
+    1254,
+    1254
+  ],
+  "terrainCorrection": {
+    "source": "atlas-terrain-correction.png",
+    "nativeRectangle": [
+      0,
+      0,
+      64,
+      128
+    ]
+  },
+  "buildingRevision": {
+    "source": "buildings-simple-concept.png",
+    "exteriorTiles": [
+      4,
+      3
+    ],
+    "atlasSlotTiles": [
+      4,
+      4
+    ],
+    "exteriorOffsetTiles": [
+      0,
+      1
+    ],
+    "playerTileSize": 16,
+    "doorTile": [
+      1,
+      3
+    ],
+    "approachTile": [
+      1,
+      4
+    ],
+    "interaction": "A facing UP; review only"
+  },
+  "export": "Centered nearest-neighbor sample and threshold128; opaque binary. Generated cell alignment and seams require review.",
+  "map": "overworld.tmj",
+  "interiors": "interiors.tmj",
+  "installation": "Not installed; no collision, transitions or gameplay content assigned."
+}

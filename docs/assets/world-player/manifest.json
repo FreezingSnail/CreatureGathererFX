@@ -1,0 +1,97 @@
+{
+  "reviewOnly": true,
+  "palette": [
+    "#000000",
+    "#ffffff"
+  ],
+  "background": "transparent",
+  "outline": {
+    "color": "#ffffff",
+    "pixels": 1,
+    "neighbors": 8
+  },
+  "sheet": [
+    32,
+    32
+  ],
+  "facing": [
+    "DOWN",
+    "UP",
+    "LEFT",
+    "RIGHT"
+  ],
+  "sprites": [
+    {
+      "name": "DOWN",
+      "file": "down.png",
+      "cell": [
+        0,
+        0
+      ],
+      "size": [
+        16,
+        16
+      ],
+      "sourceBounds": [
+        154,
+        159,
+        405,
+        450
+      ]
+    },
+    {
+      "name": "UP",
+      "file": "up.png",
+      "cell": [
+        1,
+        0
+      ],
+      "size": [
+        16,
+        16
+      ],
+      "sourceBounds": [
+        694,
+        159,
+        405,
+        450
+      ]
+    },
+    {
+      "name": "LEFT",
+      "file": "left.png",
+      "cell": [
+        0,
+        1
+      ],
+      "size": [
+        16,
+        16
+      ],
+      "sourceBounds": [
+        112,
+        716,
+        431,
+        415
+      ]
+    },
+    {
+      "name": "RIGHT",
+      "file": "right.png",
+      "cell": [
+        1,
+        1
+      ],
+      "size": [
+        16,
+        16
+      ],
+      "sourceBounds": [
+        730,
+        716,
+        417,
+        415
+      ]
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "tool": "Built-in imagegen",
+  "revision": "Simplified white-ground atlas",
+  "prompt": "Use case: style-transfer. EDIT this exact environment atlas to be MUCH SIMPLER and FIX BLACK BOXES behind props. Input is a256x256 logical atlas with16columns16rows of16x16tiles. Retain same subjects, locations, row/column ordering, 4x4building assemblies in rows8-11 and 4x4rooms in rows12-15. Output1024x1024 with crisp4x logical pixels. BLACK/WHITE ONLY. Crucial: EVERY standalone object cell in columns4-15 of rows0-7 must have PURE WHITE BACKGROUND touching ALL FOUR EDGES; no black square backdrop, no frame, no tile enclosure, no ground texture under object. Props must be clean BLACK outlined drawings on WHITE ground with white interior and small purposeful black shadow, not white icons on black squares. Each isolated prop fits inside16x16 logical cell with ONE WHITE LOGICAL PIXEL margin on each side; outline MUST NOT reach cell edges. This is mandatory so they blend on the white grass in the map. Only WATER, ROCK WALLS and ROOM WALLS may have large black areas. All grass,path,sand,snow walkable tiles should be mostly white, with only1or2tiny marks per16x16cell. Preserve top-left four terrain columns per biome row: rows0meadow,1woods,2coast,3marsh,4mountain,5snow,6village,7ruins; columns0ground,1path,2water,3wall. Water black with two simple white ripple dashes, no curls. Overall style simple restrained early handheld pixel art. ONE logical-pixel outlines, broad flat white forms, NO decorative crosshatching, NO checkerboard shading, NO ornate designs, NO dense stipple, NO tiny decorative dots, NO exaggerated cartoon forms, NO shiny faceting. Trees: simple rounded or triangle crowns, few interior marks, single trunk, no complicated foliage. Rocks: simple angular silhouette, one crack. Plants: few leaf strokes. Props: legible basic shapes. Buildings should be plain modest cottage/cabin/shop/tower with broad white walls, few roof ribs, one door and one or two windows, not fancy architectural ornaments. Interior rooms: clean open white floor and only essential bed/table/counter/altar/crystals with plain black wall lines. Keep each 64x64 building and room footprint exact. Avoid adding creatures, captions, UI, grid, margins, assets. Preserve full square atlas bounds. Output only the simpler corrected complete atlas.",
+  "references": [
+    "docs/assets/world-environment-spike/v1/atlas-native.png"
+  ],
+  "concept": "atlas-simple-concept.png",
+  "export": "node tools/generate-world-environment-spike.mjs docs/assets/world-environment-spike/atlas-simple-concept.png docs/assets/world-environment-spike/atlas-terrain-correction.png docs/assets/world-environment-spike/buildings-simple-concept.png",
+  "previous": "v1/",
+  "status": "Review only; native sizes/map composition checked, art seams/alignment not certified.",
+  "terrain": "Reuse the prior quiet terrain rectangle at native(0,0,64,128) to preserve ground/path/water/wall slot positions; props and buildings use the new simplified concept.",
+  "buildings": {
+    "tool": "Built-in imagegen",
+    "prompt": "Use case: stylized-concept. Create a VERY PLAIN BLACK AND WHITE RPG building sprite sheet, four64x64 logical pixel buildings arranged in2columns x2rows, sheet128x128 logical pixels, enlarged to1024x1024 with hard8x pixel squares. Top-left modest cottage; top-right plain timber cabin; bottom-left simple village shop; bottom-right plain stone ruin tower. These are64x64 building assemblies occupying exactly4x4 tiles of16x16 each. Primary need: player is16x16, entrances must have TILE-ALIGNED doors. In EACH building block the door occupies the SECOND TILE COLUMN from left (localx16..31) and BOTTOM TILE ROW (localy48..63); its threshold reaches bottom edge y63. Door opening is a clear solid-black rectangle localx18..29,y49..63 with narrow plain jambs, NO stairs, NO ornate arch, NO step obstruction, NO handle decorations. This strict entrance position is essential. Roof only in first two tile rows localy0..31. White wall face in bottom two rows y32..63. Use one simple window localx42..51,y35..44, leave door obvious. Cottage: simple pitched roof outline and at most2wide roof lines; cabin: straight simple roof and at most2horizontal timber seams; shop: flat plain narrow awning and white wall, no goods/signs; tower: modest square top with only3plain battlements, white stone face with at most2broad mortar seams, not giant castle. All four roofs must be MUCH PLAINER than reference. No overlapping trees, no rocks, no side buildings, no bushes, no flowers, no extra roof levels. Solid BLACK one-pixel outline on WHITE, white background, white wall, small blackwindow and black doorway, minimal shading. No stipple, no ornate shingles, no diagonal hatch shading, no gray, no checkerboard, no decorative trim, no fantasy exaggeration, no text or labels or grid or padding between64x64 cells. Draw on true128x128 logical canvas, flush outer bounds. Match simple early handheld RPG terrain architecture. Input1 is existing atlas for subject identity ONLY, replace ornate architecture with plain minimum recognizable forms. Output only this2x2 four-building sheet with entrances at specified pixel positions.",
+    "reference": "v2/atlas-native.png",
+    "export": "Building exteriors only replaced; first48source rows compacted to32native rows, bottom16door rows preserved. Actual footprint4x3 within unchanged4x4slot.",
+    "doorTile": [
+      1,
+      3
+    ],
+    "approachTile": [
+      1,
+      4
+    ],
+    "playerPixels": [
+      16,
+      16
+    ],
+    "interaction": "Current engine: A while facing adjacent door tile. Review entrance objects only; no warp implementation."
+  },
+  "fixtureRevision": {
+    "source": "fixtures/atlas-native.png",
+    "prompt": "fixtures/prompt.json",
+    "previous": "v3/",
+    "export": "node tools/generate-world-fixture-spike.mjs docs/assets/world-environment-spike/fixtures/atlas-concept.png docs/assets/world-environment-spike/fixtures/buildings-correction.png"
+  }
+}

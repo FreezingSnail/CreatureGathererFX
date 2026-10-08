@@ -1,0 +1,97 @@
+{
+  "reviewOnly": true,
+  "palette": [
+    "#000000",
+    "#ffffff"
+  ],
+  "background": "transparent",
+  "outline": {
+    "color": "#ffffff",
+    "pixels": 1,
+    "neighbors": 8
+  },
+  "sheet": [
+    32,
+    32
+  ],
+  "facing": [
+    "DOWN_A",
+    "DOWN_B",
+    "UP_A",
+    "UP_B"
+  ],
+  "sprites": [
+    {
+      "name": "DOWN_A",
+      "file": "down_a.png",
+      "cell": [
+        0,
+        0
+      ],
+      "size": [
+        16,
+        16
+      ],
+      "sourceBounds": [
+        205,
+        137,
+        383,
+        480
+      ]
+    },
+    {
+      "name": "DOWN_B",
+      "file": "down_b.png",
+      "cell": [
+        1,
+        0
+      ],
+      "size": [
+        16,
+        16
+      ],
+      "sourceBounds": [
+        667,
+        137,
+        381,
+        480
+      ]
+    },
+    {
+      "name": "UP_A",
+      "file": "up_a.png",
+      "cell": [
+        0,
+        1
+      ],
+      "size": [
+        16,
+        16
+      ],
+      "sourceBounds": [
+        205,
+        660,
+        382,
+        480
+      ]
+    },
+    {
+      "name": "UP_B",
+      "file": "up_b.png",
+      "cell": [
+        1,
+        1
+      ],
+      "size": [
+        16,
+        16
+      ],
+      "sourceBounds": [
+        667,
+        660,
+        381,
+        480
+      ]
+    }
+  ]
+}

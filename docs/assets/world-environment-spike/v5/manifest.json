@@ -1,0 +1,245 @@
+{
+  "reviewOnly": true,
+  "tileSize": 16,
+  "atlasSize": [
+    256,
+    512
+  ],
+  "tileCount": 512,
+  "biomes": [
+    {
+      "name": "Meadow",
+      "x": 0,
+      "y": 0,
+      "width": 16,
+      "height": 8,
+      "atlasRow": 0
+    },
+    {
+      "name": "Woodland",
+      "x": 16,
+      "y": 0,
+      "width": 16,
+      "height": 8,
+      "atlasRow": 1
+    },
+    {
+      "name": "Coast",
+      "x": 0,
+      "y": 8,
+      "width": 16,
+      "height": 8,
+      "atlasRow": 2
+    },
+    {
+      "name": "Marsh",
+      "x": 16,
+      "y": 8,
+      "width": 16,
+      "height": 8,
+      "atlasRow": 3
+    },
+    {
+      "name": "Mountain",
+      "x": 0,
+      "y": 16,
+      "width": 16,
+      "height": 8,
+      "atlasRow": 4
+    },
+    {
+      "name": "Snow",
+      "x": 16,
+      "y": 16,
+      "width": 16,
+      "height": 8,
+      "atlasRow": 5
+    },
+    {
+      "name": "Village",
+      "x": 0,
+      "y": 24,
+      "width": 16,
+      "height": 8,
+      "atlasRow": 6
+    },
+    {
+      "name": "Ruins",
+      "x": 16,
+      "y": 24,
+      "width": 16,
+      "height": 8,
+      "atlasRow": 7
+    }
+  ],
+  "buildings": [
+    "Cottage",
+    "Woodland cabin",
+    "Village shop",
+    "Stone tower"
+  ],
+  "rooms": [
+    "Cottage room",
+    "Shop room",
+    "Ruined shrine",
+    "Crystal cave"
+  ],
+  "conceptSize": [
+    1254,
+    1254
+  ],
+  "terrainCorrection": {
+    "source": "atlas-terrain-correction.png",
+    "nativeRectangle": [
+      0,
+      0,
+      64,
+      128
+    ]
+  },
+  "buildingRevision": {
+    "source": "atlas-native.png",
+    "sourceRectangle": [
+      0,
+      256,
+      256,
+      64
+    ],
+    "exteriorTiles": [
+      4,
+      3
+    ],
+    "atlasSlotTiles": [
+      4,
+      4
+    ],
+    "doorTile": [
+      1,
+      3
+    ],
+    "approachTile": [
+      1,
+      4
+    ],
+    "interaction": "A facing UP; review only"
+  },
+  "export": "Centered nearest-neighbor sample and threshold128; opaque binary. Generated cell alignment and seams require review.",
+  "map": "overworld.tmj",
+  "interiors": "interiors.tmj",
+  "installation": "Not installed; no collision, transitions or gameplay content assigned.",
+  "fixtureStartId": 257,
+  "fixtureAssemblies": [
+    {
+      "name": "Cottage",
+      "x": 0,
+      "y": 16,
+      "width": 4,
+      "height": 4
+    },
+    {
+      "name": "Woodland cabin",
+      "x": 4,
+      "y": 16,
+      "width": 4,
+      "height": 4
+    },
+    {
+      "name": "Village shop",
+      "x": 8,
+      "y": 16,
+      "width": 4,
+      "height": 4
+    },
+    {
+      "name": "Ruined watchtower",
+      "x": 12,
+      "y": 16,
+      "width": 4,
+      "height": 4
+    },
+    {
+      "name": "Horizontal bridge",
+      "x": 0,
+      "y": 20,
+      "width": 4,
+      "height": 4
+    },
+    {
+      "name": "Vertical bridge",
+      "x": 4,
+      "y": 20,
+      "width": 4,
+      "height": 4
+    },
+    {
+      "name": "Pond and shoreline",
+      "x": 8,
+      "y": 20,
+      "width": 4,
+      "height": 4
+    },
+    {
+      "name": "Rock cascade",
+      "x": 12,
+      "y": 20,
+      "width": 4,
+      "height": 4
+    },
+    {
+      "name": "Broadleaf tree",
+      "x": 0,
+      "y": 24,
+      "width": 4,
+      "height": 4
+    },
+    {
+      "name": "Tree grove",
+      "x": 4,
+      "y": 24,
+      "width": 4,
+      "height": 4
+    },
+    {
+      "name": "Boulder cluster",
+      "x": 8,
+      "y": 24,
+      "width": 4,
+      "height": 4
+    },
+    {
+      "name": "Shrine arch",
+      "x": 12,
+      "y": 24,
+      "width": 4,
+      "height": 4
+    },
+    {
+      "name": "Fishing dock",
+      "x": 0,
+      "y": 28,
+      "width": 4,
+      "height": 4
+    },
+    {
+      "name": "Marsh boardwalk",
+      "x": 4,
+      "y": 28,
+      "width": 4,
+      "height": 4
+    },
+    {
+      "name": "Gathering camp",
+      "x": 8,
+      "y": 28,
+      "width": 4,
+      "height": 4
+    },
+    {
+      "name": "Well and garden",
+      "x": 12,
+      "y": 28,
+      "width": 4,
+      "height": 4
+    }
+  ]
+}

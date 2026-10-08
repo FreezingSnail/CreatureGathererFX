@@ -1,0 +1,136 @@
+{
+  "reviewOnly": true,
+  "tileSize": 16,
+  "atlasSize": [
+    256,
+    256
+  ],
+  "tileCount": 256,
+  "assemblies": [
+    {
+      "name": "Cottage",
+      "x": 0,
+      "y": 0,
+      "width": 4,
+      "height": 4
+    },
+    {
+      "name": "Woodland cabin",
+      "x": 4,
+      "y": 0,
+      "width": 4,
+      "height": 4
+    },
+    {
+      "name": "Village shop",
+      "x": 8,
+      "y": 0,
+      "width": 4,
+      "height": 4
+    },
+    {
+      "name": "Ruined watchtower",
+      "x": 12,
+      "y": 0,
+      "width": 4,
+      "height": 4
+    },
+    {
+      "name": "Horizontal bridge",
+      "x": 0,
+      "y": 4,
+      "width": 4,
+      "height": 4
+    },
+    {
+      "name": "Vertical bridge",
+      "x": 4,
+      "y": 4,
+      "width": 4,
+      "height": 4
+    },
+    {
+      "name": "Pond and shoreline",
+      "x": 8,
+      "y": 4,
+      "width": 4,
+      "height": 4
+    },
+    {
+      "name": "Rock cascade",
+      "x": 12,
+      "y": 4,
+      "width": 4,
+      "height": 4
+    },
+    {
+      "name": "Broadleaf tree",
+      "x": 0,
+      "y": 8,
+      "width": 4,
+      "height": 4
+    },
+    {
+      "name": "Tree grove",
+      "x": 4,
+      "y": 8,
+      "width": 4,
+      "height": 4
+    },
+    {
+      "name": "Boulder cluster",
+      "x": 8,
+      "y": 8,
+      "width": 4,
+      "height": 4
+    },
+    {
+      "name": "Shrine arch",
+      "x": 12,
+      "y": 8,
+      "width": 4,
+      "height": 4
+    },
+    {
+      "name": "Fishing dock",
+      "x": 0,
+      "y": 12,
+      "width": 4,
+      "height": 4
+    },
+    {
+      "name": "Marsh boardwalk",
+      "x": 4,
+      "y": 12,
+      "width": 4,
+      "height": 4
+    },
+    {
+      "name": "Gathering camp",
+      "x": 8,
+      "y": 12,
+      "width": 4,
+      "height": 4
+    },
+    {
+      "name": "Well and garden",
+      "x": 12,
+      "y": 12,
+      "width": 4,
+      "height": 4
+    }
+  ],
+  "map": "overworld.tmj",
+  "firstgid": 257,
+  "buildingCorrection": {
+    "source": "buildings-correction.png",
+    "acceptedRectangle": [
+      0,
+      0,
+      256,
+      64
+    ]
+  },
+  "export": "Centered nearest-neighbor to256x256; binary threshold128. Assembly boundaries and bridge repeat seams require art review.",
+  "rawPixelBytes1bpp": 8192
+}
