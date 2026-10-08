@@ -16,6 +16,7 @@
 #include "ArenaCatalog.hpp"
 #include "ArenaNavigation.hpp"
 #include "ArenaView.hpp"
+#include "../../lib/random.hpp"
 
 namespace arena {
 
@@ -131,6 +132,16 @@ void finishBattle(battle::Outcome)
 void update(uint8_t edgeButtons)
 {
     ArenaUiState &ui = modeState.arena.ui;
+    // Confirming a player team starts immediately against a random trainer.
+    // This keeps the demo focused on team choice and samples the shared game RNG.
+    if (ui.screen == ArenaScreen::PlayerTeam && (edgeButtons & MENU_EDGE_A)) {
+        arenaContext.playerTeam = ui.list.cursor < ArenaDemoIds::playerCount
+                                      ? ui.list.cursor : 0;
+        arenaContext.opponentTeam = randomRoll(
+            0, static_cast<uint8_t>(ArenaDemoIds::opponentCount - 1));
+        startMatch();
+        return;
+    }
     const ArenaIntent intent = navigate(ui, arenaContext, edgeButtons,
                                         ArenaDemoIds::playerCount,
                                         ArenaDemoIds::opponentCount);

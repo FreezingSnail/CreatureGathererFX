@@ -30,7 +30,8 @@ inline void finishAndRecord(battle::Outcome outcome)
     arena::finishBattle(outcome);
 }
 
-inline void renderBattle()
+// Share the repeated renderer call chain so the complete arena suite fits AVR.
+__attribute__((noinline)) inline void renderBattle()
 {
     battle::BattleView view = battleSession().view();
     battlePresenter().overlay(view);
@@ -192,7 +193,7 @@ inline void mutateFreshnessState()
     }
 }
 
-inline void expectFreshState(FxTest &test)
+__attribute__((noinline)) inline void expectFreshState(FxTest &test)
 {
     const battle::BattleState &state = battleSession().state();
     test.expectEq(battleSession().isActive(), true,
