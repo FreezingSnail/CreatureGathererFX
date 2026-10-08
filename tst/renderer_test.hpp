@@ -51,7 +51,7 @@ inline void assertPpDigit(Test &test, uint8_t digit, uint16_t bits)
                 expected = (bits & (1u << bit)) != 0;
             }
             test.assert(Arduboy2Base::getPixel(x, y), expected,
-                        "PP digit selector matches original pixels");
+                        "compact digit selector matches authored pixels");
         }
     }
 }
@@ -76,12 +76,14 @@ inline void assertSaveStatusOracle(Test &test, const uint8_t (*text)[5],
 inline void PpGlyphPixelEquivalenceTest(TestSuite &suite)
 {
     Test test = Test(__func__);
-    const uint16_t digits[4] = {
+    const uint16_t digits[10] = {
         0b111101101101111, 0b111010010011010,
         0b111001111100111, 0b111100111100111,
+        18925, 31183, 31695, 9383, 31727, 31215,
     };
-    for (uint8_t digit = 0; digit < 4; ++digit) {
-        assertPpGlyph(test, digits[digit], 12, 4, "PP digit matches original pixels");
+    for (uint8_t digit = 0; digit < 10; ++digit) {
+        if (digit < 4)
+            assertPpGlyph(test, digits[digit], 12, 4, "PP digit matches original pixels");
         assertPpDigit(test, digit, digits[digit]);
     }
     test.assert(validMoveId(LEGACY_EMPTY_MOVE_ID), false,

@@ -18,7 +18,11 @@ perturbed_layout=$fixtures/fxlayout-expand-20-perturbed.toml
 # Arena UI appends three fixed bitmap labels after the existing text symbols.
 # Battle labels follow the four authored burst renames (five extra pixels each).
 # Expansion roster adds 32 creature rows, names, and paired sprite frames.
-expected=dd560eb66447e015a368d777e8ee994891c6b5d74c2a6b1f2754b08e153a56a0
+# Expansion roster move slots are filled with concept- and type-matched moves.
+# Append native48 battle views and compact option frames; existing addresses stay fixed.
+# Reviewed left-facing front profiles are baked toward the player at screen right.
+# Append twelve masked chibi player idle/walk frames; prior450constants/data stay fixed.
+expected=a2856ab26075f12ea750de8143ebce82c3197865dbe5ce5b6badce36509c70ec
 
 for layout in "$old_layout" "$new_layout" "$perturbed_layout"; do
     test -f "$layout" || {

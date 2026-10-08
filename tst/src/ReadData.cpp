@@ -4,6 +4,7 @@
 #include <avr/pgmspace.h>
 #include "parseCSV.hpp"
 #include "../fxdatatest/generated/move_data.hpp"
+#include "../fxdatatest/generated/creature_data.hpp"
 #include "../fxdatatest/generated/opponent_data.hpp"
 
 uint24_t readCreatureNameAddress(uint8_t id) {
@@ -63,6 +64,7 @@ OpponentSeed readOpponentSeed(uint8_t index) {
 }
 
 CreatureData_t getCreatureFromStore(uint8_t id) {
+    if (id >= 32 && id < creatureFixtureCount) return creatureFixtures[id];
     CreatureData_t cseed;
     std::string line = readLineFromCSV(CREATURECSV, id);
     CSVCreature csvCreature = parseCSVLineToCreature(line);

@@ -152,7 +152,7 @@ void cacheCreatureDetail(PreparedBattleItem &item, uint8_t id, uint8_t &lookups)
 void cacheMoveName(PreparedBattleItem &item, uint8_t id, uint8_t &lookups) {
     item.detailWidth = readMoveNameWidth(id);
     item.detailHeight = 8;
-    if (item.detailWidth != 0 && id < 33) {
+    if (item.detailWidth != 0) {
         item.detail = readMoveNameAddress(id);
         ++lookups;
     }
@@ -180,7 +180,7 @@ void drawCaptionText(const char *text, uint8_t x, uint8_t y) {
         const uint8_t character = pgm_read_byte(text++);
         if (character == 0) break;
         if (character != ' ') {
-            drawGlyph(glyphX, y, character, Blit::NEGATIVE);
+            drawGlyph(glyphX, y, character, Blit::OVERWRITE);
         }
         glyphX += 6;
     }
@@ -193,7 +193,7 @@ void drawCaption(uint8_t caption, uint8_t x, uint8_t y) {
 void drawDamageLine(uint8_t damage, uint8_t x, uint8_t y) {
     uint8_t divisor = damage >= 100 ? 100 : damage >= 10 ? 10 : 1;
     do {
-        drawGlyph(x, y, static_cast<uint8_t>('0' + damage / divisor), Blit::NEGATIVE);
+        drawGlyph(x, y, static_cast<uint8_t>('0' + damage / divisor), Blit::OVERWRITE);
         x += 6;
         damage %= divisor;
         divisor /= 10;
@@ -201,13 +201,13 @@ void drawDamageLine(uint8_t damage, uint8_t x, uint8_t y) {
     drawCaptionText(PSTR("damage dealt"), x + 6, y);
 }
 
-void drawBlackText(uint8_t x, uint8_t y, uint24_t address, uint8_t width) {
-    // Negative blitting maps the white-on-black FX raster directly onto the
-    // white panel, including rows that cross an 8-pixel page boundary.
-    Blit::draw(x, y, width, 8, address, FRAME(0), Blit::NEGATIVE);
+void drawFeedbackText(uint8_t x, uint8_t y, uint24_t address, uint8_t width) {
+    // FX text is already white on black; retain its native polarity.
+    if (address)
+        Blit::draw(x, y, width, 8, address, FRAME(0), Blit::OVERWRITE);
 }
 
-void drawBlackCaption(uint8_t caption, uint8_t x, uint8_t y) {
+void drawFeedbackCaption(uint8_t caption, uint8_t x, uint8_t y) {
     drawCaption(caption, x, y);
 }
 
@@ -536,7 +536,7 @@ void BattlePresenter::overlay(BattleView &view) const {
             // frozen source for incoming maxHP, which ActionResult omits.
             const uint8_t incomingMaxHp = view.active[side].maxHp;
             view.active[side].id = (flags_ & hiddenBit(side)) ? 255
-                : (result_->index < 32 ? result_->index : 255);
+                : (result_->index < battleSprites48Frames / 2 ? result_->index : 255);
             view.active[side].maxHp = incomingMaxHp;
         } else {
             view.active[side].id = (flags_ & hiddenBit(side)) ? 255
@@ -604,27 +604,27 @@ void BattlePresenter::draw() const {
 
     // Scene sprites and HP bars shake through drawScene; keep the feedback
     // panel and its text stationary so damage remains easy to read.
-    Blit::fillRect(0, 40, 128, 24, WHITE);
+    Blit::fillRect(0, 40, 128, 24, BLACK);
     const uint8_t caption = static_cast<uint8_t>((flags_ & CAPTION_MASK) >> CAPTION_SHIFT);
     const int16_t yName = 40, yAction = 48, yDetail = 56;
 
     if (stage_ == PresenterStage::Announce && result_->kind == ResultKind::Attack) {
-        drawBlackText(3, yName, item_.name, item_.nameWidth);
+        drawFeedbackText(3, yName, item_.name, item_.nameWidth);
         if (result_->flags & SELF_HIT)
-            drawBlackCaption(CAPTION_SELF_HIT, 3, yAction);
+            drawFeedbackCaption(CAPTION_SELF_HIT, 3, yAction);
         else if (result_->actor == Side::Player)
-            drawBlackText(3, yAction, attackText, attackTextWidth);
+            drawFeedbackText(3, yAction, attackText, attackTextWidth);
         else
-            drawBlackText(3, yAction, enemyAttackText, enemyAttackTextWidth);
-        drawBlackText(3, yDetail, item_.detail, item_.detailWidth);
+            drawFeedbackText(3, yAction, enemyAttackText, enemyAttackTextWidth);
+        drawFeedbackText(3, yDetail, item_.detail, item_.detailWidth);
     } else if (stage_ == PresenterStage::Announce && result_->kind == ResultKind::Switch) {
-        drawBlackText(3, yName, item_.name, item_.nameWidth);
-        drawBlackCaption(caption, 3, yAction);
-        drawBlackText(3, yDetail, item_.detail, item_.detailWidth);
+        drawFeedbackText(3, yName, item_.name, item_.nameWidth);
+        drawFeedbackCaption(caption, 3, yAction);
+        drawFeedbackText(3, yDetail, item_.detail, item_.detailWidth);
     } else if (stage_ == PresenterStage::Announce && result_->kind == ResultKind::Gather) {
-        drawBlackText(3, yName, item_.name, item_.nameWidth);
-        drawBlackText(3, yAction, item_.detail, item_.detailWidth);
-        drawNumbersBlack(3, yDetail, result_->progressBefore);
+        drawFeedbackText(3, yName, item_.name, item_.nameWidth);
+        drawFeedbackText(3, yAction, item_.detail, item_.detailWidth);
+        drawStatNumbers(3, yDetail, result_->progressBefore);
     } else if (stage_ == PresenterStage::Impact && result_->kind == ResultKind::Attack) {
         const uint8_t target = (result_->flags & SELF_HIT)
             ? static_cast<uint8_t>(result_->actor)
@@ -632,45 +632,45 @@ void BattlePresenter::draw() const {
         const uint8_t before = result_->hpBefore[target];
         const uint8_t after = result_->hpAfter[target];
         const uint8_t damage = before > after ? before - after : 0;
-        drawBlackText(3, yName, item_.name, item_.nameWidth);
+        drawFeedbackText(3, yName, item_.name, item_.nameWidth);
         drawDamageLine(damage, 3, yAction);
-        drawBlackText(3, yDetail, item_.detail, item_.detailWidth);
-        drawBlackCaption(caption, 3, yDetail);
+        drawFeedbackText(3, yDetail, item_.detail, item_.detailWidth);
+        drawFeedbackCaption(caption, 3, yDetail);
     } else if (stage_ == PresenterStage::Impact && result_->kind == ResultKind::Switch) {
-        drawBlackText(3, yName, item_.name, item_.nameWidth);
-        drawBlackText(3, yAction, item_.detail, item_.detailWidth);
+        drawFeedbackText(3, yName, item_.name, item_.nameWidth);
+        drawFeedbackText(3, yAction, item_.detail, item_.detailWidth);
     } else if (stage_ == PresenterStage::Impact && result_->kind == ResultKind::Gather) {
-        drawBlackText(3, yName, item_.name, item_.nameWidth);
-        drawBlackText(3, yAction, item_.detail, item_.detailWidth);
-        drawNumbersBlack(3, yDetail, result_->progressAfter);
+        drawFeedbackText(3, yName, item_.name, item_.nameWidth);
+        drawFeedbackText(3, yAction, item_.detail, item_.detailWidth);
+        drawStatNumbers(3, yDetail, result_->progressAfter);
     } else if (stage_ == PresenterStage::Impact && result_->kind == ResultKind::EndTurn) {
-        drawBlackText(3, yName, item_.name, item_.nameWidth);
-        drawNumbersBlack(3, yAction, item_.animationWidth);
-        drawBlackCaption(caption, 18, yAction);
+        drawFeedbackText(3, yName, item_.name, item_.nameWidth);
+        drawStatNumbers(3, yAction, item_.animationWidth);
+        drawFeedbackCaption(caption, 18, yAction);
     } else if (stage_ == PresenterStage::Consequence) {
-        drawBlackText(3, yName, item_.name, item_.nameWidth);
+        drawFeedbackText(3, yName, item_.name, item_.nameWidth);
         const uint8_t prefixWidth = item_.detailWidth;
-        drawBlackText(3, yAction, item_.detail, prefixWidth);
+        drawFeedbackText(3, yAction, item_.detail, prefixWidth);
         const uint8_t captionX = static_cast<uint8_t>(3 + prefixWidth + (prefixWidth ? 1 : 0));
         // A long type name followed by "strengthened" exceeds one 128px row.
         // Put the caption on the last panel row instead of overrunning it.
         if (static_cast<uint16_t>(captionX) + 14u * 6u <= 128u)
-            drawBlackCaption(caption, captionX, yAction);
+            drawFeedbackCaption(caption, captionX, yAction);
         else
-            drawBlackCaption(caption, 3, yDetail);
+            drawFeedbackCaption(caption, 3, yDetail);
     } else if (stage_ == PresenterStage::Faint) {
-        drawBlackText(3, yName, item_.name, item_.nameWidth);
-        drawBlackText(3, yAction, item_.detail, item_.detailWidth);
+        drawFeedbackText(3, yName, item_.name, item_.nameWidth);
+        drawFeedbackText(3, yAction, item_.detail, item_.detailWidth);
     } else if (stage_ == PresenterStage::Terminal) {
-        drawBlackText(3, yAction, item_.detail, item_.detailWidth);
-        drawBlackCaption(caption, 3, yAction);
-        drawBlackText(3, yName, item_.name, item_.nameWidth);
+        drawFeedbackText(3, yAction, item_.detail, item_.detailWidth);
+        drawFeedbackCaption(caption, 3, yAction);
+        drawFeedbackText(3, yName, item_.name, item_.nameWidth);
     }
 
     if (item_.animation != 0 && item_.frames != 0 && stage_ == PresenterStage::Announce) {
         const uint8_t frame = static_cast<uint8_t>(
             static_cast<uint16_t>(elapsed_) * (item_.frames - 1) / (ANNOUNCE_TICKS - 1));
-        Blit::draw(result_->actor == Side::Player ? 32 : 64, 0,
+        Blit::draw(result_->actor == Side::Player ? 16 : 80, 0,
                                 item_.animationWidth, item_.animationHeight,
                                 item_.animation, FRAME(frame), Blit::PLUSMASK);
     }

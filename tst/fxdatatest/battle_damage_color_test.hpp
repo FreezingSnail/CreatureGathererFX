@@ -17,31 +17,31 @@ inline void test_battle_damage_color(FxTest &test) {
     // Independent raw font reference for this fixture's 60-to-35 HP delta.
     uint8_t expectedLine[90];
     arduboy.clear();
-    Blit::fillRect(0, 40, 128, 24, WHITE);
+    Blit::fillRect(0, 40, 128, 24, BLACK);
     const char *text = PSTR("25 damage dealt");
     uint8_t x = 3;
     for (uint8_t character; (character = pgm_read_byte(text++)) != 0; x += 6)
         if (character != ' ')
             Blit::draw(x, 48, 5, 6, ArduFontTrimmed,
-                       FRAME(character - '0'), Blit::NEGATIVE);
+                       FRAME(character - '0'), Blit::OVERWRITE);
     for (uint8_t column = 0; column < sizeof(expectedLine); ++column)
         expectedLine[column] = Arduboy2Base::sBuffer[6 * 128 + 3 + column];
 
     battle_presentation_fixture::drawView(baseView);
     presenter.draw();
-    bool labelMatchesBlackTreatment = true;
+    bool labelMatchesWhiteTreatment = true;
     for (uint8_t column = 18; column < sizeof(expectedLine); ++column) {
         if (Arduboy2Base::sBuffer[6 * 128 + 3 + column] != expectedLine[column]) {
-            labelMatchesBlackTreatment = false;
+            labelMatchesWhiteTreatment = false;
             break;
         }
     }
-    test.expectEq(labelMatchesBlackTreatment, true,
-                  F("damage label is inverted to black text on white panel"));
+    test.expectEq(labelMatchesWhiteTreatment, true,
+                  F("damage label is white on black"));
 
     bool noAdjacentPackedPixels = true;
     for (uint8_t column = 3 + sizeof(expectedLine); column < 128; ++column) {
-        if (Arduboy2Base::sBuffer[6 * 128 + column] != 0xFF) {
+        if (Arduboy2Base::sBuffer[6 * 128 + column] != 0) {
             noAdjacentPackedPixels = false;
             break;
         }
@@ -49,13 +49,13 @@ inline void test_battle_damage_color(FxTest &test) {
     test.expectEq(noAdjacentPackedPixels, true,
                   F("damage label stops before adjacent packed asset data"));
 
-    bool numberMatchesBlackTreatment = true;
+    bool numberMatchesWhiteTreatment = true;
     for (uint8_t column = 0; column < 18; ++column) {
         if (Arduboy2Base::sBuffer[6 * 128 + 3 + column] != expectedLine[column]) {
-            numberMatchesBlackTreatment = false;
+            numberMatchesWhiteTreatment = false;
             break;
         }
     }
-    test.expectEq(numberMatchesBlackTreatment, true,
-                  F("damage value uses black caption-font digits inline"));
+    test.expectEq(numberMatchesWhiteTreatment, true,
+                  F("damage value uses white caption-font digits inline"));
 }

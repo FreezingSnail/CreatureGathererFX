@@ -26,18 +26,18 @@ void MenuV2::printMenu(const battle::BattleView &view) {
     (void)view;
     if (menuPointer < 0) return;
     if (!drawMenu) {
-        Blit::draw(0, 40, 128, 24, battleMenu, FRAME(0), Blit::OVERWRITE);
+        Blit::fillRect(0, 48, 128, 16, WHITE);
         return;
     }
 
     switch (stack[menuPointer]) {
     case BATTLE_OPTIONS:
-        Blit::draw(0, 40, 128, 24, fightMenu,
-                                  FRAME(cursorIndex), Blit::OVERWRITE);
+        Blit::draw(0, 48, 128, 16, battleOptions48 + 4,
+                   FRAME(cursorIndex < 0 || cursorIndex > 3 ? 0 : cursorIndex), Blit::OVERWRITE);
         break;
 
     case BATTLE_MOVE_SELECT:
-        Blit::draw(0, 40, 128, 24, battleMenu, FRAME(0), Blit::OVERWRITE);
+        Blit::fillRect(0, 48, 128, 16, WHITE);
         printMoveMenu(cursorIndex, moveSnapshot, moveNameAddresses,
                       moveInfoPacked);
         break;
@@ -48,10 +48,9 @@ void MenuV2::printMenu(const battle::BattleView &view) {
         if (party.count != 0) {
             const uint8_t selected =
                 cursorIndex < 0 ? 0 : static_cast<uint8_t>(cursorIndex);
-            if (selected < party.count && party.choices[selected].id < 32) {
-                Blit::draw(
-                    0, 0, 32, 32, NewecreatureSprites,
-                    FRAME(static_cast<uint8_t>(party.choices[selected].id * 2)), Blit::PLUSMASK);
+            if (selected < party.count && party.choices[selected].id < kBattleSpeciesCount) {
+                Blit::draw(0, 0, 48, 48, battleSprites48 + 4,
+                           FRAME(party.choices[selected].id * 2), Blit::PLUSMASK);
             }
         }
         break;

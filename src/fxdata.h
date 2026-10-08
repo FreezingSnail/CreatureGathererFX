@@ -6,8 +6,8 @@ using uint24_t = __uint24;
 
 // Initialize FX hardware using  FX::begin(FX_DATA_PAGE); in the setup() function.
 
-constexpr uint16_t FX_DATA_PAGE  = 0xf551;
-constexpr uint24_t FX_DATA_BYTES = 667233;
+constexpr uint16_t FX_DATA_PAGE  = 0xf42a;
+constexpr uint24_t FX_DATA_BYTES = 742765;
 
 constexpr uint16_t FX_SAVE_PAGE  = 0xFF80;
 constexpr uint24_t FX_SAVE_BYTES = 32768;
@@ -530,4 +530,19 @@ namespace ArenaDemoData
   constexpr uint24_t playerLabelWidths = 0x0A2E59;
   constexpr uint24_t opponentLabelWidths = 0x0A2E5C;
 }
+
+constexpr uint24_t battleSprites48 = 0x0A2E61;
+constexpr uint16_t battleSprites48Width  = 48;
+constexpr uint16_t battleSprites48Height = 48;
+constexpr uint8_t  battleSprites48Frames = 128;
+
+constexpr uint24_t battleOptions48 = 0x0B4E65;
+constexpr uint16_t battleOptions48Width  = 128;
+constexpr uint16_t battleOptions48Height = 16;
+constexpr uint8_t  battleOptions48Frames = 4;
+
+constexpr uint24_t worldPlayerSprites = 0x0B5269;
+constexpr uint16_t worldPlayerSpritesWidth  = 16;
+constexpr uint16_t worldPlayerSpritesHeight = 16;
+constexpr uint8_t  worldPlayerSpritesFrames = 12;
 

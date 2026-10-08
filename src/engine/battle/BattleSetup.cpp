@@ -12,7 +12,7 @@ namespace battle {
 namespace {
 
 constexpr uint8_t EMPTY_MOVE = 255;
-#ifdef CGFX_TRAINER_DEMO_EXPANSION
+#if defined(CGFx_TRAINER_DEMO_EXPANSION) || defined(BATTLE_SIMULATOR)
 constexpr uint8_t SPECIES_COUNT = 64;
 #else
 constexpr uint8_t SPECIES_COUNT = 32;
