@@ -15,6 +15,7 @@
 #include "world/World.hpp"
 #include "battle/BattleSession.hpp"
 #include "battle/BattleView.hpp"
+#include "battle/BattleLayout.hpp"
 
 #include <ArduboyFX.h>
 #include <stdint.h>
@@ -209,32 +210,43 @@ static void printMoveMenu(int8_t index, const battle::MoveSnapshot &moves,
         const uint8_t moveId = moves.moveIds[slot];
         if (!validMoveId(moveId)) continue;
         const bool rightColumn = (slot & 1u) != 0;
-        const uint8_t nameX = rightColumn ? 68 : 6;
-        const uint8_t nameY = slot < 2 ? 45 : 53;
+        const uint8_t nameX = rightColumn ? 68 : 4;
+        const uint8_t nameY = slot < 2 ? 48 : 56;
+        if (slot == selected)
+            Blit::fillRect(rightColumn ? 64 : 0, nameY, 64, 8, BLACK);
         // The width is also the packed color-frame stride. Every name fits
         // its 63-pixel column; PP belongs in the selected-move panel above.
         const uint8_t nameWidth = readMoveNameWidth(moveId);
         drawText(nameX, nameY, nameAddresses[slot], nameWidth,
                  FRAME(color[slot]));
     }
-    printPackedMoveInfo(moves.moveIds[selected], selected, 38, 4, moveInfo);
+    Blit::fillRect(48, 0, 32, 48, BLACK);
     if (validMoveId(moves.moveIds[selected])) {
-        PpGlyph::draw(101, 4, 0b001001111101111);
-        PpGlyph::draw(105, 4, 0b001001111101111);
+        const uint16_t info = packedMoveInfo(moveInfo, selected);
+        const uint8_t type = (info >> 6) & 0x0f;
+        if (type <= static_cast<uint8_t>(Type::STATUS)) {
+            const char *codes = PSTR("SPWAWIEAFILIPLELST");
+            drawGlyph(50, 4, pgm_read_byte(codes + type * 2), Blit::OVERWRITE);
+            drawGlyph(56, 4, pgm_read_byte(codes + type * 2 + 1), Blit::OVERWRITE);
+        }
+        drawGlyph(70, 4, (info & 1u) ? 'P' : 'S', Blit::OVERWRITE);
+        drawStatNumbers(55, 14, (info >> 1) & 0x1f);
+        PpGlyph::draw(50, 29, 0b001001111101111);
+        PpGlyph::draw(54, 29, 0b001001111101111);
         if (moves.remainingUses[selected] == 255) {
-            PpGlyph::draw(113, 5, 0b010111010);
+            PpGlyph::draw(66, 30, 0b010111010);
         } else {
-            PpGlyph::digit(111, 4, moves.remainingUses[selected]);
-            PpGlyph::draw(115, 4, 0b001001010100100);
-            PpGlyph::digit(119, 4, (moves.useLimitsPacked >> (selected * 2)) & 3);
+            PpGlyph::digit(61, 29, moves.remainingUses[selected]);
+            PpGlyph::draw(65, 29, 0b001001010100100);
+            PpGlyph::digit(69, 29, (moves.useLimitsPacked >> (selected * 2)) & 3);
         }
     }
 }
 
 static void printCreatureMenu(const battle::PartySnapshot &party, uint8_t index,
                               const uint24_t *creatureNames) {
-    Blit::fillRect(0, 33, 128, 31, WHITE);
-    Blit::fillRect(0, 0, 128, 32, BLACK);
+    Blit::fillRect(0, battle_layout::menuY, 128, battle_layout::menuHeight, WHITE);
+    Blit::fillRect(0, 0, 128, battle_layout::spriteSize, BLACK);
     if (creatureNames == nullptr || party.count == 0) {
         return;
     }
@@ -255,37 +267,45 @@ static uint8_t battleHpBarWidth(uint8_t hp, uint8_t maxHp) {
         return 0;
     }
     const uint8_t boundedHp = hp > maxHp ? maxHp : hp;
-    return static_cast<uint8_t>((static_cast<uint16_t>(boundedHp) * 30) / maxHp);
+    return static_cast<uint8_t>((static_cast<uint16_t>(boundedHp) * 28) / maxHp);
 }
 
-static void drawPlayerHP(const battle::BattleView &view, int8_t shakeX = 0, int8_t shakeY = 0) {
-    const battle::ActiveView &creature = view.active[static_cast<uint8_t>(battle::Side::Player)];
-    const uint8_t hp = creature.hp;
-    Blit::fillRect(88 + shakeX, 34 + shakeY, 34, 6, BLACK);
-    Blit::fillRect(90 + shakeX, 36 + shakeY,
-                   battleHpBarWidth(hp, creature.maxHp), 2, WHITE);
-
-    // Blit::fillRect(60, 38, curHealth, 2, WHITE);
-    // drawStatNumbers(110, 34, curHealth);
-}
-
-static void drawOpponentHP(const battle::BattleView &view, int8_t shakeX = 0, int8_t shakeY = 0) {
-    const battle::ActiveView &creature = view.active[static_cast<uint8_t>(battle::Side::Opponent)];
-    Blit::fillRect(6 + shakeX, 34 + shakeY, 34, 6, BLACK);
-    Blit::fillRect(8 + shakeX, 36 + shakeY,
-                   battleHpBarWidth(creature.hp, creature.maxHp), 2, WHITE);
-}
-
-#ifdef CGFX_TRAINER_DEMO_EXPANSION
-static constexpr uint8_t kBattleSpeciesCount = 64;
-#else
-static constexpr uint8_t kBattleSpeciesCount = 32;
+// Both health panels share the same native layout and rendering code.
+#ifdef __AVR__
+__attribute__((noinline))
 #endif
+static void drawBattleHP(const battle::ActiveView &creature, uint8_t y) {
+    if (menu.menuPointer >= 0 && menu.stack[menu.menuPointer] == BATTLE_MOVE_SELECT) return;
+    Blit::fillRect(48, y, 32, 20, BLACK);
+    static const uint16_t labels[] PROGMEM = {4815, 31599, 29391, 9389, 31599, 31597};
+    const uint8_t labelY = y == 0 ? 2 : y;
+    for (uint8_t i = 0; i < 3; ++i)
+        PpGlyph::draw(50 + i * 4, labelY, pgm_read_word(labels + (y == 0 ? 0 : 3) + i));
+    if (y != 0) {
+        const uint8_t slashX = PpGlyph::number(50, y + 7, creature.hp);
+        PpGlyph::draw(slashX, y + 7, 0b001001010100100);
+        PpGlyph::number(slashX + 4, y + 7, creature.maxHp);
+    }
+    const uint8_t barY = y == 0 ? 10 : 35;
+    Blit::fillRect(49, barY, 30, 3, WHITE);
+    Blit::fillRect(50, barY + 1, 28, 1, BLACK);
+    Blit::fillRect(50, barY + 1, battleHpBarWidth(creature.hp, creature.maxHp), 1, WHITE);
+}
+
+static void drawPlayerHP(const battle::BattleView &view, int8_t = 0, int8_t = 0) {
+    drawBattleHP(view.active[static_cast<uint8_t>(battle::Side::Player)], 20);
+}
+
+static void drawOpponentHP(const battle::BattleView &view, int8_t = 0, int8_t = 0) {
+    drawBattleHP(view.active[static_cast<uint8_t>(battle::Side::Opponent)], 0);
+}
+
+static constexpr uint8_t kBattleSpeciesCount = 64;
 
 static void clearBattleSprite(int16_t x, int16_t y) {
     // Creature art is masked, so transparent pixels do not replace pixels
     // left by the outgoing creature when a switch redraws the scene.
-    Blit::fillRect(x, y, 32, 32, BLACK);
+    Blit::fillRect(x, y, battle_layout::spriteSize, battle_layout::spriteSize, BLACK);
 }
 
 static void drawOpponent(const battle::BattleView &view, int8_t shakeX, int8_t shakeY) {
@@ -294,22 +314,24 @@ static void drawOpponent(const battle::BattleView &view, int8_t shakeX, int8_t s
     if (creature.id >= kBattleSpeciesCount) {
         return;
     }
-    Blit::draw(shakeX, shakeY, 32, 32, NewecreatureSprites,
-               FRAME((creature.id * 2)), Blit::PLUSMASK);
+    Blit::draw(shakeX, shakeY, 48, 48, battleSprites48 + 4,
+               FRAME(creature.id * 2), Blit::PLUSMASK);
 }
 
 static void drawPlayer(const battle::BattleView &view, int8_t shakeX, int8_t shakeY) {
     const battle::ActiveView &creature = view.active[static_cast<uint8_t>(battle::Side::Player)];
-    clearBattleSprite(96 + shakeX, shakeY);
+    clearBattleSprite(battle_layout::playerX + shakeX, shakeY);
     if (creature.id < kBattleSpeciesCount) {
-        Blit::draw(96 + shakeX, shakeY, 32, 32, NewecreatureSprites,
-                                FRAME(((creature.id * 2) + 1)), Blit::PLUSMASK);
+        Blit::draw(80 + shakeX, shakeY, 48, 48, battleSprites48 + 4,
+                  FRAME(creature.id * 2 + 1), Blit::PLUSMASK);
     }
 
-    drawPlayerHP(view, shakeX, shakeY);
 }
 
 static void drawScene(const battle::BattleView &view, int8_t shakeX = 0, int8_t shakeY = 0) {
+    // The party menu already drew the selected preview; don't replace it with
+    // the opposing active creature during the following render phase.
+    if (menu.menuPointer >= 0 && menu.stack[menu.menuPointer] == BATTLE_CREATURE_SELECT) return;
     // No battle field art: keep combatants and UI legible on the black canvas.
     drawPlayer(view, shakeX, shakeY);
     drawOpponent(view, shakeX, shakeY);
@@ -406,6 +428,7 @@ static uint8_t drawMapFast(WorldTransient &world) {
 #define PLAYER_SIZE 16
 #define PLAYER_X_OFFSET WIDTH / 2 - PLAYER_SIZE / 2
 #define PLAYER_Y_OFFSET HEIGHT / 2 - PLAYER_SIZE / 2
-static void drawPlayer() {
-    Blit::draw(PLAYER_X_OFFSET, PLAYER_Y_OFFSET, 16, 16, characterSheet, FRAME(0), Blit::OVERWRITE);
+static void drawPlayer(const WorldTransient &world) {
+    Blit::draw(PLAYER_X_OFFSET, PLAYER_Y_OFFSET, 16, 16, worldPlayerSprites + 4,
+               FRAME(WorldEngine::playerFrame(world)), Blit::PLUSMASK);
 }

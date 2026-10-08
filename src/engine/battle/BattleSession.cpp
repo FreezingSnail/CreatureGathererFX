@@ -38,7 +38,7 @@ BattleAction skipAction()
 }
 
 #ifdef BATTLE_SIMULATOR
-constexpr uint8_t SIMULATOR_SPECIES_COUNT = 32;
+constexpr uint8_t SIMULATOR_SPECIES_COUNT = 64;
 constexpr uint8_t SIMULATOR_EMPTY_MOVE = 255;
 constexpr uint8_t SIMULATOR_MAX_LEVEL = 31;
 

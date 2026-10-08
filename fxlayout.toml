@@ -78,6 +78,20 @@ source = { raw = "fxdata/generated/scripts.bin" }
 [[entry]]
 source = { expand = { path = "fxdata/generated/arena_demo.txt" } }
 
+# Append-only 48px layout spike: dimensions prefix, then 128 masked frames.
+[[entry]]
+name = "battleSprites48"
+source = { image = { path = "images/Battlecreatures_48x48.png", width = 48, height = 48, shades = 2, spacing = 0 } }
+
+[[entry]]
+name = "battleOptions48"
+source = { image = { path = "images/Battleoptions48_128x16.png", width = 128, height = 16, shades = 2, spacing = 0 } }
+
+# Append player frames without moving any existing FX field.
+[[entry]]
+name = "worldPlayerSprites"
+source = { image = { path = "images/Playerchibi_16x16.png", width = 16, height = 16, shades = 2, spacing = 0 } }
+
 [save]
 sectors = 8
 

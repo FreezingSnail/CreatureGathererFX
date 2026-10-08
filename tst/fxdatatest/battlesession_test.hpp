@@ -40,7 +40,7 @@ inline uint16_t headroom(uint16_t top) {
     return top - base;
 }
 
-inline void renderBattle() {
+__attribute__((noinline)) inline void renderBattle() {
     battle::BattleView view = battleSession().view();
     battlePresenter().overlay(view);
     arduboy.clear();
@@ -48,7 +48,7 @@ inline void renderBattle() {
     battlePresenter().draw();
 }
 
-inline void beginPreset(const BattlePresets::Preset &stored, uint8_t damage = 0,
+__attribute__((noinline)) inline void beginPreset(const BattlePresets::Preset &stored, uint8_t damage = 0,
                        bool oneHp = false) {
     const BattlePresets::Preset preset = BattlePresets::copyPreset(stored);
     battle::applyPlayerPreset(player, stored);
@@ -73,7 +73,7 @@ inline void endPreset() {
     gameState.state = GameState_t::WORLD;
 }
 
-inline uint16_t foldResult(uint16_t signature, const battle::ActionResult &result) {
+__attribute__((noinline)) inline uint16_t foldResult(uint16_t signature, const battle::ActionResult &result) {
     signature = static_cast<uint16_t>(signature * 33u + static_cast<uint8_t>(result.kind));
     signature = static_cast<uint16_t>(signature * 33u + static_cast<uint8_t>(result.actor));
     signature = static_cast<uint16_t>(signature * 33u + result.index);
@@ -84,7 +84,7 @@ inline uint16_t foldResult(uint16_t signature, const battle::ActionResult &resul
     return signature;
 }
 
-inline bool runToChoice(bool accelerate, uint16_t &signature) {
+__attribute__((noinline)) inline bool runToChoice(bool accelerate, uint16_t &signature) {
     for (uint16_t frame = 0; frame < 1200; ++frame) {
         if (battlePresenter().stage() == battle::PresenterStage::Idle &&
             battleSession().awaitingPlayer()) return true;
@@ -112,7 +112,7 @@ struct RunTrace {
     bool deadAttack = false;
 };
 
-inline bool opponentAuthoredMoves() {
+__attribute__((noinline)) inline bool opponentAuthoredMoves() {
     const battle::BattleState &state = battleSession().state();
     const OpponentSeed row = readOpponentSeed(state.trainerId);
     const uint8_t slot = state.activeSlot[1];
@@ -126,7 +126,7 @@ inline bool opponentAuthoredMoves() {
     return true;
 }
 
-inline Boundary runToBoundary(RunTrace &trace) {
+__attribute__((noinline)) inline Boundary runToBoundary(RunTrace &trace) {
     battle::PresenterStage lastDrawnStage = battle::PresenterStage::Idle;
     for (uint16_t frame = 0; frame < 1600; ++frame) {
         if (battleSession().result().outcome != battle::Outcome::None &&
@@ -172,13 +172,13 @@ inline Boundary runToBoundary(RunTrace &trace) {
     return Boundary::Failed;
 }
 
-inline void selectFirstLiveReplacement(FxTest &test) {
+__attribute__((noinline)) inline void selectFirstLiveReplacement(FxTest &test) {
     BattleFlow::update(0);
     test.expectEq(battleSession().awaitingReplacement(), true,
                   F("faint waits for player replacement"));
     test.expectEq(menu.menuPointer >= 0 &&
                   menu.stack[menu.menuPointer] == BATTLE_CREATURE_SELECT,
-                  true, F("forced replacement opens player party menu"));
+                  true, F("forced replacement menu"));
     BattleFlow::update(MENU_EDGE_B);
     test.expectEq(battleSession().awaitingReplacement(), true,
                   F("Back cannot cancel forced replacement"));
@@ -199,7 +199,7 @@ inline void selectFirstLiveReplacement(FxTest &test) {
                   true, F("replacement marked forced"));
 }
 
-inline bool finishTerminal(FxTest &test) {
+__attribute__((noinline)) inline bool finishTerminal(FxTest &test) {
     test.expectEq(gameState.state, GameState_t::BATTLE,
                   F("terminal feedback keeps battle active"));
     const uint16_t location = gameState.playerLocation;
@@ -232,7 +232,7 @@ inline bool finishTerminal(FxTest &test) {
 }
 
 // BATTLE_OPTIONS uses two columns: attack=0, gather=1, switch=2, escape=3.
-inline void selectOption(uint8_t navigation) {
+__attribute__((noinline)) inline void selectOption(uint8_t navigation) {
     BattleFlow::update(0);
     if (navigation != 0) BattleFlow::update(navigation);
     BattleFlow::update(MENU_EDGE_A);
@@ -256,7 +256,7 @@ __attribute__((noinline)) inline void trainerSpike(FxTest &test) {
     test.expectEq(battlePresenter().stage() != battle::PresenterStage::Idle, true,
                   F("result presentation begins"));
     test.expectEq(battlePresenter().stage() != battle::PresenterStage::Done, true,
-                  F("selection A did not accelerate announcement"));
+                  F("selection A preserves announce"));
     test.expectEq(static_cast<uint8_t>(battleSession().result().kind),
                   static_cast<uint8_t>(battle::ResultKind::Attack),
                   F("first result is an attack"));
@@ -317,18 +317,18 @@ __attribute__((noinline)) inline void typeStatusEffectiveness(FxTest &test) {
     state.active[1].statMods.clearModifiers();
 
     test.expectEq(battleSession().submitIntent({MenuIntentKind::SelectMove, 0}),
-                  true, F("stacked-status move submits through session"));
+                  true, F("stacked-status submits"));
     test.expectEq(battleSession().advance(), true,
                   F("stacked-status player attack resolves"));
     test.expectEq(static_cast<uint8_t>(battleSession().result().effectiveness),
                   static_cast<uint8_t>(Modifier::Double),
-                  F("session effectiveness matches actual damage modifier"));
+                  F("damage effectiveness matches"));
     test.expectEq(battleSession().result().hpBefore[1], 100,
-                  F("stacked-status target starts at pinned HP"));
+                  F("stacked-status initial HP"));
     test.expectEq(battleSession().result().hpAfter[1], 60,
-                  F("stacked-status target loses exactly 40 HP"));
+                  F("stacked-status loses40HP"));
     test.expectEq(battleSession().state().active[1].hp, 60,
-                  F("stacked-status attack preserves 40 damage"));
+                  F("stacked-status damage40"));
     endPreset();
 }
 
@@ -414,7 +414,7 @@ __attribute__((noinline)) inline void wildControllerReturn(FxTest &test) {
     selectOption(MENU_NAV_RIGHT);
     test.expectEq(static_cast<uint8_t>(battleSession().result().kind),
                   static_cast<uint8_t>(battle::ResultKind::Gather),
-                  F("wild Gather uses production choice controller"));
+                  F("wild Gather controller"));
     test.expectEq((battleSession().result().flags & battle::REFUSED) != 0,
                   true, F("ordinary wild Gather reports refusal"));
     uint16_t signature = foldResult(1, battleSession().result());
@@ -424,7 +424,7 @@ __attribute__((noinline)) inline void wildControllerReturn(FxTest &test) {
     selectOption(static_cast<uint8_t>(MENU_NAV_DOWN | MENU_NAV_RIGHT));
     test.expectEq(static_cast<uint8_t>(battleSession().result().kind),
                   static_cast<uint8_t>(battle::ResultKind::Escape),
-                  F("wild Escape uses production choice controller"));
+                  F("wild Escape controller"));
     test.expectEq(static_cast<uint8_t>(battleSession().result().outcome),
                   static_cast<uint8_t>(battle::Outcome::Escaped),
                   F("wild Escape becomes terminal"));
@@ -485,7 +485,7 @@ __attribute__((noinline)) inline void trainerVictory(FxTest &test) {
         test.expectEq(trace.deadAttack, false,
                       F("no fainted actor attacks"));
         test.expectEq(trace.frameReads, true,
-                      F("victory frames use transition-only metadata reads"));
+                      F("victory transition reads"));
         finishTerminal(test);
     } else {
         endPreset();
@@ -525,7 +525,7 @@ __attribute__((noinline)) inline void trainerDefeat(FxTest &test) {
         test.expectEq(trace.deadAttack, false,
                       F("fainted player never attacks"));
         test.expectEq(trace.frameReads, true,
-                      F("defeat frames use transition-only metadata reads"));
+                      F("defeat transition reads"));
         finishTerminal(test);
     } else {
         endPreset();
@@ -546,7 +546,7 @@ inline void test_battlesession(FxTest &test) {
     Serial.print(F("battle controller effective headroom="));
     Serial.println(measured >= 69 ? measured - 69 : 0);
     test.expectEq(measured >= 219, true,
-                  F("battle controller preserves 150 B after USB ISR"));
+                  F("controller stack reserve150B"));
 
 }
 

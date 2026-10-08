@@ -1,0 +1,2374 @@
+{
+  "size": 48,
+  "method": "reviewed boards: label-band removal, exterior flood mask, common paired area sampling; expansion: existing native tiles",
+  "sprites": [
+    {
+      "id": 0,
+      "name": "SquibbleSnail",
+      "view": "front",
+      "file": "48x48/0-squibblesnail-front_48x48.png",
+      "source": "docs/assets/creature-roster/mockup-v2-1.png",
+      "sourceFacing": "left",
+      "facing": "right",
+      "mirrored": true,
+      "sourceCell": {
+        "x": 0,
+        "y": 2,
+        "width": 287,
+        "height": 333
+      },
+      "crop": {
+        "x": 43,
+        "y": 120,
+        "width": 234,
+        "height": 202
+      },
+      "pairExtent": 234,
+      "opaque": 890,
+      "transparent": 1414,
+      "white": 841
+    },
+    {
+      "id": 0,
+      "name": "SquibbleSnail",
+      "view": "back",
+      "file": "48x48/0-squibblesnail-back_48x48.png",
+      "source": "docs/assets/creature-roster/mockup-v2-1.png",
+      "mirrored": false,
+      "sourceCell": {
+        "x": 286,
+        "y": 2,
+        "width": 287,
+        "height": 333
+      },
+      "crop": {
+        "x": 27,
+        "y": 159,
+        "width": 232,
+        "height": 163
+      },
+      "pairExtent": 234,
+      "opaque": 720,
+      "transparent": 1584,
+      "white": 705
+    },
+    {
+      "id": 1,
+      "name": "SquableSnail",
+      "view": "front",
+      "file": "48x48/1-squablesnail-front_48x48.png",
+      "source": "docs/assets/creature-roster/mockup-v2-1.png",
+      "sourceFacing": "right",
+      "facing": "right",
+      "mirrored": false,
+      "sourceCell": {
+        "x": 572,
+        "y": 2,
+        "width": 287,
+        "height": 333
+      },
+      "crop": {
+        "x": 48,
+        "y": 84,
+        "width": 228,
+        "height": 238
+      },
+      "pairExtent": 238,
+      "opaque": 923,
+      "transparent": 1381,
+      "white": 899
+    },
+    {
+      "id": 1,
+      "name": "SquableSnail",
+      "view": "back",
+      "file": "48x48/1-squablesnail-back_48x48.png",
+      "source": "docs/assets/creature-roster/mockup-v2-1.png",
+      "mirrored": false,
+      "sourceCell": {
+        "x": 858,
+        "y": 2,
+        "width": 286,
+        "height": 333
+      },
+      "crop": {
+        "x": 27,
+        "y": 84,
+        "width": 208,
+        "height": 238
+      },
+      "pairExtent": 238,
+      "opaque": 771,
+      "transparent": 1533,
+      "white": 771
+    },
+    {
+      "id": 2,
+      "name": "ScrambleSnail",
+      "view": "front",
+      "file": "48x48/2-scramblesnail-front_48x48.png",
+      "source": "docs/assets/creature-roster/mockup-v2-1.png",
+      "sourceFacing": "left",
+      "facing": "right",
+      "mirrored": true,
+      "sourceCell": {
+        "x": 0,
+        "y": 346,
+        "width": 295,
+        "height": 330
+      },
+      "crop": {
+        "x": 35,
+        "y": 58,
+        "width": 259,
+        "height": 260
+      },
+      "pairExtent": 262,
+      "opaque": 976,
+      "transparent": 1328,
+      "white": 948
+    },
+    {
+      "id": 2,
+      "name": "ScrambleSnail",
+      "view": "back",
+      "file": "48x48/2-scramblesnail-back_48x48.png",
+      "source": "docs/assets/creature-roster/mockup-v2-1.png",
+      "mirrored": false,
+      "sourceCell": {
+        "x": 294,
+        "y": 346,
+        "width": 279,
+        "height": 330
+      },
+      "crop": {
+        "x": 27,
+        "y": 58,
+        "width": 234,
+        "height": 262
+      },
+      "pairExtent": 262,
+      "opaque": 946,
+      "transparent": 1358,
+      "white": 942
+    },
+    {
+      "id": 3,
+      "name": "SkitterCrab",
+      "view": "front",
+      "file": "48x48/3-skittercrab-front_48x48.png",
+      "source": "docs/assets/creature-roster/mockup-v2-1.png",
+      "sourceFacing": "left",
+      "facing": "right",
+      "mirrored": true,
+      "sourceCell": {
+        "x": 572,
+        "y": 346,
+        "width": 287,
+        "height": 330
+      },
+      "crop": {
+        "x": 25,
+        "y": 140,
+        "width": 250,
+        "height": 178
+      },
+      "pairExtent": 250,
+      "opaque": 795,
+      "transparent": 1509,
+      "white": 717
+    },
+    {
+      "id": 3,
+      "name": "SkitterCrab",
+      "view": "back",
+      "file": "48x48/3-skittercrab-back_48x48.png",
+      "source": "docs/assets/creature-roster/mockup-v2-1.png",
+      "mirrored": false,
+      "sourceCell": {
+        "x": 858,
+        "y": 346,
+        "width": 286,
+        "height": 330
+      },
+      "crop": {
+        "x": 25,
+        "y": 145,
+        "width": 228,
+        "height": 173
+      },
+      "pairExtent": 250,
+      "opaque": 692,
+      "transparent": 1612,
+      "white": 631
+    },
+    {
+      "id": 4,
+      "name": "ScatterCrab",
+      "view": "front",
+      "file": "48x48/4-scattercrab-front_48x48.png",
+      "source": "docs/assets/creature-roster/mockup-v2-1.png",
+      "sourceFacing": "front",
+      "facing": "front",
+      "mirrored": false,
+      "sourceCell": {
+        "x": 0,
+        "y": 688,
+        "width": 290,
+        "height": 327
+      },
+      "crop": {
+        "x": 31,
+        "y": 63,
+        "width": 258,
+        "height": 252
+      },
+      "pairExtent": 258,
+      "opaque": 966,
+      "transparent": 1338,
+      "white": 936
+    },
+    {
+      "id": 4,
+      "name": "ScatterCrab",
+      "view": "back",
+      "file": "48x48/4-scattercrab-back_48x48.png",
+      "source": "docs/assets/creature-roster/mockup-v2-1.png",
+      "mirrored": false,
+      "sourceCell": {
+        "x": 289,
+        "y": 688,
+        "width": 284,
+        "height": 327
+      },
+      "crop": {
+        "x": 34,
+        "y": 85,
+        "width": 236,
+        "height": 230
+      },
+      "pairExtent": 258,
+      "opaque": 815,
+      "transparent": 1489,
+      "white": 815
+    },
+    {
+      "id": 5,
+      "name": "ShatterCrab",
+      "view": "front",
+      "file": "48x48/5-shattercrab-front_48x48.png",
+      "source": "docs/assets/creature-roster/mockup-v2-1.png",
+      "sourceFacing": "left",
+      "facing": "right",
+      "mirrored": true,
+      "sourceCell": {
+        "x": 572,
+        "y": 688,
+        "width": 287,
+        "height": 327
+      },
+      "crop": {
+        "x": 11,
+        "y": 66,
+        "width": 271,
+        "height": 249
+      },
+      "pairExtent": 271,
+      "opaque": 970,
+      "transparent": 1334,
+      "white": 950
+    },
+    {
+      "id": 5,
+      "name": "ShatterCrab",
+      "view": "back",
+      "file": "48x48/5-shattercrab-back_48x48.png",
+      "source": "docs/assets/creature-roster/mockup-v2-1.png",
+      "mirrored": false,
+      "sourceCell": {
+        "x": 858,
+        "y": 688,
+        "width": 286,
+        "height": 327
+      },
+      "crop": {
+        "x": 15,
+        "y": 85,
+        "width": 239,
+        "height": 230
+      },
+      "pairExtent": 271,
+      "opaque": 852,
+      "transparent": 1452,
+      "white": 825
+    },
+    {
+      "id": 6,
+      "name": "squid",
+      "view": "front",
+      "file": "48x48/6-squid-front_48x48.png",
+      "source": "docs/assets/creature-roster/mockup-v2-1.png",
+      "sourceFacing": "left",
+      "facing": "right",
+      "mirrored": true,
+      "sourceCell": {
+        "x": 0,
+        "y": 1027,
+        "width": 287,
+        "height": 336
+      },
+      "crop": {
+        "x": 35,
+        "y": 53,
+        "width": 242,
+        "height": 269
+      },
+      "pairExtent": 269,
+      "opaque": 911,
+      "transparent": 1393,
+      "white": 873
+    },
+    {
+      "id": 6,
+      "name": "squid",
+      "view": "back",
+      "file": "48x48/6-squid-back_48x48.png",
+      "source": "docs/assets/creature-roster/mockup-v2-1.png",
+      "mirrored": false,
+      "sourceCell": {
+        "x": 286,
+        "y": 1027,
+        "width": 287,
+        "height": 336
+      },
+      "crop": {
+        "x": 33,
+        "y": 65,
+        "width": 224,
+        "height": 253
+      },
+      "pairExtent": 269,
+      "opaque": 784,
+      "transparent": 1520,
+      "white": 757
+    },
+    {
+      "id": 7,
+      "name": "bigsquid",
+      "view": "front",
+      "file": "48x48/7-bigsquid-front_48x48.png",
+      "source": "docs/assets/creature-roster/mockup-v2-1.png",
+      "sourceFacing": "left",
+      "facing": "right",
+      "mirrored": true,
+      "sourceCell": {
+        "x": 572,
+        "y": 1027,
+        "width": 287,
+        "height": 336
+      },
+      "crop": {
+        "x": 21,
+        "y": 28,
+        "width": 259,
+        "height": 294
+      },
+      "pairExtent": 294,
+      "opaque": 834,
+      "transparent": 1470,
+      "white": 803
+    },
+    {
+      "id": 7,
+      "name": "bigsquid",
+      "view": "back",
+      "file": "48x48/7-bigsquid-back_48x48.png",
+      "source": "docs/assets/creature-roster/mockup-v2-1.png",
+      "mirrored": false,
+      "sourceCell": {
+        "x": 858,
+        "y": 1027,
+        "width": 286,
+        "height": 336
+      },
+      "crop": {
+        "x": 10,
+        "y": 43,
+        "width": 249,
+        "height": 279
+      },
+      "pairExtent": 294,
+      "opaque": 805,
+      "transparent": 1499,
+      "white": 775
+    },
+    {
+      "id": 8,
+      "name": "BiggestSquid",
+      "view": "front",
+      "file": "48x48/8-biggestsquid-front_48x48.png",
+      "source": "docs/assets/creature-roster/mockup-v2-2.png",
+      "sourceFacing": "right",
+      "facing": "right",
+      "mirrored": false,
+      "sourceCell": {
+        "x": 0,
+        "y": 2,
+        "width": 287,
+        "height": 332
+      },
+      "crop": {
+        "x": 37,
+        "y": 63,
+        "width": 248,
+        "height": 264
+      },
+      "pairExtent": 264,
+      "opaque": 965,
+      "transparent": 1339,
+      "white": 958
+    },
+    {
+      "id": 8,
+      "name": "BiggestSquid",
+      "view": "back",
+      "file": "48x48/8-biggestsquid-back_48x48.png",
+      "source": "docs/assets/creature-roster/mockup-v2-2.png",
+      "mirrored": false,
+      "sourceCell": {
+        "x": 286,
+        "y": 2,
+        "width": 287,
+        "height": 332
+      },
+      "crop": {
+        "x": 31,
+        "y": 62,
+        "width": 241,
+        "height": 264
+      },
+      "pairExtent": 264,
+      "opaque": 940,
+      "transparent": 1364,
+      "white": 921
+    },
+    {
+      "id": 9,
+      "name": "bell",
+      "view": "front",
+      "file": "48x48/9-bell-front_48x48.png",
+      "source": "docs/assets/creature-roster/mockup-v2-2.png",
+      "sourceFacing": "left",
+      "facing": "right",
+      "mirrored": true,
+      "sourceCell": {
+        "x": 572,
+        "y": 2,
+        "width": 288,
+        "height": 332
+      },
+      "crop": {
+        "x": 58,
+        "y": 72,
+        "width": 218,
+        "height": 254
+      },
+      "pairExtent": 254,
+      "opaque": 685,
+      "transparent": 1619,
+      "white": 670
+    },
+    {
+      "id": 9,
+      "name": "bell",
+      "view": "back",
+      "file": "48x48/9-bell-back_48x48.png",
+      "source": "docs/assets/creature-roster/mockup-v2-2.png",
+      "mirrored": false,
+      "sourceCell": {
+        "x": 859,
+        "y": 2,
+        "width": 286,
+        "height": 332
+      },
+      "crop": {
+        "x": 31,
+        "y": 75,
+        "width": 213,
+        "height": 248
+      },
+      "pairExtent": 254,
+      "opaque": 751,
+      "transparent": 1553,
+      "white": 720
+    },
+    {
+      "id": 10,
+      "name": "ember",
+      "view": "front",
+      "file": "48x48/10-ember-front_48x48.png",
+      "source": "docs/assets/creature-roster/mockup-v2-2.png",
+      "sourceFacing": "front",
+      "facing": "front",
+      "mirrored": false,
+      "sourceCell": {
+        "x": 0,
+        "y": 346,
+        "width": 293,
+        "height": 328
+      },
+      "crop": {
+        "x": 28,
+        "y": 55,
+        "width": 264,
+        "height": 262
+      },
+      "pairExtent": 264,
+      "opaque": 1044,
+      "transparent": 1260,
+      "white": 915
+    },
+    {
+      "id": 10,
+      "name": "ember",
+      "view": "back",
+      "file": "48x48/10-ember-back_48x48.png",
+      "source": "docs/assets/creature-roster/mockup-v2-2.png",
+      "mirrored": false,
+      "sourceCell": {
+        "x": 292,
+        "y": 346,
+        "width": 281,
+        "height": 328
+      },
+      "crop": {
+        "x": 32,
+        "y": 55,
+        "width": 238,
+        "height": 262
+      },
+      "pairExtent": 264,
+      "opaque": 932,
+      "transparent": 1372,
+      "white": 878
+    },
+    {
+      "id": 11,
+      "name": "cuircuit",
+      "view": "front",
+      "file": "48x48/11-cuircuit-front_48x48.png",
+      "source": "docs/assets/creature-roster/mockup-v2-2.png",
+      "sourceFacing": "front",
+      "facing": "front",
+      "mirrored": false,
+      "sourceCell": {
+        "x": 572,
+        "y": 346,
+        "width": 288,
+        "height": 328
+      },
+      "crop": {
+        "x": 34,
+        "y": 74,
+        "width": 233,
+        "height": 242
+      },
+      "pairExtent": 242,
+      "opaque": 1095,
+      "transparent": 1209,
+      "white": 1039
+    },
+    {
+      "id": 11,
+      "name": "cuircuit",
+      "view": "back",
+      "file": "48x48/11-cuircuit-back_48x48.png",
+      "source": "docs/assets/creature-roster/mockup-v2-2.png",
+      "mirrored": false,
+      "sourceCell": {
+        "x": 859,
+        "y": 346,
+        "width": 286,
+        "height": 328
+      },
+      "crop": {
+        "x": 25,
+        "y": 77,
+        "width": 229,
+        "height": 239
+      },
+      "pairExtent": 242,
+      "opaque": 1105,
+      "transparent": 1199,
+      "white": 1105
+    },
+    {
+      "id": 12,
+      "name": "hedge",
+      "view": "front",
+      "file": "48x48/12-hedge-front_48x48.png",
+      "source": "docs/assets/creature-roster/mockup-v2-2.png",
+      "sourceFacing": "front",
+      "facing": "front",
+      "mirrored": false,
+      "sourceCell": {
+        "x": 0,
+        "y": 686,
+        "width": 292,
+        "height": 325
+      },
+      "crop": {
+        "x": 28,
+        "y": 60,
+        "width": 263,
+        "height": 245
+      },
+      "pairExtent": 263,
+      "opaque": 928,
+      "transparent": 1376,
+      "white": 923
+    },
+    {
+      "id": 12,
+      "name": "hedge",
+      "view": "back",
+      "file": "48x48/12-hedge-back_48x48.png",
+      "source": "docs/assets/creature-roster/mockup-v2-2.png",
+      "mirrored": false,
+      "sourceCell": {
+        "x": 291,
+        "y": 686,
+        "width": 282,
+        "height": 325
+      },
+      "crop": {
+        "x": 24,
+        "y": 60,
+        "width": 247,
+        "height": 245
+      },
+      "pairExtent": 263,
+      "opaque": 952,
+      "transparent": 1352,
+      "white": 946
+    },
+    {
+      "id": 13,
+      "name": "cloud",
+      "view": "front",
+      "file": "48x48/13-cloud-front_48x48.png",
+      "source": "docs/assets/creature-roster/mockup-v2-2.png",
+      "sourceFacing": "front",
+      "facing": "front",
+      "mirrored": false,
+      "sourceCell": {
+        "x": 572,
+        "y": 686,
+        "width": 288,
+        "height": 325
+      },
+      "crop": {
+        "x": 12,
+        "y": 106,
+        "width": 263,
+        "height": 195
+      },
+      "pairExtent": 263,
+      "opaque": 886,
+      "transparent": 1418,
+      "white": 862
+    },
+    {
+      "id": 13,
+      "name": "cloud",
+      "view": "back",
+      "file": "48x48/13-cloud-back_48x48.png",
+      "source": "docs/assets/creature-roster/mockup-v2-2.png",
+      "mirrored": false,
+      "sourceCell": {
+        "x": 859,
+        "y": 686,
+        "width": 286,
+        "height": 325
+      },
+      "crop": {
+        "x": 9,
+        "y": 108,
+        "width": 256,
+        "height": 194
+      },
+      "pairExtent": 263,
+      "opaque": 825,
+      "transparent": 1479,
+      "white": 825
+    },
+    {
+      "id": 14,
+      "name": "rock",
+      "view": "front",
+      "file": "48x48/14-rock-front_48x48.png",
+      "source": "docs/assets/creature-roster/mockup-v2-2.png",
+      "sourceFacing": "front",
+      "facing": "front",
+      "mirrored": false,
+      "sourceCell": {
+        "x": 0,
+        "y": 1023,
+        "width": 290,
+        "height": 349
+      },
+      "crop": {
+        "x": 23,
+        "y": 59,
+        "width": 266,
+        "height": 255
+      },
+      "pairExtent": 266,
+      "opaque": 1045,
+      "transparent": 1259,
+      "white": 1006
+    },
+    {
+      "id": 14,
+      "name": "rock",
+      "view": "back",
+      "file": "48x48/14-rock-back_48x48.png",
+      "source": "docs/assets/creature-roster/mockup-v2-2.png",
+      "mirrored": false,
+      "sourceCell": {
+        "x": 289,
+        "y": 1023,
+        "width": 284,
+        "height": 349
+      },
+      "crop": {
+        "x": 28,
+        "y": 64,
+        "width": 248,
+        "height": 248
+      },
+      "pairExtent": 266,
+      "opaque": 1016,
+      "transparent": 1288,
+      "white": 984
+    },
+    {
+      "id": 15,
+      "name": "wiggleworm",
+      "view": "front",
+      "file": "48x48/15-wiggleworm-front_48x48.png",
+      "source": "docs/assets/creature-roster/mockup-v2-2.png",
+      "sourceFacing": "left",
+      "facing": "right",
+      "mirrored": true,
+      "sourceCell": {
+        "x": 572,
+        "y": 1023,
+        "width": 288,
+        "height": 349
+      },
+      "crop": {
+        "x": 35,
+        "y": 56,
+        "width": 223,
+        "height": 260
+      },
+      "pairExtent": 260,
+      "opaque": 828,
+      "transparent": 1476,
+      "white": 756
+    },
+    {
+      "id": 15,
+      "name": "wiggleworm",
+      "view": "back",
+      "file": "48x48/15-wiggleworm-back_48x48.png",
+      "source": "docs/assets/creature-roster/mockup-v2-2.png",
+      "mirrored": false,
+      "sourceCell": {
+        "x": 859,
+        "y": 1023,
+        "width": 286,
+        "height": 349
+      },
+      "crop": {
+        "x": 28,
+        "y": 68,
+        "width": 228,
+        "height": 248
+      },
+      "pairExtent": 260,
+      "opaque": 739,
+      "transparent": 1565,
+      "white": 709
+    },
+    {
+      "id": 16,
+      "name": "waggleworm",
+      "view": "front",
+      "file": "48x48/16-waggleworm-front_48x48.png",
+      "source": "docs/assets/creature-roster/mockup-v2-3.png",
+      "sourceFacing": "right",
+      "facing": "right",
+      "mirrored": false,
+      "sourceCell": {
+        "x": 0,
+        "y": 2,
+        "width": 291,
+        "height": 331
+      },
+      "crop": {
+        "x": 32,
+        "y": 52,
+        "width": 258,
+        "height": 268
+      },
+      "pairExtent": 268,
+      "opaque": 774,
+      "transparent": 1530,
+      "white": 729
+    },
+    {
+      "id": 16,
+      "name": "waggleworm",
+      "view": "back",
+      "file": "48x48/16-waggleworm-back_48x48.png",
+      "source": "docs/assets/creature-roster/mockup-v2-3.png",
+      "mirrored": false,
+      "sourceCell": {
+        "x": 290,
+        "y": 2,
+        "width": 283,
+        "height": 331
+      },
+      "crop": {
+        "x": 25,
+        "y": 101,
+        "width": 219,
+        "height": 219
+      },
+      "pairExtent": 268,
+      "opaque": 668,
+      "transparent": 1636,
+      "white": 641
+    },
+    {
+      "id": 17,
+      "name": "skimskate",
+      "view": "front",
+      "file": "48x48/17-skimskate-front_48x48.png",
+      "source": "docs/assets/creature-roster/mockup-v2-3.png",
+      "sourceFacing": "left",
+      "facing": "right",
+      "mirrored": true,
+      "sourceCell": {
+        "x": 572,
+        "y": 2,
+        "width": 292,
+        "height": 331
+      },
+      "crop": {
+        "x": 22,
+        "y": 52,
+        "width": 269,
+        "height": 268
+      },
+      "pairExtent": 269,
+      "opaque": 752,
+      "transparent": 1552,
+      "white": 707
+    },
+    {
+      "id": 17,
+      "name": "skimskate",
+      "view": "back",
+      "file": "48x48/17-skimskate-back_48x48.png",
+      "source": "docs/assets/creature-roster/mockup-v2-3.png",
+      "mirrored": false,
+      "sourceCell": {
+        "x": 863,
+        "y": 2,
+        "width": 282,
+        "height": 331
+      },
+      "crop": {
+        "x": 16,
+        "y": 111,
+        "width": 241,
+        "height": 209
+      },
+      "pairExtent": 269,
+      "opaque": 690,
+      "transparent": 1614,
+      "white": 619
+    },
+    {
+      "id": 18,
+      "name": "skimray",
+      "view": "front",
+      "file": "48x48/18-skimray-front_48x48.png",
+      "source": "docs/assets/creature-roster/mockup-v2-3.png",
+      "sourceFacing": "front",
+      "facing": "front",
+      "mirrored": false,
+      "sourceCell": {
+        "x": 0,
+        "y": 346,
+        "width": 309,
+        "height": 329
+      },
+      "crop": {
+        "x": 21,
+        "y": 51,
+        "width": 287,
+        "height": 269
+      },
+      "pairExtent": 287,
+      "opaque": 938,
+      "transparent": 1366,
+      "white": 858
+    },
+    {
+      "id": 18,
+      "name": "skimray",
+      "view": "back",
+      "file": "48x48/18-skimray-back_48x48.png",
+      "source": "docs/assets/creature-roster/mockup-v2-3.png",
+      "mirrored": false,
+      "sourceCell": {
+        "x": 308,
+        "y": 346,
+        "width": 265,
+        "height": 329
+      },
+      "crop": {
+        "x": 12,
+        "y": 77,
+        "width": 243,
+        "height": 240
+      },
+      "pairExtent": 287,
+      "opaque": 784,
+      "transparent": 1520,
+      "white": 750
+    },
+    {
+      "id": 19,
+      "name": "billow",
+      "view": "front",
+      "file": "48x48/19-billow-front_48x48.png",
+      "source": "docs/assets/creature-roster/mockup-v2-3.png",
+      "sourceFacing": "left",
+      "facing": "right",
+      "mirrored": true,
+      "sourceCell": {
+        "x": 572,
+        "y": 346,
+        "width": 288,
+        "height": 329
+      },
+      "crop": {
+        "x": 44,
+        "y": 77,
+        "width": 242,
+        "height": 240
+      },
+      "pairExtent": 242,
+      "opaque": 1003,
+      "transparent": 1301,
+      "white": 886
+    },
+    {
+      "id": 19,
+      "name": "billow",
+      "view": "back",
+      "file": "48x48/19-billow-back_48x48.png",
+      "source": "docs/assets/creature-roster/mockup-v2-3.png",
+      "mirrored": false,
+      "sourceCell": {
+        "x": 859,
+        "y": 346,
+        "width": 286,
+        "height": 329
+      },
+      "crop": {
+        "x": 33,
+        "y": 134,
+        "width": 224,
+        "height": 183
+      },
+      "pairExtent": 242,
+      "opaque": 600,
+      "transparent": 1704,
+      "white": 574
+    },
+    {
+      "id": 20,
+      "name": "howl",
+      "view": "front",
+      "file": "48x48/20-howl-front_48x48.png",
+      "source": "docs/assets/creature-roster/mockup-v2-3.png",
+      "sourceFacing": "front",
+      "facing": "front",
+      "mirrored": false,
+      "sourceCell": {
+        "x": 0,
+        "y": 688,
+        "width": 288,
+        "height": 331
+      },
+      "crop": {
+        "x": 21,
+        "y": 62,
+        "width": 266,
+        "height": 254
+      },
+      "pairExtent": 266,
+      "opaque": 1135,
+      "transparent": 1169,
+      "white": 744
+    },
+    {
+      "id": 20,
+      "name": "howl",
+      "view": "back",
+      "file": "48x48/20-howl-back_48x48.png",
+      "source": "docs/assets/creature-roster/mockup-v2-3.png",
+      "mirrored": false,
+      "sourceCell": {
+        "x": 287,
+        "y": 688,
+        "width": 286,
+        "height": 331
+      },
+      "crop": {
+        "x": 15,
+        "y": 72,
+        "width": 264,
+        "height": 247
+      },
+      "pairExtent": 266,
+      "opaque": 922,
+      "transparent": 1382,
+      "white": 920
+    },
+    {
+      "id": 21,
+      "name": "item",
+      "view": "front",
+      "file": "48x48/21-item-front_48x48.png",
+      "source": "docs/assets/creature-roster/mockup-v2-3.png",
+      "sourceFacing": "left",
+      "facing": "right",
+      "mirrored": true,
+      "sourceCell": {
+        "x": 572,
+        "y": 688,
+        "width": 288,
+        "height": 331
+      },
+      "crop": {
+        "x": 33,
+        "y": 114,
+        "width": 243,
+        "height": 176
+      },
+      "pairExtent": 243,
+      "opaque": 619,
+      "transparent": 1685,
+      "white": 619
+    },
+    {
+      "id": 21,
+      "name": "item",
+      "view": "back",
+      "file": "48x48/21-item-back_48x48.png",
+      "source": "docs/assets/creature-roster/mockup-v2-3.png",
+      "mirrored": false,
+      "sourceCell": {
+        "x": 859,
+        "y": 688,
+        "width": 286,
+        "height": 331
+      },
+      "crop": {
+        "x": 14,
+        "y": 146,
+        "width": 243,
+        "height": 170
+      },
+      "pairExtent": 243,
+      "opaque": 782,
+      "transparent": 1522,
+      "white": 782
+    },
+    {
+      "id": 22,
+      "name": "item2",
+      "view": "front",
+      "file": "48x48/22-item2-front_48x48.png",
+      "source": "docs/assets/creature-roster/mockup-v2-3.png",
+      "sourceFacing": "front",
+      "facing": "front",
+      "mirrored": false,
+      "sourceCell": {
+        "x": 0,
+        "y": 1032,
+        "width": 287,
+        "height": 328
+      },
+      "crop": {
+        "x": 39,
+        "y": 57,
+        "width": 237,
+        "height": 254
+      },
+      "pairExtent": 254,
+      "opaque": 1045,
+      "transparent": 1259,
+      "white": 971
+    },
+    {
+      "id": 22,
+      "name": "item2",
+      "view": "back",
+      "file": "48x48/22-item2-back_48x48.png",
+      "source": "docs/assets/creature-roster/mockup-v2-3.png",
+      "mirrored": false,
+      "sourceCell": {
+        "x": 286,
+        "y": 1032,
+        "width": 287,
+        "height": 328
+      },
+      "crop": {
+        "x": 25,
+        "y": 69,
+        "width": 243,
+        "height": 245
+      },
+      "pairExtent": 254,
+      "opaque": 1074,
+      "transparent": 1230,
+      "white": 1074
+    },
+    {
+      "id": 23,
+      "name": "zip",
+      "view": "front",
+      "file": "48x48/23-zip-front_48x48.png",
+      "source": "docs/assets/creature-roster/mockup-v2-3.png",
+      "sourceFacing": "left",
+      "facing": "right",
+      "mirrored": true,
+      "sourceCell": {
+        "x": 572,
+        "y": 1032,
+        "width": 288,
+        "height": 328
+      },
+      "crop": {
+        "x": 22,
+        "y": 21,
+        "width": 259,
+        "height": 287
+      },
+      "pairExtent": 287,
+      "opaque": 796,
+      "transparent": 1508,
+      "white": 796
+    },
+    {
+      "id": 23,
+      "name": "zip",
+      "view": "back",
+      "file": "48x48/23-zip-back_48x48.png",
+      "source": "docs/assets/creature-roster/mockup-v2-3.png",
+      "mirrored": false,
+      "sourceCell": {
+        "x": 859,
+        "y": 1032,
+        "width": 286,
+        "height": 328
+      },
+      "crop": {
+        "x": 11,
+        "y": 72,
+        "width": 254,
+        "height": 242
+      },
+      "pairExtent": 287,
+      "opaque": 622,
+      "transparent": 1682,
+      "white": 622
+    },
+    {
+      "id": 24,
+      "name": "zap",
+      "view": "front",
+      "file": "48x48/24-zap-front_48x48.png",
+      "source": "docs/assets/creature-roster/mockup-v2-4.png",
+      "sourceFacing": "front",
+      "facing": "front",
+      "mirrored": false,
+      "sourceCell": {
+        "x": 0,
+        "y": 2,
+        "width": 297,
+        "height": 332
+      },
+      "crop": {
+        "x": 33,
+        "y": 62,
+        "width": 263,
+        "height": 258
+      },
+      "pairExtent": 263,
+      "opaque": 882,
+      "transparent": 1422,
+      "white": 882
+    },
+    {
+      "id": 24,
+      "name": "zap",
+      "view": "back",
+      "file": "48x48/24-zap-back_48x48.png",
+      "source": "docs/assets/creature-roster/mockup-v2-4.png",
+      "mirrored": false,
+      "sourceCell": {
+        "x": 296,
+        "y": 2,
+        "width": 277,
+        "height": 332
+      },
+      "crop": {
+        "x": 28,
+        "y": 71,
+        "width": 242,
+        "height": 248
+      },
+      "pairExtent": 263,
+      "opaque": 790,
+      "transparent": 1514,
+      "white": 790
+    },
+    {
+      "id": 25,
+      "name": "suculent",
+      "view": "front",
+      "file": "48x48/25-suculent-front_48x48.png",
+      "source": "docs/assets/creature-roster/mockup-v2-4.png",
+      "sourceFacing": "front",
+      "facing": "front",
+      "mirrored": false,
+      "sourceCell": {
+        "x": 572,
+        "y": 2,
+        "width": 288,
+        "height": 332
+      },
+      "crop": {
+        "x": 24,
+        "y": 83,
+        "width": 251,
+        "height": 236
+      },
+      "pairExtent": 251,
+      "opaque": 888,
+      "transparent": 1416,
+      "white": 880
+    },
+    {
+      "id": 25,
+      "name": "suculent",
+      "view": "back",
+      "file": "48x48/25-suculent-back_48x48.png",
+      "source": "docs/assets/creature-roster/mockup-v2-4.png",
+      "mirrored": false,
+      "sourceCell": {
+        "x": 859,
+        "y": 2,
+        "width": 286,
+        "height": 332
+      },
+      "crop": {
+        "x": 19,
+        "y": 82,
+        "width": 247,
+        "height": 233
+      },
+      "pairExtent": 251,
+      "opaque": 937,
+      "transparent": 1367,
+      "white": 930
+    },
+    {
+      "id": 26,
+      "name": "cactus",
+      "view": "front",
+      "file": "48x48/26-cactus-front_48x48.png",
+      "source": "docs/assets/creature-roster/mockup-v2-4.png",
+      "sourceFacing": "front",
+      "facing": "front",
+      "mirrored": false,
+      "sourceCell": {
+        "x": 0,
+        "y": 345,
+        "width": 299,
+        "height": 331
+      },
+      "crop": {
+        "x": 30,
+        "y": 37,
+        "width": 268,
+        "height": 277
+      },
+      "pairExtent": 277,
+      "opaque": 948,
+      "transparent": 1356,
+      "white": 913
+    },
+    {
+      "id": 26,
+      "name": "cactus",
+      "view": "back",
+      "file": "48x48/26-cactus-back_48x48.png",
+      "source": "docs/assets/creature-roster/mockup-v2-4.png",
+      "mirrored": false,
+      "sourceCell": {
+        "x": 298,
+        "y": 345,
+        "width": 276,
+        "height": 331
+      },
+      "crop": {
+        "x": 21,
+        "y": 40,
+        "width": 254,
+        "height": 274
+      },
+      "pairExtent": 277,
+      "opaque": 864,
+      "transparent": 1440,
+      "white": 864
+    },
+    {
+      "id": 27,
+      "name": "flickerfly",
+      "view": "front",
+      "file": "48x48/27-flickerfly-front_48x48.png",
+      "source": "docs/assets/creature-roster/mockup-v2-4.png",
+      "sourceFacing": "front",
+      "facing": "front",
+      "mirrored": false,
+      "sourceCell": {
+        "x": 573,
+        "y": 345,
+        "width": 287,
+        "height": 331
+      },
+      "crop": {
+        "x": 27,
+        "y": 62,
+        "width": 230,
+        "height": 256
+      },
+      "pairExtent": 262,
+      "opaque": 740,
+      "transparent": 1564,
+      "white": 644
+    },
+    {
+      "id": 27,
+      "name": "flickerfly",
+      "view": "back",
+      "file": "48x48/27-flickerfly-back_48x48.png",
+      "source": "docs/assets/creature-roster/mockup-v2-4.png",
+      "mirrored": false,
+      "sourceCell": {
+        "x": 859,
+        "y": 345,
+        "width": 286,
+        "height": 331
+      },
+      "crop": {
+        "x": 13,
+        "y": 56,
+        "width": 242,
+        "height": 262
+      },
+      "pairExtent": 262,
+      "opaque": 726,
+      "transparent": 1578,
+      "white": 726
+    },
+    {
+      "id": 28,
+      "name": "flitfly",
+      "view": "front",
+      "file": "48x48/28-flitfly-front_48x48.png",
+      "source": "docs/assets/creature-roster/mockup-v2-4.png",
+      "sourceFacing": "front",
+      "facing": "front",
+      "mirrored": false,
+      "sourceCell": {
+        "x": 0,
+        "y": 688,
+        "width": 295,
+        "height": 332
+      },
+      "crop": {
+        "x": 38,
+        "y": 57,
+        "width": 256,
+        "height": 257
+      },
+      "pairExtent": 257,
+      "opaque": 1119,
+      "transparent": 1185,
+      "white": 984
+    },
+    {
+      "id": 28,
+      "name": "flitfly",
+      "view": "back",
+      "file": "48x48/28-flitfly-back_48x48.png",
+      "source": "docs/assets/creature-roster/mockup-v2-4.png",
+      "mirrored": false,
+      "sourceCell": {
+        "x": 294,
+        "y": 688,
+        "width": 279,
+        "height": 332
+      },
+      "crop": {
+        "x": 27,
+        "y": 61,
+        "width": 245,
+        "height": 253
+      },
+      "pairExtent": 257,
+      "opaque": 996,
+      "transparent": 1308,
+      "white": 918
+    },
+    {
+      "id": 29,
+      "name": "dragon",
+      "view": "front",
+      "file": "48x48/29-dragon-front_48x48.png",
+      "source": "docs/assets/creature-roster/mockup-v2-4.png",
+      "sourceFacing": "right",
+      "facing": "right",
+      "mirrored": false,
+      "sourceCell": {
+        "x": 572,
+        "y": 688,
+        "width": 288,
+        "height": 332
+      },
+      "crop": {
+        "x": 16,
+        "y": 45,
+        "width": 257,
+        "height": 274
+      },
+      "pairExtent": 274,
+      "opaque": 917,
+      "transparent": 1387,
+      "white": 885
+    },
+    {
+      "id": 29,
+      "name": "dragon",
+      "view": "back",
+      "file": "48x48/29-dragon-back_48x48.png",
+      "source": "docs/assets/creature-roster/mockup-v2-4.png",
+      "mirrored": false,
+      "sourceCell": {
+        "x": 859,
+        "y": 688,
+        "width": 286,
+        "height": 332
+      },
+      "crop": {
+        "x": 15,
+        "y": 46,
+        "width": 239,
+        "height": 269
+      },
+      "pairExtent": 274,
+      "opaque": 887,
+      "transparent": 1417,
+      "white": 879
+    },
+    {
+      "id": 30,
+      "name": "skull",
+      "view": "front",
+      "file": "48x48/30-skull-front_48x48.png",
+      "source": "docs/assets/creature-roster/mockup-v2-4.png",
+      "sourceFacing": "left",
+      "facing": "right",
+      "mirrored": true,
+      "sourceCell": {
+        "x": 0,
+        "y": 1031,
+        "width": 287,
+        "height": 341
+      },
+      "crop": {
+        "x": 74,
+        "y": 39,
+        "width": 182,
+        "height": 268
+      },
+      "pairExtent": 268,
+      "opaque": 738,
+      "transparent": 1566,
+      "white": 571
+    },
+    {
+      "id": 30,
+      "name": "skull",
+      "view": "back",
+      "file": "48x48/30-skull-back_48x48.png",
+      "source": "docs/assets/creature-roster/mockup-v2-4.png",
+      "mirrored": false,
+      "sourceCell": {
+        "x": 286,
+        "y": 1031,
+        "width": 287,
+        "height": 341
+      },
+      "crop": {
+        "x": 53,
+        "y": 39,
+        "width": 186,
+        "height": 262
+      },
+      "pairExtent": 268,
+      "opaque": 694,
+      "transparent": 1610,
+      "white": 649
+    },
+    {
+      "id": 31,
+      "name": "ardu",
+      "view": "front",
+      "file": "48x48/31-ardu-front_48x48.png",
+      "source": "docs/assets/creature-roster/mockup-v2-4.png",
+      "sourceFacing": "front",
+      "facing": "front",
+      "mirrored": false,
+      "sourceCell": {
+        "x": 572,
+        "y": 1031,
+        "width": 288,
+        "height": 341
+      },
+      "crop": {
+        "x": 30,
+        "y": 47,
+        "width": 226,
+        "height": 248
+      },
+      "pairExtent": 253,
+      "opaque": 666,
+      "transparent": 1638,
+      "white": 659
+    },
+    {
+      "id": 31,
+      "name": "ardu",
+      "view": "back",
+      "file": "48x48/31-ardu-back_48x48.png",
+      "source": "docs/assets/creature-roster/mockup-v2-4.png",
+      "mirrored": false,
+      "sourceCell": {
+        "x": 859,
+        "y": 1031,
+        "width": 286,
+        "height": 341
+      },
+      "crop": {
+        "x": 16,
+        "y": 47,
+        "width": 237,
+        "height": 253
+      },
+      "pairExtent": 253,
+      "opaque": 728,
+      "transparent": 1576,
+      "white": 728
+    },
+    {
+      "id": 32,
+      "name": "NibWeevil",
+      "view": "front",
+      "file": "48x48/32-nibweevil-front_48x48.png",
+      "source": "expansion/native/48x48",
+      "sourceFacing": "left",
+      "facing": "right",
+      "mirrored": true,
+      "opaque": 1194,
+      "transparent": 1110,
+      "white": 546
+    },
+    {
+      "id": 32,
+      "name": "NibWeevil",
+      "view": "back",
+      "file": "48x48/32-nibweevil-back_48x48.png",
+      "source": "expansion/native/48x48",
+      "mirrored": false,
+      "opaque": 1028,
+      "transparent": 1276,
+      "white": 505
+    },
+    {
+      "id": 33,
+      "name": "HuskWeevil",
+      "view": "front",
+      "file": "48x48/33-huskweevil-front_48x48.png",
+      "source": "expansion/native/48x48",
+      "sourceFacing": "left",
+      "facing": "right",
+      "mirrored": true,
+      "opaque": 1326,
+      "transparent": 978,
+      "white": 652
+    },
+    {
+      "id": 33,
+      "name": "HuskWeevil",
+      "view": "back",
+      "file": "48x48/33-huskweevil-back_48x48.png",
+      "source": "expansion/native/48x48",
+      "mirrored": false,
+      "opaque": 1110,
+      "transparent": 1194,
+      "white": 534
+    },
+    {
+      "id": 34,
+      "name": "GranaryWeevil",
+      "view": "front",
+      "file": "48x48/34-granaryweevil-front_48x48.png",
+      "source": "expansion/native/48x48",
+      "sourceFacing": "left",
+      "facing": "right",
+      "mirrored": true,
+      "opaque": 1321,
+      "transparent": 983,
+      "white": 669
+    },
+    {
+      "id": 34,
+      "name": "GranaryWeevil",
+      "view": "back",
+      "file": "48x48/34-granaryweevil-back_48x48.png",
+      "source": "expansion/native/48x48",
+      "mirrored": false,
+      "opaque": 1299,
+      "transparent": 1005,
+      "white": 701
+    },
+    {
+      "id": 35,
+      "name": "DewBud",
+      "view": "front",
+      "file": "48x48/35-dewbud-front_48x48.png",
+      "source": "expansion/native/48x48",
+      "sourceFacing": "front",
+      "facing": "front",
+      "mirrored": false,
+      "opaque": 1003,
+      "transparent": 1301,
+      "white": 467
+    },
+    {
+      "id": 35,
+      "name": "DewBud",
+      "view": "back",
+      "file": "48x48/35-dewbud-back_48x48.png",
+      "source": "expansion/native/48x48",
+      "mirrored": false,
+      "opaque": 944,
+      "transparent": 1360,
+      "white": 451
+    },
+    {
+      "id": 36,
+      "name": "NectarBloom",
+      "view": "front",
+      "file": "48x48/36-nectarbloom-front_48x48.png",
+      "source": "expansion/native/48x48",
+      "sourceFacing": "front",
+      "facing": "front",
+      "mirrored": false,
+      "opaque": 1030,
+      "transparent": 1274,
+      "white": 493
+    },
+    {
+      "id": 36,
+      "name": "NectarBloom",
+      "view": "back",
+      "file": "48x48/36-nectarbloom-back_48x48.png",
+      "source": "expansion/native/48x48",
+      "mirrored": false,
+      "opaque": 987,
+      "transparent": 1317,
+      "white": 486
+    },
+    {
+      "id": 37,
+      "name": "Sporeling",
+      "view": "front",
+      "file": "48x48/37-sporeling-front_48x48.png",
+      "source": "expansion/native/48x48",
+      "sourceFacing": "front",
+      "facing": "front",
+      "mirrored": false,
+      "opaque": 1251,
+      "transparent": 1053,
+      "white": 603
+    },
+    {
+      "id": 37,
+      "name": "Sporeling",
+      "view": "back",
+      "file": "48x48/37-sporeling-back_48x48.png",
+      "source": "expansion/native/48x48",
+      "mirrored": false,
+      "opaque": 1217,
+      "transparent": 1087,
+      "white": 677
+    },
+    {
+      "id": 38,
+      "name": "SporeKeeper",
+      "view": "front",
+      "file": "48x48/38-sporekeeper-front_48x48.png",
+      "source": "expansion/native/48x48",
+      "sourceFacing": "front",
+      "facing": "front",
+      "mirrored": false,
+      "opaque": 1400,
+      "transparent": 904,
+      "white": 727
+    },
+    {
+      "id": 38,
+      "name": "SporeKeeper",
+      "view": "back",
+      "file": "48x48/38-sporekeeper-back_48x48.png",
+      "source": "expansion/native/48x48",
+      "mirrored": false,
+      "opaque": 1325,
+      "transparent": 979,
+      "white": 705
+    },
+    {
+      "id": 39,
+      "name": "MossMole",
+      "view": "front",
+      "file": "48x48/39-mossmole-front_48x48.png",
+      "source": "expansion/native/48x48",
+      "sourceFacing": "left",
+      "facing": "right",
+      "mirrored": true,
+      "opaque": 1014,
+      "transparent": 1290,
+      "white": 536
+    },
+    {
+      "id": 39,
+      "name": "MossMole",
+      "view": "back",
+      "file": "48x48/39-mossmole-back_48x48.png",
+      "source": "expansion/native/48x48",
+      "mirrored": false,
+      "opaque": 975,
+      "transparent": 1329,
+      "white": 545
+    },
+    {
+      "id": 40,
+      "name": "Conelet",
+      "view": "front",
+      "file": "48x48/40-conelet-front_48x48.png",
+      "source": "expansion/native/48x48",
+      "sourceFacing": "front",
+      "facing": "front",
+      "mirrored": false,
+      "opaque": 911,
+      "transparent": 1393,
+      "white": 443
+    },
+    {
+      "id": 40,
+      "name": "Conelet",
+      "view": "back",
+      "file": "48x48/40-conelet-back_48x48.png",
+      "source": "expansion/native/48x48",
+      "mirrored": false,
+      "opaque": 987,
+      "transparent": 1317,
+      "white": 530
+    },
+    {
+      "id": 41,
+      "name": "SpireSquid",
+      "view": "front",
+      "file": "48x48/41-spiresquid-front_48x48.png",
+      "source": "expansion/native/48x48",
+      "sourceFacing": "front",
+      "facing": "front",
+      "mirrored": false,
+      "opaque": 854,
+      "transparent": 1450,
+      "white": 440
+    },
+    {
+      "id": 41,
+      "name": "SpireSquid",
+      "view": "back",
+      "file": "48x48/41-spiresquid-back_48x48.png",
+      "source": "expansion/native/48x48",
+      "mirrored": false,
+      "opaque": 815,
+      "transparent": 1489,
+      "white": 458
+    },
+    {
+      "id": 42,
+      "name": "Horseshoe",
+      "view": "front",
+      "file": "48x48/42-horseshoe-front_48x48.png",
+      "source": "expansion/native/48x48",
+      "sourceFacing": "front",
+      "facing": "front",
+      "mirrored": false,
+      "opaque": 1031,
+      "transparent": 1273,
+      "white": 520
+    },
+    {
+      "id": 42,
+      "name": "Horseshoe",
+      "view": "back",
+      "file": "48x48/42-horseshoe-back_48x48.png",
+      "source": "expansion/native/48x48",
+      "mirrored": false,
+      "opaque": 1054,
+      "transparent": 1250,
+      "white": 580
+    },
+    {
+      "id": 43,
+      "name": "Shieldshoe",
+      "view": "front",
+      "file": "48x48/43-shieldshoe-front_48x48.png",
+      "source": "expansion/native/48x48",
+      "sourceFacing": "front",
+      "facing": "front",
+      "mirrored": false,
+      "opaque": 1078,
+      "transparent": 1226,
+      "white": 564
+    },
+    {
+      "id": 43,
+      "name": "Shieldshoe",
+      "view": "back",
+      "file": "48x48/43-shieldshoe-back_48x48.png",
+      "source": "expansion/native/48x48",
+      "mirrored": false,
+      "opaque": 1011,
+      "transparent": 1293,
+      "white": 536
+    },
+    {
+      "id": 44,
+      "name": "SiltSkorp",
+      "view": "front",
+      "file": "48x48/44-siltskorp-front_48x48.png",
+      "source": "expansion/native/48x48",
+      "sourceFacing": "left",
+      "facing": "right",
+      "mirrored": true,
+      "opaque": 996,
+      "transparent": 1308,
+      "white": 450
+    },
+    {
+      "id": 44,
+      "name": "SiltSkorp",
+      "view": "back",
+      "file": "48x48/44-siltskorp-back_48x48.png",
+      "source": "expansion/native/48x48",
+      "mirrored": false,
+      "opaque": 949,
+      "transparent": 1355,
+      "white": 424
+    },
+    {
+      "id": 45,
+      "name": "ReefReaper",
+      "view": "front",
+      "file": "48x48/45-reefreaper-front_48x48.png",
+      "source": "expansion/native/48x48",
+      "sourceFacing": "left",
+      "facing": "right",
+      "mirrored": true,
+      "opaque": 1083,
+      "transparent": 1221,
+      "white": 510
+    },
+    {
+      "id": 45,
+      "name": "ReefReaper",
+      "view": "back",
+      "file": "48x48/45-reefreaper-back_48x48.png",
+      "source": "expansion/native/48x48",
+      "mirrored": false,
+      "opaque": 1063,
+      "transparent": 1241,
+      "white": 517
+    },
+    {
+      "id": 46,
+      "name": "Platefin",
+      "view": "front",
+      "file": "48x48/46-platefin-front_48x48.png",
+      "source": "expansion/native/48x48",
+      "sourceFacing": "left",
+      "facing": "right",
+      "mirrored": true,
+      "opaque": 1039,
+      "transparent": 1265,
+      "white": 568
+    },
+    {
+      "id": 46,
+      "name": "Platefin",
+      "view": "back",
+      "file": "48x48/46-platefin-back_48x48.png",
+      "source": "expansion/native/48x48",
+      "mirrored": false,
+      "opaque": 996,
+      "transparent": 1308,
+      "white": 521
+    },
+    {
+      "id": 47,
+      "name": "AncientJaw",
+      "view": "front",
+      "file": "48x48/47-ancientjaw-front_48x48.png",
+      "source": "expansion/native/48x48",
+      "sourceFacing": "left",
+      "facing": "right",
+      "mirrored": true,
+      "opaque": 969,
+      "transparent": 1335,
+      "white": 516
+    },
+    {
+      "id": 47,
+      "name": "AncientJaw",
+      "view": "back",
+      "file": "48x48/47-ancientjaw-back_48x48.png",
+      "source": "expansion/native/48x48",
+      "mirrored": false,
+      "opaque": 705,
+      "transparent": 1599,
+      "white": 373
+    },
+    {
+      "id": 48,
+      "name": "CoalGrub",
+      "view": "front",
+      "file": "48x48/48-coalgrub-front_48x48.png",
+      "source": "expansion/native/48x48",
+      "sourceFacing": "left",
+      "facing": "right",
+      "mirrored": true,
+      "opaque": 1072,
+      "transparent": 1232,
+      "white": 383
+    },
+    {
+      "id": 48,
+      "name": "CoalGrub",
+      "view": "back",
+      "file": "48x48/48-coalgrub-back_48x48.png",
+      "source": "expansion/native/48x48",
+      "mirrored": false,
+      "opaque": 914,
+      "transparent": 1390,
+      "white": 304
+    },
+    {
+      "id": 49,
+      "name": "CinderCocoon",
+      "view": "front",
+      "file": "48x48/49-cindercocoon-front_48x48.png",
+      "source": "expansion/native/48x48",
+      "sourceFacing": "front",
+      "facing": "front",
+      "mirrored": false,
+      "opaque": 965,
+      "transparent": 1339,
+      "white": 393
+    },
+    {
+      "id": 49,
+      "name": "CinderCocoon",
+      "view": "back",
+      "file": "48x48/49-cindercocoon-back_48x48.png",
+      "source": "expansion/native/48x48",
+      "mirrored": false,
+      "opaque": 928,
+      "transparent": 1376,
+      "white": 339
+    },
+    {
+      "id": 50,
+      "name": "FurnaceBeetle",
+      "view": "front",
+      "file": "48x48/50-furnacebeetle-front_48x48.png",
+      "source": "expansion/native/48x48",
+      "sourceFacing": "front",
+      "facing": "front",
+      "mirrored": false,
+      "opaque": 1075,
+      "transparent": 1229,
+      "white": 458
+    },
+    {
+      "id": 50,
+      "name": "FurnaceBeetle",
+      "view": "back",
+      "file": "48x48/50-furnacebeetle-back_48x48.png",
+      "source": "expansion/native/48x48",
+      "mirrored": false,
+      "opaque": 965,
+      "transparent": 1339,
+      "white": 490
+    },
+    {
+      "id": 51,
+      "name": "Flintling",
+      "view": "front",
+      "file": "48x48/51-flintling-front_48x48.png",
+      "source": "expansion/native/48x48",
+      "sourceFacing": "front",
+      "facing": "front",
+      "mirrored": false,
+      "opaque": 975,
+      "transparent": 1329,
+      "white": 471
+    },
+    {
+      "id": 51,
+      "name": "Flintling",
+      "view": "back",
+      "file": "48x48/51-flintling-back_48x48.png",
+      "source": "expansion/native/48x48",
+      "mirrored": false,
+      "opaque": 944,
+      "transparent": 1360,
+      "white": 481
+    },
+    {
+      "id": 52,
+      "name": "GeodeGuard",
+      "view": "front",
+      "file": "48x48/52-geodeguard-front_48x48.png",
+      "source": "expansion/native/48x48",
+      "sourceFacing": "front",
+      "facing": "front",
+      "mirrored": false,
+      "opaque": 1270,
+      "transparent": 1034,
+      "white": 561
+    },
+    {
+      "id": 52,
+      "name": "GeodeGuard",
+      "view": "back",
+      "file": "48x48/52-geodeguard-back_48x48.png",
+      "source": "expansion/native/48x48",
+      "mirrored": false,
+      "opaque": 1106,
+      "transparent": 1198,
+      "white": 620
+    },
+    {
+      "id": 53,
+      "name": "Tuftling",
+      "view": "front",
+      "file": "48x48/53-tuftling-front_48x48.png",
+      "source": "expansion/native/48x48",
+      "sourceFacing": "front",
+      "facing": "front",
+      "mirrored": false,
+      "opaque": 798,
+      "transparent": 1506,
+      "white": 377
+    },
+    {
+      "id": 53,
+      "name": "Tuftling",
+      "view": "back",
+      "file": "48x48/53-tuftling-back_48x48.png",
+      "source": "expansion/native/48x48",
+      "mirrored": false,
+      "opaque": 789,
+      "transparent": 1515,
+      "white": 404
+    },
+    {
+      "id": 54,
+      "name": "GustTuft",
+      "view": "front",
+      "file": "48x48/54-gusttuft-front_48x48.png",
+      "source": "expansion/native/48x48",
+      "sourceFacing": "left",
+      "facing": "right",
+      "mirrored": true,
+      "opaque": 1059,
+      "transparent": 1245,
+      "white": 556
+    },
+    {
+      "id": 54,
+      "name": "GustTuft",
+      "view": "back",
+      "file": "48x48/54-gusttuft-back_48x48.png",
+      "source": "expansion/native/48x48",
+      "mirrored": false,
+      "opaque": 850,
+      "transparent": 1454,
+      "white": 446
+    },
+    {
+      "id": 55,
+      "name": "StaticMite",
+      "view": "front",
+      "file": "48x48/55-staticmite-front_48x48.png",
+      "source": "expansion/native/48x48",
+      "sourceFacing": "left",
+      "facing": "right",
+      "mirrored": true,
+      "opaque": 1132,
+      "transparent": 1172,
+      "white": 531
+    },
+    {
+      "id": 55,
+      "name": "StaticMite",
+      "view": "back",
+      "file": "48x48/55-staticmite-back_48x48.png",
+      "source": "expansion/native/48x48",
+      "mirrored": false,
+      "opaque": 1072,
+      "transparent": 1232,
+      "white": 508
+    },
+    {
+      "id": 56,
+      "name": "ChimeSeed",
+      "view": "front",
+      "file": "48x48/56-chimeseed-front_48x48.png",
+      "source": "expansion/native/48x48",
+      "sourceFacing": "front",
+      "facing": "front",
+      "mirrored": false,
+      "opaque": 984,
+      "transparent": 1320,
+      "white": 413
+    },
+    {
+      "id": 56,
+      "name": "ChimeSeed",
+      "view": "back",
+      "file": "48x48/56-chimeseed-back_48x48.png",
+      "source": "expansion/native/48x48",
+      "mirrored": false,
+      "opaque": 931,
+      "transparent": 1373,
+      "white": 431
+    },
+    {
+      "id": 57,
+      "name": "BoughBell",
+      "view": "front",
+      "file": "48x48/57-boughbell-front_48x48.png",
+      "source": "expansion/native/48x48",
+      "sourceFacing": "front",
+      "facing": "front",
+      "mirrored": false,
+      "opaque": 1278,
+      "transparent": 1026,
+      "white": 534
+    },
+    {
+      "id": 57,
+      "name": "BoughBell",
+      "view": "back",
+      "file": "48x48/57-boughbell-back_48x48.png",
+      "source": "expansion/native/48x48",
+      "mirrored": false,
+      "opaque": 1131,
+      "transparent": 1173,
+      "white": 513
+    },
+    {
+      "id": 58,
+      "name": "ShardWisp",
+      "view": "front",
+      "file": "48x48/58-shardwisp-front_48x48.png",
+      "source": "expansion/native/48x48",
+      "sourceFacing": "front",
+      "facing": "front",
+      "mirrored": false,
+      "opaque": 886,
+      "transparent": 1418,
+      "white": 373
+    },
+    {
+      "id": 58,
+      "name": "ShardWisp",
+      "view": "back",
+      "file": "48x48/58-shardwisp-back_48x48.png",
+      "source": "expansion/native/48x48",
+      "mirrored": false,
+      "opaque": 880,
+      "transparent": 1424,
+      "white": 459
+    },
+    {
+      "id": 59,
+      "name": "Reliquary",
+      "view": "front",
+      "file": "48x48/59-reliquary-front_48x48.png",
+      "source": "expansion/native/48x48",
+      "sourceFacing": "front",
+      "facing": "front",
+      "mirrored": false,
+      "opaque": 1111,
+      "transparent": 1193,
+      "white": 554
+    },
+    {
+      "id": 59,
+      "name": "Reliquary",
+      "view": "back",
+      "file": "48x48/59-reliquary-back_48x48.png",
+      "source": "expansion/native/48x48",
+      "mirrored": false,
+      "opaque": 1058,
+      "transparent": 1246,
+      "white": 549
+    },
+    {
+      "id": 60,
+      "name": "SaplingSage",
+      "view": "front",
+      "file": "48x48/60-saplingsage-front_48x48.png",
+      "source": "expansion/native/48x48",
+      "sourceFacing": "front",
+      "facing": "front",
+      "mirrored": false,
+      "opaque": 1217,
+      "transparent": 1087,
+      "white": 478
+    },
+    {
+      "id": 60,
+      "name": "SaplingSage",
+      "view": "back",
+      "file": "48x48/60-saplingsage-back_48x48.png",
+      "source": "expansion/native/48x48",
+      "mirrored": false,
+      "opaque": 1181,
+      "transparent": 1123,
+      "white": 509
+    },
+    {
+      "id": 61,
+      "name": "GroveKeeper",
+      "view": "front",
+      "file": "48x48/61-grovekeeper-front_48x48.png",
+      "source": "expansion/native/48x48",
+      "sourceFacing": "front",
+      "facing": "front",
+      "mirrored": false,
+      "opaque": 1306,
+      "transparent": 998,
+      "white": 564
+    },
+    {
+      "id": 61,
+      "name": "GroveKeeper",
+      "view": "back",
+      "file": "48x48/61-grovekeeper-back_48x48.png",
+      "source": "expansion/native/48x48",
+      "mirrored": false,
+      "opaque": 1285,
+      "transparent": 1019,
+      "white": 581
+    },
+    {
+      "id": 62,
+      "name": "FossilBloom",
+      "view": "front",
+      "file": "48x48/62-fossilbloom-front_48x48.png",
+      "source": "expansion/native/48x48",
+      "sourceFacing": "front",
+      "facing": "front",
+      "mirrored": false,
+      "opaque": 979,
+      "transparent": 1325,
+      "white": 392
+    },
+    {
+      "id": 62,
+      "name": "FossilBloom",
+      "view": "back",
+      "file": "48x48/62-fossilbloom-back_48x48.png",
+      "source": "expansion/native/48x48",
+      "mirrored": false,
+      "opaque": 962,
+      "transparent": 1342,
+      "white": 414
+    },
+    {
+      "id": 63,
+      "name": "OrbitRelic",
+      "view": "front",
+      "file": "48x48/63-orbitrelic-front_48x48.png",
+      "source": "expansion/native/48x48",
+      "sourceFacing": "front",
+      "facing": "front",
+      "mirrored": false,
+      "opaque": 908,
+      "transparent": 1396,
+      "white": 357
+    },
+    {
+      "id": 63,
+      "name": "OrbitRelic",
+      "view": "back",
+      "file": "48x48/63-orbitrelic-back_48x48.png",
+      "source": "expansion/native/48x48",
+      "mirrored": false,
+      "opaque": 831,
+      "transparent": 1473,
+      "white": 412
+    }
+  ]
+}
