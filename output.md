@@ -5951,3 +5951,809 @@ rows, layout equivalence passed and the packed SHA baseline was updated.
 
 Measured command wall time: baseline/demo RAM builds about 35 s each; focused FX
 suite about 7 s; successful full final gate about 179 s. No push performed.
+
+## Expanded-roster battle simulator spike (2026-10-07)
+
+Enabled generated species IDs 0–63 in the host-only BattleSession simulator,
+CLI replay parsing, and simulator fixture tests. The simulator test backend now
+reads expansion records from its generated fixture instead of the legacy
+32-row creature CSV. The AVR species boundary is unchanged. Expanded the
+simulator docs with 64-species matrix commands.
+
+Commands and results:
+
+```sh
+make sim-test
+# PASS 157,750/0; includes pairwise boundary matrix and species-63 replay.
+make sim SIM_ARGS='--mode pairwise --species-count 32 --level 10 --trials 2 --seed 20261007 --policy both --max-turns 100 --output-dir build/balance/baseline-32'
+# PASS 4,096 matches.
+make sim SIM_ARGS='--mode pairwise --species-count 64 --level 10 --trials 2 --seed 20261007 --policy both --max-turns 100 --output-dir build/balance/expanded-64'
+# PASS 16,384 matches; 128 player-side matches per species under greedy policy.
+make sim SIM_ARGS='--mode random-3v3 --species-count 64 --level 10 --trials 300 --seed 20261007 --policy both --max-turns 100 --output-dir build/balance/random3-64'
+# PASS 600 matches; 300 sampled teams under both player policies.
+make sim SIM_ARGS='--mode random-3v3 --species-count 64 --level 10 --trials 300 --seed 20261007 --policy tactical --max-turns 100 --output-dir build/balance/random3-64-tactical'
+# PASS 300 matches under tactical player policy.
+build/tools/battle-sim/battle-sim --mode random-3v3 --species-count 32 --level 10 --trials 1 --seed 1 --policy both --max-turns 100 --output-dir build/balance/random3-32-seed1
+# PASS 2 matches; the legacy control completes.
+```
+
+The original pairwise screening showed a wide greedy-player win-rate spread
+(20.3%–92.2%). In the first 300-trial random-3v3 sample, expansion win
+contribution ranged from NibWeevil 27.6% (16/58) and GeodeGuard 30.4% (17/56)
+to Shieldshoe 71.4% (40/56) and CinderCocoon 76.8% (43/56). These are
+screening results against simulator policies, not human win-rate estimates.
+
+The focused role pass now gives GeodeGuard Ironbody (defensive setup), StaticMite
+Coil (charged lightning strike), ShardWisp Smite (strong spirit coverage), and
+SaplingSage Rejuvenate (healing). These use existing move records and effects.
+With the curated set, ShardWisp moved from 43.1% (25/58) to 50.0% (29/58) in
+mixed-policy 3v3 and from 62.5% to 65.6% in greedy pairwise. StaticMite's
+pairwise greedy rate rose from 29.7% to 46.9%; GeodeGuard's mixed 3v3 rate rose
+from 30.4% to 32.1%. SaplingSage's outcomes were unchanged, so its healing move
+remains a concept-role choice rather than a measured win-rate buff. Wider
+candidate testing also showed Swift/terrorize moves hurt or did not help their
+assigned species; those assignments were removed. NibWeevil's attack stat and
+Rejuvenate probes produced no worthwhile outcome gain and were reverted.
+
+The 3v3 stall exposed a second 32-species bound in shared switch loading;
+enabling 64 only under `BATTLE_SIMULATOR` fixed it. Regular firmware remains
+capped at 32 for the gathering/save integration bead. Four fixed-width creature
+records changed, so the FX image remains 700,160 B (0 B size delta); updated
+packed SHA-256 is `49ef6df1847c1748472c5e8af9eccfcad74da405620636869a60935dcaa502cf`.
+Final checks: `make test` (157,573/0), `make testvm` (42/0), `make sim-test`
+(157,750/0), `make verify-generated`, `make test-pack-parity`, and the complete
+`make final-gate ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens FXTEST_MS=4000` all passed. The gate passed all 28 FX suites,
+including `test_stack` at 423 B headroom; shipping remains 27,480 B flash /
+1,787 B static RAM / 773 B free. Full gate wall time was about 179 s.
+
+## Thematic four-move expansion roster (2026-10-07)
+
+Completed the expansion roster move assignments using existing move definitions.
+All 32 creatures now have four distinct moves, with every damaging move matching
+one of the creature's types and status moves chosen for the concept/role. This
+fills the already reserved four move-ID fields; no new mechanics or firmware
+code were added. The four role-pass moves remain: GeodeGuard / Ironbody,
+StaticMite / Coil, ShardWisp / Smite, SaplingSage / Rejuvenate. Sibling species
+now diverge into physical/special, control, and defensive choices rather than
+sharing only the same two attacks. The roster HTML embeds the updated move data.
+
+Commands and results:
+
+```sh
+# One-creature packed-data and shipping-resource spike
+make gen
+# PASS; packed FX image 700,160 B, SHA-256 af9ca8d2480896e5cfbbd2a5bccece703435de9dc380fe48250545fbdcc8e907.
+make ram BUILD_DIR=build/moveset-spike
+# PASS; shipping 27,480 B flash / 1,787 B static RAM / 773 B runtime free.
+
+# Complete four-move roster, generated artifacts, and packing parity
+make gen
+# PASS; packed image stays 700,160 B, SHA-256 deb282dc6836b8de767f22056b3145705c3931f5530eab743142c2d6d80cdff6.
+make verify-generated
+# PASS.
+make sim-test
+# PASS 157,750/0.
+make test-pack-parity
+# PASS layout equivalence, perturbation diagnostic, packed SHA.
+
+build/tools/battle-sim/battle-sim --mode pairwise --species-count 64 --level 10 --trials 2 --seed 20261007 --policy both --max-turns 100 --output-dir build/balance/movesets-full-pairwise
+# PASS 16,384 matches, 16 timeouts (same as the prior expanded-roster baseline).
+build/tools/battle-sim/battle-sim --mode random-3v3 --species-count 64 --level 10 --trials 300 --seed 20261007 --policy both --max-turns 100 --output-dir build/balance/movesets-full-random3
+# PASS 600 matches, 3 timeouts (same as prior baseline).
+build/tools/battle-sim/battle-sim --mode random-3v3 --species-count 64 --level 10 --trials 300 --seed 20261007 --policy tactical --max-turns 100 --output-dir build/balance/movesets-full-tactical
+# PASS 300 matches, 0 timeouts.
+
+make final-gate BUILD_DIR=build/complete-movesets ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens FXTEST_MS=4000
+# PASS host 157,573/0, world 190/0, VM 42/0, all generated checks,
+# all 28 FX suites; test_stack 423 B. Shipping 27,480 B flash,
+# 1,787 B static RAM, 773 B free.
+git diff --check
+# PASS.
+```
+
+Pairwise greedy screening showed the clearest lift for StaticMite (29.7% to
+46.9%, 128 player-side matches/species); most creature shifts were within one
+to two percentage points at this small per-species sample. The move pass is a
+role-completion step, not evidence of human win rates. A few long mirror/control
+battles still hit the existing 100-turn cap; overall timeout counts did not
+increase relative to the preceding roster baseline. Full-gate wall time was
+about 220 seconds; bead implementation and gate elapsed about 9 minutes.
+
+## Roster graphic uses updated sprite art across all 64 entries (2026-10-07)
+
+Updated `docs/battle-roster-balance.html`: IDs 0–31 now crop both concept views
+from the four new monochrome roster mockup boards; IDs 32–63 show their native
+48×48 front/back sprite files. The page labels the original art as concept
+mockups, not production 48×48 tiles. It remains black-and-white and embeds the
+current canonical move data.
+
+Validation: Node parsed the page script and confirmed its embedded 64 records
+match `data/json/creatures.json`; all four original mockup boards and all 64
+expansion front/back image references exist; `git diff --check` passed. No
+firmware, packed assets, or generated game data changed in this graphic-only
+follow-up. Wall time was about 3 minutes.
+
+## Variable move pools for all 64 species (2026-10-07)
+
+Correction to the prior four-move pass: `move1`–`move4` are the species'
+starting battle kit, while each canonical JSON `moveList` is the larger species
+pool. Expanded IDs 32–63 now have role- and type-matched pools of 6–11 moves;
+all default attacks are included. Added any missing starting-kit entries to the
+original species pools too, so the graphic can mark their defaults consistently.
+Across IDs 0–63, pool sizes now range from 6 to 31 and vary by species. No new
+move definitions were needed. The roster page now shows each full pool and
+outlines that species' non-empty starting slots. This remains content-pool data;
+the current game runtime still equips up to four battle moves at a time.
+
+Commands and results:
+
+```sh
+make gen
+# PASS; no packed pool data is consumed by the current generator. Image remains
+# 700,160 B, SHA-256 deb282dc6836b8de767f22056b3145705c3931f5530eab743142c2d6d80cdff6.
+make verify-generated
+# PASS.
+make sim-test
+# PASS 157,750/0; four equipped/default move fields are unchanged.
+make test-pack-parity
+# PASS; pack hash unchanged.
+make final-gate BUILD_DIR=build/move-pools ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens FXTEST_MS=4000
+# PASS host 157,573/0, world 190/0, VM 42/0, all 28 FX suites,
+# test_stack 423 B; shipping 27,480 B flash / 1,787 B static RAM / 773 B free.
+node pool validation
+# PASS all 64 pools >4; all non-empty starting moves appear in their pool;
+# all new expansion attacks match a species type; HTML data/script valid.
+git diff --check
+# PASS.
+```
+
+Pool metadata adds no packed cart bytes or firmware flash. This defines species'
+content move pools for balancing and the roster graphic; runtime move teaching or
+selection remains a separate gameplay feature.
+
+## b17 — Simulation, formulas and move-pool review (2026-10-07)
+
+Delivered `docs/battle-balance-recommendations.md`: audited current matched-fixture
+reports, growth/XP, damage/STAB/chart, stages, speed, PP, statuses, AI, gathering,
+and storage limits. Proposed six moves using existing effects and complete curated
+pools for all 32 expansion creatures plus original-family guidance. Recommendations
+are not implemented candidates. Kept firmware and canonical game data unchanged.
+
+Additional commands, each PASS 4,096 matches:
+
+```sh
+build/tools/battle-sim/battle-sim --mode pairwise --species-count 64 --level 1 --trials 1 --seed 20261007 --policy tactical --max-turns 100 --output-dir build/balance/review-level1
+build/tools/battle-sim/battle-sim --mode pairwise --species-count 64 --level 10 --trials 1 --seed 20261007 --policy tactical --max-turns 100 --output-dir build/balance/review-level10
+build/tools/battle-sim/battle-sim --mode pairwise --species-count 64 --level 31 --trials 1 --seed 20261007 --policy tactical --max-turns 100 --output-dir build/balance/review-level31
+```
+
+Mean turns including timeouts: 1.916 / 4.431 / 13.366; timeouts: 0 / 4 / 81.
+Current fixture hashes match latest prior reports. All 16 prior mixed-policy
+pairwise timeouts involve species 59/63; proposed Burst fallback remains untested.
+Keep level 31 and applied stages ±2; test smoother stat growth and immunity/PP
+repairs before considering higher caps. Level 36 can wrap current maximum HP seed
+14 from 270 to 14; stored experience permits cubic thresholds only through L40.
+
+Removed the quoted promotional HTML header/intro and changed stat-bar denominator
+12→15 to reflect current seeds. Node validation PASS: HTML script parses, requested
+text absent, seed scale corrected, recommendation table covers all 32 expansion
+species. No generation/build/full gate needed for this review/docs-only change;
+last measured resource figures are cited as prior figures, not new measurements.
+Wall time: approximately 8 minutes review/documentation; under 1 second for the
+three simulator invocations combined; no gate or worker dispatch.
+
+## f6p / aqj — Original creature enhancement and monochrome tiles (2026-10-07)
+
+Built-in imagegen redrew four original-roster boards (32 species, 64 paired views)
+using the expansion atlases as style references. Saved versioned
+`docs/assets/creature-roster/mockup-v2-{1,2,3,4}.png` and exact `prompts-v2.json`.
+Roster/gallery HTML now uses these boards and retains the earlier pass for
+comparison. Visually reviewed every new board: fuller connected bodies, clear
+faces, shell/leaf/stone shapes and rear motifs. Concept boards remain distinct
+from native 48x48 production sprites.
+
+Inspected three archived environment sheets. Main atlas is
+`art/grayscale/images/tiles_16x16.png` (256x768), not the similarly named
+`tilesheet_16x16.png` (128x64). An initial small-sheet trial with the wrong
+main-atlas dimensions was discarded. Main redraw saved as v1; a second targeted
+imagegen pass replaced gray water/path regions with black water/white ripples and
+white stone paving/black seams. Final preview is
+`docs/assets/world-tiles/tiles-bw-redraw-v2.png` (724x2172). Added a comparison
+page `docs/world-tiles-redraw.html`, notes and exact prompts.
+
+Used the existing `decodePng`/`encodePng` exports in
+`tools/creature-sprite-export.mjs` for final binary-palette export of the four
+boards and corrected tile preview. Node validations PASS: all five final PNGs
+contain exactly black/white opaque pixels; HTML inline scripts parse; all static
+image/link targets exist; roster references all four new boards. Manual image
+inspection performed because the user explicitly requested visual redraws.
+
+No canonical sprites/generated data/firmware changed, so no generation or final
+gate was run. Prior resource figures remain unchanged by these docs-only assets.
+The main tile preview is not aligned native16x16 source data. Filed cf7 for native
+tile mapping/export/seam checks and installation; existing archived sources remain
+intact. Wall time: about10 minutes across both art passes, including generation
+and correction; no worker dispatch or build gate.
+
+## 3h9 — Native48 viewer and battle/menu spike (2026-10-07)
+
+The viewer mixed original32 concept crops with expansion native48 tiles. Exported
+all64 species/128 views to native48 PNGs, paired96x3072 masked source, contacts and
+manifest. Viewer now uses only these tiles. All128 paths exist; HTML script parses.
+Added appended FX assets and opt-in CGFX_BATTLE_48_SPIKE: full48 sprites at x0/80,
+center32px HP/bars or move metadata, two8px choice rows y48/56. Selection uses a
+full black cell and existing white bitmap text. Party previews and incoming
+switches support species63. Feedback temporarily covers bottom8 sprite rows.
+Default shipping remains32px; this spike does not imply main-game roster/save
+integration. Actual screenshots: docs/battle48-spike.html; reproducible design:
+docs/battle48-spike.md. The expanded trainer demo is built in build/battle48-demo.
+
+Commands/results:
+- `node tools/battle-sprite48-export.mjs`:128 validated binary48 views PASS.
+- `make gen`:PASS; appended entries, generated headers and manifest agree.
+- `node --test tools/tests/battle-sprite48-export_test.mjs`:3 PASS/0 FAIL;
+  all128 viewer sprites match packed pixels and masks byte for byte.
+- `make test-pack-parity`:layout equivalence and perturbation PASS; cart SHA256
+  1ed1dfec8736037704eb80198d0453b409cdb0bd52b4b08a5add7c84af48c5d6.
+- `make ram BUILD_DIR=build/battle48-baseline`:27,480 flash/1,787 static RAM.
+- `make ram BUILD_DIR=build/battle48-spike AVR_SHIPPING_CPP_FLAGS='-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X -DCGFX_SHIPPING_NO_USB -DCGFX_BATTLE_48_SPIKE'`:
+  final27,720 flash (+240),1,787 static (+0),773 physical SRAM free,
+  1,976 flash free. Intermediate27,770→27,700→27,728 preceded edge/glyph fixes.
+- `make fxtest-spike BUILD_DIR=build/battle48-device FXTEST_SPIKE_INO=tst/fxdatatest/test_battle48.ino ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens FXTEST_MS=20000 AVR_FXTEST_CPP_FLAGS='-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X -DFX_READ_COUNTER -DCGFX_BATTLE_48_SPIKE -DCGFX_BATTLE48_CAPTURE'`:
+  battle48:15 PASS/0 FAIL; test_stack:4 PASS/0 FAIL,420B headroom (prior423B).
+  Renderer mean7,402µs across eight draws, versus19,230µs52fps period. Includes
+  first/last species, hidden255, empty/legacy slots, clamp/zero HP, glyph pages,
+  cached metadata, production options and expansion switches.
+- `node tools/battle48-screen-export.mjs build/battle48-device/focused.log`:
+  four actual framebuffers at128x64 and6x; visually inspected options/moves.
+- `make build BUILD_DIR=build/battle48-demo AVR_SHIPPING_CPP_FLAGS='-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X -DCGFX_SHIPPING_NO_USB -DCGFX_BATTLE_48_SPIKE -DCGFX_TRAINER_DEMO -DCGFX_TRAINER_DEMO_EXPANSION'`:
+  PASS; final demo resource figures recorded below.
+
+Cart700,160→774,912B (+74,752B external storage): sprite payload73,728B,
+option payload1,024B plus two4-byte headers/alignment. No reordered existing
+entries, new globals, or per-frame move metadata cart reads.
+
+Failures/corrections: equal-grid crops clipped anatomy; exporter now measures
+row rules/safe gutters and rejects clipping. Screenshots exposed PpGlyph page0
+assumption; fixed absolute16-bit page addressing. Two initial slash assertions
+used incorrect pixel column/bit; corrected x63,y33 assertion passes. First full
+gate with default3,000ms capture failed only test_battletrainer (no serial);
+isolated20,000ms trainer check passed51/0. Settled gate rerun uses20,000ms.
+No Git operations: bd prime explicitly prohibits them.
+
+Expanded48 trainer demo final:27,678B flash/1,793B static RAM. Luna performed
+a read-only debug review at the user's request: no remaining failures or
+glyph/assertion defects found. Full settled check phase passed157,573 +190 +42
+host/VM assertions and all29 device suites; shipping RAM phase follows.
+
+Final settled command: `make final-gate BUILD_DIR=build/battle48-gate ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens FXTEST_MS=20000`: PASS, including29 device suites and generation checks. Shipping default27,482B flash/1,787B static RAM/773B physical free; generic glyph correction costs2B versus fresh27,480 baseline. Opt-in48 build27,720 is238B above corrected default,240B above original common baseline. Logs: build/battle48-gate/final-gate/{check,ram}.log. Packed cart and generated symbols verified; no hand-edited generated files.
+Wall time: approximately33minutes total; roughly9minutes integrated gates across two attempts,24minutes root implementation/exports/focused checks/documentation; Luna read-only review under1minute, no worker implementation.
+
+## ybx — Opponent front direction (2026-10-07)
+
+Reviewed all eight native contact sheets. Source orientation is explicit per
+species in data/json/battle_sprite_orientation.json:24 left profiles,4 right
+profiles,36 front-on poses. Exporter reflects only the24 left front profiles
+toward player at screen right; right/front-on approved shapes are retained.
+Manifest records sourceFacing, resulting facing and mirrored status; all64
+backs remain byte-identical (SHA256 comparison before/after). Requested optional
+preference for redrawing the36 straight-on faces into right-facing three-quarter
+poses; mirror work and verification proceed independently.
+
+Commands/results: node tools/battle-sprite48-export.mjs PASS128 tiles; make gen
+PASS. node --test tools/tests/battle-sprite48-export_test.mjs PASS4/0 including
+orientation coverage, reflection pixel/mask preservation and all128 packed frame
+byte comparisons. make test-pack-parity PASS; revised cart SHA256
+78c3f6712671073c76e5cde4af113f8ca6c7687dd2fa740b6a13660ffb8c0154.
+Actual device: /Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+captureserial=20000 fxport=d1 display=ssd1306
+file=build/battle48-device/fxtest/test_battle48/output/test_battle48.ino.hex
+file=dist/fxdata.bin > build/battle48-facing/screens.log; battle48 PASS15/0,
+renderer7402us. node tools/battle48-screen-export.mjs
+build/battle48-facing/screens.log PASS4 actual framebuffers; reviewed screenshot
+shows SquibbleSnail front now right-facing. Viewer PNGs, contact sheets, source
+sheet and cart all share the baked direction. No device code changed. Cart size
+remains774912B: zero additional storage or runtime mirroring cost.
+
+Settled final gate: make final-gate BUILD_DIR=build/battle48-gate
+ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+FXTEST_MS=20000 PASS. All29 device suites and157573+190+42 host/VM assertions
+pass; shipping27482B flash/1787B static/773B physical free, unchanged.
+No failures/debugging needed this bead. No Git operations per bd prime.
+Wall time approximately7minutes root including roughly4minutes full gate,
+no dispatched workers. Kept approved front-on shapes while optional redraw
+preference remains unanswered; resulting source direction is explicitly recorded
+rather than calling front-on poses right profiles.
+
+## 6ka — Group roster viewer by battle role (2026-10-07)
+
+Added Group: none/battle role control. In role mode it moves the existing filtered
+creature cards into alphabetized role sections and shows each section count. Search,
+stat sort and original/expansion filters call the existing render then regroup;
+none restores the original flat grid. All sprite cards/content stay intact.
+
+Validation: one Node command parsed the inline HTML script using vm.Script, checked
+all four selector IDs and grouping/update hooks, resolved every local static link,
+and confirmed all128 viewer sprite paths from the manifest exist: PASS. No firmware
+data or assets changed; no full gate needed. Wall time about4 minutes.
+
+## xon — Battle move and status reference pages (2026-10-07)
+
+Added self-contained monochrome docs/battle-moves.html and
+docs/battle-status-effects.html, generated from canonical moves data by
+tools/generate-battle-reference.mjs. Linked both from roster and linked each
+move effect to its status anchor. Move page covers43 usable moves with IDs, type,
+power, category, authored accuracy, battle uses and effect. It excludes the NONE
+slot sentinel. It clearly notes that accuracy values are not currently rolled by
+the runtime, and moves use one action rather than a charge-up turn. Status page
+covers all30 coded effects, grouped by behavior, with actual timing and effects.
+
+Validation: node tools/generate-battle-reference.mjs PASS (43 moves,30 effects).
+A Node verification parsed all inline scripts, counted43 move rows/30 effect cards,
+checked all links and all move-to-effect anchors: PASS. No firmware build needed.
+Wall time about7minutes.
+
+## qcy — World tile assets page and INFSED correction (2026-10-07)
+
+Added docs/world-tile-assets.html and linked it from the roster plus generated
+battle-reference navigation. The page shows the installed 256x768 main 16px atlas,
+installed 64x64 and128x64 companion atlases, 256x256 world map source, and new
+724x2172 binary monochrome redraw preview. It clearly labels the redraw as not
+installed while tile ID/seam remapping remains incomplete. Preserved the installed
+source paths and gave dimensions/grid sizes for each sheet. Also corrected user
+clarification: INFSED is titled Infused throughout the regenerated status page.
+
+Verification: node tools/generate-battle-reference.mjs PASS, 43 moves/30 effects.
+Node vm/static-link check parsed all four pages, resolved local assets/map links,
+and confirmed INFSED=Infused: PASS. `file` confirmed all four atlas dimensions.
+No firmware or generation changes. Wall time about6minutes.
+
+## qcy — Four-shade grayscale tile redraw follow-up (2026-10-07)
+
+User clarified the four-shade grayscale sheet must guide the redraw. Confirmed
+art/grayscale/images/tiles_16x16.png is indexed 2-bit with palette black,85-gray,
+170-gray,white; the active images/tiles_16x16.png is already binary. Generated a
+new v3 preview using the archived four-shade atlas as reference, converted the
+result to strict black/white while preserving alpha, and saved
+docs/assets/world-tiles/tiles-bw-redraw-v3.png (724x2172). Replaced the newest
+preview shown by docs/world-tile-assets.html and docs/world-tiles-redraw.html; the
+asset page now shows the exact grayscale reference sheet beside it. Added exact v3
+prompt/source palette to prompts.json and updated redraw notes. v1/v2 remain intact.
+
+Validation: Node inspected PLTE exact values, v3 dimensions, strict B/W pixels and
+binary alpha; all local links on both tile pages resolve: PASS. Visually inspected
+redraw. Preview only; source atlas/FX tiles not changed pending tile-ID remapping.
+Used imagegen skill built-in mode; wall time about5minutes including generation.
+
+## 70x — Native-size environment clarity redraw (2026-10-07)
+
+Audited v3: 724x2172 gives 45.25px nominal cells, so native 16x16 size and
+logical-pixel dithering were not respected. Used built-in imagegen skill with
+art/grayscale/images/tiles_16x16.png as the sole reference; requested bold material
+silhouettes, quieter terrain, dark water and distinct wood/brick/rock textures.
+Preserved raw v4 concept (724x2172) and exported v4-native (256x768) using centered
+nearest-neighbor sampling and opaque binary RGB threshold. No ordered dithering.
+Native export was visually inspected. Exact tile-ID alignment and seams remain
+uncertified; explicit preview status retained. Installed atlases/cart untouched.
+
+Updated docs/world-tiles-redraw.html with exact 1x/2x/4x zoom and 16px grid overlay;
+updated world-tile-assets.html, redraw notes and prompts.json. Built-in generation
+prompt and export details recorded in docs/assets/world-tiles/prompts.json.
+
+Validation: `node --input-type=module` importing existing decodePng validated
+256x768 dimensions, all 196608 opaque binary pixels, 21 local links, embedded
+script syntax and zoom/grid handlers, and prompt JSON: PASS. Doc/art only;
+no device suites or firmware generation required. Two patch applications failed
+on text matching; files then updated with targeted replacements and validated.
+Wall time approximately 6 minutes (single agent; no full firmware gate).
+
+## k2n — Second tile redraw matching creature style (2026-10-07)
+
+Built-in imagegen style-transfer spike using archived grayscale layout, preserved
+v4 and actual original/expansion creature contact sheets 1/5 as style references.
+Saved separate v5-concept (725x2170) and v5-native (256x768) assets; centered
+nearest-neighbor reduction and binary threshold, no ordered dithering. Visually
+inspected native export: rounder tree groups, broad clean rock highlights, simpler
+furniture and clear sparse water ripples. Prompt/references/export saved in
+prompts.json. Comparison page now shows grayscale/v4/v5, retaining native zoom
+and grid controls; asset gallery adds v5 without removing v4. Updated redraw notes.
+
+Validation: `node --input-type=module` with native assert/decodePng: v4 concept SHA
+54dcea8eecc149fbf2054afc1998c33415b998c0d6fe3f8d61365df28e580a7b and native SHA
+3dc6a23fac861e444c8a5085abcb3abb8c05808d49a9888a6bbdf6155dd69ade unchanged;
+v5 all 196608 pixels binary/opaque and dimensions256x768; 27 local links,
+both variant references, embedded JS syntax and zoom/grid handlers, JSON: PASS.
+Tile-ID fidelity/seams remain uncertified. No installed atlases or packed image
+changed; no firmware gate needed for art/docs-only spike. Wall time about3minutes,
+single agent, built-in imagegen mode. Beads stealth mode: no git operations.
+
+## iw9 — Expanded environment atlas and tilemap spike (2026-10-07)
+
+Created separate docs/assets/world-environment-spike atlas and composed review maps:
+8 biome rows (meadow/woodland/coast/marsh/mountain/snow/village/ruins), four 4x4
+building assemblies and four 4x4 interiors. Used built-in imagegen referencing v5
+and actual expansion creature sprites. Preserved concept and an initial concept
+copy. First assembled map revealed busy repeating ground; generated a targeted
+terrain correction and accepted only native rectangle(0,0,64,128), preserving all
+other first-concept pixels. Native atlas256x256, overworld32x32 tiles/512x512px,
+interior32x8 tiles/512x128px. Tiled TMJ maps reference the native atlas and include
+location rectangles. Added tools/generate-world-environment-spike.mjs for review
+export only, viewer with 1x/2x/4x, grid and eight environment crops, prompt/manifest
+provenance, scope notes and links from tile gallery/comparison.
+
+Exact export commands:
+`node tools/generate-world-environment-spike.mjs /Users/connorfranc/.codex/generated_images/01a11420-e36c-7332-8699-d66e58787a2b/exec-6bebe5e2-0bc8-4c47-a350-1fc9047dd80a.png`
+`node tools/generate-world-environment-spike.mjs docs/assets/world-environment-spike/atlas-concept.png /Users/connorfranc/.codex/generated_images/01a11420-e36c-7332-8699-d66e58787a2b/exec-6531c593-70ee-4b71-bead-1f402fae3256.png`
+Both PASS; rebuild command using workspace sources is documented in redraw notes.
+
+Validation: `node --check tools/generate-world-environment-spike.mjs` PASS.
+Native Node assert/decodePng checks:1280 bounded integer tile IDs,327680 output
+pixels exactly match atlas crops, all location bounds, strict opaque binary atlas,
+all props/assemblies outside terrain correction identical to initial concept,
+four v4/v5 SHA256 baselines unchanged,39 local links,embedded JS/provenance PASS.
+Viewer checks:all9view/zoom combinations and grid handler PASS. Native atlas/map
+visually inspected before and after terrain correction. No device gate: review
+art/docs/tool only; no installed atlas/map/cart changes. Tile seams and cell art
+alignment remain review items; no collision/encounters/entrance data assigned.
+Raw future FX estimates:8192B1bpp pixels+2560B16-bit map IDs before headers/masks;
+no actual game flash/SRAM change. Wall time about8minutes,single agent.
+
+## 7ll — Add environment spike to existing HTML asset viewer (2026-10-07)
+
+Added a visible environment/location section to docs/world-tile-assets.html with
+native atlas, composed overworld and interior PNG cards. Linked interactive map
+viewer and editable Tiled maps. Preserved existing atlas/redraw cards; updated
+intro and map-source explanation. Node native assertion validation:all three new
+previews embedded,v4/v5 retained,all local links resolve PASS. HTML-only; no device
+gate needed. Wall time about1minute,single agent.
+
+## rql — Simplify atlas and remove black prop boxes (2026-10-07)
+
+User found prop backgrounds clash with white grass and art too ornate. Saved
+prior native atlas, both maps/PNGs, manifest/prompt under v1/ with SHA256 checksums.
+Generated separate atlas-simple-concept.png using built-in imagegen:small outlined
+props on white ground,sparse detail,plainer structures. First export exposed
+shifted terrain slots; reused earlier quiet terrain correction in native(0,0,64,128)
+instead of accepting broken checkerboard water/path. Props/buildings/interiors
+use simplified concept. Rebuilt atlas/maps and viewer defaults to simplified;
+Version selector retains earlier detailed assets and updates environment crops.
+Updated asset gallery, provenance and rebuild recipe. Native map visually checked.
+
+Commands:
+`node tools/generate-world-environment-spike.mjs docs/assets/world-environment-spike/atlas-simple-concept.png`
+initial export inspection identified shifted terrain slots,not accepted as final.
+`node tools/generate-world-environment-spike.mjs docs/assets/world-environment-spike/atlas-simple-concept.png docs/assets/world-environment-spike/atlas-terrain-correction.png`
+final export PASS.
+Native Node assert validation:binary256x256 atlas,zero dark-majority prop cells,
+327680 composed map pixels exactly match atlas,map IDs unchanged,all seven v1
+artifacts match saved SHA256,local links PASS. Viewer script VM:18version/view/zoom
+combinations,crop source switch and grid handler PASS. Preview only; seams still
+need art review; installed game assets/firmware unchanged. About5minutes single
+agent; no firmware gate for review artwork/HTML-only changes.
+
+## 0vf — Keep atlas view (2026-10-07)
+
+Default environment viewer to atlas:selector,image,2x dimensions and caption
+updated consistently. Version switch preserves atlas selection. Native Node
+assert/VM validation PASS for initial HTML and version switching. HTML-only;
+no game changes. Wall time under1minute,single agent.
+
+## 6ir — Plain player-scale buildings and entrance assemblies (2026-10-07)
+
+Inspected src/engine/draw.h PLAYER_SIZE16/draw16x16, World.cpp movement16-step
+commit and interact A/faced adjacent tile, StepEvent.cpp no doorway warp.
+User further asked about larger collections while retaining16x16:documented
+1x1small props,2x2trees/rocks,3x3or4x3buildings. Built-in imagegen generated
+separate plain cottage/cabin/shop/tower2x2sheet. Export uses4x3exteriors within
+existing4x4atlas slots:roof/wall source48rows compacted32,bottom16door rows retained,
+blankfirstslotrow. Only buildingstrip changes;v2simplified and v1detailed retained.
+Five one-tile entrance review rectangles and clear approach paths in Tiled map;
+UP+A convention is metadata,not installed game code. Viewer keeps atlas default,
+adds27combination version/view/zoom selection and four entrance/player panels.
+Actual first16x16character frame exported as black ink/transparency with exact
+pixel positions;avoids canvas readback/CORS problems from local file viewers.
+Updated prompt/manifest/scope and rebuild recipe.
+
+Command:
+`node tools/generate-world-environment-spike.mjs docs/assets/world-environment-spike/atlas-simple-concept.png docs/assets/world-environment-spike/atlas-terrain-correction.png docs/assets/world-environment-spike/buildings-simple-concept.png`
+PASS. Native Node assert/decodePng/VM checks:49152non-building pixels unchanged,
+four dark door cells/blankpadding,five one-tile entrance+approach placements,
+327680map pixels exact,actual player ink faithful,37local links,27viewer settings,
+four entrance panels PASS. `node --check tools/generate-world-environment-spike.mjs`
+PASS. Atlas/map visually inspected. Review-only script/docs/art;no firmware/cart
+or save changes,no full device gate required. Wall time about8minutes,single agent.
+
+## 5ky — Less square buildings and multi-tile fixtures (2026-10-07)
+
+Preserved square-building atlas/maps/manifest/prompt under v3/ with checksums.
+Built-in imagegen generated new256x256native fixture atlas:4refined building
+assemblies plus horizontal/vertical bridges,pond banks,cascade,tree,grove,boulders,
+shrine,dock,marsh boardwalk,camp,well/garden. First building pass exceeded compact
+roof slots;generated correction accepted onlytop64pxstrip. Non-building fixtures
+remain exactly first-concept art. Replaced onlymain atlas building strip,retaining
+terrain/props/interiors;recomposed main PNGs. Separate fixture map32x32 with
+mainfirstgid1/fixturefirstgid257 assembles all16fixtures in appropriate contexts.
+Native atlas/showcase visually inspected. No installed game asset/cart changes.
+
+Added tools/generate-world-fixture-spike.mjs,fixture provenance/manifests,notes,
+visible gallery cards and external docs/assets/world-environment-viewer.js.
+Viewer defaults to new fixture atlas;showcase and16assembly crops available;
+previous versions retained. Fixed previous inline viewer's related-image switch
+so maps and entrance sprites match selected version;fixture view disables
+unavailable interior selector. Actual player scale panels retained.
+
+Exact export:
+`node tools/generate-world-fixture-spike.mjs docs/assets/world-environment-spike/fixtures/atlas-concept.png /Users/connorfranc/.codex/generated_images/01a11420-e36c-7332-8699-d66e58787a2b/exec-039cf1bc-e9cb-41b7-861e-73248ab763b5.png`
+PASS;workspace correction source preserved,rebuild recipe documented.
+One HTML-edit attempt referenced an uncreated temporary script and failedENOENT
+before writing;replaced with permanent viewer JS and validated final files.
+
+Validation:Node native assert/decodePng/VM16bounded binary assemblies,49152main
+non-building pixels retained,nonbuilding fixture art retained,7v3SHA256 unchanged,
+589824map pixels exact,45local links,45version/view/zoom settings,4entrance+16fixture
++8environment crop panels PASS. `node --check tools/generate-world-fixture-spike.mjs`
+and `node --check docs/assets/world-environment-viewer.js` PASS. Seams/bridge-middle
+repetition remain art review,not certified gameplay data. AdditionalrawFXpixel
+estimate8192B;no firmware or SRAM change,no device gate for this review-only spike.
+Wall time about10minutes,single agent.
+
+## q9v — Publish one environment/fixture tile atlas (2026-10-07)
+
+User wants single atlas. Packed main256x256 above fixture256x256 into published
+atlas-native.png256x512,16columns32rows,51216pxcells. IDs1-256/257-512 unchanged.
+Generator now publishes one atlas and remaps all three TMJ maps to one tileset.
+Fixture manifest coordinates shifted+16rows;source component PNG retained as
+history. Preserved split-stage under v4/with11SHA256 baselines. Viewer defaults
+combinedatlas;Fixture showcase is a view rather than separate atlas version;
+fixture crop panels read bottomhalf ofcombinedimage. Removed separate fixture
+atlas gallerycard;updatedmaincard,dimensions,metadata,provenance,scope notes.
+
+Command:`node tools/generate-world-fixture-spike.mjs docs/assets/world-environment-spike/fixtures/atlas-concept.png docs/assets/world-environment-spike/fixtures/buildings-correction.png`
+PASS. Native Node assert/decodePng/VM:exacttop/bottompacking,11savedSHA256unchanged,
+3single-tilesetmaps unchanged IDs/layers/PNGbytes,589824map pixels exact,42links,
+48viewer combinations and16combinedatlascrop coordinates PASS. Both JS files
+`node --check` PASS. No added artwork/pixel payload (same16384raw1bppbytes total),
+no installed game/cart/firmware changes. Wall time about4minutes,singleagent.
+
+## b9m — Classic top-down player-relative fixtures (2026-10-07)
+
+User found64pxfixtures oversized/illustrative versusPokemon Blue. Researched
+primary pret/pokered sprite facings (four8pxpieces at0/8 form16pxsprite) and
+movement.asm16pxconventions;projectdraw.h/World.cpp confirm16pxplayer/cells and
+128x64viewport. Pinned project-specific targets:buildings3x2,trees2x2,grove3x2,
+rocks2x1,smallshrine2x2,pond3x2,bridgewalkingwidth1tile. These ratios are design
+choices,not claims everyBlueasset has that size. Preserved previouscombinedstage
+underv5/with14SHA256baselines. Built-in imagegen compact-topdown revision,original
+art notcopiedPokemonassets. First equal-quarter export clipped subjects because
+actualoccupiedbands32-73/83-135/144-188/196-249:export nowlocatesfourwhite-separated
+bands,cropswholeobjects,fits nativefootprints,extracts bridge decks overexisting
+quietwater. Strictbinarywhitepadding verified. Stillone512tile256x512atlas.
+
+Added browser-only128x64movement prototype withactual16pxplayer/camera(56,24),
+village doorway,one-tilefootbridge,woodlandgap. Arrow/A movement/collision/door
+review letsuserjudge traversal. Generated nativePNG samples/data andupdated
+viewerfootprintcrops/3x2doorpreviews/previous-versionselector;atlas remainsdefault.
+No firmware,packedcart,saveorinstalledmap changes. Samepixelpayload/IDcount.
+
+Commands:`node tools/generate-world-fixture-spike.mjs docs/assets/world-environment-spike/fixtures/atlas-concept.png --classic`
+`node tools/generate-world-traversal-spike.mjs` PASS.
+NativeNodeassert/decodePng/BFS/VM:49152basepixelsretained,14snapshotSHA256unchanged,
+compactbounds/whitepadding,589824map pixels exact,3native128x64views,doorapproaches
+reachable,one-tilebridge traversable and waterblocked,browserA/collision/camera,
+44links PASS. MainviewerVM60version/view/zoom settings,4entrance+16footprintcrops
+PASS. FourchangedJSfiles `node --check` PASS. Nativeatlas/game-sizedframes visually
+inspected. Artistseams/repetition stillreview beforeinstallation;movementpreview
+isbrowser-only,notshippingwarpcode. Walltimeabout12minutes,singleagent.
+
+## y7i / 2jp — Smooth browser traversal and NPC review sheet (2026-10-07)
+
+Smooth16px steps via requestAnimationFrame at308ms/tile,integerpixel camera
+following,held arrows,release-to-finish,scene cancellation,blur/hidden hold reset.
+Logical destinations commit after animation; collision checked before entry;
+A checks wait for rest. Browser only, no game movement/flash changes.
+
+Built-inimagegen8NPC sheet and simpler second revision; originalconcept preserved.
+Exactprompts saved docs/assets/world-npcs/prompt.json. Native64x32sheet has8binary
+16x16idleframes:gatherer,farmer,shopkeeper,herbalist,fisher,ranger,miner,child.
+Gatherer replaces reviewarrow;5NPCplacements block cells and answerA. Gallery,
+individualPNGs,manifest,8xnearestpreview,native128x64scenePNGs updated.
+Directions/walkingframes remain laterartwork;down-facingidle explicitlylabelled.
+No installedsprites,terrainIDs,firmware,save,or packedcartbytes changed. Raw1bpp
+8framepayload wouldbe256bytes ifinstalled,excludingheaders/masks/facings.
+
+Commands: node tools/generate-world-npc-spike.mjs; node tools/generate-world-traversal-spike.mjs
+PASS. node --test tools/tests/world-traversal-viewer_test.mjs:7/7 PASS covering
+pixelmotion,camerasync,held/release,scene cancellation,blur,door/NPCcollision/A,
+all8PNGdimensions/binarypalette/bounds/individual-to-sheetparity. FourchangedJS
+node --check PASS. Nativeviewerlinkcheck PASS;nativevillageframe inspected.
+Initialanimationtest hit floatingpoint fakeclockboundary:advance1ms past step
+for completion assertions;no runtime change needed. Firstnativeartreduction
+lostdetail;rerendered simplerconcept,tuned nativefit/samplethresholdbeforefinal
+checks. No fullfirmwaregate for browser/doc-onlyspike. Walltimeabout15minutes,
+singleagent;focusedchecksunder1second. No commits per bdprime stealthmode.
+
+## 9jh — Transparent NPCs with1pxwhite outline (2026-10-07)
+
+All8NPCPNGs/sheet/8xpreview now binaryalpha0/255;1pxwhite8-neighbor outline,
+opaque enclosedwhite interiors,remainingbackgroundtransparent. Nativecells
+stay16x16;artfits14x14to reserve unclippedborder. Exporter derivesmask from
+exteriorfloodfill and1pxdilation. Statictraversal compositor now respectsNPCalpha
+instead oferasing underlyingpaths. Browsercanvasalready compositesalpha.
+HTMLdescription/docupdated. Built-inimagegen transparencyedit retained as visual
+reference;nativeexport maintains originalcharacter source with deterministic
+pixelmask. No firmware/cartbytes changed; eventualmask storage is additionalto
+rawpixelpayload estimate.
+
+Commands:node tools/generate-world-npc-spike.mjs;
+node tools/generate-world-traversal-spike.mjs PASS.
+node --test tools/tests/world-traversal-viewer_test.mjs:8/8PASS includingnative
+cells,palette/alpha,sheetparity,allblackpixels surroundedbyopaque1pxneighbors,
+cellboundaryclearance,transparentbackground,andexactunderlyingpath preservation.
+Bothchangedexporters node --check PASS. Nativepreview inspected. Walltimeabout
+5minutes,singleagent;checksunder1second. No commits (bdprime stealthmode).
+
+## f9q — Four-direction chibi player (2026-10-07)
+
+Built-inimagegen produced matchingcap/backpack player inDOWN/UP/LEFT/RIGHT,
+largerhead/shortbody/tinyfeet. Savedconcept/exactprompt/nativeframes/32x32sheet/
+8xpreview/manifest underdocs/assets/world-player. GeneralizedexistingnativeNPC
+exporter with --player (2x2cells);defaultNPCexportunchanged. Sourcealpha now
+composited overwhite duringbinarization. Allframes16x16,1pxwhiteoutline,
+transparentexterior,opaqueinterior. NPCgroup retains its existingartwork.
+
+Browser uses currentfacing sourcecrop,includingblockedturns andsceneresets.
+Doorwaypreview usesUP;staticPNGpreviews use sceneinitialfacing. HTMLplayergallery
+anddescriptionupdated. Fourdirectionidleposes only,notwalkanimation.
+No installedsprites,firmware,save,packedcartor terrainIDs changed. Hypothetical
+uncompresseddevicecost128bytespixels+128bytesmask beforeheaders;notinstalled.
+
+Commands:node tools/generate-world-npc-spike.mjs --player;
+node tools/generate-world-npc-spike.mjs;node tools/generate-world-traversal-spike.mjs
+PASS. node --test tools/tests/world-traversal-viewer_test.mjs:11/11PASS,including
+4distinctposes,directioncrop/blockedturn/scenereset,staticstartingfacing,palette/
+alpha/outlinebounds/sheetparity,camera/collision/interactions/pathpreservation.
+FourchangedJS node --check PASS;30localviewerlinks PASS;native8xplayerpreview
+inspected. Browser/docs-only,firmwaregate notrequired. Walltimeabout6minutes,
+singleagent;checksunder1second. No commits perbdprime stealthmode.
+
+## 4wj — Four-direction walking animation (2026-10-07)
+
+Built-inimagegen eightwalkingposes:two alternatingfootposes for eachdirection,
+samechibicap/backpackplayer. Savedconcept/exactprompt/64x32sheet/individual16x16
+PNGs/8xpreview/manifest underdocs/assets/world-player/walk. Existingexporter
+--player --walk exports these separately;idle/NPCsources andPNGsuntouched.
+Onepixelwhiteoutline,transparentexterior,opaqueinterior remain.
+
+Browser selectsAatnativepixel0-7,Bat8-15during308msstep;pose followsdirection,
+returns toidleatrest,cycles continuouslywhileheld,cancels onscenechange,and
+blockedturns stayidle. Walksheetload fallsback toidleuntilready. HTMLgallery
+showswalking sheet alongsideidleframes. Nofirmware/cart/save/terrainchange;
+ifinstalleduncompressed,walkingpixel+mask datawouldadd512bytesbeforeheaders.
+
+Commands:node tools/generate-world-npc-spike.mjs --player --walk PASS.
+node --test tools/tests/world-traversal-viewer_test.mjs:15/15PASS. Includesdistinct
+lowerbodyposes inall4directions,halfstepcrops,rest/blocked/resetidle,heldcontinuity,
+nativebounds/palette/alpha/outline/sheetparity andallpriorcollision/camera/Achecks.
+Initialall-directionhalfstepassertionfailedatfakeclockfloatingpointboundary;
+advanced1mspastboundaryfor deterministic assertion (runtimeunchanged).
+BothchangedJS node --check PASS;32localviewerlinks PASS. Nativewalking8xpreview
+andgeneratedsource inspected. Browser/docs-only,no fullfirmwaregate. Walltime
+about6minutes,singleagent;focusedchecksunder1second. No commits(bdprimestealth).
+
+## a3n — Repair front/back gait and disappearing body (2026-10-07)
+
+User reported UP/DOWN animation wrong,then missingbody. Luna read-onlydiagnosis
+confirmed correctframeordering but inconsistentgeneratedUPtorso/head plus
+independentcrop/resizing. Built-inimagegen front/backcorrection retained with
+exactprompt;nativeexport now anchorshead/torso toidlePNG. Firstcomposition
+wrongly replacedtorso row12 withlegpixels:finalfix preserves RGB throughrow12,
+animates onlyrows13-14 usingidlefootcolumns,maintainscentregap,and rebuilds1px
+whiteoutline/alpha. Attemptedbodyredraw retained asconcept-body-study,prompt
+saved;approvedidleart restored ratherthan acceptingdetail loss. Sideposes/NPC
+art preserved. Browserandshippingcart now usecorrectedfront/backPNGs.
+
+Commands:node tools/generate-world-npc-spike.mjs --player;
+node tools/generate-world-npc-spike.mjs --player --walk --front-back;
+node tools/generate-world-npc-spike.mjs --player --walk;
+node tools/generate-world-traversal-spike.mjs;node tools/export-world-player-game.mjs;
+make gen PASS. node --test tools/tests/world-traversal-viewer_test.mjs:17/17PASS,
+includinghead/torsoRGBstability,twofootlengthsalternating,separategap,allmask
+bounds,sheet/packedpixelparity. Initialpost-maskheadcopy brokeoutline;composition
+movedbeforemaskgeneration. Changedlegrowtest exposedmergedfeet inunselectedbody
+study;restoredidle andcorrectedrowcontract. Nativefront/backpreview inspected.
+Singleimplementer plusLunaread-onlydebug;repairabout10minutes withinintegration.
+
+## v0f — Install four-direction chibi player and walking in game (2026-10-07)
+
+Shippingworldrenderer now draws appendedworldPlayerSprites field withPLUSMASK.
+12frames are16x16 inDirectionenum UP,RIGHT,DOWN,LEFT order,eachidle/A/B. PNGsource
+images/Playerchibi_16x16.png assembledfromreviewframes byexport-world-player-game;
+make gen is thepackingentry. Headerprefix4bytes,stride64bytes/frame. Framequery
+uses existingWorldMotion direction andstep:0idle,1-7A,8-15B. No newRAMstate;
+blockedturns/stepcompletion remain directionalidle. Fixedfront/backtorso before
+shippinggate. Originalcharactersheet/terrain/NPCcatalog/saves remain unchanged.
+Luna read-onlyreview found no drift;RGBhead/torso throughrow12 staysfixed,
+footoutline extendsrow15 as expected. README/browserstatus/docs updated.
+
+Freshbaseline:make ram BUILD_DIR=build/chibi-player-baseline ->27482Bflash,
+1787BstaticRAM,773BphysicalRAMfree. Thin integratedslice:
+make ram BUILD_DIR=build/chibi-player-integrated ->27518Bflash,1787BstaticRAM.
+Wholeimage delta+36Bflash,+0BRAM;2178Bapplicationflashfree. No gameplaytrim.
+Cart append772Bfield(768pixel+mask,4dimensionheader);pagealignedcart grows768B.
+450orderedpriorconstants and741993priorFXdatabytes provedidentical;onlydata
+page/bytecount changes as expected,savepage staysFF80. CartSHA256:
+a2856ab26075f12ea750de8143ebce82c3197865dbe5ce5b6badce36509c70ec.
+Updatedpackparitybaseline onlyafter append/sourcepixelproof;existingfixture
+layoutparity andperturbationdiagnostic stillPASS. One-offinitialABIcomparison
+matchedduplicatenames acrossnamespaces;orderedconstantcomparison correctedthat
+validator,withno generatedaddresschanges.
+
+Focusedcommands:
+make test ->World258/0PASS,including68newmovementframeassertions.
+node --test tools/tests/world-traversal-viewer_test.mjs ->17/17PASS,includingall12
+source-to-packedpixel/coveragebits,torso/feet,camera/held/reset/collision/A.
+make fxtest-spike BUILD_DIR=build/chibi-player-device-final FXTEST_SPIKE_INO=tst/fxdatatest/test_world_player.ino ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens FXTEST_MS=4000
+PASS:world_player40/0,stack4/0;player-renderheadroom659B,save423B,transition529B.
+make test-pack-parity ->PASS (build/chibi-player-parity.log).
+
+Finalsettledgate:
+make final-gate BUILD_DIR=build/chibi-player-gate ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens FXTEST_MS=4000
+PASS:host157573/0,World258/0,VM42/0,manifest/generatedlibs/verification/ABIguards,
+all30FXsuites;shipping27518Bflash,1787BRAM,773Bphysicalfree. Completecheck/RAMlogs
+atbuild/chibi-player-gate/final-gate/{check,ram}.log. Gatewallabout4minutes;
+worker/integrationabout20minutes,orchestratorreportabout1minute. Singleimplementer
+plusLunaread-onlydebug/review. No commit/push perbdprime stealthmode.
+
+## foc — Apply native48 battle reworks and repair corrupt attack text (2026-10-07)
+
+Owner screenshot was the legacy32px battle path. Promoted reviewed native48 front/back sprites, compact two-row options/moves and stationary numericHP corridor to default; removed legacy render branches fromBattleLayout/draw/MenuV2Legacy. Main-game encounters/saves remain32species; packed64sprite catalog andexpanded demo supportall64. Attack playback previously acceptedID<33 while widthlookup supportsutility33–44: nonzerowidth/zeroaddress read unrelatedFXbytes. Widthtable now determines authored/sentinel eligibility; nulltext skipped. Device regression comparesall43validmove announcements pixel-for-pixel to packedrasters,includingcleanunusedrow. Attackeffect placements16/80 avoidHPcorridor. Switchdisplay bound uses packedframecount.
+
+Budget: fresh make ram BUILD_DIR=build/battle48-promote-baseline ->27518flash/1787static; initial48+labelrepair27816/1787 (+298). RemovedduplicateplayerHPdraw andsharedidenticalHPpanels viaAVRnoinlinehelper. make ram BUILD_DIR=build/battle48-promote-shared-hp ->27700/1787 (+182flash/+0RAM),1996physicalflashfree,773physicalRAMfree. Finalexpandedtrainer build27656flash/1793static. ExistingFXpayload/addresslayout unchanged; no spritepayload added.
+
+Focusedverification:
+make test > build/battle48-promote-host.log: PASS host/World258/0.
+node --test tools/tests/battle-sprite48-export_test.mjs > build/battle48-promote-assets.log:4/4PASS.
+make test-pack-parity > build/battle48-promote-parity.log:PASS unchangedSHA/layout/negativeperturbation.
+make fxtest-spike BUILD_DIR=build/battle48-promote-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_battlepresentation.ino ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens FXTEST_MS=8000:311/0PASS;stack4/0.
+make fxtest-spike BUILD_DIR=build/battle48-promote-native FXTEST_SPIKE_INO=tst/fxdatatest/test_battle48.ino ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens FXTEST_MS=8000:15/0PASS,7402usrenderer;stack4/0.
+make fxtest-spike BUILD_DIR=build/battle48-promote-arena FXTEST_SPIKE_INO=tst/fxdatatest/test_arenademo.ino ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens FXTEST_MS=8000:1864/0PASS,effectivearenaheadroom287B.
+make fxtest-spike BUILD_DIR=build/battle48-promote-session FXTEST_SPIKE_INO=tst/fxdatatest/test_battlesession.ino ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens FXTEST_MS=8000:63/0PASS,effectivecontrollerheadroom373B,save420B,transition529B.
+
+Failedattempts: firstfocusedpresentation260/8 exposedoldPPtestcoordinates andactualbeamcoveringnewHP; updatedpixelchecksandmovedtargetanimation. Native48switch14/1 exposedremaining32speciesdisplayguard;fixedframecountbound. Firstgate build/battle48-promote-gate stoppedarenademotest29770B(74overboard). Productiontrim andtest-onlysharedrenderer/freshnesshelpers retainedallassertions,fit29694B. Secondgate build/battle48-promote-final stoppedbattlesessiontest29886B(190over). Factoredtesthelpers,sharedHPproductionhelper,andshortened12verbosefailurelabels withassertionsintact;focusedtestfits29612B. Finalsettledgate result recordedbelow.
+
+Rebuilt make build BUILD_DIR=build/battle48-demo AVR_SHIPPING_CPP_FLAGS='-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X -DCGFX_SHIPPING_NO_USB -DCGFX_TRAINER_DEMO -DCGFX_TRAINER_DEMO_EXPANSION';isolatedsplitcart/savecopies refreshed. ReloadArdens to usebuiltHEX. No commit/push perbdprime stealthmode.
+
+Finalsettledgate: make final-gate BUILD_DIR=build/battle48-promote-final ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens FXTEST_MS=8000 PASS. Host157573/0,World258/0,VM42/0;all30FXsuites6397/0;manifest/generatedlibs/ABIguardsPASS. Shipping27700flash/1787static/773physicalRAMfree. Arena finaleffectiveheadroom280B;session373B;save420B. Gatecomplete logs build/battle48-promote-final/final-gate/{check,ram}.log. Finalexpandedtrainer27656flash/1793static. Worker+iterationwallabout15minutes;settledgateabout4minutes;orchestratorreportunder1minute. Singleagent,no delegation.
+
+## aci — White-on-black battle feedback (2026-10-07)
+
+Owner screenshot requested lesswhitearea beneath combatants. Feedback24px at y40 now clearsBLACK;allbitmapnames/actions/moves use nativewhiteFXframe0 OVERWRITE,fontcaptions/damagedigits usewhitefontOVERWRITE,andgather/ticknumbers reuseexistingwhiteStatNumbers. HelpersrenamedfeedbackText/Caption. Selectionmenus,positions/timing,HP/spritesandmechanics unchanged. Noassetgeneration/payloadchange. READMEandbattle48docs updated.
+
+Freshbaseline make ram BUILD_DIR=build/battle-feedback-dark-baseline ->27700flash/1787static. make ram BUILD_DIR=build/battle-feedback-dark-measured ->27568flash/1787static: -132flash/+0RAM,2128physicalflashfree/773physicalRAMfree.
+make fxtest-spike BUILD_DIR=build/battle-feedback-dark-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_battlepresentation.ino ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens FXTEST_MS=8000:311/0PASS;caption/font/moveraster/damage/terminal/status/gather/sentinelchecksflipink/background independently;stack4/0,save420B,transition529B,presenter268B/caption315B effective.
+make fxtest-headless BUILD_DIR=build/battle-feedback-dark-color FXTEST_INOS=tst/fxdatatest/test_battle_damage_color.ino ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens FXTEST_MS=8000:4/0PASS. Initialstagedcopy stillheldold0xFFedgeexpectation whilelocalcorrectionwasmade;first3/1FAIL,reruncorrectedblack0referencePASS. Allassertionsretained.
+Expandedtrainer rebuilt: make build BUILD_DIR=build/battle48-demo AVR_SHIPPING_CPP_FLAGS='-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X -DCGFX_SHIPPING_NO_USB -DCGFX_TRAINER_DEMO -DCGFX_TRAINER_DEMO_EXPANSION' ->27522flash/1793static. IsolatedFXsplitcopies refreshed. Finalgate resultbelow.
+
+Final make final-gate BUILD_DIR=build/battle-feedback-dark-gate ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens FXTEST_MS=8000 PASS:host157573/0,World258/0,VM42/0,all30FXsuites6397/0,manifest/generatedlibs/ABIguardsPASS. Shipping27568flash/1787static/773physicalRAMfree;save420B,arenaeffective287B. Completecheck/RAMlogs build/battle-feedback-dark-gate/final-gate/{check,ram}.log. Worker/baseline/focusedabout2minutes;fullgateabout4minutes;reportunder1minute,singleagent. No commits/push perbdprime stealthmode.
+
+## imj — Clarify HP ownership and hide opponent exactHP (2026-10-07)
+
+Owner findscentralHPambiguous andrequestsopponentexactHPhidden. Upperpanel nowFOE withbaronly;lowerpanelYOU retainsowncurrent/max/bar. LabelsuseexistingfontTrimmedglyphs viaPSTR,no newglobals/FXpayload. Numericrow8–15 isclearedblack forFOE;playerrow32–39 remainscorrect. Bars17/41 andfeedbacktiming unchanged. Permanentdevicechecks comparebothlabels toindependentrawfont,verifyFOEnumericrowblank,andcompareownnumber/slashrow toown80/100 ratherthanopponent35/100. Existingedge/sentinel/switch/PPchecks retained. Capturedallfouractualscreens andexportednative/6xPNGstoHTMLviewer;README/docs updated.
+
+Freshbaseline make ram BUILD_DIR=build/battle-hp-ownership-baseline ->27568flash/1787static; make ram BUILD_DIR=build/battle-hp-ownership-measured ->27612/1787: +44flash/+0RAM,2084physicalflashfree/773physicalRAMfree.
+make fxtest-spike BUILD_DIR=build/battle-hp-ownership-device FXTEST_SPIKE_INO=tst/fxdatatest/test_battle48.ino ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens FXTEST_MS=8000 AVR_FXTEST_CPP_FLAGS='-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X -DFX_READ_COUNTER -DCGFX_BATTLE48_CAPTURE' > build/battle-hp-ownership-device.log:19/0PASS,renderavg6564us;stack4/0,save420B/transition529B. node tools/battle48-screen-export.mjs build/battle-hp-ownership-device.log:4screensPASS.
+Expandedtrainer make build BUILD_DIR=build/battle48-demo AVR_SHIPPING_CPP_FLAGS='-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X -DCGFX_SHIPPING_NO_USB -DCGFX_TRAINER_DEMO -DCGFX_TRAINER_DEMO_EXPANSION' ->27566flash/1793static;isolatedsplitcart/savecopiesrefreshed. No packeddatachanges. Finalgateresultbelow.
+
+Final make final-gate BUILD_DIR=build/battle-hp-ownership-gate ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens FXTEST_MS=8000 PASS:host157573/0,World258/0,VM42/0,all30FXsuites6401/0;manifest/generatedlibs/ABIguardsPASS. Shipping27612flash/1787static/773physicalRAMfree;effectivearena287B,save420B. Fullcheck/RAMlogs build/battle-hp-ownership-gate/final-gate/{check,ram}.log. Worker/baseline/focusedabout2minutes,gateabout4minutes,reportunder1minute,singleagent;no failedattempts. No commit/push perbdprime stealthmode.
+
+## zi4 — Compact center battle HUD (2026-10-07)
+
+Owner screenshot rejectslarge FOE/YOU glyphs,chunky202/202 andwidewhitebars. Compact3×5 labels nowFOE(50,2),YOU(50,20);native3×5 digits0–9 inPROGMEM and numberformatterwithoutleadingzeroes at(50,27). ExistingPPdigits0–3 preserveexactpatterns. Thin30×3tracksat(49,10)/(49,35),28×1fills;bothfinishbeforefeedbacky40. Foe remainsbaronly;own0/100,5/10,80/100,255/255verifiedpixelwise. NoFXpayload,newstate,tablemetadatareads,mechanics changes. ActualcapturedPNGsinHTMLupdated;nativecapture inspected andaccepted compactspacing.
+
+Fresh make ram BUILD_DIR=build/battle-hud-compact-baseline ->27612flash/1787static; make ram BUILD_DIR=build/battle-hud-compact-measured ->27678/1787: +66flash/+0RAM,2018physicalflashfree/773physicalRAMfree. Originalbattlefeelbaseline27482→current27678 =+196B,within256target/400cap (includesintervening36Bwalking).
+make fxtest-spike BUILD_DIR=build/battle-hud-compact-device FXTEST_SPIKE_INO=tst/fxdatatest/test_battle48.ino ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens FXTEST_MS=8000 AVR_FXTEST_CPP_FLAGS='-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X -DFX_READ_COUNTER -DCGFX_BATTLE48_CAPTURE' > build/battle-hud-compact-device.log:23/0PASS,renderavg6370us;stack4/0,save420B/transition529B. node tools/battle48-screen-export.mjs build/battle-hud-compact-device.log:4screensPASS.
+make fxtest-spike BUILD_DIR=build/battle-hud-compact-presentation FXTEST_SPIKE_INO=tst/fxdatatest/test_battlepresentation.ino ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens FXTEST_MS=8000 > build/battle-hud-compact-presentation.log:311/0PASS,stack4/0,presentereffective268B/caption315B.
+make test > build/battle-hud-compact-host.log:206725/0 plusWorld258/0PASS;permanentrenderer suiteextendsexactselectorpixelcoverage0–9 whilepreserving0–3equivalence. Initialgatefailedhostcompile becausePpGlyphnewPROGMEMtable lackedexplicitpgmspaceinclude andhoststubonlymodeledbyte read. Addedexplicitinclude andnativehostpgm_read_word;hostPASS. Noassertionsremoved.
+Rebuilt make build BUILD_DIR=build/battle48-demo AVR_SHIPPING_CPP_FLAGS='-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X -DCGFX_SHIPPING_NO_USB -DCGFX_TRAINER_DEMO -DCGFX_TRAINER_DEMO_EXPANSION' ->27628flash/1793static;isolatedsplitcart/savecopiesrefreshed. Finalgateresultbelow.
+
+Finalsettled make final-gate BUILD_DIR=build/battle-hud-compact-gate ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens FXTEST_MS=8000 PASS:host206725/0,World258/0,VM42/0,all30FXsuites6405/0;manifest/generatedlibs/ABIguardsPASS. Shipping27678flash/1787static/773physicalRAMfree. Save420B,arenaeffective287B,player-render659B. Fullcheck/RAMlogs build/battle-hud-compact-gate/final-gate/{check,ram}.log. Expandedtrainerrebuilt afterpgmspaceinclude,27628flash/1793static. Worker/baseline/focusedabout4minutes,settledgateabout4minutes,reportunder1minute,singleagent. No commit/push perbdprime stealthmode.
