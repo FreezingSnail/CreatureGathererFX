@@ -37,6 +37,7 @@ class WorldEngine {
     static void loadMap(WorldTransient &world, uint8_t mapIndex, uint8_t submapIndex);
     static void setPos(WorldTransient &world, uint8_t x, uint8_t y);
     static ViewOffset view(const WorldTransient &world);
+    static uint8_t playerFrame(const WorldTransient &world);
     static uint16_t location();
     static void syncFromLocation(WorldTransient &world);
 #ifdef TEST

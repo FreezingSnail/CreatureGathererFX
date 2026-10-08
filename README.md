@@ -44,7 +44,20 @@ upload, connect USB, hold DOWN while resetting the Arduboy, then start the uploa
 bootloader is active; shipping startup also checks DOWN and transfers to the bootloader. If that
 path does not enter the bootloader, double-tap reset and start the upload promptly.
 
+## Player artwork and walking
+
+The world player uses masked16×16 chibi sprites facing up,right,down,left.
+Each direction has an idle pose and two walking poses, selected from the existing
+16-pixel movement step. White outlines separate the player from scenery;
+transparent pixels preserve the map beneath. No additional animation state is
+stored in RAM. The authored source is `images/Playerchibi_16x16.png`; `make gen`
+packs it as the append-only `worldPlayerSprites` FX field.
+
 ## Trainer battle demo (opt-in)
+
+Battles use the reviewed native48×48 front/back sprites and compact two-row menu by default.
+Playback feedback uses white text on black. The compact HUD labels FOE (bar only) and YOU (current/max HP and bar), with
+3×5 numbers and thin tracks above the feedback area.
 
 After `make gen`, build the developer demo with the `CGFX_TRAINER_DEMO` flag. It starts a three-on-three
 trainer battle with the named `opening` player and trainer preset, using the normal battle controls.
@@ -102,10 +115,10 @@ cp -f dist/fxdata-save.bin build/arena-demo/isolated/fxdata-save.bin
 
 `dist/fxdata.bin` is the flashable FX cart image; Ardens takes its FX data and save regions as
 separate inputs as shown above. The demo offers the three level-31 premade teams (Blitz, Bulwark,
-Utility) and five premade opponents (Starter, Speed, Fortress, Tricks, Champion). Choose a team,
-then an opponent, and play through the ordinary battle flow. After terminal battle feedback, the
-demo returns directly to the cached team choice, where A confirms the next choice, B goes back, and
-Up/Down change the highlighted entry. Every match starts with fresh HP, status, modifiers, and move uses.
+Utility) and randomly selects one of five premade opponents (Starter, Speed, Fortress, Tricks,
+Champion) for each match. Choose a team and play through the ordinary battle flow. After terminal
+battle feedback, the demo returns directly to the cached team choice, where A starts the next match
+and Up/Down change the highlighted entry. Every match starts with fresh HP, status, modifiers, and move uses.
 The demo bypasses player save loading and writing and does not add arena records, rewards, or
 progression.
 

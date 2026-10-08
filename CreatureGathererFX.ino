@@ -221,7 +221,7 @@ uint8_t render() {
     case GameState_t::WORLD:
     {
         const uint8_t rowsRead = drawMapFast(worldState());
-        drawPlayer();
+        drawPlayer(worldState());
         return rowsRead;
     }
     case GameState_t::SAVING:

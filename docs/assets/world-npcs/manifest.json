@@ -1,0 +1,164 @@
+{
+  "reviewOnly": true,
+  "palette": [
+    "#000000",
+    "#ffffff"
+  ],
+  "background": "transparent",
+  "outline": {
+    "color": "#ffffff",
+    "pixels": 1,
+    "neighbors": 8
+  },
+  "sheet": [
+    64,
+    32
+  ],
+  "facing": "DOWN",
+  "sprites": [
+    {
+      "name": "Gatherer",
+      "file": "gatherer.png",
+      "cell": [
+        0,
+        0
+      ],
+      "size": [
+        16,
+        16
+      ],
+      "sourceBounds": [
+        42,
+        216,
+        232,
+        366
+      ]
+    },
+    {
+      "name": "Farmer",
+      "file": "farmer.png",
+      "cell": [
+        1,
+        0
+      ],
+      "size": [
+        16,
+        16
+      ],
+      "sourceBounds": [
+        328,
+        210,
+        281,
+        372
+      ]
+    },
+    {
+      "name": "Shopkeeper",
+      "file": "shopkeeper.png",
+      "cell": [
+        2,
+        0
+      ],
+      "size": [
+        16,
+        16
+      ],
+      "sourceBounds": [
+        660,
+        220,
+        237,
+        362
+      ]
+    },
+    {
+      "name": "Herbalist",
+      "file": "herbalist.png",
+      "cell": [
+        3,
+        0
+      ],
+      "size": [
+        16,
+        16
+      ],
+      "sourceBounds": [
+        973,
+        187,
+        238,
+        395
+      ]
+    },
+    {
+      "name": "Fisher",
+      "file": "fisher.png",
+      "cell": [
+        0,
+        1
+      ],
+      "size": [
+        16,
+        16
+      ],
+      "sourceBounds": [
+        40,
+        737,
+        271,
+        387
+      ]
+    },
+    {
+      "name": "Ranger",
+      "file": "ranger.png",
+      "cell": [
+        1,
+        1
+      ],
+      "size": [
+        16,
+        16
+      ],
+      "sourceBounds": [
+        344,
+        738,
+        283,
+        386
+      ]
+    },
+    {
+      "name": "Miner",
+      "file": "miner.png",
+      "cell": [
+        2,
+        1
+      ],
+      "size": [
+        16,
+        16
+      ],
+      "sourceBounds": [
+        627,
+        738,
+        313,
+        386
+      ]
+    },
+    {
+      "name": "Child",
+      "file": "child.png",
+      "cell": [
+        3,
+        1
+      ],
+      "size": [
+        16,
+        16
+      ],
+      "sourceBounds": [
+        940,
+        737,
+        271,
+        387
+      ]
+    }
+  ]
+}

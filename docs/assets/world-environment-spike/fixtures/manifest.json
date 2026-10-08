@@ -1,0 +1,259 @@
+{
+  "reviewOnly": true,
+  "tileSize": 16,
+  "atlasSize": [
+    256,
+    512
+  ],
+  "tileCount": 512,
+  "assemblies": [
+    {
+      "name": "Cottage",
+      "x": 0,
+      "y": 16,
+      "width": 4,
+      "height": 4,
+      "targetFootprintTiles": [
+        3,
+        2
+      ],
+      "footprintOffsetTiles": [
+        0,
+        2
+      ]
+    },
+    {
+      "name": "Woodland cabin",
+      "x": 4,
+      "y": 16,
+      "width": 4,
+      "height": 4,
+      "targetFootprintTiles": [
+        3,
+        2
+      ],
+      "footprintOffsetTiles": [
+        0,
+        2
+      ]
+    },
+    {
+      "name": "Village shop",
+      "x": 8,
+      "y": 16,
+      "width": 4,
+      "height": 4,
+      "targetFootprintTiles": [
+        3,
+        2
+      ],
+      "footprintOffsetTiles": [
+        0,
+        2
+      ]
+    },
+    {
+      "name": "Ruined watchtower",
+      "x": 12,
+      "y": 16,
+      "width": 4,
+      "height": 4,
+      "targetFootprintTiles": [
+        3,
+        2
+      ],
+      "footprintOffsetTiles": [
+        0,
+        2
+      ]
+    },
+    {
+      "name": "Horizontal bridge",
+      "x": 0,
+      "y": 20,
+      "width": 4,
+      "height": 4,
+      "targetFootprintTiles": [
+        4,
+        1
+      ],
+      "footprintOffsetTiles": [
+        0,
+        3
+      ]
+    },
+    {
+      "name": "Vertical bridge",
+      "x": 4,
+      "y": 20,
+      "width": 4,
+      "height": 4,
+      "targetFootprintTiles": [
+        1,
+        4
+      ],
+      "footprintOffsetTiles": [
+        1,
+        0
+      ]
+    },
+    {
+      "name": "Pond and shoreline",
+      "x": 8,
+      "y": 20,
+      "width": 4,
+      "height": 4,
+      "targetFootprintTiles": [
+        3,
+        2
+      ],
+      "footprintOffsetTiles": [
+        0,
+        2
+      ]
+    },
+    {
+      "name": "Rock cascade",
+      "x": 12,
+      "y": 20,
+      "width": 4,
+      "height": 4,
+      "targetFootprintTiles": [
+        2,
+        2
+      ],
+      "footprintOffsetTiles": [
+        1,
+        2
+      ]
+    },
+    {
+      "name": "Broadleaf tree",
+      "x": 0,
+      "y": 24,
+      "width": 4,
+      "height": 4,
+      "targetFootprintTiles": [
+        2,
+        2
+      ],
+      "footprintOffsetTiles": [
+        1,
+        2
+      ]
+    },
+    {
+      "name": "Tree grove",
+      "x": 4,
+      "y": 24,
+      "width": 4,
+      "height": 4,
+      "targetFootprintTiles": [
+        3,
+        2
+      ],
+      "footprintOffsetTiles": [
+        0,
+        2
+      ]
+    },
+    {
+      "name": "Boulder cluster",
+      "x": 8,
+      "y": 24,
+      "width": 4,
+      "height": 4,
+      "targetFootprintTiles": [
+        2,
+        1
+      ],
+      "footprintOffsetTiles": [
+        1,
+        3
+      ]
+    },
+    {
+      "name": "Shrine arch",
+      "x": 12,
+      "y": 24,
+      "width": 4,
+      "height": 4,
+      "targetFootprintTiles": [
+        2,
+        2
+      ],
+      "footprintOffsetTiles": [
+        1,
+        2
+      ]
+    },
+    {
+      "name": "Fishing dock",
+      "x": 0,
+      "y": 28,
+      "width": 4,
+      "height": 4,
+      "targetFootprintTiles": [
+        2,
+        2
+      ],
+      "footprintOffsetTiles": [
+        1,
+        2
+      ]
+    },
+    {
+      "name": "Marsh boardwalk",
+      "x": 4,
+      "y": 28,
+      "width": 4,
+      "height": 4,
+      "targetFootprintTiles": [
+        1,
+        4
+      ],
+      "footprintOffsetTiles": [
+        1,
+        0
+      ]
+    },
+    {
+      "name": "Gathering camp",
+      "x": 8,
+      "y": 28,
+      "width": 4,
+      "height": 4,
+      "targetFootprintTiles": [
+        2,
+        2
+      ],
+      "footprintOffsetTiles": [
+        1,
+        2
+      ]
+    },
+    {
+      "name": "Well and garden",
+      "x": 12,
+      "y": 28,
+      "width": 4,
+      "height": 4,
+      "targetFootprintTiles": [
+        3,
+        2
+      ],
+      "footprintOffsetTiles": [
+        0,
+        2
+      ]
+    }
+  ],
+  "map": "overworld.tmj",
+  "firstgid": 257,
+  "buildingCorrection": null,
+  "export": "Centered nearest-neighbor to256x256; binary threshold128. Assembly boundaries and bridge repeat seams require art review.",
+  "rawPixelBytes1bpp": 8192,
+  "style": "Compact classic top-down, player-relative footprints",
+  "atlas": "../atlas-native.png",
+  "componentPreview": "atlas-native.png"
+}

@@ -1,0 +1,13 @@
+{
+  "atlas-native.png": "57786b67e6ffd5ed62aed8eb00028f0d2854446fc619d1b5f0449a9a3a6c2955",
+  "overworld.png": "4f6de5df5ba1c954e3683b152793b8c35fc3c421f55cc7201c50d681b15c9292",
+  "interiors.png": "109ea575c46ff184627672a653dbf090852d0f6e50a5630b19d08e5a71cbf6d2",
+  "overworld.tmj": "9418230025a42b434c6d47bbec827b9f57b5daa38054755f1e336424912c9db0",
+  "interiors.tmj": "ad49062c986cdb954a3eefbe1ea564c2f6fde1c7566a05e32db1bf05df6627f5",
+  "manifest.json": "976a26de4b379c350188451e6437c85c59f1a8118457c325c3a8e78ef6145176",
+  "prompt.json": "4b572cb2a612539f650ce06f02ab41ccd4eb9a3401d14797f510dd409d9a8229",
+  "fixtures/atlas-native.png": "3078fe13decfadbebade9a6752ecaa887a8a2e1dad1aeabb981d68f77e7fc1fe",
+  "fixtures/overworld.png": "91d48d7031322e7f4cf9030d48ff1162e6b7392c9fc640f00fba20af03625e83",
+  "fixtures/overworld.tmj": "f654bfef42a9e4badb63cb7d2169b1b0f32911548661724980ee21df7c754bd2",
+  "fixtures/manifest.json": "890f6a320e7eb6a86ac7d27c2aa59a4db8ff1ab287847934c809c323521232d2"
+}
