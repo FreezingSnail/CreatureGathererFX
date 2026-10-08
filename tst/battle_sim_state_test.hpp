@@ -174,7 +174,7 @@ void preparedThreeVsThreeAndValidation(TestSuite &suite)
     test.assert(session.beginPrepared(malformed, scenario.benchMaxHp), false,
                 "prepared session rejects an out-of-range active slot");
     malformed = scenario.state;
-    malformed.active[0].id = 32;
+    malformed.active[0].id = 64;
     test.assert(session.beginPrepared(malformed, scenario.benchMaxHp), false,
                 "prepared session rejects an out-of-range species ID");
     malformed = scenario.state;
@@ -202,7 +202,7 @@ void preparedThreeVsThreeAndValidation(TestSuite &suite)
     test.assert(build(invalid, opponent, scenario), BuildError::ActiveSlot,
                 "builder rejects an invalid active slot");
     invalid = player;
-    invalid.members[0].species = 32;
+    invalid.members[0].species = 64;
     test.assert(build(invalid, opponent, scenario), BuildError::Species,
                 "builder rejects an invalid species ID");
     invalid = player;

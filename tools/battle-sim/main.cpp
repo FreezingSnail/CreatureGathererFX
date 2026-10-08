@@ -23,7 +23,7 @@ void usage(std::ostream &out)
         << "  --trials N               trials per matchup/scenario (default 1)\n"
         << "  --policy greedy|random-valid-move|tactical|switch-tactical|both (default both)\n"
         << "  --max-turns N            timeout bound (default 100)\n"
-        << "  --species-count N        use fixture IDs 0..N-1 (default 32)\n"
+        << "  --species-count N        use fixture IDs 0..N-1 (default 32, max 64)\n"
         << "  --output-dir PATH        report directory (default build/balance)\n"
         << "  --replay-scenario NAME   pair_NN_NN, random_3v3, opening, switch_drill, or utility\n"
         << "  --replay-seed N          recorded per-match seed\n"
@@ -61,7 +61,7 @@ bool parseTeam(const char *text, std::vector<uint8_t> &team)
         const size_t last = separator == std::string::npos
             ? value.size() : separator;
         uint64_t species = 0;
-        if (!parseUnsigned(value.substr(first, last - first).c_str(), 31,
+        if (!parseUnsigned(value.substr(first, last - first).c_str(), 63,
                            species) || team.size() >= 3) {
             return false;
         }
@@ -136,7 +136,7 @@ bool parseOptions(int argc, char **argv, CommandOptions &command,
             uint64_t maximum = UINT64_MAX;
             if (option == "--level") maximum = 31;
             else if (option == "--trials" || option == "--max-turns") maximum = 65535;
-            else if (option == "--species-count") maximum = 32;
+            else if (option == "--species-count") maximum = 64;
             else if (option == "--replay-seed") maximum = UINT64_MAX;
             else if (option != "--seed") {
                 error = "unknown option: " + option;

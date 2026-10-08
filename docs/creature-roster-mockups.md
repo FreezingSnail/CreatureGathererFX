@@ -1,5 +1,23 @@
 # Creature roster mockups
 
+## Second redraw pass — 2026-10-07
+
+All 32 original creatures now have updated paired boards in the
+[gallery](creature-roster-mockups.html) and [roster](battle-roster-balance.html).
+The expansion atlases supplied the style references: fuller bodies, chunky white
+silhouettes, thick black seams, clearer faces, leaf and stone clusters, and more
+distinct rear views. Original species identities and the two-column/four-row
+board order remain. The earlier pass remains available in the gallery for comparison.
+
+The four new files are `assets/creature-roster/mockup-v2-1.png` through
+`mockup-v2-4.png`. They are enlarged concept boards, not native sprite tiles.
+Built-in imagegen created the redraws; binary-palette export through the existing
+PNG codec removes incidental antialias colors. All exported pixels are opaque
+black or white. Exact prompts are in
+[prompts-v2.json](assets/creature-roster/prompts-v2.json).
+
+See also the [environment tile redraw](world-tiles-redraw.html).
+
 CreatureGathererFX-dcj, 2026-10-06. All 32 species are grouped into four
 eight-species boards. Each cell preserves the ID and its existing paired
 battle views as the reference for stronger silhouette, negative space and
