@@ -45,7 +45,6 @@
 #include "arena_flow_test.hpp"
 #include "battle_presets_test.hpp"
 #include "battle_item_test.hpp"
-#include "lure_prototype_test.hpp"
 #include "battle_utility_test.hpp"
 #ifdef BATTLE_SIMULATOR
 #include "battle_sim_state_test.hpp"
@@ -220,8 +219,6 @@ int main() {
     BattleSimulatorRunnerSuite(tests);
 #endif
     std::cout << "BattleItemSuite finished" << std::endl;
-    LurePrototypeSuite(tests);
-    std::cout << "LurePrototypeSuite finished" << std::endl;
     BlitSuite(tests);
     NativeRendererSuite(tests);
     std::cout << "NativeRendererSuite finished" << std::endl;
