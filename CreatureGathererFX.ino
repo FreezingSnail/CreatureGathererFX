@@ -42,7 +42,6 @@ ModeState modeState;
 MenuV2 menu = MenuV2();
 Player player = Player();
 
-Animator animator = Animator();
 PlantGameState plants;
 
 DialogMenu dialogMenu;
@@ -192,7 +191,6 @@ void run() {
         SaveController::advance();
         return;
     }
-    animator.play();
     if (dialogMenu.peek()) {
         dialogMenu.drawPopMenu();
     } else if (gameState.state == GameState_t::BATTLE) {
@@ -228,7 +226,6 @@ uint8_t render() {
         SaveController::drawStatus();
         return 0;
     }
-    // animator.play();
     // if (dialogMenu.peek()) {
     //     dialogMenu.drawPopMenu();
     // } else {
