@@ -6757,3 +6757,10 @@ make test > build/battle-hud-compact-host.log:206725/0 plusWorld258/0PASS;perman
 Rebuilt make build BUILD_DIR=build/battle48-demo AVR_SHIPPING_CPP_FLAGS='-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X -DCGFX_SHIPPING_NO_USB -DCGFX_TRAINER_DEMO -DCGFX_TRAINER_DEMO_EXPANSION' ->27628flash/1793static;isolatedsplitcart/savecopiesrefreshed. Finalgateresultbelow.
 
 Finalsettled make final-gate BUILD_DIR=build/battle-hud-compact-gate ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens FXTEST_MS=8000 PASS:host206725/0,World258/0,VM42/0,all30FXsuites6405/0;manifest/generatedlibs/ABIguardsPASS. Shipping27678flash/1787static/773physicalRAMfree. Save420B,arenaeffective287B,player-render659B. Fullcheck/RAMlogs build/battle-hud-compact-gate/final-gate/{check,ram}.log. Expandedtrainerrebuilt afterpgmspaceinclude,27628flash/1793static. Worker/baseline/focusedabout4minutes,settledgateabout4minutes,reportunder1minute,singleagent. No commit/push perbdprime stealthmode.
+
+## jp8.6 M0.5 lure wedge
+
+- Pre-deletion playable build: `make build` PASS, 27,678 B flash / 1,787 B static RAM; 2,018 B physical flash free / 773 B physical SRAM free. Post-deletion build retained the same totals, so the prototype had no net linked-image cost.
+- `make test` before deletion: host 206,725/0 and world 258/0. The permanent wedge measurements were plant 3 turns / 0 HP / 0 flee; battle drop 2 turns / 8 HP / 0 flee; six waits fire flee once. The suite accounts for 28 removed assertions after deleting the throwaway test.
+- After deletion, `make test`: host 206,697/0 and world 258/0. `make build`: PASS, 27,678 B flash / 1,787 B static RAM. No generated data or save format changed.
+- Changes: removed `LurePrototype.{hpp,cpp}` and `tst/lure_prototype_test.hpp`, and unregistered their source/suite. Wall time for the checkpoint, verification, and report: about 2 minutes.

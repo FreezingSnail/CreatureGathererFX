@@ -141,7 +141,6 @@ TEST_SOURCES = src/lib/Blit.cpp \
 	src/engine/arena/ArenaDemo.cpp \
 	src/engine/arena/ArenaView.cpp \
 	src/engine/ModeState.cpp \
-	src/engine/world/LurePrototype.cpp \
 	src/engine/world/World.cpp \
 	src/engine/world/Encounter.cpp \
 	src/engine/world/StepEvent.cpp \
