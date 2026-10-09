@@ -1,4 +1,4 @@
-.PHONY: help setup doctor plant test test-debug testvm testvm-debug sim sim-test gen gen-data gen-sprites gen-fixtures pack full build mini ram run dev arena-demo check final-gate verify-generated test-manifest test-generated-libs test-doctor test-fxtest-ram test-avr-build-budget fxtest fxtest-headless fxtest-spike fxtest-preflight fxtest-headless-preflight fxtest-build fxtest-run new-fxtest
+.PHONY: help setup doctor plant test test-debug testvm testvm-debug sim sim-test gen gen-data gen-sprites gen-fixtures pack full build mini ram run dev arena-demo check final-gate verify-generated test-manifest test-generated-libs test-doctor test-fxtest-ram test-avr-build-budget test-world-script-profile world-script-profile-check fxtest fxtest-headless fxtest-spike fxtest-preflight fxtest-headless-preflight fxtest-build fxtest-run new-fxtest
 
 # Public command API. Override tool, board, and output variables per workspace/CI.
 CXX ?= g++
@@ -50,6 +50,10 @@ SIM_ARGS ?= --mode anchors --seed 1 --trials 1 --policy both --max-turns 100
 WORLD_TEST_BIN ?= $(BUILD_DIR)/tests/world
 VM_TEST_BIN ?= $(BUILD_DIR)/tests/vm
 GENERATED_TEST_BIN ?= $(BUILD_DIR)/tests/generated
+WORLD_SCRIPT_PROFILE_BIN ?= $(BUILD_DIR)/tools/check-world-script-profile
+WORLD_SCRIPT_PROFILE_TEST_BIN ?= $(BUILD_DIR)/tests/world-script-profile
+WORLD_SCRIPT_PROFILE_INPUT ?= fxdata/generated/scripts.bin
+WORLD_SCRIPT_PROFILE_TEXT ?= fxdata/generated/text.bin
 RAM_ELF ?= $(BUILD_DIR)/CreatureGathererFX.ino.elf
 AVR_NM ?= $(shell command -v avr-nm 2>/dev/null || find "$(HOME)/Library/Arduino15/packages" "$(HOME)/.arduino15/packages" -type f -path '*/tools/avr-gcc/*/bin/avr-nm' -print -quit 2>/dev/null)
 AVR_SIZE ?= $(shell command -v avr-size 2>/dev/null || find "$(HOME)/Library/Arduino15/packages" "$(HOME)/.arduino15/packages" -type f -path '*/tools/avr-gcc/*/bin/avr-size' -print -quit 2>/dev/null)
@@ -70,6 +74,7 @@ help:
 		'  sim      compile and run the host BattleSession batch simulator; output: $(BATTLE_SIM_BIN)' \
 		'  sim-test run host C++ tests with the fixture-backed BATTLE_SIMULATOR seam; output: $(SIM_TEST_BIN)' \
 		'  testvm   run fast ScriptVM C++ tests; prerequisite: $(CXX); output: $(VM_TEST_BIN)' \
+		'  test-world-script-profile validate the compact world VM script profile' \
 		'  build    compile Arduboy FX sketch; prerequisite: $(ARDUINO_CLI); output: $(BUILD_DIR)' \
 		'  ram      build and report FX flash/RAM plus largest static symbols; prerequisite: $(ARDUINO_CLI), avr-size, avr-nm' \
 		'  arena-demo generate FX data, build the opt-in arena firmware, then launch Ardens' \
@@ -87,7 +92,7 @@ help:
 		'  fxtest-headless  run every FX device sketch through Ardens serial capture; blocks unsupported Ardens' \
 		'  fxtest-spike  run one selected FX suite plus test_stack; set FXTEST_SPIKE_INO and ARDENS' \
 		'' \
-		'Overrides: CXX, ARDUINO_CLI, FQBN, BUILD_DIR, ARDUINO_BUILD_PATH, ARDUINO_BUILD_CACHE_PATH, DIST_DIR, FXDATA_BIN, ARDENS, FXTEST_MS, FXTEST_RAM_BUDGET, AVR_FLASH_BUDGET, AVR_STATIC_RAM_BUDGET, RAM_ELF, AVR_SIZE, AVR_NM, AVR_RELAX_FLAGS, AVR_FXTEST_BUILD_PROPERTIES, AVR_FXTEST_CPP_FLAGS, AVR_SHIPPING_BUILD_PROPERTIES, AVR_SHIPPING_CPP_FLAGS, ARENA_DEMO_BUILD_DIR, ARENA_DEMO_CART_DIR, ARENA_DEMO_CPP_FLAGS, ARENA_DEMO_FLASH_BUDGET.'
+		'Overrides: CXX, ARDUINO_CLI, FQBN, BUILD_DIR, ARDUINO_BUILD_PATH, ARDUINO_BUILD_CACHE_PATH, DIST_DIR, FXDATA_BIN, ARDENS, FXTEST_MS, FXTEST_RAM_BUDGET, AVR_FLASH_BUDGET, AVR_STATIC_RAM_BUDGET, RAM_ELF, AVR_SIZE, AVR_NM, AVR_RELAX_FLAGS, AVR_FXTEST_BUILD_PROPERTIES, AVR_FXTEST_CPP_FLAGS, AVR_SHIPPING_BUILD_PROPERTIES, AVR_SHIPPING_CPP_FLAGS, WORLD_SCRIPT_PROFILE_INPUT, WORLD_SCRIPT_PROFILE_TEXT, ARENA_DEMO_BUILD_DIR, ARENA_DEMO_CART_DIR, ARENA_DEMO_CPP_FLAGS, ARENA_DEMO_FLASH_BUDGET.'
 
 setup:
 	@printf '%s\n' \
@@ -165,7 +170,7 @@ endef
 
 full: gen build
 
-build:
+build: world-script-profile-check
 	@mkdir -p "$(BUILD_DIR)"
 	@mkdir -p "$(ARDUINO_BUILD_PATH)/fx"
 	@set -eu; \
@@ -196,7 +201,7 @@ ram: build
 	"$(AVR_NM)" --print-size --size-sort --radix=d "$$elf" | awk '$$3 ~ /^[bBdD]$$/' | tail -15; \
 	echo 'RAM_TOP_SYMBOLS_END'
 
-mini:
+mini: world-script-profile-check
 	@mkdir -p "$(BUILD_DIR)"
 	@mkdir -p "$(ARDUINO_BUILD_PATH)/mini"
 	@set -eu; \
@@ -320,7 +325,7 @@ pack:
 	./tools/record-fxdata-manifest.sh "$(FX_LAYOUT)" "$(FXDATA_MANIFEST)"; \
 	./tools/assert-fxdata-manifest.sh "$(FX_LAYOUT)" "$(FXDATA_MANIFEST)"
 
-check: gen test testvm test-manifest test-generated-libs test-fxtest-ram test-avr-build-budget verify-generated build fxtest
+check: gen test testvm test-world-script-profile test-manifest test-generated-libs test-fxtest-ram test-avr-build-budget verify-generated build fxtest
 
 # Final pre-commit gate. Keep the integrated check and shipping RAM build
 # sequential even when the caller invokes make with -j.
@@ -349,6 +354,24 @@ test-generated-libs:
 	./tools/tests/generated-libs_test.sh
 	./tools/tests/arena-demo-data_test.sh
 	./tools/tests/first-unqualified-alias_test.sh
+
+test-world-script-profile:
+	@mkdir -p "$(dir $(WORLD_SCRIPT_PROFILE_TEST_BIN))"
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) tools/tests/world-script-profile_test.cpp -o "$(WORLD_SCRIPT_PROFILE_TEST_BIN)"
+	"$(WORLD_SCRIPT_PROFILE_TEST_BIN)"
+
+$(WORLD_SCRIPT_PROFILE_BIN): tools/check-world-script-profile.cpp src/vm/opcodes.hpp
+	@mkdir -p "$(dir $@)"
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) tools/check-world-script-profile.cpp -o "$@"
+
+# Compact world scripts have no dialog text: scripts.bin stays fixed-size and
+# text.bin is the two-byte zero-count header. Full-VM opt-in skips both checks.
+world-script-profile-check: $(WORLD_SCRIPT_PROFILE_BIN) $(WORLD_SCRIPT_PROFILE_INPUT) $(WORLD_SCRIPT_PROFILE_TEXT)
+	@if printf ' %s ' "$(AVR_SHIPPING_CPP_FLAGS)" | grep -q ' -DCGFX_FULL_WORLD_VM '; then \
+		echo 'world-script-profile: full VM opt-in enabled'; \
+	else \
+		"$(WORLD_SCRIPT_PROFILE_BIN)" "$(WORLD_SCRIPT_PROFILE_INPUT)" "$(WORLD_SCRIPT_PROFILE_TEXT)"; \
+	fi
 
 test-doctor:
 	./tools/tests/doctor_test.sh
