@@ -8,9 +8,6 @@ extern Arduboy2Base arduboy;
 
 #include "lib/Blit.hpp"
 
-#include "Animator.hpp"
-extern Animator animator;
-
 #include "engine/menu/MenuV2.hpp"
 extern MenuV2 menu;
 

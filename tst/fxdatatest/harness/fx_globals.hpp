@@ -6,7 +6,6 @@
 #include "../src/engine/menu/DialogMenu.hpp"
 
 decltype(arduboy) arduboy;
-Animator animator = Animator();
 DialogMenu dialogMenu;
 #else
 #include "../src/globals.hpp"
@@ -25,7 +24,6 @@ GameState gameState;
 ModeState modeState;
 MenuV2 menu = MenuV2();
 Player player = Player();
-Animator animator = Animator();
 PlantGameState plants;
 DialogMenu dialogMenu;
 #endif
