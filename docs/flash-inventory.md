@@ -4,6 +4,29 @@ Measured 2026-10-08 for `CreatureGathererFX-ax8`. Committed reference: `5835223`
 The current working tree also contains the uncommitted M1 checkpoint draft,
 inventory screen, and owner edits. This is an inventory, not a proposal to remove gameplay.
 
+## Landed reductions after the audit (2026-10-09)
+
+The tables below retain the original audit controls. These subsequent isolated
+reductions preserve tactical AI and battle visuals; whole-image deltas differ
+between the accepted baseline and the uncommitted M1 draft.
+
+| Change | Accepted baseline flash / static saved | M1 draft flash / static saved |
+|---|---:|---:|
+| Remove unused Animator | 228 / 28 B | 152 / 28 B |
+| Remove redundant move snapshot clearing | 42 / 0 B | 44 / 0 B |
+| Compact authored world-warp execution and omit unavailable world dialogs | 812 / 0 B | 868 / 0 B |
+
+Accepted firmware now measures **26,596 B flash / 1,759 B static SRAM**.
+The original journal-backed M1 draft measures **30,046 / 1,842 B**, still
+350 B above the hard flash limit. Full world commands and dialogs remain
+available through `CGFX_FULL_WORLD_VM`; default builds reject incompatible
+authored content. All three existing warps remain. The damage-only AI experiment
+was rejected by the owner and was not adopted.
+
+The separate working-sector storage prototype with the compact world profile
+measured **29,152 / 1,807 B**, only 32 B below the planning target. It is not
+adopted: batched updates, recovery and painted-stack acceptance remain pending.
+
 ## Physical budgets and current builds
 
 | Image | Firmware flash | Static SRAM | Flash headroom against 29,696 B |

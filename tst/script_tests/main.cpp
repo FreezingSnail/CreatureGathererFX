@@ -3,6 +3,7 @@
 #include "../../src/globals.hpp"
 
 #include "action_test.hpp"
+#include "warp_test.hpp"
 
 GameState gameState;
 uint8_t sBuffer[1024];
@@ -15,6 +16,7 @@ int main() {
 
     // Run test suites
     ScriptVmTest(tests);
+    WarpVmTest(tests);
     std::cout << "EffectSuite finished" << std::endl;
 
     std::cout << "Tests Finished" << std::endl;

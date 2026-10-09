@@ -44,6 +44,20 @@ upload, connect USB, hold DOWN while resetting the Arduboy, then start the uploa
 bootloader is active; shipping startup also checks DOWN and transfers to the bootloader. If that
 path does not enter the bootloader, double-tap reset and start the upload promptly.
 
+## World script profile
+
+Shipping world interactions use the compact `If`, `TpIf`, and `End` profile
+for the three authored warps. The interpreter keeps the 128-byte command-boundary
+scan, big-endian operands, flag and jump checks, and 30-command execution cap.
+Default world interactions omit popup handling because this profile cannot queue
+messages. Tactical battle AI, battle menus, and battle rendering use the same paths.
+
+Define `CGFX_FULL_WORLD_VM` in the shipping C++ flags to select the full world
+interpreter and popup behavior. `ScriptVm::initVM/run` remain available to callers;
+`initWarpVM/runWarpVM` reject unsupported streams. The generated-content guard
+rejects full-only commands or script text in a default build, including commands
+inside skipped branches. Choose the full profile when authoring that content.
+
 ## Player artwork and walking
 
 The world player uses masked16×16 chibi sprites facing up,right,down,left.
