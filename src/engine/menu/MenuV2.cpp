@@ -82,7 +82,6 @@ void MenuV2::openMenu(MenuEnum menu, const battle::BattleView &view) {
     }
 
     if (menu == BATTLE_MOVE_SELECT) {
-        moveSnapshot = {};
         for (uint8_t slot = 0; slot < MENU_MOVE_COUNT; ++slot) {
             moveSnapshot.moveIds[slot] = view.moveIds[slot];
             moveSnapshot.remainingUses[slot] = view.remainingUses[slot];
