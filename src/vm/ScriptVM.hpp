@@ -47,6 +47,9 @@ class ScriptVm {
 
     void initVM(uint8_t *script, uint16_t current, uint16_t target);
 
+    void initWarpVM(uint8_t *script, uint16_t current, uint16_t target);
+    void runWarpVM();
+
     void run();
     void end();
     uint16_t readUInt16();

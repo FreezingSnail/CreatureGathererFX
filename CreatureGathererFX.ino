@@ -191,9 +191,12 @@ void run() {
         SaveController::advance();
         return;
     }
+#if defined(CGFX_FULL_WORLD_VM) || defined(TEST)
     if (dialogMenu.peek()) {
         dialogMenu.drawPopMenu();
-    } else if (gameState.state == GameState_t::BATTLE) {
+    } else
+#endif
+    if (gameState.state == GameState_t::BATTLE) {
         menu.printMenu(battleSession().view());
     }
 }

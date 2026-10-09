@@ -107,15 +107,17 @@ bool interactionJustPressedA() {
 bool interactionDialogActive() {
 #ifdef TEST
     return worldInteractionDialogActive();
-#else
+#elif defined(CGFX_FULL_WORLD_VM)
     return dialogMenu.peek();
+#else
+    return false;
 #endif
 }
 
 void popInteractionDialog() {
 #ifdef TEST
     worldInteractionPopDialog();
-#else
+#elif defined(CGFX_FULL_WORLD_VM)
     dialogMenu.popMenu();
 #endif
 }
@@ -133,8 +135,13 @@ void runInteractionScript(uint8_t *script, uint16_t currentTile, uint16_t target
 #ifdef TEST
     worldInteractionRunScript(script, currentTile, targetTile);
 #else
+#ifdef CGFX_FULL_WORLD_VM
     vm.initVM(script, currentTile, targetTile);
     vm.run();
+#else
+    vm.initWarpVM(script, currentTile, targetTile);
+    vm.runWarpVM();
+#endif
 #endif
 }
 

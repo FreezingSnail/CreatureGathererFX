@@ -9,9 +9,11 @@ MINI_FQBN ?= arduboy-homemade:avr:arduboy-mini
 # linking plus shared function prologues save flash without changing measured
 # static RAM or painted stack. Shipping builds add the no-USB entry separately.
 AVR_RELAX_FLAGS ?= -mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X
+# Propagate only world-profile selection to tests, preserving their USB entry.
+WORLD_VM_PROFILE_FLAGS = $(filter -DCGFX_FULL_WORLD_VM -DCGFX_FULL_WORLD_VM=%,$(AVR_SHIPPING_CPP_FLAGS))
 # Instrument FX test firmware with the logical read counter while preserving
 # the stock USB main used by the serial P/F harness.
-AVR_FXTEST_CPP_FLAGS ?= $(AVR_RELAX_FLAGS) -DFX_READ_COUNTER
+AVR_FXTEST_CPP_FLAGS ?= $(AVR_RELAX_FLAGS) -DFX_READ_COUNTER $(WORLD_VM_PROFILE_FLAGS)
 AVR_FXTEST_BUILD_PROPERTIES ?= --build-property "compiler.cpp.extra_flags=$(AVR_FXTEST_CPP_FLAGS)" \
 	--build-property "compiler.c.extra_flags=$(AVR_RELAX_FLAGS)" \
 	--build-property "compiler.c.elf.extra_flags=$(AVR_RELAX_FLAGS)"
@@ -60,7 +62,7 @@ AVR_SIZE ?= $(shell command -v avr-size 2>/dev/null || find "$(HOME)/Library/Ard
 
 CPPFLAGS ?= -I.
 CXXFLAGS ?= -std=c++17 -w -O0 -g3
-TEST_CPPFLAGS = -I tst/host
+TEST_CPPFLAGS = -I tst/host $(WORLD_VM_PROFILE_FLAGS)
 TEST_FLAGS = -DTEST
 DEBUG_FLAGS = -DDEBUG
 
@@ -367,7 +369,7 @@ $(WORLD_SCRIPT_PROFILE_BIN): tools/check-world-script-profile.cpp src/vm/opcodes
 # Compact world scripts have no dialog text: scripts.bin stays fixed-size and
 # text.bin is the two-byte zero-count header. Full-VM opt-in skips both checks.
 world-script-profile-check: $(WORLD_SCRIPT_PROFILE_BIN) $(WORLD_SCRIPT_PROFILE_INPUT) $(WORLD_SCRIPT_PROFILE_TEXT)
-	@if printf ' %s ' "$(AVR_SHIPPING_CPP_FLAGS)" | grep -q ' -DCGFX_FULL_WORLD_VM '; then \
+	@if test -n "$(WORLD_VM_PROFILE_FLAGS)"; then \
 		echo 'world-script-profile: full VM opt-in enabled'; \
 	else \
 		"$(WORLD_SCRIPT_PROFILE_BIN)" "$(WORLD_SCRIPT_PROFILE_INPUT)" "$(WORLD_SCRIPT_PROFILE_TEXT)"; \

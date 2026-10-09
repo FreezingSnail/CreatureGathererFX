@@ -94,6 +94,12 @@ inline void test_stack(FxTest &test)
     vm.initVM(script, 0, 0);
     vm.run();
 
+    script[0] = static_cast<uint8_t>(VmOpcode::TpIf);
+    memset(script + 1, 0, 8);
+    script[9] = static_cast<uint8_t>(VmOpcode::End);
+    vm.initWarpVM(script, 0, 0);
+    vm.runWarpVM();
+
     PopUpDialog scriptDialog = {};
     scriptDialog.type = SCRIPT_TEXT;
     scriptDialog.textAddress = 0;
