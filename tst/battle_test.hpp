@@ -113,6 +113,29 @@ void BattleDamageIntegrationTest(TestSuite &suite)
     test.assert(applyStage(applyStage(100, 1), -1), static_cast<uint16_t>(100),
                 "plus one then minus one preserves base");
 
+    const uint8_t stageNumerator[9] = {2, 2, 2, 2, 2, 3, 4, 5, 6};
+    const uint8_t stageDenominator[9] = {6, 5, 4, 3, 2, 2, 2, 2, 2};
+    for (uint16_t value = 0; value <= 7905; ++value) {
+        for (uint8_t index = 0; index < 9; ++index) {
+            const uint16_t expected = static_cast<uint16_t>(
+                (static_cast<uint32_t>(value) * stageNumerator[index]) /
+                stageDenominator[index]);
+            test.assert(applyStage(value, static_cast<int8_t>(index) - 4), expected,
+                        "16-bit stage arithmetic matches reference over live range");
+        }
+    }
+    for (uint16_t speed = 0; speed <= 255; ++speed) {
+        for (uint8_t index = 0; index < 9; ++index) {
+            const uint16_t expected = static_cast<uint16_t>(
+                (static_cast<uint32_t>(speed) * stageNumerator[index]) /
+                stageDenominator[index]);
+            test.assert(applyStage(speed, static_cast<int8_t>(index) - 4), expected,
+                        "all AI speed inputs preserve stage result");
+        }
+    }
+    test.assert(applyStage(7905, 4), static_cast<uint16_t>(23715),
+                "maximum live attack product fits staged arithmetic");
+
     Combatant attacker = combatant(Type::WIND);
     Combatant defender = combatant(Type::SPIRIT);
     test.addToLog("known damage expected=40 from power10 attack40 defense20 half-base STAB");

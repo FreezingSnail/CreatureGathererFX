@@ -44,9 +44,9 @@ uint16_t applyStage(uint16_t value, int8_t stage)
 {
     const int8_t bounded = clampStage(stage);
     const StageScale &scale = stageTable[static_cast<uint8_t>(bounded + 4)];
-    const uint32_t scaled =
-        (static_cast<uint32_t>(value) * scale.numerator) / scale.denominator;
-    return scaled > 0xffffU ? 0xffffU : static_cast<uint16_t>(scaled);
+    const uint16_t scaled =
+        static_cast<uint16_t>(value * scale.numerator) / scale.denominator;
+    return scaled;
 }
 
 Modifier attackModifier(const Combatant &attacker, const Combatant &defender,
