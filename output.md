@@ -6971,3 +6971,115 @@ All changes isolated in build/world-warp-profile/{current,working}/CreatureGathe
 - Confirmed an outcome defect: SaveController capture/restore copies pointer size rather than generated flag extent. The one-byte array is read/written as two bytes on AVR (eight on host); the inspected ELF places framebuffer byte zero adjacent, and a captured nonzero neighbor violates reserved snapshot validation. Filed detailed deferred priority-zero `8fu`. Deferred epic `1as` contains 17 bounded size experiments; save experiments depend on the flag fix, deeper result compaction on its precursor spikes. No implementation dispatch.
 - Validation: `git diff --check -- AGENTS.md output.md docs/firmware-simplification-review.md docs/reviews` passed. Each new report's `git diff --no-index --check /dev/null <file>` emitted no whitespace errors (exit 1 denotes the added-file difference). Structured Beads check confirms all four `62u` review/policy children closed and proposed implementation tasks actually deferred.
 - Tracked epic wall time approximately 8.8 minutes including parallel reviews; reviewer-reported durations roughly 5/10/4 minutes (approximate, not additive). Gate time 0; implementation time 0. No commit/push or new build caches. Existing M1 and legacy test blockers remain separate.
+
+## 2026-10-10 — 1x8 reconcile legacy battle session FX suite with compact flow
+
+- Rewrote `tst/fxdatatest/battlesession_test.hpp` (268 insertions, 164 deletions; no other file touched; `.ino` files unchanged) to drive the compact single-phase `BattleFlow` instead of the retired staged presenter and voluntary-switch path. Every legacy behavior that still exists keeps device coverage; retired behaviors were replaced with equivalent compact-flow coverage. `test_battlesession.ino` and `test_battletrainer.ino` still launch the two entries unchanged, so both suites remain in the full FX wildcard.
+- Exact acceptance #1: `PATH=/Users/connorfranc/Applications/CreatureGathererTools/bin:$PATH ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens make fxtest-headless FXTEST_INOS=tst/fxdatatest/test_battlesession.ino BUILD_DIR=build/1x8-device`. Tail: `battle controller painted headroom=659`, `battle controller effective headroom=590`, `test_battlesession PASSED=86 FAILED=0`, `P`, `test_battlesession: PASS`. Flash 26,642/29,696 B; static RAM 1,703/2,160 B (457 B free).
+- `test_battletrainer` (shares the header, was failing 0/2 on the old presenter) now passes: tail `trainer victory turns=38`, `trainer victory boundary=2`, `trainer defeat boundary=2`, `test_battletrainer PASSED=36 FAILED=0`, `P`. Flash 21,932 B; static RAM 1,707 B.
+- Replacement regression re-run: `... make fxtest-headless FXTEST_INOS=tst/fxdatatest/test_battle_slim.ino ...` -> `test_battle_slim PASSED=55 FAILED=0`, `P`.
+- Exact acceptance #2 (spike, includes test_stack): `... make fxtest-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_battlesession.ino BUILD_DIR=build/1x8-device`. Battle suite `P` with painted headroom 659 (>=219). `test_stack` reports `stack headroom=0x1FD (509)` (>=219) but fails 3/1 solely on the pre-existing unrelated M1 assertion `FAIL save compaction completes got=2 want=12`; this is the same baseline failure recorded by the 06g/vpc adoption entries above and is out of scope (no save code touched). Overall make exits 2 on that unrelated suite only.
+- Host gate: `PATH=/Users/connorfranc/Applications/CreatureGathererTools/bin:$PATH make test` -> `All tests passed!` (device header is not part of the host build; run to confirm no regression).
+- Retained (now compact-flow driven): party/trainer entry counts and trainer rules; setup read budget; default attack resolution and result kind; render does not reroll and adds no metadata reads; menu/feedback transition reads are bounded and steady frames are metadata-free; single-feedback bounded completion; stacked-status/type effectiveness and 40-HP math; entry imports damaged persistent HP and never refills; forced replacement opens the filtered direct page, B cannot cancel, second visible row maps to its original party slot, `FORCED_SWITCH` flagged, PP/spend ownership and zero-HP bench preserved; wild rules/one opponent; Escape reaches the terminal Escaped outcome and exactly-once world restore/party sync/menu+dialog cleanup; 3v3 trainer Win with both opponent forced replacements, authored moves retained and no fainted actor attacking; all-player Lose with both forced player replacements; painted stack >=219.
+- Replaced/retired (justified): `BattlePresenter::stage()` `Idle/Done` pacing -> `BattleFeedback` single-phase hold (feedback/menu union arms); voluntary `ResultKind::Switch` via `BATTLE_CREATURE_SELECT` while awaiting an action -> forced-replacement page (`beginReplacement`); legacy `BATTLE_OPTIONS`/`BATTLE_MOVE_SELECT` stack assertions -> compact move/actions page assertions; trainer Gather/Escape `REFUSED` reached through the always-open actions menu -> the compact actions page disables unavailable cells (asserted inert) plus a direct session-level `REFUSED` check; the resolver refusal boundary is also covered by `tst/battle_resolve_test.hpp`. Render-heavy per-frame draws inside the 3v3 loop were reduced to once per begun result (the shared draw path is still asserted read-free) to keep `test_battletrainer` inside the default 3000 ms capture window; steady-frame metadata cleanliness is asserted in `trainerSpike` and the slim device/host suites.
+- Deviations: none to production or generated code; no git commit/push; only the one test header changed. Unrelated blocker unchanged: M1 `tst/fxdatatest/save_test.hpp` / save-compaction device fixture.
+- Wall time (worker, approximate, this turn): ~35 min (exploration + 4 focused device builds/runs + host gate); gate time 0; no orchestrator final gate run by this worker.
+
+## jp8.2.11 — v3 device save fixture rewrite and M1 slice measurement (2026-10-10)
+
+Rewrote `tst/fxdatatest/save_test.hpp` from the removed v2 `SaveFile` API to the
+v3 96-byte snapshot + 64-slot store contract in `docs/m1-storage.md`. The device
+suite now covers: 16-byte journal layout/stride/publish marker; duplicate
+species add via `storeAdd`; party assign + save + `storeBoot` reboot; derived
+level/party-HP restore; explicit-HP reassignment bounds; empty and slot63
+addressing (+ out-of-range refusal); full-64 refusal and slot63 tombstone reuse;
+checkpoint cuts before/after commit (4718/4720), after journal erase (8816) and
+after cleanup-bit clear (8817) including interrupted-first-save and committed-
+corruption fail-closed; torn journal marker, 17th-pending-slot refusal and boot
+index overflow fail-closed. Host `tst/save_test.hpp` is unchanged and remains
+the exhaustive v3 proof; the device suite mirrors it against real FX save flash.
+
+Device cuts use a swap-in write limiter (the device backend has no
+`flashFakeSetWriteLimit`): `cutBegin/cutEnd` replace `flash.eraseSector` and
+`flash.writeBytes` with counting wrappers that reproduce the host offsets, then
+restore the originals. `fresh()` erases both checkpoint sectors with a busy wait
+after each erase (the FX flash drops a command issued mid-erase) and lets
+`storeFresh` reset the journal/runtime.
+
+Also fixed `tst/fxdatatest/stack_test.hpp` `runSave`: the loop bound was 64
+(`uint8_t`), but the v3 checkpoint verifies both 4096-byte regions in 64-byte
+chunks, so the save stalled at `VerifySpare` (the old `save compaction completes
+got=2 want=12`). Bound is now `uint16_t attempts < 256`; test_stack is 4/0.
+
+Exact commands / results:
+- `PATH=/Users/connorfranc/Applications/CreatureGathererTools/bin:$PATH make test`
+  -> host 209,655/0; world 258/0.
+- `... make testvm` -> 343/0.
+- `... make verify-generated` -> exit 0.
+- `... ARDENS=.../Ardens make fxtest-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_save.ino BUILD_DIR=build/jp8.2.11-device`
+  -> `test_save PASSED=284 FAILED=0` / `P` (20008 B flash, 1920 B static, 240 B
+  RAM free); `test_stack PASSED=4 FAILED=0` / `P` (painted stack headroom 491 B,
+  mode transition 585 B).
+- `... make build BUILD_DIR=build/m1-slice` -> AVR_FLASH_BYTES=23488/29696,
+  AVR_STATIC_RAM_BYTES=1747/2160 (6208 B flash free, 413 B static free).
+- `... make ram BUILD_DIR=build/m1-slice` -> same 23488/1747, 813 B physical SRAM
+  free; top static symbols: Arduboy2 sBuffer 1024, modeState 191, player 112,
+  SaveController::saveState 96, scratch 100, pending 50.
+
+Budget check: flash 23,488 <= 29,696 and <= 29,184 planning; static 1,747 <=
+2,160; painted 491 >= 219. Firmware is unchanged by this bead (test-only edit
+plus capture window), so the shipping before/after is identical; prior accepted
+checkpoint was 27,408/1,759.
+
+Deviation: raised the Makefile `FXTEST_MS` default 3000 -> 12000 (with an inline
+comment). The v3 device save suite performs several full 4 KB checkpoint
+verify/erase cycles and needs roughly 9,500 emulated ms to print its marker;
+3000 cut it off (`test_save: FAIL (no serial)`). A lower-explicitly-set
+`FXTEST_MS` (e.g. 8000) will truncate this suite; do not override it lower.
+Scratch measurement builds (jp8-subsetA/B, jp8-full) removed; device and
+m1-slice evidence retained. `make clean-build-artifacts CLEAN_APPLY=1` applied
+(106 candidates). No commit, no push.
+
+## CreatureGathererFX-5sz — Reconcile arena demo FX suite with compact flow
+
+Scope: test-only. Rewrote `tst/fxdatatest/arenademo_test.hpp` render/pacing onto
+compact single-phase `BattleFlow`; no production/generated edits. No missing test
+seam was needed — the deterministic confirm path reuses the existing
+`rngSeed`/`randomRoll` public API.
+
+Retained arena coverage (now against compact flow):
+- catalog team loading, player-team selection, `startMatch` invalid-index rejection
+- randomized opponent on confirm via `arena::update` (seeded RNG predicts the roll)
+- transition read-counter discipline (`verifyPlayerTeam`/`startMatch` markUpdate)
+- terminal Win/Lose completion, exactly-once `finishBattle` restore, replay freshness
+- all 15 authored matchups, painted stack reserve
+
+Replaced legacy coverage:
+- `battlePresenter().overlay/draw` + `drawScene(view)` -> `BattleScene::draw(state)`
+  plus `modeState.battle.ui.feedback`/`menu`
+- `PresenterStage` pacing in `renderBattle()`/`finishTrainer()` -> `BattleFlow::update`
+  driving feedback, choices and the terminal callback; render asserted read-free.
+
+Exact commands / results:
+- `PATH=/Users/connorfranc/Applications/CreatureGathererTools/bin:$PATH make test`
+  -> host Total Passed 209,655 Failed 0; world 258/0.
+- `... ARDENS=.../Ardens make fxtest-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_arenademo.ino BUILD_DIR=build/5sz-device`
+  -> `test_arenademo PASSED=1870 FAILED=0` / `P`; painted effective headroom 515 B
+  (minimumStack 584 >= 219); 24982 B flash, 1740 B static. `test_stack` 4/0 / `P`
+  (painted 491 B).
+- `... make fxtest-headless FXTEST_INOS=tst/fxdatatest/test_battle_slim.ino BUILD_DIR=build/5sz-slim`
+  -> `test_battle_slim PASSED=55 FAILED=0` / `P`.
+
+`tst/fxdatatest/test_arenademo.ino` untouched; suite still in the
+`tst/fxdatatest/*.ino` wildcard. No commit, no push.
+
+Wall time: worker ~35 min (two fresh AVR device builds + host suite).
+
+## 2026-10-10 — orchestrator cleanup: fixture repairs, final gate, commit series
+
+- Worker fixture repairs unblocked all gates: 1x8 battlesession reconcile (test_battlesession 86/0, test_battletrainer 36/0, painted 659; REVIEW APPROVED); jp8.2.11 v3 save fixture rewrite (test_save 284/0, test_stack 4/0, painted 491; stack runSave bound 64->256; Makefile FXTEST_MS default 3000->12000 for the ~9.5k ms suite; REVIEW APPROVED); 5sz arena reconcile (test_arenademo 1870/0, painted 584, seeded random-opponent coverage added; REVIEW APPROVED).
+- Full gate `build/orchestrator-final-gate2`: PASS. Shipping 23,488 flash / 1,747 static (6,208 flash free, 813 B physical SRAM free); all 30 FX device suites, host 209,655/0 + world 258/0, VM 343/0, manifest/generated/parity/budget guards green. Logs `build/orchestrator-final-gate2/final-gate/{check,ram}.log`.
+- Commits: `6b2c48c` bounded cleanup tooling; `8e7e914` review/M1-contract/audit docs; `0311bc9` M1 checkpoint slice + v3 save suites; `d69c497` battle carve onto compact single-phase flow; `86f305f` b0b compiler policy + packed type chart; this report commit. `.battle-carve-spike/` added to .gitignore (779 MB isolated spike stays untracked).
+- Beads closed: 1x8, jp8.2.11, 5sz (workers); 06g, vpc, b0b, 6jx (orchestrator; jp8.2.7 force-passed for the adoptions and remains open for the full post-integration cut matrix only). Newly filed and closed: 5sz.
+- Still uncommitted (owner WIP, bead jp8.5.16): InventoryMenu.*, draw.h, MenuIntent.hpp, tst/main.cpp + Makefile inventory hunks, tst/inventory_menu_test.hpp; untracked .codex/.
+- Wall time: two full gate runs approximately 6 min each; fixture repair worker durations not captured in the completion notices; orchestrator staging/commit segment approximately 25 min.
