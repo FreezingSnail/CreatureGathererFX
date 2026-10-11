@@ -12,7 +12,9 @@ in `AGENTS.md`.
 
 Run `make gen` to generate game data, native sprite/font sources, and package the FX image with
 `cgfx-tools`; it requires no Python bridge. `make gen-sprites` explicitly regenerates those
-sprite/font sources through `cgfx-tools`.
+sprite/font sources through `cgfx-tools`. The opt-in `arena-demo` and `lure-demo` targets use
+`gen-if-needed` to reuse generated outputs only when authored inputs, packed artifacts, generator
+tooling, and generated-header mirrors still match; explicit `make gen` remains forceful.
 
 Run `make check` for generation, host tests, and FX tests when [Ardens](https://github.com/tiberiusbrown/Ardens)
 is available. `fxtest` delegates only to the `fxtest-headless` serial harness: every concrete
@@ -108,8 +110,8 @@ Build and launch the arena demo with:
 make arena-demo ARDENS=/path/to/Ardens
 ```
 
-The target runs `make gen`, builds into `build/arena-demo` using the opt-in `CGFX_ARENA_DEMO`
-define and a 29,184-byte arena flash ceiling, then launches Ardens with isolated FX data and save
+The target runs `make gen-if-needed`, builds into `build/arena-demo` using the opt-in
+`CGFX_ARENA_DEMO` define and a 29,184-byte arena flash ceiling, then launches Ardens with isolated FX data and save
 files. Override the output path, isolated cart path, or flags with `ARENA_DEMO_BUILD_DIR`,
 `ARENA_DEMO_CART_DIR`, `ARENA_DEMO_CPP_FLAGS`, and `ARENA_DEMO_FLASH_BUDGET`. It requires Ardens
 plus the normal `cgfx-tools`, Arduino CLI, and AVR size tools used by `make gen` and `make ram`.

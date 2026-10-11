@@ -4,9 +4,12 @@ set -eu
 printf '%s\n' "$*" >>"$GATE_CALL_LOG"
 for argument do
     case "$argument" in
-        check|gen|ram|fxtest-headless) stage=$argument ;;
+        check|gen|gen-if-needed|ram|fxtest-headless) stage=$argument ;;
     esac
 done
+if [ "$stage" = gen-if-needed ]; then
+    stage=gen
+fi
 printf 'fixture full diagnostics for %s\n' "$stage"
 if [ "${GATE_FAIL_STAGE:-}" = "$stage" ]; then
     echo 'fixture failure detail'

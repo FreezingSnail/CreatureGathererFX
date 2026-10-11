@@ -6,7 +6,7 @@ ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd -P)
 cd "$ROOT"
 
 help=$(make --no-print-directory help)
-for target in setup doctor gen test testvm build ram run dev arena-demo check final-gate fxtest fxtest-headless fxtest-spike test-fxtest-ram test-avr-build-budget; do
+for target in setup doctor gen gen-if-needed test testvm build ram run dev arena-demo check final-gate fxtest fxtest-headless fxtest-spike test-fxtest-ram test-avr-build-budget; do
     printf '%s\n' "$help" | grep -Fq "  $target " || {
         printf 'missing help entry: %s\n' "$target" >&2
         exit 1
@@ -86,7 +86,9 @@ make --no-print-directory arena-demo MAKE="$fixture_make" \
     FXDATA_SAVE_BIN=build/arena-contract/fxdata-save.bin \
     ARDENS="$true_bin" \
     AVR_SHIPPING_CPP_FLAGS='-mrelax -DCGFX_SHIPPING_NO_USB -DLOCAL_EXTRA' >/dev/null
-test "$(awk '{print $2}' "$GATE_CALL_LOG")" = "$(printf 'gen\nram')"
+test "$(sed -n '1s/.* //p' "$GATE_CALL_LOG")" = gen-if-needed
+test "$(wc -l <"$GATE_CALL_LOG" | tr -d ' ')" -eq 2
+sed -n '2p' "$GATE_CALL_LOG" | grep -Fq 'ram BUILD_DIR='
 grep -Fq 'BUILD_DIR=build/arena-contract' "$GATE_CALL_LOG"
 grep -Fq 'AVR_SHIPPING_CPP_FLAGS=-mrelax -DCGFX_SHIPPING_NO_USB -DLOCAL_EXTRA -DCGFX_ARENA_DEMO' "$GATE_CALL_LOG"
 grep -Fq 'AVR_FLASH_BUDGET=29184' "$GATE_CALL_LOG"
@@ -113,11 +115,15 @@ grep -Fq 'fixture failure detail' "$gate_dir/error.log"
 
 arena_dry=$(make --no-print-directory -n arena-demo BUILD_DIR=build/ignored \
     ARENA_DEMO_BUILD_DIR=build/arena-contract ARDENS="$true_bin")
-printf '%s\n' "$arena_dry" | grep -Fq 'gen'
+printf '%s\n' "$arena_dry" | grep -Fq -- '-j1 gen-if-needed'
 printf '%s\n' "$arena_dry" | grep -Fq 'ram BUILD_DIR="build/arena-contract"'
 printf '%s\n' "$arena_dry" | grep -Fq 'AVR_FLASH_BUDGET="29184"'
 printf '%s\n' "$arena_dry" | grep -Fq 'file="build/arena-contract/CreatureGathererFX.ino.hex"'
 printf '%s\n' "$arena_dry" | grep -Fq 'save="build/arena-contract/isolated/fxdata-save.bin"'
+
+lure_dry=$(make --no-print-directory -n lure-demo BUILD_DIR=build/ignored \
+    LURE_DEMO_BUILD_DIR=build/lure-contract ARDENS="$true_bin")
+printf '%s\n' "$lure_dry" | grep -Fq -- '-j1 gen-if-needed'
 
 build=$(make --no-print-directory -n build \
     ARDUINO_CLI=fixture-arduino FQBN=fixture:fx BUILD_DIR=build/contract)
