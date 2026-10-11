@@ -103,7 +103,11 @@ void journalInit()
 bool journalAppend(const JournalRecord &in)
 {
     if (journalTail == JOURNAL_UNINITIALIZED) {
+#ifdef TEST
         journalInit();
+#else
+        return false;
+#endif
     }
     if (journalTail == JOURNAL_CAPACITY) {
         return false;
@@ -155,9 +159,11 @@ uint16_t journalLength() { return journalTail; }
 
 bool journalFull()
 {
+#ifdef TEST
     if (journalTail == JOURNAL_UNINITIALIZED) {
         journalInit();
     }
+#endif
     return journalTail == JOURNAL_CAPACITY;
 }
 
