@@ -30,11 +30,6 @@ int8_t clampStage(int8_t stage)
     return stage;
 }
 
-bool validTableType(Type type)
-{
-    return type == Type::NONE || static_cast<uint8_t>(type) < TypeCount;
-}
-
 uint16_t applyDamageModifier(uint16_t value, Modifier modifier)
 {
     // Caller has already rejected immunity; remaining modifiers encode shifts -2..2.
@@ -84,9 +79,6 @@ uint8_t computeDamage(const Combatant &attacker, const Combatant &defender,
     const Move &move = attacker.moves[moveSlot];
     const uint8_t moveTypeValue = move.getMoveType();
     const Type moveType = static_cast<Type>(moveTypeValue);
-    if (!validTableType(moveType)) {
-        return 0;
-    }
 
     const uint8_t power = move.getMovePower();
     if (power == 0) {
@@ -117,12 +109,6 @@ uint8_t computeDamage(const Combatant &attacker, const Combatant &defender,
     // Packed power <=31, attack <=255, stage scale <=3, modifier <=4:
     // floor(31*255*3/2)*4 <=47428, so every damage intermediate fits uint16_t.
     const uint16_t baseDamage = attackTerm / divisor / 2;
-
-    const Type defenderType1 = defender.types.getType1();
-    const Type defenderType2 = defender.types.getType2();
-    if (!validTableType(defenderType1) || !validTableType(defenderType2)) {
-        return 0;
-    }
 
     const Modifier modifier = attackModifier(attacker, defender, moveType);
     if (modifier == Modifier::None) {

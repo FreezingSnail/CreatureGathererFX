@@ -69,9 +69,9 @@ void TypeTest(TestSuite &t) {
     }
 
     for (uint8_t type = 0; type < TypeCount; ++type) {
-        test.assert(typeTable[static_cast<uint8_t>(Type::STATUS)][type],
+        test.assert(getModifier(Type::STATUS, static_cast<Type>(type)),
                     Modifier::None, "STATUS attack row retains zero cells");
-        test.assert(typeTable[type][static_cast<uint8_t>(Type::STATUS)],
+        test.assert(getModifier(static_cast<Type>(type), Type::STATUS),
                     Modifier::None, "STATUS defender column retains zero cells");
     }
     test.assert(getModifier(Type::WATER, Type::NONE), Modifier::Same,
