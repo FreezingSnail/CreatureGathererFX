@@ -49,11 +49,6 @@ void writeBytes(uint32_t addr, const uint8_t *data, uint16_t len)
     }
 }
 
-void writePage(uint16_t page, const uint8_t *data)
-{
-    writeBytes(static_cast<uint32_t>(page) * 256, data, 256);
-}
-
 void readBytes(uint32_t addr, uint8_t *data, uint16_t len)
 {
     ++readCount;
@@ -76,7 +71,7 @@ uint16_t read16(uint16_t addr)
 }
 } // namespace
 
-FlashBackend flash = {eraseSector, writePage, writeBytes, readBytes, busy};
+FlashBackend flash = {eraseSector, writeBytes, readBytes, busy};
 
 void flashFakeReset()
 {
