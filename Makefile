@@ -358,7 +358,12 @@ pack:
 	@set -e; \
 	mkdir -p "$(BUILD_DIR)" "$(DIST_DIR)"; \
 	stage="$$(cd "$$(mktemp -d "$(BUILD_DIR)/cgfx-pack.XXXXXX")" && pwd -P)"; \
-	tar -cf - --exclude './.git' --exclude './build' --exclude './dist' . | tar -xf - -C "$$stage"; \
+	trap 'rm -rf "$$stage"' 0; \
+	trap 'exit 1' HUP INT TERM; \
+	tar -cf - \
+	    --exclude='./.git' --exclude='./.beads' --exclude='./.codex' \
+	    --exclude='./.battle-carve-spike' --exclude='./build' --exclude='./dist' \
+	    --exclude='./.cache' --exclude='./harness/workspaces' . | tar -xf - -C "$$stage"; \
 	cgfx-tools --project "$$stage/cgfx-project.json" --pack --layout "$$stage/fxlayout.toml"; \
 	mv -f "$$stage/src/fxdata.h" src/fxdata.h; \
 	mv -f "$$stage/dist/fxdata.bin" "$(DIST_DIR)/fxdata.bin"; \
