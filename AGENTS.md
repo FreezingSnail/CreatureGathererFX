@@ -79,10 +79,9 @@ It always runs every FX suite, even if a focused `FXTEST_INOS` override is prese
   Stage generated sets together after a regen; a half-staged set once shipped a stale opcode table.
   Tests read generated symbolic constants, never literal record indices. `fxlayout.toml`
   declaration order is a permanent ABI.
-- **Build cleanup**: after each completed spike or experiment, review `make clean-build-artifacts`
-  and apply with `make clean-build-artifacts CLEAN_APPLY=1`. It removes only generated Arduino
-  cache/object paths; retain reports, source copies, CSV/measurement evidence, save images, and
-  selected control/final ELFs. Unknown paths stay untouched.
+- **Bound build storage**: follow the build-storage rules below. A separate bead, variant or worker
+  is not a reason to create another complete build tree. Clean disposable outputs after each
+  measured item; keep only the evidence needed to reproduce and assess it.
 - **Spike snapshots**: never recursively copy the dirty repository into a child directory. Make one
   control source snapshot, then save each experiment as its exact tracked-source patch, allowlisted
   untracked source/generator prerequisites, report, and chosen ELF. Exclude `build/`,
@@ -102,6 +101,47 @@ It always runs every FX suite, even if a focused `FXTEST_INOS` override is prese
   top byte. Route packed address-table reads through `FxRead::indexed24` in `src/lib/FxRead.hpp`;
   it reads the three big-endian bytes and reconstructs `uint24_t`. Keep the device table test,
   including entries above `0x010000`, as evidence for this workaround.
+
+## Build storage and cleanup
+
+The 2026-10-11 disk incident left roughly 37 GiB of disposable pack stages. Source isolation must
+not duplicate build caches, metadata or old experiments.
+
+- **One build lane.** Only one worker or orchestrator may run AVR builds, generation, packing or
+  integrated gates at a time. Assign the lane explicitly before dispatch; other workers may prepare
+  non-overlapping source changes and small host checks. Workers must finish and release the lane
+  before the next worker starts.
+- **Reuse directories.** Pin one working `BUILD_DIR` and one integrated-gate directory per session;
+  reuse existing suitable directories. Do not create per-bead or per-variant compiler/cache trees.
+  Save the control ELF and measurements before overwriting the working outputs with the candidate.
+  Keep per-bead logs under the shared report directory. For isolated sources, use
+  `make -C /absolute/source BUILD_DIR=/absolute/shared-build ...` and confirm build provenance;
+  invalidate incompatible outputs when switching sources or flags.
+- **Check space before dispatch and after each item.** Run `df -h . /private/tmp` and `du -sh` on
+  the shared build and owned scratch roots. Default storage budgets are 5 GiB for repository build
+  outputs and 5 GiB for session scratch, including retained evidence. Keep at least 10 GiB free.
+  If either budget is exceeded, free space falls below the reserve, or one item adds an unexplained
+  1 GiB, stop new builds and clean or identify the cause. Record a justified larger budget in the
+  bead before using it; do not silently multiply build trees or move the same sprawl to `/tmp`.
+- **Clean each measured item.** The lane owner previews `make clean-build-artifacts` for each
+  actual build root, then applies `make clean-build-artifacts CLEAN_APPLY=1` after preserving its
+  evidence. Pass the relative `BUILD_DIR=build/...` explicitly for nested roots. This helper only
+  recognizes certain generated Arduino/cache paths: an empty preview does not prove the tree is
+  clean. Inspect remaining sizes and remove other positively identified disposable staging/cache
+  directories separately. Never clean another worker's active directory.
+- **Retain compact evidence.** Keep exact patches, source revision/allowlisted prerequisites,
+  reports, measurements, relevant save images and selected control/final ELFs. Use one committed
+  control snapshot plus patches; retire completed variant source copies once that evidence suffices.
+  Do not retain complete compiler outputs, pack stages or duplicate repository snapshots per trial.
+  Unknown sources or unique evidence stay untouched and are reported.
+- **Temporary stages must self-clean.** Packing/staging commands must remove their own temporary
+  directory on success, failure and catchable interruption. Exclude metadata, build/dist outputs,
+  caches and scratch/spike roots from copied inputs. Do not remove the `pack` cleanup trap or broaden
+  its copy to the entire repository. After generation, verify no `cgfx-pack.*` stage remains; remove
+  positively identified abandoned stages before the next build. Keep final images and logs outside
+  temporary stages.
+- **Handoff includes storage.** Report free disk space, shared build paths, retained evidence and
+  cleanup performed. The orchestrator checks these before assigning another build wave.
 
 ## Dev-cycle speed rules (from past waves)
 
@@ -127,8 +167,9 @@ It always runs every FX suite, even if a focused `FXTEST_INOS` override is prese
 - **One full gate per bead.** The worker runs host/VM suites, touched device suites, and generation
   checks; the orchestrator runs the final full gate once before committing. Focused checks do not
   replace that final gate.
-- **Parallelize non-overlapping beads.** Docs/tooling beads can run alongside code beads; only
-  same-file work serializes. Split oversized beads before dispatch (2–3 logical layers each).
+- **Parallelize non-overlapping source work.** Docs/tooling beads can run alongside code beads;
+  same-file edits serialize, and AVR/generation/gate work always uses the single build lane above.
+  Split oversized beads before dispatch (2–3 logical layers each).
 - **Route implementation by risk.** Use Sol for high-risk AVR, save-format, SPI, or stack work.
   Use Luna for bounded tests, tables, and documentation once the contract is pinned. For mixed work,
   have Sol settle the risky design first, then dispatch non-overlapping bounded implementation work.
