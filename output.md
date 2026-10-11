@@ -6765,13 +6765,109 @@ Finalsettled make final-gate BUILD_DIR=build/battle-hud-compact-gate ARDENS=/Use
 - After deletion, `make test`: host 206,697/0 and world 258/0. `make build`: PASS, 27,678 B flash / 1,787 B static RAM. No generated data or save format changed.
 - Changes: removed `LurePrototype.{hpp,cpp}` and `tst/lure_prototype_test.hpp`, and unregistered their source/suite. Wall time for the checkpoint, verification, and report: about 2 minutes.
 
-## o2n — Remove unused legacy Animator (2026-10-09)
+## M1 parallel-wave checks (not settled)
 
-- Removed unused Animator API/files, sketch28B global and per-frame play call, common declaration and device-harness globals. No production push caller existed; BattlePresenter and directional walking remain unchanged. Read-only review APPROVED.
-- Current-tree commands: make build BUILD_DIR=build/trim-animator; make test; make testvm; git diff --check. Draft31110flash/1870static ->30958/1842: -152flash/-28static. Current shipping build remains blocked1262B over physical limit because uncommitted M1 is preserved. Host206372/0; World258/0; VM42/0.
-- Isolated HEAD baseline plus ONLY Animator cleanup: make final-gate ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens FXTEST_MS=8000; make test-pack-parity. PASS: host206697/0, World258/0, VM42/0, all30device suites6405/0, generation/manifest/library/ABI/RAM guards. Shipping27678/1787 ->27450/1759 (-228flash/-28static),801B physical SRAM free; painted save446B, arena effective315B, player render687B. Pack parityPASS; six regenerated source/header comparisons identical to root artifacts. Complete gate logs: build/animator-validation/CreatureGathererFX/build/final-gate/{check,ram}.log.
-- Isolation preparation failures: git archive omitted ignored FX descriptor/asset and test-fixture inputs; seeded exact original FX/data/image/map and tools/tests snapshots, then reran fullgate. A historical tool-path attempt also failed unknown deepthought; settled gate uses installed cgfx-tools. No generated source hand edits or production-budget override. Follow-up le5 records clean-checkout generation/fixture gap.
-- Wall time: root implementation/current host tests about1minute; isolation preparation about4minutes; settled finalgate about4minutes; worker review read-only; no manual visual acceptance required. Only cleanup and this report are staged; other M1/inventory/owner edits remain uncommitted. No push.
+- `make check` after the inventory and compaction drafts: host 206,739/0; world 258/0; VM 42/0; manifest/generated-library checks passed. The shipping build then failed at 29,720 B, 24 B over the 29,696 B physical limit. This combined-tree result is not attributable to InventoryMenu alone; jp8.2.4 is an uncommitted draft and is blocked on a recovery-format correction.
+- The inventory agent's earlier `make build` during concurrent edits reported 29,644 B / 1,944 B, but later settled builds reproduced the 29,720 B overflow. Treat the earlier size as superseded.
+- Storage draft checks reported host 206,739/0, world 258/0; focused `test_save` 281/0 and `test_stack` 4/0, 253 B save-chain headroom. `make ram` was reported as 29,614 B / 1,880 B, but its paired shipping build log is 29,720 B; resource reporting must be rerun sequentially after the design fix.
+
+## jp8.2.4 compaction recovery follow-up (2026-10-08)
+
+SaveFile commits now verify the complete inactive sector is blank after erase, write payload and sequence before the marker, and read back both the envelope and payload checksum before replacing cached active metadata. This keeps the prior valid snapshot selected after partial target erases/writes, including the sequence-zero complement edge. Host fault coverage now includes every byte cut through legacy migration, sector rollover, pending checkpoint rollover, and clear checkpoint rollover; 257 commits exercise sequence `0xff` to `0x00`; dirty-tail and existing old-store/power-cut recovery cases remain.
+
+Verification:
+`make test` -> host 249,103/0 and VM 258/0; pass (about 4 s).
+`make verify-generated` -> pass (about 3 s); `make gen` had passed earlier in this task before the source-only follow-up.
+`make fxtest-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_save.ino ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens` -> `test_save` 281/0, cold scan headroom 428 B, save path 230 B, `test_stack` 5/0; pass (about 10 s). An earlier attempt after adding read-back validation measured 204 B and failed the 219 B minimum; reducing nested checksum-validation state retained full verification and restored 230 B.
+`make build BUILD_DIR=build/jp824-final-20261008` -> failed: 31,494 B flash / 29,696 B available (1,798 B over); static RAM 1,896 B / 2,560 B, 664 B physical free. Exact compiler tail: `Sketch too big` / `text section exceeds available space on board`. Wall time about 32 s. The duplicate invocation caused by a lost session handle produced the same result and is not a separate measurement. `make ram` was not run because the shipping image already exceeded flash budget; no correctness code was trimmed.
+
+`make verify-generated` confirms no generated artifact drift. No stage, commit, or bead close.
+
+## jp8.2.10 — Rebaseline M1 storage after review (2026-10-09)
+
+Pinned `docs/m1-storage.md`: 64 duplicate-capable instances including party3,
+stable slots, a96B v3 snapshot +512B collection in one coherent alternating
+checkpoint, a one-way verified journal-cleanup bit, and intentional v1/v2 reset.
+The design removes detached SaveFile envelopes, legacy migration and tombstone
+squeeze. Header+snapshot+records occupy624B; the sole record helper is
+base+112+slot*8 with slot<64. Fixed snapshot offsets total96B; pending index16
+uint8 pairs is32B. The old draft's capacity/address/last-chunk inconsistencies
+are superseded; implementation is not repaired or promoted in this design task.
+
+Updated M1/lzc and jp8.2.4/.5/.6/.7 contracts; marked jp8.2.8/.9 historical.
+Created jp8.2.11 for measured duplicate add-save-reboot proof before expansion;
+jp8.2.4 depends on it. Planning flash29184; hard flash29696/static2160/painted219.
+Validation: checked fixed field/slot extents and dependency ordering; git diff
+--check and bd dep cycles. Documentation/tracker work only; no new firmware
+measurement or acceptance pass claimed. Existing inventory/user/storage draft
+edits preserved. Design/report wall time about5minutes; gate time0.
+
+## jp8.2.11 — Coherent checkpoint first measurement (2026-10-09, blocked)
+
+Archived the abandoned storage-only diff at `build/m1-rebaseline-storage.patch`
+(excludes InventoryMenu, inventory registrations, ArenaView, renderer, .codex,
+tracker and existing reports). Restored its committed storage baseline with
+file-specific writes, preserving unrelated work. Restored `fxlayout.toml`'s
+obsolete storage comment too; no generated input or ABI offset changes remain.
+
+Sequential fresh baseline:
+`make build BUILD_DIR=build/m1-combined-baseline` -> PASS,
+flash27,678B/static1,787B; physical SRAM773B free.
+`make ram BUILD_DIR=build/m1-combined-baseline` -> PASS, same27,678/1,787;
+saveState130B. Baseline commands took about2minutes combined.
+
+First v3 slice: explicit96B snapshot; fixed64-slot checkpoint; stable duplicate
+instance API; one64B scratch; pending16 uint8 pairs; alternating store sectors;
+body/header validation and commit markers; verified journal erase then normalized
+cleanup-bit clear; v1/v2 reset. Basic party seed/load adapters use store records
+and derive level from experience. Inventory fields are codec-only and zero in the
+shipping adapter; Player inventory migration remains jp8.2.6. Current inventory
+screen and battleInventory pointer were not changed.
+
+`make build BUILD_DIR=build/m1-slice` -> FAIL:
+`Sketch uses 31218 bytes (105%) of program storage space. Maximum is 29696 bytes.`
+`Global variables use 1867 bytes (72%) of dynamic memory, leaving 693 bytes for local variables.`
+`Error during build: text section exceeds available space in board`
+Delta+3,540B flash/+80B static; hard flash deficit1,522B;
+planning29,184B deficit2,034B. Stop for measured trim before expansion.
+`make test` -> FAIL,206,330 passed/1 failed: NativeFrameSavePathTest return
+state remainsSAVING after an erased fake cart retains stale Store runtime state.
+All five new save suites passed; test isolation still needs repair.
+No shipping RAM follow-up/device spike/painted stack/testvm/generated verification
+claimed. StoreAssign explicit HP contract clarification is pending implementation.
+Worker wall time about6minutes at blocker; gate0. No stage/commit/close.
+
+## jp8.2.11 — Bounded trim1 measurement (2026-10-09, still blocked)
+
+Parent authorized capacity-preserving trim only. Added explicit canonical
+`PlantStage::serialize/restore` (8 backing bytes) and `PlantPair::serialize/restore`
+(1 backing byte), replacing per-stage/per-pair reconstruction in SaveController.
+Shared snapshot byte/party-slot validation and outlined checkpoint/checksum and
+NOR byte writer reuse preserve the64-slot format and checks. Implemented explicit
+PartyAssignHP: runtime and replay share bounds/live/distinct/maxHP validation;
+unassignment requiresHP0; the journal restores the new occupant'sHP. A17th
+pending slot at boot fails closed. Fresh initialization verifies full journal
+erase; fake-cart reset resets Store runtime, repairing the renderer isolation
+failure. Inventory fields remain codec-only; current inventory authority untouched.
+
+`make build BUILD_DIR=build/m1-trim-1` -> FAIL:
+`Sketch uses 31110 bytes (104%) of program storage space. Maximum is 29696 bytes.`
+`Global variables use 1870 bytes (73%) of dynamic memory, leaving 690 bytes for local variables.`
+`Error during build: text section exceeds available space in board`
+Trim1 net-108B flash/+3B static against first slice; baseline delta+3,432/+83.
+Hard flash deficit1,414B; planning target deficit1,926B. Capacity remains64.
+No follow-on trim, RAM build, device spike or acceptance gate was run after this
+measurement. Existing v2 device-save tests still require replacement for the v3
+API before any eventual device acceptance. Worker trim wall time about5minutes;
+gate0. Pause for parent scope direction. No stage/commit/close.
+
+Native verification initially `make test` ->206,332/0, world258/0. Strengthened
+HP replay/bounds, boot-index overflow and canonical plant serialization tests
+first produced206,371/1: the test's journal-empty assertion was placed after a
+new PartyAssign append. Moved it before that append; the final rerun follows.
+`make test` final rerun -> PASS:206,372/0 host;258/0 world.
+`git diff --check` -> PASS. These host passes do not replace the blocked resource
+measurement or unrun device/painted-stack gate.
 
 ## ax8 — Full feature and flash inventory (2026-10-08)
 
@@ -6782,6 +6878,14 @@ Finalsettled make final-gate BUILD_DIR=build/battle-hud-compact-gate ARDENS=/Use
 - Initial preparation failures: missing generated arena header, then flattened battle-preset header; corrected isolated source copies. Arduino reports expected application-size failures for oversized diagnostic images; measurements use the successfully linked ELF without weakening production budgets. LTO DWARF source grouping proved unreliable (unrelated code maps to DialogQueue.cpp:15); discarded those group totals and used whole-image removal measurements.
 - Read-only reviewer verified source status and cost interpretation; clarified hybrid baseline, retained vs playable features, inlining limits and net draft attribution. No host/device tests or final gate rerun: audit changed documentation only; current firmware remains over budget and has no acceptance claim.
 - Wall time: final measurement matrix55s compiler wall total (baseline26s/draft29s, cache-assisted); orchestrator approximately7min including preliminary experiments and review; worker read-only review, gate N/A. No commit/push; existing blocked firmware work preserved.
+
+## o2n — Remove unused legacy Animator (2026-10-09)
+
+- Removed unused Animator API/files, sketch28B global and per-frame play call, common declaration and device-harness globals. No production push caller existed; BattlePresenter and directional walking remain unchanged. Read-only review APPROVED.
+- Current-tree commands: make build BUILD_DIR=build/trim-animator; make test; make testvm; git diff --check. Draft31110flash/1870static ->30958/1842: -152flash/-28static. Current shipping build remains blocked1262B over physical limit because uncommitted M1 is preserved. Host206372/0; World258/0; VM42/0.
+- Isolated HEAD baseline plus ONLY Animator cleanup: make final-gate ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens FXTEST_MS=8000; make test-pack-parity. PASS: host206697/0, World258/0, VM42/0, all30device suites6405/0, generation/manifest/library/ABI/RAM guards. Shipping27678/1787 ->27450/1759 (-228flash/-28static),801B physical SRAM free; painted save446B, arena effective315B, player render687B. Pack parityPASS; six regenerated source/header comparisons identical to root artifacts. Complete gate logs: build/animator-validation/CreatureGathererFX/build/final-gate/{check,ram}.log.
+- Isolation preparation failures: git archive omitted ignored FX descriptor/asset and test-fixture inputs; seeded exact original FX/data/image/map and tools/tests snapshots, then reran fullgate. A historical tool-path attempt also failed unknown deepthought; settled gate uses installed cgfx-tools. No generated source hand edits or production-budget override. Follow-up le5 records clean-checkout generation/fixture gap.
+- Wall time: root implementation/current host tests about1minute; isolation preparation about4minutes; settled finalgate about4minutes; worker review read-only; no manual visual acceptance required. Only cleanup and this report are staged; other M1/inventory/owner edits remain uncommitted. No push.
 
 ## akt — Remove redundant battle move-snapshot clearing (2026-10-09)
 
@@ -6823,3 +6927,47 @@ All changes isolated in build/world-warp-profile/{current,working}/CreatureGathe
 - Full checks use AVR_SHIPPING_CPP_FLAGS='-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X -DCGFX_SHIPPING_NO_USB -DCGFX_FULL_WORLD_VM' and repeat replacing final define with =1: make testvm world-script-profile-check BUILD_DIR=build/hd8-full-plain (or build/hd8-full-value); make fxtest-headless FXTEST_INOS=tst/fxdatatest/test_scripts.ino BUILD_DIR=build/hd8-full-plain (or build/hd8-full-value) ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens. Both native243/0, device17/0 (14416/1832). make build BUILD_DIR=build/hd8-full-value with the =1 flags ->27408/1759. Valid Msg dispatch native-covered; empty authored text means device typed-popup rendering/routing is queued directly. Full flags never propagate shipping noUSB to tests.
 - Root exact final gate in accepted-only build/animator-validation/CreatureGathererFX: make final-gate BUILD_DIR=build/hd8-gate ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens FXTEST_MS=8000. PASS: host206697/0, World258/0, VM343/0, all30FX suites6449/0, profile/manifest/generated/ABI/resource guards. Shipping26596flash/1759static, physicalSRAMfree801B; painted save446/arena effective310B. make test-pack-parity PASS; all15tracked generated artifacts identical. Full logs build/animator-validation/CreatureGathererFX/build/hd8-gate/final-gate/{check,ram}.log.
 - Wall time: worker726.6s; final gate about3min; orchestrator approximately5min preparation/resource review/staging, overlapping worker verification. Separate world commit; remaining M1/inventory/owner work preserved; no push.
+
+## b0b — Adopt measured flash recovery (2026-10-10, blocked by current M1 tree)
+
+- Adopted the three approved source changes: shipping C++ adds `-fno-inline-small-functions`; `Damage.cpp` drops generator-redundant invalid move/creature type guards; `Type.cpp` stores the 9×9 modifier chart in packed PROGMEM and decodes through `getModifier`. Host tests now retain valid `Type::NONE`, zero-power, sentinel, and all chart-result coverage, while removing only malformed runtime type-ID expectations. Existing native generator negative tests for invalid move and creature types are in `../CreatureGathererTools/crates/core/src/builder.rs` (tests around lines 1612 and 1667).
+- Current dirty-tree baseline: `PATH=/Users/connorfranc/Applications/CreatureGathererTools/bin:$PATH make ram BUILD_DIR=build/flash-adoption-before` -> expected blocked shipping size, 30,046 flash / 1,842 static SRAM; 350 B over the 29,696 B flash limit. After adoption: same command with `BUILD_DIR=build/flash-adoption-after` -> 29,790 / 1,842; measured current-tree delta -256 flash / 0 static, still 94 B over. Shipping flags were `-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X -DCGFX_SHIPPING_NO_USB -fno-inline-small-functions`. This differs from the isolated frozen-control -444 B result because this checkout includes unrelated M1 work; no unrelated work was changed to force the image under limit.
+- `make gen`, `make test` (host 206,367/0; world 258/0), `make testvm` (343/0), `make verify-generated`, `make test-generated-libs` (40/0 plus shell invariants), and `make test-pack-parity` all pass. Generation left no tracked generated changes; packed image parity passes unchanged.
+- Focused `PATH=... ARDENS=... make fxtest-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_battleutility.ino BUILD_DIR=build/flash-adoption-device`: battle utility passed 49/0; utility transition painted headroom 692 B. `test_stack` painted headroom 530 B, above the 150 B reserve, but failed an existing M1 save assertion: `save compaction completes got=2 want=12` (3 passed/1 failed). No M1 save code was changed.
+- Focused `PATH=/Users/connorfranc/Applications/CreatureGathererTools/bin:$PATH ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens make fxtest-headless FXTEST_INOS=tst/fxdatatest/test_tables.ino BUILD_DIR=build/flash-adoption-tables` -> 949/0, pass.
+- Required `PATH=/Users/connorfranc/Applications/CreatureGathererTools/bin:$PATH ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens make final-gate BUILD_DIR=build/flash-adoption-final FXTEST_MS=15000` ran generation, all host/VM suites, profile/manifest/generated-library and AVR budget checks successfully, then stopped at the shipping build: 29,790 flash / 1,842 static, 94 B over. Device-wide stage and final RAM report were not reached. Full check log: `build/flash-adoption-final/final-gate/check.log`.
+- Worker implementation/verification wall time was about 7 minutes; final-gate check took about 2 minutes. Bead remains in progress; no commit or close because the shipping image and full gate do not pass in the current tree. Unrelated M1/menu work remains preserved.
+
+## 2026-10-10 — bsd.1 simplified battle spike planning
+
+- Delivered `docs/slim-battle-spike-design.md` and epic `CreatureGathererFX-bsd`, with six dependent implementation/evaluation children. Preserves parties and native combat; proposes removing voluntary switches, staged playback, generic battle menus/detail panel and dormant battle consumable execution. User explicitly requested automatic versus chosen knockout replacement via compile-time selection in the same demo source; both variants and fair whole-image comparisons are specified.
+- Pinned party-slot/PP ownership, frozen turn invalidation, menu geometry/edges, feedback timing/captions, 27 B menu / 10 B feedback / 191 B mode-overlay budget, metadata read rules, file ownership, permanent tests and exact flag propagation. Approximately 6 KB recovery is an objective, not measured savings.
+- Verified dependency graph with `bd list --parent CreatureGathererFX-bsd --limit 20 --json` (filtered to statuses/dependencies). All six implementation children and epic are actually deferred; planning child closed. `git diff --no-index --check /dev/null docs/slim-battle-spike-design.md` emitted no whitespace errors (exit 1 denotes a new-file difference); `git diff --check -- output.md` passed before this append. No implementation, agent dispatch, generation or size checks performed in this planning turn.
+- Recorded bead-authoring segment: approximately 2 minutes (19:24–19:26 UTC); earlier context/design review not separately timed. Worker time 0; gate time 0. No production code edits or adoption; existing dirty work preserved. Known capacity/M1 gate failures remain explicit in the design.
+
+## 2026-10-10 — vpc slim battle production adoption (blocked by M1 FX save fixture)
+
+- Applied the Sol-approved czv choice implementation to the dirty production checkout, preserving its pre-existing save, inventory-menu, cleanup, and unrelated edits. The adoption diff against a reconstructed frozen dirty-root snapshot is `/private/tmp/cgfx-slim-battle-spike/reports/vpc-production-adoption.patch`; the pre-adoption tracked patch/status are `vpc-root-pre-adoption.patch` and `vpc-root-pre-adoption-status.txt` in the same reports directory. No candidate tree copy or cumulative patch application was used.
+- Default/player-choice shipping build remains `CGFX_BATTLE_AUTO_REPLACE=0`; the Makefile propagates the selected flag separately into host and FX-test builds. The parity fixture excludes the appended feedback captions from its old migration comparison, retaining prior records. Added a permanent natural-versus-accelerated feedback regression for identical RNG count, result/outcome, HP, and move uses, with no action reroll during either feedback interval. Removed the misleading retired `BattlePlaybackSuite finished` line.
+- Shipping command: `PATH=/Users/connorfranc/Applications/CreatureGathererTools/bin:$PATH make ram BUILD_DIR=build/vpc-choice AVR_SHIPPING_CPP_FLAGS='-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X -DCGFX_SHIPPING_NO_USB -fno-inline-small-functions -DCGFX_BATTLE_AUTO_REPLACE=0'`. Result: **23,982 B flash / 1,747 B static**, 5,714 B flash free and 413 B static free. This matches the isolated czv choice image.
+- Host/world: choice `make test BUILD_DIR=build/vpc-choice CPPFLAGS='-I. -DCGFX_BATTLE_AUTO_REPLACE=0'` = 206,393/0 and 258/0; auto comparative `...BUILD_DIR=build/vpc-auto...=1` = 206,378/0 and 258/0. VM `make testvm BUILD_DIR=build/vpc-choice` = 343/0. `make test-manifest`, `make test-generated-libs` (40/0 plus 5 shell invariants), `make verify-generated`, and `make test-pack-parity` all pass.
+- Generation: first `make gen` stopped because generated sprite ordering was stale. The direct configured `cgfx-tools --sprite-config fxsprites.toml` invocation refreshed that ordering; then supported `make gen-sprites` and `make gen` succeeded, followed by passing `make verify-generated` and `make test-pack-parity`. No generated file was hand-edited.
+- Focused device: choice `test_battle_slim` passed 15/0. Paired `test_stack` reported 509 B painted headroom and 3/1 solely on the unrelated M1 assertion `save compaction completes got=2 want=12`.
+- Required choice `make final-gate BUILD_DIR=build/vpc-final-choice FINAL_GATE_LOG_DIR=/private/tmp/cgfx-slim-battle-spike/reports/vpc-final-choice-gate AVR_SHIPPING_CPP_FLAGS='-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X -DCGFX_SHIPPING_NO_USB -fno-inline-small-functions -DCGFX_BATTLE_AUTO_REPLACE=0' ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens` ran once and **failed** while compiling the existing `tst/fxdatatest/save_test.hpp`: it still names removed `SaveFile.party/plants/inventory/version/checksum` fields and missing `saveFileCommit`/`saveFileChecksum`. The full check log is preserved at `vpc-final-choice-gate/check.log`; the gate stopped before the all-device execution and RAM report. No save fixture/code was changed.
+- Existing M1 follow-up `CreatureGathererFX-jp8.2.7` covers checkpoint interruption, round-trip, and device fixture verification; it remains open. The adoption bead remains blocked/uncommitted pending that unrelated fixture repair and a passing orchestrator gate. No commit or push. Source review was APPROVED pending gate evidence. Focused checks took seconds to tens of seconds; the full gate took approximately 170 seconds; exact per-command timing was not captured by the shell runner.
+
+## 2026-10-10 — 06g adopt measured player-choice battle trims (blocked by M1 test fixture)
+
+- Froze current dirty root before edits under `/private/tmp/cgfx-06g-adoption/control/`: tracked dirty patch SHA256 `3f41f2f65177c84717ac584d1a546779d6417608f3b9414e4ec93e6a20c9db7c`, plus allowlisted untracked source/docs. Scratch, build, `.git`, `.beads`, and `.codex` trees were excluded. Actual-root scoped adoption patch is `/private/tmp/cgfx-06g-adoption/reports/root-adoption.patch` (SHA256 `b6e87e6a6f005e8ac179e49bb49295eebd1740faa924f33a8c5a292c819fc011`). Sol source review APPROVED. The compact AVR test now drives real BattleFlow through opponent-first KO, paused menu choice, trusted selection and forced replacement, slot-2 PP/modifier ownership, frozen-actor invalidation, and sole-survivor confirmation: 55 passed / 0 failed.
+- Shipping choice command: `PATH=/Users/connorfranc/Applications/CreatureGathererTools/bin:$PATH make ram BUILD_DIR=build/06g-choice-shipping AVR_SHIPPING_CPP_FLAGS='-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X -DCGFX_SHIPPING_NO_USB -fno-inline-small-functions -DCGFX_BATTLE_AUTO_REPLACE=0'`. Result **23,488 B flash / 1,747 B static SRAM**, 6,208 B flash free and 813 B physical SRAM free. Exact ELF retained at `/private/tmp/cgfx-06g-adoption/reports/root-choice.elf` (SHA256 `f75fb79178cdd8c8aae8f9f3c59a1f825d83749ed7bec8e77c66a9f6ff36b58b`).
+- Exact command timings: shipping `make ram` 11.60 s; host/world 3.07 s; VM 1.05 s; `make gen` 13.70 s; post-gen verify 3.62 s; manifest 2.53 s; generated-libs/invariants 1.88 s; pack-parity 14.31 s; focused battle+stack 12.17 s; final gate approximately 150 s. Commands used: `PATH=/Users/connorfranc/Applications/CreatureGathererTools/bin:$PATH make test CPPFLAGS='-I. -DCGFX_BATTLE_AUTO_REPLACE=0'`; same PATH with `make testvm CPPFLAGS='-I. -DCGFX_BATTLE_AUTO_REPLACE=0'`, `make gen`, `make verify-generated`, `make test-manifest`, `make test-generated-libs`, and `make test-pack-parity`; focused device command was `PATH=/Users/connorfranc/Applications/CreatureGathererTools/bin:$PATH ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens make fxtest-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_battle_slim.ino BUILD_DIR=build/06g-choice-device`.
+- One required choice `make final-gate` ran with the same policy flags and Ardens: `PATH=/Users/connorfranc/Applications/CreatureGathererTools/bin:$PATH ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens make final-gate BUILD_DIR=build/06g-choice-final-gate CPPFLAGS='-I. -DCGFX_BATTLE_AUTO_REPLACE=0' AVR_SHIPPING_CPP_FLAGS='-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X -DCGFX_SHIPPING_NO_USB -fno-inline-small-functions -DCGFX_BATTLE_AUTO_REPLACE=0'`. It exits 2 during FX `test_save` compilation: `tst/fxdatatest/save_test.hpp` still references removed `SaveFile.party`, `plants`, `inventory`, `version`, and `checksum`, and missing `saveFileCommit` / `saveFileChecksum`. The complete log is `/private/tmp/cgfx-06g-adoption/reports/final-gate-check.log` (SHA256 `eabee950dc88c5db9fef459a489212db38e9417ab98000bb71a50a1f8bbbc0c7`); it stopped before full device execution and final RAM stage; separate shipping RAM passed. No save changes or weakened tests were made.
+- Linked blockers are open `CreatureGathererFX-jp8.2.7` (M1 save fixtures) and new `CreatureGathererFX-1x8` (reconcile the retained legacy `test_battlesession.ino` against compact flow without dropping assertions). `make clean-build-artifacts` found no eligible generated artifacts; the 1.2 GB final-gate build cache remains untouched by policy. Adoption remains applied but uncommitted; bead `CreatureGathererFX-06g` is blocked. No commit or push.
+
+## 2026-10-10 — 62u deep Sol review and engineering priorities
+
+- Updated `AGENTS.md`: correct requested outcomes first, measured firmware size second; reuse, abstraction, general quality and generic safety conventions have no independent priority. Host tools enforce authored-data constraints; shipping code trusts proven internal values. Real gameplay, input, persistence and hardware outcomes remain requirements. Updated the dated 23,488/1,747 checkpoint and clarified metadata reads versus raster transfers.
+- Three parallel read-only Sol reviews delivered `docs/reviews/62u-battle-review.md`, `62u-world-vm-review.md` and `62u-storage-render-review.md`. Consolidation: `docs/firmware-simplification-review.md`. No runtime code, tests, generation, builds or gates changed/run. The existing shipping ELF is a checkpoint and may predate mutable save source; no new flash saving is claimed.
+- Confirmed an outcome defect: SaveController capture/restore copies pointer size rather than generated flag extent. The one-byte array is read/written as two bytes on AVR (eight on host); the inspected ELF places framebuffer byte zero adjacent, and a captured nonzero neighbor violates reserved snapshot validation. Filed detailed deferred priority-zero `8fu`. Deferred epic `1as` contains 17 bounded size experiments; save experiments depend on the flag fix, deeper result compaction on its precursor spikes. No implementation dispatch.
+- Validation: `git diff --check -- AGENTS.md output.md docs/firmware-simplification-review.md docs/reviews` passed. Each new report's `git diff --no-index --check /dev/null <file>` emitted no whitespace errors (exit 1 denotes the added-file difference). Structured Beads check confirms all four `62u` review/policy children closed and proposed implementation tasks actually deferred.
+- Tracked epic wall time approximately 8.8 minutes including parallel reviews; reviewer-reported durations roughly 5/10/4 minutes (approximate, not additive). Gate time 0; implementation time 0. No commit/push or new build caches. Existing M1 and legacy test blockers remain separate.

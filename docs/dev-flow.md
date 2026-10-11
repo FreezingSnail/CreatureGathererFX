@@ -75,6 +75,33 @@ agent. `AGENTS.md` carries the short list.
 - Worker reports carry exact numbers and tails; a build that cannot fit or a failing gate is
   reported BLOCKED with the deficit and options, never as a faked pass.
 
+## Build storage cleanup
+
+- After each completed spike or budget experiment, preview `make clean-build-artifacts`; apply the
+  reviewed cleanup with `make clean-build-artifacts CLEAN_APPLY=1`.
+- The helper only removes Arduino compiler caches and `.o`/`.d` files from the generated sketch
+  copy. It retains reports, source copies, CSV/measurement evidence, save images, and ELFs/HEXes.
+  Unknown paths and scratch clones remain for manual review; there is no unattended cleanup.
+- Keep one selected control ELF and the final candidate ELF with their measurement reports. Remove
+  duplicate generated build copies after their result is recorded.
+- Verify the helper's path and evidence guards with `make test-clean-build-artifacts` when changing
+  its scope.
+
+## Experiment source snapshots
+
+- Never recursively copy the dirty repository into a child directory for a spike or variant. One
+  full repository copy can duplicate all prior builds and experiments, then multiply again per
+  variant. Keep one control source snapshot for the wave; represent each experiment with its exact
+  tracked-source patch, allowlisted untracked source and required generator inputs, measurement
+  report, and chosen ELF.
+- Prefer `git archive` for the committed base, then apply only the reviewed dirty tracked-source
+  patch and copy explicitly required untracked source/generator prerequisites. A filesystem-based
+  snapshot must exclude `build/`, `.battle-carve-spike/`, all scratch/spike work directories,
+  `.git/`, `.beads/`, `.codex/`, and compiler or generator caches.
+- Keep the chosen control ELF and final candidate ELF with their reports. Do not create a full source
+  clone per experiment. When an existing recursive copy is found, measure and report it; preserve
+  unknown source or evidence until the owner decides its disposition.
+
 ## Review checklist (generated data, save, render)
 
 - Generated diff: `make gen` empty diff; manifest valid; `src/fxdata.h` matches the packed image;
