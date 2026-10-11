@@ -7399,3 +7399,17 @@ Patch SHA256 `14847bb512f787f48c3d0f0572bc620b533eaab65832b7870d55f298717f7264`.
 ### Adoption gate: CreatureGathererFX-box.5
 
 `make final-gate BUILD_DIR=build/box-adoption-gate FINAL_GATE_LOG_DIR=build/box-adoption-gate/reports/5 ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens`: PASS. Complete diagnostics retained in `build/box-adoption-gate/reports/5`; one saving per commit.
+
+### Adoption box.6 — initialize the journal through one boot replay (2026-10-11)
+
+Removed the redundant `journalInit()` setup scan. On ordinary startup, `SaveController::load()` enters `storeBoot()` before party seeding or appends; replay sets the tail for valid checkpoints, and `storeFresh()` sets it after erasing fresh/legacy journals. Production `journalAppend()` now refuses an uninitialized tail; the host `TEST` lazy seam and test-only `journalFull()` behavior remain. Torn nonblank-tail refusal, marker-last write/readback, cleanup verification, replay order and 256-entry capacity are unchanged. The current `CGFX_LURE_WEDGE` branch still skips persistent load and party seeding and has no persistent append caller.
+
+Exact shipping flags: `-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X -DCGFX_SHIPPING_NO_USB -fno-inline-small-functions -DCGFX_BATTLE_AUTO_REPLACE=0 -DCGFX_BATTLE_NO_FACTS`. Paired current-main whole-image result: 24,776 B flash / 1,844 B static → 24,524 / 1,844 (−252 flash / 0 static); free flash is 5,172 B and static free is 316 B. The focused stack fixture paints 487 B headroom. The paired `CGFX_LURE_WEDGE` shipping profile also compiles at 23,046 B / 1,844 B. Candidate ELF has no `journalCount` or `journalInit` symbols.
+
+Checks: `make test BUILD_DIR=build/box-adoption-6-host` passed 283,187 native and 258 world assertions; `PATH=/Users/connorfranc/Applications/CreatureGathererTools/bin:$PATH ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens make fxtest-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_journal_boot.ino BUILD_DIR=build/box-adoption-6-focused FXTEST_MS=60000 AVR_FXTEST_CPP_FLAGS='<shipping flags plus -DFX_READ_COUNTER>'` passed the real AVR journal boot suite 284/0 and `test_stack` 4/0, 487 B painted. The device suite covers uninitialized append refusal, fresh boot, checkpoint replay, append-after-boot, torn-tail refusal, cleanup retry, and full 256-tail behavior. Sol approved current-main recovery and Lure Wedge preservation. No full gate or commit is claimed; root gate driver owns that step.
+
+Patch SHA256 `a1ac6f4a3a8c65178cfc75aae4848652fc4af0794f1721320ac84a96a03ab7f4`; artifacts are under `/private/tmp/cgfx-box-adopt-6/artifacts/`. Worker time ~8 min; no generated or packed data changed.
+
+### Adoption gate: CreatureGathererFX-box.6
+
+`make final-gate BUILD_DIR=build/box-adoption-gate FINAL_GATE_LOG_DIR=build/box-adoption-gate/reports/6 ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens`: PASS. Complete diagnostics retained in `build/box-adoption-gate/reports/6`; one saving per commit.
