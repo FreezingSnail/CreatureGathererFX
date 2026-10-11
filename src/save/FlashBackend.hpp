@@ -4,7 +4,6 @@
 
 struct FlashBackend {
     void (*eraseSector)(uint16_t page);
-    void (*writePage)(uint16_t page, const uint8_t *data);
     void (*writeBytes)(uint32_t addr, const uint8_t *data, uint16_t len);
     void (*readBytes)(uint32_t addr, uint8_t *data, uint16_t len);
     bool (*busy)(void);
@@ -32,11 +31,6 @@ namespace flash_backend_detail {
 inline void eraseSector(uint16_t page)
 {
     FX::eraseSaveBlock(page);
-}
-
-inline void writePage(uint16_t page, const uint8_t *data)
-{
-    FX::writeSavePage(page, const_cast<uint8_t *>(data));
 }
 
 __attribute__((noinline)) inline void writeBytes(uint32_t addr, const uint8_t *data, uint16_t len)
@@ -80,7 +74,6 @@ inline bool busy()
 
 inline FlashBackend flash = {
     flash_backend_detail::eraseSector,
-    flash_backend_detail::writePage,
     flash_backend_detail::writeBytes,
     flash_backend_detail::readBytes,
     flash_backend_detail::busy,

@@ -7361,3 +7361,15 @@ Current patch SHA256 `2a1a34fcfc4d7ad309424af275a05fa4adf001d19f9eaf0729066eb5a6
 ### Adoption gate: CreatureGathererFX-box.2
 
 `make final-gate BUILD_DIR=build/box-adoption-gate FINAL_GATE_LOG_DIR=build/box-adoption-gate/reports/2 ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens`: PASS. Complete diagnostics retained in `build/box-adoption-gate/reports/2`; one saving per commit.
+
+### Adoption box.3 — remove unused FlashBackend page-write slot (2026-10-11)
+
+On current main after box.2 (`355c629`), removed only `FlashBackend::writePage`, its device thunk/table entry, and fake thunk/initializer entry. Byte writes, erase/read/busy and fake interrupted-write behavior remain. Shipping baseline: 25,054 B flash / 1,844 B static; candidate: 24,976 / 1,844 (−78 B / 0 B); painted stack headroom 505 B. Flags: `-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X -DCGFX_SHIPPING_NO_USB -fno-inline-small-functions -DCGFX_BATTLE_AUTO_REPLACE=0`.
+
+Checks: `make test BUILD_DIR=build/box-adoption-3-host` passed 283,187 native and 258 world assertions; `make fxtest-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_save.ino BUILD_DIR=build/box-adoption-3-device` with shipping flags plus `-DFX_READ_COUNTER` passed M1 save 284/0 and test_stack 4/0, painted 505 B; `make ram BUILD_DIR=build/box-adoption-3-before` and `...-after` with exact shipping flags measured 25,054/1,844 → 24,976/1,844. Worker time about 1.5 min, excluding gate wait. Sol current-main read-only review requested before handoff.
+
+Patch SHA256 `901a1c0f94ffd59edb84544bb1102b8824e7a086909cf3669b2c0994536ee9a1`; ELF SHA256 `01f0d6eac94cc6189f9cb9777b2804465b08838b3e0a209b06541056092c96a9`. Artifacts under `/private/tmp/cgfx-box-adopt-3/artifacts/`.
+
+### Adoption gate: CreatureGathererFX-box.3
+
+`make final-gate BUILD_DIR=build/box-adoption-gate FINAL_GATE_LOG_DIR=build/box-adoption-gate/reports/3 ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens`: PASS. Complete diagnostics retained in `build/box-adoption-gate/reports/3`; one saving per commit.
