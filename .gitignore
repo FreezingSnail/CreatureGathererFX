@@ -37,6 +37,9 @@ tst/fxdatatest/test_*/
 # Make target-owned outputs
 dist/
 
+# Isolated research spikes (never staged)
+.battle-carve-spike/
+
 # bd worktrees
 harness/workspaces/ifrit/
 harness/workspaces/shiva/
