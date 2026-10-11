@@ -1,4 +1,4 @@
-.PHONY: help setup doctor plant test test-debug testvm testvm-debug sim sim-test gen gen-data gen-sprites gen-fixtures pack full build mini ram run dev arena-demo check final-gate verify-generated test-manifest test-generated-libs test-doctor test-fxtest-ram test-avr-build-budget test-world-script-profile world-script-profile-check fxtest fxtest-headless fxtest-spike fxtest-preflight fxtest-headless-preflight fxtest-build fxtest-run new-fxtest
+.PHONY: help setup doctor plant test test-debug testvm testvm-debug sim sim-test gen gen-data gen-sprites gen-fixtures pack full build mini ram run dev arena-demo check final-gate verify-generated test-manifest test-generated-libs test-doctor test-fxtest-ram test-avr-build-budget test-world-script-profile world-script-profile-check fxtest fxtest-headless fxtest-spike fxtest-preflight fxtest-headless-preflight fxtest-build fxtest-run new-fxtest clean-build-artifacts test-clean-build-artifacts
 
 # Public command API. Override tool, board, and output variables per workspace/CI.
 CXX ?= g++
@@ -89,6 +89,8 @@ help:
 		'  test-generated-libs check generated libs against the packed image; prerequisite: $(CXX)' \
 		'  test-pack-parity verify native packed-image SHA-256 baseline' \
 		'  test-doctor run permanent setup-diagnostic tests' \
+		'  clean-build-artifacts preview generated Arduino cache cleanup; add CLEAN_APPLY=1 to delete' \
+		'  test-clean-build-artifacts exercise cleanup safety in isolated build fixtures' \
 		'  test-fxtest-ram exercise the fail-closed device ELF static-RAM guard' \
 		'  fxtest   alias for fxtest-headless; skips only when ARDENS is unset' \
 		'  fxtest-headless  run every FX device sketch through Ardens serial capture; blocks unsupported Ardens' \
@@ -377,6 +379,15 @@ world-script-profile-check: $(WORLD_SCRIPT_PROFILE_BIN) $(WORLD_SCRIPT_PROFILE_I
 
 test-doctor:
 	./tools/tests/doctor_test.sh
+
+clean-build-artifacts:
+	@case "$(CLEAN_APPLY)" in \
+		1) ./tools/clean-build-artifacts.sh --apply ;; \
+		*) ./tools/clean-build-artifacts.sh ;; \
+	esac
+
+test-clean-build-artifacts:
+	@./tools/clean-build-artifacts_test.sh
 
 test-fxtest-ram:
 	./tools/tests/fxtest-ram_test.sh
