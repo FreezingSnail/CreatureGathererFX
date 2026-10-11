@@ -7373,3 +7373,15 @@ Patch SHA256 `901a1c0f94ffd59edb84544bb1102b8824e7a086909cf3669b2c0994536ee9a1`;
 ### Adoption gate: CreatureGathererFX-box.3
 
 `make final-gate BUILD_DIR=build/box-adoption-gate FINAL_GATE_LOG_DIR=build/box-adoption-gate/reports/3 ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens`: PASS. Complete diagnostics retained in `build/box-adoption-gate/reports/3`; one saving per commit.
+
+### Adoption box.4 — remove redundant attack snapshots (2026-10-11)
+
+On current main after box.3 (`61bbd635`), removed the two inner `captureAfter` calls in `resolveAttack`; outer `resolveAction` capture/KO/outcome handling and self-hit, effects, RNG and facts remain in their original order. Shipping baseline is 24,976 B flash / 1,844 B static; candidate is 24,968 / 1,844 (−8 B / 0 B), painted headroom 505 B. Exact shipping flags: `-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X -DCGFX_SHIPPING_NO_USB -fno-inline-small-functions -DCGFX_BATTLE_AUTO_REPLACE=0`.
+
+Checks: `make test BUILD_DIR=build/box-adoption-4-host` passed 283,187 native and 258 world; `make fxtest-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_battleutility.ino BUILD_DIR=build/box-adoption-4-device` with shipping flags plus `-DFX_READ_COUNTER` passed battleutility47/0 and stack4/0, painted505B; `make ram BUILD_DIR=build/box-adoption-4-after AVR_SHIPPING_CPP_FLAGS='<shipping flags>'` measured 24,968/1,844. Paired baseline is the immediately preceding current-main 24,976/1,844 build. Sol read-only review requested due to combat resolution path; no generation changed. Worker time about 1.5 min, excluding root gate wait.
+
+Patch SHA256 `f33160d5a990310597d44d0e58eb38b797b0ade9457cb77a01b0aa4c680c9d48`; ELF SHA256 `7b4483c01d9433a50644ef4d5ae32e34f9a669cd51699e46f026225b3319a5a6`. Artifacts under `/private/tmp/cgfx-box-adopt-4/artifacts/`.
+
+### Adoption gate: CreatureGathererFX-box.4
+
+`make final-gate BUILD_DIR=build/box-adoption-gate FINAL_GATE_LOG_DIR=build/box-adoption-gate/reports/4 ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens`: PASS. Complete diagnostics retained in `build/box-adoption-gate/reports/4`; one saving per commit.
