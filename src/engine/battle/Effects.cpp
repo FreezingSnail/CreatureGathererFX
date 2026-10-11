@@ -47,6 +47,7 @@ bool statForEffect(Effect effect, StatType &stat, int8_t &delta)
     return true;
 }
 
+#ifndef CGFX_BATTLE_NO_FACTS
 bool appendFact(ActionResult &out, Effect effect, Side side, uint8_t value)
 {
     for (uint8_t i = 0; i < 4; ++i) {
@@ -60,6 +61,7 @@ bool appendFact(ActionResult &out, Effect effect, Side side, uint8_t value)
     }
     return false;
 }
+#endif
 
 uint8_t tickAmount(const Combatant &combatant, Effect effect)
 {
@@ -91,6 +93,7 @@ bool applyTick(Combatant &combatant, Effect effect, uint8_t &after)
     return after != before;
 }
 
+#ifndef CGFX_BATTLE_NO_FACTS
 bool rollMoveEffectAtRate(BattleState &state, Side attacker, Effect effect,
                           Rng &rng, Consequence &out, uint8_t rate)
 {
@@ -107,6 +110,7 @@ bool rollMoveEffectAtRate(BattleState &state, Side attacker, Effect effect,
     const Side target = isSelfEffect(effect) ? attacker : otherSide(attacker);
     return applyEffect(state, target, effect, out);
 }
+#endif
 
 } // namespace
 
@@ -122,7 +126,11 @@ uint8_t effectRate(uint8_t effectId)
 #endif
 }
 
+#ifdef CGFX_BATTLE_NO_FACTS
+bool applyEffect(BattleState &state, Side target, Effect effect)
+#else
 bool applyEffect(BattleState &state, Side target, Effect effect, Consequence &out)
+#endif
 {
     if (!validSide(target) || !validEffect(effect) || effect == Effect::NONE) {
         return false;
@@ -138,9 +146,11 @@ bool applyEffect(BattleState &state, Side target, Effect effect, Consequence &ou
         if (before == after) {
             return false;
         }
+#ifndef CGFX_BATTLE_NO_FACTS
         out.effect = effect;
         out.side = static_cast<uint8_t>(target);
         out.value = static_cast<uint8_t>(after + 3);
+#endif
         return true;
     }
 
@@ -152,12 +162,25 @@ bool applyEffect(BattleState &state, Side target, Effect effect, Consequence &ou
         const uint8_t slot = combatant.status.effects[0] == effect ? 0 : 1;
         combatant.effectTurns |= static_cast<uint8_t>(3u << (slot * 2));
     }
+#ifndef CGFX_BATTLE_NO_FACTS
     out.effect = effect;
     out.side = static_cast<uint8_t>(target);
     out.value = 0;
+#endif
     return true;
 }
 
+#ifdef CGFX_BATTLE_NO_FACTS
+bool rollMoveEffect(BattleState &state, Side attacker, Effect effect, Rng &rng)
+{
+    if (!validEffect(effect) || effect == Effect::NONE) return false;
+    if (rng.roll(100) >= 100) return false;
+    const Side target = isSelfEffect(effect) ? attacker : otherSide(attacker);
+    return applyEffect(state, target, effect);
+}
+
+void tickEffects(BattleState &state)
+#else
 bool rollMoveEffect(BattleState &state, Side attacker, Effect effect,
                     Rng &rng, Consequence &out)
 {
@@ -183,6 +206,7 @@ bool rollMoveEffect(BattleState &state, Side attacker, Effect effect,
 }
 
 void tickEffects(BattleState &state, ActionResult &out)
+#endif
 {
     for (uint8_t sideIndex = 0; sideIndex < 2; ++sideIndex) {
         Combatant &combatant = state.active[sideIndex];
@@ -192,7 +216,9 @@ void tickEffects(BattleState &state, ActionResult &out)
             uint8_t after = 0;
             if ((effect == Effect::SAPPD || effect == Effect::INFSED) &&
                 applyTick(combatant, effect, after)) {
+#ifndef CGFX_BATTLE_NO_FACTS
                 appendFact(out, effect, side, after);
+#endif
             }
             const uint8_t remaining = (combatant.effectTurns >> (slot * 2)) & 3;
             if (remaining != 0) {

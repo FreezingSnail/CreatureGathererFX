@@ -24,16 +24,20 @@ using EffectRateFn = uint8_t (*)(uint8_t effectId);
 
 uint8_t effectRate(uint8_t effectId);
 
+#ifdef CGFX_BATTLE_NO_FACTS
+bool applyEffect(BattleState &state, Side target, Effect effect);
+bool rollMoveEffect(BattleState &state, Side attacker, Effect effect, Rng &rng);
+void tickEffects(BattleState &state);
+#else
 bool applyEffect(BattleState &state, Side target, Effect effect, Consequence &out);
-
 bool rollMoveEffect(BattleState &state, Side attacker, Effect effect,
                     Rng &rng, Consequence &out);
 bool rollMoveEffect(BattleState &state, Side attacker, Effect effect,
                     Rng &rng, Consequence &out, EffectRateFn rateFn);
 bool rollMoveEffect(BattleState &state, Side attacker, Effect effect,
                     Rng &rng, Consequence &out, uint8_t rate);
-
 void tickEffects(BattleState &state, ActionResult &out);
+#endif
 TurnGate gateTurn(BattleState &state, Side side, Rng &rng);
 
 } // namespace battle

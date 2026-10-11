@@ -52,11 +52,13 @@ inline void resetActionResult(ActionResult &result) {
         result.hpBefore[side] = result.hpAfter[side] = 0;
     }
     result.progressBefore = result.progressAfter = 0;
+#ifndef CGFX_BATTLE_NO_FACTS
     for (uint8_t i = 0; i < 4; ++i) {
         result.consequences[i].effect = Effect::NONE;
         result.consequences[i].side = 255;
         result.consequences[i].value = 0;
     }
+#endif
 }
 
 static_assert(sizeof(Consequence) == 3, "semantic consequence contract");

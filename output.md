@@ -7385,3 +7385,17 @@ Patch SHA256 `f33160d5a990310597d44d0e58eb38b797b0ade9457cb77a01b0aa4c680c9d48`;
 ### Adoption gate: CreatureGathererFX-box.4
 
 `make final-gate BUILD_DIR=build/box-adoption-gate FINAL_GATE_LOG_DIR=build/box-adoption-gate/reports/4 ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens`: PASS. Complete diagnostics retained in `build/box-adoption-gate/reports/4`; one saving per commit.
+
+### Adoption box.5 — omit unused battle facts in shipping (2026-10-11)
+
+Kept the 28-byte `ActionResult` and detailed host/presenter APIs. `CGFX_BATTLE_NO_FACTS` skips only consequence reset/writes and uses no-output move/tick effect paths; effects, ordered RNG draws, HP/timers, final snapshots, KO flags and outcome handling remain. Shipping flags now include the macro. The focused AVR `test_battle_facts` build alone receives it; normal FX test suites keep the caller's `AVR_FXTEST_BUILD_PROPERTIES`. Custom facts-suite build properties have their own quoted `AVR_FXTEST_NO_FACTS_BUILD_PROPERTIES` override. The fixture has a compile-time guard for that profile, and the existing host effects suite asserts all authored rates through `CONCUSED` are 100.
+
+Exact shipping flags: `-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X -DCGFX_SHIPPING_NO_USB -fno-inline-small-functions -DCGFX_BATTLE_AUTO_REPLACE=0 -DCGFX_BATTLE_NO_FACTS`. Paired current-main whole-image result: 24,968 B flash / 1,844 B static → 24,776 / 1,844 (−192 flash / 0 static). Candidate has 4,920 B flash free and 316 B static free; test_stack paints 489 B headroom.
+
+Checks: `make test BUILD_DIR=build/box-adoption-5-host` passed 283,187 native and 258 world assertions; `make test-doctor BUILD_DIR=build/box-adoption-5-doctor` passed; `sh tools/tests/make-contract-test.sh` passed after its arena fixture was given the generated-image placeholders it requires. Actual device command `PATH=/Users/connorfranc/Applications/CreatureGathererTools/bin:$PATH ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens make fxtest-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_battle_facts.ino BUILD_DIR=build/box-adoption-5-focused` passed 16/0; paired `test_stack` passed 4/0, 489 B painted. Shipping and focused `build.options.json` confirm the exact macro paths. Sol approved mechanics and the quoting-safe Makefile profile split. No integrated gate or commit is claimed; root gate driver owns that step.
+
+Patch SHA256 `14847bb512f787f48c3d0f0572bc620b533eaab65832b7870d55f298717f7264`. Baseline/candidate shipping ELFs and focused device/stack ELFs are under `/private/tmp/cgfx-box-adopt-5/artifacts/`. Worker time ~14 min; no generated or packed data changed.
+
+### Adoption gate: CreatureGathererFX-box.5
+
+`make final-gate BUILD_DIR=build/box-adoption-gate FINAL_GATE_LOG_DIR=build/box-adoption-gate/reports/5 ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens`: PASS. Complete diagnostics retained in `build/box-adoption-gate/reports/5`; one saving per commit.
