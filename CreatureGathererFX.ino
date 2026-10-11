@@ -47,7 +47,9 @@ Player player = Player();
 
 PlantGameState plants;
 
+#if CGFX_DIALOG_QUEUE_ENABLED
 DialogMenu dialogMenu;
+#endif
 ScriptVm vm;
 uint8_t *buffer;
 
@@ -213,7 +215,7 @@ void run() {
         SaveController::advance();
         return;
     }
-#if defined(CGFX_FULL_WORLD_VM) || defined(TEST)
+#if defined(CGFX_FULL_WORLD_VM) || defined(TEST) || defined(FX_READ_COUNTER)
     if (dialogMenu.peek()) {
         dialogMenu.drawPopMenu();
     } else
