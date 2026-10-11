@@ -6,10 +6,11 @@
 struct MapWordFixture { uint16_t index; uint16_t word; };
 const MapWordFixture mapWordFixtures[] PROGMEM = {
     { 0, 0x0007 },
-    { 65532, 0x0212 },
-    { 521, 0x0513 },
+    { 521, 0x8221 },
+    { 521, 0x8221 },
+    { 522, 0x4513 },
+    { 526, 0x1227 },
     { 65533, 0x0A0F },
     { 65534, 0x0E10 },
-    { 65535, 0x4611 },
 };
-constexpr uint8_t mapWordFixtureCount = 6;
+constexpr uint8_t mapWordFixtureCount = 7;

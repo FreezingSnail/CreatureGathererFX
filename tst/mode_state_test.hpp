@@ -18,7 +18,7 @@ extern Player player;
 
 void ModeStateLayoutTest(TestSuite &suite) {
     Test test(__func__);
-    test.assert(sizeof(WorldTransient), static_cast<size_t>(191),
+    test.assert(sizeof(WorldTransient), static_cast<size_t>(193),
                 "world payload is script, property window, and cache");
     test.assert(offsetof(WorldTransient, propertyWindow), static_cast<size_t>(128),
                 "property window follows the 128-byte script slot");

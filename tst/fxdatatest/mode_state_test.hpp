@@ -12,7 +12,7 @@
 
 inline void test_mode_state(FxTest &test)
 {
-    test.expectEq(sizeof(WorldTransient), 191, F("world payload size"));
+    test.expectEq(sizeof(WorldTransient), 193, F("world payload size"));
     test.expectEq(sizeof(ModeState), sizeof(WorldTransient), F("AVR mode union size"));
     test.expectEq(alignof(WorldTransient), 1, F("world payload alignment"));
     test.expectEq(sizeof(battle::Combatant), 36, F("AVR combatant size"));

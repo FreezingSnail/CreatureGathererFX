@@ -11,7 +11,14 @@ constexpr uint8_t SLOT_COUNT = 10;
 constexpr uint8_t TABLE_BYTES = SLOT_COUNT + 2;
 constexpr uint8_t ZONE_BYTES = 10;
 constexpr uint8_t ZONE_COUNT = 8;
-constexpr uint8_t TABLE_COUNT = 1;
+// Zone 0 owns the pocket's lure-biased group: one base wild table plus four
+// lure tables. Selection bounds every lure offset against this count.
+constexpr uint8_t TABLE_COUNT = 5;
+constexpr uint8_t NIBBLE_COUNT = 4;
+
+// Lure table offset meaning "no active lure"; select() then uses the cached
+// base table. Mirrors LureZone::INERT_OFFSET without coupling the two headers.
+constexpr uint8_t INERT_OFFSET = 0xFF;
 
 constexpr uint8_t CACHE_VALID_OFFSET = TABLE_BYTES;
 constexpr uint8_t CACHE_CHUNK_LOW_OFFSET = CACHE_VALID_OFFSET + 1;
@@ -21,7 +28,9 @@ constexpr uint8_t CACHE_TABLE_COUNT_OFFSET = CACHE_VALID_OFFSET + 4;
 constexpr uint8_t CACHE_TYPE_MASK_OFFSET = CACHE_VALID_OFFSET + 5;
 constexpr uint8_t CACHE_LEVEL_OFFSET = CACHE_VALID_OFFSET + 6;
 constexpr uint8_t CACHE_TABLE_INDEX_OFFSET = CACHE_VALID_OFFSET + 7;
-constexpr uint8_t CACHE_BYTES = CACHE_TABLE_INDEX_OFFSET + 1;
+// Two bytes pack the zone's four lure-slot nibbles read at zone load.
+constexpr uint8_t CACHE_NIBBLES_OFFSET = CACHE_TABLE_INDEX_OFFSET + 1;
+constexpr uint8_t CACHE_BYTES = CACHE_NIBBLES_OFFSET + 2;
 
 using Rng = uint8_t (*)(uint8_t lower, uint8_t upper);
 
@@ -31,15 +40,19 @@ struct Decision {
     uint8_t slot;
 };
 
-// Cache one zone's base wild table. The only FX reads happen inside this
-// transition operation; select() is deliberately RAM-only for step dispatch.
+// Cache one zone's base wild table at load, a chunk-change transition. select()
+// reuses the cached base table with no FX reads; a lure-biased pick fetches its
+// table once at battle entry, keeping the inert step path RAM-only.
 bool load(uint8_t *cache, uint16_t chunkId);
 void invalidate(uint8_t *cache);
 
 // Select exactly one of the ten table slots and apply the cached level rule.
+// `lureTableOffset` is LureZone::tableOffset(): a lure type (0..3) selects a
+// lure-biased table through the cached nibbles, while INERT_OFFSET keeps the
+// base table. An out-of-range nibble fails closed.
 // Empty party slots contribute level zero while the divisor remains PARTY_SIZE.
 bool select(const uint8_t *cache, const Creature party[PARTY_SIZE], Rng rng,
-            Decision &out);
+            uint8_t lureTableOffset, Decision &out);
 uint8_t partyAverageLevel(const Creature party[PARTY_SIZE]);
 
 #ifdef TEST
@@ -48,5 +61,5 @@ void setRngForTest(Rng rng);
 
 } // namespace Encounter
 
-static_assert(Encounter::CACHE_BYTES == 20,
+static_assert(Encounter::CACHE_BYTES == 22,
               "encounter cache must fit the world transient budget");

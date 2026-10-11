@@ -1,11 +1,17 @@
 #pragma once
 
+#include <string.h>
+
 #include "test.hpp"
 #include "host/Arduboy2.h"
+#include "src/FXDataFake.hpp"
 
 #include "../src/engine/world/StepEvent.hpp"
 #include "../src/engine/world/TilePropertyWindow.hpp"
 #include "../src/engine/world/World.hpp"
+#include "../src/engine/world/LureZone.hpp"
+#include "../src/engine/world/Encounter.hpp"
+#include "../src/fxdata.h"
 #include "../src/globals.hpp"
 
 namespace worldMovementFake {
@@ -30,6 +36,137 @@ static void fillStepWindow(WorldTransient &world, uint8_t x, uint8_t y,
     for (uint8_t row = 0; row < TilePropertyWindow::WINDOW_HEIGHT; ++row) {
         window.writeRow(row, cells[row]);
     }
+}
+
+namespace lureStepDetail {
+uint8_t forcedRoll = 0;
+uint8_t forcedRng(uint8_t, uint8_t) { return forcedRoll; }
+
+// Every window cell is walkable and encounter-tagged so the step hook reaches
+// the roll gate at the destination tile.
+void fillEncounterWindow(WorldTransient &world, uint8_t x, uint8_t y) {
+    uint16_t cells[TilePropertyWindow::WINDOW_HEIGHT][TilePropertyWindow::WINDOW_WIDTH];
+    for (uint8_t row = 0; row < TilePropertyWindow::WINDOW_HEIGHT; ++row) {
+        for (uint8_t col = 0; col < TilePropertyWindow::WINDOW_WIDTH; ++col) {
+            cells[row][col] = TileProps::packTile(
+                1, TileProps::PROP_WALKABLE | TileProps::PROP_ENCOUNTER);
+        }
+    }
+    TilePropertyWindow window(world.propertyWindow);
+    window.begin(static_cast<int16_t>(x) - 3, static_cast<int16_t>(y) - 2);
+    for (uint8_t row = 0; row < TilePropertyWindow::WINDOW_HEIGHT; ++row) {
+        window.writeRow(row, cells[row]);
+    }
+}
+
+// Seed a valid inert zone cache so select() succeeds without any FX read.
+void seedInertZone(WorldTransient &world) {
+    uint8_t *cache = world.zoneTableCache;
+    memset(cache, 0, Encounter::CACHE_BYTES);
+    for (uint8_t slot = 0; slot < Encounter::SLOT_COUNT; ++slot) cache[slot] = slot;
+    cache[Encounter::SLOT_COUNT] = 2;
+    cache[Encounter::SLOT_COUNT + 1] = 5;
+    cache[Encounter::CACHE_VALID_OFFSET] = 1;
+    cache[Encounter::CACHE_TABLE_BASE_OFFSET] = 0;
+    cache[Encounter::CACHE_TABLE_COUNT_OFFSET] = 1;
+    cache[Encounter::CACHE_TABLE_INDEX_OFFSET] = 0;
+}
+
+// Author chunk 1 and chunk 33 via the FX fake so onChunkChange's load() result
+// drives the lure keep/clear decision.
+void prepareLureZones() {
+    fxDataFake::dataBase = EncounterFXData::zoneDefs;
+    std::memset(fxDataFake::dataBytes, 0, sizeof(fxDataFake::dataBytes));
+    const uint16_t chunks[2] = {1, 33};
+    for (uint8_t zone = 0; zone < 2; ++zone) {
+        const uint8_t o = static_cast<uint8_t>(zone * Encounter::ZONE_BYTES);
+        fxDataFake::dataBytes[o] = static_cast<uint8_t>(chunks[zone]);
+        fxDataFake::dataBytes[o + 1] = static_cast<uint8_t>(chunks[zone] >> 8);
+        fxDataFake::dataBytes[o + 2] = 0;
+        fxDataFake::dataBytes[o + 3] = Encounter::TABLE_COUNT;
+        fxDataFake::dataBytes[o + 4] = 1;
+        fxDataFake::dataBytes[o + 5] = 1;
+        fxDataFake::dataBytes[o + 6] = 2;
+        fxDataFake::dataBytes[o + 7] = 3;
+        fxDataFake::dataBytes[o + 8] = 4;
+        fxDataFake::dataBytes[o + 9] = 0;
+    }
+    for (uint8_t zone = 2; zone < Encounter::ZONE_COUNT; ++zone) {
+        const uint8_t o = static_cast<uint8_t>(zone * Encounter::ZONE_BYTES);
+        fxDataFake::dataBytes[o] = 255;
+        fxDataFake::dataBytes[o + 1] = 255;
+    }
+    const uint8_t tableOffset =
+        static_cast<uint8_t>(Encounter::ZONE_COUNT * Encounter::ZONE_BYTES);
+    for (uint8_t table = 0; table < Encounter::TABLE_COUNT; ++table) {
+        const uint8_t base = static_cast<uint8_t>(
+            tableOffset + table * Encounter::TABLE_BYTES);
+        for (uint8_t slot = 0; slot < Encounter::SLOT_COUNT; ++slot)
+            fxDataFake::dataBytes[base + slot] = slot;
+        fxDataFake::dataBytes[base + Encounter::SLOT_COUNT] = 2;
+        fxDataFake::dataBytes[base + Encounter::SLOT_COUNT + 1] = 5;
+    }
+    fxDataFake::readCount = 0;
+}
+} // namespace lureStepDetail
+
+void LureStepTest(TestSuite &suite) {
+    using namespace lureStepDetail;
+    Test test(__func__);
+    StepEventTest::setEncounterRng(forcedRng);
+
+    // Decay and expiry through the step hook.
+    gameState.state = GameState_t::WORLD;
+    gameState.playerLocation = 0x0209;
+    TilePropertyWindow::invalidate(worldState().propertyWindow);
+    LureZone::clear();
+    LureZone::deposit(LureZone::lureId(0, 0));
+    const uint8_t charge = LureZone::charge();
+    test.assert(charge, static_cast<uint8_t>(4), "tier-zero deposit charge");
+    for (uint8_t step = 0; step + 1 < charge; ++step) onStep(0x0209);
+    test.assert(LureZone::charge(), static_cast<uint8_t>(1),
+                "step hook decays one charge per step");
+    test.assert(LureZone::active(), true, "lure stays active before expiry");
+    onStep(0x0209);
+    test.assert(LureZone::active(), false, "step hook expires the lure");
+
+    // 25% gate: a high roll refuses, a low roll enters battle.
+    player.basic();
+    for (uint8_t slot = 1; slot < PARTY_SIZE; ++slot) player.party[slot].level = 0;
+    player.party[0].level = 5;
+    seedInertZone(worldState());
+    fillEncounterWindow(worldState(), 9, 2);
+    gameState.state = GameState_t::WORLD;
+    gameState.playerLocation = 0x0209;
+    forcedRoll = 99;
+    onStep(0x0209);
+    test.assert(gameState.state, GameState_t::WORLD,
+                "encounter roll above 25% is refused");
+    forcedRoll = 0;
+    onStep(0x0209);
+    test.assert(gameState.state, GameState_t::BATTLE,
+                "encounter roll below 25% enters battle");
+    exitBattle();
+
+    // A lure belongs to the authored zones: crossing the pocket's chunk 1 and
+    // chunk 33 boundary keeps it, while a chunk with no authored zone clears it.
+    prepareLureZones();
+    gameState.state = GameState_t::WORLD;
+    gameState.playerLocation = 0x0209;
+    LureZone::clear();
+    LureZone::deposit(LureZone::lureId(1, 0));
+    test.assert(LureZone::zoneChunk(), Chunk::chunkOfLocation(0x0209),
+                "lure records its deposit chunk");
+    WorldEngine::setPos(worldState(), 9, 4);
+    test.assert(Chunk::chunkOfLocation(gameState.playerLocation),
+                static_cast<uint16_t>(33), "crossing lands in chunk 33");
+    test.assert(LureZone::active(), true, "lure survives the chunk 1 -> 33 crossing");
+    WorldEngine::setPos(worldState(), 16, 2);
+    test.assert(Chunk::chunkOfLocation(gameState.playerLocation),
+                static_cast<uint16_t>(2), "crossing lands in an unauthored chunk");
+    test.assert(LureZone::active(), false, "unauthored chunk clears the lure");
+
+    suite.addTest(test);
 }
 
 void StepSuite(TestRunner &runner) {
@@ -150,5 +287,6 @@ void StepSuite(TestRunner &runner) {
                 "128th step advances plant stages");
 
     suite.addTest(test);
+    LureStepTest(suite);
     runner.addTestSuite(suite);
 }

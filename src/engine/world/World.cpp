@@ -2,11 +2,16 @@
 #include "WorldCollision.hpp"
 #include "StepEvent.hpp"
 #include "Encounter.hpp"
+#include "LureZone.hpp"
+#include "TileProps.hpp"
+#include "../../item/Inventory.hpp"
+#include "../../item/ItemIds.hpp"
+#include "../../lib/FxRead.hpp"
+#include "../../fxdata.h"
 
 #ifndef TEST
 #include "../../common.hpp"
 #include "../../globals.hpp"
-#include "../../lib/FxRead.hpp"
 #else
 #include <Arduboy2.h>
 #include "../../GameState.hpp"
@@ -18,6 +23,7 @@ extern void worldInteractionReadScript(uint24_t address, uint8_t *buffer, uint8_
 extern void worldInteractionRunScript(uint8_t *script, uint16_t currentTile, uint16_t targetTile);
 extern uint24_t worldInteractionScriptsBase();
 extern uint8_t worldMovementButtons();
+extern uint8_t worldPickerButtons();
 #endif
 
 namespace {
@@ -103,7 +109,6 @@ bool interactionJustPressedA() {
     return arduboy.justPressed(A_BUTTON);
 #endif
 }
-
 bool interactionDialogActive() {
 #ifdef TEST
     return worldInteractionDialogActive();
@@ -182,6 +187,23 @@ uint8_t movementButtons() {
     return buttons;
 #endif
 }
+
+uint8_t pickerButtons() {
+#ifdef TEST
+    return worldPickerButtons();
+#else
+    uint8_t buttons = 0;
+    if (arduboy.justPressed(UP_BUTTON)) buttons |= LureZone::PICKER_BTN_UP;
+    if (arduboy.justPressed(DOWN_BUTTON)) buttons |= LureZone::PICKER_BTN_DOWN;
+    if (arduboy.justPressed(A_BUTTON)) buttons |= LureZone::PICKER_BTN_A;
+    if (arduboy.justPressed(B_BUTTON)) buttons |= LureZone::PICKER_BTN_B;
+    return buttons;
+#endif
+}
+
+// The pocket box (tsx id 544) carries PROP_SPARE and the plant (tsx id 550)
+// carries PROP_PLANTABLE; both are read from the RAM property window so the
+// A-press hooks never add FX reads on top of the single VM slot read.
 }
 
 void WorldEngine::init(WorldTransient &world) {
@@ -279,6 +301,11 @@ void WorldEngine::inputFromButtons(WorldTransient &world, uint8_t buttons) {
 
 void WorldEngine::runMap(WorldTransient &world) {
     syncFromLocation(world);
+    // A deposited material picker freezes world movement while it is open.
+    if (LureZone::pickerOpen()) {
+        LureZone::pickerInput(pickerButtons());
+        return;
+    }
     if (interactionDialogActive()) {
         if (interactionJustPressedA()) popInteractionDialog();
     } else if (moving(world.motion) && moveable(world)) {
@@ -287,10 +314,11 @@ void WorldEngine::runMap(WorldTransient &world) {
         const uint16_t beforeInteract = gameState.playerLocation;
         interact();
         if (gameState.playerLocation != beforeInteract) syncFromLocation(world);
-        if (!interactionDialogActive()) input(world);
+        if (!interactionDialogActive() && !LureZone::pickerOpen()) input(world);
         // Match the previous sketch path: the first animation pixel is applied
         // on the same frame that accepts the direction, for 16 ticks per tile.
-        if (!interactionDialogActive() && moving(world.motion) && moveable(world)) {
+        if (!interactionDialogActive() && !LureZone::pickerOpen() &&
+            moving(world.motion) && moveable(world)) {
             moveChar(world);
         }
     }
@@ -338,11 +366,16 @@ void WorldEngine::beginMoveForTest(WorldTransient &world, Direction value) {
 #endif
 
 void WorldEngine::onChunkChange(WorldTransient &world, uint16_t newChunk) {
+    // A lure belongs to the authored zones, not one chunk: crossing between the
+    // pocket's chunk 1 and chunk 33 keeps it, while entering a chunk with no
+    // authored zone (load() returns false) clears it before the new zone's
+    // encounter table takes over.
     if (!Chunk::validChunkId(newChunk)) {
         Encounter::invalidate(world.zoneTableCache);
+        LureZone::clear();
         return;
     }
-    Encounter::load(world.zoneTableCache, newChunk);
+    if (!Encounter::load(world.zoneTableCache, newChunk)) LureZone::clear();
 }
 
 void WorldEngine::encounter() {
@@ -374,6 +407,27 @@ void WorldEngine::interact() {
 
     const uint16_t playerChunk = Chunk::chunkOfLocation(playerTile);
     if (!Chunk::validChunkId(playerChunk)) return;
+
+    // Faced-tile props come from the RAM property window (the same storage as
+    // collision), so the box and plant hooks add no FX reads on the A press.
+    uint8_t targetProps = 0;
+    bool targetOccupied = false;
+    const int16_t targetX = static_cast<uint8_t>(targetTile);
+    const int16_t targetY = static_cast<uint8_t>(targetTile >> 8);
+    if (TilePropertyWindow(world.propertyWindow)
+            .lookup(targetX, targetY, targetProps, targetOccupied) &&
+        targetOccupied) {
+        if ((targetProps & TileProps::PROP_SPARE) != 0) {
+            LureZone::openPicker();
+            return;
+        }
+        if ((targetProps & TileProps::PROP_PLANTABLE) != 0) {
+            item::inventoryAdd(LureZone::inventory(), item::ItemKind::Lure,
+                               item::lureId(0, 0), 1);
+            LureZone::showMessage(lureTextGathered, 45, 40);
+            return;
+        }
+    }
 
     // The 128-byte script slot overlays WorldMotion. Preserve the movement
     // cursor and facing across execution; message dialogs can pause the world

@@ -4,6 +4,7 @@
 
 #include "test.hpp"
 #include "../src/engine/world/Encounter.hpp"
+#include "../src/engine/world/LureZone.hpp"
 #include "../src/engine/world/StepEvent.hpp"
 #include "../src/engine/world/TilePropertyWindow.hpp"
 #include "../src/engine/world/World.hpp"
@@ -18,6 +19,16 @@ uint8_t forcedRoll = 0;
 uint8_t rngCalls = 0;
 uint8_t lastLower = 0;
 uint8_t lastUpper = 0;
+
+// Mirrors the authored zone-0 tables: base wild mix plus four distinct
+// lure-biased groups, all species below the 32-entry store.
+constexpr uint8_t kFixtureTables[Encounter::TABLE_COUNT][Encounter::SLOT_COUNT] = {
+    {0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
+    {10, 11, 12, 13, 14, 15, 16, 17, 18, 19},
+    {20, 21, 22, 23, 24, 25, 26, 27, 28, 29},
+    {30, 31, 0, 1, 2, 3, 4, 5, 6, 7},
+    {8, 9, 10, 11, 12, 13, 14, 15, 16, 17}
+};
 
 uint8_t forcedRng(uint8_t lower, uint8_t upper) {
     ++rngCalls;
@@ -45,7 +56,8 @@ void prepareParty(uint8_t first, uint8_t second, uint8_t third) {
 }
 
 void prepareFx(uint16_t chunkId, int8_t levelOffset = 0,
-               uint8_t tableBase = 0, uint8_t tableCount = 1) {
+               uint8_t tableBase = 0,
+               uint8_t tableCount = Encounter::TABLE_COUNT) {
     fxDataFake::dataBase = EncounterFXData::zoneDefs;
     std::memset(fxDataFake::dataBytes, 0, sizeof(fxDataFake::dataBytes));
     fxDataFake::readCount = 0;
@@ -55,6 +67,10 @@ void prepareFx(uint16_t chunkId, int8_t levelOffset = 0,
     fxDataFake::dataBytes[zoneOffset + 2] = tableBase;
     fxDataFake::dataBytes[zoneOffset + 3] = tableCount;
     fxDataFake::dataBytes[zoneOffset + 4] = 1;
+    fxDataFake::dataBytes[zoneOffset + 5] = 1;
+    fxDataFake::dataBytes[zoneOffset + 6] = 2;
+    fxDataFake::dataBytes[zoneOffset + 7] = 3;
+    fxDataFake::dataBytes[zoneOffset + 8] = 4;
     fxDataFake::dataBytes[zoneOffset + 9] = static_cast<uint8_t>(levelOffset);
     for (uint8_t zone = 1; zone < Encounter::ZONE_COUNT; ++zone) {
         const uint8_t offset = static_cast<uint8_t>(zone * Encounter::ZONE_BYTES);
@@ -62,11 +78,15 @@ void prepareFx(uint16_t chunkId, int8_t levelOffset = 0,
         fxDataFake::dataBytes[offset + 1] = 255;
     }
     const uint8_t tableOffset = Encounter::ZONE_COUNT * Encounter::ZONE_BYTES;
-    for (uint8_t slot = 0; slot < Encounter::SLOT_COUNT; ++slot) {
-        fxDataFake::dataBytes[tableOffset + slot] = slot;
+    for (uint8_t table = 0; table < Encounter::TABLE_COUNT; ++table) {
+        const uint8_t base = static_cast<uint8_t>(
+            tableOffset + table * Encounter::TABLE_BYTES);
+        for (uint8_t slot = 0; slot < Encounter::SLOT_COUNT; ++slot) {
+            fxDataFake::dataBytes[base + slot] = kFixtureTables[table][slot];
+        }
+        fxDataFake::dataBytes[base + Encounter::SLOT_COUNT] = 2;
+        fxDataFake::dataBytes[base + Encounter::SLOT_COUNT + 1] = 5;
     }
-    fxDataFake::dataBytes[tableOffset + Encounter::SLOT_COUNT] = 1;
-    fxDataFake::dataBytes[tableOffset + Encounter::SLOT_COUNT + 1] = 31;
 }
 
 void fillProperties(WorldTransient &world, uint8_t x, uint8_t y,
@@ -95,6 +115,7 @@ void prepareWorld(uint16_t location, bool encounter) {
     gameState.state = GameState_t::WORLD;
     prepareParty(9, 6, 0);
     prepareFx(Chunk::chunkOfLocation(location));
+    LureZone::clear();
     WorldEngine::init(worldState());
     WorldEngine::loadMap(worldState(), 0, 0);
     fillProperties(worldState(), static_cast<uint8_t>(location),
@@ -117,6 +138,9 @@ void seedCache(uint8_t *cache, int8_t offset, uint8_t floor, uint8_t ceil) {
     cache[Encounter::CACHE_TABLE_BASE_OFFSET] = 0;
     cache[Encounter::CACHE_TABLE_COUNT_OFFSET] = 1;
     cache[Encounter::CACHE_LEVEL_OFFSET] = static_cast<uint8_t>(offset);
+    cache[Encounter::CACHE_TABLE_INDEX_OFFSET] = 0;
+    cache[Encounter::CACHE_NIBBLES_OFFSET] = 0x21;
+    cache[Encounter::CACHE_NIBBLES_OFFSET + 1] = 0x43;
 }
 
 } // namespace encounter_test_detail
@@ -139,7 +163,7 @@ void EncounterDecisionTest(TestSuite &suite) {
     rngCalls = 0;
     for (uint8_t slot = 0; slot < Encounter::SLOT_COUNT; ++slot) {
         forcedRoll = slot;
-        test.assert(Encounter::select(cache, party, forcedRng, decision), true,
+        test.assert(Encounter::select(cache, party, forcedRng, Encounter::INERT_OFFSET, decision), true,
                     "injected roll selects a valid table slot");
         test.assert(decision.slot, slot, "injected roll reaches its table slot");
         test.assert(decision.creatureId, slot, "selected slot supplies creature ID");
@@ -152,27 +176,27 @@ void EncounterDecisionTest(TestSuite &suite) {
 
     seedCache(cache, -20, 2, 8);
     forcedRoll = 0;
-    test.assert(Encounter::select(cache, party, forcedRng, decision), true,
+    test.assert(Encounter::select(cache, party, forcedRng, Encounter::INERT_OFFSET, decision), true,
                 "negative offset clamps safely");
     test.assert(decision.level, static_cast<uint8_t>(2), "lower inclusive clamp");
     seedCache(cache, 20, 2, 8);
-    test.assert(Encounter::select(cache, party, forcedRng, decision), true,
+    test.assert(Encounter::select(cache, party, forcedRng, Encounter::INERT_OFFSET, decision), true,
                 "positive offset clamps safely");
     test.assert(decision.level, static_cast<uint8_t>(8), "upper inclusive clamp");
 
     cache[Encounter::CACHE_VALID_OFFSET] = 0;
     rngCalls = 0;
-    test.assert(Encounter::select(cache, party, forcedRng, decision), false,
+    test.assert(Encounter::select(cache, party, forcedRng, Encounter::INERT_OFFSET, decision), false,
                 "invalid cache skips without RNG");
     test.assert(rngCalls, static_cast<uint8_t>(0), "invalid cache has no roll");
 
     seedCache(cache, 0, 8, 2);
-    test.assert(Encounter::select(cache, party, forcedRng, decision), false,
+    test.assert(Encounter::select(cache, party, forcedRng, Encounter::INERT_OFFSET, decision), false,
                 "reversed level bounds are malformed");
     seedCache(cache, 0, 1, 31);
     cache[4] = 32;
     forcedRoll = 4;
-    test.assert(Encounter::select(cache, party, forcedRng, decision), false,
+    test.assert(Encounter::select(cache, party, forcedRng, Encounter::INERT_OFFSET, decision), false,
                 "invalid creature ID skips safely");
 
     suite.addTest(test);
@@ -218,9 +242,49 @@ void EncounterWorldIntegrationTest(TestSuite &suite) {
     suite.addTest(test);
 }
 
+void EncounterLureSelectionTest(TestSuite &suite) {
+    using namespace encounter_test_detail;
+    Test test(__func__);
+    Creature party[PARTY_SIZE] = {};
+    party[0].level = 9;
+    party[1].level = 6;
+    party[2].level = 0;
+
+    const uint16_t chunk = Chunk::chunkOfLocation(0x0203);
+    prepareFx(chunk);
+    uint8_t cache[Encounter::CACHE_BYTES];
+    test.assert(Encounter::load(cache, chunk), true, "lure zone table loads");
+
+    Encounter::Decision decision = {};
+    forcedRoll = 4;
+    test.assert(Encounter::select(cache, party, forcedRng, Encounter::INERT_OFFSET,
+                                  decision), true,
+                "inert lure selects the base table");
+    test.assert(decision.creatureId, kFixtureTables[0][4], "inert lure uses table zero");
+
+    for (uint8_t lure = 0; lure < Encounter::NIBBLE_COUNT; ++lure) {
+        const uint8_t table = static_cast<uint8_t>(lure + 1);
+        forcedRoll = 0;
+        test.assert(Encounter::select(cache, party, forcedRng, lure, decision), true,
+                    "active lure selects its biased table");
+        test.assert(decision.creatureId, kFixtureTables[table][0],
+                    "lure type maps through its nibble");
+    }
+
+    // A nibble at or above tableCount must fail closed.
+    prepareFx(chunk, 0, 0, 1);
+    test.assert(Encounter::load(cache, chunk), true, "single-table zone loads");
+    forcedRoll = 0;
+    test.assert(Encounter::select(cache, party, forcedRng, 0, decision), false,
+                "offset at the table count is refused");
+
+    suite.addTest(test);
+}
+
 void EncounterSuite(TestRunner &runner) {
     TestSuite suite("Wild encounter integration");
     EncounterDecisionTest(suite);
+    EncounterLureSelectionTest(suite);
     EncounterWorldIntegrationTest(suite);
     runner.addTestSuite(suite);
 }

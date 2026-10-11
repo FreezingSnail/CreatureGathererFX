@@ -36,7 +36,7 @@ struct WorldTransient {
         WorldMotion motion;
     };
     uint8_t propertyWindow[TilePropertyWindow::STORAGE_BYTES];
-    uint8_t zoneTableCache[20];
+    uint8_t zoneTableCache[22];
 
     void activateScript() {
         for (uint8_t i = 0; i < sizeof(script); ++i) script[i] = 0;
@@ -78,7 +78,7 @@ static_assert(alignof(arena::ArenaMode) == 1, "arena UI overlay must remain byte
 
 static_assert(sizeof(WorldMotion) == 4, "world motion cursor must fit the script-slot overlay");
 static_assert(alignof(WorldMotion) == 1, "world motion cursor must stay byte aligned");
-static_assert(sizeof(WorldTransient) == 191, "world transient payload must remain 191 bytes");
+static_assert(sizeof(WorldTransient) == 193, "world transient payload must remain 193 bytes");
 static_assert(alignof(WorldTransient) == 1, "world transient payload must stay byte aligned");
 
 // Only these two modes are mutually exclusive. SaveController state remains
@@ -104,7 +104,7 @@ static_assert(__has_trivial_destructor(battle::BattleMode),
               "ModeState transitions rely on BattleMode having no owned resources");
 static_assert(sizeof(ModeState) >= sizeof(WorldTransient), "ModeState must hold the world payload");
 #ifdef __AVR__
-static_assert(sizeof(ModeState) == 191, "AVR mode storage must be the 191-byte world member");
+static_assert(sizeof(ModeState) == 193, "AVR mode storage must be the 193-byte world member");
 static_assert(alignof(ModeState) == 1, "AVR mode storage must remain byte aligned");
 #endif
 
