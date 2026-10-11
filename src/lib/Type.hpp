@@ -86,20 +86,7 @@ static uint16_t applyMod(uint16_t value, Modifier modifier) {
     }
 }
 
-extern const Modifier typeTable[TypeCount][TypeCount] TYPE_TABLE_STORAGE;
-
-static Modifier getModifier(Type attackType, Type defendingType) {
-    if (defendingType == Type::NONE) {
-        return Modifier::Same;
-    }
-    if (attackType == Type::NONE) return Modifier::None;
-#ifdef __AVR__
-    return static_cast<Modifier>(pgm_read_byte(
-        &typeTable[static_cast<uint8_t>(attackType)][static_cast<uint8_t>(defendingType)]));
-#else
-    return typeTable[static_cast<uint8_t>(attackType)][static_cast<uint8_t>(defendingType)];
-#endif
-}
+Modifier getModifier(Type attackType, Type defendingType);
 
 static Modifier combineModifier(Modifier a, Modifier b) {
     if (a == Modifier::None || b == Modifier::None) return Modifier::None;

@@ -20,7 +20,7 @@ AVR_FXTEST_BUILD_PROPERTIES ?= --build-property "compiler.cpp.extra_flags=$(AVR_
 	--build-property "compiler.c.elf.extra_flags=$(AVR_RELAX_FLAGS)"
 # Only shipping FX/Mini sketches compile their no-USB main. Device-test
 # sketches keep the stock core main so Serial P/F output remains available.
-AVR_SHIPPING_CPP_FLAGS ?= $(AVR_RELAX_FLAGS) -DCGFX_SHIPPING_NO_USB
+AVR_SHIPPING_CPP_FLAGS ?= $(AVR_RELAX_FLAGS) -DCGFX_SHIPPING_NO_USB -fno-inline-small-functions
 AVR_SHIPPING_BUILD_PROPERTIES ?= --build-property "compiler.cpp.extra_flags=$(AVR_SHIPPING_CPP_FLAGS)" \
 	--build-property "compiler.c.extra_flags=$(AVR_RELAX_FLAGS)" \
 	--build-property "compiler.c.elf.extra_flags=$(AVR_RELAX_FLAGS)"
