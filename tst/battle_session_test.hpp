@@ -109,14 +109,23 @@ inline void BattleSessionIntegrationTest(TestSuite &suite)
         test.assert(session.advance(), true, "fixture emits one acknowledged result");
         session.finishPresentation();
     }
+#if CGFX_BATTLE_AUTO_REPLACE
+    test.assert(session.awaitingReplacement(), false,
+                "automatic policy does not request a replacement menu");
+    test.assert(session.state().activeSlot[0], static_cast<uint8_t>(1),
+                "automatic policy replaces from the lowest living original slot");
+    test.assert(session.result().kind, ResultKind::Switch,
+                "automatic replacement remains a separate switch result");
+#else
     test.assert(session.awaitingReplacement(), true,
-                "end-turn faint waits for replacement");
+                "choice policy waits after an end-turn faint");
     test.assert(session.submitIntent({MenuIntentKind::SelectParty, 1}), true,
                 "replacement accepts original party slot");
     test.assert(session.advance(), true, "replacement emits a switch result");
     test.assert(session.result().kind, ResultKind::Switch,
                 "replacement result remains separate from end turn");
     session.finishPresentation();
+#endif
     test.assert(session.awaitingPlayer(), true,
                 "replacement completion opens a fresh choice");
 

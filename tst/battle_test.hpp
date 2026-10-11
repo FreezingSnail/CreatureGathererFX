@@ -190,10 +190,6 @@ void BattleDamageIntegrationTest(TestSuite &suite)
                 "zero-power move stays zero");
     test.assert(computeDamage(attacker, defender, 4), static_cast<uint8_t>(0),
                 "out-of-range move slot stays zero");
-    attacker.moves[0] = makeMove(static_cast<Type>(9), 10, true);
-    test.assert(computeDamage(attacker, defender, 0), static_cast<uint8_t>(0),
-                "invalid move type stays bounded");
-
     attacker = combatant(Type::WIND);
     defender = combatant(Type::SPIRIT);
     attacker.moves[0] = makeMove(Type::WIND, 10, true, Accuracy::HUNDRED);

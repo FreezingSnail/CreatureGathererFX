@@ -3,8 +3,6 @@
 
 #include "Damage.hpp"
 #include "Effects.hpp"
-#include "../../item/ConsumableDef.hpp"
-#include "../../item/Inventory.hpp"
 #include "../../lib/Type.hpp"
 
 namespace battle {
@@ -81,24 +79,22 @@ int8_t boundedSpeedStage(int8_t stage)
     return stage;
 }
 
-uint32_t stagedSpeed(const Combatant &combatant)
+uint16_t stagedSpeed(const Combatant &combatant)
 {
     const int8_t stage = boundedSpeedStage(
         combatant.statMods.getModifier(StatType::SPEED_M));
-    const uint32_t speed = combatant.stats.speed;
+    const uint16_t speed = combatant.stats.speed;
     if (stage < 0) {
-        return (speed * 2u) / static_cast<uint32_t>(2 - stage);
+        return static_cast<uint16_t>((speed * 2u) / (2 - stage));
     }
-    return (speed * static_cast<uint32_t>(2 + stage)) / 2u;
+    return static_cast<uint16_t>((speed * (2 + stage)) / 2u);
 }
 
 uint8_t actionPriority(ActionKind kind)
 {
     switch (kind) {
-    case ActionKind::Switch:
     case ActionKind::Gather:
     case ActionKind::Escape:
-    case ActionKind::UseItem:
         return 1;
     case ActionKind::Attack:
     case ActionKind::Skip:
@@ -237,56 +233,13 @@ void resolveGather(BattleState &state, Side actor, Rng &rng,
     }
 }
 
-void resolveUseItem(BattleState &state, Side actor, uint8_t itemId,
-                    ActionResult &out)
-{
-    out.kind = ResultKind::UseItem;
-    out.actor = actor;
-    out.index = itemId;
-
-    item::Inventory *inventory = item::battleInventory();
-    if (actor != Side::Player || inventory == nullptr ||
-        !item::inventoryTake(*inventory, item::ItemKind::Consumable, itemId, 1)) {
-        // A failed take is a refused Skip and deliberately performs no FX read.
-        resolveSkip(state, actor, true, false, out);
-        out.index = 255;
-        return;
-    }
-
-    // Consume before reading the definition. A successful take is therefore
-    // never left in the bag when the transition-time definition is decoded.
-    const item::ConsumableDef definition = item::readConsumableDef(itemId);
-    switch (static_cast<item::ConsumableKind>(definition.kind)) {
-    case item::ConsumableKind::Heal: {
-        Combatant &combatant = state.active[sideIndex(actor)];
-        const uint8_t before = combatant.hp;
-        const uint16_t requested = static_cast<uint16_t>(before) + definition.arg;
-        combatant.hp = requested > combatant.maxHp
-            ? combatant.maxHp : static_cast<uint8_t>(requested);
-        // Existing INFSED carries an HP-after fact; UseItem result kind
-        // disambiguates it from an end-turn status tick. Zero is meaningful:
-        // full-HP Heal is still consumed and reports zero restored.
-        out.consequences[0] = {
-            Effect::INFSED, static_cast<uint8_t>(actor),
-            static_cast<uint8_t>(combatant.hp - before)
-        };
-        break;
-    }
-    case item::ConsumableKind::Cure:
-    case item::ConsumableKind::Charge:
-    case item::ConsumableKind::None:
-    default:
-        // Cure/Charge effects are owned by later item milestones.
-        break;
-    }
-}
-
 ResultKind extensionResult(ActionKind kind)
 {
     switch (kind) {
     case ActionKind::Switch: return ResultKind::Switch;
     case ActionKind::Gather: return ResultKind::Gather;
     case ActionKind::Escape: return ResultKind::Escape;
+    // Keep the legacy enum value stable while the battle item route is absent.
     case ActionKind::UseItem: return ResultKind::UseItem;
     case ActionKind::Attack: return ResultKind::Attack;
     case ActionKind::Skip:
@@ -318,8 +271,8 @@ Side firstMover(const BattleState &state, const TurnPlan &plan)
         return playerPriority > opponentPriority ? Side::Player : Side::Opponent;
     }
 
-    const uint32_t playerSpeed = stagedSpeed(state.active[sideIndex(Side::Player)]);
-    const uint32_t opponentSpeed =
+    const uint16_t playerSpeed = stagedSpeed(state.active[sideIndex(Side::Player)]);
+    const uint16_t opponentSpeed =
         stagedSpeed(state.active[sideIndex(Side::Opponent)]);
     return playerSpeed >= opponentSpeed ? Side::Player : Side::Opponent;
 }
@@ -374,7 +327,9 @@ void resolveAction(BattleState &state, Side actor, BattleAction action,
         resolveGather(state, actor, rng, out);
         break;
     case ActionKind::UseItem:
-        resolveUseItem(state, actor, action.index, out);
+        // World inventory remains available outside battle. This legacy action
+        // value is refused until a battle item interface is deliberately added.
+        resolveSkip(state, actor, true, false, out);
         break;
     case ActionKind::Escape:
         out.kind = ResultKind::Escape;

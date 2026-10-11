@@ -59,7 +59,6 @@ struct BattleState {
     uint8_t gatherable : 1;
     uint8_t trainer : 1;
     uint8_t over : 1;
-    uint8_t switchLockMask : 2;
     uint8_t trainerId;
 };
 

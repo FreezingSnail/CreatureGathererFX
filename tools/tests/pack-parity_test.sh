@@ -22,7 +22,8 @@ perturbed_layout=$fixtures/fxlayout-expand-20-perturbed.toml
 # Append native48 battle views and compact option frames; existing addresses stay fixed.
 # Reviewed left-facing front profiles are baked toward the player at screen right.
 # Append twelve masked chibi player idle/walk frames; prior450constants/data stay fixed.
-expected=a2856ab26075f12ea750de8143ebce82c3197865dbe5ce5b6badce36509c70ec
+# Slim battle feedback appends eleven authored captions after the existing text assets.
+expected=a5c62d6f9b577e3fad3cacdc93d63a9050d7870b4f433ec37d67055516ad7320
 
 for layout in "$old_layout" "$new_layout" "$perturbed_layout"; do
     test -f "$layout" || {

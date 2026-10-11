@@ -6,6 +6,13 @@
 #include "MoveUses.hpp"
 #include "../../player/Player.hpp"
 
+#ifndef CGFX_BATTLE_AUTO_REPLACE
+#define CGFX_BATTLE_AUTO_REPLACE 0
+#endif
+#if CGFX_BATTLE_AUTO_REPLACE != 0 && CGFX_BATTLE_AUTO_REPLACE != 1
+#error "CGFX_BATTLE_AUTO_REPLACE must be 0 or 1"
+#endif
+
 extern Player player;
 
 namespace battle {
@@ -205,10 +212,9 @@ uint8_t BattleSession::firstLiveBenchSlot(Side side) const
     return 255;
 }
 
-bool BattleSession::emitReplacement(Side side, uint8_t originalSlot,
-                                    bool forced)
+bool BattleSession::emitReplacement(Side side, uint8_t originalSlot)
 {
-    const bool switched = applySwitch(state_, side, originalSlot, forced, result_);
+    const bool switched = applySwitch(state_, side, originalSlot, true, result_);
     if (!switched) cursor_.plan.action[sideIndex(side)] = skipAction();
     cursor_.phase = SessionPhase::Presenting;
     return true;
@@ -234,18 +240,24 @@ bool BattleSession::submitIntent(MenuIntent intent)
         BattleAction action = skipAction();
         switch (intent.kind) {
         case MenuIntentKind::SelectMove:
+#ifndef __AVR__
+            // Native callers can synthesize intents; the AVR menu snapshot is
+            // produced and consumed while the session is paused at this phase.
             if (intent.index >= 4 ||
                 remainingMoveUses(state_, Side::Player, intent.index) == 0)
                 return false;
+#endif
             action = {ActionKind::Attack, intent.index};
             break;
         case MenuIntentKind::SelectParty:
-            if (!canSwitch(state_, Side::Player, intent.index)) return false;
-            action = {ActionKind::Switch, intent.index};
-            break;
+            // Party selection is reserved for the forced-replacement phase.
+            // Voluntary switching is removed from both player and AI policy.
+            return false;
         case MenuIntentKind::Pass:
+#ifndef __AVR__
             for (uint8_t slot = 0; slot < 4; ++slot)
                 if (remainingMoveUses(state_, Side::Player, slot)) return false;
+#endif
             break;
         case MenuIntentKind::Gather:
             action = {ActionKind::Gather, 0};
@@ -261,27 +273,30 @@ bool BattleSession::submitIntent(MenuIntent intent)
         return submitPlayerAction(action);
     }
 
+#if !CGFX_BATTLE_AUTO_REPLACE
     if (cursor_.phase == SessionPhase::Replacement &&
         needsReplacement(Side::Player) &&
-        intent.kind == MenuIntentKind::SelectParty &&
-        canSwitch(state_, Side::Player, intent.index)) {
+        intent.kind == MenuIntentKind::SelectParty) {
+#ifndef __AVR__
+        // Keep direct native intent tests checked; the shipping replacement
+        // menu only emits living original slots from this paused phase.
+        if (!canSwitch(state_, Side::Player, intent.index)) return false;
+#endif
         cursor_.plan.action[static_cast<uint8_t>(Side::Player)] =
             {ActionKind::Switch, intent.index};
         cursor_.phase = SessionPhase::Ready;
         return true;
     }
+#endif
     return false;
 }
 
 bool BattleSession::advance()
 {
     if (cursor_.phase == SessionPhase::Replacement) {
-        if (needsReplacement(Side::Player)) {
-            if (cursor_.plan.action[static_cast<uint8_t>(Side::Player)].kind !=
-                ActionKind::Switch) {
-                return false;
-            }
-        }
+#if !CGFX_BATTLE_AUTO_REPLACE
+        if (needsReplacement(Side::Player)) return false;
+#endif
         cursor_.phase = SessionPhase::Ready;
     }
     if (cursor_.phase != SessionPhase::Ready) return false;
@@ -293,19 +308,23 @@ bool BattleSession::advance()
     }
 
     // Replacement is a transition result and always precedes any remaining
-    // frozen actor. Player replacement waits for SelectParty; opponent picks
-    // the lowest live original slot without recomputing turn order.
+    // frozen actor. The selected policy affects only the player replacement;
+    // the opponent always uses the lowest live original slot.
     if (needsReplacement(Side::Player)) {
+#if CGFX_BATTLE_AUTO_REPLACE
+        const uint8_t original = firstLiveBenchSlot(Side::Player);
+        if (original == 255) return false;
+        return emitReplacement(Side::Player, original);
+#else
         const BattleAction action =
             cursor_.plan.action[static_cast<uint8_t>(Side::Player)];
-        return emitReplacement(Side::Player, action.index, true);
+        return emitReplacement(Side::Player, action.index);
+#endif
     }
     if (needsReplacement(Side::Opponent)) {
         const uint8_t original = firstLiveBenchSlot(Side::Opponent);
         if (original == 255) return false;
-        cursor_.plan.action[static_cast<uint8_t>(Side::Opponent)] =
-            {ActionKind::Switch, original};
-        return emitReplacement(Side::Opponent, original, true);
+        return emitReplacement(Side::Opponent, original);
     }
 
     for (;;) {
@@ -321,14 +340,7 @@ bool BattleSession::advance()
         }
 
         const BattleAction action = cursor_.plan.action[actorIndex];
-        if (action.kind == ActionKind::Switch) {
-            const bool switched = applySwitch(state_, actor, action.index, false, result_);
-            if (switched && actor == Side::Opponent)
-                state_.switchLockMask |= static_cast<uint8_t>(1u << actorIndex);
-        } else {
-            resolveAction(state_, actor, action, rng_, result_);
-            state_.switchLockMask &= static_cast<uint8_t>(~(1u << actorIndex));
-        }
+        resolveAction(state_, actor, action, rng_, result_);
 
         if (result_.flags & PLAYER_FAINTED) {
             cursor_.invalidMask |= INVALID_PLAYER;
@@ -403,8 +415,17 @@ bool BattleSession::isActive() const
 
 bool BattleSession::awaitingReplacement() const
 {
+#if CGFX_BATTLE_AUTO_REPLACE
+    return false;
+#else
     return cursor_.phase == SessionPhase::Replacement &&
            needsReplacement(Side::Player);
+#endif
+}
+
+bool BattleSession::isPresenting() const
+{
+    return cursor_.phase == SessionPhase::Presenting;
 }
 
 bool BattleSession::awaitingPlayer() const
@@ -506,6 +527,27 @@ PartySnapshot BattleSession::partyChoices() const
         }
     }
     out.forced = static_cast<uint8_t>(needsReplacement(Side::Player));
+    return out;
+}
+
+ReplacementChoices BattleSession::replacementChoices() const
+{
+    ReplacementChoices out = {};
+    const uint8_t side = static_cast<uint8_t>(Side::Player);
+    const uint8_t count = state_.partyCount[side] > PARTY_SIZE
+        ? PARTY_SIZE : state_.partyCount[side];
+    const uint8_t activeSlot = state_.activeSlot[side];
+    if (count < 2 || activeSlot >= count) return out;
+
+    uint8_t bench = 0;
+    for (uint8_t original = 0; original < count; ++original) {
+        if (original == activeSlot) continue;
+        const BenchSlot &member = state_.bench[side][bench++];
+        if (member.hp == 0) continue;
+        out.slots[out.count] = original;
+        out.ids[out.count] = member.id;
+        ++out.count;
+    }
     return out;
 }
 

@@ -4,6 +4,7 @@
 
 #include "src/engine/battle/BattleSession.hpp"
 #include "src/engine/battle/BattleFlow.hpp"
+#include "src/engine/battle/BattleScene.hpp"
 #include "src/engine/arena/ArenaDemo.hpp"
 #include "src/engine/game/Gamestate.hpp"
 #include "src/engine/menu/MenuNav.hpp"
@@ -39,7 +40,6 @@ decltype(arduboy) arduboy;
 
 GameState gameState;
 ModeState modeState;
-MenuV2 menu = MenuV2();
 Player player = Player();
 
 PlantGameState plants;
@@ -118,7 +118,6 @@ void setup() {
     const BattlePresets::Preset preset =
         BattlePresets::copyPreset(BattlePresets::opening);
 #endif
-    menu.clear();
     dialogMenu.clear();
     enterBattle();
     battleSession().beginTrainer(preset.trainerId);
@@ -199,7 +198,6 @@ void run() {
     } else
 #endif
     if (gameState.state == GameState_t::BATTLE) {
-        menu.printMenu(battleSession().view());
     }
 }
 
@@ -213,12 +211,10 @@ uint8_t render() {
         return 0;
 #endif
     case GameState_t::BATTLE: {
-        battle::BattleView view = battleSession().view();
-        battlePresenter().overlay(view);
-        int8_t shakeX, shakeY;
-        battlePresenter().sceneOffset(shakeX, shakeY);
-        drawScene(view, shakeX, shakeY);
-        battlePresenter().draw();
+        battle::BattleMode &mode = modeState.battle;
+        battle::BattleScene::draw(battleSession().state());
+        if (battleSession().isPresenting()) mode.ui.feedback.draw();
+        else if (mode.ui.menu.initialized()) mode.ui.menu.draw();
         return 0;
     }
     case GameState_t::WORLD:

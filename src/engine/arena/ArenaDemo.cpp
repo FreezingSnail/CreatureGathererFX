@@ -101,7 +101,6 @@ bool startMatch()
     if (!readOpponentId(arenaContext.opponentTeam, trainerId)) return false;
     if (!applyPlayerTeam(arenaContext.playerTeam, player)) return false;
 
-    menu.clear();
     dialogMenu.clear();
     enterBattle();
     battleSession().beginTrainer(trainerId);

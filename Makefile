@@ -11,9 +11,10 @@ MINI_FQBN ?= arduboy-homemade:avr:arduboy-mini
 AVR_RELAX_FLAGS ?= -mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X
 # Propagate only world-profile selection to tests, preserving their USB entry.
 WORLD_VM_PROFILE_FLAGS = $(filter -DCGFX_FULL_WORLD_VM -DCGFX_FULL_WORLD_VM=%,$(AVR_SHIPPING_CPP_FLAGS))
+BATTLE_AUTO_REPLACE_FLAGS = $(filter -DCGFX_BATTLE_AUTO_REPLACE -DCGFX_BATTLE_AUTO_REPLACE=%,$(AVR_SHIPPING_CPP_FLAGS))
 # Instrument FX test firmware with the logical read counter while preserving
 # the stock USB main used by the serial P/F harness.
-AVR_FXTEST_CPP_FLAGS ?= $(AVR_RELAX_FLAGS) -DFX_READ_COUNTER $(WORLD_VM_PROFILE_FLAGS)
+AVR_FXTEST_CPP_FLAGS ?= $(AVR_RELAX_FLAGS) -DFX_READ_COUNTER $(WORLD_VM_PROFILE_FLAGS) $(BATTLE_AUTO_REPLACE_FLAGS)
 AVR_FXTEST_BUILD_PROPERTIES ?= --build-property "compiler.cpp.extra_flags=$(AVR_FXTEST_CPP_FLAGS)" \
 	--build-property "compiler.c.extra_flags=$(AVR_RELAX_FLAGS)" \
 	--build-property "compiler.c.elf.extra_flags=$(AVR_RELAX_FLAGS)"
@@ -65,7 +66,7 @@ AVR_SIZE ?= $(shell command -v avr-size 2>/dev/null || find "$(HOME)/Library/Ard
 
 CPPFLAGS ?= -I.
 CXXFLAGS ?= -std=c++17 -w -O0 -g3
-TEST_CPPFLAGS = -I tst/host $(WORLD_VM_PROFILE_FLAGS)
+TEST_CPPFLAGS = -I tst/host $(WORLD_VM_PROFILE_FLAGS) $(BATTLE_AUTO_REPLACE_FLAGS)
 TEST_FLAGS = -DTEST
 DEBUG_FLAGS = -DDEBUG
 
@@ -148,6 +149,9 @@ TEST_SOURCES = src/lib/Blit.cpp \
 	src/engine/battle/BattlePresets.cpp \
 	src/engine/battle/BattleSetup.cpp \
 	src/engine/battle/BattlePresenter.cpp \
+	src/engine/battle/BattleMenu.cpp \
+	src/engine/battle/BattleFeedback.cpp \
+	src/engine/battle/BattleScene.cpp \
 	src/engine/arena/ArenaCatalog.cpp \
 	src/engine/arena/ArenaNavigation.cpp \
 	src/engine/arena/ArenaDemo.cpp \

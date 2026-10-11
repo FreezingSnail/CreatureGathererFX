@@ -47,4 +47,15 @@ struct PartySnapshot {
     uint8_t forced;
 };
 
+// Shipping handoff for the replacement menu; rows are already live and map
+// directly back to their original party slots.
+struct ReplacementChoices {
+    uint8_t slots[2];
+    uint8_t ids[2];
+    uint8_t count;
+};
+
+static_assert(sizeof(ReplacementChoices) == 5,
+              "replacement handoff must remain five bytes");
+
 } // namespace battle
