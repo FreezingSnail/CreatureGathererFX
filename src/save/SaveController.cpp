@@ -9,11 +9,14 @@
 #include "Compaction.hpp"
 #include "SaveFile.hpp"
 #include "../creature/LevelCurve.hpp"
+#include "../flags/flag_bit_array.hpp"
 
 namespace SaveController {
 namespace {
 
 SaveFile saveState = {};
+static_assert(sizeof(FLAG_BIT_ARRAY) <= sizeof(saveState.flags),
+              "SaveFile flags must fit generated game flags");
 GameState_t stateBeforeSaving = GameState_t::WORLD;
 bool savingStarted = false;
 
@@ -29,7 +32,7 @@ void captureLiveSaveState()
     }
     memset(&saveState, 0, sizeof(saveState));
     saveState.playerLocation = gameState.playerLocation;
-    memcpy(saveState.flags, gameState.flags, sizeof(gameState.flags));
+    memcpy(saveState.flags, gameState.flags, sizeof(FLAG_BIT_ARRAY));
     for (uint8_t i = 0; i < 3; ++i) {
         const uint8_t slot = storePartySlot(i);
         saveState.partySlots[i] = slot;
@@ -131,7 +134,7 @@ bool load()
 {
     if (!saveFileLoad(saveState)) return false;
     gameState.playerLocation = saveState.playerLocation;
-    memcpy(gameState.flags, saveState.flags, sizeof(gameState.flags));
+    memcpy(gameState.flags, saveState.flags, sizeof(FLAG_BIT_ARRAY));
     for (uint8_t i = 0; i < 3; ++i) {
         StoreRecord record;
         const uint8_t slot = saveState.partySlots[i];
