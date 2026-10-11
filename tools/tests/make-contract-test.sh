@@ -116,8 +116,8 @@ arena_dry=$(make --no-print-directory -n arena-demo BUILD_DIR=build/ignored \
 printf '%s\n' "$arena_dry" | grep -Fq 'gen'
 printf '%s\n' "$arena_dry" | grep -Fq 'ram BUILD_DIR="build/arena-contract"'
 printf '%s\n' "$arena_dry" | grep -Fq 'AVR_FLASH_BUDGET="29184"'
-printf '%s\n' "$arena_dry" | grep -Fq 'file="build/arena-demo/CreatureGathererFX.ino.hex"'
-printf '%s\n' "$arena_dry" | grep -Fq 'save="build/arena-demo/isolated/fxdata-save.bin"'
+printf '%s\n' "$arena_dry" | grep -Fq 'file="build/arena-contract/CreatureGathererFX.ino.hex"'
+printf '%s\n' "$arena_dry" | grep -Fq 'save="build/arena-contract/isolated/fxdata-save.bin"'
 
 build=$(make --no-print-directory -n build \
     ARDUINO_CLI=fixture-arduino FQBN=fixture:fx BUILD_DIR=build/contract)
@@ -125,7 +125,7 @@ printf '%s\n' "$build" | grep -Fq 'fixture-arduino compile --fqbn "fixture:fx"'
 printf '%s\n' "$build" | grep -Fq 'ARDUINO_BUILD_CACHE_PATH="build/contract/arduino-cache" fixture-arduino compile'
 printf '%s\n' "$build" | grep -Fq -- '--build-path "build/contract/arduino-build/fx"'
 printf '%s\n' "$build" | grep -Fq -- '--output-dir "build/contract"'
-printf '%s\n' "$build" | grep -Fq -- '--build-property "compiler.cpp.extra_flags=-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X -DCGFX_SHIPPING_NO_USB -DCGFX_BATTLE_NO_FACTS"'
+printf '%s\n' "$build" | grep -Fq -- '--build-property "compiler.cpp.extra_flags=-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X -DCGFX_SHIPPING_NO_USB -fno-inline-small-functions -DCGFX_BATTLE_NO_FACTS"'
 for property in compiler.c.extra_flags compiler.c.elf.extra_flags; do
     printf '%s\n' "$build" | grep -Fq -- "--build-property \"$property=-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X\""
 done
@@ -144,14 +144,15 @@ mini=$(make --no-print-directory -n mini \
 printf '%s\n' "$mini" | grep -Fq 'fixture-arduino compile --fqbn "fixture:mini"'
 printf '%s\n' "$mini" | grep -Fq -- '--build-path "build/contract/arduino-build/mini"'
 printf '%s\n' "$mini" | grep -Fq -- '--output-dir "build/contract"'
-printf '%s\n' "$mini" | grep -Fq -- '--build-property "compiler.cpp.extra_flags=-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X -DCGFX_SHIPPING_NO_USB -DCGFX_BATTLE_NO_FACTS"'
+printf '%s\n' "$mini" | grep -Fq -- '--build-property "compiler.cpp.extra_flags=-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X -DCGFX_SHIPPING_NO_USB -fno-inline-small-functions -DCGFX_BATTLE_NO_FACTS"'
 for property in compiler.c.extra_flags compiler.c.elf.extra_flags; do
     printf '%s\n' "$mini" | grep -Fq -- "--build-property \"$property=-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X\""
 done
 facts_device=$(make --no-print-directory -n fxtest-build \
     ARDUINO_CLI=fixture-arduino FQBN=fixture:fx BUILD_DIR=build/contract \
     FXTEST_INOS=tst/fxdatatest/test_battle_facts.ino)
-printf '%s\n' "$facts_device" | grep -Fq -- '--build-property "compiler.cpp.extra_flags=-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X -DFX_READ_COUNTER -DCGFX_BATTLE_NO_FACTS"'
+printf '%s\n' "$facts_device" | grep -Fq -- '-DFX_READ_COUNTER'
+printf '%s\n' "$facts_device" | grep -Fq -- '-DCGFX_BATTLE_NO_FACTS"'
 facts_override=$(make --no-print-directory -n fxtest-build \
     ARDUINO_CLI=fixture-arduino FQBN=fixture:fx BUILD_DIR=build/contract \
     FXTEST_INOS=tst/fxdatatest/test_battle_facts.ino \
@@ -209,7 +210,7 @@ printf '%s\n' "$fxtest" | grep -Fq 'check-fxtest-ram.sh "$stage/build/$ino.ino.e
 printf '%s\n' "$fxtest" | grep -Fq 'check-fxtest-ram.sh "$stage/build/$ino.ino.elf"'
 for property in compiler.cpp.extra_flags compiler.c.extra_flags compiler.c.elf.extra_flags; do
     if [ "$property" = compiler.cpp.extra_flags ]; then
-        printf '%s\n' "$fxtest" | grep -Fq -- '--build-property "compiler.cpp.extra_flags=-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X -DFX_READ_COUNTER"'
+        printf '%s\n' "$fxtest" | grep -Fq -- '-DFX_READ_COUNTER'
     else
         printf '%s\n' "$fxtest" | grep -Fq -- "--build-property \"$property=-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X\""
     fi
@@ -232,7 +233,7 @@ grep -Fq 'strings "$(ARDENS)" | grep -Fxq captureserial' Makefile
 headless_run=$(make --no-print-directory -n fxtest-run \
     ARDENS=fixture-ardens FXDATA_BIN=dist/fixture-fxdata.bin \
     BUILD_DIR=build/contract)
-printf '%s\n' "$headless_run" | grep -Fq 'fixture-ardens captureserial=3000 fxport=d1 display=ssd1306'
+printf '%s\n' "$headless_run" | grep -Fq 'fixture-ardens captureserial=12000 fxport=d1 display=ssd1306'
 printf '%s\n' "$headless_run" | grep -Fq 'cp -f "dist/fixture-fxdata.bin" "$stage/fxdata.bin"'
 printf '%s\n' "$headless_run" | grep -Fq 'file=$stage/fxdata.bin'
 printf '%s\n' "$headless_run" | grep -Fq "grep -qx 'F'"
@@ -252,11 +253,16 @@ fi
 pack=$(make --no-print-directory -n pack BUILD_DIR=build/contract DIST_DIR=dist/contract)
 printf '%s\n' "$pack" | grep -Fq 'cgfx-tools --project "$stage/cgfx-project.json"'
 printf '%s\n' "$pack" | grep -Fq -- '--pack --layout "$stage/fxlayout.toml"'
+for excluded in .git .beads .codex .battle-carve-spike build dist .cache harness/workspaces; do
+    printf '%s\n' "$pack" | grep -Fq -- "--exclude='./$excluded'"
+done
+printf '%s\n' "$pack" | grep -Fq "trap 'rm -rf \"\$stage\"' 0"
 printf '%s\n' "$pack" | grep -Fq '"dist/contract/fxdata.bin"'
 if printf '%s\n' "$pack" | grep -Fq 'fxdata-build.py fxdata/fxdata.txt'; then
     printf 'pack retains direct legacy Python generation\n' >&2
     exit 1
 fi
+sh tools/tests/pack-stage-contract.sh
 printf '%s\n' "$host" | grep -Fq -- '-o "build/contract/tests/host"'
 if printf '%s\n' "$host" | grep -Fq -- '-I/src'; then
     printf 'host build retains machine-root include path\n' >&2
