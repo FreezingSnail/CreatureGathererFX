@@ -22,6 +22,7 @@ esac
 
 # Exercise wrappers without compiling firmware or launching Ardens.
 gate_dir="$ROOT/build/contract/gate"
+true_bin=/usr/bin/true
 mkdir -p "$gate_dir"
 GATE_CALL_LOG="$gate_dir/calls.log"
 export GATE_CALL_LOG
@@ -76,11 +77,14 @@ done
 # Arena target phases are sequential, keep flags/budget/output isolated, and
 # stop before building if generation fails.
 : >"$GATE_CALL_LOG"
+mkdir -p "$ROOT/build/arena-contract"
+: >"$ROOT/build/arena-contract/fxdata-data.bin"
+: >"$ROOT/build/arena-contract/fxdata-save.bin"
 make --no-print-directory arena-demo MAKE="$fixture_make" \
     ARENA_DEMO_BUILD_DIR=build/arena-contract \
     FXDATA_DATA_BIN=build/arena-contract/fxdata-data.bin \
     FXDATA_SAVE_BIN=build/arena-contract/fxdata-save.bin \
-    ARDENS=/bin/true \
+    ARDENS="$true_bin" \
     AVR_SHIPPING_CPP_FLAGS='-mrelax -DCGFX_SHIPPING_NO_USB -DLOCAL_EXTRA' >/dev/null
 test "$(awk '{print $2}' "$GATE_CALL_LOG")" = "$(printf 'gen\nram')"
 grep -Fq 'BUILD_DIR=build/arena-contract' "$GATE_CALL_LOG"
@@ -88,7 +92,7 @@ grep -Fq 'AVR_SHIPPING_CPP_FLAGS=-mrelax -DCGFX_SHIPPING_NO_USB -DLOCAL_EXTRA -D
 grep -Fq 'AVR_FLASH_BUDGET=29184' "$GATE_CALL_LOG"
 : >"$GATE_CALL_LOG"
 if GATE_FAIL_STAGE=gen make --no-print-directory arena-demo MAKE="$fixture_make" \
-    ARENA_DEMO_BUILD_DIR=build/arena-contract ARDENS=/bin/true \
+    ARENA_DEMO_BUILD_DIR=build/arena-contract ARDENS="$true_bin" \
     FXDATA_DATA_BIN=build/arena-contract/fxdata-data.bin \
     FXDATA_SAVE_BIN=build/arena-contract/fxdata-save.bin >"$gate_dir/error.log" 2>&1; then
     echo 'arena-demo swallowed generation failure' >&2
@@ -98,7 +102,7 @@ test "$(wc -l <"$GATE_CALL_LOG" | tr -d ' ')" -eq 1
 grep -Fq 'fixture failure detail' "$gate_dir/error.log"
 : >"$GATE_CALL_LOG"
 if GATE_FAIL_STAGE=ram make --no-print-directory arena-demo MAKE="$fixture_make" \
-    ARENA_DEMO_BUILD_DIR=build/arena-contract ARDENS=/bin/true \
+    ARENA_DEMO_BUILD_DIR=build/arena-contract ARDENS="$true_bin" \
     FXDATA_DATA_BIN=build/arena-contract/fxdata-data.bin \
     FXDATA_SAVE_BIN=build/arena-contract/fxdata-save.bin >"$gate_dir/error.log" 2>&1; then
     echo 'arena-demo swallowed RAM/build failure' >&2
@@ -108,7 +112,7 @@ test "$(wc -l <"$GATE_CALL_LOG" | tr -d ' ')" -eq 2
 grep -Fq 'fixture failure detail' "$gate_dir/error.log"
 
 arena_dry=$(make --no-print-directory -n arena-demo BUILD_DIR=build/ignored \
-    ARENA_DEMO_BUILD_DIR=build/arena-contract ARDENS=/bin/true)
+    ARENA_DEMO_BUILD_DIR=build/arena-contract ARDENS="$true_bin")
 printf '%s\n' "$arena_dry" | grep -Fq 'gen'
 printf '%s\n' "$arena_dry" | grep -Fq 'ram BUILD_DIR="build/arena-contract"'
 printf '%s\n' "$arena_dry" | grep -Fq 'AVR_FLASH_BUDGET="29184"'
@@ -121,7 +125,7 @@ printf '%s\n' "$build" | grep -Fq 'fixture-arduino compile --fqbn "fixture:fx"'
 printf '%s\n' "$build" | grep -Fq 'ARDUINO_BUILD_CACHE_PATH="build/contract/arduino-cache" fixture-arduino compile'
 printf '%s\n' "$build" | grep -Fq -- '--build-path "build/contract/arduino-build/fx"'
 printf '%s\n' "$build" | grep -Fq -- '--output-dir "build/contract"'
-printf '%s\n' "$build" | grep -Fq -- '--build-property "compiler.cpp.extra_flags=-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X -DCGFX_SHIPPING_NO_USB"'
+printf '%s\n' "$build" | grep -Fq -- '--build-property "compiler.cpp.extra_flags=-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X -DCGFX_SHIPPING_NO_USB -DCGFX_BATTLE_NO_FACTS"'
 for property in compiler.c.extra_flags compiler.c.elf.extra_flags; do
     printf '%s\n' "$build" | grep -Fq -- "--build-property \"$property=-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X\""
 done
@@ -140,10 +144,19 @@ mini=$(make --no-print-directory -n mini \
 printf '%s\n' "$mini" | grep -Fq 'fixture-arduino compile --fqbn "fixture:mini"'
 printf '%s\n' "$mini" | grep -Fq -- '--build-path "build/contract/arduino-build/mini"'
 printf '%s\n' "$mini" | grep -Fq -- '--output-dir "build/contract"'
-printf '%s\n' "$mini" | grep -Fq -- '--build-property "compiler.cpp.extra_flags=-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X -DCGFX_SHIPPING_NO_USB"'
+printf '%s\n' "$mini" | grep -Fq -- '--build-property "compiler.cpp.extra_flags=-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X -DCGFX_SHIPPING_NO_USB -DCGFX_BATTLE_NO_FACTS"'
 for property in compiler.c.extra_flags compiler.c.elf.extra_flags; do
     printf '%s\n' "$mini" | grep -Fq -- "--build-property \"$property=-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X\""
 done
+facts_device=$(make --no-print-directory -n fxtest-build \
+    ARDUINO_CLI=fixture-arduino FQBN=fixture:fx BUILD_DIR=build/contract \
+    FXTEST_INOS=tst/fxdatatest/test_battle_facts.ino)
+printf '%s\n' "$facts_device" | grep -Fq -- '--build-property "compiler.cpp.extra_flags=-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X -DFX_READ_COUNTER -DCGFX_BATTLE_NO_FACTS"'
+facts_override=$(make --no-print-directory -n fxtest-build \
+    ARDUINO_CLI=fixture-arduino FQBN=fixture:fx BUILD_DIR=build/contract \
+    FXTEST_INOS=tst/fxdatatest/test_battle_facts.ino \
+    AVR_FXTEST_NO_FACTS_BUILD_PROPERTIES='--build-property "compiler.cpp.extra_flags=-DLOCAL -DCGFX_BATTLE_NO_FACTS"')
+printf '%s\n' "$facts_override" | grep -Fq -- '--build-property "compiler.cpp.extra_flags=-DLOCAL -DCGFX_BATTLE_NO_FACTS"'
 printf '%s\n' "$mini" | grep -Fq 'check-avr-build-budget.sh "$log" "29696" "2160" Mini'
 
 override=$(make --no-print-directory -n build \

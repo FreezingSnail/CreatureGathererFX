@@ -128,6 +128,7 @@ Modifier attackEffectiveness(const Combatant &attacker,
     return attackModifier(attacker, defender, moveType);
 }
 
+#ifndef CGFX_BATTLE_NO_FACTS
 bool appendFact(ActionResult &out, const Consequence &fact)
 {
     if (fact.effect == Effect::NONE || fact.side >= SIDE_COUNT) return false;
@@ -139,6 +140,7 @@ bool appendFact(ActionResult &out, const Consequence &fact)
     }
     return false;
 }
+#endif
 
 void resolveAttack(BattleState &state, Side actor, uint8_t moveSlot,
                    bool selfHit, Rng &rng, ActionResult &out)
@@ -177,10 +179,14 @@ void resolveAttack(BattleState &state, Side actor, uint8_t moveSlot,
         if (effect == Effect::NONE) continue;
         const Side effectTarget = isSelfEffect(effect) ? actor : targetSide;
         if (state.active[sideIndex(effectTarget)].hp == 0) continue;
+#ifdef CGFX_BATTLE_NO_FACTS
+        (void)rollMoveEffect(state, actor, effect, rng);
+#else
         Consequence fact = {Effect::NONE, 255, 0};
         if (rollMoveEffect(state, actor, effect, rng, fact)) {
             appendFact(out, fact);
         }
+#endif
     }
 }
 
@@ -364,7 +370,11 @@ void resolveEndTurn(BattleState &state, Rng &rng, bool acquisitionPending,
         return;
     }
 
+#ifdef CGFX_BATTLE_NO_FACTS
+    tickEffects(state);
+#else
     tickEffects(state, out);
+#endif
     captureAfter(state, out);
     markFaints(out, out.flags);
 
