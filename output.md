@@ -7349,3 +7349,15 @@ All 17 children and P0 `8fu` are closed. The consolidated accepted/rejected item
 ### Adoption box.1 — current-main SaveController flag extent
 
 On main `c018266` (M1 v3), changed only the two `SaveController` flag copy lengths to `sizeof(FLAG_BIT_ARRAY)`, added the fit assertion, and added host/device canary plus real generated-pointer round-trip coverage. Exact shipping `make ram`: 25,154/1,844 → 25,142/1,844 (−12 flash / 0 static). Host 209,728/0 plus world 258/0; actual `test_save_flags` 27/0; `test_stack` 4/0, painted 503 B. Sol approved; candidate ELF SHA256 `33365f55ef31d5e3b077880f89cc0c2b6315f022817f2eae7164366453d6ba39`. Awaiting root fullgate/commit before box.2. Mainline M1 snapshot format and zero-filled canonical padding are unchanged.
+
+### Adoption box.2 — 1as.1 narrow stage arithmetic (2026-10-11)
+
+Applied only `src/engine/battle/Damage.cpp` and `tst/battle_test.hpp` on current main `bfce2c2`. The 8fu predecessor baseline was 25,142 B flash / 1,844 B static; candidate shipping build is 25,054 / 1,844 (−88 B flash, 0 static), painted headroom 505 B. Exact shipping flags: `-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X -DCGFX_SHIPPING_NO_USB -fno-inline-small-functions -DCGFX_BATTLE_AUTO_REPLACE=0`.
+
+Checks: `make test BUILD_DIR=build/box-adoption-1as1-host` passed 283,187 native and 258 world assertions; `make fxtest-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_battleutility.ino BUILD_DIR=build/box-adoption-1as1-device` with shipping flags plus `-DFX_READ_COUNTER` passed battleutility 47/0 and test_stack 4/0, painted 505 B; `make ram BUILD_DIR=build/box-adoption-1as1-after AVR_SHIPPING_CPP_FLAGS='<shipping flags>'` measured 25,054/1,844. Isolated paired control/candidate measured 25,142/1,844 → 25,054/1,844. Worker time about 2 min; no generated source changed.
+
+Current patch SHA256 `2a1a34fcfc4d7ad309424af275a05fa4adf001d19f9eaf0729066eb5a603ed48`; candidate ELF SHA256 `e6b5ee30d96cb747c0820d63d69e8dfd3b5fb39fa584c2aecf43fc6abfb97042`. Artifacts: `/private/tmp/cgfx-box-adopt-1as1/artifacts/1as.1-current-main.patch` and `.elf`. Awaiting root integrated gate/commit.
+
+### Adoption gate: CreatureGathererFX-box.2
+
+`make final-gate BUILD_DIR=build/box-adoption-gate FINAL_GATE_LOG_DIR=build/box-adoption-gate/reports/2 ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens`: PASS. Complete diagnostics retained in `build/box-adoption-gate/reports/2`; one saving per commit.
