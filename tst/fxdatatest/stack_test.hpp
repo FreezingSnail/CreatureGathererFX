@@ -56,7 +56,9 @@ __attribute__((noinline)) inline SaveStep runSave()
     SaveFile state = {};
     saveBegin();
     SaveStep step = SaveStep::Idle;
-    for (uint8_t attempts = 0; attempts < 64 && saveInProgress(); ++attempts) {
+    // The v3 checkpoint verifies both 4096-byte regions in 64-byte chunks, so a
+    // full save needs well over the former 64-step bound.
+    for (uint16_t attempts = 0; attempts < 256 && saveInProgress(); ++attempts) {
         step = saveStepAdvance(state);
         FX::waitWhileBusy();
     }

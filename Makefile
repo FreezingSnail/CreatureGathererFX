@@ -41,7 +41,10 @@ FX_LAYOUT ?= fxlayout.toml
 FXDATA_MANIFEST ?= fxdata/generated/manifest.json
 FXDATA_DIST_DIR ?= $(DIST_DIR)
 ARDENS ?= $(shell command -v Ardens 2>/dev/null)
-FXTEST_MS ?= 3000
+# Emulated serial-capture window. The v3 save suite performs several full
+# 4096-byte checkpoint verify/erase cycles, so it needs more emulated time than
+# the former 3000 default; raise the window rather than drop device coverage.
+FXTEST_MS ?= 12000
 FXTEST_RAM_BUDGET ?= 2160
 FXTEST_BUILD_DIR ?= $(BUILD_DIR)/fxtest
 FINAL_GATE_LOG_DIR ?= $(BUILD_DIR)/final-gate

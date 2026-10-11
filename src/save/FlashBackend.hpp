@@ -39,7 +39,7 @@ inline void writePage(uint16_t page, const uint8_t *data)
     FX::writeSavePage(page, const_cast<uint8_t *>(data));
 }
 
-inline void writeBytes(uint32_t addr, const uint8_t *data, uint16_t len)
+__attribute__((noinline)) inline void writeBytes(uint32_t addr, const uint8_t *data, uint16_t len)
 {
     while (len != 0) {
         const uint16_t pageOffset = static_cast<uint16_t>(addr & 0xff);

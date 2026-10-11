@@ -1,45 +1,28 @@
 #pragma once
-
-#include <stddef.h>
 #include <stdint.h>
 
-#include "../creature/Creature.hpp"
-#include "../flags/flag_bit_array.hpp"
-#include "../plants/PlantGamestate.hpp"
-#include "../player/Player.hpp"
+constexpr uint8_t SAVE_VERSION = 3;
+constexpr uint8_t PARTY_MAX = 3;
+constexpr uint8_t SAVE_SNAPSHOT_BYTES = 96;
 
-constexpr uint8_t SAVE_VERSION = 2;
-constexpr uint8_t PARTY_MAX = sizeof(((Player *)nullptr)->party) / sizeof(Creature);
-constexpr uint8_t FLAG_BYTES = sizeof(FLAG_BIT_ARRAY);
-constexpr uint8_t INVENTORY_BYTES = sizeof(((Player *)nullptr)->items);
-
-struct PlantSaveBlock {
-    PlantStage plantStages;
-    PlantPair plantPairs[2];
-    uint8_t ticker;
-};
-
+// Byte arrays have explicit wire offsets; location is encoded little-endian.
 struct SaveFile {
-    uint8_t version;
-    uint8_t reserved;
     uint16_t playerLocation;
-    uint8_t flags[FLAG_BYTES];
-    Creature party[PARTY_MAX];
-    uint8_t partyHP[PARTY_MAX];
-    PlantSaveBlock plants;
-    uint8_t inventory[INVENTORY_BYTES];
-    uint16_t checksum;
+    uint8_t flags[8];
+    uint8_t partySlots[3];
+    uint8_t partyHP[3];
+    uint8_t plantStages[8];
+    uint8_t plantPairs[2];
+    uint8_t plantTicker;
+    uint8_t lures[24];
+    uint8_t consumables[8];
+    uint8_t keyItems[4];
+    uint8_t future[33];
 };
-
-static_assert(sizeof(SaveFile) + 2 <= 4094,
-              "SaveFile must fit sector 0 with room to append");
-
-// On failure, leaves out unchanged so callers retain their live/new-game state.
+static_assert(sizeof(SaveFile) == SAVE_SNAPSHOT_BYTES, "Snapshot size is fixed");
+void saveFileEncode(const SaveFile &in, uint8_t offset, uint8_t *out, uint8_t count);
+void saveFileDecode(const uint8_t *in, SaveFile &out);
+bool saveFileValid(const SaveFile &in);
+bool saveSnapshotByteValid(uint8_t offset, uint8_t byte);
+bool savePartySlotsValid(const uint8_t slots[3]);
 bool saveFileLoad(SaveFile &out);
-// Reads only the committed party baseline; leaves state unchanged on failure.
-bool saveFileLoadParty(SaveFile &state);
-bool saveFileMatchesStored(const SaveFile &expected);
-void saveFileCommit(const SaveFile &in);
-// Caller has already set version and checksum on its mutable save snapshot.
-void saveFileCommitPrepared(const SaveFile &record);
-uint16_t saveFileChecksum(const SaveFile &in);

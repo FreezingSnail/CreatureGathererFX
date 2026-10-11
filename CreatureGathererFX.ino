@@ -138,6 +138,7 @@ void setup() {
 #else
     const bool restored = SaveController::load();
 #endif
+    if (SaveController::bootRecoveryFailed()) { for (;;) {} }
     if (!restored) {
         gameState.playerLocation = static_cast<uint16_t>(3) |
                                    (static_cast<uint16_t>(2) << 8);
@@ -149,6 +150,7 @@ void setup() {
 #ifndef CGFX_WILD_DEMO
     if (!restored) {
         player.basic();
+        SaveController::seedParty();
     }
 #endif
 #endif

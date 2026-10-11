@@ -1,5 +1,6 @@
 #pragma once
 #include <stdint.h>
+#include <string.h>
 
 class PlantStage {
   private:
@@ -9,6 +10,8 @@ class PlantStage {
     uint8_t value[8] = {};
 
   public:
+    void serialize(uint8_t out[8]) const { memcpy(out, value, 8); }
+    void restore(const uint8_t in[8]) { memcpy(value, in, 8); }
     void increment(uint8_t index);
     void incrementAll();
     uint8_t getStage(uint8_t index);

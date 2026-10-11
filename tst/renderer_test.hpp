@@ -179,7 +179,7 @@ inline void NativeFrameSavePathTest(TestSuite &suite)
     test.assert(arduboy.nextFrame(), false,
                 "second update does not render without a new frame");
 
-    for (uint8_t step = 0; step < 64 && saveInProgress(); ++step) {
+    for (uint8_t step = 0; step < 160 && saveInProgress(); ++step) {
         SaveController::advance();
     }
     test.assert(saveInProgress(), false, "save path completes through frame advances");
