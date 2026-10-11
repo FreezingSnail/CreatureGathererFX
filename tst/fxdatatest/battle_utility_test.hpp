@@ -92,21 +92,16 @@ inline void test_battleutility(FxTest &test) {
     state.bench[1][1] = {4, 1, 254, DualType(Type::SPIRIT), 14, 14};
     FxReadCounter::resetFrame();
     BattleAction choice = chooseAction(state, Side::Opponent);
-    test.expectEq(static_cast<uint8_t>(choice.kind), static_cast<uint8_t>(ActionKind::Switch),
-                  F("wide risk selects switch"));
-    test.expectEq(choice.index, 1, F("wide risk preserves best slot"));
-    test.expectEq(FxReadCounter::count(), 0, F("switch decision performs no FX reads"));
+    test.expectEq(static_cast<uint8_t>(choice.kind), static_cast<uint8_t>(ActionKind::Attack),
+                  F("wide threat keeps the tactical attack"));
+    test.expectEq(choice.index, 0, F("attack policy selects its authored move"));
+    test.expectEq(FxReadCounter::count(), 0, F("attack decision performs no FX reads"));
     state.bench[1][1].hp = 255;
-    FxReadCounter::resetFrame();
-    test.expectEq(chooseAction(state, Side::Opponent).index, 1, F("wide risk stable tie"));
-    test.expectEq(FxReadCounter::count(), 0, F("repeat decision performs no FX reads"));
-    state.switchLockMask = 2;
     FxReadCounter::resetFrame();
     test.expectEq(static_cast<uint8_t>(chooseAction(state, Side::Opponent).kind),
                   static_cast<uint8_t>(ActionKind::Attack),
-                  F("switch lock prevents an immediate repeat switch"));
-    test.expectEq(FxReadCounter::count(), 0, F("locked decision performs no FX reads"));
-    state.switchLockMask = 0;
+                  F("bench HP does not create a voluntary switch"));
+    test.expectEq(FxReadCounter::count(), 0, F("repeat decision performs no FX reads"));
     state.active[0].stats.attack = 1;
     FxReadCounter::resetFrame();
     test.expectEq(static_cast<uint8_t>(chooseAction(state, Side::Opponent).kind),

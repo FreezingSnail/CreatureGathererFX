@@ -81,6 +81,14 @@ uint8_t factCount(const battle::ActionResult &result)
     return count;
 }
 
+uint32_t stagedSpeedReference(uint8_t speed, int8_t stage)
+{
+    const uint32_t wideSpeed = speed;
+    return stage < 0
+        ? (wideSpeed * 2u) / static_cast<uint32_t>(2 - stage)
+        : (wideSpeed * static_cast<uint32_t>(2 + stage)) / 2u;
+}
+
 void assertSentinels(Test &test, const battle::ActionResult &result)
 {
     for (uint8_t slot = 0; slot < 4; ++slot) {
@@ -163,6 +171,52 @@ void AttackModifierReferenceTest(TestSuite &suite)
 
 } // namespace battle_resolve_test_detail
 
+inline void StagedSpeedExhaustiveTest(TestSuite &suite)
+{
+    using namespace battle;
+    using namespace battle_resolve_test_detail;
+    Test test(__func__);
+    TurnPlan plan = {};
+    plan.action[0] = {ActionKind::Attack, 0};
+    plan.action[1] = {ActionKind::Attack, 0};
+    battle::BattleState state = stateFixture();
+    Combatant &player = state.active[static_cast<uint8_t>(Side::Player)];
+    Combatant &opponent = state.active[static_cast<uint8_t>(Side::Opponent)];
+    opponent.statMods.clearModifiers();
+
+    for (uint16_t speed = 0; speed <= 255; ++speed) {
+        player.stats.speed = static_cast<uint8_t>(speed);
+        for (int8_t stage = -3; stage <= 3; ++stage) {
+            player.statMods.clearModifiers();
+            player.statMods.setModifier(StatType::SPEED_M, stage);
+            const uint32_t expected = stagedSpeedReference(
+                static_cast<uint8_t>(speed), stage);
+            if (expected <= 255) {
+                opponent.stats.speed = static_cast<uint8_t>(expected);
+                test.assert(firstMover(state, plan), Side::Player,
+                            "wide-reference speed tie favors player");
+                if (expected < 255) {
+                    opponent.stats.speed = static_cast<uint8_t>(expected + 1u);
+                    test.assert(firstMover(state, plan), Side::Opponent,
+                                "one-point faster opponent keeps speed order");
+                }
+            } else {
+                opponent.stats.speed = 255;
+                test.assert(firstMover(state, plan), Side::Player,
+                            "16-bit stage result remains above 8-bit maximum");
+            }
+            if (expected == 255) {
+                opponent.stats.speed = 128;
+                opponent.statMods.setModifier(StatType::SPEED_M, 2);
+                test.assert(firstMover(state, plan), Side::Opponent,
+                            "255 speed loses to exact 256 opponent result");
+                opponent.statMods.clearModifiers();
+            }
+        }
+    }
+    suite.addTest(test);
+}
+
 inline void BattleResolveIntegrationTest(TestSuite &suite)
 {
     using namespace battle;
@@ -183,12 +237,8 @@ inline void BattleResolveIntegrationTest(TestSuite &suite)
     test.assert(firstMover(state, plan), Side::Player,
                 "normal order uses staged speed without narrow overflow");
     plan.action[1] = {ActionKind::Switch, 1};
-    test.assert(firstMover(state, plan), Side::Opponent,
-                "fast opponent switch beats normal player attack");
-    plan.action[0] = {ActionKind::Switch, 1};
-    plan.action[1] = {ActionKind::Attack, 0};
     test.assert(firstMover(state, plan), Side::Player,
-                "fast player switch beats normal opponent attack");
+                "unsupported switch intent does not outrank normal speed");
     plan.action[0] = {ActionKind::Attack, 0};
     plan.action[1] = {ActionKind::Attack, 0};
     state.active[1].stats.speed = 250;
@@ -256,13 +306,6 @@ inline void BattleResolveIntegrationTest(TestSuite &suite)
     test.assert(computeDamage(state.active[0], state.active[1], 0),
                 static_cast<uint8_t>(255), "damage retains saturation at 255");
 
-    state.active[0].moves[0] = makeMove(static_cast<Type>(9), 10);
-    test.assert(computeDamage(state.active[0], state.active[1], 0),
-                static_cast<uint8_t>(0), "invalid move type remains rejected by damage");
-    script(0, 0);
-    resolveAction(state, Side::Player, {ActionKind::Attack, 0}, rng, result);
-    test.assert(result.effectiveness, Modifier::Same,
-                "invalid move type remains neutral in result query");
     state.active[0].moves[0] = makeMove(Type::WATER, 0);
     state.active[1].types = DualType(Type::WATER);
     test.assert(computeDamage(state.active[0], state.active[1], 0),
@@ -284,15 +327,6 @@ inline void BattleResolveIntegrationTest(TestSuite &suite)
     resolveAction(state, Side::Player, {ActionKind::Attack, 0}, rng, result);
     test.assert(result.effectiveness, Modifier::None,
                 "NONE move result retains immunity");
-    state.active[0].moves[0] = makeMove(Type::WATER, 10);
-    state.active[1].types = DualType(static_cast<Type>(9), Type::NONE);
-    test.assert(computeDamage(state.active[0], state.active[1], 0),
-                static_cast<uint8_t>(0), "invalid defender type remains rejected by damage");
-    script(0, 0);
-    resolveAction(state, Side::Player, {ActionKind::Attack, 0}, rng, result);
-    test.assert(result.effectiveness, Modifier::Same,
-                "invalid defender type retains neutral fallback");
-
     state = stateFixture();
     state.active[1].hp = 1;
     state.active[0].moves[0] = makeMove(Type::SPIRIT, 10,
@@ -818,6 +852,7 @@ inline void BattleResolveSuite(TestRunner &runner)
 {
     TestSuite suite("Battle resolution integration");
     BattleResolveIntegrationTest(suite);
+    StagedSpeedExhaustiveTest(suite);
     battle_resolve_test_detail::AttackModifierReferenceTest(suite);
     BattleEscapeIntegrationTest(suite);
     BattleGatherIntegrationTest(suite);

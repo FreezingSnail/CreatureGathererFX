@@ -71,8 +71,11 @@ inline void BattleEffectsIntegrationTest(TestSuite &suite)
     test.assert(isSelfEffect(Effect::ATKDWN), false, "negative stat effect targets other");
     test.assert(isSelfEffect(Effect::SAPPD), false, "damage tick targets other");
     test.assert(isSelfEffect(Effect::NONE), false, "NONE never targets self");
-    test.assert(effectRate(static_cast<uint8_t>(Effect::ATKUP)), 100,
-                "recognized effect rate defaults to 100");
+    for (uint8_t id = 0;
+         id <= static_cast<uint8_t>(Effect::CONCUSED); ++id) {
+        test.assert(effectRate(id), static_cast<uint8_t>(100),
+                    "every authored effect rate defaults to 100");
+    }
     test.assert(effectRate(255), 0, "NONE has no effect rate");
 
     battle::BattleState state = stateFixture();
@@ -145,6 +148,8 @@ inline void BattleEffectsIntegrationTest(TestSuite &suite)
     test.assert(state.active[0].status.effects[0], Effect::INFSED,
                 "healing tick targets attacker status slots");
     test.assert(state.active[0].hp, 80, "healing tick effect waits for end turn");
+    test.assert(scriptedCount, static_cast<uint8_t>(4),
+                "each default effect still consumes one RNG roll");
     const uint8_t rollsBeforeNone = scriptedCount;
     test.assert(rollMoveEffect(state, Side::Player, Effect::NONE, rng, fact), false,
                 "NONE does not roll or apply");

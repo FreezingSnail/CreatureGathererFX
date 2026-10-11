@@ -1,18 +1,38 @@
 #pragma once
 
+// Device-suite coverage for the arena demo on the compact single-phase
+// BattleFlow. The staged presenter and PresenterStage pacing are retired and
+// the TEST-shim presenter is never advanced by the compact controller, so this
+// fixture drives the same production path the game loop uses: BattleFlow::update
+// with arena::finishBattle as the terminal callback, BattleScene::draw plus the
+// active compact UI arm, and the direct move/replacement pages.
+//
+// Retained arena coverage (now expressed against the compact flow):
+//   * catalog team loading, player-team selection and startMatch validation
+//   * randomized opponent on confirm through arena::update (seeded RNG seam)
+//   * transition read-counter discipline for team loads and match entry
+//   * terminal Win/Lose completion, exactly-once finishBattle restore
+//   * replay freshness, all 15 authored matchups, painted stack reserve
+// Replaced legacy coverage:
+//   * battlePresenter().overlay/draw and drawScene(view) -> BattleScene::draw
+//     plus modeState.battle.ui.feedback/menu
+//   * PresenterStage pacing in renderBattle()/finishTrainer() -> compact
+//     BattleFlow::update driving feedback, choices and the terminal callback
+
 #include "fxtest.hpp"
 #include "arena_demo_ids.hpp"
 #include "generated/arena_demo_data.hpp"
 #include "src/engine/arena/ArenaCatalog.hpp"
 #include "src/engine/arena/ArenaDemo.hpp"
 #include "src/engine/battle/BattleFlow.hpp"
+#include "src/engine/battle/BattleScene.hpp"
 #include "src/engine/battle/MoveUses.hpp"
 #include "src/engine/ModeState.hpp"
-#include "src/engine/draw.h"
 #include "src/engine/menu/MenuV2.hpp"
 #include "src/lib/FxReadCounter.hpp"
 #include "src/lib/ReadData.hpp"
 #include "src/lib/MoveIds.hpp"
+#include "src/lib/random.hpp"
 #include "src/player/Player.hpp"
 #include "src/globals.hpp"
 
@@ -30,48 +50,51 @@ inline void finishAndRecord(battle::Outcome outcome)
     arena::finishBattle(outcome);
 }
 
-// Share the repeated renderer call chain so the complete arena suite fits AVR.
+// Compact, single-phase presenter: the scene draws from live state, feedback
+// owns the union while presenting, and the menu owns it at a choice or
+// replacement boundary. Neither arm performs metadata reads while drawing.
 __attribute__((noinline)) inline void renderBattle()
 {
-    battle::BattleView view = battleSession().view();
-    battlePresenter().overlay(view);
-    arduboy.clear();
-    drawScene(view);
-    battlePresenter().draw();
+    battle::BattleScene::draw(battleSession().state());
+    if (battleSession().isPresenting()) {
+        modeState.battle.ui.feedback.draw();
+    } else if (battleSession().awaitingPlayer() &&
+               modeState.battle.ui.menu.initialized()) {
+        modeState.battle.ui.menu.draw();
+    }
 }
 
-inline bool finishTrainer(FxTest &test, bool stopAfterAction = false,
+// Drive the compact single-phase controller to a terminal callback. At each
+// choice/replacement boundary it opens the direct page and submits the default
+// row; presenting feedback is ticked with occasional A edges. Rendering is
+// interleaved and asserted metadata-read-free. stopAfterAction parks once a
+// submitted action returns to a fresh player boundary.
+__attribute__((noinline)) inline bool finishTrainer(FxTest &test, bool stopAfterAction = false,
                           uint16_t frameLimit = 25000)
 {
     uint16_t frames = 0;
     uint8_t actions = 0;
-    battle::PresenterStage previous = battle::PresenterStage::Idle;
     bool returned = false;
     while (frames < frameLimit && !returned) {
         if (stopAfterAction && actions != 0 &&
-            battlePresenter().stage() == battle::PresenterStage::Idle &&
+            !battleSession().isPresenting() &&
             battleSession().awaitingPlayer()) break;
         FxReadCounter::resetFrame();
-        if (battlePresenter().stage() == battle::PresenterStage::Idle &&
+        if (!battleSession().isPresenting() &&
             battleSession().awaitingPlayer()) {
-        BattleFlow::update(0, finishAndRecord);
-        BattleFlow::update(MENU_EDGE_A, finishAndRecord);
-            ++actions;
-            if (battle::remainingMoveUses(battleSession().state(),
-                                          battle::Side::Player, 1))
-                BattleFlow::update(MENU_NAV_RIGHT, finishAndRecord);
+            // Opening the direct page caches move metadata; the following A
+            // edge submits without resolving (resolve begins next frame).
+            BattleFlow::update(0, finishAndRecord);
             BattleFlow::update(MENU_EDGE_A, finishAndRecord);
+            ++actions;
         } else {
             returned = BattleFlow::update((frames % 11u) == 0 ? MENU_EDGE_A : 0,
                                           finishAndRecord);
         }
         if (returned) break;
-        const bool updatePassed = FxReadCounter::markUpdate();
-        const battle::PresenterStage current = battlePresenter().stage();
-        if (current != previous) renderBattle();
-        previous = current;
-        const bool renderPassed = FxReadCounter::renderExact(0);
-        if (!updatePassed || !renderPassed || !FxReadCounter::framePassed()) {
+        const uint8_t readsBeforeRender = FxReadCounter::count();
+        renderBattle();
+        if (FxReadCounter::count() != readsBeforeRender) {
             test.expectEq(false, true, F("arena"));
             return false;
         }
@@ -451,6 +474,35 @@ inline void test_arenademo(FxTest &test)
             test.expectEq(modeState.arena.ui.list.cursor, team, F("arena"));
             test.expectEq(arena::arenaContext.opponentTeam, opponent, F("arena"));
         }
+    }
+
+    // arena::update confirms the cursor team and samples the shared game RNG for
+    // the opponent. Seeding the RNG makes the confirm path deterministic while
+    // still exercising the production randomRoll call in ArenaDemo::update.
+    modeState.arena.ui.screen = arena::ArenaScreen::PlayerTeam;
+    modeState.arena.ui.list = {ArenaDemoIds::playerCount, 1, 1, 1};
+    arena::arenaContext.playerTeam = 0xff;
+    arena::arenaContext.opponentTeam = 0xff;
+    {
+        const uint16_t seed = 0x1234;
+        rngSeed(seed);
+        const uint8_t expectedOpponent =
+            randomRoll(0, static_cast<uint8_t>(ArenaDemoIds::opponentCount - 1));
+        rngSeed(seed);
+        arena_spike_test::paintStack(top);
+        FxReadCounter::resetFrame();
+        arena::update(MENU_EDGE_A);
+        arena_spike_test::recordMinimum(top, minimumStack);
+        test.expectEq(arena::arenaContext.playerTeam, static_cast<uint8_t>(1),
+                      F("arena"));
+        test.expectEq(arena::arenaContext.opponentTeam, expectedOpponent,
+                      F("arena"));
+        test.expectEq(battleSession().state().trainerId,
+                      arena_spike_test::trainerId(expectedOpponent), F("arena"));
+        test.expectEq(gameState.state, GameState_t::BATTLE, F("arena"));
+        test.expectEq(FxReadCounter::markUpdate(), true, F("arena"));
+        arena::finishBattle(battle::Outcome::None);
+        test.expectEq(gameState.state, GameState_t::ARENA, F("arena"));
     }
 
     test.expectEq(minimumStack >= 219, true,

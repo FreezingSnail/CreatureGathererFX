@@ -226,6 +226,15 @@ inline void BattlePlaybackIntegrationTest(TestSuite &suite)
                 "replacement fixture accepts initial action");
     replacement.frame(false);
     replacement.drain(true);
+#if CGFX_BATTLE_AUTO_REPLACE
+    test.assert(replacement.session.awaitingReplacement(), false,
+                "automatic replacement never opens a player menu");
+    test.assert(replacement.session.state().activeSlot[0],
+                static_cast<uint8_t>(1),
+                "automatic policy selects the lowest living original slot");
+    test.assert(replacement.session.result().kind, ResultKind::Switch,
+                "automatic forced replacement emits its own result");
+#else
     test.assert(replacement.session.awaitingReplacement(), true,
                 "forced replacement waits after faint playback");
     test.assert(replacement.submit({MenuIntentKind::Back, 0}), false,
@@ -237,6 +246,7 @@ inline void BattlePlaybackIntegrationTest(TestSuite &suite)
     test.assert(replacement.submit({MenuIntentKind::SelectParty, 1}), true,
                 "forced replacement accepts live original party slot");
     replacement.drain(true);
+#endif
     test.assert(replacement.session.awaitingPlayer() || replacement.session.exitReady(), true,
                 "replacement playback returns to choice or terminal");
 

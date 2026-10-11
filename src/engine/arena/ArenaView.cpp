@@ -17,13 +17,13 @@ void drawCounter(uint8_t current, uint8_t count)
 
 void drawControls()
 {
-    drawText(0, 56, arenaControls, 65, FRAME(0));
+    drawText(0, 56, arenaControls, 70, FRAME(0));
 }
 
 void drawSelection(const arena::ArenaUiState &ui, bool players)
 {
     drawText(0, 0, players ? arenaChooseTeam : arenaChooseOpponent,
-             players ? 55 : 75, FRAME(0));
+             players ? 60 : 80, FRAME(0));
     drawText(0, 10, ui.preview.labelAddress, ui.preview.labelWidth, FRAME(0));
     for (uint8_t slot = 0; slot < 3; ++slot)
         drawText(0, static_cast<int16_t>(22 + slot * 10),

@@ -12,6 +12,8 @@ inline void operator delete(void *, void *) noexcept {}
 #endif
 
 #include "battle/BattlePresenter.hpp"
+#include "battle/BattleMenu.hpp"
+#include "battle/BattleFeedback.hpp"
 #include "battle/BattleSession.hpp"
 #include "world/TilePropertyWindow.hpp"
 #if defined(CGFX_ARENA_DEMO) || defined(TEST) || defined(FX_READ_COUNTER)
@@ -43,14 +45,22 @@ struct WorldTransient {
 };
 
 namespace battle {
-struct BattleMode : BattleSession {
-    BattlePresenter presenter;
+union BattleUi {
+    BattleMenu menu;
+    BattleFeedback feedback;
 
-    BattleMode() : BattleSession(), presenter() {}
+    BattleUi() : menu() {}
+};
+
+struct BattleMode : BattleSession {
+    BattleUi ui;
+
+    BattleMode() : BattleSession(), ui() {}
 };
 
 #ifdef __AVR__
 static_assert(sizeof(BattleMode) <= 191, "battle playback must fit the world overlay");
+static_assert(sizeof(BattleUi) == 27, "battle UI union must remain 27 bytes");
 #endif
 } // namespace battle
 
@@ -105,9 +115,12 @@ extern ModeState modeState;
 inline __attribute__((always_inline)) battle::BattleSession &battleSession() {
     return static_cast<battle::BattleSession &>(modeState.battle);
 }
+#if defined(TEST) || defined(FX_READ_COUNTER)
+extern battle::BattlePresenter testBattlePresenter;
 inline __attribute__((always_inline)) battle::BattlePresenter &battlePresenter() {
-    return modeState.battle.presenter;
+    return testBattlePresenter;
 }
+#endif
 inline __attribute__((always_inline)) WorldTransient &worldState() { return modeState.world; }
 inline __attribute__((always_inline)) void enterBattle() { modeState.enterBattle(); }
 inline __attribute__((always_inline)) void exitBattle() { modeState.exitBattle(); }

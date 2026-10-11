@@ -163,12 +163,20 @@ void BattleSetupIntegrationTest(TestSuite &suite)
                 "third original trainer slot can replace the first");
     test.assert(state.active[static_cast<uint8_t>(Side::Opponent)].hp, 9,
                 "third slot preserves depleted bench HP");
+    test.assert(state.bench[static_cast<uint8_t>(Side::Opponent)][0].id, 0,
+                "switch to slot two keeps original slot zero first");
+    test.assert(state.bench[static_cast<uint8_t>(Side::Opponent)][1].id, 3,
+                "switch to slot two keeps original slot one last");
     assertAuthoredTrainer(test, state, originalTrainerSlot(expectedTrainer, 2),
                          "replacement retains authored slot two");
     test.assert(applySwitch(state, Side::Opponent, 0, false, result), true,
                 "first original slot can return after third");
     test.assert(state.active[static_cast<uint8_t>(Side::Opponent)].hp, 15,
                 "first slot preserves depleted HP after third switch");
+    test.assert(state.bench[static_cast<uint8_t>(Side::Opponent)][0].id, 3,
+                "switch back from slot two preserves middle slot order");
+    test.assert(state.bench[static_cast<uint8_t>(Side::Opponent)][1].id, 6,
+                "switch back from slot two preserves final slot order");
 
     const uint8_t activeBeforeRefused =
         state.active[static_cast<uint8_t>(Side::Opponent)].id;
@@ -201,6 +209,8 @@ void BattleSetupIntegrationTest(TestSuite &suite)
                 "player switch restores persistent bench HP");
     test.assert(state.bench[static_cast<uint8_t>(Side::Player)][1].id, 2,
                 "player bench order excludes new active slot");
+    test.assert(state.bench[static_cast<uint8_t>(Side::Player)][0].id, 1,
+                "player switch keeps lower original slot first");
     test.assert(state.bench[static_cast<uint8_t>(Side::Player)][1].hp, 50,
                 "player outgoing HP remains mapped by original slot");
 

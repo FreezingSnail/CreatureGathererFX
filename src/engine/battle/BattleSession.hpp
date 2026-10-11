@@ -50,12 +50,14 @@ class BattleSession {
     bool isActive() const;
     bool awaitingPlayer() const;
     bool awaitingReplacement() const;
+    bool isPresenting() const;
     bool exitReady() const;
 
     void syncPlayerHp();
     BattleView view() const;
     MoveSnapshot moves() const;
     PartySnapshot partyChoices() const;
+    ReplacementChoices replacementChoices() const;
 
     const BattleState &state() const;
 #ifdef TEST
@@ -71,7 +73,7 @@ class BattleSession {
     void resetCursor(SessionPhase phase);
     void beginResultIfNeeded();
     bool needsReplacement(Side side) const;
-    bool emitReplacement(Side side, uint8_t originalSlot, bool forced);
+    bool emitReplacement(Side side, uint8_t originalSlot);
     uint8_t firstLiveBenchSlot(Side side) const;
     void captureState(ActionResult &out) const;
     bool submitPlayerAction(BattleAction action);

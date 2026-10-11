@@ -141,7 +141,7 @@ void BattleAiIntegrationTest(TestSuite &suite)
     suite.addTest(test);
 }
 
-void BattleAiSwitchRiskTest(TestSuite &suite)
+void BattleAiDoesNotVoluntarilySwitchTest(TestSuite &suite)
 {
     using namespace battle;
     using namespace battle_ai_test_detail;
@@ -157,18 +157,18 @@ void BattleAiSwitchRiskTest(TestSuite &suite)
     state.bench[1][0] = {3, 1, 255, DualType(Type::SPIRIT), 14, 14};
     state.bench[1][1] = {4, 1, 254, DualType(Type::SPIRIT), 14, 14};
     BattleAction action = chooseAction(state, Side::Opponent);
-    test.assert(action.kind, ActionKind::Switch, "high-HP trainer switches to surviving defense");
-    test.assert(action.index, 1, "risk products above signed 16-bit range retain best candidate");
+    test.assert(action.kind, ActionKind::Attack,
+                "trainer uses its tactical attack instead of a voluntary switch");
+    test.assert(action.index, 0,
+                "bench risk does not replace the selected attack");
     state.bench[1][1].hp = 255;
-    test.assert(chooseAction(state, Side::Opponent).index, 1,
-                "equal high-HP risk preserves original slot tie order");
-    state.switchLockMask = 2;
     test.assert(chooseAction(state, Side::Opponent).kind, ActionKind::Attack,
-                "switch lock preserves required intervening attack");
-    state.switchLockMask = 0;
+                "bench HP changes do not create a voluntary switch");
+    test.assert(chooseAction(state, Side::Opponent).kind, ActionKind::Attack,
+                "bench HP never creates an opponent voluntary switch");
     state.active[0].hp = 1;
     test.assert(chooseAction(state, Side::Opponent).kind, ActionKind::Attack,
-                "lethal action still takes priority over defensive switching");
+                "lethal attack remains selected by tactical policy");
     suite.addTest(test);
 }
 
@@ -176,6 +176,6 @@ void BattleAiSuite(TestRunner &runner)
 {
     TestSuite suite("Battle AI integration");
     BattleAiIntegrationTest(suite);
-    BattleAiSwitchRiskTest(suite);
+    BattleAiDoesNotVoluntarilySwitchTest(suite);
     runner.addTestSuite(suite);
 }

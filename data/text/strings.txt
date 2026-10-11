@@ -191,3 +191,17 @@ namespace ArenaUiText {
     arenaChooseOpponent = "Choose Opponent"
     arenaControls = "A:Pick B:Back"
 }
+
+namespace BattleFeedbackStrings {
+    battleWin = "win"
+    battleDefeat = "defeat"
+    battleEscaped = "escaped"
+    battleGathered = "gathered"
+    battleFled = "fled"
+    battleCannotAct = "cannot act"
+    battleHurtItself = "hurt itself"
+    battleEnters = "enters the field"
+    battleCannotEscape = "cannot escape"
+    battlePass = "pass"
+    battleTurnEnd = "turn end"
+}

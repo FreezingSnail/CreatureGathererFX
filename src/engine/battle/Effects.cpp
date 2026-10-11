@@ -161,8 +161,7 @@ bool applyEffect(BattleState &state, Side target, Effect effect, Consequence &ou
 bool rollMoveEffect(BattleState &state, Side attacker, Effect effect,
                     Rng &rng, Consequence &out)
 {
-    return rollMoveEffectAtRate(state, attacker, effect, rng, out,
-                                effectRate(static_cast<uint8_t>(effect)));
+    return rollMoveEffectAtRate(state, attacker, effect, rng, out, 100);
 }
 
 bool rollMoveEffect(BattleState &state, Side attacker, Effect effect,

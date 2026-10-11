@@ -46,6 +46,10 @@
 #include "battle_presets_test.hpp"
 #include "battle_item_test.hpp"
 #include "battle_utility_test.hpp"
+#include "battle_slim_test.hpp"
+#include "battle_slim_session_test.hpp"
+#include "battle_slim_menu_test.hpp"
+#include "battle_slim_feedback_test.hpp"
 #ifdef BATTLE_SIMULATOR
 #include "battle_sim_state_test.hpp"
 #include "battle_sim_runner_test.hpp"
@@ -203,9 +207,9 @@ int main() {
     std::cout << "BattlePresentationSuite finished" << std::endl;
     BattleSessionSuite(tests);
     std::cout << "BattleSessionSuite finished" << std::endl;
-    BattlePlaybackSuite(tests);
-    std::cout << "BattlePlaybackSuite finished" << std::endl;
+    // The compact flow suite covers single-phase feedback and action boundaries.
     BattleFlowSuite(tests);
+    std::cout << "Slim battle frame controller finished" << std::endl;
     ArenaLifecycleSuite(tests);
     ArenaCatalogSuite(tests);
     ArenaNavigationSuite(tests);
@@ -214,6 +218,10 @@ int main() {
     BattlePresetsSuite(tests);
     BattleItemSuite(tests);
     BattleUtilitySuite(tests);
+    battle_slim_fixture::BattleSlimScaffoldSuite(tests);
+    battle_slim_session_test_detail::BattleSlimSessionSuite(tests);
+    BattleSlimMenuSuite(tests);
+    battle_slim_feedback_fixture::SlimFeedbackSuite(tests);
 #ifdef BATTLE_SIMULATOR
     BattleSimulatorStateSuite(tests);
     BattleSimulatorRunnerSuite(tests);

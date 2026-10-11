@@ -43,7 +43,6 @@ void clearCombatant(Combatant &combatant)
 void clearState(BattleState &state)
 {
     resetMoveUses(state);
-    state.switchLockMask = 0;
     for (uint8_t side = 0; side < 2; ++side)
         for (uint8_t slot = 0; slot < PARTY_SIZE; ++slot)
             state.partyModifiers[side][slot] = 0;
@@ -236,28 +235,6 @@ uint8_t fillTrainer(BattleState &state, const OpponentSeed &seed, uint8_t count)
     return reads;
 }
 
-void snapshotParty(const BattleState &state, Side side,
-                   BenchSlot (&slots)[PARTY_SIZE])
-{
-    const uint8_t sideIndex = static_cast<uint8_t>(side);
-    const uint8_t count = state.partyCount[sideIndex];
-    const uint8_t activeSlot = state.activeSlot[sideIndex];
-    uint8_t benchSlot = 0;
-    for (uint8_t originalSlot = 0; originalSlot < count; ++originalSlot) {
-        if (originalSlot == activeSlot) {
-            slots[originalSlot].id = state.active[sideIndex].id;
-            slots[originalSlot].level = state.active[sideIndex].level;
-            slots[originalSlot].hp = state.active[sideIndex].hp;
-            slots[originalSlot].types = state.active[sideIndex].types;
-            slots[originalSlot].defense = state.active[sideIndex].stats.defense;
-            slots[originalSlot].specialDefense = state.active[sideIndex].stats.spcDef;
-        } else {
-            slots[originalSlot] = state.bench[sideIndex][benchSlot];
-            ++benchSlot;
-        }
-    }
-}
-
 // Switch results carry a complete pre/post view so presentation and the next
 // action observe the unchanged side as well as the incoming combatant.
 void captureTransitionBefore(const BattleState &state, ActionResult &out)
@@ -289,6 +266,14 @@ bool loadIncoming(const BattleState &state, Side side, uint8_t originalSlot,
         return false;
     }
 
+#ifdef __AVR__
+    // The shipping caller is the paused menu's original-slot snapshot. The
+    // persistent player roster cannot change before this replacement boundary.
+    if (side == Side::Player) {
+        copyCreature(incoming, player.party[originalSlot], slot.hp);
+        return true;
+    }
+#else
     // Player records already carry their authored move IDs; reuse that cache
     // when it still names the same original slot. Synthetic/native fixtures
     // fall through to the canonical FX species record.
@@ -298,16 +283,21 @@ bool loadIncoming(const BattleState &state, Side side, uint8_t originalSlot,
         copyCreature(incoming, player.party[originalSlot], slot.hp);
         return true;
     }
+#endif
 
     Creature creature;
     if (side == Side::Opponent && state.trainer) {
         const OpponentSeed trainer = readOpponentSeed(state.trainerId);
         const CreatureSeed &authored = trainerSeed(trainer, originalSlot);
+#ifndef __AVR__
+        // Host fixtures can be synthetic; packaged trainer rows were already
+        // validated when the party was counted and loaded.
         if (!validCreatureSeed(authored) ||
             trainerSpeciesForSlot(originalSlot, authored.id) != slot.id ||
             authored.lvl != slot.level) {
             return false;
         }
+#endif
         loadTrainerCreature(creature, authored, originalSlot);
         reads = static_cast<uint8_t>(2 + trainerCreatureReads(authored));
         copyCreature(incoming, creature, slot.hp);
@@ -320,6 +310,7 @@ bool loadIncoming(const BattleState &state, Side side, uint8_t originalSlot,
     return true;
 }
 
+#ifndef __AVR__
 bool validSwitchRequest(const BattleState &state, Side side,
                         uint8_t originalSlot)
 {
@@ -329,6 +320,7 @@ bool validSwitchRequest(const BattleState &state, Side side,
            originalSlot < count && originalSlot != state.activeSlot[sideIndex] &&
            state.activeSlot[sideIndex] < count;
 }
+#endif
 
 } // namespace
 
@@ -407,23 +399,30 @@ bool applySwitch(BattleState &state, Side side, uint8_t originalSlot,
     if (sideIndex < 2) {
         captureTransitionBefore(state, out);
     }
+#ifndef __AVR__
     if (sideIndex >= 2 || !validSwitchRequest(state, side, originalSlot)) {
         out.flags |= REFUSED;
         return false;
     }
+#endif
 
-    BenchSlot slots[PARTY_SIZE];
-    snapshotParty(state, side, slots);
-    const BenchSlot incomingSlot = slots[originalSlot];
+    const uint8_t activeSlot = state.activeSlot[sideIndex];
+    const uint8_t targetBenchSlot = originalSlot < activeSlot
+        ? originalSlot : static_cast<uint8_t>(originalSlot - 1);
+    const BenchSlot incomingSlot = state.bench[sideIndex][targetBenchSlot];
     if (incomingSlot.hp == 0 || incomingSlot.id >= SPECIES_COUNT) {
         out.flags |= REFUSED;
         captureTransitionAfter(state, out);
         return false;
     }
 
-    const uint8_t oldId = state.active[sideIndex].id;
-    const uint8_t oldMaxHp = state.active[sideIndex].maxHp;
-    const uint8_t oldHp = state.active[sideIndex].hp;
+    BenchSlot outgoing;
+    outgoing.id = state.active[sideIndex].id;
+    outgoing.level = state.active[sideIndex].level;
+    outgoing.hp = state.active[sideIndex].hp;
+    outgoing.types = state.active[sideIndex].types;
+    outgoing.defense = state.active[sideIndex].stats.defense;
+    outgoing.specialDefense = state.active[sideIndex].stats.spcDef;
     Combatant incoming;
     uint8_t reads = 0;
     if (!loadIncoming(state, side, originalSlot, incomingSlot, incoming, reads)) {
@@ -438,23 +437,24 @@ bool applySwitch(BattleState &state, Side side, uint8_t originalSlot,
     incoming.statMods.modifiers = state.partyModifiers[sideIndex][originalSlot];
     state.active[sideIndex] = incoming;
     state.activeSlot[sideIndex] = originalSlot;
-    uint8_t benchSlot = 0;
-    const uint8_t count = state.partyCount[sideIndex];
-    for (uint8_t slot = 0; slot < count; ++slot) {
-        if (slot == originalSlot) continue;
-        state.bench[sideIndex][benchSlot] = slots[slot];
-        ++benchSlot;
+    const uint8_t outgoingBenchSlot = activeSlot < originalSlot
+        ? activeSlot : static_cast<uint8_t>(activeSlot - 1);
+    if (targetBenchSlot < outgoingBenchSlot) {
+        for (uint8_t slot = targetBenchSlot; slot < outgoingBenchSlot; ++slot) {
+            state.bench[sideIndex][slot] = state.bench[sideIndex][slot + 1];
+        }
+    } else {
+        for (uint8_t slot = targetBenchSlot; slot > outgoingBenchSlot; --slot) {
+            state.bench[sideIndex][slot] = state.bench[sideIndex][slot - 1];
+        }
     }
-    while (benchSlot < PARTY_SIZE - 1) {
-        state.bench[sideIndex][benchSlot] = {};
-        ++benchSlot;
-    }
+    state.bench[sideIndex][outgoingBenchSlot] = outgoing;
+    const uint8_t usedBenchSlots = static_cast<uint8_t>(state.partyCount[sideIndex] - 1);
+    if (usedBenchSlots < PARTY_SIZE - 1)
+        state.bench[sideIndex][usedBenchSlots] = {};
 
     out.index = incoming.id;
-    out.speciesBefore[sideIndex] = oldId;
-    out.maxHpBefore[sideIndex] = oldMaxHp;
-    out.hpBefore[sideIndex] = oldHp;
-    captureTransitionAfter(state, out);
+    out.hpAfter[sideIndex] = state.active[sideIndex].hp;
     return true;
 }
 

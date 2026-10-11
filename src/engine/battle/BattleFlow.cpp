@@ -1,82 +1,90 @@
 #include "BattleFlow.hpp"
 
+#include "BattleFeedback.hpp"
+#include "BattleMenu.hpp"
+#include "BattleScene.hpp"
 #include "BattleSession.hpp"
 #include "../ModeState.hpp"
-#include "../menu/MenuV2.hpp"
 #include "../../GameState.hpp"
 #include "../../globals.hpp"
 
 namespace BattleFlow {
 namespace {
 
-bool menuAt(MenuEnum type) {
-    return menu.menuPointer >= 0 && menu.stack[menu.menuPointer] == type;
+void beginFeedback(battle::BattleMode &mode) {
+    ::new (static_cast<void *>(&mode.ui.feedback)) battle::BattleFeedback();
+    mode.ui.feedback.begin(mode.result(), mode.state());
 }
 
-void openChoice() {
-    if (menuAt(BATTLE_OPTIONS) || menuAt(BATTLE_MOVE_SELECT) ||
-        menuAt(BATTLE_CREATURE_SELECT)) return;
+void beginMenu(battle::BattleMode &mode) {
+    ::new (static_cast<void *>(&mode.ui.menu)) battle::BattleMenu();
+}
+
+void finishBattle(battle::BattleSession &session, TerminalCallback callback) {
+    const battle::Outcome outcome = session.result().outcome;
+#if defined(TEST) || defined(FX_READ_COUNTER)
     menu.clear();
-    menu.push(BATTLE_OPTIONS);
-}
-
-void openReplacement(battle::BattleSession &session) {
-    if (menuAt(BATTLE_CREATURE_SELECT)) return;
-    menu.clear();
-    menu.openMenu(BATTLE_CREATURE_SELECT, session.view());
-    menu.setPartySnapshot(session.partyChoices());
-}
-
-void beginResult(battle::BattleSession &session,
-                 battle::BattlePresenter &presenter) {
-    if (session.advance()) presenter.begin(session.result());
+#endif
+    dialogMenu.clear();
+    if (callback != nullptr) {
+        callback(outcome);
+        return;
+    }
+    exitBattle();
+    gameState.state = GameState_t::WORLD;
 }
 
 } // namespace
 
 bool update(uint8_t edgeButtons, TerminalCallback onFinished) {
-    battle::BattleSession &session = battleSession();
-    battle::BattlePresenter &presenter = battlePresenter();
-
-    // A result exclusively owns its completion edge. The next action/menu
-    // cannot consume that same edge after a phase transition.
-    if (presenter.stage() != battle::PresenterStage::Idle) {
-        if (!presenter.done()) {
-            presenter.update((edgeButtons & MENU_EDGE_A) != 0);
-        } else {
-            session.finishPresentation();
-            presenter.reset();
-            if (session.exitReady()) {
-                const battle::Outcome outcome = session.result().outcome;
-                menu.clear();
-                dialogMenu.clear();
-                if (onFinished != nullptr) {
-                    onFinished(outcome);
-                    return true;
-                }
-                exitBattle();
-                gameState.state = GameState_t::WORLD;
-                return true;
-            }
-        }
-        return false;
-    }
+    battle::BattleMode &mode = modeState.battle;
+    battle::BattleSession &session = mode;
 
     if (!session.isActive()) return false;
     if (dialogMenu.peek()) dialogMenu.clear();
 
-    if (session.awaitingReplacement() || session.awaitingPlayer()) {
-        if (session.awaitingReplacement()) openReplacement(session);
-        else openChoice();
-        const MenuIntent intent = menu.run(session, edgeButtons);
+    // Presentations own every edge until they finish. Reconstructing the menu
+    // happens after the boundary, so the completion edge cannot select again.
+    if (session.isPresenting()) {
+        mode.ui.feedback.update((edgeButtons & MENU_EDGE_A) != 0);
+        if (!mode.ui.feedback.done()) return false;
+
+        session.finishPresentation();
+        if (session.exitReady()) {
+            finishBattle(session, onFinished);
+            return true;
+        }
+        beginMenu(mode);
+        return false;
+    }
+
+    if (session.awaitingPlayer()) {
+        if (!mode.ui.menu.initialized()) {
+#if !CGFX_BATTLE_AUTO_REPLACE
+            if (session.awaitingReplacement()) {
+                mode.ui.menu.beginReplacement(session.replacementChoices());
+            } else {
+#endif
+                const battle::BattleState &state = session.state();
+                mode.ui.menu.beginMoves(session.moves(), state.gatherable,
+                                        !state.trainer);
+#if !CGFX_BATTLE_AUTO_REPLACE
+            }
+#endif
+            return false;
+        }
+
+        const MenuIntent intent = mode.ui.menu.update(edgeButtons);
         if (intent.kind != MenuIntentKind::None && session.submitIntent(intent)) {
-            menu.clear();
-            beginResult(session, presenter);
+            // Resolving starts on the next frame; this edge belongs only to the
+            // accepted selection and is never replayed into another phase.
         }
         return false;
     }
 
-    beginResult(session, presenter);
+    // Ready/automatic replacement: advance once, then hand the compact UI arm
+    // to feedback. There is no additional controller phase byte in BattleMode.
+    if (session.advance()) beginFeedback(mode);
     return false;
 }
 

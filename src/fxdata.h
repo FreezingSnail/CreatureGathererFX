@@ -6,8 +6,8 @@ using uint24_t = __uint24;
 
 // Initialize FX hardware using  FX::begin(FX_DATA_PAGE); in the setup() function.
 
-constexpr uint16_t FX_DATA_PAGE  = 0xf42a;
-constexpr uint24_t FX_DATA_BYTES = 742765;
+constexpr uint16_t FX_DATA_PAGE  = 0xf426;
+constexpr uint24_t FX_DATA_BYTES = 743808;
 
 constexpr uint16_t FX_SAVE_PAGE  = 0xFF80;
 constexpr uint24_t FX_SAVE_BYTES = 32768;
@@ -455,93 +455,109 @@ constexpr uint24_t creature60 = 0x020583;
 constexpr uint24_t creature61 = 0x0205FB;
 constexpr uint24_t creature62 = 0x020673;
 constexpr uint24_t creature63 = 0x0206EB;
+constexpr uint24_t battleWin = 0x020759;
+constexpr uint24_t battleDefeat = 0x020781;
+constexpr uint24_t battleEscaped = 0x0207C7;
+constexpr uint24_t battleGathered = 0x020817;
+constexpr uint24_t battleFled = 0x020871;
+constexpr uint24_t battleCannotAct = 0x0208A3;
+constexpr uint24_t battleHurtItself = 0x020911;
+constexpr uint24_t battleEnters = 0x020989;
+constexpr uint24_t battleCannotEscape = 0x020A33;
+constexpr uint24_t battlePass = 0x020ABF;
+constexpr uint24_t battleTurnEnd = 0x020AF1;
 namespace CreatureNames
 {
-  constexpr uint24_t CreatureNames = 0x020759;
+  constexpr uint24_t CreatureNames = 0x020B4B;
 }
 
 namespace MoveNames
 {
-  constexpr uint24_t MoveNames = 0x020819;
+  constexpr uint24_t MoveNames = 0x020C0B;
 }
 
 namespace MenuStrings
 {
-  constexpr uint24_t MenuStrings = 0x0208A0;
+  constexpr uint24_t MenuStrings = 0x020C92;
 }
 
 namespace EffectStrings
 {
-  constexpr uint24_t EffectStrings = 0x020912;
+  constexpr uint24_t EffectStrings = 0x020D04;
 }
 
 namespace LureTierNames
 {
-  constexpr uint24_t LureTierNames = 0x020915;
+  constexpr uint24_t LureTierNames = 0x020D07;
 }
 
 namespace LureTypeNames
 {
-  constexpr uint24_t LureTypeNames = 0x02091E;
+  constexpr uint24_t LureTypeNames = 0x020D10;
 }
 
 namespace ConsumableNames
 {
-  constexpr uint24_t ConsumableNames = 0x020936;
+  constexpr uint24_t ConsumableNames = 0x020D28;
 }
 
 namespace ArenaUiText
 {
-  constexpr uint24_t ArenaUiText = 0x02094E;
+  constexpr uint24_t ArenaUiText = 0x020D40;
 }
 
-constexpr uint24_t basicBeamR = 0x020957;
-constexpr uint24_t basicBeamL = 0x021157;
-constexpr uint24_t BasicWaveR = 0x021957;
-constexpr uint24_t BasicWaveL = 0x022157;
-constexpr uint24_t fontTrimmed = 0x022957;
+namespace BattleFeedbackStrings
+{
+  constexpr uint24_t BattleFeedbackStrings = 0x020D49;
+}
+
+constexpr uint24_t basicBeamR = 0x020D6A;
+constexpr uint24_t basicBeamL = 0x02156A;
+constexpr uint24_t BasicWaveR = 0x021D6A;
+constexpr uint24_t BasicWaveL = 0x02256A;
+constexpr uint24_t fontTrimmed = 0x022D6A;
 constexpr uint16_t fontTrimmedWidth  = 5;
 constexpr uint16_t fontTrimmedHeight = 6;
 constexpr uint8_t  fontTrimmedFrames = 75;
 
-constexpr uint24_t type_table = 0x022AD2;
-constexpr uint24_t move_table = 0x022B12;
-constexpr uint24_t map_data = 0x022BC2;
-constexpr uint24_t raw_map_data = 0x042BC2;
-constexpr uint24_t raw_map_text = 0x062BC2;
-constexpr uint24_t consumable_table = 0x062BC4;
-constexpr uint24_t generator_version = 0x062BD4;
-constexpr uint24_t scripts = 0x062BE5;
+constexpr uint24_t type_table = 0x022EE5;
+constexpr uint24_t move_table = 0x022F25;
+constexpr uint24_t map_data = 0x022FD5;
+constexpr uint24_t raw_map_data = 0x042FD5;
+constexpr uint24_t raw_map_text = 0x062FD5;
+constexpr uint24_t consumable_table = 0x062FD7;
+constexpr uint24_t generator_version = 0x062FE7;
+constexpr uint24_t scripts = 0x062FF8;
 namespace ArenaDemoData
 {
-  constexpr uint24_t playerMembers = 0x0A2BE5;
-  constexpr uint24_t opponentTrainerIds = 0x0A2C1B;
-  constexpr uint24_t opponentSpecies = 0x0A2C20;
-  constexpr uint24_t player_blitz = 0x0A2C2F;
-  constexpr uint24_t player_bulwark = 0x0A2C61;
-  constexpr uint24_t player_utility = 0x0A2CA7;
-  constexpr uint24_t opponent_starter = 0x0A2CED;
-  constexpr uint24_t opponent_speed = 0x0A2D33;
-  constexpr uint24_t opponent_fortress = 0x0A2D65;
-  constexpr uint24_t opponent_tricks = 0x0A2DB5;
-  constexpr uint24_t opponent_champion = 0x0A2DF1;
-  constexpr uint24_t playerLabels = 0x0A2E41;
-  constexpr uint24_t opponentLabels = 0x0A2E4A;
-  constexpr uint24_t playerLabelWidths = 0x0A2E59;
-  constexpr uint24_t opponentLabelWidths = 0x0A2E5C;
+  constexpr uint24_t playerMembers = 0x0A2FF8;
+  constexpr uint24_t opponentTrainerIds = 0x0A302E;
+  constexpr uint24_t opponentSpecies = 0x0A3033;
+  constexpr uint24_t player_blitz = 0x0A3042;
+  constexpr uint24_t player_bulwark = 0x0A3074;
+  constexpr uint24_t player_utility = 0x0A30BA;
+  constexpr uint24_t opponent_starter = 0x0A3100;
+  constexpr uint24_t opponent_speed = 0x0A3146;
+  constexpr uint24_t opponent_fortress = 0x0A3178;
+  constexpr uint24_t opponent_tricks = 0x0A31C8;
+  constexpr uint24_t opponent_champion = 0x0A3204;
+  constexpr uint24_t playerLabels = 0x0A3254;
+  constexpr uint24_t opponentLabels = 0x0A325D;
+  constexpr uint24_t playerLabelWidths = 0x0A326C;
+  constexpr uint24_t opponentLabelWidths = 0x0A326F;
 }
 
-constexpr uint24_t battleSprites48 = 0x0A2E61;
+constexpr uint24_t battleSprites48 = 0x0A3274;
 constexpr uint16_t battleSprites48Width  = 48;
 constexpr uint16_t battleSprites48Height = 48;
 constexpr uint8_t  battleSprites48Frames = 128;
 
-constexpr uint24_t battleOptions48 = 0x0B4E65;
+constexpr uint24_t battleOptions48 = 0x0B5278;
 constexpr uint16_t battleOptions48Width  = 128;
 constexpr uint16_t battleOptions48Height = 16;
 constexpr uint8_t  battleOptions48Frames = 4;
 
-constexpr uint24_t worldPlayerSprites = 0x0B5269;
+constexpr uint24_t worldPlayerSprites = 0x0B567C;
 constexpr uint16_t worldPlayerSpritesWidth  = 16;
 constexpr uint16_t worldPlayerSpritesHeight = 16;
 constexpr uint8_t  worldPlayerSpritesFrames = 12;
