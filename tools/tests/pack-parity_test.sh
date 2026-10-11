@@ -23,7 +23,13 @@ perturbed_layout=$fixtures/fxlayout-expand-20-perturbed.toml
 # Reviewed left-facing front profiles are baked toward the player at screen right.
 # Append twelve masked chibi player idle/walk frames; prior450constants/data stay fixed.
 # Slim battle feedback appends eleven authored captions after the existing text assets.
-expected=a5c62d6f9b577e3fad3cacdc93d63a9050d7870b4f433ec37d67055516ad7320
+# Overworld pocket floor carries the encounter prop; zone 0 gains five lure-biased
+# tables and [1,2,3,4] lure nibbles, changing raw_map and encounters payloads.
+# jp8.9 adds the pocket box/plant tiles, chunk 1 and 33 lure zones, and the
+# LureText/harness strings, changing raw_map, encounters, and the text block.
+# jp8.9 gate fix gives the box tile the spare prop (bit 5) so the World A hook
+# reads it from the RAM property window instead of a per-press FX word read.
+expected=7539dc9a8ae15499a49cbbcf615105ee4174e19953d5c74c31ce0e1fbd27019e
 
 for layout in "$old_layout" "$new_layout" "$perturbed_layout"; do
     test -f "$layout" || {

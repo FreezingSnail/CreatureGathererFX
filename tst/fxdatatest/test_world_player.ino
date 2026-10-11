@@ -1,7 +1,16 @@
 #include "harness/fx_globals.hpp"
 #include "src/engine/draw.h"
+#include "src/engine/world/StepEvent.hpp"
+#include "src/engine/world/LureZone.hpp"
+#include "src/item/Inventory.hpp"
+#include "src/item/ItemIds.hpp"
 #include "fxtest.hpp"
 #include "stack_test.hpp"
+
+namespace lureWedgeTest {
+uint8_t forcedRoll = 0;
+uint8_t forcedRng(uint8_t, uint8_t) { return forcedRoll; }
+}
 
 void setup() {
     fxTestSetup();
@@ -39,6 +48,29 @@ void setup() {
     }
     test.expectEq(minimumHeadroom >= stack_fx_test_detail::MIN_HEADROOM, true, F("player render preserves stack reserve"));
     Serial.print(F("player render headroom=")); Serial.println(minimumHeadroom);
+
+    // A pocket encounter tile fires an encounter under the deterministic roll
+    // seam while a lure is deposited, exercising the authored chunk-33 zone.
+    item::inventoryAdd(LureZone::inventory(), item::ItemKind::Lure,
+                       item::lureId(0, 0), 1);
+    LureZone::clear();
+    gameState.state = GameState_t::WORLD;
+    gameState.playerLocation = static_cast<uint16_t>((7u << 8) | 12u);
+    WorldEngine::init(worldState());
+    WorldEngine::loadMap(worldState(), 0, 0);
+    drawMapFast(worldState());
+    LureZone::deposit(LureZone::lureId(0, 0));
+    test.expectEq(LureZone::active(), true, F("pocket lure is active"));
+    player.basic();
+    for (uint8_t slot = 1; slot < PARTY_SIZE; ++slot) player.party[slot].level = 0;
+    player.party[0].level = 5;
+    lureWedgeTest::forcedRoll = 0;
+    StepEventTest::setEncounterRng(lureWedgeTest::forcedRng);
+    onStep(static_cast<uint16_t>((7u << 8) | 12u));
+    test.expectEq(gameState.state, GameState_t::BATTLE,
+                  F("pocket encounter tile fires a wild battle"));
+    test.expectEq(battleSession().isActive(), true, F("encounter battle session active"));
+
     test.report(F("test_world_player"));
 }
 void loop() { exit(0); }

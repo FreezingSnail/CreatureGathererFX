@@ -171,11 +171,14 @@ inline void test_tiles(FxTest &test) {
     const uint16_t emptySouth = rawTileWordAt(12, 8);
 
     test.expectEq(TileProps::tileId(floorNorth), 275, F("north raw tile id"));
-    test.expectEq(TileProps::tileProps(floorNorth), TileProps::PROP_WALKABLE,
-                  F("north walkable property"));
+    test.expectEq(TileProps::tileProps(floorNorth),
+                  static_cast<uint8_t>(TileProps::PROP_WALKABLE | TileProps::PROP_ENCOUNTER),
+                  F("north walkable encounter property"));
     test.expectEq(TileProps::tileId(floor), 275, F("spawn raw tile id"));
     test.expectEq(TileProps::hasTileProp(floor, TileProps::PROP_WALKABLE), true,
                   F("spawn walkable property"));
+    test.expectEq(TileProps::hasTileProp(floor, TileProps::PROP_ENCOUNTER), true,
+                  F("spawn encounter property"));
     test.expectEq(TileProps::tileId(wallWest), 262, F("west wall raw tile id"));
     test.expectEq(TileProps::hasTileProp(wallWest, TileProps::PROP_WALKABLE), false,
                   F("west wall is blocked"));

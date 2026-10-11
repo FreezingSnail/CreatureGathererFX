@@ -299,7 +299,7 @@ inline void test_arenademo(FxTest &test)
                   F("arena"));
     test.expectEq(sizeof(arena::ArenaPreview), static_cast<size_t>(19),
                   F("arena"));
-    test.expectEq(sizeof(ModeState), static_cast<size_t>(191),
+    test.expectEq(sizeof(ModeState), static_cast<size_t>(193),
                   F("arena"));
     test.expectEq(modeState.arena.ui.list.itemCount, ArenaDemoIds::playerCount,
                   F("arena"));
@@ -507,7 +507,7 @@ inline void test_arenademo(FxTest &test)
 
     test.expectEq(minimumStack >= 219, true,
                   F("arena"));
-    test.expectEq(sizeof(ModeState), static_cast<size_t>(191),
+    test.expectEq(sizeof(ModeState), static_cast<size_t>(193),
                   F("arena"));
     test.expectEq(reinterpret_cast<uint16_t>(&__bss_end), residentEndBefore,
                   F("arena"));

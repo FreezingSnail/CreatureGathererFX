@@ -17,6 +17,14 @@ uint16_t readChunkId(const uint8_t *zone) {
            (static_cast<uint16_t>(zone[1]) << 8);
 }
 
+// Four lure-slot nibbles live in two cache bytes: index 0/2 in the low nibble,
+// index 1/3 in the high nibble.
+uint8_t lureNibble(const uint8_t *cache, uint8_t index) {
+    const uint8_t packed = cache[CACHE_NIBBLES_OFFSET + (index >> 1)];
+    return (index & 1) ? static_cast<uint8_t>(packed >> 4)
+                       : static_cast<uint8_t>(packed & 0x0F);
+}
+
 bool validTable(const uint8_t *table) {
     if (table[SLOT_COUNT] == 0 || table[SLOT_COUNT] > table[SLOT_COUNT + 1]) {
         return false;
@@ -61,6 +69,12 @@ bool load(uint8_t *cache, uint16_t chunkId) {
         const uint8_t tableCount = cache[3];
         const uint8_t typeMask = cache[4];
         const uint8_t levelOffset = cache[9];
+        // Capture the lure nibbles before the table read overwrites the zone
+        // def payload at cache[0..TABLE_BYTES-1].
+        const uint8_t nibble0 = cache[5];
+        const uint8_t nibble1 = cache[6];
+        const uint8_t nibble2 = cache[7];
+        const uint8_t nibble3 = cache[8];
         if (tableCount == 0 || tableBase >= TABLE_COUNT ||
             static_cast<uint16_t>(tableBase) + tableCount > TABLE_COUNT) {
             FxReadCounter::transitionExact(reads);
@@ -78,8 +92,8 @@ bool load(uint8_t *cache, uint16_t chunkId) {
             return false;
         }
 
-        // Keep transition metadata after the table payload. Lure-specific
-        // selection is intentionally deferred; tableBase is the wild table.
+        // Keep transition metadata after the table payload. The nibbles drive
+        // lure-biased table selection in select(); tableBase is the wild table.
         cache[CACHE_VALID_OFFSET] = 1;
         cache[CACHE_CHUNK_LOW_OFFSET] = static_cast<uint8_t>(chunkId);
         cache[CACHE_CHUNK_HIGH_OFFSET] = static_cast<uint8_t>(chunkId >> 8);
@@ -88,6 +102,10 @@ bool load(uint8_t *cache, uint16_t chunkId) {
         cache[CACHE_TYPE_MASK_OFFSET] = typeMask;
         cache[CACHE_LEVEL_OFFSET] = levelOffset;
         cache[CACHE_TABLE_INDEX_OFFSET] = tableBase;
+        cache[CACHE_NIBBLES_OFFSET] = static_cast<uint8_t>(
+            (nibble0 & 0x0F) | ((nibble1 & 0x0F) << 4));
+        cache[CACHE_NIBBLES_OFFSET + 1] = static_cast<uint8_t>(
+            (nibble2 & 0x0F) | ((nibble3 & 0x0F) << 4));
         FxReadCounter::transitionExact(reads);
         return true;
     }
@@ -108,19 +126,35 @@ uint8_t partyAverageLevel(const Creature party[PARTY_SIZE]) {
 }
 
 bool select(const uint8_t *cache, const Creature party[PARTY_SIZE], Rng rng,
-            Decision &out) {
+            uint8_t lureTableOffset, Decision &out) {
     if (cache[CACHE_VALID_OFFSET] != 1 ||
         cache[CACHE_TABLE_COUNT_OFFSET] == 0 ||
         cache[CACHE_TABLE_BASE_OFFSET] >= TABLE_COUNT ||
         static_cast<uint16_t>(cache[CACHE_TABLE_BASE_OFFSET]) +
-                cache[CACHE_TABLE_COUNT_OFFSET] > TABLE_COUNT ||
-        cache[TABLE_BYTES - 2] == 0 ||
-        cache[TABLE_BYTES - 2] > cache[TABLE_BYTES - 1]) {
+                cache[CACHE_TABLE_COUNT_OFFSET] > TABLE_COUNT) {
         return false;
     }
-    for (uint8_t tableSlot = 0; tableSlot < SLOT_COUNT; ++tableSlot) {
-        if (cache[tableSlot] >= SPECIES_COUNT) return false;
+
+    const uint8_t tableBase = cache[CACHE_TABLE_BASE_OFFSET];
+    uint8_t tableIndex = tableBase;
+    if (lureTableOffset != INERT_OFFSET) {
+        const uint8_t lureOffset = lureNibble(cache, lureTableOffset & 0x03u);
+        if (lureOffset >= cache[CACHE_TABLE_COUNT_OFFSET]) return false;
+        tableIndex = static_cast<uint8_t>(tableBase + lureOffset);
+        if (tableIndex >= TABLE_COUNT) return false;
     }
+
+    // The cache holds the base table; a lure-biased pick fetches its table
+    // once at battle entry. The inert path stays RAM-only.
+    uint8_t lureTable[TABLE_BYTES];
+    const uint8_t *table = cache;
+    if (tableIndex != cache[CACHE_TABLE_INDEX_OFFSET]) {
+        const uint24_t address = EncounterFXData::tables +
+            static_cast<uint24_t>(tableIndex) * TABLE_BYTES;
+        FxRead::bytes(address, lureTable, TABLE_BYTES);
+        table = lureTable;
+    }
+    if (!validTable(table)) return false;
 
     bool hasParty = false;
     for (uint8_t slot = 0; slot < PARTY_SIZE; ++slot) {
@@ -132,18 +166,18 @@ bool select(const uint8_t *cache, const Creature party[PARTY_SIZE], Rng rng,
     if (!hasParty) return false;
 
     const uint8_t slot = rollSlot(selectedRng(rng));
-    if (slot >= SLOT_COUNT || cache[slot] >= SPECIES_COUNT) return false;
+    if (slot >= SLOT_COUNT || table[slot] >= SPECIES_COUNT) return false;
 
     const int16_t rawLevel = static_cast<int16_t>(partyAverageLevel(party)) +
         static_cast<int8_t>(cache[CACHE_LEVEL_OFFSET]);
-    const int16_t floor = cache[TABLE_BYTES - 2];
-    const int16_t ceil = cache[TABLE_BYTES - 1];
+    const int16_t floor = table[TABLE_BYTES - 2];
+    const int16_t ceil = table[TABLE_BYTES - 1];
     int16_t level = rawLevel;
     if (level < floor) level = floor;
     if (level > ceil) level = ceil;
     if (level <= 0 || level > 255) return false;
 
-    out.creatureId = cache[slot];
+    out.creatureId = table[slot];
     out.level = static_cast<uint8_t>(level);
     out.slot = slot;
     return true;

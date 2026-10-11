@@ -948,8 +948,10 @@ void checkAuthoredTiles(Report &report, const std::vector<uint8_t> &source,
         uint8_t properties;
     };
     const Cell cells[] = {
-        {"north floor", 12, 6, 275, TileProps::PROP_WALKABLE},
-        {"spawn floor", 12, 7, 275, TileProps::PROP_WALKABLE},
+        {"north floor", 12, 6, 275,
+         static_cast<uint8_t>(TileProps::PROP_WALKABLE | TileProps::PROP_ENCOUNTER)},
+        {"spawn floor", 12, 7, 275,
+         static_cast<uint8_t>(TileProps::PROP_WALKABLE | TileProps::PROP_ENCOUNTER)},
         {"west wall", 11, 7, 262, 0},
         {"east wall", 13, 7, 261, 0},
     };

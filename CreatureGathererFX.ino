@@ -11,6 +11,9 @@
 #include "src/engine/menu/MenuV2.hpp"
 #include "src/engine/world/Event.hpp"
 #include "src/engine/world/World.hpp"
+#include "src/engine/world/LureZone.hpp"
+#include "src/item/Inventory.hpp"
+#include "src/item/ItemIds.hpp"
 #include "src/fxdata.h"
 #include "src/save/SaveController.hpp"
 #include "src/save/Journal.hpp"
@@ -81,6 +84,19 @@ int main(void) {
 }
 #endif
 
+#ifdef CGFX_LURE_WEDGE
+// Playtest seeding: stock the world inventory so the box picker offers a spread
+// of lure types and tiers immediately. Wiped/replaced when Player item
+// ownership lands in CreatureGathererFX-jp8.5.13.
+static void seedLureWedge() {
+    item::Inventory &inv = LureZone::inventory();
+    item::inventoryAdd(inv, item::ItemKind::Lure, item::lureId(0, 0), 3);
+    item::inventoryAdd(inv, item::ItemKind::Lure, item::lureId(1, 1), 2);
+    item::inventoryAdd(inv, item::ItemKind::Lure, item::lureId(2, 2), 1);
+    item::inventoryAdd(inv, item::ItemKind::Lure, item::lureId(3, 0), 2);
+}
+#endif
+
 void setup() {
     // Serial.begin(9600);
     //  arduboy.begin();
@@ -91,7 +107,7 @@ void setup() {
     //  plants.tick();
 
     FX::begin(FX_DATA_PAGE, FX_SAVE_PAGE);
-#if !defined(CGFX_TRAINER_DEMO) && !defined(CGFX_WILD_DEMO) && !defined(CGFX_ARENA_DEMO)
+#if !defined(CGFX_TRAINER_DEMO) && !defined(CGFX_WILD_DEMO) && !defined(CGFX_ARENA_DEMO) && !defined(CGFX_LURE_WEDGE)
     journalInit();
 #endif
     FX::setCursorRange(0, 32767);
@@ -127,7 +143,10 @@ void setup() {
     arena::boot();
     return;
 #else
-#ifdef CGFX_WILD_DEMO
+#ifdef CGFX_LURE_WEDGE
+    // The lure playtest boots inside the pocket without touching a user save.
+    const bool restored = false;
+#elif defined(CGFX_WILD_DEMO)
     // This preset starts in the normal overworld and keeps the demo independent
     // of a user's save. Its first step is the opt-in encounter trigger.
     battle::applyPlayerPreset(player, BattlePresets::opening);
@@ -146,7 +165,12 @@ void setup() {
     exitBattle();
 
     gameState.state = GameState_t::WORLD;
-#ifndef CGFX_WILD_DEMO
+#ifdef CGFX_LURE_WEDGE
+    gameState.playerLocation = static_cast<uint16_t>(11) |
+                               (static_cast<uint16_t>(5) << 8);
+    player.basic();
+    seedLureWedge();
+#elif !defined(CGFX_WILD_DEMO)
     if (!restored) {
         player.basic();
         SaveController::seedParty();
@@ -221,6 +245,7 @@ uint8_t render() {
     {
         const uint8_t rowsRead = drawMapFast(worldState());
         drawPlayer(worldState());
+        LureZone::drawOverlay();
         return rowsRead;
     }
     case GameState_t::SAVING:

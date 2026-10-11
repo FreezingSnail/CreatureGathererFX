@@ -205,3 +205,12 @@ namespace BattleFeedbackStrings {
     battlePass = "pass"
     battleTurnEnd = "turn end"
 }
+
+namespace LureText {
+    lureTextPrompt = "Set Lure"
+    lureTextSet = "Lure Set"
+    lureTextEmpty = "No Lures"
+    lureTextGathered = "Gathered"
+    lureTextExpired = "Lure Gone"
+    lureTextFooter = "A:Set B:Back"
+}

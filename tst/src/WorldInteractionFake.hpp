@@ -15,6 +15,7 @@ extern uint16_t runCount;
 extern uint16_t currentTile;
 extern uint16_t targetTile;
 extern uint8_t runFirstByte;
+extern uint8_t pickerButtons;
 
 void reset();
 }

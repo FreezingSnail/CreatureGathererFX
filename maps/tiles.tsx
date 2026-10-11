@@ -20,7 +20,7 @@
  <tile id="261"><properties><property name="walkable" type="bool" value="false"/></properties></tile>
  <tile id="266"><properties><property name="walkable" type="bool" value="false"/></properties></tile>
  <tile id="273"><properties><property name="walkable" type="bool" value="false"/></properties></tile>
- <tile id="274"><properties><property name="walkable" type="bool" value="true"/></properties></tile>
+ <tile id="274"><properties><property name="walkable" type="bool" value="true"/><property name="encounter" type="bool" value="true"/></properties></tile>
  <tile id="275"><properties><property name="walkable" type="bool" value="false"/></properties></tile>
  <tile id="289"><properties><property name="walkable" type="bool" value="false"/></properties></tile>
  <tile id="290"><properties><property name="walkable" type="bool" value="false"/></properties></tile>
@@ -32,4 +32,10 @@
  <tile id="526"><properties><property name="water" type="bool" value="true"/></properties></tile>
  <tile id="527"><properties><property name="walkable" type="bool" value="true"/><property name="water" type="bool" value="true"/></properties></tile>
  <tile id="528"><properties><property name="walkable" type="bool" value="true"/><property name="encounter" type="bool" value="true"/></properties></tile>
+ <!-- Pocket prop tiles. The box (544) stays a non-walkable container and
+      carries the spare prop (bit 5) so WorldEngine::interact() picks it from
+      the RAM property window; the plant (550) carries the plantable prop for
+      the faced gather hook. Map words are tsx id + 1. -->
+ <tile id="544"><properties><property name="walkable" type="bool" value="false"/><property name="spare" type="bool" value="true"/></properties></tile>
+ <tile id="550"><properties><property name="plantable" type="bool" value="true"/></properties></tile>
 </tileset>

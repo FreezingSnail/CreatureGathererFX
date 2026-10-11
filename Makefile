@@ -1,4 +1,4 @@
-.PHONY: help setup doctor plant test test-debug testvm testvm-debug sim sim-test gen gen-data gen-sprites gen-fixtures pack full build mini ram run dev arena-demo check final-gate verify-generated test-manifest test-generated-libs test-doctor test-fxtest-ram test-avr-build-budget test-world-script-profile world-script-profile-check fxtest fxtest-headless fxtest-spike fxtest-preflight fxtest-headless-preflight fxtest-build fxtest-run new-fxtest clean-build-artifacts test-clean-build-artifacts
+.PHONY: help setup doctor plant test test-debug testvm testvm-debug sim sim-test gen gen-data gen-sprites gen-fixtures pack full build mini ram run dev arena-demo lure-demo check final-gate verify-generated test-manifest test-generated-libs test-doctor test-fxtest-ram test-avr-build-budget test-world-script-profile world-script-profile-check fxtest fxtest-headless fxtest-spike fxtest-preflight fxtest-headless-preflight fxtest-build fxtest-run new-fxtest clean-build-artifacts test-clean-build-artifacts
 
 # Public command API. Override tool, board, and output variables per workspace/CI.
 CXX ?= g++
@@ -84,6 +84,7 @@ help:
 		'  build    compile Arduboy FX sketch; prerequisite: $(ARDUINO_CLI); output: $(BUILD_DIR)' \
 		'  ram      build and report FX flash/RAM plus largest static symbols; prerequisite: $(ARDUINO_CLI), avr-size, avr-nm' \
 		'  arena-demo generate FX data, build the opt-in arena firmware, then launch Ardens' \
+		'  lure-demo  generate FX data, build the opt-in lure-wedge firmware, then launch Ardens' \
 		'  test-avr-build-budget exercise the fail-closed shipping flash/RAM parser' \
 		'  final-gate  run the full check then the shipping RAM report; requires ARDENS' \
 		'  run      launch Ardens with the sketch, FX data, and FX save images; prerequisite: ARDENS' \
@@ -159,6 +160,7 @@ TEST_SOURCES = src/lib/Blit.cpp \
 	src/engine/ModeState.cpp \
 	src/engine/world/World.cpp \
 	src/engine/world/Encounter.cpp \
+	src/engine/world/LureZone.cpp \
 	src/engine/world/StepEvent.cpp \
 	src/GameState.cpp \
 	src/flags/flag_bit_array.cpp \
@@ -298,6 +300,32 @@ arena-demo:
 	    file="$(ARENA_DEMO_BUILD_DIR)/CreatureGathererFX.ino.hex" \
 	    file="$(ARENA_DEMO_CART_DIR)/fxdata-data.bin" \
 	    save="$(ARENA_DEMO_CART_DIR)/fxdata-save.bin"
+
+# Opt-in lure playtest. Mirrors arena-demo: generate, build the wedge firmware
+# into an isolated directory, copy the split FX data/save inputs beside it, then
+# launch Ardens. Shipping build is unaffected; the define only sets the boot
+# location inside the pocket and seeds the world inventory.
+LURE_DEMO_BUILD_DIR ?= build/lure-demo
+LURE_DEMO_CART_DIR ?= $(LURE_DEMO_BUILD_DIR)/isolated
+LURE_DEMO_CPP_FLAGS ?= $(AVR_SHIPPING_CPP_FLAGS) -DCGFX_LURE_WEDGE
+LURE_DEMO_FLASH_BUDGET ?= 29184
+
+lure-demo:
+	@test -n "$(ARDENS)" || { echo "lure-demo: ARDENS is unset; set ARDENS=/path/to/Ardens" >&2; exit 1; }
+	@test -x "$(ARDENS)" || { echo "lure-demo: Ardens executable not found at $(ARDENS)" >&2; exit 1; }
+	@$(MAKE) --no-print-directory gen
+	@$(MAKE) --no-print-directory ram BUILD_DIR="$(LURE_DEMO_BUILD_DIR)" AVR_SHIPPING_CPP_FLAGS="$(LURE_DEMO_CPP_FLAGS)" AVR_FLASH_BUDGET="$(LURE_DEMO_FLASH_BUDGET)"
+	@test -f "$(LURE_DEMO_BUILD_DIR)/CreatureGathererFX.ino.hex" || { echo "lure-demo: sketch hex missing from $(LURE_DEMO_BUILD_DIR)" >&2; exit 1; }
+	@test -f "$(FXDATA_DATA_BIN)" || { echo "lure-demo: FX data image missing at $(FXDATA_DATA_BIN); run make gen" >&2; exit 1; }
+	@test -f "$(FXDATA_SAVE_BIN)" || { echo "lure-demo: FX save image missing at $(FXDATA_SAVE_BIN); run make gen" >&2; exit 1; }
+	@mkdir -p "$(LURE_DEMO_CART_DIR)"
+	@cp -f "$(FXDATA_DATA_BIN)" "$(LURE_DEMO_CART_DIR)/fxdata-data.bin"
+	@cp -f "$(FXDATA_SAVE_BIN)" "$(LURE_DEMO_CART_DIR)/fxdata-save.bin"
+	"$(ARDENS)" \
+	    fxport=$(RUN_FXPORT) display=$(RUN_DISPLAY) \
+	    file="$(LURE_DEMO_BUILD_DIR)/CreatureGathererFX.ino.hex" \
+	    file="$(LURE_DEMO_CART_DIR)/fxdata-data.bin" \
+	    save="$(LURE_DEMO_CART_DIR)/fxdata-save.bin"
 
 gen: gen-data gen-sprites gen-fixtures pack
 
@@ -441,7 +469,7 @@ test-debug:
 	$(call run_test,$(DEBUG_FLAGS),$(TEST_FLAGS),$(TEST_SOURCES),$(HOST_TEST_BIN))
 	$(call run_test,-DWORLD_TEST,$(TEST_FLAGS),$(WORLD_TEST_SOURCES),$(WORLD_TEST_BIN))
 
-WORLD_TEST_SOURCES = src/GameState.cpp src/engine/world/World.cpp src/engine/world/Encounter.cpp src/engine/world/StepEvent.cpp src/plants/PlantGamestate.cpp src/plants/PlantStage.cpp src/plants/PlantPair.cpp src/flags/flag_bit_array.cpp tst/src/random.cpp tst/world_test_main.cpp
+WORLD_TEST_SOURCES = src/GameState.cpp src/engine/world/World.cpp src/engine/world/Encounter.cpp src/engine/world/LureZone.cpp src/engine/world/StepEvent.cpp src/plants/PlantGamestate.cpp src/plants/PlantStage.cpp src/plants/PlantPair.cpp src/item/Inventory.cpp src/item/ItemNames.cpp src/lib/ListView.cpp src/flags/flag_bit_array.cpp tst/src/random.cpp tst/world_test_main.cpp
 
 testvm:
 	$(call run_test,,$(TEST_FLAGS),$(TESTVM_SOURCES),$(VM_TEST_BIN))

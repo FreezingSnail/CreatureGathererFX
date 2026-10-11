@@ -20,6 +20,7 @@
 #include "world_interact_test.hpp"
 #include "step_test.hpp"
 #include "encounter_test.hpp"
+#include "lure_zone_test.hpp"
 #include "transition_test.hpp"
 #include "fx_read_counter_test.hpp"
 #include "battle_view_test.hpp"
@@ -76,6 +77,7 @@ uint16_t runCount = 0;
 uint16_t currentTile = 0;
 uint16_t targetTile = 0;
 uint8_t runFirstByte = 0;
+uint8_t pickerButtons = 0;
 
 void reset() {
     pressedA = false;
@@ -88,6 +90,7 @@ void reset() {
     currentTile = 0;
     targetTile = 0;
     runFirstByte = 0;
+    pickerButtons = 0;
 }
 }
 
@@ -118,6 +121,7 @@ bool worldInteractionJustPressedA() { return worldInteractionFake::pressedA; }
 bool worldInteractionDialogActive() { return dialogMenu.peek(); }
 void worldInteractionPopDialog() { dialogMenu.popMenu(); }
 uint24_t worldInteractionScriptsBase() { return worldInteractionFake::scriptsBase; }
+uint8_t worldPickerButtons() { return worldInteractionFake::pickerButtons; }
 uint8_t worldMovementButtons() {
     ++worldMovementFake::calls;
     const uint8_t buttons = worldMovementFake::pendingButtons;
@@ -188,6 +192,8 @@ int main() {
     std::cout << "StepSuite finished" << std::endl;
     EncounterSuite(tests);
     std::cout << "EncounterSuite finished" << std::endl;
+    LureZoneSuite(tests);
+    std::cout << "LureZoneSuite finished" << std::endl;
     TransitionSuite(tests);
     std::cout << "TransitionSuite finished" << std::endl;
     FxReadCounterSuite(tests);

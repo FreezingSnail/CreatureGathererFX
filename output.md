@@ -7083,3 +7083,221 @@ Wall time: worker ~35 min (two fresh AVR device builds + host suite).
 - Beads closed: 1x8, jp8.2.11, 5sz (workers); 06g, vpc, b0b, 6jx (orchestrator; jp8.2.7 force-passed for the adoptions and remains open for the full post-integration cut matrix only). Newly filed and closed: 5sz.
 - Still uncommitted (owner WIP, bead jp8.5.16): InventoryMenu.*, draw.h, MenuIntent.hpp, tst/main.cpp + Makefile inventory hunks, tst/inventory_menu_test.hpp; untracked .codex/.
 - Wall time: two full gate runs approximately 6 min each; fixture repair worker durations not captured in the completion notices; orchestrator staging/commit segment approximately 25 min.
+
+## CreatureGathererFX-jp8.8 — Add the lure-zone core to the overworld pocket
+
+Scope: overworld lure-zone core (M2/M3, part 1 of 2). Authored inputs:
+`maps/tiles.tsx` adds the `encounter` prop to tile 274; `fxdata/data/encounters.txt`
+zone 0 keeps chunk 0, gains `tableCount 5`, lure nibbles `[1,2,3,4]`, and five
+authored tables (base wild mix + four lure groups, species < 32, floor/ceil 2/5).
+New `src/engine/world/LureZone.{hpp,cpp}` plain statics (lureId/charge/zoneChunk;
+deposit/onStep/clear/active/tableOffset, no WorldTransient growth).
+`Encounter` cache 20 -> 22 stores the four lure nibbles; `select(cache, party, rng,
+lureTableOffset, out)` maps a lure type through the cached nibbles, bounds the
+offset against `tableCount` (fail closed), and fetches the selected table once at
+battle entry while the inert path stays cached/RAM-only. `StepEvent` decays the
+lure, gates encounter-prop steps at 25%, and passes `LureZone::tableOffset()`.
+`WorldEngine::onChunkChange` clears the lure when the chunk changes.
+
+Permanent tests: new `tst/lure_zone_test.hpp` (registered in `tst/main.cpp`);
+`tst/encounter_test.hpp` (inert -> base table, each nibble -> its table,
+offset >= count refused); `tst/step_test.hpp` (decay, expiry, 25% gate, chunk
+change clears). Updated `WorldTransient`/cache size asserts (191 -> 193) and the
+generated/device map pins (pocket floor now walkable+encounter).
+
+Exact commands / results (PATH=/Users/connorfranc/Applications/CreatureGathererTools/bin:$PATH):
+- `make gen` -> `Packed FX image: .../dist/fxdata.bin`.
+- `make verify-generated` -> exit 0, no output.
+- `make test-generated-libs` -> `generated-libs-invariants: PASS`.
+- `make test-pack-parity` -> `pack parity: PASS` (expected hash updated to
+  `28b79362c0b244a7bbcfab5b1f0d50bc21f61399b232cc7096082c5597c7556b`).
+- `make test` -> host Total Passed 209,695 Failed 0; world 258/0.
+- `make testvm` -> Total Passed 343 Failed 0.
+- `ARDENS=.../Ardens make fxtest-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_world_player.ino BUILD_DIR=build/jp8.8-device`
+  -> `test_world_player PASSED=40 FAILED=0` / `P`; `test_stack PASSED=4 FAILED=0` / `P`;
+  stack headroom 485 B (>= 219); `FXTEST_RAM_FREE_BYTES=506`.
+- `make ram BUILD_DIR=build/jp8.8-ram` -> flash 23,776 / static 1,754 (free 806).
+
+Generated evidence: `fxdata/generated/raw_map.bin` carries prop 17 (`0x4513`) on all
+31 pocket floor words (x9..14,y2..6 plus (12,7)); `EncounterFXData::zoneDefs`/`tables`
+stay at `0x000000`/`0x000050`.
+
+Whole-image delta vs the stated baseline (23,488 flash / 1,747 static, reproduced by a
+clean HEAD worktree `make ram`): flash +288 B, static +7 B. Static = +2 B cache growth
+plus 4 B LureZone statics (+ alignment). The same tree also carries the owner's
+uncommitted InventoryMenu WIP, so the isolated bead delta may be smaller; flash is well
+inside the 29,696 budget and static inside 2,160.
+
+Deviation / observation (pinned contract preserved): under `Chunk::chunkAt` (8x4 tiles)
+the pocket floor (x9..14,y2..6) is chunk 1 (y2..3) and chunk 33 (y4..6), not chunk 0.
+The bead pins "zone 0 stays chunk 0", so zone 0's chunkId field is unchanged; as a
+result the authored zone-0 table does not match the pocket chunk, and a lure deposited
+in the pocket clears on the chunk-1/chunk-33 boundary crossing. Flagged for the
+orchestrator / part 2 (jp8.9). Interpretation: the encounter gate is PROP_ENCOUNTER +
+the 25% roll (inert lures still roll the base table), matching the bead's
+"inert -> base table" case and the epic's "bias" wording.
+
+No commit, no push. `build/props-probe/` untouched.
+
+Wall time (worker): ~55 min (full host/VM suites, device spike, shipping RAM build).
+
+## CreatureGathererFX-jp8.9 — Add lure box deposit, pickers and lure-demo build
+
+Scope: overworld lure-zone slice part 2 of 2. Adds the pocket box/plant props, the
+faced-tile interact hook, the material picker and world inventory, the LureText
+strings, the `-DCGFX_LURE_WEDGE` playtest seeding, the `make lure-demo` target, and
+the required jp8.8 zone-chunk correction.
+
+Authored inputs:
+- `maps/tiles.tsx`: box tile 544 (non-walkable container, GID-keyed) and plant tile
+  550 (`plantable`). Chosen after inspecting the tileset art; both are unused by the
+  map, so no existing cell changes prop class.
+- `maps/world_map.json`: (9,2) -> gid 545 (box), (14,2) -> gid 551 (plant); map word
+  = tsx id + 1.
+- `fxdata/data/encounters.txt` (REQUIRED CORE CORRECTION): kept zone 0 (chunk 0) and
+  authored chunk 1 and chunk 33 with the same `tableBase 0`, `tableCount 5` and
+  `[1,2,3,4]` nibbles; the layout stays at the fixed eight zones (3 authored + 5
+  sentinels).
+- `data/text/strings.txt` + `fxsprites.toml` order: appended `namespace LureText`
+  (prompt/set/empty/gathered/expired/footer) after the existing text, preserving all
+  prior string addresses.
+
+Code:
+- `src/engine/world/LureZone.{hpp,cpp}`: added the temporary world `item::Inventory`
+  owner (`inventory()`; replaced by Player item ownership in jp8.5.13), the 5-row
+  material picker over `item::inventoryNthNonZero` filtered to `ItemKind::Lure`
+  (name caches resolved on open/scroll only, movement/cursor/window state), a
+  consume-then-deposit action (`inventoryTake` + `deposit` with the inventory
+  type*3+tier to zone-encoding conversion), and a non-blocking message window used
+  for the gather/expiry confirmations (steps decremented in `onStep`).
+- `src/engine/world/LureZoneView.cpp` (new, not linked into the host/world suites):
+  `LureZone::drawOverlay()` renders the picker or the active message.
+- `src/engine/world/World.cpp`: `interact()` reads the faced raw map word once (box
+  GID 545 opens the picker, `PROP_PLANTABLE` gathers `lureId(0,0)` and shows the
+  gathered text, other targets keep the existing VM slot path); `onChunkChange()`
+  now clears the lure only when `Encounter::load()` returns false for the new chunk
+  (survives chunk 1<->33); picker input freezes world movement while open.
+- `src/engine/world/StepEvent.{hpp,cpp}`: the deterministic roll seam is exposed to
+  `FX_READ_COUNTER` device builds (shipping stays seam-free).
+- `CreatureGathererFX.ino`: calls `LureZone::drawOverlay()` in the world render path;
+  under `CGFX_LURE_WEDGE` boots at (11,5), skips the save/journal, and seeds the
+  inventory (type0 tier0 x3, type1 tier1 x2, type2 tier2 x1, type3 tier0 x2).
+- `Makefile`: new `lure-demo` target mirroring `arena-demo` (gen, isolated build with
+  `-DCGFX_LURE_WEDGE`, isolated data/save copies, Ardens launch); `LureZone.cpp`,
+  `Inventory.cpp`, `ItemNames.cpp`, `ListView.cpp` added to `WORLD_TEST_SOURCES`.
+- `tst/fxdatatest/arenademo_test.hpp`: the two `sizeof(ModeState)` pins updated
+  191 -> 193 for the jp8.8 cache growth (assert not weakened).
+
+Permanent tests:
+- `tst/world_interact_test.hpp`: box opens the picker with one faced-word read and no
+  VM slot read; the plant face gathers one base lure with no slot read; ordinary
+  targets still read the word and the slot.
+- `tst/lure_zone_test.hpp`: lure-only filtering, row/cursor/window movement,
+  consume-then-deposit (feedback, one unit, zone id), 24-entry list end, expiry and
+  message decay.
+- `tst/step_test.hpp`: replaced the clear-on-chunk-change assertion with both
+  behaviors — lure survives the chunk 1 -> 33 crossing, clears entering an unauthored
+  chunk (FX fake authored zones).
+- `tst/fxdatatest/test_world_player.ino`: pocket encounter tile at (12,7) fires a
+  wild battle under the forced roll with an active lure.
+
+Exact commands / results (`PATH=/Users/connorfranc/Applications/CreatureGathererTools/bin:$PATH`):
+- `make gen` -> `Packed FX image: .../dist/fxdata.bin`.
+- `make verify-generated` -> exit 0, no output.
+- `make test-generated-libs` -> `generated-libs: 40 passed, 0 failed`;
+  invariants 5/0; arena-demo-data PASS; first-unqualified-alias 28/0.
+- `make test-pack-parity` -> layout equivalence/perturbation PASS; expected hash
+  refreshed to `a32e3e8b47a26eab512322d5dcc719d355fcb59fb7d29600af2ac3111ffb624b`
+  (the jp8.8 fixture `Sprites.txt` exclude list also gained the six LureText strings
+  and the `LureText` table).
+- `make test` -> host Total Passed 209,732 Failed 0; world 258/0.
+- `make testvm` -> Total Passed 343 Failed 0.
+- `ARDENS=... make fxtest-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_world_player.ino BUILD_DIR=build/jp8.9-device`
+  -> `test_world_player PASSED=43 FAILED=0` / `P`; `test_stack PASSED=4 FAILED=0` /
+  `P`, painted headroom 489 B (>= 219); device RAM free 424 B (world_player) /
+  344 B (stack).
+- `ARDENS=... make fxtest-headless FXTEST_INOS=tst/fxdatatest/test_arenademo.ino BUILD_DIR=build/jp8.9-arena`
+  -> `test_arenademo PASSED=1870 FAILED=0` / `P` (193-byte mode pin).
+- `ARDENS=... make fxtest-headless FXTEST_INOS=tst/fxdatatest/test_tiles.ino BUILD_DIR=build/jp8.9-tiles`
+  -> `test_tiles PASSED=101 FAILED=0` / `P` (map/prop fixtures).
+- `make ram BUILD_DIR=build/jp8.9-ram` -> flash 25,178 / static 1,844 (free 716).
+  Delta vs the jp8.8 checkpoint (23,776 / 1,754, free 806): +1,402 flash, +90 static
+  (inventory 32 B, picker name cache 30 B, plus the picker/name string machinery).
+- `make -n lure-demo` -> recipe prints (gen, isolated ram build, data/save copies,
+  Ardens launch).
+- lure-demo build (launch deferred to the owner per dispatch):
+  `make ram BUILD_DIR=build/jp8.9-lure-demo AVR_SHIPPING_CPP_FLAGS='<shipping + -DCGFX_LURE_WEDGE>'`
+  -> Sketch 23,678 B flash, 1,844 B static, 716 B free. The `make lure-demo` launch
+  step was not executed interactively.
+
+No commit, no push.
+
+Wall time (worker): approximately 75 minutes including the jp8.8 code review, the
+tile-art inspection, the chunk correction, and the device/parity runs.
+
+## jp8.9 GATE FIX (reopened) — World A one-FX-read pin restored
+
+Cause: the jp8.9 interact hook did a per-press raw-map-word FX read
+(`readFacedWord()` via `FxRead::bytes` + `FxReadCounter::transitionExact(1)`)
+before the VM path, so every world A press cost two FX slots
+(`test_scripts` 69/7: `World A reads one FX slot got=2 want=1` x6,
+`compact popup still reads script got=2 want=1`).
+
+Fix (exactly the probed plan):
+- `maps/tiles.tsx`: the box tile (id 544) gains
+  `<property name="spare" type="bool" value="true"/>` -> prop bit 5
+  (`TileProps::PROP_SPARE`, 32). Stays non-walkable. Plant (550) keeps
+  `plantable`. No lure_box names.
+- `src/engine/world/World.cpp interact()`: removed the raw-map-word read.
+  The faced tile is now resolved from the existing RAM property window
+  (`TilePropertyWindow(world.propertyWindow).lookup(...)`, same storage as
+  collision, zero FX reads): occupied + `PROP_SPARE` -> box picker;
+  occupied + `PROP_PLANTABLE` -> plant pickup; otherwise the VM script path
+  is unchanged. Removed the now-dead `readFacedWord()`, `BOX_TILE_GID`, and
+  the `worldInteractionReadWord` test seam. `PROP_SPARE` was previously
+  unused outside a generic pack/unpack unit test, so no other consumer
+  misbehaves.
+- Host tests: `tst/world_interact_test.hpp` seeds the property window
+  (`seedFacedProps`) instead of injecting a fake raw word; the debug-only
+  `tileWord`/`lastWordTarget`/`wordReadCount` fake plumbing was deleted from
+  `tst/src/WorldInteractionFake.hpp`, `tst/main.cpp`, `tst/world_test_main.cpp`.
+
+Generated evidence (`fxdata/generated/raw_map.bin`, LE 16-bit words):
+- box cell = `0x8221` (props 32 = PROP_SPARE), exactly 1 aligned occurrence;
+- plant cell = `0x1227` (props 4 = PROP_PLANTABLE), exactly 1 occurrence;
+- `raw_map` has no other word with prop bit 5 set; `map_data.hpp` fixtures now
+  carry `{521, 0x8221}` (sampled twice, count 7).
+- `tools/tests/pack-parity_test.sh`: expected hash refreshed to
+  `7539dc9a8ae15499a49cbbcf615105ee4174e19953d5c74c31ce0e1fbd27019e`.
+
+Exact commands / results (`PATH=/Users/connorfranc/Applications/CreatureGathererTools/bin:$PATH`,
+`ARDENS=/Users/connorfranc/Applications/CreatureGathererTools/bin/ardens`):
+- `make gen` -> `Packed FX image: .../dist/fxdata.bin`.
+- `make verify-generated` -> exit 0, no output.
+- `make test-generated-libs` -> generated-libs 40/0; invariants 5/0; PASS.
+- `make test-pack-parity` -> layout equivalence + perturbation PASS; pack parity PASS.
+- `make test` -> host Total Passed 209,730 Failed 0; world 258/0.
+- `make testvm` -> Total Passed 343 Failed 0.
+- `make fxtest-headless FXTEST_INOS='test_scripts test_world_player test_arenademo test_tiles'
+  BUILD_DIR=build/jp8.9-fix-device` ->
+  `test_scripts PASSED=76 FAILED=0` (one-read pin restored),
+  `test_world_player PASSED=43 FAILED=0`,
+  `test_arenademo PASSED=1870 FAILED=0`,
+  `test_tiles PASSED=104 FAILED=0`.
+- `make fxtest-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_world_player.ino
+  BUILD_DIR=build/jp8.9-fix-stack` -> `test_stack PASSED=4 FAILED=0`,
+  painted headroom 489 B (>= 219); world_player RAM free 424 B.
+- `make ram BUILD_DIR=build/jp8.9-fix-ram` -> flash 25,154 / static 1,844 (free 716).
+  Delta vs 25,178 / 1,844: **-24 flash, 0 static**.
+
+No commit, no push. Wall time (worker, gate fix): ~40 min including the
+host test harness follow-up.
+
+## 2026-10-11 — playable lure zone slice landed (jp8.8 + jp8.9)
+
+- Core (jp8.8): pocket (chunks 1/33, 8x4 grid) becomes walkable+encounter; encounters.txt authored with chunk 1 and 33 zone entries, 5 tables and lure nibbles [1,2,3,4]; LureZone statics (id/charge/zone chunk); 25% per-step encounter gate; decay 1/step; load-driven chunk-exit clear; Encounter cache 20->22 with fail-closed lure table selection. Deltas: +288 flash / +7 static.
+- UI + demo (jp8.9): box tile 544 marked PROP_SPARE + plant tile 550 PROP_PLANTABLE in the pocket; interact dispatches from RAM TilePropertyWindow props only (zero extra FX reads per A press); 5-row material picker with name caching on open/scroll; LureText strings; CGFX_LURE_WEDGE seeds materials and boots inside the pocket; `make lure-demo` target added. Net vs pre-slice: +1,666 flash / +97 static.
+- Gate history: jp8.8's full gate failed only on arena fixture sizeof(ModeState)==191 (fixed to 193 in jp8.9); jp8.9's first gate failed test_scripts 69/7 (extra counted FX read on A press) and was fixed with the probed `spare` property dispatch — one-read pin restored 76/0. Reviews: APPROVED after the fix.
+- Final gate `build/jp8.9-fix-final-gate`: PASS. Shipping 25,154 flash / 1,844 static (716 B physical SRAM free, 316 B project static free); all 30 FX device suites; host 209,730/0 + world 258/0; VM 343/0; parity 7539dc9a...7019e. Painted stack 489 B.
+- Playtest: `make lure-demo ARDENS=/path/to/Ardens` — spawns in the pocket with seeded materials; box deposit via picker, plant pickup, lure-biased encounters.
+- Landed as one slice commit (files are entangled across both beads); owner inventory WIP preserved and excluded.
