@@ -51,9 +51,12 @@ constexpr uint8_t CREATURE_ID_COUNT = 32;
 MenuIntent noIntent() { return {MenuIntentKind::None, 0}; }
 MenuIntent intent(MenuIntentKind kind, uint8_t index = 0) { return {kind, index}; }
 
+// Six-glyph generated labels carry one leading blank slot: 7 cells * 5 px.
+constexpr uint8_t ACTION_LABEL_WIDTH = 35;
+
 uint24_t gatherAddress() {
 #ifdef __AVR__
-    return MenuFXData::gather;
+    return gather;
 #else
     return 0;
 #endif
@@ -61,7 +64,7 @@ uint24_t gatherAddress() {
 
 uint24_t escapeAddress() {
 #ifdef __AVR__
-    return MenuFXData::escape;
+    return escape;
 #else
     return 0;
 #endif
@@ -237,9 +240,9 @@ void BattleMenu::draw() const {
         const bool escape = (flags_ & ALLOW_ESCAPE) != 0;
         if (cursor_ == 0 && gather) Blit::fillRect(0, 56, 64, 8, BLACK);
         if (cursor_ == 1 && escape) Blit::fillRect(64, 56, 64, 8, BLACK);
-        drawText(4, 56, gatherAddress(), 35,
+        drawText(4, 56, gatherAddress(), ACTION_LABEL_WIDTH,
                  cursor_ == 0 && gather ? selectedFrame : normalFrame);
-        drawText(68, 56, escapeAddress(), 35,
+        drawText(68, 56, escapeAddress(), ACTION_LABEL_WIDTH,
                  cursor_ == 1 && escape ? selectedFrame : normalFrame);
         return;
     }

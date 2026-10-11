@@ -7,6 +7,7 @@
 #include "src/engine/battle/BattleScene.hpp"
 #include "src/engine/ModeState.hpp"
 #include "src/engine/menu/MenuNav.hpp"
+#include "src/lib/MoveIds.hpp"
 #include "src/lib/FxReadCounter.hpp"
 
 #if !CGFX_BATTLE_AUTO_REPLACE
@@ -168,6 +169,30 @@ void setup() {
     BattleFlow::update(0);
     battle::BattleScene::draw(battleSession().state());
     modeState.battle.ui.menu.draw();
+
+    // The actions page blits the packed gather/escape label rasters. The raw
+    // menu text blocks under MenuFXData render as pixel garbage.
+    battle::MoveSnapshot noMoves = {};
+    for (uint8_t slot = 0; slot < 4; ++slot) {
+        noMoves.moveIds[slot] = EMPTY_MOVE_ID;
+        noMoves.remainingUses[slot] = 0;
+    }
+    battle::BattleMenu actions;
+    actions.beginMoves(noMoves, false, false);
+    actions.update(MENU_EDGE_B);
+    arduboy.clear();
+    actions.draw();
+    uint8_t label[35];
+    FX::readDataBytes(gather + 35, label, 35);
+    bool gatherPixels = true;
+    for (uint8_t c = 0; c < 35; ++c)
+        if (Arduboy2Base::sBuffer[7 * 128 + 4 + c] != label[c]) gatherPixels = false;
+    test.expectEq(gatherPixels, true, F("actions page blits the packed gather label"));
+    FX::readDataBytes(escape + 35, label, 35);
+    bool escapePixels = true;
+    for (uint8_t c = 0; c < 35; ++c)
+        if (Arduboy2Base::sBuffer[7 * 128 + 68 + c] != label[c]) escapePixels = false;
+    test.expectEq(escapePixels, true, F("actions page blits the packed escape label"));
 #if !CGFX_BATTLE_AUTO_REPLACE
     battle::ReplacementChoices choices = {};
     choices.count = 2;
