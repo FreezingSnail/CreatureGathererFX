@@ -25,7 +25,9 @@ void finishBattle(battle::BattleSession &session, TerminalCallback callback) {
 #if defined(TEST) || defined(FX_READ_COUNTER)
     menu.clear();
 #endif
+#if CGFX_DIALOG_QUEUE_ENABLED
     dialogMenu.clear();
+#endif
     if (callback != nullptr) {
         callback(outcome);
         return;
@@ -41,7 +43,9 @@ bool update(uint8_t edgeButtons, TerminalCallback onFinished) {
     battle::BattleSession &session = mode;
 
     if (!session.isActive()) return false;
+#if CGFX_DIALOG_QUEUE_ENABLED
     if (dialogMenu.peek()) dialogMenu.clear();
+#endif
 
     // Presentations own every edge until they finish. Reconstructing the menu
     // happens after the boundary, so the completion edge cannot select again.
