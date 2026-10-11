@@ -7449,3 +7449,7 @@ Coordinated acceptance: `PATH=/Users/connorfranc/Applications/CreatureGathererTo
 ### Adoption gate: CreatureGathererFX-box.8
 
 The rerun `make final-gate BUILD_DIR=build/box-adoption-gate FINAL_GATE_LOG_DIR=build/box-adoption-gate/reports/disk-fix ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens` passed after repairing disk exhaustion. Current shipping 24,442 B flash / 1,759 B static; this saving is −80 flash / −85 static. All 34 FX suites passed; stack paints 493 B. Gate wall time 420 seconds, shared with the settled pack-tooling fix; no runtime changes were made between validation and the separate commits. Cumulative first eight adopted savings: −712 flash / −85 static against the 25,154/1,844 current-main control.
+
+### Agent build-storage policy — afo (2026-10-11)
+
+Updated `AGENTS.md` after the pack-stage disk incident: one AVR/generation/gate lane; reused working/gate paths; explicit source provenance; disk checks before dispatch and after each item; default 5 GiB build and 5 GiB scratch budgets with 10 GiB free reserve; per-item cleanup with inspection beyond the helper's recognized paths; compact evidence retention and self-cleaning temporary stages. Clarified that source edits may run in parallel while build-heavy work serializes. `git diff --check`: PASS. Documentation only; firmware and generated artifacts unchanged from the passing integrated gate in `build/box-adoption-gate/reports/disk-fix`. No new build trees or firmware tests were needed. Wall time approximately 3 minutes.
