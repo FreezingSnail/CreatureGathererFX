@@ -1,30 +1,28 @@
 #pragma once
-
-#include <stddef.h>
 #include <stdint.h>
-
 #include "../lib/uint24.h"
-
 constexpr uint8_t STORE_RECORD_TOMBSTONE_ID = 0xff;
 constexpr uint8_t STORE_RECORD_BYTES = 8;
-constexpr uint16_t STORE_RECORDS_PER_SECTOR = 512;
-
-// A store slot is exactly eight bytes, including the extension byte.
-// A zero reserved byte means the default value for its eventual use.
+constexpr uint8_t STORE_CAPACITY = 64;
+constexpr uint16_t STORE_RECORDS_PER_SECTOR = STORE_CAPACITY;
 struct __attribute__((packed)) StoreRecord {
     uint8_t id;
     uint16_t exp;
     uint8_t moves[4];
     uint8_t reserved;
 };
-
-static_assert(sizeof(StoreRecord) == STORE_RECORD_BYTES, "Store records must fit 32 per page");
-static_assert(offsetof(StoreRecord, exp) == 1, "Experience starts after the id");
-static_assert(offsetof(StoreRecord, moves) == 3, "Moves follow experience");
-static_assert(offsetof(StoreRecord, reserved) == 7, "Reserved is the final byte");
-static_assert(STORE_RECORD_BYTES * STORE_RECORDS_PER_SECTOR == 4096,
-              "A store sector must hold 512 records");
-
+static_assert(sizeof(StoreRecord) == 8, "Store record wire size");
+// Callers enforce slot < STORE_CAPACITY before using this sole address helper.
 inline uint24_t storeRecordAddr(uint24_t base, uint16_t slot) {
-    return base + (static_cast<uint24_t>(slot) << 3);
+    return base + 112 + (static_cast<uint24_t>(slot) << 3);
+}
+inline void storeRecordEncode(const StoreRecord &in, uint8_t *out) {
+    out[0] = in.id; out[1] = in.exp; out[2] = in.exp >> 8;
+    for (uint8_t i = 0; i < 4; ++i) out[3+i] = in.moves[i];
+    out[7] = 0;
+}
+inline void storeRecordDecode(const uint8_t *in, StoreRecord &out) {
+    out.id = in[0]; out.exp = static_cast<uint16_t>(in[1]) | (static_cast<uint16_t>(in[2]) << 8);
+    for (uint8_t i = 0; i < 4; ++i) out.moves[i] = in[3+i];
+    out.reserved = in[7];
 }

@@ -56,13 +56,13 @@ bool journalEncode(const JournalRecord &in, uint8_t out[JOURNAL_RECORD_BYTES])
     out[3] = static_cast<uint8_t>(in.slot >> 8);
     memcpy(out + 4, in.payload, sizeof(in.payload));
     out[14] = journalCheck(out);
-    out[15] = 0xff;
+    out[15] = 0xa5;
     return true;
 }
 
 bool journalDecode(const uint8_t in[JOURNAL_RECORD_BYTES], JournalRecord &out)
 {
-    if (journalBlank(in) || in[14] != journalCheck(in)) {
+    if (journalBlank(in) || in[15] != 0xa5 || in[14] != journalCheck(in)) {
         return false;
     }
 
@@ -116,7 +116,13 @@ bool journalAppend(const JournalRecord &in)
         return false; // A torn tail cannot be overwritten by NOR flash.
     }
     journalEncode(in, bytes);
-    flash.writeBytes(address, bytes, sizeof(bytes));
+    flash.writeBytes(address, bytes, 15);
+    uint8_t verified[15];
+    flash.readBytes(address, verified, 15);
+    if (memcmp(bytes, verified, 15) != 0) return false;
+    flash.writeBytes(address + 15, bytes + 15, 1);
+    flash.readBytes(address + 15, verified, 1);
+    if (verified[0] != 0xa5) return false;
     while (flash.busy()) {
     }
     ++journalTail;
@@ -134,16 +140,18 @@ uint16_t journalReplay(void (*apply)(const JournalRecord &))
         for (uint8_t record = 0; record < JOURNAL_RECORDS_PER_WINDOW; ++record) {
             JournalRecord decoded;
             if (!journalDecode(window + record * JOURNAL_RECORD_BYTES, decoded)) {
+                journalTail = count;
                 return count;
             }
-            if (journalKnownOp(decoded.op)) {
-                apply(decoded);
-            }
+            apply(decoded);
             ++count;
         }
     }
+    journalTail = count;
     return count;
 }
+
+uint16_t journalLength() { return journalTail; }
 
 bool journalFull()
 {

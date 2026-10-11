@@ -35,5 +35,6 @@ void journalInit();
 uint16_t journalCount();
 bool journalAppend(const JournalRecord &in);
 uint16_t journalReplay(void (*apply)(const JournalRecord &));
+uint16_t journalLength();
 bool journalFull();
 void journalErase();

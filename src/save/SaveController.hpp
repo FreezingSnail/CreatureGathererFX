@@ -10,6 +10,8 @@ namespace SaveController {
 // Loads the latest committed save into persistent game/player state. Returns
 // false when the save sector is blank or incompatible, leaving live state unchanged.
 bool load();
+bool bootRecoveryFailed();
+void seedParty();
 
 // Snapshots live RAM and enters the multi-frame save sequence. returnState is
 // the state to restore once the sequence finishes.

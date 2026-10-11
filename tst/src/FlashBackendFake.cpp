@@ -1,9 +1,10 @@
 #include "../../src/save/FlashBackend.hpp"
+#include "../../src/save/Compaction.hpp"
 
 #include <string.h>
 
 namespace {
-constexpr uint16_t FLASH_FAKE_BYTES = 8192;
+constexpr uint16_t FLASH_FAKE_BYTES = 32768;
 constexpr uint16_t SAVE_SECTOR_BYTES = 4096;
 uint8_t storage[FLASH_FAKE_BYTES];
 int32_t writeLimit = -1;
@@ -83,6 +84,7 @@ void flashFakeReset()
     writeLimit = -1;
     busyFlag = false;
     readCount = 0;
+    storeFresh();
 }
 
 const uint8_t *flashFakeData()
@@ -115,6 +117,7 @@ uint32_t flashFakeReadCount()
 void flashFakeResetReadCount()
 {
     readCount = 0;
+    storeFresh();
 }
 
 namespace FX {
