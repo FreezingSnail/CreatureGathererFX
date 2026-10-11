@@ -164,7 +164,6 @@ void resolveAttack(BattleState &state, Side actor, uint8_t moveSlot,
             : static_cast<uint8_t>(target.hp - damage);
     }
 
-    captureAfter(state, out);
     if (selfHit) {
         return;
     }
@@ -183,7 +182,6 @@ void resolveAttack(BattleState &state, Side actor, uint8_t moveSlot,
             appendFact(out, fact);
         }
     }
-    captureAfter(state, out);
 }
 
 void resolveSkip(BattleState &state, Side actor, bool refused,
