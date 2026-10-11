@@ -128,7 +128,10 @@ not duplicate build caches, metadata or old experiments.
   evidence. Pass the relative `BUILD_DIR=build/...` explicitly for nested roots. This helper only
   recognizes certain generated Arduino/cache paths: an empty preview does not prove the tree is
   clean. Inspect remaining sizes and remove other positively identified disposable staging/cache
-  directories separately. Never clean another worker's active directory.
+  directories separately. Retain the active shared demo/compiler cache while it remains within the
+  storage budget and compatible with the next build; clean obsolete or incompatible experiment
+  caches rather than deleting the active reused cache after every item. Never clean another
+  worker's active directory.
 - **Retain compact evidence.** Keep exact patches, source revision/allowlisted prerequisites,
   reports, measurements, relevant save images and selected control/final ELFs. Use one committed
   control snapshot plus patches; retire completed variant source copies once that evidence suffices.

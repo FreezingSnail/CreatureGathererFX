@@ -1,4 +1,4 @@
-.PHONY: help setup doctor plant test test-debug testvm testvm-debug sim sim-test gen gen-data gen-sprites gen-fixtures pack full build mini ram run dev arena-demo lure-demo check final-gate verify-generated test-manifest test-generated-libs test-doctor test-fxtest-ram test-avr-build-budget test-world-script-profile world-script-profile-check fxtest fxtest-headless fxtest-spike fxtest-preflight fxtest-headless-preflight fxtest-build fxtest-run new-fxtest clean-build-artifacts test-clean-build-artifacts
+.PHONY: help setup doctor plant test test-debug testvm testvm-debug sim sim-test gen gen-if-needed gen-data gen-sprites gen-fixtures pack full build mini ram run dev arena-demo lure-demo check final-gate verify-generated test-manifest test-generated-libs test-doctor test-fxtest-ram test-avr-build-budget test-world-script-profile world-script-profile-check fxtest fxtest-headless fxtest-spike fxtest-preflight fxtest-headless-preflight fxtest-build fxtest-run new-fxtest clean-build-artifacts test-clean-build-artifacts
 
 # Public command API. Override tool, board, and output variables per workspace/CI.
 CXX ?= g++
@@ -32,6 +32,7 @@ AVR_SHIPPING_BUILD_PROPERTIES ?= --build-property "compiler.cpp.extra_flags=$(AV
 AVR_FLASH_BUDGET ?= 29696
 AVR_STATIC_RAM_BUDGET ?= 2160
 BUILD_DIR ?= build
+GEN_CACHE_STAMP ?= $(BUILD_DIR)/gen-cache/fingerprint
 ARDUINO_BUILD_PATH ?= $(BUILD_DIR)/arduino-build
 ARDUINO_BUILD_CACHE_PATH ?= $(BUILD_DIR)/arduino-cache
 DIST_DIR ?= dist
@@ -79,6 +80,7 @@ help:
 		'  setup    print non-mutating first-run guidance; prerequisite: make' \
 		'  doctor   report local tool readiness; prerequisite: tools/doctor.sh' \
 		'  gen      package committed/generated FX inputs; prerequisite: cgfx-tools; output: $(DIST_DIR)/fxdata.bin' \
+		'  gen-if-needed reuse current generated FX outputs for opt-in demos; stale content regenerates' \
 		'  test     run fast host C++ tests; prerequisite: $(CXX); output: $(HOST_TEST_BIN)' \
 		'  sim      compile and run the host BattleSession batch simulator; output: $(BATTLE_SIM_BIN)' \
 		'  sim-test run host C++ tests with the fixture-backed BATTLE_SIMULATOR seam; output: $(SIM_TEST_BIN)' \
@@ -290,7 +292,7 @@ ARENA_DEMO_FLASH_BUDGET ?= 29184
 arena-demo:
 	@test -n "$(ARDENS)" || { echo "arena-demo: ARDENS is unset; set ARDENS=/path/to/Ardens" >&2; exit 1; }
 	@test -x "$(ARDENS)" || { echo "arena-demo: Ardens executable not found at $(ARDENS)" >&2; exit 1; }
-	@$(MAKE) --no-print-directory gen
+	@$(MAKE) --no-print-directory -j1 gen-if-needed
 	@$(MAKE) --no-print-directory ram BUILD_DIR="$(ARENA_DEMO_BUILD_DIR)" AVR_SHIPPING_CPP_FLAGS="$(ARENA_DEMO_CPP_FLAGS)" AVR_FLASH_BUDGET="$(ARENA_DEMO_FLASH_BUDGET)"
 	@test -f "$(ARENA_DEMO_BUILD_DIR)/CreatureGathererFX.ino.hex" || { echo "arena-demo: sketch hex missing from $(ARENA_DEMO_BUILD_DIR)" >&2; exit 1; }
 	@test -f "$(FXDATA_DATA_BIN)" || { echo "arena-demo: FX data image missing at $(FXDATA_DATA_BIN); run make gen" >&2; exit 1; }
@@ -316,7 +318,7 @@ LURE_DEMO_FLASH_BUDGET ?= 29184
 lure-demo:
 	@test -n "$(ARDENS)" || { echo "lure-demo: ARDENS is unset; set ARDENS=/path/to/Ardens" >&2; exit 1; }
 	@test -x "$(ARDENS)" || { echo "lure-demo: Ardens executable not found at $(ARDENS)" >&2; exit 1; }
-	@$(MAKE) --no-print-directory gen
+	@$(MAKE) --no-print-directory -j1 gen-if-needed
 	@$(MAKE) --no-print-directory ram BUILD_DIR="$(LURE_DEMO_BUILD_DIR)" AVR_SHIPPING_CPP_FLAGS="$(LURE_DEMO_CPP_FLAGS)" AVR_FLASH_BUDGET="$(LURE_DEMO_FLASH_BUDGET)"
 	@test -f "$(LURE_DEMO_BUILD_DIR)/CreatureGathererFX.ino.hex" || { echo "lure-demo: sketch hex missing from $(LURE_DEMO_BUILD_DIR)" >&2; exit 1; }
 	@test -f "$(FXDATA_DATA_BIN)" || { echo "lure-demo: FX data image missing at $(FXDATA_DATA_BIN); run make gen" >&2; exit 1; }
@@ -331,6 +333,16 @@ lure-demo:
 	    save="$(LURE_DEMO_CART_DIR)/fxdata-save.bin"
 
 gen: gen-data gen-sprites gen-fixtures pack
+	@./tools/ensure-generated.sh --record . "$(GEN_CACHE_STAMP)" \
+	    "$(FX_LAYOUT)" "$(FXDATA_MANIFEST)" "$(FXDATA_DIST_DIR)" \
+	    "$(DIST_DIR)" "$(FXDATA_BIN)" "$(FXDATA_DATA_BIN)" "$(FXDATA_SAVE_BIN)"
+
+# Opt-in demos reuse a checked cache; ordinary `make gen` stays forceful.
+gen-if-needed:
+	@./tools/ensure-generated.sh --ensure . "$(GEN_CACHE_STAMP)" \
+	    "$(FX_LAYOUT)" "$(FXDATA_MANIFEST)" "$(FXDATA_DIST_DIR)" \
+	    "$(DIST_DIR)" "$(FXDATA_BIN)" "$(FXDATA_DATA_BIN)" "$(FXDATA_SAVE_BIN)" \
+	    -- $(MAKE) --no-print-directory -j1 gen
 
 gen-data:
 	@set -e; \
@@ -391,6 +403,7 @@ verify-generated:
 
 test-manifest:
 	./tools/tests/fxdata-manifest_test.sh
+	./tools/tests/ensure-generated_test.sh
 
 # Generated-library integration tests: packed image <-> src/fxdata.h <-> the
 # generated sources, plus generated-header drift and text-block framing.

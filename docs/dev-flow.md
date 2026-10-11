@@ -28,7 +28,10 @@ agent. `AGENTS.md` carries the short list.
 ## Generated artifacts
 
 - `make gen` is the only generation entry; it requires `cgfx-tools` on `PATH` (`make doctor`
-  verifies the selected executable; `make setup` prints non-mutating guidance).
+  verifies the selected executable; `make setup` prints non-mutating guidance). Arena and lure demos
+  call `make gen-if-needed`, which reuses outputs only after the authored manifest, packed images,
+  installed tool, generation recipe and generated-header mirrors match the last successful `gen`.
+  Explicit `make gen`, `make check` and `make final-gate` still regenerate forcefully.
 - Never hand-edit `fxdata/generated/`, `tst/fxdatatest/generated/`, `src/vm/opcodes.hpp`,
   `src/flags/*`, `src/fxdata.h`, or `fxdata/Sprites.txt` — change the JSON/CSV/PNG/TOML source and
   regenerate.
