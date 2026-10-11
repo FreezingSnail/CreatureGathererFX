@@ -51,25 +51,33 @@ __attribute__((noinline)) bool validate(uint16_t base, uint16_t &gen, uint8_t &c
     uint8_t a=0,b=0; checksum(a,b,scratch,12);
     if ((static_cast<uint16_t>(b)<<8 | a)!=expectedHeader) return false;
     a=0;b=0;
-    for (uint16_t at=16;at<624;at+=64) {
-        uint8_t n = 624-at < 64 ? 624-at : 64;
-        flash.readBytes(base+at,scratch,n); checksum(a,b,scratch,n);
-    }
-    if ((static_cast<uint16_t>(b)<<8 | a)!=expectedBody) return false;
+    bool valid=true;
     flash.readBytes(base+16,scratch,64);
     uint8_t slots[3]; memcpy(slots,scratch+10,3);
-    if(!savePartySlotsValid(slots)) return false;
-    for(uint8_t i=2;i<64;++i) if(!saveSnapshotByteValid(i,scratch[i])) return false;
+    if(!savePartySlotsValid(slots)) valid=false;
+    for(uint8_t i=2;i<64;++i)
+        if(!saveSnapshotByteValid(i,scratch[i])) valid=false;
+    checksum(a,b,scratch,64);
     flash.readBytes(base+80,scratch,32);
-    for(uint8_t i=0;i<32;++i) if(!saveSnapshotByteValid(i+64,scratch[i])) return false;
+    for(uint8_t i=0;i<32;++i)
+        if(!saveSnapshotByteValid(i+64,scratch[i])) valid=false;
+    checksum(a,b,scratch,32);
     uint8_t count=0;
-    for(uint8_t slot=0;slot<64;++slot) {
-        flash.readBytes(storeRecordAddr(base,slot),scratch,8);
-        if(!recordValid(scratch)) return false;
-        if(scratch[0]!=255) ++count;
-        else for(uint8_t i=0;i<3;++i) if(slots[i]==slot) return false;
+    uint16_t address=base+112;
+    uint8_t slot=0;
+    for(uint8_t block=0;block<8;++block,address+=64) {
+        flash.readBytes(address,scratch,64);
+        checksum(a,b,scratch,64);
+        for(uint8_t i=0;i<8;++i) {
+            const uint8_t *record=scratch+i*8;
+            if(!recordValid(record)) valid=false;
+            if(record[0]!=255) ++count;
+            else for(uint8_t j=0;j<3;++j) if(slots[j]==slot) valid=false;
+            ++slot;
+        }
     }
-    return count==expectedCount;
+    return (static_cast<uint16_t>(b)<<8 | a)==expectedBody &&
+           valid && count==expectedCount;
 }
 bool pendingEntry(uint8_t slot, uint8_t &entry) {
     for(entry=0;entry<pendingCount;++entry) if(pending[entry].slot==slot) return true;

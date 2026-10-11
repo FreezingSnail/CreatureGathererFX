@@ -7410,6 +7410,20 @@ Checks: `make test BUILD_DIR=build/box-adoption-6-host` passed 283,187 native an
 
 Patch SHA256 `a1ac6f4a3a8c65178cfc75aae4848652fc4af0794f1721320ac84a96a03ab7f4`; artifacts are under `/private/tmp/cgfx-box-adopt-6/artifacts/`. Worker time ~8 min; no generated or packed data changed.
 
+### Adoption box.7 — stream M1 checkpoint validation in one pass (2026-10-11)
+
+Current M1 v3 `validate()` now checks and validates the exact 608-byte body in ten bounded reads: 64-byte snapshot prefix, 32-byte snapshot tail, then eight 64-byte record blocks. It uses the existing 64-byte scratch area, accumulates the Fletcher checksum and semantic validity/live count, and decides only after the full body stream. Header normalization/commit/generation checks, party slots, snapshot offsets, canonical empty records, record validation, live count and party references are unchanged.
+
+Exact shipping flags: `-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X -DCGFX_SHIPPING_NO_USB -fno-inline-small-functions -DCGFX_BATTLE_AUTO_REPLACE=0 -DCGFX_BATTLE_NO_FACTS`. Paired current-main whole-image result: 24,524 B flash / 1,844 B static → 24,522 / 1,844 (−2 flash / 0 static). Static free remains 316 B; `test_stack` painted headroom is 491 B.
+
+Checks: `make test BUILD_DIR=build/box-adoption-7-host` passed 283,187 native and 258 world assertions; `PATH=/Users/connorfranc/Applications/CreatureGathererTools/bin:$PATH ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens make fxtest-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_journal_boot.ino BUILD_DIR=build/box-adoption-7-focused FXTEST_MS=60000 AVR_FXTEST_CPP_FLAGS='<shipping flags plus -DFX_READ_COUNTER>'` passed the actual AVR journal/recovery suite 284/0 and `test_stack` 4/0, painted 491 B. Sol approved the current-main v3 wire and recovery behavior. No full gate or commit is claimed; root gate driver owns that step.
+
+Patch SHA256 `bd3a0ffaa2288a1a8d555972519cf47d8706049e00705c55c5d34dae114fa4dc`; paired shipping and device/stack ELFs are under `/private/tmp/cgfx-box-adopt-7/artifacts/`. Worker time ~5 min; no generated or packed data changed.
+
 ### Adoption gate: CreatureGathererFX-box.6
 
 `make final-gate BUILD_DIR=build/box-adoption-gate FINAL_GATE_LOG_DIR=build/box-adoption-gate/reports/6 ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens`: PASS. Complete diagnostics retained in `build/box-adoption-gate/reports/6`; one saving per commit.
+
+### Adoption gate: CreatureGathererFX-box.7
+
+`make final-gate BUILD_DIR=build/box-adoption-gate FINAL_GATE_LOG_DIR=build/box-adoption-gate/reports/7 ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens`: PASS. Complete diagnostics retained in `build/box-adoption-gate/reports/7`; one saving per commit.
