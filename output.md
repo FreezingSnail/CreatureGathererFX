@@ -7301,3 +7301,47 @@ host test harness follow-up.
 - Final gate `build/jp8.9-fix-final-gate`: PASS. Shipping 25,154 flash / 1,844 static (716 B physical SRAM free, 316 B project static free); all 30 FX device suites; host 209,730/0 + world 258/0; VM 343/0; parity 7539dc9a...7019e. Painted stack 489 B.
 - Playtest: `make lure-demo ARDENS=/path/to/Ardens` — spawns in the pocket with seeded materials; box deposit via picker, plant pickup, lure-biased encounters.
 - Landed as one slice commit (files are entangled across both beads); owner inventory WIP preserved and excluded.
+
+## 2026-10-11 — isolated firmware simplification spike 1as.11 (pending review)
+
+- Compact one-pass warp interpreter with host checker constraints for flags, branch boundaries and 0..255 teleport coordinates; full VM remains selectable. Root production source is unchanged.
+- Independent: 23,314/1,747 → 23,060/1,747 (−254 flash, 0 static). Cumulative: 22,400/1,662 → 22,138/1,662 (−262 flash, 0 static); cumulative delta vs frozen control 23,488/1,747 is −1,350/−85.
+- Host/profile/world/VM tests pass (283,136/0 + 258/0 + 343/0). Macro-enabled packed-script device suite passes 72/0 in both copies, including real World A, blank chunk, 255 coordinates and one FX read. Paired stack remains 509 B painted (440 B effective after ISR allowance) and fails the known unrelated compaction assertion (got 2/want 12; 3/1), so no gate pass is claimed. Full-VM shipping profile also compiles (23,706/1,747).
+- Exact report and preserved patches/ELFs: `/private/tmp/cgfx-1as-spike/artifacts/1as.11-report.md`. Patch SHA256 `a287f65575d312af3e6e82aca31a585cf7b99cc0a301ac6a9bf8522be7aa691d`. Sol review APPROVED. Wall time about 21 minutes.
+
+### 2026-10-11 — 1as.13 encounter profile/select spike
+
+Isolated `.13` candidate branches from accepted `.11`: adds host validation of authored and packed encounter data, then removes `select()`'s duplicate table span, bounds and species scan while retaining the valid-cache, empty-party/no-roll, RNG, selected slot/ID and final level behavior. Paired exact-shipping builds: independent 23,060→23,026 flash / 1,747→1,747 static; cumulative 22,138→22,104 / 1,662→1,662 (−34 B flash each). Native host/world/VM/profile tests pass (209,655/0, 258/0, 343/0, profile pass); actual `test_world_player` passes 40/0 on both candidates. `test_stack` remains 3/1 on both with known `save compaction completes got=2 want=12`; painted headroom 507 B independent, 509 B cumulative. Sol read-only review pending; no full gate, adoption or shared runtime edit claimed. Reports, exact patches and ELFs are under `/private/tmp/cgfx-1as-spike`; total wall time ~15 min.
+
+1as.13 verification update: Sol review requested an actual packed-encounter AVR path and Mini prebuild wiring. Both are now present: `mini` runs encounter packed-profile validation; `test_encounter` passes 17/0 on independent and cumulative AVR images (chunk0 load/select species0; selection stays RAM-only; missing chunk1 invalidates/no-roll). `fxtest-spike` with this suite also reports stack 3/1 solely for unchanged save compaction got2/want12; painted headroom remains 507/509 B. Final patch hashes after adding the device suite: cumulative `9b7ba8c5…47e5eec5a`, independent `1a2df1b7…e20aec8a`. Reviewer final approval requested.
+
+### 2026-10-11 — 1as.14 byte-wise plant growth
+
+Isolated `PlantStage::incrementAll` now processes eight packed bytes with the 2-bit modulo-four carry formula; 128-tick growth and the 8-byte save ABI remain. Paired exact-shipping builds: independent 23,026→22,970 flash / 1,747→1,747 static; cumulative 22,104→22,048 / 1,662→1,662 (−56 B flash each). Native exhaustive byte oracle and tick127/128 tests pass (PlantStage 2,250/0); host/world/VM pass. Device `test_plant_stage` passes 66/0 both profiles. Paired stack check remains 3/1 only for known save-compaction got2/want12; painted headroom 507/509 B. Patch/report/ELFs preserved under `/private/tmp/cgfx-1as-spike`; wall time ~6 min.
+
+### 2026-10-11 — 1as.15 AVR snapshot encoder specialization (rejected)
+
+AVR-only 64+32 byte slice copies with 96-byte layout/offset/endian assertions preserve the snapshot wire image; host and arbitrary-slice encoding retain the byte loop. Both pairs grow: independent 22,970→23,012 flash / 1,747 static (+42/0); cumulative 22,048→22,086 / 1,662 (+38/0). The measured variant is excluded from the cumulative candidate. Native host/world/VM pass. Actual AVR `test_save_encode` passes 98/0 in both variants; cumulative `test_save_flags` passes 27/0. Independent `test_save_flags` exposes the predecessor's unfixed 8fu pointer-size bug (23/4), separate from this change. Stack remains 3/1 solely for known `save compaction completes got=2 want=12`; painted headroom 507/509 B. Sol review: ABI/behavior APPROVED, size REJECT. Reports, patches, logs and ELFs are under `/private/tmp/cgfx-1as-spike`; wall time ~6 min.
+
+### 2026-10-11 — 1as.16 journal decoder blank-record check
+
+Removed only `journalDecode`'s all-FF body scan; the `0xa5` marker still rejects blank records, while append's nonblank-tail refusal and marker-last verification remain. Corrected paired builds from accepted `.14` controls: independent 22,970→22,954 flash / 1,747 static (−16/0); cumulative 22,048→22,014 / 1,662 (−34/0). Host/world/VM pass (285,259/0, 258/0, 343/0 cumulative; 211,778/0, 258/0, 343/0 independent); actual AVR `test_journal_boot` passes 289/0 both. Stack remains 3/1 only for known compaction `got=2 want=12`; painted headroom 507/509 B. Sol approved the corrected patches. An initial pair accidentally mixed pre-.14 controls with .14 candidates; it was discarded before the final report and retained under `1as.16-discarded-mixed-*`. Final report/patches/ELFs are under `/private/tmp/cgfx-1as-spike`; total wall time ~14 min.
+
+### 2026-10-11 — 1as.17 carry validated PP into attack spending
+
+`resolveAction` now keeps the validated remaining-use count across the status gate and passes it into normal attack spending, eliminating a repeated PP lookup. The refusal still happens before RNG; finite use is charged to the active original party slot, unlimited moves do not increment, and status skip, confusion self-hit, and Gather confusion self-hit (including exhausted slot 0) do not spend PP. Native/device tests cover these outcomes and a player-choice `BattleFlow` attack.
+
+Paired exact-shipping `make ram` flags were `-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X -DCGFX_SHIPPING_NO_USB -fno-inline-small-functions -DCGFX_BATTLE_AUTO_REPLACE=0 -DCGFX_BATTLE_NO_FACTS -DCGFX_BATTLE_COMPACT_RESULT -DCGFX_COMPACT_WARP_VM`:
+
+| Pair | Control flash/static | Candidate flash/static | Delta |
+|---|---:|---:|---:|
+| Independent | 22,954 / 1,747 B | 22,930 / 1,747 B | −24 / 0 B |
+| Cumulative | 22,014 / 1,662 B | 22,000 / 1,662 B | −14 / 0 B |
+
+The cumulative chain now measures 22,000 flash / 1,662 static, −1,488 / −85 B from the frozen 23,488 / 1,747 baseline. Native `make test testvm` passed in both pairs: cumulative 285,259/0 plus world 258/0 and VM 343/0; independent 211,778/0 plus world 258/0 and VM 343/0. Actual AVR `test_battle_compact` passed 37/0 cumulative and 35/0 independent (the independent source retains its 28 B result ABI); player-choice flow confirms PP spends in the selected original slot. Companion `test_stack` remains 3/1 only for the known `save compaction completes got=2 want=12` assertion; painted headroom is 547 B cumulative and 525 B independent. Sol approved both source patches. No full gate or production adoption is claimed.
+
+Commands: `make test testvm BUILD_DIR=<host-17-pair>`; exact-flags `make ram BUILD_DIR=<ram-17-pair> AVR_SHIPPING_CPP_FLAGS='<flags above>'`; `make fxtest-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_battle_compact.ino BUILD_DIR=<fxtest-17-pair> AVR_FXTEST_CPP_FLAGS='<shipping flags plus -DFX_READ_COUNTER>'`. For the independent device fixture, omit only `-DCGFX_BATTLE_COMPACT_RESULT` because that isolated source retains the detailed result ABI. Missing generated `dist/fxdata-data.bin` initially blocked the profile preflight in snapshots; `make gen` repaired the prerequisite in all four copies, after which paired builds passed. The first device assertion run exposed a test counter not reset before the no-PP case; the fixture was corrected and rerun. Patches, hashes, reports and paired ELFs are under `/private/tmp/cgfx-1as-spike/artifacts`; cumulative patch SHA256 `75b5915f72ed38be4563bf29be51dfcee827f8320e99b8e4b55029eb84520186`, independent `efacc84103ce4f10dbf5f1619a7b0acdb0633c209b663123c36721d018f05f48`. Worker wall time ~6 min.
+
+### Final 1as research checkpoint
+
+All 17 children and P0 `8fu` are closed. The consolidated accepted/rejected item table, retained profile flags, known blockers and adoption context are in `/private/tmp/cgfx-1as-spike/artifacts/1as-final-report.md`. Final isolated cumulative candidate: 22,000 B flash / 1,662 B static; versus frozen 23,488 / 1,747, this is −1,488 flash / −85 static, with 7,696 B flash free. Retained: `.1-.4`, `.6-.7`, `.9-.11`, `.13-.14`, `.16-.17`; rejected: `.5` (zero delta), `.8`, `.12`, `.15`. No production adoption or full-gate pass is claimed. The known stack assertion and stale legacy save/battle fixtures remain open.
