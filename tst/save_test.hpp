@@ -7,6 +7,7 @@
 #include "../src/save/SaveController.hpp"
 #include "../src/creature/Creature.hpp"
 #include "../src/creature/LevelCurve.hpp"
+#include "../src/flags/flag_bit_array.hpp"
 #include "../src/globals.hpp"
 #include "../src/plants/PlantGamestate.hpp"
 
@@ -124,7 +125,40 @@ inline void ShippingSaveRestoreTest(TestSuite &suite) {
     test.assert(plants.plantPairs[1].serialize(),0x3c,"second plant pair restored");
     test.assert(plants.ticker,91,"plant ticker restored");suite.addTest(test);
 }
+inline void SaveFlagExtentTest(TestSuite &suite) {
+    using namespace save_test_detail;Test test(__func__);fresh();player.basic();SaveController::seedParty();
+    uint8_t flagsAndNeighbor[sizeof(FLAG_BIT_ARRAY) + 8] = {};
+    flagsAndNeighbor[0] = 0x5a;
+    flagsAndNeighbor[sizeof(FLAG_BIT_ARRAY)] = 0xc7;
+    uint8_t *originalFlags = gameState.flags;
+    gameState.flags = flagsAndNeighbor;
+    SaveController::begin(GameState_t::WORLD);
+    for(uint16_t i=0;i<256 && saveInProgress();++i) SaveController::advance();
+    SaveFile stored = {};
+    test.assert(saveFileLoad(stored),true,"flag snapshot commits with adjacent byte set");
+    test.assert(stored.flags[0],0x5a,"generated flag byte is captured");
+    for(uint8_t i=sizeof(FLAG_BIT_ARRAY);i<sizeof(stored.flags);++i)
+        test.assert(stored.flags[i],0,"unused save flag bytes stay canonical zero");
+    flagsAndNeighbor[0] = 0;
+    test.assert(SaveController::load(),true,"flag snapshot loads");
+    test.assert(flagsAndNeighbor[0],0x5a,"generated flag byte is restored");
+    test.assert(flagsAndNeighbor[sizeof(FLAG_BIT_ARRAY)],0xc7,
+                "neighbor byte is unchanged by restore");
+    gameState.flags = originalFlags;
+
+    FLAG_BIT_ARRAY[0] = 0x69;
+    SaveController::begin(GameState_t::WORLD);
+    for(uint16_t i=0;i<256 && saveInProgress();++i) SaveController::advance();
+    test.assert(saveFileLoad(stored),true,"generated flag pointer snapshot commits");
+    for(uint8_t i=sizeof(FLAG_BIT_ARRAY);i<sizeof(stored.flags);++i)
+        test.assert(stored.flags[i],0,"generated pointer leaves reserved flag bytes zero");
+    FLAG_BIT_ARRAY[0] = 0;
+    test.assert(SaveController::load(),true,"generated flag pointer snapshot loads");
+    test.assert(FLAG_BIT_ARRAY[0],0x69,"real generated flag byte round-trips");
+    suite.addTest(test);
+}
 inline void SaveSuite(TestRunner &runner) {
     TestSuite suite("Save Suite");CheckpointCollectionTest(suite);CollectionCapacityTest(suite);
-    CheckpointCutTest(suite);JournalPublicationTest(suite);ShippingSaveRestoreTest(suite);runner.addTestSuite(suite);
+    CheckpointCutTest(suite);JournalPublicationTest(suite);ShippingSaveRestoreTest(suite);
+    SaveFlagExtentTest(suite);runner.addTestSuite(suite);
 }

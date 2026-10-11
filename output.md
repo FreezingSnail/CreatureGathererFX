@@ -7345,3 +7345,7 @@ Commands: `make test testvm BUILD_DIR=<host-17-pair>`; exact-flags `make ram BUI
 ### Final 1as research checkpoint
 
 All 17 children and P0 `8fu` are closed. The consolidated accepted/rejected item table, retained profile flags, known blockers and adoption context are in `/private/tmp/cgfx-1as-spike/artifacts/1as-final-report.md`. Final isolated cumulative candidate: 22,000 B flash / 1,662 B static; versus frozen 23,488 / 1,747, this is −1,488 flash / −85 static, with 7,696 B flash free. Retained: `.1-.4`, `.6-.7`, `.9-.11`, `.13-.14`, `.16-.17`; rejected: `.5` (zero delta), `.8`, `.12`, `.15`. No production adoption or full-gate pass is claimed. The known stack assertion and stale legacy save/battle fixtures remain open.
+
+### Adoption box.1 — current-main SaveController flag extent
+
+On main `c018266` (M1 v3), changed only the two `SaveController` flag copy lengths to `sizeof(FLAG_BIT_ARRAY)`, added the fit assertion, and added host/device canary plus real generated-pointer round-trip coverage. Exact shipping `make ram`: 25,154/1,844 → 25,142/1,844 (−12 flash / 0 static). Host 209,728/0 plus world 258/0; actual `test_save_flags` 27/0; `test_stack` 4/0, painted 503 B. Sol approved; candidate ELF SHA256 `33365f55ef31d5e3b077880f89cc0c2b6315f022817f2eae7164366453d6ba39`. Awaiting root fullgate/commit before box.2. Mainline M1 snapshot format and zero-filled canonical padding are unchanged.
