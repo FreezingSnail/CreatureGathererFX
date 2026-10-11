@@ -2,6 +2,7 @@ lib/*
 libs/*
 build/*
 .vscode/
+.codex/
 *.hex
 *.eep
 *.elf
