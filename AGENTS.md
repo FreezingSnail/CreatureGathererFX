@@ -7,6 +7,31 @@ the workflow conventions distilled from past waves.
 
 This project uses **bd** (beads) for issue tracking. Run `bd prime` for full workflow context.
 
+## Engineering priorities
+
+1. **Correct requested outcomes and game mechanics.** Preserve the behavior the owner wants,
+   including real gameplay states, timing, persistence and hardware operation.
+2. **Small firmware.** Choose the implementation with the lowest measured whole-image program
+   flash cost that achieves those outcomes within SRAM, stack and frame-time limits.
+
+Reusability, abstraction, architecture cleanliness, general code-quality conventions and generic
+safety practices have no independent priority. Prefer direct, specialized code when it works and
+is smaller. Do not add layers, general-purpose APIs, fallback paths, validation or guards merely
+because they are considered good programming practice. Keep a refactor only if it produces a
+measured resource win or is needed for a requested outcome.
+
+Trust controlled authored data and internally produced values where their invariants are known.
+Enforce content constraints in host authoring/generation/build tools instead of spending AVR
+program flash on malformed-data defenses. Check the generator's actual guarantees before relying
+on them; fill missing authoring checks there. Impossible internal API misuse is not a gameplay
+requirement, and tests that invent such misuse must not force defensive code into shipping builds.
+
+Empty entries, no usable moves, knocked-out creatures, party exhaustion, fresh input edges, valid
+sentinels and interrupted save writes are real states with required outcomes. Preserve their
+behavior with the smallest necessary logic; do not confuse it with generic defensive programming.
+Tests should prove mechanics and hardware outcomes, not enforce style or unnecessary abstractions.
+Diagnostic symbol sizes are leads; whole-image AVR measurements decide which changes save bytes.
+
 ## Commands
 
 ```sh
@@ -20,6 +45,8 @@ make test-manifest         # permanent generated-artifact tests
 make test-generated-libs   # packed image <-> src/fxdata.h <-> generated sources
 make test-pack-parity      # native packed-image SHA-256 baseline
 make test-doctor           # setup-diagnostic tests
+make clean-build-artifacts # preview generated Arduino-cache cleanup; CLEAN_APPLY=1 to apply
+make test-clean-build-artifacts # verify cleanup bounds and preserved evidence
 make build | mini | run    # shipping FX / Mini / interactive Ardens run
 make ram                   # shipping FX build with flash/RAM report
 make doctor                # tool readiness (cgfx-tools, arduino-cli, Ardens)
@@ -52,11 +79,25 @@ It always runs every FX suite, even if a focused `FXTEST_INOS` override is prese
   Stage generated sets together after a regen; a half-staged set once shipped a stale opcode table.
   Tests read generated symbolic constants, never literal record indices. `fxlayout.toml`
   declaration order is a permanent ABI.
+- **Build cleanup**: after each completed spike or experiment, review `make clean-build-artifacts`
+  and apply with `make clean-build-artifacts CLEAN_APPLY=1`. It removes only generated Arduino
+  cache/object paths; retain reports, source copies, CSV/measurement evidence, save images, and
+  selected control/final ELFs. Unknown paths stay untouched.
+- **Spike snapshots**: never recursively copy the dirty repository into a child directory. Make one
+  control source snapshot, then save each experiment as its exact tracked-source patch, allowlisted
+  untracked source/generator prerequisites, report, and chosen ELF. Exclude `build/`,
+  `.battle-carve-spike/`, all scratch/spike work directories, `.git/`, `.beads/`, `.codex/`, and
+  caches from filesystem snapshots. Prefer `git archive` for the committed base, then apply only
+  the reviewed dirty patch and required allowlisted inputs. Inspect existing copies and report their
+  size; keep unknown source/evidence until the owner decides to remove it.
 - **Single FX image**: `dist/fxdata.bin` is the only flashable cart image; `src/fxdata.h` mirrors it.
-- **SRAM is the binding constraint** (flash 61% used; globals were 2018/2560 B with a save path
-  that overflows by ~262 B). Budget rules live in `docs/dev-flow.md`.
-- **FX/OLED share SPI**: cart reads happen only on transitions, never per-step or per-frame. The
-  per-frame read counter (jp8.1.7) keeps this enforceable.
+- **Budget both program flash and SRAM.** The measured player-choice checkpoint (2026-10-10) uses
+  23,488/29,696 B program flash and 1,747/2,560 B static SRAM, with 509 B painted stack headroom.
+  These are a dated checkpoint, not guaranteed future headroom. Keep the existing ~150 B effective
+  reserve and the budget rules in `docs/dev-flow.md`; static free bytes alone do not prove stack fit.
+- **FX/OLED share SPI**: metadata/table reads happen only on transitions, never per-step or
+  per-frame. Existing sprite/text raster transfers during rendering are expected. The metadata
+  read counter (jp8.1.7) keeps the transition rule enforceable.
 - **24-bit FX table reads**: ArduboyFX 1.4.0's AVR `readIndexedUInt24` path returns an incorrect
   top byte. Route packed address-table reads through `FxRead::indexed24` in `src/lib/FxRead.hpp`;
   it reads the three big-endian bytes and reconstructs `uint24_t`. Keep the device table test,
