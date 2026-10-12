@@ -7797,3 +7797,16 @@ Validation:
 - make test-pack-parity BUILD_DIR=build/lure-demo —PASS. Cart SHA256 remains c024abf4a7f47a665f724cfa83402f3e48b4c6b2184706bc57ba1ae8f84ba7f9; no unexpected generated changes.
 
 Storage:31GiB free,total build4.0GiB,single lane build/lure-demo60MiB after preview/apply clean-build-artifacts and removal of its disposable fxtest stages. Simple sources/artifacts8.1MiB. Retained aid-art-tests,viewer,pack-parity,final-gate and cleanup logs plus selected shipping ELF; generated concepts/prompts/native maps/contact sheets remain in source. No source snapshots or duplicate build trees. Wall clock approximately83minutes(14:39–16:02UTC) across generation,composition,verification and cleanup. No failed gate; no push.
+
+## CreatureGathererFX-efg — joined v4 and simple native16px catalogue
+
+Owner selected Environment Clarity Redraw v4. Preserved its768native16px cells and appended160simple32px assets as640unscaled16px quadrants, yielding256×1408 pixels/1408cells. Source/quadrant manifest, Tiled tileset and editable hybrid town accompany the atlas. Shared gallery adds1×/2×/4×sheet controls,16px grid and three128×64device crops. The town combines the native v4 house with simple cottages, trees and garden; original16px player remains unchanged. Gallery and both existing tile pages link the join. This is a review catalogue: current10bit gameplay IDs cap at1023, requiring a selected/remapped subset for installation. No gameplay format or packed assets changed.
+
+Validation:
+- node tools/join-simple-environments16.mjs —PASS768original+640appended cells, hybrid town and3crops; regenerated with v4 after owner selection.
+- node --test tools/tests/join-simple-environments16_test.mjs tools/tests/simple-environments_test.mjs tools/tests/environment32-viewer_test.mjs tools/tests/environment32-scene_test.mjs tools/tests/habitat-terrain_test.mjs tools/tests/lure-world-spike_test.mjs tools/tests/world-arranged-comparison_test.mjs —61/61PASS,1120ms. Exact source/quadrant pixels, IDs, map rendering, crops/player, Tiled references and native viewer dimensions checked.
+- Node syntax checks for joiner/viewer,479local HTMLreferences and git diff --check —PASS.
+- make final-gate BUILD_DIR=build/lure-demo FINAL_GATE_LOG_DIR=build/lure-demo/reports/efg-final-gate ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens —PASS host283220+258,VM343,all34FX suites; shipping25626B flash/1760B static,800B free,painted stack484B. Gate ran while v4 review-only art was regenerated; firmware/gameplay inputs unchanged and final selected art passed its61checks separately.
+- make test-pack-parity BUILD_DIR=build/lure-demo —PASS. Cart SHA256 unchanged:c024abf4a7f47a665f724cfa83402f3e48b4c6b2184706bc57ba1ae8f84ba7f9. No unexpected generated changes.
+
+Storage:31GiB free,total build4.0GiB,single lane build/lure-demo60MiB; combined outputs276KiB. Previewed/applied clean-build-artifacts and removed229MiB of owned disposable fxtest stages after preserving logs and efg-shipping-final.elf. Retained efg art tests,full gate and cleanup evidence. No source snapshots or duplicate build trees. Wall time approximately17minutes(16:13–16:30UTC), including gate and owner selection. No failed gate; no push.
