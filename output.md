@@ -7713,3 +7713,57 @@ arranger scripts, exact scene PNGs, comparison sheets, permanent tests.
 Storage37GiB free;32pxspike5.7MiB;comparison724KiB. Workers removed their
 temporary enlarged previews; no AVR/cache/staging outputs created. Existing
 build trees untouched. All changes remain uncommitted.
+
+## CreatureGathererFX-9uf — creature-themed dithered habitats
+
+Reviewed the current 64-entry creature roster and front-sprite contact sheets. Grouped 25 creatures into Huskfield Meadow, Dewcap Grove, Shellstone Tide and Cinderflint Quarry, with rationale and current types beside the actual creature references. Added a built-in imagegen concept/prompt, 64 new binary32px tiles, four384×256 arrangements and twelve native128×64 crops. All nine scenes and camera presets remain on `docs/world-environment-32-spike.html`; added four docs-gallery entries. Earlier dark cave player correction is preserved.
+
+Validation:
+- `node tools/export-environment32-spike.mjs docs/assets/world-environment-32-spike/habitats` — PASS256×256, 64cells, 20,618black /44,918white pixels;8,192B raw1bpp.
+- `node tools/author-creature-habitats.mjs` and `node tools/compose-environment32-scene.mjs` — PASS; habitat placement counts35/35/36/40, three native crops each.
+- `node --test tools/tests/environment32-scene_test.mjs tools/tests/environment32-viewer_test.mjs tools/tests/world-arranged-comparison_test.mjs` —36/36PASS; exact tile pixels, binary palette, unchanged masked player, native crops, roster references and habitat deep links. Final run327ms.
+- Node syntax checks and `git diff --check` —PASS. Local HTML href/src/data-image check —269references resolve.
+- Inspected native atlas enlargement, full maps and device crop enlargements. Staggered clusters and adjusted camera presets after review; one intermediate authoring collision was caught by composer validation and corrected before final passing export.
+
+Review-only habitat proposals; no encounter/gathering tables or shipping/generated firmware assets changed by this task. Seam/alignment certification remains outside this visual spike. Existing unrelated firmware edits retained. No AVR gate or build lane used. Artwork remains with the ongoing uncommitted spike. Wall time approximately9minutes (04:49:51–04:58UTC), no gate time.
+
+Storage:37GiB free; existing build4.0GiB untouched; world-environment32 review assets8.9MiB including retained concept/prompt/native atlases/maps/crops. No source snapshots, compiler caches or pack stages created; no cleanup needed.
+
+## CreatureGathererFX-ei6 — connected habitat terrain
+
+Owner rejected the blank white ground and isolated prop stamps. Added16 full-surface32px terrain textures (four materials per biome), a native128×128 atlas, exact built-in imagegen prompt/source, connected authored16px material maps, four-pixel dither transitions and exterior-masked prop composition. Ground now continues beneath props; enclosed highlights and a one-pixel light rim remain. Removed redundant ground/water stamps. All four habitat scenes, twelve crops, camera presets and gallery previews updated on the existing page. Earlier white-ground experiments and original-player dark cave remain for comparison.
+
+Commands/results:
+- `node tools/export-environment32-spike.mjs docs/assets/world-environment-32-spike/habitats/terrain`: PASS16tiles,128×128,8,867black/7,517white pixels,2,048B raw1bpp; paired opposite texture edges.
+- `node tools/author-creature-habitats.mjs` + `node tools/compose-environment32-scene.mjs`: PASS; revised habitat prop counts31/33/18/34.
+- `node --test tools/tests/habitat-terrain_test.mjs tools/tests/environment32-scene_test.mjs tools/tests/environment32-viewer_test.mjs tools/tests/world-arranged-comparison_test.mjs`:41/41PASS in440ms. Tests cover edge parity, nonblank material coverage, connected paths, player walking surface, removed white boxes, exact binary composition/crops and original player in dark caves.
+- Node syntax checks for changed tools/viewer + `git diff --check`:PASS. Local href/src/data-image check271references resolve.
+- Inspected native texture sheet, revised grove/shore full maps and meadow/quarry device crops. Larger map patterns still show visible repetition; native-size readability is the review target.
+
+Wall time approximately32minutes (05:00–05:32UTC), no firmware gate/build time. No shipping assets or firmware changed by this task. Existing unrelated edits retained. Review spike stays uncommitted.35GiB free, world-environment32 assets13MiB; no compiler caches, snapshots or packing stages created; no cleanup needed.
+
+## CreatureGathererFX-lou — sparse ground and cohesive variety
+
+Owner clarified that white ground with small details is welcome; full-surface dithering was too heavy. Revised the review renderer to use small biome-specific accents on bare white, lighter path marks and sparse edge cues. Reduced dense-region footprints and authored different path profiles for each habitat. Preserved connected fields/pools/shore/coal pockets, masked props and the original16px player. Updated all four maps, twelve crops, gallery descriptions and docs. Existing source atlases/prompts retained; no new image generation, shipping generation or firmware work.
+
+Validation: `node tools/author-creature-habitats.mjs`; `node tools/compose-environment32-scene.mjs`; `node --test tools/tests/habitat-terrain_test.mjs tools/tests/environment32-scene_test.mjs tools/tests/environment32-viewer_test.mjs tools/tests/world-arranged-comparison_test.mjs` —41/41PASS,430ms. Tests now permit bare ground and cap open-cell interior marks while retaining connectivity, composition/crop/player and prop-mask checks. One intermediate path change put a shore player preset outside the walking strip; the test caught it and the route was corrected before final passing export. A local one-off edit script had a const-assignment error after writing the renderer; remaining author-map edits were applied separately.
+
+Syntax checks and `git diff --check` PASS;271local HTMLreferences resolve. Inspected full meadow/grove scenes and native enlarged device crops. Full scene white-pixel fractions77.7/74.9/67.6/76.6percent. Wall time approximately3minutes (12:59–13:02UTC), no gate time.35GiB free; review assets13MiB, existing builds untouched, no new caches/snapshots/stages or cleanup. Artwork remains in the ongoing uncommitted spike.
+
+## CreatureGathererFX-15m — playable lure scenery and clarity revision
+
+Integrated the sparse environment artwork into the opt-in lure pocket. A baked128×128 scene supplies64 opaque16px rendering frames while retaining32px scenery silhouettes. The renderer selects these frames only underCGFX_LURE_WEDGE and still reads the original map words/properties. Box(9,2),plant(14,2),exit(12,7),boot(11,5),collision,encounter and lure interactions are preserved. Generation runs the scene exporter before packing/cache checks. FX layout is append-only: all745,392 prior payload bytes remain identical; appended sprite block2,052B.
+
+Owner screenshot feedback identified mushy canopy/checker backing and dark interaction blobs. Generated a clearer16-prop concept with bold contours, white highlights and shadow-only dithering, retained exact prompt/source and authored row bands, and exported with a fixed threshold. Removed dense backing from this pocket. Small fixtures are authored at16px and cropped from32px cells instead of downsampled. Added native128×64 boot/container/plant previews to the shared page and gallery. This supersedes the first passing gate's artwork. The clarity revision changes pixel content without changing frame count, FX length or program flash.
+
+Validation:
+- make gen BUILD_DIR=build/lure-demo — PASS; verify-generated/generated-libs included in final gate. src/fxdata.h regenerated together with the appended layout/source. Cart SHA256 c4a2e401f1cdcadc2a0e523e841edcbe4135310e603ff45d4bb772fe1804bc61.
+- node --test tools/tests/lure-world-spike_test.mjs tools/tests/habitat-terrain_test.mjs tools/tests/environment32-scene_test.mjs tools/tests/environment32-viewer_test.mjs tools/tests/world-arranged-comparison_test.mjs —44/44PASS,519ms. Exact packed pixels for all64frames, native fixture ink/highlights, original mechanics, scene/player composition and viewers checked.
+- make fxtest-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_world_player.ino BUILD_DIR=build/lure-demo FXTEST_BUILD_DIR=build/lure-demo/fxtest AVR_FXTEST_CPP_FLAGS='-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X -DFX_READ_COUNTER -DCGFX_LURE_WEDGE' ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens —world_player50/0; idle/four-scroll exact raster parity and encounters; player headroom690B,map659B; stack4/0,painted484B.
+- Control/candidate make ram BUILD_DIR=build/lure-demo AVR_SHIPPING_CPP_FLAGS='-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X -DCGFX_SHIPPING_NO_USB -fno-inline-small-functions -DCGFX_BATTLE_NO_FACTS -DCGFX_LURE_WEDGE' AVR_FLASH_BUDGET=29184 —control24,278B flash/1,760B static;candidate24,386B/1,760B. Delta+108B flash,0B SRAM. The increase is opt-in tile selection code; art pixels reside on FX. Static free800B.
+- make final-gate BUILD_DIR=build/lure-demo FINAL_GATE_LOG_DIR=build/lure-demo/reports/final-gate ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens —PASS after clarity revision; host283,220+258,VM343,all34FX suites pass,stack484B. Shipping25,626B flash/1,760B static/800B free. First gate also passed before screenshot correction; its logs retained separately.
+- make test-pack-parity BUILD_DIR=build/lure-demo —PASS after final gate; prior payload prefix equality confirmed separately. Syntax checks,283 local HTML asset references and git diff --check PASS.
+
+Intermediate issues corrected: indexed PNG was replaced with renderer's RGBA tiles_16x16 source in preview composition; device word read cast and tile0 expected-raster handling fixed before passing focused checks. No failed final gate. No changes to original world map or mechanics. Source control baseline802e346bd747081246c2b30ab4ff85325776f516. Total wall time approximately31minutes(13:08–13:39UTC), including two full gates and screenshot-driven art revision.
+
+Storage: single lane build/lure-demo,34GiB free,total build4.0GiB,active lane59MiB,review artwork15MiB. Ran clean-build-artifacts preview/apply for this lane and removed its positively identified229MiB disposable fxtest staging after results were retained. No repository snapshots or duplicate build trees. Compact evidence in build/lure-demo/reports: control/candidate/final-shipping ELFs,control packed data/header,host/art/parity logs,both gate logs and cleanup logs. Isolated lure hex/data/save retained. Related ongoing review artwork is included with this integration so all source dependencies exist in the checkout. No push.

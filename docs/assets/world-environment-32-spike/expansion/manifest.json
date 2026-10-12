@@ -1,0 +1,35 @@
+{
+  "reviewOnly": true,
+  "source": "concept.png",
+  "sourceSize": [
+    1254,
+    1254
+  ],
+  "sheet": [
+    128,
+    128
+  ],
+  "cell": [
+    32,
+    32
+  ],
+  "columns": 4,
+  "rows": 4,
+  "tiles": 16,
+  "palette": [
+    "#000000",
+    "#ffffff"
+  ],
+  "opaque": true,
+  "export": "Area-weighted sampling; alpha composited over white; 4x4 Bayer ordered dithering at native pixel scale. Preview enlarged nearest-neighbor.",
+  "blackPixels": 4884,
+  "whitePixels": 11500,
+  "raw1bppBytes": 2048,
+  "alignmentAndSeamsCertified": false,
+  "rowThemes": [
+    "16px paths",
+    "Water and footbridge",
+    "Compact cottage and garden",
+    "Foliage and props"
+  ]
+}

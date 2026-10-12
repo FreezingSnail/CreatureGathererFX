@@ -1,0 +1,79 @@
+[
+  {
+    "slug": "huskfield",
+    "name": "Huskfield Meadow",
+    "ids": [
+      32,
+      33,
+      34,
+      53,
+      54,
+      2
+    ],
+    "description": "Seed weevils share ribbed pods and grain stores with wind tufts and ScrambleSnail. Tall stalks shelter a worn dirt harvest lane; loose husks and seed fluff gather at the field edges.",
+    "motifs": "Ribbed husks, grain heads, windseed fluff and a small granary.",
+    "views": [
+      "Granary approach",
+      "Seedpod clearing",
+      "Windseed edge"
+    ]
+  },
+  {
+    "slug": "dewcap",
+    "name": "Dewcap Grove",
+    "ids": [
+      35,
+      36,
+      37,
+      38,
+      39,
+      18
+    ],
+    "description": "DewBud and NectarBloom favor the wet edge, while Sporeling, SporeKeeper and MossMole occupy the shaded logs. Skimray connects the plant theme to the pools. A leaf-litter path threads between mushroom groves.",
+    "motifs": "Dew leaves, nectar blooms, spotted caps, mossy logs and shallow pools.",
+    "views": [
+      "Mushroom trail",
+      "Dew pool",
+      "Moss den"
+    ]
+  },
+  {
+    "slug": "shellstone",
+    "name": "Shellstone Tide",
+    "ids": [
+      3,
+      40,
+      42,
+      44,
+      46,
+      41
+    ],
+    "description": "SkitterCrab, Conelet and Horseshoe inhabit the shell banks; SiltSkorp and Platefin suit the silt pools. SpireSquid gives the old spiral fossils an elder connection. Textured shell sand separates the exposed fossil beds from the water.",
+    "motifs": "Spiral fossils, armored shells, tidal pools, layered reef stone and a short jetty.",
+    "views": [
+      "Shell bank",
+      "Fossil bed",
+      "Tide landing"
+    ]
+  },
+  {
+    "slug": "cinderflint",
+    "name": "Cinderflint Quarry",
+    "ids": [
+      10,
+      16,
+      48,
+      49,
+      50,
+      51,
+      52
+    ],
+    "description": "CoalGrub, CinderCocoon and FurnaceBeetle form the hot-soil family. Ember and WaggleWorm fit the vents, while Flintling and GeodeGuard inhabit the cooler mineral face. Packed grit lanes connect the coal working to the crystal pocket.",
+    "motifs": "Coal, clinker, vents, faceted geodes and abandoned mine timbers.",
+    "views": [
+      "Mine threshold",
+      "Coal working",
+      "Geode pocket"
+    ]
+  }
+]

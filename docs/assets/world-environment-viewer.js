@@ -1,5 +1,7 @@
 const root = 'assets/world-environment-spike/';
 const select = document.querySelector('#version'), viewSelect = document.querySelector('#view');
+const requestedVersion = new URLSearchParams(window.location.search).get('version');
+if ([...select.options].some(option => option.value === requestedVersion)) select.value = requestedVersion;
 const image = document.querySelector('#preview'), sheet = document.querySelector('.sheet');
 const world = new Image(), buildingAtlas = new Image(), playerSheet = new Image(), fixtureAtlas = new Image();
 function folder() { return root + (select.value === 'current' ? '' : select.value + '/'); }

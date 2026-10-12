@@ -30,7 +30,8 @@ perturbed_layout=$fixtures/fxlayout-expand-20-perturbed.toml
 # jp8.9 gate fix gives the box tile the spare prop (bit 5) so the World A hook
 # reads it from the RAM property window instead of a per-press FX word read.
 # jp8.10 appends the six-line lure-demo intro card strings to the text block.
-expected=3471e18db4b9231fd6ce42b99409c724bc0e842eb48044a0bc14d382b0b622e0
+# Append64 opaque lure-world render cells; all745392 prior payload bytes match the control.
+expected=c4a2e401f1cdcadc2a0e523e841edcbe4135310e603ff45d4bb772fe1804bc61
 
 for layout in "$old_layout" "$new_layout" "$perturbed_layout"; do
     test -f "$layout" || {

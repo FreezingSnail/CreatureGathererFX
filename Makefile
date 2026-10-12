@@ -339,6 +339,7 @@ gen: gen-data gen-sprites gen-fixtures pack
 
 # Opt-in demos reuse a checked cache; ordinary `make gen` stays forceful.
 gen-if-needed:
+	@node tools/export-lure-world-spike.mjs
 	@./tools/ensure-generated.sh --ensure . "$(GEN_CACHE_STAMP)" \
 	    "$(FX_LAYOUT)" "$(FXDATA_MANIFEST)" "$(FXDATA_DIST_DIR)" \
 	    "$(DIST_DIR)" "$(FXDATA_BIN)" "$(FXDATA_DATA_BIN)" "$(FXDATA_SAVE_BIN)" \
@@ -346,6 +347,7 @@ gen-if-needed:
 
 gen-data:
 	@set -e; \
+	node tools/export-lure-world-spike.mjs; \
 	cgfx-tools --project cgfx-project.json; \
 	: 'Firmware includes generated headers from src; refresh copies atomically with generation.'; \
 	cp -f fxdata/generated/opcodes.hpp src/vm/opcodes.hpp; \
