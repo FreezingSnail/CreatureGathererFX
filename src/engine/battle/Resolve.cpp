@@ -29,6 +29,10 @@ uint8_t sideIndex(Side side)
 
 void captureBefore(const BattleState &state, ActionResult &out)
 {
+#ifdef CGFX_BATTLE_COMPACT_RESULT
+    out.hpBefore[0] = state.active[0].hp;
+    out.hpBefore[1] = state.active[1].hp;
+#else
     for (uint8_t side = 0; side < SIDE_COUNT; ++side) {
         out.speciesBefore[side] = state.active[side].id;
         out.maxHpBefore[side] = state.active[side].maxHp;
@@ -37,16 +41,31 @@ void captureBefore(const BattleState &state, ActionResult &out)
     }
     out.progressBefore = state.gather.progress;
     out.progressAfter = state.gather.progress;
+#endif
 }
 
 void captureAfter(const BattleState &state, ActionResult &out)
 {
+#ifndef CGFX_BATTLE_COMPACT_RESULT
     for (uint8_t side = 0; side < SIDE_COUNT; ++side) {
         out.hpAfter[side] = state.active[side].hp;
     }
     out.progressAfter = state.gather.progress;
+#else
+    (void)state;
+    (void)out;
+#endif
 }
 
+#ifdef CGFX_BATTLE_COMPACT_RESULT
+void markFaints(const BattleState &state, const ActionResult &out, uint8_t &flags)
+{
+    for (uint8_t side = 0; side < SIDE_COUNT; ++side) {
+        if (out.hpBefore[side] != 0 && state.active[side].hp == 0)
+            flags |= side == 0 ? PLAYER_FAINTED : OPPONENT_FAINTED;
+    }
+}
+#else
 bool liveToZero(const ActionResult &out, Side side)
 {
     const uint8_t index = sideIndex(side);
@@ -58,6 +77,7 @@ void markFaints(const ActionResult &out, uint8_t &flags)
     if (liveToZero(out, Side::Player)) flags |= PLAYER_FAINTED;
     if (liveToZero(out, Side::Opponent)) flags |= OPPONENT_FAINTED;
 }
+#endif
 
 void setTerminalOutcome(BattleState &state, ActionResult &out)
 {
@@ -157,9 +177,13 @@ void resolveAttack(BattleState &state, Side actor, uint8_t moveSlot,
     out.kind = ResultKind::Attack;
     out.actor = actor;
     out.index = attacker.moveIds[moveSlot];
+#ifndef CGFX_BATTLE_COMPACT_RESULT
     out.effectiveness = attackEffectiveness(attacker, target, moveSlot);
+#endif
     if (selfHit) out.flags |= SELF_HIT;
+#ifndef CGFX_BATTLE_COMPACT_RESULT
     if (move.isPhysical()) out.flags |= PHYSICAL_MOVE;
+#endif
 
     if (target.hp != 0) {
         const uint8_t damage = computeDamage(attacker, target, moveSlot);
@@ -353,7 +377,11 @@ void resolveAction(BattleState &state, Side actor, BattleAction action,
     }
 
     captureAfter(state, out);
+#ifdef CGFX_BATTLE_COMPACT_RESULT
+    markFaints(state, out, out.flags);
+#else
     markFaints(out, out.flags);
+#endif
     if (out.kind == ResultKind::Attack || out.kind == ResultKind::Skip) {
         setTerminalOutcome(state, out);
     }
@@ -377,7 +405,11 @@ void resolveEndTurn(BattleState &state, Rng &rng, bool acquisitionPending,
     tickEffects(state, out);
 #endif
     captureAfter(state, out);
+#ifdef CGFX_BATTLE_COMPACT_RESULT
+    markFaints(state, out, out.flags);
+#else
     markFaints(out, out.flags);
+#endif
 
     // End-turn terminal order is intentionally explicit: a KO wins over a
     // pending gather, which wins over the wild flee countdown.

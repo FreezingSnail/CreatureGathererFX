@@ -164,6 +164,7 @@ bool BattleSession::beginPrepared(
 }
 #endif
 
+#ifndef CGFX_BATTLE_COMPACT_RESULT
 void BattleSession::captureState(ActionResult &out) const
 {
     for (uint8_t side = 0; side < SIDE_COUNT; ++side) {
@@ -175,12 +176,15 @@ void BattleSession::captureState(ActionResult &out) const
     out.progressBefore = state_.gather.progress;
     out.progressAfter = state_.gather.progress;
 }
+#endif
 
 void BattleSession::beginResultIfNeeded()
 {
     if (result_.kind != ResultKind::None) return;
     resetActionResult(result_);
+#ifndef CGFX_BATTLE_COMPACT_RESULT
     captureState(result_);
+#endif
     result_.kind = ResultKind::EndTurn;
     result_.actor = Side::Player;
     result_.outcome = Outcome::Lose;

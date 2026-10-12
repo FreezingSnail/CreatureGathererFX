@@ -1,4 +1,5 @@
 #include "../../lib/Text.hpp"
+#ifndef CGFX_BATTLE_COMPACT_RESULT
 #include "BattlePresenter.hpp"
 #include "../../lib/FxReadCounter.hpp"
 #include "../../lib/uint24.h"
@@ -678,3 +679,4 @@ void BattlePresenter::draw() const {
 }
 
 } // namespace battle
+#endif

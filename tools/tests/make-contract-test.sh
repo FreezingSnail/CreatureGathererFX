@@ -131,7 +131,7 @@ printf '%s\n' "$build" | grep -Fq 'fixture-arduino compile --fqbn "fixture:fx"'
 printf '%s\n' "$build" | grep -Fq 'ARDUINO_BUILD_CACHE_PATH="build/contract/arduino-cache" fixture-arduino compile'
 printf '%s\n' "$build" | grep -Fq -- '--build-path "build/contract/arduino-build/fx"'
 printf '%s\n' "$build" | grep -Fq -- '--output-dir "build/contract"'
-printf '%s\n' "$build" | grep -Fq -- '--build-property "compiler.cpp.extra_flags=-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X -DCGFX_SHIPPING_NO_USB -fno-inline-small-functions -DCGFX_BATTLE_NO_FACTS"'
+printf '%s\n' "$build" | grep -Fq -- '--build-property "compiler.cpp.extra_flags=-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X -DCGFX_SHIPPING_NO_USB -fno-inline-small-functions -DCGFX_BATTLE_NO_FACTS -DCGFX_BATTLE_COMPACT_RESULT"'
 for property in compiler.c.extra_flags compiler.c.elf.extra_flags; do
     printf '%s\n' "$build" | grep -Fq -- "--build-property \"$property=-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X\""
 done
@@ -150,7 +150,7 @@ mini=$(make --no-print-directory -n mini \
 printf '%s\n' "$mini" | grep -Fq 'fixture-arduino compile --fqbn "fixture:mini"'
 printf '%s\n' "$mini" | grep -Fq -- '--build-path "build/contract/arduino-build/mini"'
 printf '%s\n' "$mini" | grep -Fq -- '--output-dir "build/contract"'
-printf '%s\n' "$mini" | grep -Fq -- '--build-property "compiler.cpp.extra_flags=-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X -DCGFX_SHIPPING_NO_USB -fno-inline-small-functions -DCGFX_BATTLE_NO_FACTS"'
+printf '%s\n' "$mini" | grep -Fq -- '--build-property "compiler.cpp.extra_flags=-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X -DCGFX_SHIPPING_NO_USB -fno-inline-small-functions -DCGFX_BATTLE_NO_FACTS -DCGFX_BATTLE_COMPACT_RESULT"'
 for property in compiler.c.extra_flags compiler.c.elf.extra_flags; do
     printf '%s\n' "$mini" | grep -Fq -- "--build-property \"$property=-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X\""
 done
@@ -164,6 +164,16 @@ facts_override=$(make --no-print-directory -n fxtest-build \
     FXTEST_INOS=tst/fxdatatest/test_battle_facts.ino \
     AVR_FXTEST_NO_FACTS_BUILD_PROPERTIES='--build-property "compiler.cpp.extra_flags=-DLOCAL -DCGFX_BATTLE_NO_FACTS"')
 printf '%s\n' "$facts_override" | grep -Fq -- '--build-property "compiler.cpp.extra_flags=-DLOCAL -DCGFX_BATTLE_NO_FACTS"'
+compact_device=$(make --no-print-directory -n fxtest-build \
+    ARDUINO_CLI=fixture-arduino FQBN=fixture:fx BUILD_DIR=build/contract \
+    FXTEST_INOS=tst/fxdatatest/test_battle_compact.ino)
+printf '%s\n' "$compact_device" | grep -Fq -- '-DFX_READ_COUNTER'
+printf '%s\n' "$compact_device" | grep -Fq -- '-DCGFX_BATTLE_NO_FACTS -DCGFX_BATTLE_COMPACT_RESULT"'
+compact_override=$(make --no-print-directory -n fxtest-build \
+    ARDUINO_CLI=fixture-arduino FQBN=fixture:fx BUILD_DIR=build/contract \
+    FXTEST_INOS=tst/fxdatatest/test_battle_compact.ino \
+    AVR_FXTEST_COMPACT_RESULT_BUILD_PROPERTIES='--build-property "compiler.cpp.extra_flags=-DLOCAL -DCGFX_BATTLE_NO_FACTS -DCGFX_BATTLE_COMPACT_RESULT"')
+printf '%s\n' "$compact_override" | grep -Fq -- '--build-property "compiler.cpp.extra_flags=-DLOCAL -DCGFX_BATTLE_NO_FACTS -DCGFX_BATTLE_COMPACT_RESULT"'
 printf '%s\n' "$mini" | grep -Fq 'check-avr-build-budget.sh "$log" "29696" "2160" Mini'
 
 override=$(make --no-print-directory -n build \

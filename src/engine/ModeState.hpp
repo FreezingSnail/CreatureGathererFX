@@ -11,7 +11,9 @@ inline void operator delete(void *, void *) noexcept {}
 #include <new>
 #endif
 
+#ifndef CGFX_BATTLE_COMPACT_RESULT
 #include "battle/BattlePresenter.hpp"
+#endif
 #include "battle/BattleMenu.hpp"
 #include "battle/BattleFeedback.hpp"
 #include "battle/BattleSession.hpp"
@@ -115,7 +117,7 @@ extern ModeState modeState;
 inline __attribute__((always_inline)) battle::BattleSession &battleSession() {
     return static_cast<battle::BattleSession &>(modeState.battle);
 }
-#if defined(TEST) || defined(FX_READ_COUNTER)
+#if (defined(TEST) || defined(FX_READ_COUNTER)) && !defined(CGFX_BATTLE_COMPACT_RESULT)
 extern battle::BattlePresenter testBattlePresenter;
 inline __attribute__((always_inline)) battle::BattlePresenter &battlePresenter() {
     return testBattlePresenter;

@@ -17,7 +17,12 @@ inline void test_mode_state(FxTest &test)
     test.expectEq(alignof(WorldTransient), 1, F("world payload alignment"));
     test.expectEq(sizeof(battle::Combatant), 36, F("AVR combatant size"));
     test.expectEq(sizeof(battle::BattleState), 124, F("AVR battle state size"));
+#ifdef CGFX_BATTLE_COMPACT_RESULT
+    test.expectEq(sizeof(battle::ActionResult), 7, F("compact action result size"));
+    test.expectEq(sizeof(battle::BattleSession), 142, F("compact battle session size"));
+#else
     test.expectEq(sizeof(battle::ActionResult), 28, F("AVR action result size"));
+#endif
 
     gameState.playerLocation = 0x0A0B;
     player.party[0].id = 13;

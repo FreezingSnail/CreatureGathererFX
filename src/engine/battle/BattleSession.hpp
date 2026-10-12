@@ -75,13 +75,19 @@ class BattleSession {
     bool needsReplacement(Side side) const;
     bool emitReplacement(Side side, uint8_t originalSlot);
     uint8_t firstLiveBenchSlot(Side side) const;
+#ifndef CGFX_BATTLE_COMPACT_RESULT
     void captureState(ActionResult &out) const;
+#endif
     bool submitPlayerAction(BattleAction action);
     void finishNormalResult();
 };
 
 #ifdef __AVR__
+#ifdef CGFX_BATTLE_COMPACT_RESULT
+static_assert(sizeof(BattleSession) == 142, "compact battle session budget");
+#else
 static_assert(sizeof(BattleSession) == 163, "battle session AVR budget");
+#endif
 #endif
 
 } // namespace battle

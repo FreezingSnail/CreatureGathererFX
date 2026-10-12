@@ -40,9 +40,10 @@ void cacheMove(uint24_t &address, uint8_t &width, uint8_t move) {
     cacheAddress(address, width, source, sourceWidth);
 }
 
-void cacheActor(uint24_t &address, uint8_t &width, const ActionResult &result) {
+void cacheActor(uint24_t &address, uint8_t &width, const ActionResult &result,
+                const BattleState &state) {
     const uint8_t side = static_cast<uint8_t>(result.actor);
-    if (side < 2) cacheCreatureName(address, width, result.speciesBefore[side]);
+    if (side < 2) cacheCreatureName(address, width, state.active[side].id);
 }
 
 void drawLine(uint24_t address, uint8_t width, uint8_t y) {
@@ -70,7 +71,7 @@ void BattleFeedback::begin(const ActionResult &result, const BattleState &state)
 
     switch (result.kind) {
     case ResultKind::Attack:
-        cacheActor(lines_[0], widths_[0], result);
+        cacheActor(lines_[0], widths_[0], result, state);
         if (result.flags & SELF_HIT) {
             cacheCaption(lines_[1], widths_[1], battleHurtItself, 11);
         } else if (result.flags & (REFUSED | STATUS_SKIPPED)) {
@@ -87,15 +88,15 @@ void BattleFeedback::begin(const ActionResult &result, const BattleState &state)
         break;
     }
     case ResultKind::Gather:
-        cacheActor(lines_[0], widths_[0], result);
+        cacheActor(lines_[0], widths_[0], result, state);
         cacheCaption(lines_[1], widths_[1], gather, 6);
         break;
     case ResultKind::Escape:
-        cacheActor(lines_[0], widths_[0], result);
+        cacheActor(lines_[0], widths_[0], result, state);
         cacheCaption(lines_[1], widths_[1], battleCannotEscape, 13);
         break;
     case ResultKind::Skip:
-        cacheActor(lines_[0], widths_[0], result);
+        cacheActor(lines_[0], widths_[0], result, state);
         cacheCaption(lines_[1], widths_[1], battlePass, 4);
         break;
     case ResultKind::EndTurn:
