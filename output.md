@@ -7781,3 +7781,19 @@ Validation:
 - make test-pack-parity BUILD_DIR=build/lure-demo —PASS. Syntax checks and git diff --check PASS. Intermediate preview stride error corrected before passing native tests and generation.
 
 Storage:32GiB free,total build4.0GiB,single active lane build/lure-demo59MiB after preview/apply clean-build-artifacts and removing its disposable fxtest stages. Retained opg-candidate/opg-shipping-final ELFs,art/gen/focused/parity/gate/cleanup logs and isolated lure hex/data/save. No source snapshots or duplicate build roots. Wall time approximately40minutes(14:04–14:45UTC), including two full gates and owner style selection; no failed gate. No push. Follow-on review-only simple environment recreation tracked separately asCreatureGathererFX-aid.
+
+## CreatureGathererFX-aid — simple environment recreation
+
+Recreated all nine existing32px arrangements in a clear non-dithered style: river village, garden town, market city, light/dark crystal cave and the four creature habitats. Four built-in reference redraws retain the original sheet grids/object identities and use the lure clarity concept as style reference. Exact prompts/reference paths, raw concepts, fixed-threshold native atlases, enlarged sheets and manifests are retained under simple/. Assets total144scenery+16terrain cells,20KiB raw1bpp. Existing dithered atlases/maps remain intact.
+
+The new composer preserves all authored placements, creature groups, three player positions and cameras. Ground stays sparse white, with continuous outlines around connected ponds/shore/coal patches. All nine maps and27native128×64 crops appear together on the same page; dark cave flips terrain before compositing the original16×16 player. Inspector defaults to Simple and switches to Dithered without changing the selected scene. Added18-cell paired style contact sheet and extended the overall comparison to five arranged sets/20native cells. Gallery links the new scenes.
+
+Validation:
+- node tools/author-simple-environments.mjs —PASS9scenes/27native crops. Native black counts old→simple:world19904→17469,compact4884→2955,habitats20618→19169,terrain8867→2963. Fixed128 threshold; no added Bayer dithering.
+- node tools/compare-world-arrangements.mjs —PASS5sets,20exact native cells,5full arranged sheets.
+- node --test tools/tests/simple-environments_test.mjs tools/tests/environment32-viewer_test.mjs tools/tests/environment32-scene_test.mjs tools/tests/habitat-terrain_test.mjs tools/tests/lure-world-spike_test.mjs tools/tests/world-arranged-comparison_test.mjs —57/57PASS,780ms. Layout/camera identity, binary crops, original player including dark cave, atlas grid/density, both contact sheets and style switching checked.
+- Node syntax checks for composer/comparer/viewer,409local HTMLreferences and git diff --check —PASS. Inspected native sheet, town/city/cave and habitat maps during composition.
+- make final-gate BUILD_DIR=build/lure-demo FINAL_GATE_LOG_DIR=build/lure-demo/reports/aid-final-gate ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens —PASS host283220+258,VM343,all34FX suites; shipping25626B flash/1760B static,800B static free,painted stack484B. No firmware/gameplay asset changes in this bead.
+- make test-pack-parity BUILD_DIR=build/lure-demo —PASS. Cart SHA256 remains c024abf4a7f47a665f724cfa83402f3e48b4c6b2184706bc57ba1ae8f84ba7f9; no unexpected generated changes.
+
+Storage:31GiB free,total build4.0GiB,single lane build/lure-demo60MiB after preview/apply clean-build-artifacts and removal of its disposable fxtest stages. Simple sources/artifacts8.1MiB. Retained aid-art-tests,viewer,pack-parity,final-gate and cleanup logs plus selected shipping ELF; generated concepts/prompts/native maps/contact sheets remain in source. No source snapshots or duplicate build trees. Wall clock approximately83minutes(14:39–16:02UTC) across generation,composition,verification and cleanup. No failed gate; no push.

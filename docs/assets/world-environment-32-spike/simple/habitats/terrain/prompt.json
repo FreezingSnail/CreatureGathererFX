@@ -1,0 +1,8 @@
+{
+  "mode": "built-in reference redraw",
+  "prompt": "Redraw the FIRST reference's4x4 terrain material grid into the clear simple monochrome pixel style of the SECOND reference.16 tiles arranged4 columns4 rows on a square pure-white sheet, no gutters or labels. Every cell exports at32x32 pixels. NO dithering, stipple, checker shading, gray or fine texture noise. Keep native-sized marks large enough to read at32px. Col1 bare white ground with a few small themed tufts; col2 nearly white path with3 tiny pebbles percell; col3 themed patch; col4 terrain boundary. Row1 meadow: grass tufts, dirt, cut stalk field in sparse spaced clusters, soil patches with few curved black lines. Row2 grove: moss tufts, leaf path, pond with white water and a few short black ripples, reeds in spaced clusters. Row3 shore: shell sand, packed sand, sea white water with few black scalloped wave lines, outlined reef stones with white centers. Row4 quarry: ash specks on white, grit pebbles, coal ground black with large deliberate white cracks, faceted flint rocks with white centers. Keep all shapes pure black contours and white interiors, minimal compact solid black shadows. Seamless borders where repeated. Black coal is only one cell; other15 mostly white. Avoid carpet-like patterning. Use clear object silhouettes matching second reference. No perspective, lighting gradients or decoration outside cells.",
+  "references": [
+    "docs/assets/world-environment-32-spike/habitats/terrain/concept.png",
+    "docs/assets/world-environment-32-spike/habitats/lure-clarity/concept.png"
+  ]
+}

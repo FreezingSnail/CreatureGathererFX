@@ -1,0 +1,206 @@
+{
+  "size": [
+    344,
+    680
+  ],
+  "cells": [
+    {
+      "slug": "river",
+      "style": "simple",
+      "source": "docs/assets/world-environment-32-spike/simple/viewport-1.png",
+      "x": 72,
+      "y": 32,
+      "size": [
+        128,
+        64
+      ]
+    },
+    {
+      "slug": "river",
+      "style": "dither",
+      "source": "docs/assets/world-environment-32-spike/viewport-1.png",
+      "x": 208,
+      "y": 32,
+      "size": [
+        128,
+        64
+      ]
+    },
+    {
+      "slug": "town",
+      "style": "simple",
+      "source": "docs/assets/world-environment-32-spike/simple/scenes/town/viewport-1.png",
+      "x": 72,
+      "y": 104,
+      "size": [
+        128,
+        64
+      ]
+    },
+    {
+      "slug": "town",
+      "style": "dither",
+      "source": "docs/assets/world-environment-32-spike/scenes/town/viewport-1.png",
+      "x": 208,
+      "y": 104,
+      "size": [
+        128,
+        64
+      ]
+    },
+    {
+      "slug": "city",
+      "style": "simple",
+      "source": "docs/assets/world-environment-32-spike/simple/scenes/city/viewport-1.png",
+      "x": 72,
+      "y": 176,
+      "size": [
+        128,
+        64
+      ]
+    },
+    {
+      "slug": "city",
+      "style": "dither",
+      "source": "docs/assets/world-environment-32-spike/scenes/city/viewport-1.png",
+      "x": 208,
+      "y": 176,
+      "size": [
+        128,
+        64
+      ]
+    },
+    {
+      "slug": "cave",
+      "style": "simple",
+      "source": "docs/assets/world-environment-32-spike/simple/scenes/cave/viewport-1.png",
+      "x": 72,
+      "y": 248,
+      "size": [
+        128,
+        64
+      ]
+    },
+    {
+      "slug": "cave",
+      "style": "dither",
+      "source": "docs/assets/world-environment-32-spike/scenes/cave/viewport-1.png",
+      "x": 208,
+      "y": 248,
+      "size": [
+        128,
+        64
+      ]
+    },
+    {
+      "slug": "cave-dark",
+      "style": "simple",
+      "source": "docs/assets/world-environment-32-spike/simple/scenes/cave-dark/viewport-1.png",
+      "x": 72,
+      "y": 320,
+      "size": [
+        128,
+        64
+      ]
+    },
+    {
+      "slug": "cave-dark",
+      "style": "dither",
+      "source": "docs/assets/world-environment-32-spike/scenes/cave-dark/viewport-1.png",
+      "x": 208,
+      "y": 320,
+      "size": [
+        128,
+        64
+      ]
+    },
+    {
+      "slug": "huskfield",
+      "style": "simple",
+      "source": "docs/assets/world-environment-32-spike/simple/scenes/huskfield/viewport-1.png",
+      "x": 72,
+      "y": 392,
+      "size": [
+        128,
+        64
+      ]
+    },
+    {
+      "slug": "huskfield",
+      "style": "dither",
+      "source": "docs/assets/world-environment-32-spike/scenes/huskfield/viewport-1.png",
+      "x": 208,
+      "y": 392,
+      "size": [
+        128,
+        64
+      ]
+    },
+    {
+      "slug": "dewcap",
+      "style": "simple",
+      "source": "docs/assets/world-environment-32-spike/simple/scenes/dewcap/viewport-1.png",
+      "x": 72,
+      "y": 464,
+      "size": [
+        128,
+        64
+      ]
+    },
+    {
+      "slug": "dewcap",
+      "style": "dither",
+      "source": "docs/assets/world-environment-32-spike/scenes/dewcap/viewport-1.png",
+      "x": 208,
+      "y": 464,
+      "size": [
+        128,
+        64
+      ]
+    },
+    {
+      "slug": "shellstone",
+      "style": "simple",
+      "source": "docs/assets/world-environment-32-spike/simple/scenes/shellstone/viewport-1.png",
+      "x": 72,
+      "y": 536,
+      "size": [
+        128,
+        64
+      ]
+    },
+    {
+      "slug": "shellstone",
+      "style": "dither",
+      "source": "docs/assets/world-environment-32-spike/scenes/shellstone/viewport-1.png",
+      "x": 208,
+      "y": 536,
+      "size": [
+        128,
+        64
+      ]
+    },
+    {
+      "slug": "cinderflint",
+      "style": "simple",
+      "source": "docs/assets/world-environment-32-spike/simple/scenes/cinderflint/viewport-1.png",
+      "x": 72,
+      "y": 608,
+      "size": [
+        128,
+        64
+      ]
+    },
+    {
+      "slug": "cinderflint",
+      "style": "dither",
+      "source": "docs/assets/world-environment-32-spike/scenes/cinderflint/viewport-1.png",
+      "x": 208,
+      "y": 608,
+      "size": [
+        128,
+        64
+      ]
+    }
+  ]
+}

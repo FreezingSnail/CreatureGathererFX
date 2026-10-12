@@ -212,3 +212,17 @@ node --test tools/tests/lure-world-spike_test.mjs
 ```
 
 Measured opt-in lure build:24388B program flash (control24278B,+110; extending the western coverage adds2B over the prior lure renderer),1760B staticRAM (no delta),800B static free. Device tests verify exact map rasterization for idle and all four scrolling directions, original player masks and a real lure-zone encounter; map-render headroom657B and integrated painted stack headroom484B.
+
+## Simple environment recreation · aid
+
+All nine dithered arrangements now have separate simple-style counterparts under `simple/`: river village, garden town, market city, light/dark crystal cave, Huskfield Meadow, Dewcap Grove, Shellstone Tide and Cinderflint Quarry. Four reference redraws provide144 scenery tiles plus16 terrain materials, preserving the earlier atlas grids and authored placements. Continuous black contours, white highlights and solid compact shadows replace checker shading. Ground keeps small isolated accents; ponds, coast and coal patches retain connected authored regions with continuous boundary cues.
+
+`simple/` retains each exact prompt, raw source, fixed-threshold32px atlas, enlarged sheet and export manifest. The same16px player, three positions and128×64 cameras are preserved for every scene. Dark cave inverts only scenery before compositing the original player. All maps,27native crops and paired dither comparisons appear together on the existing HTML page. The camera inspector defaults to Simple and offers the original Dithered style; `?style=dither&scene=cave` selects the earlier view. A labeled18-cell contact sheet compares both styles for all nine scenes. The broader arranged-set contact sheet now includes five styles and20native crops.
+
+```sh
+node tools/author-simple-environments.mjs
+node tools/compare-world-arrangements.mjs
+node --test tools/tests/simple-environments_test.mjs tools/tests/environment32-viewer_test.mjs tools/tests/environment32-scene_test.mjs tools/tests/habitat-terrain_test.mjs tools/tests/lure-world-spike_test.mjs tools/tests/world-arranged-comparison_test.mjs
+```
+
+These are review asset variants. The playable lure uses its dedicated clear atlas and unchanged authored mechanics. The recreation does not change packed gameplay data or firmware.

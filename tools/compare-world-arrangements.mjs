@@ -7,6 +7,7 @@ const root = 'docs/assets/world-arranged-comparison';
 fs.mkdirSync(root, { recursive: true });
 const slugs = ['town', 'city', 'cave'];
 const sets = [
+  { slug: 'simple32', name: '32PX SIMPLE', assetRoot: 'assets/world-environment-32-spike/simple/scenes', scenes: slugs.map(slug => ({ slug, ...JSON.parse(fs.readFileSync(`docs/assets/world-environment-32-spike/simple/scenes/${slug}/scene.json`)) })) },
   { slug: 'dither32', name: '32PX DITHER', assetRoot: 'assets/world-environment-32-spike/scenes', scenes: slugs.map(slug => ({ slug, ...JSON.parse(fs.readFileSync(`docs/assets/world-environment-32-spike/scenes/${slug}/scene.json`)) })) },
   ...['classic16', 'redraw-v4', 'redraw-v5'].map(slug => ({ slug, assetRoot: `assets/world-arranged-comparison/${slug}`, ...JSON.parse(fs.readFileSync(`${root}/${slug}/manifest.json`)) })),
 ];
@@ -35,7 +36,7 @@ function copy(target, source, x, y, scale = 1, inverted = false) {
 }
 const read = file => decodePng(fs.readFileSync('docs/' + file));
 for (const set of sets) {
-  if (set.slug === 'dither32') { set.darkAssetRoot = set.assetRoot; continue; }
+  if (set.slug === 'dither32' || set.slug === 'simple32') { set.darkAssetRoot = set.assetRoot; continue; }
   set.darkAssetRoot = `assets/world-arranged-comparison/dark/${set.slug}`;
   const destination = 'docs/' + set.darkAssetRoot + '/cave-dark';
   fs.mkdirSync(destination, { recursive: true });
@@ -59,7 +60,7 @@ for (const set of sets) {
     fs.writeFileSync(`${destination}/viewport-${index + 1}.png`, encodePng(crop));
   }
 }
-const sheet = blank(616, 328);
+const sheet = blank(72 + sets.length * 136, 328);
 const cells = [];
 sets.forEach((set, column) => text(sheet, set.slug.toUpperCase(), 72 + column * 136, 8));
 for (const [row, slug] of [...slugs, 'cave-dark'].entries()) {
@@ -90,4 +91,4 @@ const section = `<h2>All arranged asset sets</h2><p>Luna-arranged examples from 
 const page = 'docs/world-environment-32-spike.html', html = fs.readFileSync(page, 'utf8');
 assert.ok(html.includes('<!-- asset-comparison-start -->'));
 fs.writeFileSync(page, html.replace(/<!-- asset-comparison-start -->[\s\S]*?<!-- asset-comparison-end -->/, '<!-- asset-comparison-start -->\n' + section + '\n<!-- asset-comparison-end -->'));
-console.log(`PASS: ${sets.length} arranged sets; ${cells.length} exact128x64 comparison cells; four full scene sheets.`);
+console.log(`PASS: ${sets.length} arranged sets; ${cells.length} exact128x64 comparison cells; ${sets.length} full scene sheets.`);

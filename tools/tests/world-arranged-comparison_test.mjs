@@ -43,10 +43,10 @@ for (const slug of ['classic16', 'redraw-v4', 'redraw-v5']) {
   });
 }
 
-test('one sheet contains all16 exact native comparison crops', () => {
+test('one sheet contains all20 exact native comparison crops across five sets', () => {
   const manifest = JSON.parse(fs.readFileSync(`${root}/comparison-manifest.json`));
   const sheet = read(`${root}/comparison-native.png`);
-  assert.equal(manifest.sets.length, 4); assert.equal(manifest.cells.length, 16);
+  assert.equal(manifest.sets.length, 5); assert.equal(manifest.cells.length, 20);
   assert.deepEqual([sheet.width, sheet.height], manifest.sheet);
   for (const cell of manifest.cells) {
     const source = read('docs/' + cell.source);
@@ -59,7 +59,7 @@ test('one sheet contains all16 exact native comparison crops', () => {
   }
 });
 
-test('all four dark cave sets invert scenery while preserving every masked player pixel', () => {
+test('all five dark cave sets invert scenery while preserving every masked player pixel', () => {
   const manifest = JSON.parse(fs.readFileSync(`${root}/comparison-manifest.json`));
   for (const set of manifest.sets) {
     const cave = set.scenes.find(scene => scene.slug === 'cave');

@@ -2,6 +2,1192 @@
   "reviewOnly": true,
   "sets": [
     {
+      "slug": "simple32",
+      "name": "32PX SIMPLE",
+      "assetRoot": "assets/world-environment-32-spike/simple/scenes",
+      "scenes": [
+        {
+          "slug": "town",
+          "name": "Garden town · simple",
+          "reviewOnly": true,
+          "size": [
+            384,
+            256
+          ],
+          "artTileSize": 32,
+          "movementScale": 16,
+          "viewport": [
+            128,
+            64
+          ],
+          "playerSize": [
+            16,
+            16
+          ],
+          "tileIds": "1-64 original atlas; 65-80 expansion; 0 pure white ground",
+          "description": "Clear outlines, white highlights and sparse ground. Same authored layout and player positions as the dithered version.",
+          "placements": [
+            [
+              65,
+              0,
+              128
+            ],
+            [
+              65,
+              32,
+              128
+            ],
+            [
+              65,
+              64,
+              128
+            ],
+            [
+              65,
+              96,
+              128
+            ],
+            [
+              65,
+              128,
+              128
+            ],
+            [
+              65,
+              160,
+              128
+            ],
+            [
+              65,
+              192,
+              128
+            ],
+            [
+              65,
+              224,
+              128
+            ],
+            [
+              65,
+              256,
+              128
+            ],
+            [
+              65,
+              288,
+              128
+            ],
+            [
+              65,
+              320,
+              128
+            ],
+            [
+              65,
+              352,
+              128
+            ],
+            [
+              73,
+              32,
+              64
+            ],
+            [
+              74,
+              64,
+              64
+            ],
+            [
+              66,
+              48,
+              96
+            ],
+            [
+              75,
+              96,
+              64
+            ],
+            [
+              80,
+              96,
+              96
+            ],
+            [
+              73,
+              144,
+              64
+            ],
+            [
+              74,
+              176,
+              64
+            ],
+            [
+              66,
+              160,
+              96
+            ],
+            [
+              75,
+              208,
+              64
+            ],
+            [
+              80,
+              208,
+              96
+            ],
+            [
+              73,
+              256,
+              64
+            ],
+            [
+              74,
+              288,
+              64
+            ],
+            [
+              66,
+              272,
+              96
+            ],
+            [
+              75,
+              320,
+              64
+            ],
+            [
+              80,
+              320,
+              96
+            ],
+            [
+              73,
+              32,
+              192
+            ],
+            [
+              74,
+              64,
+              192
+            ],
+            [
+              66,
+              48,
+              160
+            ],
+            [
+              73,
+              256,
+              192
+            ],
+            [
+              74,
+              288,
+              192
+            ],
+            [
+              66,
+              272,
+              160
+            ],
+            [
+              38,
+              160,
+              192
+            ],
+            [
+              76,
+              192,
+              192
+            ],
+            [
+              4,
+              192,
+              160
+            ],
+            [
+              75,
+              96,
+              224
+            ],
+            [
+              75,
+              320,
+              224
+            ],
+            [
+              77,
+              0,
+              0
+            ],
+            [
+              78,
+              0,
+              224
+            ],
+            [
+              78,
+              32,
+              0
+            ],
+            [
+              77,
+              64,
+              0
+            ],
+            [
+              78,
+              96,
+              0
+            ],
+            [
+              77,
+              128,
+              0
+            ],
+            [
+              78,
+              160,
+              0
+            ],
+            [
+              77,
+              192,
+              0
+            ],
+            [
+              78,
+              224,
+              0
+            ],
+            [
+              77,
+              256,
+              0
+            ],
+            [
+              78,
+              288,
+              0
+            ],
+            [
+              77,
+              320,
+              0
+            ],
+            [
+              78,
+              352,
+              0
+            ],
+            [
+              78,
+              352,
+              224
+            ],
+            [
+              77,
+              0,
+              64
+            ],
+            [
+              77,
+              352,
+              64
+            ],
+            [
+              77,
+              0,
+              192
+            ],
+            [
+              77,
+              352,
+              160
+            ]
+          ],
+          "views": [
+            {
+              "name": "Cottage approach",
+              "player": [
+                56,
+                104
+              ],
+              "facing": "up",
+              "camera": [
+                0,
+                64
+              ]
+            },
+            {
+              "name": "Town lane",
+              "player": [
+                184,
+                136
+              ],
+              "facing": "right",
+              "camera": [
+                128,
+                112
+              ]
+            },
+            {
+              "name": "Well and garden",
+              "player": [
+                184,
+                168
+              ],
+              "facing": "down",
+              "camera": [
+                128,
+                152
+              ]
+            }
+          ]
+        },
+        {
+          "slug": "city",
+          "name": "Market city · simple",
+          "reviewOnly": true,
+          "size": [
+            384,
+            256
+          ],
+          "artTileSize": 32,
+          "movementScale": 16,
+          "viewport": [
+            128,
+            64
+          ],
+          "playerSize": [
+            16,
+            16
+          ],
+          "tileIds": "1-64 original atlas; 65-80 expansion; 0 pure white ground",
+          "description": "Clear outlines, white highlights and sparse ground. Same authored layout and player positions as the dithered version.",
+          "placements": [
+            [
+              44,
+              0,
+              0
+            ],
+            [
+              52,
+              0,
+              32
+            ],
+            [
+              45,
+              32,
+              0
+            ],
+            [
+              53,
+              32,
+              32
+            ],
+            [
+              46,
+              64,
+              0
+            ],
+            [
+              54,
+              64,
+              32
+            ],
+            [
+              44,
+              128,
+              0
+            ],
+            [
+              52,
+              128,
+              32
+            ],
+            [
+              45,
+              160,
+              0
+            ],
+            [
+              53,
+              160,
+              32
+            ],
+            [
+              46,
+              192,
+              0
+            ],
+            [
+              54,
+              192,
+              32
+            ],
+            [
+              44,
+              256,
+              0
+            ],
+            [
+              52,
+              256,
+              32
+            ],
+            [
+              45,
+              288,
+              0
+            ],
+            [
+              53,
+              288,
+              32
+            ],
+            [
+              46,
+              320,
+              0
+            ],
+            [
+              54,
+              320,
+              32
+            ],
+            [
+              44,
+              0,
+              192
+            ],
+            [
+              52,
+              0,
+              224
+            ],
+            [
+              45,
+              32,
+              192
+            ],
+            [
+              53,
+              32,
+              224
+            ],
+            [
+              46,
+              64,
+              192
+            ],
+            [
+              54,
+              64,
+              224
+            ],
+            [
+              44,
+              256,
+              192
+            ],
+            [
+              52,
+              256,
+              224
+            ],
+            [
+              45,
+              288,
+              192
+            ],
+            [
+              53,
+              288,
+              224
+            ],
+            [
+              46,
+              320,
+              192
+            ],
+            [
+              54,
+              320,
+              224
+            ],
+            [
+              65,
+              0,
+              96
+            ],
+            [
+              65,
+              0,
+              160
+            ],
+            [
+              65,
+              32,
+              96
+            ],
+            [
+              65,
+              32,
+              160
+            ],
+            [
+              65,
+              64,
+              96
+            ],
+            [
+              65,
+              64,
+              160
+            ],
+            [
+              66,
+              96,
+              96
+            ],
+            [
+              66,
+              96,
+              160
+            ],
+            [
+              65,
+              128,
+              96
+            ],
+            [
+              40,
+              128,
+              160
+            ],
+            [
+              65,
+              160,
+              96
+            ],
+            [
+              65,
+              160,
+              160
+            ],
+            [
+              65,
+              192,
+              96
+            ],
+            [
+              65,
+              192,
+              160
+            ],
+            [
+              66,
+              224,
+              96
+            ],
+            [
+              66,
+              224,
+              160
+            ],
+            [
+              65,
+              256,
+              96
+            ],
+            [
+              65,
+              256,
+              160
+            ],
+            [
+              65,
+              288,
+              96
+            ],
+            [
+              65,
+              288,
+              160
+            ],
+            [
+              65,
+              320,
+              96
+            ],
+            [
+              65,
+              320,
+              160
+            ],
+            [
+              65,
+              352,
+              96
+            ],
+            [
+              65,
+              352,
+              160
+            ],
+            [
+              66,
+              96,
+              64
+            ],
+            [
+              66,
+              224,
+              64
+            ],
+            [
+              66,
+              96,
+              128
+            ],
+            [
+              66,
+              224,
+              128
+            ],
+            [
+              38,
+              160,
+              128
+            ],
+            [
+              76,
+              192,
+              128
+            ],
+            [
+              80,
+              64,
+              64
+            ],
+            [
+              80,
+              192,
+              64
+            ],
+            [
+              80,
+              320,
+              64
+            ],
+            [
+              39,
+              128,
+              128
+            ],
+            [
+              75,
+              32,
+              128
+            ],
+            [
+              75,
+              288,
+              128
+            ],
+            [
+              33,
+              0,
+              128
+            ],
+            [
+              33,
+              320,
+              128
+            ],
+            [
+              77,
+              128,
+              224
+            ],
+            [
+              77,
+              192,
+              224
+            ],
+            [
+              76,
+              160,
+              224
+            ]
+          ],
+          "views": [
+            {
+              "name": "Shop frontage",
+              "player": [
+                168,
+                72
+              ],
+              "facing": "up",
+              "camera": [
+                112,
+                24
+              ]
+            },
+            {
+              "name": "Market square",
+              "player": [
+                200,
+                104
+              ],
+              "facing": "down",
+              "camera": [
+                144,
+                80
+              ]
+            },
+            {
+              "name": "South street",
+              "player": [
+                296,
+                168
+              ],
+              "facing": "left",
+              "camera": [
+                240,
+                144
+              ]
+            }
+          ]
+        },
+        {
+          "slug": "cave",
+          "name": "Crystal cave · simple",
+          "reviewOnly": true,
+          "size": [
+            384,
+            256
+          ],
+          "artTileSize": 32,
+          "movementScale": 16,
+          "viewport": [
+            128,
+            64
+          ],
+          "playerSize": [
+            16,
+            16
+          ],
+          "tileIds": "1-64 original atlas; 65-80 expansion; 0 pure white ground",
+          "description": "Clear outlines, white highlights and sparse ground. Same authored layout and player positions as the dithered version.",
+          "placements": [
+            [
+              19,
+              0,
+              0
+            ],
+            [
+              20,
+              0,
+              224
+            ],
+            [
+              19,
+              32,
+              0
+            ],
+            [
+              20,
+              32,
+              224
+            ],
+            [
+              19,
+              64,
+              0
+            ],
+            [
+              20,
+              64,
+              224
+            ],
+            [
+              19,
+              96,
+              0
+            ],
+            [
+              20,
+              96,
+              224
+            ],
+            [
+              19,
+              128,
+              0
+            ],
+            [
+              20,
+              128,
+              224
+            ],
+            [
+              19,
+              160,
+              0
+            ],
+            [
+              20,
+              160,
+              224
+            ],
+            [
+              19,
+              192,
+              0
+            ],
+            [
+              20,
+              192,
+              224
+            ],
+            [
+              19,
+              224,
+              0
+            ],
+            [
+              20,
+              224,
+              224
+            ],
+            [
+              19,
+              256,
+              0
+            ],
+            [
+              20,
+              256,
+              224
+            ],
+            [
+              19,
+              288,
+              0
+            ],
+            [
+              20,
+              288,
+              224
+            ],
+            [
+              19,
+              320,
+              0
+            ],
+            [
+              20,
+              320,
+              224
+            ],
+            [
+              19,
+              352,
+              0
+            ],
+            [
+              20,
+              352,
+              224
+            ],
+            [
+              20,
+              0,
+              32
+            ],
+            [
+              20,
+              352,
+              32
+            ],
+            [
+              20,
+              0,
+              64
+            ],
+            [
+              20,
+              352,
+              64
+            ],
+            [
+              20,
+              0,
+              96
+            ],
+            [
+              20,
+              352,
+              96
+            ],
+            [
+              20,
+              0,
+              128
+            ],
+            [
+              20,
+              352,
+              128
+            ],
+            [
+              20,
+              0,
+              160
+            ],
+            [
+              20,
+              352,
+              160
+            ],
+            [
+              20,
+              0,
+              192
+            ],
+            [
+              20,
+              352,
+              192
+            ],
+            [
+              21,
+              160,
+              32
+            ],
+            [
+              18,
+              128,
+              32
+            ],
+            [
+              18,
+              192,
+              32
+            ],
+            [
+              20,
+              64,
+              64
+            ],
+            [
+              20,
+              64,
+              96
+            ],
+            [
+              20,
+              64,
+              160
+            ],
+            [
+              20,
+              96,
+              160
+            ],
+            [
+              20,
+              128,
+              160
+            ],
+            [
+              20,
+              256,
+              64
+            ],
+            [
+              20,
+              288,
+              64
+            ],
+            [
+              20,
+              288,
+              96
+            ],
+            [
+              20,
+              256,
+              160
+            ],
+            [
+              20,
+              288,
+              160
+            ],
+            [
+              22,
+              96,
+              64
+            ],
+            [
+              22,
+              224,
+              64
+            ],
+            [
+              22,
+              32,
+              192
+            ],
+            [
+              22,
+              320,
+              192
+            ],
+            [
+              24,
+              128,
+              96
+            ],
+            [
+              24,
+              224,
+              96
+            ],
+            [
+              24,
+              160,
+              192
+            ],
+            [
+              24,
+              192,
+              192
+            ],
+            [
+              24,
+              256,
+              192
+            ],
+            [
+              5,
+              160,
+              64
+            ],
+            [
+              5,
+              160,
+              96
+            ],
+            [
+              5,
+              192,
+              128
+            ],
+            [
+              5,
+              224,
+              128
+            ],
+            [
+              5,
+              256,
+              128
+            ],
+            [
+              5,
+              288,
+              128
+            ],
+            [
+              5,
+              160,
+              160
+            ],
+            [
+              5,
+              192,
+              160
+            ],
+            [
+              5,
+              32,
+              96
+            ],
+            [
+              5,
+              32,
+              128
+            ],
+            [
+              5,
+              32,
+              160
+            ],
+            [
+              18,
+              96,
+              192
+            ],
+            [
+              17,
+              320,
+              64
+            ],
+            [
+              79,
+              320,
+              128
+            ]
+          ],
+          "views": [
+            {
+              "name": "Cave mouth",
+              "player": [
+                168,
+                72
+              ],
+              "facing": "up",
+              "camera": [
+                112,
+                24
+              ]
+            },
+            {
+              "name": "Stone passage",
+              "player": [
+                184,
+                136
+              ],
+              "facing": "right",
+              "camera": [
+                128,
+                112
+              ]
+            },
+            {
+              "name": "Crystal chamber",
+              "player": [
+                200,
+                168
+              ],
+              "facing": "down",
+              "camera": [
+                144,
+                152
+              ]
+            }
+          ]
+        }
+      ],
+      "darkAssetRoot": "assets/world-environment-32-spike/simple/scenes"
+    },
+    {
       "slug": "dither32",
       "name": "32PX DITHER",
       "assetRoot": "assets/world-environment-32-spike/scenes",
@@ -11814,15 +13000,27 @@
     }
   ],
   "sheet": [
-    616,
+    752,
     328
   ],
   "cells": [
     {
+      "set": "simple32",
+      "scene": "town",
+      "source": "assets/world-environment-32-spike/simple/scenes/town/viewport-1.png",
+      "x": 72,
+      "y": 32,
+      "size": [
+        128,
+        64
+      ],
+      "sceneryInverted": false
+    },
+    {
       "set": "dither32",
       "scene": "town",
       "source": "assets/world-environment-32-spike/scenes/town/viewport-1.png",
-      "x": 72,
+      "x": 208,
       "y": 32,
       "size": [
         128,
@@ -11834,7 +13032,7 @@
       "set": "classic16",
       "scene": "town",
       "source": "assets/world-arranged-comparison/classic16/town/viewport-1.png",
-      "x": 208,
+      "x": 344,
       "y": 32,
       "size": [
         128,
@@ -11846,7 +13044,7 @@
       "set": "redraw-v4",
       "scene": "town",
       "source": "assets/world-arranged-comparison/redraw-v4/town/viewport-1.png",
-      "x": 344,
+      "x": 480,
       "y": 32,
       "size": [
         128,
@@ -11858,8 +13056,20 @@
       "set": "redraw-v5",
       "scene": "town",
       "source": "assets/world-arranged-comparison/redraw-v5/town/viewport-1.png",
-      "x": 480,
+      "x": 616,
       "y": 32,
+      "size": [
+        128,
+        64
+      ],
+      "sceneryInverted": false
+    },
+    {
+      "set": "simple32",
+      "scene": "city",
+      "source": "assets/world-environment-32-spike/simple/scenes/city/viewport-1.png",
+      "x": 72,
+      "y": 104,
       "size": [
         128,
         64
@@ -11870,7 +13080,7 @@
       "set": "dither32",
       "scene": "city",
       "source": "assets/world-environment-32-spike/scenes/city/viewport-1.png",
-      "x": 72,
+      "x": 208,
       "y": 104,
       "size": [
         128,
@@ -11882,7 +13092,7 @@
       "set": "classic16",
       "scene": "city",
       "source": "assets/world-arranged-comparison/classic16/city/viewport-1.png",
-      "x": 208,
+      "x": 344,
       "y": 104,
       "size": [
         128,
@@ -11894,7 +13104,7 @@
       "set": "redraw-v4",
       "scene": "city",
       "source": "assets/world-arranged-comparison/redraw-v4/city/viewport-1.png",
-      "x": 344,
+      "x": 480,
       "y": 104,
       "size": [
         128,
@@ -11906,8 +13116,20 @@
       "set": "redraw-v5",
       "scene": "city",
       "source": "assets/world-arranged-comparison/redraw-v5/city/viewport-1.png",
-      "x": 480,
+      "x": 616,
       "y": 104,
+      "size": [
+        128,
+        64
+      ],
+      "sceneryInverted": false
+    },
+    {
+      "set": "simple32",
+      "scene": "cave",
+      "source": "assets/world-environment-32-spike/simple/scenes/cave/viewport-1.png",
+      "x": 72,
+      "y": 176,
       "size": [
         128,
         64
@@ -11918,7 +13140,7 @@
       "set": "dither32",
       "scene": "cave",
       "source": "assets/world-environment-32-spike/scenes/cave/viewport-1.png",
-      "x": 72,
+      "x": 208,
       "y": 176,
       "size": [
         128,
@@ -11930,7 +13152,7 @@
       "set": "classic16",
       "scene": "cave",
       "source": "assets/world-arranged-comparison/classic16/cave/viewport-1.png",
-      "x": 208,
+      "x": 344,
       "y": 176,
       "size": [
         128,
@@ -11942,7 +13164,7 @@
       "set": "redraw-v4",
       "scene": "cave",
       "source": "assets/world-arranged-comparison/redraw-v4/cave/viewport-1.png",
-      "x": 344,
+      "x": 480,
       "y": 176,
       "size": [
         128,
@@ -11954,7 +13176,7 @@
       "set": "redraw-v5",
       "scene": "cave",
       "source": "assets/world-arranged-comparison/redraw-v5/cave/viewport-1.png",
-      "x": 480,
+      "x": 616,
       "y": 176,
       "size": [
         128,
@@ -11963,10 +13185,22 @@
       "sceneryInverted": false
     },
     {
+      "set": "simple32",
+      "scene": "cave-dark",
+      "source": "assets/world-environment-32-spike/simple/scenes/cave-dark/viewport-1.png",
+      "x": 72,
+      "y": 248,
+      "size": [
+        128,
+        64
+      ],
+      "sceneryInverted": true
+    },
+    {
       "set": "dither32",
       "scene": "cave-dark",
       "source": "assets/world-environment-32-spike/scenes/cave-dark/viewport-1.png",
-      "x": 72,
+      "x": 208,
       "y": 248,
       "size": [
         128,
@@ -11978,7 +13212,7 @@
       "set": "classic16",
       "scene": "cave-dark",
       "source": "assets/world-arranged-comparison/dark/classic16/cave-dark/viewport-1.png",
-      "x": 208,
+      "x": 344,
       "y": 248,
       "size": [
         128,
@@ -11990,7 +13224,7 @@
       "set": "redraw-v4",
       "scene": "cave-dark",
       "source": "assets/world-arranged-comparison/dark/redraw-v4/cave-dark/viewport-1.png",
-      "x": 344,
+      "x": 480,
       "y": 248,
       "size": [
         128,
@@ -12002,7 +13236,7 @@
       "set": "redraw-v5",
       "scene": "cave-dark",
       "source": "assets/world-arranged-comparison/dark/redraw-v5/cave-dark/viewport-1.png",
-      "x": 480,
+      "x": 616,
       "y": 248,
       "size": [
         128,
