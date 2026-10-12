@@ -7827,3 +7827,18 @@ Validation:
 Storage: sole lane `build/lure-demo`; selected shipping ELF retained at `reports/i8r-shipping-final.elf`, alongside art/gate/cleanup logs. Previewed and applied `make clean-build-artifacts BUILD_DIR=build/lure-demo CLEAN_APPLY=1`; removed positively identified230MiBowned device-test outputs after preserving logs. No pack stages remain. End:30GiBfree, totalbuild4.0GiB, lane60MiB, new urban3.4MiB and legacy redraw1.6MiB. No snapshots or duplicate build lanes.
 
 Wall time approximately15minutes: artwork/tools~6.5min, integrated gate7min33sec, report/cleanup~1min. No failing gates or deviations. Gameplay installation of a selected/remapped subset remains outside this review-art update.
+
+## CreatureGathererFX-box.9 — compact shipping battle results (2026-10-12)
+
+Current-main adoption of retained `1as.10`. Adapted the reviewed isolated patch to committed source instead of copying frozen files: preserved the restored voluntary switching, feedback dwell, packed-label and dialog-queue work, and the current generation/demo Makefile behavior. The prepared `1as.9` dialog-queue hunks were already committed as box.8 and were not reapplied. One deviation in the prepared contract-test expectations: current `Avr_fxtest_cpp_flags` expands empty profile filters, so the compact device-build checks assert `-DFX_READ_COUNTER` and `-DCGFX_BATTLE_NO_FACTS -DCGFX_BATTLE_COMPACT_RESULT"` separately instead of one exact spacing-sensitive string; the shipping/Mini expectations use the exact current flag list.
+
+Shipping-only `CGFX_BATTLE_COMPACT_RESULT` result shape is 7 bytes (kind, actor, index, flags, outcome, two pre-action HP); it requires no-facts, keeps the 28-byte detailed result for host/legacy builds, skips unread transition snapshots, and reads the actor's active id at feedback entry. Default shipping flags now include the compact option; `test_battle_compact` builds with `AVR_FXTEST_COMPACT_RESULT_BUILD_PROPERTIES`. Mechanics, RNG, PP, forced replacement and terminal priority are unchanged.
+
+Validation:
+- Exact shipping flags control (`-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X -DCGFX_SHIPPING_NO_USB -fno-inline-small-functions -DCGFX_BATTLE_NO_FACTS`): 25,670 B flash / 1,760 B static; candidate adds `-DCGFX_BATTLE_COMPACT_RESULT`: 25,218 / 1,760, **−452 B flash / 0 B static**; logs and both ELFs in `build/box-adoption-gate/reports/9/`.
+- `make fxtest-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_battle_compact.ino`: compact 19/0, `test_stack` 4/0, painted stack headroom 484 B.
+- `make final-gate BUILD_DIR=build/box-adoption-gate FINAL_GATE_LOG_DIR=build/box-adoption-gate/reports/9 ARDENS=…`: PASS; host 283,220 + world 258/0, VM 343/0, all 35 FX suites; `test_mode_state`, `test_battlesession`, `test_battlepresentation`, `test_save` and `test_stack` included. Shipping 25,218 B flash / 1,760 B static, 800 B RAM free, 4,478 B flash free.
+- `git apply --check` of the reconciled patch and `sh tools/tests/make-contract-test.sh` PASS (compact device and override properties checked); `make test-pack-parity` PASS, layout equivalence PASS; cart SHA-256 unchanged `c024abf4a7f47a665f724cfa83402f3e48b4c6b2184706bc57ba1ae8f84ba7f9`; `git diff --check` clean.
+- Reconcile sources: `/private/tmp/cgfx-box-adopt-9/{source,source-clean}` (base `1fea6c8`), `/private/tmp/cgfx-base-1fea6c8` clean archive, reviewed patch `/private/tmp/cgfx-1as-spike/artifacts/1as.10-independent.patch`. Abandoned `cgfx-pack.OBEsGp` stage from the interrupted October 11 attempt removed before this lane ran.
+
+Storage: no new build root; reused `build/box-adoption-gate` (one lane). Wall time approximately 30 minutes for reconcile, host/device checks, both size builds and the integrated gate. No failed gate; no push.

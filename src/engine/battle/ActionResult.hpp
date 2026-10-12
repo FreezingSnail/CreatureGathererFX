@@ -4,6 +4,10 @@
 #include "../../lib/Effect.hpp"
 #include "../../lib/Type.hpp"
 
+#if defined(CGFX_BATTLE_COMPACT_RESULT) && !defined(CGFX_BATTLE_NO_FACTS)
+#error "CGFX_BATTLE_COMPACT_RESULT requires CGFX_BATTLE_NO_FACTS"
+#endif
+
 namespace battle {
 
 enum class ResultKind : uint8_t {
@@ -31,11 +35,15 @@ struct ActionResult {
     uint8_t index;
     uint8_t flags;
     Outcome outcome;
+#ifdef CGFX_BATTLE_COMPACT_RESULT
+    uint8_t hpBefore[2];
+#else
     Modifier effectiveness;
     uint8_t speciesBefore[2], maxHpBefore[2];
     uint8_t hpBefore[2], hpAfter[2];
     uint8_t progressBefore, progressAfter;
     Consequence consequences[4];
+#endif
 };
 
 // Reset the caller-owned POD explicitly. An aggregate with nonzero default
@@ -46,6 +54,9 @@ inline void resetActionResult(ActionResult &result) {
     result.index = 255;
     result.flags = 0;
     result.outcome = Outcome::None;
+#ifdef CGFX_BATTLE_COMPACT_RESULT
+    result.hpBefore[0] = result.hpBefore[1] = 0;
+#else
     result.effectiveness = Modifier::Same;
     for (uint8_t side = 0; side < 2; ++side) {
         result.speciesBefore[side] = result.maxHpBefore[side] = 0;
@@ -59,9 +70,14 @@ inline void resetActionResult(ActionResult &result) {
         result.consequences[i].value = 0;
     }
 #endif
+#endif
 }
 
 static_assert(sizeof(Consequence) == 3, "semantic consequence contract");
+#ifdef CGFX_BATTLE_COMPACT_RESULT
+static_assert(sizeof(ActionResult) == 7, "compact shipping result contract");
+#else
 static_assert(sizeof(ActionResult) == 28, "one resident action result contract");
+#endif
 
 } // namespace battle

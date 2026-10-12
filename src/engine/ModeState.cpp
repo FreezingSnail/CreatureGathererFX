@@ -3,7 +3,7 @@
 #include "../lib/random.hpp"
 #include "world/World.hpp"
 
-#if defined(TEST) || defined(FX_READ_COUNTER)
+#if (defined(TEST) || defined(FX_READ_COUNTER)) && !defined(CGFX_BATTLE_COMPACT_RESULT)
 battle::BattlePresenter testBattlePresenter;
 #endif
 
@@ -21,7 +21,7 @@ void ModeState::enterBattle() {
     // fresh active member without reading or clearing inactive world data.
     ::new (static_cast<void *>(&battle)) battle::BattleMode();
     battle.setRng({battleRandomRoll});
-#if defined(TEST) || defined(FX_READ_COUNTER)
+#if (defined(TEST) || defined(FX_READ_COUNTER)) && !defined(CGFX_BATTLE_COMPACT_RESULT)
     testBattlePresenter.reset();
 #endif
 }

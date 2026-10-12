@@ -236,8 +236,8 @@ uint8_t fillTrainer(BattleState &state, const OpponentSeed &seed, uint8_t count)
     return reads;
 }
 
-// Switch results carry a complete pre/post view so presentation and the next
-// action observe the unchanged side as well as the incoming combatant.
+// Detailed host/legacy results retain the complete transition view.
+#ifndef CGFX_BATTLE_COMPACT_RESULT
 void captureTransitionBefore(const BattleState &state, ActionResult &out)
 {
     for (uint8_t side = 0; side < 2; ++side) {
@@ -257,6 +257,7 @@ void captureTransitionAfter(const BattleState &state, ActionResult &out)
     }
     out.progressAfter = state.gather.progress;
 }
+#endif
 
 bool loadIncoming(const BattleState &state, Side side, uint8_t originalSlot,
                   const BenchSlot &slot, Combatant &incoming,
@@ -395,11 +396,12 @@ bool applySwitch(BattleState &state, Side side, uint8_t originalSlot,
     out.actor = side;
     out.flags = forced ? FORCED_SWITCH : 0;
 
-    // Capture RAM state before validating. Refused requests still need a
-    // presentable result, while validation must remain entirely pre-FX.
+#ifndef CGFX_BATTLE_COMPACT_RESULT
+    // Refused detailed results retain their pre/post transition snapshots.
     if (sideIndex < 2) {
         captureTransitionBefore(state, out);
     }
+#endif
 #ifndef __AVR__
     if (sideIndex >= 2 || !validSwitchRequest(state, side, originalSlot)) {
         out.flags |= REFUSED;
@@ -413,7 +415,9 @@ bool applySwitch(BattleState &state, Side side, uint8_t originalSlot,
     const BenchSlot incomingSlot = state.bench[sideIndex][targetBenchSlot];
     if (incomingSlot.hp == 0 || incomingSlot.id >= SPECIES_COUNT) {
         out.flags |= REFUSED;
+#ifndef CGFX_BATTLE_COMPACT_RESULT
         captureTransitionAfter(state, out);
+#endif
         return false;
     }
 
@@ -428,7 +432,9 @@ bool applySwitch(BattleState &state, Side side, uint8_t originalSlot,
     uint8_t reads = 0;
     if (!loadIncoming(state, side, originalSlot, incomingSlot, incoming, reads)) {
         out.flags |= REFUSED;
+#ifndef CGFX_BATTLE_COMPACT_RESULT
         captureTransitionAfter(state, out);
+#endif
         return false;
     }
     FxReadCounter::transitionExact(reads);
@@ -455,7 +461,9 @@ bool applySwitch(BattleState &state, Side side, uint8_t originalSlot,
         state.bench[sideIndex][usedBenchSlots] = {};
 
     out.index = incoming.id;
+#ifndef CGFX_BATTLE_COMPACT_RESULT
     out.hpAfter[sideIndex] = state.active[sideIndex].hp;
+#endif
     return true;
 }
 
