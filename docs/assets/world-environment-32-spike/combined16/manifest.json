@@ -1,6 +1,6 @@
 {
   "reviewOnly": true,
-  "baseSource": "docs/assets/world-tiles/tiles-bw-redraw-v4-native.png",
+  "baseSource": "docs/assets/world-environment-32-spike/simple/legacy16/atlas16.png",
   "baseSize": [
     256,
     768
@@ -12,14 +12,16 @@
   ],
   "sheet": [
     256,
-    1408
+    1664
   ],
   "columns": 16,
-  "tileCount": 1408,
-  "appended32pxTiles": 160,
-  "appended16pxCells": 640,
+  "tileCount": 1664,
+  "appended32pxTiles": 224,
+  "appended16pxCells": 896,
   "ids": "One-based native tile IDs. Quadrant order: top-left,top-right,bottom-left,bottom-right.",
-  "packing": "Original16px sheet followed by unscaled32px assets split into four16px cells.",
+  "artDirection": "Approved simple nondithered environments; legacy v4 redrawn to match.",
+  "legacyReference": "docs/assets/world-tiles/tiles-bw-redraw-v4-native.png",
+  "packing": "Redrawn16px sheet followed by unscaled32px assets split into four16px cells.",
   "sections": [
     {
       "name": "world",
@@ -48,6 +50,13 @@
       "firstId": 1345,
       "lastId": 1408,
       "atlasY": 1344
+    },
+    {
+      "name": "urban",
+      "source": "docs/assets/world-environment-32-spike/simple/urban/atlas32.png",
+      "firstId": 1409,
+      "lastId": 1664,
+      "atlasY": 1408
     }
   ],
   "tiles": [
@@ -3249,6 +3258,1286 @@
         1392,
         1407,
         1408
+      ]
+    },
+    {
+      "source": "docs/assets/world-environment-32-spike/simple/urban/atlas32.png",
+      "group": "urban",
+      "sourceTile": 1,
+      "sceneTileId": 161,
+      "sourcePixel": [
+        0,
+        0
+      ],
+      "atlasPixel": [
+        0,
+        1408
+      ],
+      "quadrants": [
+        1409,
+        1410,
+        1425,
+        1426
+      ]
+    },
+    {
+      "source": "docs/assets/world-environment-32-spike/simple/urban/atlas32.png",
+      "group": "urban",
+      "sourceTile": 2,
+      "sceneTileId": 162,
+      "sourcePixel": [
+        32,
+        0
+      ],
+      "atlasPixel": [
+        32,
+        1408
+      ],
+      "quadrants": [
+        1411,
+        1412,
+        1427,
+        1428
+      ]
+    },
+    {
+      "source": "docs/assets/world-environment-32-spike/simple/urban/atlas32.png",
+      "group": "urban",
+      "sourceTile": 3,
+      "sceneTileId": 163,
+      "sourcePixel": [
+        64,
+        0
+      ],
+      "atlasPixel": [
+        64,
+        1408
+      ],
+      "quadrants": [
+        1413,
+        1414,
+        1429,
+        1430
+      ]
+    },
+    {
+      "source": "docs/assets/world-environment-32-spike/simple/urban/atlas32.png",
+      "group": "urban",
+      "sourceTile": 4,
+      "sceneTileId": 164,
+      "sourcePixel": [
+        96,
+        0
+      ],
+      "atlasPixel": [
+        96,
+        1408
+      ],
+      "quadrants": [
+        1415,
+        1416,
+        1431,
+        1432
+      ]
+    },
+    {
+      "source": "docs/assets/world-environment-32-spike/simple/urban/atlas32.png",
+      "group": "urban",
+      "sourceTile": 5,
+      "sceneTileId": 165,
+      "sourcePixel": [
+        128,
+        0
+      ],
+      "atlasPixel": [
+        128,
+        1408
+      ],
+      "quadrants": [
+        1417,
+        1418,
+        1433,
+        1434
+      ]
+    },
+    {
+      "source": "docs/assets/world-environment-32-spike/simple/urban/atlas32.png",
+      "group": "urban",
+      "sourceTile": 6,
+      "sceneTileId": 166,
+      "sourcePixel": [
+        160,
+        0
+      ],
+      "atlasPixel": [
+        160,
+        1408
+      ],
+      "quadrants": [
+        1419,
+        1420,
+        1435,
+        1436
+      ]
+    },
+    {
+      "source": "docs/assets/world-environment-32-spike/simple/urban/atlas32.png",
+      "group": "urban",
+      "sourceTile": 7,
+      "sceneTileId": 167,
+      "sourcePixel": [
+        192,
+        0
+      ],
+      "atlasPixel": [
+        192,
+        1408
+      ],
+      "quadrants": [
+        1421,
+        1422,
+        1437,
+        1438
+      ]
+    },
+    {
+      "source": "docs/assets/world-environment-32-spike/simple/urban/atlas32.png",
+      "group": "urban",
+      "sourceTile": 8,
+      "sceneTileId": 168,
+      "sourcePixel": [
+        224,
+        0
+      ],
+      "atlasPixel": [
+        224,
+        1408
+      ],
+      "quadrants": [
+        1423,
+        1424,
+        1439,
+        1440
+      ]
+    },
+    {
+      "source": "docs/assets/world-environment-32-spike/simple/urban/atlas32.png",
+      "group": "urban",
+      "sourceTile": 9,
+      "sceneTileId": 169,
+      "sourcePixel": [
+        0,
+        32
+      ],
+      "atlasPixel": [
+        0,
+        1440
+      ],
+      "quadrants": [
+        1441,
+        1442,
+        1457,
+        1458
+      ]
+    },
+    {
+      "source": "docs/assets/world-environment-32-spike/simple/urban/atlas32.png",
+      "group": "urban",
+      "sourceTile": 10,
+      "sceneTileId": 170,
+      "sourcePixel": [
+        32,
+        32
+      ],
+      "atlasPixel": [
+        32,
+        1440
+      ],
+      "quadrants": [
+        1443,
+        1444,
+        1459,
+        1460
+      ]
+    },
+    {
+      "source": "docs/assets/world-environment-32-spike/simple/urban/atlas32.png",
+      "group": "urban",
+      "sourceTile": 11,
+      "sceneTileId": 171,
+      "sourcePixel": [
+        64,
+        32
+      ],
+      "atlasPixel": [
+        64,
+        1440
+      ],
+      "quadrants": [
+        1445,
+        1446,
+        1461,
+        1462
+      ]
+    },
+    {
+      "source": "docs/assets/world-environment-32-spike/simple/urban/atlas32.png",
+      "group": "urban",
+      "sourceTile": 12,
+      "sceneTileId": 172,
+      "sourcePixel": [
+        96,
+        32
+      ],
+      "atlasPixel": [
+        96,
+        1440
+      ],
+      "quadrants": [
+        1447,
+        1448,
+        1463,
+        1464
+      ]
+    },
+    {
+      "source": "docs/assets/world-environment-32-spike/simple/urban/atlas32.png",
+      "group": "urban",
+      "sourceTile": 13,
+      "sceneTileId": 173,
+      "sourcePixel": [
+        128,
+        32
+      ],
+      "atlasPixel": [
+        128,
+        1440
+      ],
+      "quadrants": [
+        1449,
+        1450,
+        1465,
+        1466
+      ]
+    },
+    {
+      "source": "docs/assets/world-environment-32-spike/simple/urban/atlas32.png",
+      "group": "urban",
+      "sourceTile": 14,
+      "sceneTileId": 174,
+      "sourcePixel": [
+        160,
+        32
+      ],
+      "atlasPixel": [
+        160,
+        1440
+      ],
+      "quadrants": [
+        1451,
+        1452,
+        1467,
+        1468
+      ]
+    },
+    {
+      "source": "docs/assets/world-environment-32-spike/simple/urban/atlas32.png",
+      "group": "urban",
+      "sourceTile": 15,
+      "sceneTileId": 175,
+      "sourcePixel": [
+        192,
+        32
+      ],
+      "atlasPixel": [
+        192,
+        1440
+      ],
+      "quadrants": [
+        1453,
+        1454,
+        1469,
+        1470
+      ]
+    },
+    {
+      "source": "docs/assets/world-environment-32-spike/simple/urban/atlas32.png",
+      "group": "urban",
+      "sourceTile": 16,
+      "sceneTileId": 176,
+      "sourcePixel": [
+        224,
+        32
+      ],
+      "atlasPixel": [
+        224,
+        1440
+      ],
+      "quadrants": [
+        1455,
+        1456,
+        1471,
+        1472
+      ]
+    },
+    {
+      "source": "docs/assets/world-environment-32-spike/simple/urban/atlas32.png",
+      "group": "urban",
+      "sourceTile": 17,
+      "sceneTileId": 177,
+      "sourcePixel": [
+        0,
+        64
+      ],
+      "atlasPixel": [
+        0,
+        1472
+      ],
+      "quadrants": [
+        1473,
+        1474,
+        1489,
+        1490
+      ]
+    },
+    {
+      "source": "docs/assets/world-environment-32-spike/simple/urban/atlas32.png",
+      "group": "urban",
+      "sourceTile": 18,
+      "sceneTileId": 178,
+      "sourcePixel": [
+        32,
+        64
+      ],
+      "atlasPixel": [
+        32,
+        1472
+      ],
+      "quadrants": [
+        1475,
+        1476,
+        1491,
+        1492
+      ]
+    },
+    {
+      "source": "docs/assets/world-environment-32-spike/simple/urban/atlas32.png",
+      "group": "urban",
+      "sourceTile": 19,
+      "sceneTileId": 179,
+      "sourcePixel": [
+        64,
+        64
+      ],
+      "atlasPixel": [
+        64,
+        1472
+      ],
+      "quadrants": [
+        1477,
+        1478,
+        1493,
+        1494
+      ]
+    },
+    {
+      "source": "docs/assets/world-environment-32-spike/simple/urban/atlas32.png",
+      "group": "urban",
+      "sourceTile": 20,
+      "sceneTileId": 180,
+      "sourcePixel": [
+        96,
+        64
+      ],
+      "atlasPixel": [
+        96,
+        1472
+      ],
+      "quadrants": [
+        1479,
+        1480,
+        1495,
+        1496
+      ]
+    },
+    {
+      "source": "docs/assets/world-environment-32-spike/simple/urban/atlas32.png",
+      "group": "urban",
+      "sourceTile": 21,
+      "sceneTileId": 181,
+      "sourcePixel": [
+        128,
+        64
+      ],
+      "atlasPixel": [
+        128,
+        1472
+      ],
+      "quadrants": [
+        1481,
+        1482,
+        1497,
+        1498
+      ]
+    },
+    {
+      "source": "docs/assets/world-environment-32-spike/simple/urban/atlas32.png",
+      "group": "urban",
+      "sourceTile": 22,
+      "sceneTileId": 182,
+      "sourcePixel": [
+        160,
+        64
+      ],
+      "atlasPixel": [
+        160,
+        1472
+      ],
+      "quadrants": [
+        1483,
+        1484,
+        1499,
+        1500
+      ]
+    },
+    {
+      "source": "docs/assets/world-environment-32-spike/simple/urban/atlas32.png",
+      "group": "urban",
+      "sourceTile": 23,
+      "sceneTileId": 183,
+      "sourcePixel": [
+        192,
+        64
+      ],
+      "atlasPixel": [
+        192,
+        1472
+      ],
+      "quadrants": [
+        1485,
+        1486,
+        1501,
+        1502
+      ]
+    },
+    {
+      "source": "docs/assets/world-environment-32-spike/simple/urban/atlas32.png",
+      "group": "urban",
+      "sourceTile": 24,
+      "sceneTileId": 184,
+      "sourcePixel": [
+        224,
+        64
+      ],
+      "atlasPixel": [
+        224,
+        1472
+      ],
+      "quadrants": [
+        1487,
+        1488,
+        1503,
+        1504
+      ]
+    },
+    {
+      "source": "docs/assets/world-environment-32-spike/simple/urban/atlas32.png",
+      "group": "urban",
+      "sourceTile": 25,
+      "sceneTileId": 185,
+      "sourcePixel": [
+        0,
+        96
+      ],
+      "atlasPixel": [
+        0,
+        1504
+      ],
+      "quadrants": [
+        1505,
+        1506,
+        1521,
+        1522
+      ]
+    },
+    {
+      "source": "docs/assets/world-environment-32-spike/simple/urban/atlas32.png",
+      "group": "urban",
+      "sourceTile": 26,
+      "sceneTileId": 186,
+      "sourcePixel": [
+        32,
+        96
+      ],
+      "atlasPixel": [
+        32,
+        1504
+      ],
+      "quadrants": [
+        1507,
+        1508,
+        1523,
+        1524
+      ]
+    },
+    {
+      "source": "docs/assets/world-environment-32-spike/simple/urban/atlas32.png",
+      "group": "urban",
+      "sourceTile": 27,
+      "sceneTileId": 187,
+      "sourcePixel": [
+        64,
+        96
+      ],
+      "atlasPixel": [
+        64,
+        1504
+      ],
+      "quadrants": [
+        1509,
+        1510,
+        1525,
+        1526
+      ]
+    },
+    {
+      "source": "docs/assets/world-environment-32-spike/simple/urban/atlas32.png",
+      "group": "urban",
+      "sourceTile": 28,
+      "sceneTileId": 188,
+      "sourcePixel": [
+        96,
+        96
+      ],
+      "atlasPixel": [
+        96,
+        1504
+      ],
+      "quadrants": [
+        1511,
+        1512,
+        1527,
+        1528
+      ]
+    },
+    {
+      "source": "docs/assets/world-environment-32-spike/simple/urban/atlas32.png",
+      "group": "urban",
+      "sourceTile": 29,
+      "sceneTileId": 189,
+      "sourcePixel": [
+        128,
+        96
+      ],
+      "atlasPixel": [
+        128,
+        1504
+      ],
+      "quadrants": [
+        1513,
+        1514,
+        1529,
+        1530
+      ]
+    },
+    {
+      "source": "docs/assets/world-environment-32-spike/simple/urban/atlas32.png",
+      "group": "urban",
+      "sourceTile": 30,
+      "sceneTileId": 190,
+      "sourcePixel": [
+        160,
+        96
+      ],
+      "atlasPixel": [
+        160,
+        1504
+      ],
+      "quadrants": [
+        1515,
+        1516,
+        1531,
+        1532
+      ]
+    },
+    {
+      "source": "docs/assets/world-environment-32-spike/simple/urban/atlas32.png",
+      "group": "urban",
+      "sourceTile": 31,
+      "sceneTileId": 191,
+      "sourcePixel": [
+        192,
+        96
+      ],
+      "atlasPixel": [
+        192,
+        1504
+      ],
+      "quadrants": [
+        1517,
+        1518,
+        1533,
+        1534
+      ]
+    },
+    {
+      "source": "docs/assets/world-environment-32-spike/simple/urban/atlas32.png",
+      "group": "urban",
+      "sourceTile": 32,
+      "sceneTileId": 192,
+      "sourcePixel": [
+        224,
+        96
+      ],
+      "atlasPixel": [
+        224,
+        1504
+      ],
+      "quadrants": [
+        1519,
+        1520,
+        1535,
+        1536
+      ]
+    },
+    {
+      "source": "docs/assets/world-environment-32-spike/simple/urban/atlas32.png",
+      "group": "urban",
+      "sourceTile": 33,
+      "sceneTileId": 193,
+      "sourcePixel": [
+        0,
+        128
+      ],
+      "atlasPixel": [
+        0,
+        1536
+      ],
+      "quadrants": [
+        1537,
+        1538,
+        1553,
+        1554
+      ]
+    },
+    {
+      "source": "docs/assets/world-environment-32-spike/simple/urban/atlas32.png",
+      "group": "urban",
+      "sourceTile": 34,
+      "sceneTileId": 194,
+      "sourcePixel": [
+        32,
+        128
+      ],
+      "atlasPixel": [
+        32,
+        1536
+      ],
+      "quadrants": [
+        1539,
+        1540,
+        1555,
+        1556
+      ]
+    },
+    {
+      "source": "docs/assets/world-environment-32-spike/simple/urban/atlas32.png",
+      "group": "urban",
+      "sourceTile": 35,
+      "sceneTileId": 195,
+      "sourcePixel": [
+        64,
+        128
+      ],
+      "atlasPixel": [
+        64,
+        1536
+      ],
+      "quadrants": [
+        1541,
+        1542,
+        1557,
+        1558
+      ]
+    },
+    {
+      "source": "docs/assets/world-environment-32-spike/simple/urban/atlas32.png",
+      "group": "urban",
+      "sourceTile": 36,
+      "sceneTileId": 196,
+      "sourcePixel": [
+        96,
+        128
+      ],
+      "atlasPixel": [
+        96,
+        1536
+      ],
+      "quadrants": [
+        1543,
+        1544,
+        1559,
+        1560
+      ]
+    },
+    {
+      "source": "docs/assets/world-environment-32-spike/simple/urban/atlas32.png",
+      "group": "urban",
+      "sourceTile": 37,
+      "sceneTileId": 197,
+      "sourcePixel": [
+        128,
+        128
+      ],
+      "atlasPixel": [
+        128,
+        1536
+      ],
+      "quadrants": [
+        1545,
+        1546,
+        1561,
+        1562
+      ]
+    },
+    {
+      "source": "docs/assets/world-environment-32-spike/simple/urban/atlas32.png",
+      "group": "urban",
+      "sourceTile": 38,
+      "sceneTileId": 198,
+      "sourcePixel": [
+        160,
+        128
+      ],
+      "atlasPixel": [
+        160,
+        1536
+      ],
+      "quadrants": [
+        1547,
+        1548,
+        1563,
+        1564
+      ]
+    },
+    {
+      "source": "docs/assets/world-environment-32-spike/simple/urban/atlas32.png",
+      "group": "urban",
+      "sourceTile": 39,
+      "sceneTileId": 199,
+      "sourcePixel": [
+        192,
+        128
+      ],
+      "atlasPixel": [
+        192,
+        1536
+      ],
+      "quadrants": [
+        1549,
+        1550,
+        1565,
+        1566
+      ]
+    },
+    {
+      "source": "docs/assets/world-environment-32-spike/simple/urban/atlas32.png",
+      "group": "urban",
+      "sourceTile": 40,
+      "sceneTileId": 200,
+      "sourcePixel": [
+        224,
+        128
+      ],
+      "atlasPixel": [
+        224,
+        1536
+      ],
+      "quadrants": [
+        1551,
+        1552,
+        1567,
+        1568
+      ]
+    },
+    {
+      "source": "docs/assets/world-environment-32-spike/simple/urban/atlas32.png",
+      "group": "urban",
+      "sourceTile": 41,
+      "sceneTileId": 201,
+      "sourcePixel": [
+        0,
+        160
+      ],
+      "atlasPixel": [
+        0,
+        1568
+      ],
+      "quadrants": [
+        1569,
+        1570,
+        1585,
+        1586
+      ]
+    },
+    {
+      "source": "docs/assets/world-environment-32-spike/simple/urban/atlas32.png",
+      "group": "urban",
+      "sourceTile": 42,
+      "sceneTileId": 202,
+      "sourcePixel": [
+        32,
+        160
+      ],
+      "atlasPixel": [
+        32,
+        1568
+      ],
+      "quadrants": [
+        1571,
+        1572,
+        1587,
+        1588
+      ]
+    },
+    {
+      "source": "docs/assets/world-environment-32-spike/simple/urban/atlas32.png",
+      "group": "urban",
+      "sourceTile": 43,
+      "sceneTileId": 203,
+      "sourcePixel": [
+        64,
+        160
+      ],
+      "atlasPixel": [
+        64,
+        1568
+      ],
+      "quadrants": [
+        1573,
+        1574,
+        1589,
+        1590
+      ]
+    },
+    {
+      "source": "docs/assets/world-environment-32-spike/simple/urban/atlas32.png",
+      "group": "urban",
+      "sourceTile": 44,
+      "sceneTileId": 204,
+      "sourcePixel": [
+        96,
+        160
+      ],
+      "atlasPixel": [
+        96,
+        1568
+      ],
+      "quadrants": [
+        1575,
+        1576,
+        1591,
+        1592
+      ]
+    },
+    {
+      "source": "docs/assets/world-environment-32-spike/simple/urban/atlas32.png",
+      "group": "urban",
+      "sourceTile": 45,
+      "sceneTileId": 205,
+      "sourcePixel": [
+        128,
+        160
+      ],
+      "atlasPixel": [
+        128,
+        1568
+      ],
+      "quadrants": [
+        1577,
+        1578,
+        1593,
+        1594
+      ]
+    },
+    {
+      "source": "docs/assets/world-environment-32-spike/simple/urban/atlas32.png",
+      "group": "urban",
+      "sourceTile": 46,
+      "sceneTileId": 206,
+      "sourcePixel": [
+        160,
+        160
+      ],
+      "atlasPixel": [
+        160,
+        1568
+      ],
+      "quadrants": [
+        1579,
+        1580,
+        1595,
+        1596
+      ]
+    },
+    {
+      "source": "docs/assets/world-environment-32-spike/simple/urban/atlas32.png",
+      "group": "urban",
+      "sourceTile": 47,
+      "sceneTileId": 207,
+      "sourcePixel": [
+        192,
+        160
+      ],
+      "atlasPixel": [
+        192,
+        1568
+      ],
+      "quadrants": [
+        1581,
+        1582,
+        1597,
+        1598
+      ]
+    },
+    {
+      "source": "docs/assets/world-environment-32-spike/simple/urban/atlas32.png",
+      "group": "urban",
+      "sourceTile": 48,
+      "sceneTileId": 208,
+      "sourcePixel": [
+        224,
+        160
+      ],
+      "atlasPixel": [
+        224,
+        1568
+      ],
+      "quadrants": [
+        1583,
+        1584,
+        1599,
+        1600
+      ]
+    },
+    {
+      "source": "docs/assets/world-environment-32-spike/simple/urban/atlas32.png",
+      "group": "urban",
+      "sourceTile": 49,
+      "sceneTileId": 209,
+      "sourcePixel": [
+        0,
+        192
+      ],
+      "atlasPixel": [
+        0,
+        1600
+      ],
+      "quadrants": [
+        1601,
+        1602,
+        1617,
+        1618
+      ]
+    },
+    {
+      "source": "docs/assets/world-environment-32-spike/simple/urban/atlas32.png",
+      "group": "urban",
+      "sourceTile": 50,
+      "sceneTileId": 210,
+      "sourcePixel": [
+        32,
+        192
+      ],
+      "atlasPixel": [
+        32,
+        1600
+      ],
+      "quadrants": [
+        1603,
+        1604,
+        1619,
+        1620
+      ]
+    },
+    {
+      "source": "docs/assets/world-environment-32-spike/simple/urban/atlas32.png",
+      "group": "urban",
+      "sourceTile": 51,
+      "sceneTileId": 211,
+      "sourcePixel": [
+        64,
+        192
+      ],
+      "atlasPixel": [
+        64,
+        1600
+      ],
+      "quadrants": [
+        1605,
+        1606,
+        1621,
+        1622
+      ]
+    },
+    {
+      "source": "docs/assets/world-environment-32-spike/simple/urban/atlas32.png",
+      "group": "urban",
+      "sourceTile": 52,
+      "sceneTileId": 212,
+      "sourcePixel": [
+        96,
+        192
+      ],
+      "atlasPixel": [
+        96,
+        1600
+      ],
+      "quadrants": [
+        1607,
+        1608,
+        1623,
+        1624
+      ]
+    },
+    {
+      "source": "docs/assets/world-environment-32-spike/simple/urban/atlas32.png",
+      "group": "urban",
+      "sourceTile": 53,
+      "sceneTileId": 213,
+      "sourcePixel": [
+        128,
+        192
+      ],
+      "atlasPixel": [
+        128,
+        1600
+      ],
+      "quadrants": [
+        1609,
+        1610,
+        1625,
+        1626
+      ]
+    },
+    {
+      "source": "docs/assets/world-environment-32-spike/simple/urban/atlas32.png",
+      "group": "urban",
+      "sourceTile": 54,
+      "sceneTileId": 214,
+      "sourcePixel": [
+        160,
+        192
+      ],
+      "atlasPixel": [
+        160,
+        1600
+      ],
+      "quadrants": [
+        1611,
+        1612,
+        1627,
+        1628
+      ]
+    },
+    {
+      "source": "docs/assets/world-environment-32-spike/simple/urban/atlas32.png",
+      "group": "urban",
+      "sourceTile": 55,
+      "sceneTileId": 215,
+      "sourcePixel": [
+        192,
+        192
+      ],
+      "atlasPixel": [
+        192,
+        1600
+      ],
+      "quadrants": [
+        1613,
+        1614,
+        1629,
+        1630
+      ]
+    },
+    {
+      "source": "docs/assets/world-environment-32-spike/simple/urban/atlas32.png",
+      "group": "urban",
+      "sourceTile": 56,
+      "sceneTileId": 216,
+      "sourcePixel": [
+        224,
+        192
+      ],
+      "atlasPixel": [
+        224,
+        1600
+      ],
+      "quadrants": [
+        1615,
+        1616,
+        1631,
+        1632
+      ]
+    },
+    {
+      "source": "docs/assets/world-environment-32-spike/simple/urban/atlas32.png",
+      "group": "urban",
+      "sourceTile": 57,
+      "sceneTileId": 217,
+      "sourcePixel": [
+        0,
+        224
+      ],
+      "atlasPixel": [
+        0,
+        1632
+      ],
+      "quadrants": [
+        1633,
+        1634,
+        1649,
+        1650
+      ]
+    },
+    {
+      "source": "docs/assets/world-environment-32-spike/simple/urban/atlas32.png",
+      "group": "urban",
+      "sourceTile": 58,
+      "sceneTileId": 218,
+      "sourcePixel": [
+        32,
+        224
+      ],
+      "atlasPixel": [
+        32,
+        1632
+      ],
+      "quadrants": [
+        1635,
+        1636,
+        1651,
+        1652
+      ]
+    },
+    {
+      "source": "docs/assets/world-environment-32-spike/simple/urban/atlas32.png",
+      "group": "urban",
+      "sourceTile": 59,
+      "sceneTileId": 219,
+      "sourcePixel": [
+        64,
+        224
+      ],
+      "atlasPixel": [
+        64,
+        1632
+      ],
+      "quadrants": [
+        1637,
+        1638,
+        1653,
+        1654
+      ]
+    },
+    {
+      "source": "docs/assets/world-environment-32-spike/simple/urban/atlas32.png",
+      "group": "urban",
+      "sourceTile": 60,
+      "sceneTileId": 220,
+      "sourcePixel": [
+        96,
+        224
+      ],
+      "atlasPixel": [
+        96,
+        1632
+      ],
+      "quadrants": [
+        1639,
+        1640,
+        1655,
+        1656
+      ]
+    },
+    {
+      "source": "docs/assets/world-environment-32-spike/simple/urban/atlas32.png",
+      "group": "urban",
+      "sourceTile": 61,
+      "sceneTileId": 221,
+      "sourcePixel": [
+        128,
+        224
+      ],
+      "atlasPixel": [
+        128,
+        1632
+      ],
+      "quadrants": [
+        1641,
+        1642,
+        1657,
+        1658
+      ]
+    },
+    {
+      "source": "docs/assets/world-environment-32-spike/simple/urban/atlas32.png",
+      "group": "urban",
+      "sourceTile": 62,
+      "sceneTileId": 222,
+      "sourcePixel": [
+        160,
+        224
+      ],
+      "atlasPixel": [
+        160,
+        1632
+      ],
+      "quadrants": [
+        1643,
+        1644,
+        1659,
+        1660
+      ]
+    },
+    {
+      "source": "docs/assets/world-environment-32-spike/simple/urban/atlas32.png",
+      "group": "urban",
+      "sourceTile": 63,
+      "sceneTileId": 223,
+      "sourcePixel": [
+        192,
+        224
+      ],
+      "atlasPixel": [
+        192,
+        1632
+      ],
+      "quadrants": [
+        1645,
+        1646,
+        1661,
+        1662
+      ]
+    },
+    {
+      "source": "docs/assets/world-environment-32-spike/simple/urban/atlas32.png",
+      "group": "urban",
+      "sourceTile": 64,
+      "sceneTileId": 224,
+      "sourcePixel": [
+        224,
+        224
+      ],
+      "atlasPixel": [
+        224,
+        1632
+      ],
+      "quadrants": [
+        1647,
+        1648,
+        1663,
+        1664
       ]
     }
   ]

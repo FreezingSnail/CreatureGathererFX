@@ -7810,3 +7810,20 @@ Validation:
 - make test-pack-parity BUILD_DIR=build/lure-demo —PASS. Cart SHA256 unchanged:c024abf4a7f47a665f724cfa83402f3e48b4c6b2184706bc57ba1ae8f84ba7f9. No unexpected generated changes.
 
 Storage:31GiB free,total build4.0GiB,single lane build/lure-demo60MiB; combined outputs276KiB. Previewed/applied clean-build-artifacts and removed229MiB of owned disposable fxtest stages after preserving logs and efg-shipping-final.elf. Retained efg art tests,full gate and cleanup evidence. No source snapshots or duplicate build trees. Wall time approximately17minutes(16:13–16:30UTC), including gate and owner selection. No failed gate; no push.
+
+## CreatureGathererFX-i8r — unified simple environments and urban set (2026-10-12)
+
+Owner approved the simple nondithered scenes as the direction for future environments; recorded in `bd remember --key environment-art-direction`. Replaced the combined atlas's old v4 portion with a matching imagegen redraw (`simple/legacy16/atlas16.png`); retained the original v4 reference unchanged. Added64urban32px assets: paving, streets/crossings, eight64px buildings, city furniture and greenery. The combined catalogue is now256×1664 /1664native16px cells. Review layout is retained; artwork is new, so this is not an installed-game ABI replacement. Existing10-bit gameplay IDs and packed assets remain unchanged.
+
+Built-in imagegen used the approved simple environment sheet as the style reference. Exact prompts, raw concepts and native binary exports are retained under `docs/assets/world-environment-32-spike/simple/{legacy16,urban}`. A targeted urban edit removed generated cell-divider lines. Market Street and Residential Block use connected pavement/street lanes, original16px players, six actual-size128×64 views, and Tiled exports referencing the combined atlas. All appear on the existing gallery page. Gallery cards, dimensions, sheet selector and documentation updated.
+
+Validation:
+- `node tools/author-simple-urban.mjs`; `node tools/join-simple-environments16.mjs`; `node tools/arrange-simple-urban.mjs`: PASS.
+- `node --test tools/tests/join-simple-environments16_test.mjs tools/tests/simple-urban_test.mjs tools/tests/simple-environments_test.mjs tools/tests/environment32-viewer_test.mjs tools/tests/environment32-scene_test.mjs tools/tests/habitat-terrain_test.mjs tools/tests/lure-world-spike_test.mjs tools/tests/world-arranged-comparison_test.mjs`:64/64pass,554ms; `build/lure-demo/reports/i8r-art-tests.log`.
+- `node --check` for all three author/join/arrange tools and the shared viewer: PASS.498local gallery references resolve. `git diff --check` and staged check: PASS.
+- `make final-gate BUILD_DIR=build/lure-demo FINAL_GATE_LOG_DIR=build/lure-demo/reports/i8r-final-gate ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens`: PASS; host283220+258, VM343, all34device suites. Shipping flash25626B, static SRAM1760B, free800B, painted stack484B; unchanged.
+- `make test-pack-parity BUILD_DIR=build/lure-demo`: PASS. FX SHA-256 unchanged `c024abf4a7f47a665f724cfa83402f3e48b4c6b2184706bc57ba1ae8f84ba7f9`. No unexpected generated changes.
+
+Storage: sole lane `build/lure-demo`; selected shipping ELF retained at `reports/i8r-shipping-final.elf`, alongside art/gate/cleanup logs. Previewed and applied `make clean-build-artifacts BUILD_DIR=build/lure-demo CLEAN_APPLY=1`; removed positively identified230MiBowned device-test outputs after preserving logs. No pack stages remain. End:30GiBfree, totalbuild4.0GiB, lane60MiB, new urban3.4MiB and legacy redraw1.6MiB. No snapshots or duplicate build lanes.
+
+Wall time approximately15minutes: artwork/tools~6.5min, integrated gate7min33sec, report/cleanup~1min. No failing gates or deviations. Gameplay installation of a selected/remapped subset remains outside this review-art update.

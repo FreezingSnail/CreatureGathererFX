@@ -8,7 +8,7 @@ function viewer(query = '') {
   function element(id) {
     if (elements.has(id)) return elements.get(id);
     const value = {
-      id, style: {}, children: [], complete: true, naturalWidth: id === '#combined16-atlas' ? 256 : 128, naturalHeight: id === '#combined16-atlas' ? 1408 : 128,
+      id, style: {}, children: [], complete: true, naturalWidth: id === '#combined16-atlas' ? 256 : 128, naturalHeight: id === '#combined16-atlas' ? 1664 : 128,
       width: id === '#scene-view' ? 384 : 128, height: id === '#scene-view' ? 256 : 64,
       value: id === '#combined16-zoom' ? '2' : id === '#view-zoom' || id === '#scale' ? '4' : '0', checked: false,
       handlers: {}, addEventListener(name, fn) { this.handlers[name] = fn; },
@@ -63,9 +63,9 @@ test('simple style defaults and style switching preserve the selected scene and 
 
 test('combined sheet uses16px boundaries and integer native zoom',()=>{
  const {elements}=viewer(),atlas=elements.get('#combined16-atlas'),zoom=elements.get('#combined16-zoom'),bounds=elements.get('#combined16-bounds'),grid=elements.get('#combined16-grid');
- assert.equal(atlas.width,512);assert.equal(atlas.height,2816);assert.equal(grid.style.backgroundSize,'32px 32px');
+ assert.equal(atlas.width,512);assert.equal(atlas.height,3328);assert.equal(grid.style.backgroundSize,'32px 32px');
  zoom.value='1';zoom.handlers.change();bounds.checked=true;bounds.handlers.change();
- assert.equal(atlas.width,256);assert.equal(atlas.height,1408);assert.equal(grid.style.backgroundSize,'16px 16px');assert.equal(grid.style.display,'block');
+ assert.equal(atlas.width,256);assert.equal(atlas.height,1664);assert.equal(grid.style.backgroundSize,'16px 16px');assert.equal(grid.style.display,'block');
 });
 
 test('all five examples appear together and dark cave keeps the original player', () => {

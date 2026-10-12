@@ -1,0 +1,20 @@
+{
+  "reviewOnly": true,
+  "source": "concept.png",
+  "sheet": [
+    256,
+    256
+  ],
+  "cell": [
+    32,
+    32
+  ],
+  "columns": 8,
+  "tiles": 64,
+  "palette": [
+    "#000000",
+    "#ffffff"
+  ],
+  "export": "Area-weighted fixed128 threshold, no dithering",
+  "layoutCompatibility": "Eight columns; buildings use 2x2 cells"
+}

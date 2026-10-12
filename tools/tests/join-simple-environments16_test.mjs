@@ -4,10 +4,11 @@ import fs from 'node:fs';
 import {decodePng} from '../creature-sprite-export.mjs';
 const root='docs/assets/world-environment-32-spike/combined16',read=file=>decodePng(fs.readFileSync(file));
 const manifest=JSON.parse(fs.readFileSync(root+'/manifest.json')),atlas=read(root+'/atlas16.png');
-test('joined atlas preserves every original cell and every unscaled32px source quadrant',()=>{
- const original=read(manifest.baseSource);assert.deepEqual(atlas.pixels.subarray(0,original.pixels.length),original.pixels);
- assert.deepEqual([atlas.width,atlas.height],[256,1408]);assert.deepEqual(manifest.cell,[16,16]);
- assert.equal(manifest.baseTileCount,768);assert.equal(manifest.tileCount,1408);assert.equal(manifest.tiles.length,160);
+test('joined atlas preserves the refreshed legacy cells and every unscaled32px source quadrant',()=>{
+ assert.match(manifest.baseSource,/simple\/legacy16\/atlas16.png$/);
+ const old=read(manifest.legacyReference),original=read(manifest.baseSource);assert.notDeepEqual(old.pixels,original.pixels);assert.deepEqual(atlas.pixels.subarray(0,original.pixels.length),original.pixels);
+ assert.deepEqual([atlas.width,atlas.height],[256,1664]);assert.deepEqual(manifest.cell,[16,16]);
+ assert.equal(manifest.baseTileCount,768);assert.equal(manifest.tileCount,1664);assert.equal(manifest.tiles.length,224);
  const sources=new Map(),ids=new Set();
  for(const t of manifest.tiles){
   if(!sources.has(t.source))sources.set(t.source,read(t.source));const source=sources.get(t.source);
@@ -20,7 +21,7 @@ test('joined atlas preserves every original cell and every unscaled32px source q
    }
   }
  }
- assert.equal(ids.size,640);
+ assert.equal(ids.size,896);
 });
 test('hybrid town renders solely from the combined16px atlas and preserves the native player',()=>{
  const scene=JSON.parse(fs.readFileSync(root+'/scene.json')),terrain=read(root+'/scene-terrain.png');
@@ -44,5 +45,5 @@ test('Tiled map uses the exact combined IDs and source-relative tileset',()=>{
  const scene=JSON.parse(fs.readFileSync(root+'/scene.json')),map=JSON.parse(fs.readFileSync(root+'/town.tmj'));
  assert.equal(map.tilewidth,16);assert.equal(map.tileheight,16);assert.deepEqual(map.layers[0].data,scene.map.flat());
  assert.deepEqual(map.tilesets,[{firstgid:1,source:'tileset.tsx'}]);
- const tsx=fs.readFileSync(root+'/tileset.tsx','utf8');assert.match(tsx,/tilecount="1408" columns="16"/);assert.match(tsx,/source="atlas16.png" width="256" height="1408"/);
+ const tsx=fs.readFileSync(root+'/tileset.tsx','utf8');assert.match(tsx,/tilecount="1664" columns="16"/);assert.match(tsx,/source="atlas16.png" width="256" height="1664"/);
 });
