@@ -425,7 +425,7 @@
   ],
   "views": [
     {
-      "name": "Native16px house",
+      "name": "Redrawn16px house",
       "player": [
         184,
         128
@@ -461,5 +461,5 @@
       ]
     }
   ],
-  "baseSource": "docs/assets/world-tiles/tiles-bw-redraw-v4-native.png"
+  "baseSource": "docs/assets/world-environment-32-spike/simple/legacy16/atlas16.png"
 }

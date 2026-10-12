@@ -227,15 +227,21 @@ node --test tools/tests/simple-environments_test.mjs tools/tests/environment32-v
 
 These are review asset variants. The playable lure uses its dedicated clear atlas and unchanged authored mechanics. The recreation does not change packed gameplay data or firmware.
 
-## Combined native16px sheet · efg
+## Current simple environment catalogue · i8r
 
-The owner selected Environment Clarity Redraw v4 as the existing sheet to combine with the simple environments. `combined16/atlas16.png` preserves its original256×768 pixels and768tile positions, then appends the160simple32px assets as640native16px quadrants. The resulting256×1408 master has16columns and1408cells. No pixels are scaled: a32px object still occupies four neighboring16px cells. The manifest records each source and its top-left, top-right, bottom-left and bottom-right IDs.
+The approved direction for future environments is the simple nondithered scene style: clear black contours, broad white interiors, sparse ground detail and coherent terrain. Older styles remain archived for comparison.
 
-The shared HTML page provides the master sheet at1×,2× and4×, an optional16px grid, a mixed town arrangement and three actual-size128×64 crops with the original16×16 player. The native v4 house sits alongside the simple cottages, trees and garden. `tileset.tsx` and `town.tmj` let Tiled load the same sheet and arrangement.
+The v4 portion of the combined sheet has now been redrawn to match this direction. Its review layout remains256×768 with768cells, but the pixels are new and positions require review before any gameplay remap. The original v4 reference is preserved unchanged. The approved160simple32px assets and64newurban32px assets append as896native16px quadrants. The combined master is256×1664,16columns,1664cells. No source pixels are resized during joining;32px assets occupy adjacent2×2 cells.
 
-This is an authoring/review catalogue. Current gameplay map words reserve10bits for tile IDs (maximum1023), so installing artwork from the full1408-cell catalogue requires selecting and remapping a smaller gameplay sheet. This join does not change the packed game assets or firmware.
+The urban set includes paving, street segments and crossings, eight64×64 buildings, street furniture and greenery. Market Street and Residential Block each have an editable Tiled map, full arrangement and three128×64 actual-size views with the original16×16 player. The urban sheets and both scenes appear on the same HTML page as all existing environments; the sheet inspector also offers Simple urban. The combined town now uses the redrawn legacy house.
+
+Built-in imagegen produced the legacy redraw and urban concept with the approved simple sheet as reference. Source concepts and exact prompts are retained in `simple/{legacy16,urban}/`. The binary exports use area-weighted sampling and a fixed128threshold, with no added dithering.
+
+This remains an authoring/review catalogue. Current gameplay map words reserve10bits for IDs (maximum1023); gameplay adoption requires a selected/remapped subset. Packed gameplay data and firmware are unchanged.
 
 ```sh
+node tools/author-simple-urban.mjs
 node tools/join-simple-environments16.mjs
-node --test tools/tests/join-simple-environments16_test.mjs tools/tests/environment32-viewer_test.mjs
+node tools/arrange-simple-urban.mjs
+node --test tools/tests/join-simple-environments16_test.mjs tools/tests/simple-urban_test.mjs tools/tests/environment32-viewer_test.mjs
 ```
