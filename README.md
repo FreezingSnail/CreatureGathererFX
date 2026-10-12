@@ -48,7 +48,7 @@ path does not enter the bootloader, double-tap reset and start the upload prompt
 
 ## Lure world scenery (opt-in)
 
-`make lure-demo ARDENS=/path/to/Ardens` uses the revised dithered habitat scenery
+`make lure-demo ARDENS=/path/to/Ardens` uses the clear, sparse environment scenery
 in the existing lure clearing.32px environment artwork is baked into16px render
 cells; sparse white ground, connected foliage and the original16px player preserve
 the current movement scale. The box, plant, collision and encounter/lure data stay

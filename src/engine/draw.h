@@ -420,10 +420,10 @@ static uint8_t drawMapFast(WorldTransient &world) {
                 y -= 16;
             }
 #ifdef CGFX_LURE_WEDGE
-            if (mapX >= 8 && mapX < 16 && mapY < 8) {
+            if (mapX >= 4 && mapX < 16 && mapY < 8) {
                 // Artwork only: propertyWindow still receives the authored map words.
                 Blit::draw(x, y, 16, 16, lureWorldTiles + 4,
-                           FRAME(mapY * 8 + mapX - 8), Blit::OVERWRITE);
+                           FRAME(mapY * 12 + mapX - 4), Blit::OVERWRITE);
             } else
 #endif
             Blit::draw(x, y, 16, 16, tiles, FRAME(tileId - 1), Blit::OVERWRITE);

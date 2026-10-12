@@ -51,7 +51,7 @@ void setup() {
 
 
 #ifdef CGFX_LURE_WEDGE
-    test.expectEq(lureWorldTilesFrames,64,F("lure scenery has64 render cells"));
+    test.expectEq(lureWorldTilesFrames,96,F("lure scenery has96 render cells"));
     uint16_t mapHeadroom=65535;
     for(uint8_t d=0;d<5;++d) {
         gameState.playerLocation=static_cast<uint16_t>((5u<<8)|11u);
@@ -73,7 +73,7 @@ void setup() {
             const uint8_t mx=wx>>4,my=wy>>4;
             uint24_t address;
             uint16_t frame;
-            if(mx>=8&&mx<16&&my<8){address=lureWorldTiles+4;frame=my*8+mx-8;}
+            if(mx>=4&&mx<16&&my<8){address=lureWorldTiles+4;frame=my*12+mx-4;}
             else {
                 uint16_t word;
                 FX::readDataBytes(raw_map_data+(static_cast<uint24_t>(my)*256+mx)*2,reinterpret_cast<uint8_t *>(&word),2);
