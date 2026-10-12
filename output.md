@@ -7463,3 +7463,29 @@ Arena and lure demo targets now call `gen-if-needed`; explicit `make gen`, `chec
 With `/usr/bin/true` as non-GUI Ardens, baseline arena build was 16.31 s at 24,730 B flash / 1,850 B static. Candidate cold cache miss ran generation and built the same image in 13.65 s. Warm arena build skipped generation and completed in 8.63 s at the same flash/RAM totals. A separate warm `make gen-if-needed` preserved mtimes and hashes for the fingerprint, packed image, generated manifest, generated opcode header, and mirrored source header. No firmware behavior or packed bytes changed. Root owns the integrated final gate and commit; no gate pass or commit is claimed here.
 
 njx integrated acceptance: `PATH=/Users/connorfranc/Applications/CreatureGathererTools/bin:$PATH make final-gate BUILD_DIR=build/box-adoption-gate FINAL_GATE_LOG_DIR=build/box-adoption-gate/reports/njx ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens`: PASS. Native/world/VM assertions 283,187 / 258 / 343; all 34 device suites pass, including the new cache fixture through `test-manifest`. Shipping remains 24,442 B flash / 1,759 B static, painted stack headroom 493 B. No unexpected tracked generated changes. Gate log timestamp interval 2,990 seconds (2,984 check + 6 RAM); reused arena/gate directories remain 51/288 MiB. `AGENTS.md` now explicitly retains the active compatible shared compiler cache within the disk budget while cleaning obsolete experiment caches, so cleanup does not defeat incremental builds. Free disk at handoff 45 GiB. Root review/commit work approximately 3 minutes excluding gate wait.
+
+## t8l restore voluntary switching + four-item battle options menu (2026-10-11)
+
+Owner reported the arena demo showed GATHER/ESCAPE instead of the four expected
+options and asked whether switching was cut. It was: bsd/8bd.2/06g had removed
+voluntary player/AI switching and replaced the four-item options page with
+moves-as-root plus a two-cell actions page.
+
+Restored on the compact implementation: `BattleMenu` options root drawn from
+the packed `battleOptions48` art (MOVE/GATHER/CHANGE/ESCAPE, cursor selects the
+matching frame), MOVE pushes the four-slot page, CHANGE pushes a two-row
+living-bench party page that caches names on the transition (`beginParty`,
+called by `BattleFlow` when `partyPending()`), B returns to the options root,
+forced replacement keeps its filtered page. `BattleSession` accepts
+Choice-phase `SelectParty` through `canSwitch`, resolves switch actions with
+setup-owned `applySwitch` and the opponent `switchLockMask`; `Resolve` gives
+Switch fast priority; `Ai` restores the risk-based opponent switch policy;
+`BattleFeedback` captions voluntary and forced switches alike.
+
+Commands: `make test` (283208/0 + 258/0); `make fxtest-headless` focused
+test_battle_slim 61/0, test_battlesession 88/0, test_battleutility 49/0,
+test_arenademo 1870/0, test_battletrainer 36/0, test_battle48 23/0,
+test_battlepresentation 311/0, test_stack 4/0 (headroom 484 B);
+`make final-gate` PASS. Shipping 25434/29696 flash (+992 over the 24442
+control), static 1759/2160, stack 484 B. Arena demo 25858/29184 (+1128 over
+24730). Generated artifacts unchanged. Commit 18687aa.
