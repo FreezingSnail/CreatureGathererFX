@@ -226,3 +226,16 @@ node --test tools/tests/simple-environments_test.mjs tools/tests/environment32-v
 ```
 
 These are review asset variants. The playable lure uses its dedicated clear atlas and unchanged authored mechanics. The recreation does not change packed gameplay data or firmware.
+
+## Combined native16px sheet · efg
+
+The owner selected Environment Clarity Redraw v4 as the existing sheet to combine with the simple environments. `combined16/atlas16.png` preserves its original256×768 pixels and768tile positions, then appends the160simple32px assets as640native16px quadrants. The resulting256×1408 master has16columns and1408cells. No pixels are scaled: a32px object still occupies four neighboring16px cells. The manifest records each source and its top-left, top-right, bottom-left and bottom-right IDs.
+
+The shared HTML page provides the master sheet at1×,2× and4×, an optional16px grid, a mixed town arrangement and three actual-size128×64 crops with the original16×16 player. The native v4 house sits alongside the simple cottages, trees and garden. `tileset.tsx` and `town.tmj` let Tiled load the same sheet and arrangement.
+
+This is an authoring/review catalogue. Current gameplay map words reserve10bits for tile IDs (maximum1023), so installing artwork from the full1408-cell catalogue requires selecting and remapping a smaller gameplay sheet. This join does not change the packed game assets or firmware.
+
+```sh
+node tools/join-simple-environments16.mjs
+node --test tools/tests/join-simple-environments16_test.mjs tools/tests/environment32-viewer_test.mjs
+```

@@ -79,3 +79,10 @@ atlas.onload = updateSheet; if (atlas.complete) updateSheet();
 scale.addEventListener('change', updateSheet); document.querySelector('#bounds').addEventListener('change', updateSheet);
 const sheetFolders = { original:'', expansion:'expansion/', habitats:'habitats/', terrain:'habitats/terrain/', clarity:'habitats/lure-clarity/', 'simple-world':'simple/', 'simple-village':'simple/expansion/', 'simple-habitats':'simple/habitats/', 'simple-terrain':'simple/habitats/terrain/' };
 document.querySelector('#set').addEventListener('change', event => { atlas.src = baseRoot + sheetFolders[event.target.value] + 'atlas32.png'; });
+const combinedAtlas=document.querySelector('#combined16-atlas'),combinedZoom=document.querySelector('#combined16-zoom'),combinedGrid=document.querySelector('#combined16-grid'),combinedBounds=document.querySelector('#combined16-bounds');
+function updateCombinedSheet(){
+  const scale=Number(combinedZoom.value);combinedAtlas.width=combinedAtlas.naturalWidth*scale;combinedAtlas.height=combinedAtlas.naturalHeight*scale;
+  combinedGrid.style.backgroundSize=`${16*scale}px ${16*scale}px`;combinedGrid.style.display=combinedBounds.checked?'block':'none';
+}
+combinedAtlas.onload=updateCombinedSheet;if(combinedAtlas.complete)updateCombinedSheet();
+combinedZoom.addEventListener('change',updateCombinedSheet);combinedBounds.addEventListener('change',updateCombinedSheet);
