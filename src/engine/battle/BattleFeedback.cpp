@@ -80,12 +80,10 @@ void BattleFeedback::begin(const ActionResult &result, const BattleState &state)
         }
         break;
     case ResultKind::Switch: {
-        if (result.flags & FORCED_SWITCH) {
-            const uint8_t side = static_cast<uint8_t>(result.actor);
-            if (side < 2)
-                cacheCreatureName(lines_[0], widths_[0], state.active[side].id);
-            cacheCaption(lines_[1], widths_[1], battleEnters, 16);
-        }
+        const uint8_t side = static_cast<uint8_t>(result.actor);
+        if (side < 2)
+            cacheCreatureName(lines_[0], widths_[0], state.active[side].id);
+        cacheCaption(lines_[1], widths_[1], battleEnters, 16);
         break;
     }
     case ResultKind::Gather:

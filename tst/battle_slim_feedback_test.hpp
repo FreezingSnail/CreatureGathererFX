@@ -77,6 +77,15 @@ inline void SlimFeedbackTest(TestSuite &suite)
                 static_cast<uint32_t>(battleEnters + 84u),
                 "forced replacement uses the enters caption");
 
+    result.flags = 0;
+    result.actor = Side::Player;
+    state.active[0].id = 6;
+    feedback.begin(result, state);
+    feedback.draw();
+    test.assert(fxDataFake::lastDataAddress,
+                static_cast<uint32_t>(battleEnters + 84u),
+                "voluntary switch uses the enters caption");
+
     resetActionResult(result);
     result.kind = ResultKind::Skip;
     result.actor = Side::Opponent;

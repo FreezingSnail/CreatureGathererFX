@@ -70,8 +70,8 @@ bool update(uint8_t edgeButtons, TerminalCallback onFinished) {
             } else {
 #endif
                 const battle::BattleState &state = session.state();
-                mode.ui.menu.beginMoves(session.moves(), state.gatherable,
-                                        !state.trainer);
+                mode.ui.menu.beginOptions(session.moves(), state.gatherable,
+                                          !state.trainer);
 #if !CGFX_BATTLE_AUTO_REPLACE
             }
 #endif
@@ -79,6 +79,9 @@ bool update(uint8_t edgeButtons, TerminalCallback onFinished) {
         }
 
         const MenuIntent intent = mode.ui.menu.update(edgeButtons);
+        // The party page caches its living rows on the CHANGE transition.
+        if (mode.ui.menu.partyPending())
+            mode.ui.menu.beginParty(session.view());
         if (intent.kind != MenuIntentKind::None && session.submitIntent(intent)) {
             // Resolving starts on the next frame; this edge belongs only to the
             // accepted selection and is never replayed into another phase.
