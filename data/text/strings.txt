@@ -213,4 +213,10 @@ namespace LureText {
     lureTextGathered = "Gathered"
     lureTextExpired = "Lure Gone"
     lureTextFooter = "A:Set B:Back"
+    lureTextIntroTitle = "Lure Demo"
+    lureTextIntroSet = "A at box: set lure"
+    lureTextIntroBias = "Lures bias spawns"
+    lureTextIntroSteps = "16-64 steps"
+    lureTextIntroGather = "A at plant: gather"
+    lureTextIntroNoSave = "No demo save"
 }

@@ -26,9 +26,10 @@ constexpr uint8_t lureId(uint8_t type, uint8_t tier) {
 constexpr uint8_t lureType(uint8_t id) { return id & 0x03u; }
 constexpr uint8_t lureTier(uint8_t id) { return static_cast<uint8_t>(id >> 2); }
 
-// Deposit charge (in steps) per tier. Higher tiers bias encounters longer.
+// Deposit charge (in steps) per tier. Forward the authored item model so the
+// zone charge tracks item::lureChargeOf (16/32/64) instead of a separate scale.
 constexpr uint8_t lureChargeOf(uint8_t tier) {
-    return static_cast<uint8_t>(4 + (tier < 3 ? tier : 2) * 4);
+    return item::lureChargeOf(tier < 2 ? tier : 2);
 }
 
 // Reset the zone to inert.
@@ -84,6 +85,14 @@ void showMessage(uint24_t text, uint8_t width, uint8_t steps);
 bool messageActive();
 uint24_t messageAddr();
 uint8_t messageWidth();
+
+// --- Boot intro card ------------------------------------------------------
+// Six-line explanation shown once at wedge boot. The world is frozen while the
+// card is up; any fresh picker button edge dismisses it.
+void showIntro();
+void dismissIntro();
+bool introActive();
+void introInput(uint8_t buttons);
 
 // Draws the picker and any active message; defined in LureZoneView.cpp so the
 // host/world suites do not pull the Arduboy renderer.

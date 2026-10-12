@@ -169,6 +169,7 @@ void setup() {
                                (static_cast<uint16_t>(5) << 8);
     player.basic();
     seedLureWedge();
+    LureZone::showIntro();
 #elif !defined(CGFX_WILD_DEMO)
     if (!restored) {
         player.basic();

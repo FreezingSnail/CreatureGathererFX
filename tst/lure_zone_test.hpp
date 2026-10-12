@@ -11,7 +11,7 @@
 extern GameState gameState;
 
 // Deposit/decay/expiry state machine for the overworld lure zone. The step
-// hook integration (decay through onStep, the 25% roll gate, and chunk-change
+// hook integration (decay through onStep, the 10% roll gate, and chunk-change
 // clearing) is covered in step_test.hpp; this suite pins the state machine.
 void LureZoneStateTest(TestSuite &suite) {
     Test test(__func__);
@@ -29,6 +29,13 @@ void LureZoneStateTest(TestSuite &suite) {
                 "lure type is the low two bits");
     test.assert(LureZone::lureTier(6), static_cast<uint8_t>(1),
                 "lure tier is the high bits");
+
+    test.assert(LureZone::lureChargeOf(0), static_cast<uint8_t>(16),
+                "tier-zero charge forwards the item model");
+    test.assert(LureZone::lureChargeOf(1), static_cast<uint8_t>(32),
+                "tier-one charge forwards the item model");
+    test.assert(LureZone::lureChargeOf(2), static_cast<uint8_t>(64),
+                "tier-two charge forwards the item model");
 
     gameState.playerLocation = 0x0209;
     const uint16_t chunk = Chunk::chunkOfLocation(gameState.playerLocation);
@@ -49,6 +56,8 @@ void LureZoneStateTest(TestSuite &suite) {
                 "expired lure is inert");
 
     LureZone::deposit(LureZone::lureId(3, 2));
+    test.assert(LureZone::charge(), static_cast<uint8_t>(64),
+                "tier-two deposit charge is 64 steps");
     test.assert(LureZone::charge(), LureZone::lureChargeOf(2),
                 "tier two charge is longer");
     LureZone::clear();
@@ -58,6 +67,16 @@ void LureZoneStateTest(TestSuite &suite) {
     LureZone::deposit(LureZone::lureId(0, 0));
     LureZone::deposit(LureZone::LURE_NONE);
     test.assert(LureZone::active(), false, "none deposit clears the zone");
+
+    // Boot intro card: show -> active -> any fresh edge dismisses -> inactive.
+    LureZone::dismissIntro();
+    test.assert(LureZone::introActive(), false, "intro starts dismissed");
+    LureZone::showIntro();
+    test.assert(LureZone::introActive(), true, "show activates the intro");
+    LureZone::introInput(0);
+    test.assert(LureZone::introActive(), true, "no button leaves the intro up");
+    LureZone::introInput(LureZone::PICKER_BTN_B);
+    test.assert(LureZone::introActive(), false, "a fresh button edge dismisses the intro");
 
     suite.addTest(test);
 }

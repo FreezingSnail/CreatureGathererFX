@@ -52,5 +52,7 @@ order = [
   "battleCannotAct", "battleHurtItself", "battleEnters", "battleCannotEscape",
   "battlePass", "battleTurnEnd",
   "lureTextPrompt", "lureTextSet", "lureTextEmpty", "lureTextGathered",
-  "lureTextExpired", "lureTextFooter"
+  "lureTextExpired", "lureTextFooter",
+  "lureTextIntroTitle", "lureTextIntroSet", "lureTextIntroBias",
+  "lureTextIntroSteps", "lureTextIntroGather", "lureTextIntroNoSave"
 ]

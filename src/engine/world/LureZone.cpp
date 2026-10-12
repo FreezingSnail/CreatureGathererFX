@@ -30,6 +30,8 @@ uint24_t gMessageAddr = 0;
 uint8_t gMessageWidth = 0;
 uint8_t gMessageTimer = 0;
 
+bool gIntroActive = false;
+
 // Lures precede consumables in inventoryNthNonZero, so the lure-only list is
 // that walk with non-lure kinds skipped.
 uint8_t lureCount(const item::Inventory &inv) {
@@ -205,5 +207,14 @@ void showMessage(uint24_t text, uint8_t width, uint8_t steps) {
 bool messageActive() { return gMessageTimer != 0 && gMessageAddr != 0; }
 uint24_t messageAddr() { return gMessageAddr; }
 uint8_t messageWidth() { return gMessageWidth; }
+
+void showIntro() { gIntroActive = true; }
+void dismissIntro() { gIntroActive = false; }
+bool introActive() { return gIntroActive; }
+
+void introInput(uint8_t buttons) {
+    if (buttons & (PICKER_BTN_UP | PICKER_BTN_DOWN | PICKER_BTN_A | PICKER_BTN_B))
+        gIntroActive = false;
+}
 
 } // namespace LureZone
