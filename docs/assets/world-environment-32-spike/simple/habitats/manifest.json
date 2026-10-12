@@ -1,0 +1,28 @@
+{
+  "reviewOnly": true,
+  "source": "concept.png",
+  "sourceSize": [
+    1254,
+    1254
+  ],
+  "sheet": [
+    256,
+    256
+  ],
+  "cell": [
+    32,
+    32
+  ],
+  "columns": 8,
+  "rows": 8,
+  "tiles": 64,
+  "palette": [
+    "#000000",
+    "#ffffff"
+  ],
+  "opaque": true,
+  "export": "Area-weighted sampling with fixed128 binary threshold; no added dithering. Native cell positions preserved.",
+  "blackPixels": 19169,
+  "whitePixels": 46367,
+  "raw1bppBytes": 8192
+}

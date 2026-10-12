@@ -1,0 +1,325 @@
+{
+  "name": "Cinderflint Quarry · simple",
+  "slug": "cinderflint",
+  "reviewOnly": true,
+  "size": [
+    384,
+    256
+  ],
+  "artTileSize": 32,
+  "movementScale": 16,
+  "viewport": [
+    128,
+    64
+  ],
+  "playerSize": [
+    16,
+    16
+  ],
+  "tileIds": "81–144 masked habitat props; layered connected terrain",
+  "terrain": {
+    "biome": 3,
+    "cellSize": 16,
+    "sheet": "habitats/terrain/atlas32.png",
+    "materials": [
+      "ground",
+      "path",
+      "patch",
+      "border"
+    ],
+    "map": [
+      "222222222222000000033333",
+      "222222222222000000033333",
+      "000000000000000000033333",
+      "000000111000000000033333",
+      "000000111000000000000000",
+      "111111111000000000000000",
+      "111111111110000000000000",
+      "111111111111111111111000",
+      "000000111111111111111111",
+      "000000000001111111111111",
+      "000000000000000000000111",
+      "000000000000000000000000",
+      "000000000000000000000000",
+      "222222000000000000033333",
+      "222222000000000000033333",
+      "222222000000000000033333"
+    ]
+  },
+  "description": "Clear outlines, white highlights and sparse ground. Same authored layout and player positions as the dithered version.",
+  "motifs": "Coal, clinker, vents, faceted geodes and abandoned mine timbers.",
+  "creatures": [
+    {
+      "id": 10,
+      "name": "ember",
+      "types": [
+        "fire"
+      ],
+      "sprite": "assets/battle-sprites48/48x48/10-ember-front_48x48.png"
+    },
+    {
+      "id": 16,
+      "name": "waggleworm",
+      "types": [
+        "earth",
+        "fire"
+      ],
+      "sprite": "assets/battle-sprites48/48x48/16-waggleworm-front_48x48.png"
+    },
+    {
+      "id": 48,
+      "name": "CoalGrub",
+      "types": [
+        "fire",
+        "earth"
+      ],
+      "sprite": "assets/battle-sprites48/48x48/48-coalgrub-front_48x48.png"
+    },
+    {
+      "id": 49,
+      "name": "CinderCocoon",
+      "types": [
+        "fire",
+        "earth"
+      ],
+      "sprite": "assets/battle-sprites48/48x48/49-cindercocoon-front_48x48.png"
+    },
+    {
+      "id": 50,
+      "name": "FurnaceBeetle",
+      "types": [
+        "fire",
+        "earth"
+      ],
+      "sprite": "assets/battle-sprites48/48x48/50-furnacebeetle-front_48x48.png"
+    },
+    {
+      "id": 51,
+      "name": "Flintling",
+      "types": [
+        "earth",
+        "lightning"
+      ],
+      "sprite": "assets/battle-sprites48/48x48/51-flintling-front_48x48.png"
+    },
+    {
+      "id": 52,
+      "name": "GeodeGuard",
+      "types": [
+        "earth",
+        "lightning"
+      ],
+      "sprite": "assets/battle-sprites48/48x48/52-geodeguard-front_48x48.png"
+    }
+  ],
+  "placements": [
+    [
+      129,
+      0,
+      0
+    ],
+    [
+      136,
+      32,
+      16
+    ],
+    [
+      137,
+      64,
+      32
+    ],
+    [
+      138,
+      96,
+      32
+    ],
+    [
+      129,
+      144,
+      16
+    ],
+    [
+      130,
+      176,
+      32
+    ],
+    [
+      131,
+      208,
+      0
+    ],
+    [
+      132,
+      256,
+      32
+    ],
+    [
+      133,
+      288,
+      0
+    ],
+    [
+      134,
+      320,
+      16
+    ],
+    [
+      136,
+      352,
+      32
+    ],
+    [
+      138,
+      32,
+      96
+    ],
+    [
+      144,
+      64,
+      80
+    ],
+    [
+      139,
+      96,
+      80
+    ],
+    [
+      130,
+      144,
+      96
+    ],
+    [
+      131,
+      176,
+      80
+    ],
+    [
+      135,
+      208,
+      80
+    ],
+    [
+      132,
+      256,
+      80
+    ],
+    [
+      134,
+      288,
+      80
+    ],
+    [
+      133,
+      320,
+      96
+    ],
+    [
+      129,
+      0,
+      176
+    ],
+    [
+      136,
+      32,
+      160
+    ],
+    [
+      130,
+      144,
+      160
+    ],
+    [
+      131,
+      208,
+      176
+    ],
+    [
+      132,
+      256,
+      176
+    ],
+    [
+      133,
+      288,
+      176
+    ],
+    [
+      134,
+      320,
+      160
+    ],
+    [
+      136,
+      352,
+      176
+    ],
+    [
+      129,
+      32,
+      224
+    ],
+    [
+      136,
+      64,
+      224
+    ],
+    [
+      135,
+      96,
+      224
+    ],
+    [
+      132,
+      256,
+      224
+    ],
+    [
+      134,
+      288,
+      224
+    ],
+    [
+      133,
+      320,
+      224
+    ]
+  ],
+  "views": [
+    {
+      "name": "Mine threshold",
+      "player": [
+        112,
+        64
+      ],
+      "facing": "up",
+      "camera": [
+        64,
+        32
+      ]
+    },
+    {
+      "name": "Coal working",
+      "player": [
+        184,
+        136
+      ],
+      "facing": "right",
+      "camera": [
+        128,
+        112
+      ]
+    },
+    {
+      "name": "Geode pocket",
+      "player": [
+        312,
+        136
+      ],
+      "facing": "down",
+      "camera": [
+        256,
+        112
+      ]
+    }
+  ]
+}

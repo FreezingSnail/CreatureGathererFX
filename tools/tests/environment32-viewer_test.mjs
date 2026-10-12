@@ -27,6 +27,7 @@ function viewer(query = '') {
     document: { querySelector: element, createElement: name => element('created-' + elements.size + '-' + name) },
   });
   vm.runInContext(fs.readFileSync('docs/assets/world-environment-32-spike/scene-collection.js', 'utf8'), context);
+  vm.runInContext(fs.readFileSync('docs/assets/world-environment-32-spike/simple/scene-collection.js', 'utf8'), context);
   vm.runInContext(fs.readFileSync('docs/assets/environment32-viewer.js', 'utf8'), context);
   function loaded() { images.forEach(image => image.onload?.()); }
   loaded();
@@ -44,6 +45,20 @@ test('native128x64 display copies the inspected frame before the camera outline,
   assert.equal(elements.get('#native-view').width, 128); assert.equal(elements.get('#native-view').height, 64);
   const html = fs.readFileSync('docs/world-environment-32-spike.html', 'utf8');
   assert.match(html, /#native-view\{width:128px;height:64px;/);
+});
+
+test('simple style defaults and style switching preserve the selected scene and native viewport',()=>{
+ const {elements,images,loaded}=viewer('?scene=dewcap');
+ assert.equal(elements.get('#scene-style').value,'simple');
+ assert.equal(elements.get('#example').value,'6');
+ assert.ok(images.some(image=>image.src.includes('/simple/scenes/dewcap/scene-terrain.png')));
+ const style=elements.get('#scene-style');style.value='dither';style.handlers.change({target:style});loaded();
+ assert.equal(elements.get('#example').value,'6');
+ assert.ok(images.some(image=>image.src==='assets/world-environment-32-spike/scenes/dewcap/scene-terrain.png'));
+ assert.equal(elements.get('#native-view').width,128);assert.equal(elements.get('#native-view').height,64);
+ assert.equal(viewer('?style=dither&scene=cave').elements.get('#scene-style').value,'dither');
+ const set=elements.get('#set');set.value='simple-habitats';set.handlers.change({target:set});
+ assert.equal(elements.get('#atlas').src,'assets/world-environment-32-spike/simple/habitats/atlas32.png');
 });
 
 test('all five examples appear together and dark cave keeps the original player', () => {

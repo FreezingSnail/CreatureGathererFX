@@ -1,0 +1,8 @@
+{
+  "mode": "built-in reference redraw",
+  "prompt": "Redraw the FIRST reference sprite sheet in the clear simple black and white pixel-art style of the SECOND reference. Keep EXACTLY the first sheet's grid, every cell position, every object's identity, the same silhouette footprint, and matching join positions for multi-cell buildings/shorelines. This is a top-down JRPG environment tile sheet intended to export at 32x32 pixels per cell, viewed on a tiny128x64 monochrome display. Use crisp continuous black contours, large quiet WHITE interior surfaces, a few deliberate internal details, and compact solid black undersides. NO dithering, NO stipple, NO checker patterns, NO gray, NO decorative texture noise. Ground mostly white with isolated tiny grass tufts. Water mostly white with a few strong short wave strokes. Roofs mostly white with few straight seams. Pure white background; no grid borders, labels, text, padding or margins. Do not crop or move any tile. Uniform square sheet. In dark objects preserve large readable white highlights. Match the second reference's clear tree/mushroom/crate style; do not import its arrangement. Keep8 columns and8 rows,64 cells. The two houses each span three columns and two rows at the SAME locations; preserve joining roof/facade segments exactly.",
+  "references": [
+    "docs/assets/world-environment-32-spike/concept.png",
+    "docs/assets/world-environment-32-spike/habitats/lure-clarity/concept.png"
+  ]
+}

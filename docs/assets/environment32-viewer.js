@@ -1,5 +1,7 @@
-const root = 'assets/world-environment-32-spike/';
-const scenes = window.environment32Scenes;
+const baseRoot = 'assets/world-environment-32-spike/';
+const initialStyle = new URLSearchParams(window.location.search).get('style') === 'dither' ? 'dither' : 'simple';
+let root = baseRoot + (initialStyle === 'simple' ? 'simple/' : '');
+let scenes = initialStyle === 'simple' ? window.environment32SimpleScenes : window.environment32Scenes;
 const names = ['river', 'town', 'city', 'cave', 'cave-dark', 'huskfield', 'dewcap', 'shellstone', 'cinderflint'];
 const requested = names.indexOf(new URLSearchParams(window.location.search).get('scene'));
 let scene = scenes[Math.max(0, requested)];
@@ -50,6 +52,12 @@ example.addEventListener('change', event => { scene = scenes[Number(event.target
 const viewZoom = document.querySelector('#view-zoom');
 function resizeViewport() { const n = Number(viewZoom.value); game.style.width = 128 * n + 'px'; game.style.height = 64 * n + 'px'; }
 viewZoom.addEventListener('change', resizeViewport); resizeViewport(); loadScene();
+const style = document.querySelector('#scene-style'); style.value = initialStyle;
+style.addEventListener('change', event => {
+  const index = scenes.indexOf(scene), simple = event.target.value === 'simple';
+  scenes = simple ? window.environment32SimpleScenes : window.environment32Scenes;
+  root = baseRoot + (simple ? 'simple/' : ''); scene = scenes[index]; loadScene();
+});
 document.querySelector('#position').addEventListener('change', event => {
   selected = Number(event.target.value); camera.splice(0, 2, ...scene.views[selected].camera); draw();
 });
@@ -69,4 +77,5 @@ function updateSheet() {
 }
 atlas.onload = updateSheet; if (atlas.complete) updateSheet();
 scale.addEventListener('change', updateSheet); document.querySelector('#bounds').addEventListener('change', updateSheet);
-document.querySelector('#set').addEventListener('change', event => { atlas.src = root + (event.target.value === 'clarity' ? 'habitats/lure-clarity/' : event.target.value === 'terrain' ? 'habitats/terrain/' : ['expansion', 'habitats'].includes(event.target.value) ? event.target.value + '/' : '') + 'atlas32.png'; });
+const sheetFolders = { original:'', expansion:'expansion/', habitats:'habitats/', terrain:'habitats/terrain/', clarity:'habitats/lure-clarity/', 'simple-world':'simple/', 'simple-village':'simple/expansion/', 'simple-habitats':'simple/habitats/', 'simple-terrain':'simple/habitats/terrain/' };
+document.querySelector('#set').addEventListener('change', event => { atlas.src = baseRoot + sheetFolders[event.target.value] + 'atlas32.png'; });
