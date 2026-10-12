@@ -89,9 +89,20 @@ bool update(uint8_t edgeButtons, TerminalCallback onFinished) {
         return false;
     }
 
-    // Ready/automatic replacement: advance once, then hand the compact UI arm
-    // to feedback. There is no additional controller phase byte in BattleMode.
-    if (session.advance()) beginFeedback(mode);
+    // Ready/automatic replacement: advance once. A non-terminal end-turn step
+    // has no caption or dwell, so it is acknowledged immediately; everything
+    // else hands the compact UI arm to feedback. There is no additional
+    // controller phase byte in BattleMode.
+    if (session.advance()) {
+        const battle::ActionResult &result = session.result();
+        if (result.kind == battle::ResultKind::EndTurn &&
+            result.outcome == battle::Outcome::None && !session.state().over) {
+            session.finishPresentation();
+            beginMenu(mode);
+            return false;
+        }
+        beginFeedback(mode);
+    }
     return false;
 }
 

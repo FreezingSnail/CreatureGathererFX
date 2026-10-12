@@ -19,6 +19,10 @@ inline uint24_t passAddress() { return 0; }
 #endif
 }
 
+// Single-phase footer pacing at the shipping 52 FPS. The natural hold keeps a
+// caption readable; a fresh A edge may finish it after the minimum dwell.
+enum : uint8_t { FEEDBACK_HOLD_TICKS = 42, FEEDBACK_MIN_DWELL_TICKS = 10 };
+
 // Cached, single-phase feedback footer. Metadata is prepared once at entry.
 class BattleFeedback {
   public:

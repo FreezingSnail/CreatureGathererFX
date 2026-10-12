@@ -80,10 +80,12 @@ FeedbackRun runFeedback(bool accelerate) {
         battleSession().state(), battle::Side::Player, 0);
 
     if (accelerate) {
-        for (uint8_t tick = 0; tick < 4; ++tick) BattleFlow::update(0);
+        for (uint8_t tick = 0; tick < battle::FEEDBACK_MIN_DWELL_TICKS; ++tick)
+            BattleFlow::update(0);
         BattleFlow::update(MENU_EDGE_A);
     } else {
-        for (uint8_t tick = 0; tick < 26; ++tick) BattleFlow::update(0);
+        for (uint8_t tick = 0; tick < battle::FEEDBACK_HOLD_TICKS; ++tick)
+            BattleFlow::update(0);
     }
     run.rngCalls = rngCalls;
     run.playerHp = battleSession().state().active[0].hp;
@@ -151,6 +153,22 @@ inline void BattleFlowControllerTest(TestSuite &suite) {
     BattleFlow::update(0);
     test.assert(modeState.battle.ui.menu.initialized(), true,
                 "next frame prepares the next choice menu");
+
+    // The end-turn step is acknowledged without a feedback caption or dwell.
+    BattleFlow::update(MENU_EDGE_A); // Open the move page.
+    BattleFlow::update(MENU_EDGE_A); // Submit the next action.
+    bool endTurnPresented = false;
+    for (uint16_t frame = 0; frame < 4096 && !battleSession().awaitingPlayer(); ++frame) {
+        BattleFlow::update(MENU_EDGE_A);
+        if (battleSession().isPresenting() &&
+            battleSession().result().kind == battle::ResultKind::EndTurn) {
+            endTurnPresented = true;
+        }
+    }
+    test.assert(endTurnPresented, false,
+                "end-turn results never enter the feedback phase");
+    test.assert(battleSession().awaitingPlayer(), true,
+                "the turn reaches the next choice boundary");
     exitBattle();
     gameState.state = GameState_t::WORLD;
 
@@ -198,7 +216,7 @@ inline void BattleFlowControllerTest(TestSuite &suite) {
                 "terminal feedback begins before the callback");
     test.assert(terminalCallbacks, static_cast<uint8_t>(0),
                 "terminal callback waits for feedback completion");
-    for (uint8_t tick = 0; tick < 26; ++tick)
+    for (uint8_t tick = 0; tick < battle::FEEDBACK_HOLD_TICKS; ++tick)
         BattleFlow::update(0, onTerminal);
     test.assert(terminalCallbacks, static_cast<uint8_t>(1),
                 "terminal callback runs exactly once");

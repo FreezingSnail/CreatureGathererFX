@@ -99,8 +99,6 @@ void BattleFeedback::begin(const ActionResult &result, const BattleState &state)
         cacheCaption(lines_[1], widths_[1], battlePass, 4);
         break;
     case ResultKind::EndTurn:
-        cacheCaption(lines_[0], widths_[0], battleTurnEnd, 8);
-        break;
     case ResultKind::UseItem:
     case ResultKind::None:
     default:
@@ -110,8 +108,11 @@ void BattleFeedback::begin(const ActionResult &result, const BattleState &state)
 
 void BattleFeedback::update(bool freshA) {
     if (phase_ != 0) return;
-    if (elapsed_ < 26) ++elapsed_;
-    if (elapsed_ >= 26 || (freshA && elapsed_ >= 4)) phase_ = 1;
+    if (elapsed_ < FEEDBACK_HOLD_TICKS) ++elapsed_;
+    if (elapsed_ >= FEEDBACK_HOLD_TICKS ||
+        (freshA && elapsed_ >= FEEDBACK_MIN_DWELL_TICKS)) {
+        phase_ = 1;
+    }
 }
 
 bool BattleFeedback::done() const { return phase_ != 0; }

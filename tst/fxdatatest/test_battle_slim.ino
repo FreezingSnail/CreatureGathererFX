@@ -62,7 +62,7 @@ static bool reachPlayerReplacement(FxTest &test, uint8_t playerCount) {
                   battle::Side::Player, 0), playerUsesBefore,
                   F("invalidated frozen actor spends no move use"));
 
-    for (uint8_t frame = 0; frame < 40 &&
+    for (uint8_t frame = 0; frame < 80 &&
          !battleSession().awaitingReplacement(); ++frame)
         BattleFlow::update(MENU_EDGE_A);
     test.expectEq(battleSession().awaitingReplacement(), true,
@@ -105,7 +105,7 @@ static bool reachPlayerReplacement(FxTest &test, uint8_t playerCount) {
         battleSession().state().moveUsesSpent[0][selectedOriginal];
 
     // Complete replacement feedback and advance the remaining frozen turn.
-    for (uint8_t frame = 0; frame < 40 && battleSession().isPresenting(); ++frame)
+    for (uint8_t frame = 0; frame < 80 && battleSession().isPresenting(); ++frame)
         BattleFlow::update(MENU_EDGE_A);
     BattleFlow::update(0);
     test.expectEq(static_cast<uint8_t>(battleSession().result().kind),
