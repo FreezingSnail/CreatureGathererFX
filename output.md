@@ -7489,3 +7489,17 @@ test_battlepresentation 311/0, test_stack 4/0 (headroom 484 B);
 `make final-gate` PASS. Shipping 25434/29696 flash (+992 over the 24442
 control), static 1759/2160, stack 484 B. Arena demo 25858/29184 (+1128 over
 24730). Generated artifacts unchanged. Commit 18687aa.
+
+## Feedback pacing + no end-turn line (2026-10-11, follow-up to t8l)
+
+Owner asked to drop the "turn end" line and slow the battle messages.
+`BattleFlow` now acknowledges a non-terminal `EndTurn` result immediately
+(`finishPresentation`, fresh menu, no caption and no dwell); terminal end-turn
+outcomes still present. `BattleFeedback` dropped the unused end-turn caption
+case and now paces with `FEEDBACK_HOLD_TICKS = 42` and
+`FEEDBACK_MIN_DWELL_TICKS = 10` (pre-carve announce pace; previously 26/4).
+
+Commands: `make test` 283210/0 + 258/0; focused FX suites test_battle_slim
+61/0, test_battlesession 88/0, test_arenademo 1870/0, test_battletrainer 36/0,
+test_stack 4/0 (484 B); `make final-gate` PASS. Shipping 25444/29696 flash,
+1759/2160 static; arena demo 25874/29184. Commit 0e16fa3.
