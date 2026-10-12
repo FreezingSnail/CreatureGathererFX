@@ -49,6 +49,52 @@ void setup() {
     test.expectEq(minimumHeadroom >= stack_fx_test_detail::MIN_HEADROOM, true, F("player render preserves stack reserve"));
     Serial.print(F("player render headroom=")); Serial.println(minimumHeadroom);
 
+
+#ifdef CGFX_LURE_WEDGE
+    test.expectEq(lureWorldTilesFrames,64,F("lure scenery has64 render cells"));
+    uint16_t mapHeadroom=65535;
+    for(uint8_t d=0;d<5;++d) {
+        gameState.playerLocation=static_cast<uint16_t>((5u<<8)|11u);
+        WorldEngine::init(worldState());
+        worldState().motion.directionAndFlags=d<4?d:0;
+        worldState().motion.step=d<4?4:0;
+        // Match the motion mask used by normal16px movement.
+        if(d<4) worldState().motion.directionAndFlags |= static_cast<uint8_t>((d==0?3:d==1?2:d==2?4:1)<<3);
+        const ViewOffset offset=WorldEngine::view(worldState());
+        memset(Arduboy2Base::sBuffer,0,1024);
+        const uint16_t base=reinterpret_cast<uint16_t>(&stack_fx_test_detail::__bss_end);
+        const uint16_t top=stack_fx_test_detail::paintStack();
+        drawMapFast(worldState());
+        const uint16_t headroom=stack_fx_test_detail::lowWater(base,top)-base;
+        if(headroom<mapHeadroom)mapHeadroom=headroom;
+        bool matches=true;
+        for(uint8_t y=0;y<64;++y)for(uint8_t x=0;x<128;++x) {
+            const int16_t wx=128+x-offset.x,wy=48+y-offset.y;
+            const uint8_t mx=wx>>4,my=wy>>4;
+            uint24_t address;
+            uint16_t frame;
+            if(mx>=8&&mx<16&&my<8){address=lureWorldTiles+4;frame=my*8+mx-8;}
+            else {
+                uint16_t word;
+                FX::readDataBytes(raw_map_data+(static_cast<uint24_t>(my)*256+mx)*2,reinterpret_cast<uint8_t *>(&word),2);
+                if(TileProps::tileId(word)==0) {
+                    if((Arduboy2Base::sBuffer[(y>>3)*128+x]>>(y&7))&1)matches=false;
+                    continue;
+                }
+                frame=TileProps::tileId(word)-1;address=tiles;
+            }
+            uint8_t byte;
+            FX::readDataBytes(address+static_cast<uint24_t>(frame)*32+((wy&15)>>3)*16+(wx&15),&byte,1);
+            const uint8_t expected=(byte>>(wy&7))&1;
+            const uint8_t actual=(Arduboy2Base::sBuffer[(y>>3)*128+x]>>(y&7))&1;
+            if(expected!=actual)matches=false;
+        }
+        test.expectEq(matches,true,F("lure map idle and scrolling match packed art"));
+    }
+    test.expectEq(mapHeadroom>=stack_fx_test_detail::MIN_HEADROOM,true,F("lure map render preserves stack reserve"));
+    Serial.print(F("lure map headroom="));Serial.println(mapHeadroom);
+#endif
+
     // A pocket encounter tile fires an encounter under the deterministic roll
     // seam while a lure is deposited, exercising the authored chunk-33 zone.
     item::inventoryAdd(LureZone::inventory(), item::ItemKind::Lure,

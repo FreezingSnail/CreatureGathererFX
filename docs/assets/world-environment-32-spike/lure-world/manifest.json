@@ -1,0 +1,95 @@
+{
+  "reviewOnly": true,
+  "optIn": "CGFX_LURE_WEDGE",
+  "worldOrigin": [
+    8,
+    0
+  ],
+  "size": [
+    128,
+    128
+  ],
+  "renderCell": [
+    16,
+    16
+  ],
+  "sceneryCell": [
+    32,
+    32
+  ],
+  "frames": 64,
+  "source": "images/LureWorld_16x16.png",
+  "artSource": "habitats/lure-clarity/atlas32.png",
+  "mechanics": "Existing map and properties unchanged",
+  "terrain": {
+    "biome": 1,
+    "map": [
+      "00000000",
+      "00000000",
+      "01111110",
+      "00111100",
+      "00111100",
+      "00111100",
+      "00111100",
+      "00001000"
+    ]
+  },
+  "container": [
+    9,
+    2
+  ],
+  "plant": [
+    14,
+    2
+  ],
+  "views": [
+    {
+      "name": "boot",
+      "playerLocation": [
+        11,
+        5
+      ],
+      "facing": "down",
+      "camera": [
+        0,
+        48
+      ],
+      "playerScreen": [
+        56,
+        24
+      ]
+    },
+    {
+      "name": "container",
+      "playerLocation": [
+        10,
+        2
+      ],
+      "facing": "left",
+      "camera": [
+        -16,
+        0
+      ],
+      "playerScreen": [
+        56,
+        24
+      ]
+    },
+    {
+      "name": "plant",
+      "playerLocation": [
+        13,
+        2
+      ],
+      "facing": "right",
+      "camera": [
+        32,
+        0
+      ],
+      "playerScreen": [
+        56,
+        24
+      ]
+    }
+  ]
+}

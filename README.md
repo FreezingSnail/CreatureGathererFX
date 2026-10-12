@@ -46,6 +46,15 @@ upload, connect USB, hold DOWN while resetting the Arduboy, then start the uploa
 bootloader is active; shipping startup also checks DOWN and transfers to the bootloader. If that
 path does not enter the bootloader, double-tap reset and start the upload promptly.
 
+## Lure world scenery (opt-in)
+
+`make lure-demo ARDENS=/path/to/Ardens` uses the revised dithered habitat scenery
+in the existing lure clearing.32px environment artwork is baked into16px render
+cells; sparse white ground, connected foliage and the original16px player preserve
+the current movement scale. The box, plant, collision and encounter/lure data stay
+at their existing locations. Normal shipping world art is unchanged.
+See [native previews and art notes](docs/world-environment-32-spike.html#lure-world).
+
 ## World script profile
 
 Shipping world interactions use the compact `If`, `TpIf`, and `End` profile

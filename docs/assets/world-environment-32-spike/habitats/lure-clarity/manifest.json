@@ -1,0 +1,35 @@
+{
+  "reviewOnly": true,
+  "source": "concept.png",
+  "sourceSize": [
+    1261,
+    1247
+  ],
+  "sheet": [
+    128,
+    128
+  ],
+  "cell": [
+    32,
+    32
+  ],
+  "columns": 4,
+  "rows": 4,
+  "tiles": 16,
+  "palette": [
+    "#000000",
+    "#ffffff"
+  ],
+  "opaque": true,
+  "export": "Authored source row bands and ink bounds fitted to30px scenery or16px fixtures; area-weighted fixed128 binary threshold; no added Bayer noise.",
+  "blackPixels": 3405,
+  "whitePixels": 12979,
+  "raw1bppBytes": 2048,
+  "alignmentAndSeamsCertified": false,
+  "rowThemes": [
+    "Canopy silhouettes",
+    "Shrubs and roots",
+    "Small interaction fixtures",
+    "Boundary props"
+  ]
+}

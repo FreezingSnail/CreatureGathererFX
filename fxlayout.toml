@@ -92,6 +92,11 @@ source = { image = { path = "images/Battleoptions48_128x16.png", width = 128, he
 name = "worldPlayerSprites"
 source = { image = { path = "images/Playerchibi_16x16.png", width = 16, height = 16, shades = 2, spacing = 0 } }
 
+# Append opt-in lure scenery; all existing field addresses stay fixed.
+[[entry]]
+name = "lureWorldTiles"
+source = { image = { path = "images/LureWorld_16x16.png", width = 16, height = 16, shades = 2, spacing = 0 } }
+
 [save]
 sectors = 8
 
