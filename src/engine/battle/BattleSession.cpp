@@ -250,9 +250,9 @@ bool BattleSession::submitIntent(MenuIntent intent)
             action = {ActionKind::Attack, intent.index};
             break;
         case MenuIntentKind::SelectParty:
-            // Party selection is reserved for the forced-replacement phase.
-            // Voluntary switching is removed from both player and AI policy.
-            return false;
+            if (!canSwitch(state_, Side::Player, intent.index)) return false;
+            action = {ActionKind::Switch, intent.index};
+            break;
         case MenuIntentKind::Pass:
 #ifndef __AVR__
             for (uint8_t slot = 0; slot < 4; ++slot)
@@ -340,7 +340,18 @@ bool BattleSession::advance()
         }
 
         const BattleAction action = cursor_.plan.action[actorIndex];
-        resolveAction(state_, actor, action, rng_, result_);
+        if (action.kind == ActionKind::Switch) {
+            // Switch transitions are setup-owned and fast priority; the
+            // opponent locks itself out of a second consecutive switch.
+            const bool switched =
+                applySwitch(state_, actor, action.index, false, result_);
+            if (switched && actor == Side::Opponent) {
+                state_.switchLockMask |= static_cast<uint8_t>(1u << actorIndex);
+            }
+        } else {
+            resolveAction(state_, actor, action, rng_, result_);
+            state_.switchLockMask &= static_cast<uint8_t>(~(1u << actorIndex));
+        }
 
         if (result_.flags & PLAYER_FAINTED) {
             cursor_.invalidMask |= INVALID_PLAYER;

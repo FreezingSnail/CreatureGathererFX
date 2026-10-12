@@ -93,6 +93,7 @@ uint16_t stagedSpeed(const Combatant &combatant)
 uint8_t actionPriority(ActionKind kind)
 {
     switch (kind) {
+    case ActionKind::Switch:
     case ActionKind::Gather:
     case ActionKind::Escape:
         return 1;

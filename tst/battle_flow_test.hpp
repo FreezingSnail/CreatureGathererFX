@@ -65,7 +65,8 @@ struct FeedbackRun {
 
 FeedbackRun runFeedback(bool accelerate) {
     beginTrainer();
-    BattleFlow::update(0); // Open the move page.
+    BattleFlow::update(0); // Prepare the options page.
+    BattleFlow::update(MENU_EDGE_A); // Open the four-slot move page.
     BattleFlow::update(MENU_EDGE_A); // Submit the default usable move.
     BattleFlow::update(0); // Resolve once and begin feedback.
 
@@ -120,9 +121,14 @@ inline void BattleFlowControllerTest(TestSuite &suite) {
                 "feedback timing preserves move uses");
 
     beginTrainer();
-    test.assert(BattleFlow::update(0), false, "trainer enters compact move page");
+    test.assert(BattleFlow::update(0), false,
+                "trainer enters the compact options page");
     test.assert(modeState.battle.ui.menu.initialized(), true,
                 "menu state is initialized on the choice boundary");
+    test.assert(BattleFlow::update(MENU_EDGE_A), false,
+                "A on MOVE opens the four-slot move page");
+    test.assert(battleSession().result().kind, battle::ResultKind::None,
+                "opening the move page does not resolve");
     test.assert(BattleFlow::update(MENU_EDGE_A), false,
                 "fresh A submits one move without resolving in that frame");
     test.assert(battleSession().result().kind, battle::ResultKind::None,
@@ -148,25 +154,44 @@ inline void BattleFlowControllerTest(TestSuite &suite) {
     exitBattle();
     gameState.state = GameState_t::WORLD;
 
+    // CHANGE routes a voluntary switch through the session.
+    beginTrainer();
+    BattleFlow::update(0); // Prepare the options page.
+    BattleFlow::update(MENU_NAV_DOWN);
+    BattleFlow::update(MENU_EDGE_A);
+    test.assert(modeState.battle.ui.menu.partyPending(), false,
+                "flow caches the party rows on the CHANGE transition");
+    test.assert(BattleFlow::update(MENU_EDGE_A), false,
+                "party row submits a voluntary switch");
+    test.assert(battleSession().isPresenting(), false,
+                "switch selection does not resolve in the same frame");
+    BattleFlow::update(0);
+    test.assert(battleSession().result().kind, battle::ResultKind::Switch,
+                "voluntary switch resolves as its own result");
+    test.assert(battleSession().state().activeSlot[0] != 0, true,
+                "voluntary switch changes the active slot");
+    exitBattle();
+    gameState.state = GameState_t::WORLD;
+
     beginWild();
     terminalCallbacks = 0;
     callbackOutcome = battle::Outcome::None;
-    BattleFlow::update(0); // Prepare moves; the entry edge is discarded.
-    BattleFlow::update(MENU_EDGE_B); // Open actions, default Gather selection.
+    BattleFlow::update(0); // Prepare options; the entry edge is discarded.
+    BattleFlow::update(MENU_NAV_RIGHT); // Gather cell.
     BattleFlow::update(MENU_EDGE_A); // Submit Gather.
     BattleFlow::update(0); // Resolve one action.
     test.assert(battleSession().result().kind, battle::ResultKind::Gather,
-                "wild action page routes Gather through the session");
+                "wild options page routes Gather through the session");
     test.assert(battleSession().isPresenting(), true,
                 "gather result uses the same feedback phase");
     finishActionTurn();
-    BattleFlow::update(0); // Prepare the next move page.
-    BattleFlow::update(MENU_EDGE_B);
+    BattleFlow::update(0); // Prepare the next options page.
+    BattleFlow::update(MENU_NAV_DOWN);
     BattleFlow::update(MENU_NAV_RIGHT);
     BattleFlow::update(MENU_EDGE_A);
     BattleFlow::update(0);
     test.assert(battleSession().result().kind, battle::ResultKind::Escape,
-                "wild action page routes Escape through the session");
+                "wild options page routes Escape through the session");
     test.assert(battleSession().result().outcome, battle::Outcome::Escaped,
                 "successful escape is terminal");
     test.assert(BattleFlow::update(0, onTerminal), false,

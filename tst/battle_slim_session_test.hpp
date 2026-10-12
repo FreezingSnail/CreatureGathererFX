@@ -48,17 +48,28 @@ inline void prepareKnockout(BattleSession &session)
     state.moveUsesSpent[static_cast<uint8_t>(Side::Player)][2] = 1;
 }
 
-inline void VoluntarySwitchIsRejected(TestSuite &suite)
+inline void VoluntarySwitchIsAccepted(TestSuite &suite)
 {
     using namespace battle;
     Test test(__func__);
     BattleSession session;
     prepareKnockout(session);
 
+    battle::BattleState &state = session.stateForTest();
+    state.active[static_cast<uint8_t>(Side::Player)].hp = 40;
+    test.assert(session.submitIntent({MenuIntentKind::SelectParty, 2}), true,
+                "ordinary action choice accepts a living original bench slot");
     test.assert(session.submitIntent({MenuIntentKind::SelectParty, 1}), false,
-                "ordinary action choice rejects voluntary party selection");
-    test.assert(session.submitIntent({MenuIntentKind::SelectMove, 0}), true,
-                "ordinary move action remains available after rejected switch");
+                "a fainted original bench slot is rejected");
+    test.assert(session.advance(), true,
+                "switch emits one transition result");
+    test.assert(static_cast<uint8_t>(session.result().kind),
+                static_cast<uint8_t>(ResultKind::Switch),
+                "switch result owns the presentation phase");
+    test.assert(state.activeSlot[static_cast<uint8_t>(Side::Player)],
+                static_cast<uint8_t>(2),
+                "incoming creature occupies its original bench slot");
+    session.finishPresentation();
     suite.addTest(test);
 }
 
@@ -286,7 +297,7 @@ inline void OpponentReplacementIsForced(TestSuite &suite)
 inline void BattleSlimSessionSuite(TestRunner &runner)
 {
     TestSuite suite("Slim battle session and replacement policy");
-    VoluntarySwitchIsRejected(suite);
+    VoluntarySwitchIsAccepted(suite);
     KnockoutReplacementPolicy(suite);
     TwoBenchReplacementUsesPolicy(suite);
     ReplacementRowsMapAroundMiddleActiveSlot(suite);

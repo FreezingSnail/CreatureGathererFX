@@ -179,7 +179,9 @@ __attribute__((noinline)) inline Boundary runToBoundary(RunTrace &trace) {
             }
             if (result.kind == battle::ResultKind::Switch &&
                 result.actor == battle::Side::Opponent) {
-                ++trace.opponentReplacements;
+                if (result.flags & battle::FORCED_SWITCH) {
+                    ++trace.opponentReplacements;
+                }
                 trace.authoredMoves = trace.authoredMoves && opponentAuthoredMoves();
             }
             // Draw once per begun result: enough to prove the shared draw path
@@ -200,6 +202,7 @@ __attribute__((noinline)) inline Boundary runToBoundary(RunTrace &trace) {
 // choice boundary and submit the lowest usable move.
 __attribute__((noinline)) inline void chooseMove() {
     BattleFlow::update(0);
+    BattleFlow::update(MENU_EDGE_A);
     BattleFlow::update(MENU_NAV_RIGHT);
     BattleFlow::update(MENU_EDGE_A);
 }
@@ -256,9 +259,14 @@ __attribute__((noinline)) inline void trainerSpike(FxTest &test) {
     FxReadCounter::resetFrame();
     test.expectEq(BattleFlow::update(0), false, F("choice opens without exit"));
     test.expectEq(modeState.battle.ui.menu.initialized(), true,
-                  F("compact move page open"));
+                  F("compact options page open"));
     test.expectEq(FxReadCounter::count() > 0, true,
                   F("menu transition caches move metadata"));
+
+    FxReadCounter::resetFrame();
+    test.expectEq(BattleFlow::update(MENU_EDGE_A), false,
+                  F("A on MOVE opens the four-slot page"));
+    test.expectEq(FxReadCounter::count(), 0, F("page change is metadata-free"));
 
     FxReadCounter::resetFrame();
     test.expectEq(BattleFlow::update(MENU_EDGE_A), false,
@@ -358,14 +366,14 @@ __attribute__((noinline)) inline void trainerActionRestrictions(FxTest &test) {
     beginPreset(BattlePresets::opening);
     const uint8_t hpBefore = battleSession().state().active[0].hp;
     BattleFlow::update(0);
-    BattleFlow::update(MENU_EDGE_B);
-    BattleFlow::update(MENU_EDGE_A);
-    test.expectEq(battleSession().isPresenting(), false,
-                  F("disabled escape cell does not resolve"));
-    BattleFlow::update(MENU_NAV_LEFT);
+    BattleFlow::update(MENU_NAV_RIGHT);
     BattleFlow::update(MENU_EDGE_A);
     test.expectEq(battleSession().isPresenting(), false,
                   F("disabled gather cell does not resolve"));
+    BattleFlow::update(MENU_NAV_DOWN);
+    BattleFlow::update(MENU_EDGE_A);
+    test.expectEq(battleSession().isPresenting(), false,
+                  F("disabled escape cell does not resolve"));
     test.expectEq(static_cast<uint8_t>(battleSession().result().kind),
                   static_cast<uint8_t>(battle::ResultKind::None),
                   F("no action submitted from a disabled cell"));
@@ -429,9 +437,10 @@ __attribute__((noinline)) inline void trainerForcedReplacement(FxTest &test) {
 
     BattleFlow::update(0);
     test.expectEq(modeState.battle.ui.menu.initialized(), true,
-                  F("compact move page ready for the frozen action"));
+                  F("compact options page ready for the frozen action"));
     const uint8_t playerUsesBefore = battle::remainingMoveUses(
         battleSession().state(), battle::Side::Player, 0);
+    BattleFlow::update(MENU_EDGE_A);
     BattleFlow::update(MENU_EDGE_A);
     test.expectEq(battleSession().isPresenting(), false,
                   F("selection does not resolve in the same frame"));
@@ -520,9 +529,8 @@ __attribute__((noinline)) inline void wildControllerReturn(FxTest &test) {
 
     BattleFlow::update(0);
     test.expectEq(modeState.battle.ui.menu.initialized(), true,
-                  F("wild choice opens the compact page"));
-    BattleFlow::update(MENU_EDGE_B);
-    BattleFlow::update(MENU_NAV_LEFT);
+                  F("wild choice opens the compact options page"));
+    BattleFlow::update(MENU_NAV_RIGHT);
     BattleFlow::update(MENU_EDGE_A);
     test.expectEq(battleSession().isPresenting(), false,
                   F("non-gatherable Gather cell is inert"));
@@ -530,7 +538,7 @@ __attribute__((noinline)) inline void wildControllerReturn(FxTest &test) {
                   static_cast<uint8_t>(battle::ResultKind::None),
                   F("disabled wild Gather does not resolve"));
 
-    BattleFlow::update(MENU_NAV_RIGHT);
+    BattleFlow::update(MENU_NAV_DOWN);
     BattleFlow::update(MENU_EDGE_A);
     BattleFlow::update(0);
     test.expectEq(static_cast<uint8_t>(battleSession().result().kind),

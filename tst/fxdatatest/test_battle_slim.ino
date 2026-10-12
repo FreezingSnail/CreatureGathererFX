@@ -39,9 +39,10 @@ static bool reachPlayerReplacement(FxTest &test, uint8_t playerCount) {
     state.partyModifiers[0][1] = 0x15;
     state.partyModifiers[0][2] = 0x2a;
 
-    BattleFlow::update(0); // Open the real move menu.
+    BattleFlow::update(0); // Open the options page.
     test.expectEq(modeState.battle.ui.menu.initialized(), true,
-                  F("battle flow initializes the move menu"));
+                  F("battle flow initializes the compact menu"));
+    BattleFlow::update(MENU_EDGE_A); // Open the move page.
     const uint8_t playerUsesBefore = battle::remainingMoveUses(
         battleSession().state(), battle::Side::Player, 0);
     const uint8_t activeSpentBefore = state.moveUsesSpent[0][0];
@@ -153,6 +154,7 @@ void setup() {
     BattleFlow::update(0); // Initialize direct menu once at the choice boundary.
     test.expectEq(modeState.battle.ui.menu.initialized(), true,
                   F("trainer turn initializes compact menu"));
+    BattleFlow::update(MENU_EDGE_A); // Open the move page.
     BattleFlow::update(MENU_EDGE_A);
     test.expectEq(battleSession().isPresenting(), false,
                   F("selection edge does not also resolve"));
@@ -170,29 +172,56 @@ void setup() {
     battle::BattleScene::draw(battleSession().state());
     modeState.battle.ui.menu.draw();
 
-    // The actions page blits the packed gather/escape label rasters. The raw
-    // menu text blocks under MenuFXData render as pixel garbage.
+    // The options root blits the packed four-item battleOptions48 art; the
+    // cursor selects its matching frame.
     battle::MoveSnapshot noMoves = {};
     for (uint8_t slot = 0; slot < 4; ++slot) {
         noMoves.moveIds[slot] = EMPTY_MOVE_ID;
         noMoves.remainingUses[slot] = 0;
     }
     battle::BattleMenu actions;
-    actions.beginMoves(noMoves, false, false);
-    actions.update(MENU_EDGE_B);
+    actions.beginOptions(noMoves, false, false);
     arduboy.clear();
     actions.draw();
-    uint8_t label[35];
-    FX::readDataBytes(gather + 35, label, 35);
-    bool gatherPixels = true;
-    for (uint8_t c = 0; c < 35; ++c)
-        if (Arduboy2Base::sBuffer[7 * 128 + 4 + c] != label[c]) gatherPixels = false;
-    test.expectEq(gatherPixels, true, F("actions page blits the packed gather label"));
-    FX::readDataBytes(escape + 35, label, 35);
-    bool escapePixels = true;
-    for (uint8_t c = 0; c < 35; ++c)
-        if (Arduboy2Base::sBuffer[7 * 128 + 68 + c] != label[c]) escapePixels = false;
-    test.expectEq(escapePixels, true, F("actions page blits the packed escape label"));
+    uint8_t art[256];
+    FX::readDataBytes(battleOptions48 + 4, art, 256);
+    bool optionsPixels = true;
+    for (uint16_t i = 0; i < 256; ++i)
+        if (Arduboy2Base::sBuffer[6 * 128 + i] != art[i]) optionsPixels = false;
+    test.expectEq(optionsPixels, true,
+                  F("options page blits the packed four-item menu art"));
+    actions.update(MENU_NAV_RIGHT);
+    arduboy.clear();
+    actions.draw();
+    FX::readDataBytes(battleOptions48 + 4 + 256, art, 256);
+    bool cursorPixels = true;
+    for (uint16_t i = 0; i < 256; ++i)
+        if (Arduboy2Base::sBuffer[6 * 128 + i] != art[i]) cursorPixels = false;
+    test.expectEq(cursorPixels, true,
+                  F("options cursor selects the matching art frame"));
+
+    // CHANGE opens the pending party page; its rows cache living bench names.
+    actions.update(MENU_NAV_LEFT);
+    actions.update(MENU_NAV_DOWN);
+    actions.update(MENU_EDGE_A);
+    test.expectEq(actions.partyPending(), true,
+                  F("CHANGE opens the pending party page"));
+    battle::BattleView partyView = {};
+    partyView.partyCount[0] = 3;
+    partyView.activeSlot[0] = 0;
+    partyView.party[0][0] = {0, 10, 1};
+    partyView.party[0][1] = {1, 12, 1};
+    partyView.party[0][2] = {2, 14, 1};
+    FxReadCounter::resetFrame();
+    actions.beginParty(partyView);
+    test.expectEq(FxReadCounter::count(), static_cast<uint8_t>(2),
+                  F("party transition caches both living bench names"));
+    const MenuIntent party = actions.update(MENU_EDGE_A);
+    test.expectEq(static_cast<uint8_t>(party.kind),
+                  static_cast<uint8_t>(MenuIntentKind::SelectParty),
+                  F("party row emits SelectParty"));
+    test.expectEq(party.index, static_cast<uint8_t>(1),
+                  F("first party row keeps its original bench slot"));
 #if !CGFX_BATTLE_AUTO_REPLACE
     battle::ReplacementChoices choices = {};
     choices.count = 2;

@@ -237,8 +237,12 @@ inline void BattleResolveIntegrationTest(TestSuite &suite)
     test.assert(firstMover(state, plan), Side::Player,
                 "normal order uses staged speed without narrow overflow");
     plan.action[1] = {ActionKind::Switch, 1};
+    test.assert(firstMover(state, plan), Side::Opponent,
+                "fast opponent switch beats normal player attack");
+    plan.action[0] = {ActionKind::Switch, 1};
+    plan.action[1] = {ActionKind::Attack, 0};
     test.assert(firstMover(state, plan), Side::Player,
-                "unsupported switch intent does not outrank normal speed");
+                "fast player switch beats normal opponent attack");
     plan.action[0] = {ActionKind::Attack, 0};
     plan.action[1] = {ActionKind::Attack, 0};
     state.active[1].stats.speed = 250;

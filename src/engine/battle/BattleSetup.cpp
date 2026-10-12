@@ -61,6 +61,7 @@ void clearState(BattleState &state)
     state.gatherable = false;
     state.trainer = false;
     state.over = false;
+    state.switchLockMask = 0;
     state.trainerId = 255;
 }
 
