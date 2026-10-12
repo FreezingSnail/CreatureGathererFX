@@ -31,7 +31,7 @@ perturbed_layout=$fixtures/fxlayout-expand-20-perturbed.toml
 # reads it from the RAM property window instead of a per-press FX word read.
 # jp8.10 appends the six-line lure-demo intro card strings to the text block.
 # Append64 opaque lure-world render cells; all745392 prior payload bytes match the control.
-expected=c4a2e401f1cdcadc2a0e523e841edcbe4135310e603ff45d4bb772fe1804bc61
+expected=c024abf4a7f47a665f724cfa83402f3e48b4c6b2184706bc57ba1ae8f84ba7f9
 
 for layout in "$old_layout" "$new_layout" "$perturbed_layout"; do
     test -f "$layout" || {

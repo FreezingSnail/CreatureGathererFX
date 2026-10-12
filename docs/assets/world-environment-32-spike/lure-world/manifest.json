@@ -2,11 +2,11 @@
   "reviewOnly": true,
   "optIn": "CGFX_LURE_WEDGE",
   "worldOrigin": [
-    8,
+    4,
     0
   ],
   "size": [
-    128,
+    192,
     128
   ],
   "renderCell": [
@@ -17,21 +17,28 @@
     32,
     32
   ],
-  "frames": 64,
+  "frames": 96,
   "source": "images/LureWorld_16x16.png",
   "artSource": "habitats/lure-clarity/atlas32.png",
+  "fixtureSource": "habitats/lure-clarity/atlas32.png",
+  "sceneryIds": [
+    0,
+    1,
+    2,
+    3
+  ],
   "mechanics": "Existing map and properties unchanged",
   "terrain": {
     "biome": 1,
     "map": [
-      "00000000",
-      "00000000",
-      "01111110",
-      "00111100",
-      "00111100",
-      "00111100",
-      "00111100",
-      "00001000"
+      "000000000000",
+      "000000000000",
+      "001101111110",
+      "001100111100",
+      "001100111100",
+      "001100111100",
+      "001100111100",
+      "001100001000"
     ]
   },
   "container": [
@@ -51,7 +58,7 @@
       ],
       "facing": "down",
       "camera": [
-        0,
+        64,
         48
       ],
       "playerScreen": [
@@ -67,7 +74,7 @@
       ],
       "facing": "left",
       "camera": [
-        -16,
+        48,
         0
       ],
       "playerScreen": [
@@ -83,7 +90,7 @@
       ],
       "facing": "right",
       "camera": [
-        32,
+        96,
         0
       ],
       "playerScreen": [

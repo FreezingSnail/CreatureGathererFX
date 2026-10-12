@@ -4,15 +4,15 @@ import fs from 'node:fs';
 import {decodePng} from '../creature-sprite-export.mjs';
 const root='docs/assets/world-environment-32-spike/lure-world';
 const atlas=decodePng(fs.readFileSync('images/LureWorld_16x16.png'));
-test('playable lure artwork packs every16px render cell exactly from the128px scene',()=>{
- assert.deepEqual([atlas.width,atlas.height],[128,128]);
+test('playable lure artwork packs every16px render cell including the western approach',()=>{
+ assert.deepEqual([atlas.width,atlas.height],[192,128]);
  const header=fs.readFileSync('src/fxdata.h','utf8');
  const address=parseInt(header.match(/constexpr uint24_t lureWorldTiles = 0x([0-9A-F]+);/)[1],16);
  const packed=fs.readFileSync('dist/fxdata-data.bin');
  assert.deepEqual([...packed.subarray(address,address+4)],[0,16,0,16]);
- for(let frame=0;frame<64;frame++)for(let page=0;page<2;page++)for(let x=0;x<16;x++){
+ for(let frame=0;frame<96;frame++)for(let page=0;page<2;page++)for(let x=0;x<16;x++){
    let expected=0;for(let bit=0;bit<8;bit++){
-    const i=(((Math.floor(frame/8)*16+page*8+bit)*128+frame%8*16+x)*4);
+    const i=(((Math.floor(frame/12)*16+page*8+bit)*192+frame%12*16+x)*4);
     assert.ok(atlas.pixels[i]===0||atlas.pixels[i]===255);assert.equal(atlas.pixels[i+3],255);
     expected|=(atlas.pixels[i]===255?1:0)<<bit;
    }
@@ -23,7 +23,7 @@ test('pocket mechanics and docs presets retain box, plant, exit and native playe
  const map=JSON.parse(fs.readFileSync('maps/world_map.json'));
  assert.equal(map.tiles[2][9],545);assert.equal(map.tiles[2][14],551);assert.equal(map.tiles[7][12],275);
  const manifest=JSON.parse(fs.readFileSync(`${root}/manifest.json`));
- assert.deepEqual(manifest.worldOrigin,[8,0]);assert.equal(manifest.frames,64);
+ assert.deepEqual(manifest.worldOrigin,[4,0]);assert.equal(manifest.frames,96);
  for(const v of manifest.views){const image=decodePng(fs.readFileSync(`${root}/${v.name}.png`));assert.deepEqual([image.width,image.height],[128,64]);assert.deepEqual(v.playerScreen,[56,24]);}
  const scene=decodePng(fs.readFileSync(`${root}/terrain.png`));assert.deepEqual(scene.pixels,atlas.pixels);
 });
@@ -39,4 +39,10 @@ test('lure interaction fixtures retain quiet highlights and native16px silhouett
   assert.ok(black>=20&&black<150,'fixture retains its shape without becoming a solid dark blob');
   assert.ok(insideWhite>100,'fixture has quiet white highlights');
  }
+});
+test('lure scenery and fixtures share the clear native atlas across the western approach',()=>{
+ const manifest=JSON.parse(fs.readFileSync(root+'/manifest.json'));
+ assert.equal(manifest.artSource,'habitats/lure-clarity/atlas32.png');
+ assert.equal(manifest.fixtureSource,manifest.artSource);
+ assert.deepEqual(manifest.sceneryIds,[0,1,2,3]);
 });
