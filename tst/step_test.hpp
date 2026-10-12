@@ -122,7 +122,7 @@ void LureStepTest(TestSuite &suite) {
     LureZone::clear();
     LureZone::deposit(LureZone::lureId(0, 0));
     const uint8_t charge = LureZone::charge();
-    test.assert(charge, static_cast<uint8_t>(4), "tier-zero deposit charge");
+    test.assert(charge, static_cast<uint8_t>(16), "tier-zero deposit charge");
     for (uint8_t step = 0; step + 1 < charge; ++step) onStep(0x0209);
     test.assert(LureZone::charge(), static_cast<uint8_t>(1),
                 "step hook decays one charge per step");
@@ -130,7 +130,8 @@ void LureStepTest(TestSuite &suite) {
     onStep(0x0209);
     test.assert(LureZone::active(), false, "step hook expires the lure");
 
-    // 25% gate: a high roll refuses, a low roll enters battle.
+    // 10% gate: a high roll refuses, a low roll enters battle, and the 9/10
+    // boundary splits enter (9) from refuse (10).
     player.basic();
     for (uint8_t slot = 1; slot < PARTY_SIZE; ++slot) player.party[slot].level = 0;
     player.party[0].level = 5;
@@ -141,11 +142,24 @@ void LureStepTest(TestSuite &suite) {
     forcedRoll = 99;
     onStep(0x0209);
     test.assert(gameState.state, GameState_t::WORLD,
-                "encounter roll above 25% is refused");
+                "encounter roll above 10% is refused");
+    forcedRoll = 10;
+    onStep(0x0209);
+    test.assert(gameState.state, GameState_t::WORLD,
+                "encounter roll at the 10% boundary is refused");
+    forcedRoll = 9;
+    onStep(0x0209);
+    test.assert(gameState.state, GameState_t::BATTLE,
+                "encounter roll at the 10% boundary enters battle");
+    exitBattle();
+    gameState.state = GameState_t::WORLD;
+    gameState.playerLocation = 0x0209;
+    seedInertZone(worldState());
+    fillEncounterWindow(worldState(), 9, 2);
     forcedRoll = 0;
     onStep(0x0209);
     test.assert(gameState.state, GameState_t::BATTLE,
-                "encounter roll below 25% enters battle");
+                "encounter roll below 10% enters battle");
     exitBattle();
 
     // A lure belongs to the authored zones: crossing the pocket's chunk 1 and

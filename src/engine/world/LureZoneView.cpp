@@ -48,6 +48,18 @@ void drawMessage() {
     drawText(2, 56, LureZone::messageAddr(), LureZone::messageWidth(), 0);
 }
 
+// Six-line boot card. Widths are the generated bitmap widths (5 px per glyph,
+// including the legacy leading space); the card fills 128x64.
+void drawIntro() {
+    Blit::fillRect(0, 0, 128, 64, BLACK);
+    drawText(4, 4, lureTextIntroTitle, 50, 0);
+    drawText(4, 14, lureTextIntroSet, 95, 0);
+    drawText(4, 24, lureTextIntroBias, 90, 0);
+    drawText(4, 34, lureTextIntroSteps, 60, 0);
+    drawText(4, 44, lureTextIntroGather, 95, 0);
+    drawText(4, 54, lureTextIntroNoSave, 65, 0);
+}
+
 } // namespace
 
 namespace LureZone {
@@ -55,6 +67,10 @@ namespace LureZone {
 void drawOverlay() {
     if (pickerOpen()) {
         drawPicker();
+        return;
+    }
+    if (introActive()) {
+        drawIntro();
         return;
     }
     if (messageActive()) drawMessage();

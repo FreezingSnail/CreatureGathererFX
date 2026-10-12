@@ -7503,3 +7503,213 @@ Commands: `make test` 283210/0 + 258/0; focused FX suites test_battle_slim
 61/0, test_battlesession 88/0, test_arenademo 1870/0, test_battletrainer 36/0,
 test_stack 4/0 (484 B); `make final-gate` PASS. Shipping 25444/29696 flash,
 1759/2160 static; arena demo 25874/29184. Commit 0e16fa3.
+
+## CreatureGathererFX-192 — 32px environment artwork spike (2026-10-12)
+
+Reviewed installed images/tiles.png and the current combined environment atlas.
+Built-in imagegen produced a new white-base top-down JRPG concept; exact prompt
+and concept retained in docs/assets/world-environment-32-spike/. Export is
+256x256, 64 cells of 32x32, opaque binary black/white; native 4x4 Bayer
+dithering follows area-weighted sampling. 19904 black / 45632 white pixels;
+8192 B raw 1bpp before headers/masks. Viewer has 1x/2x/4x and grid toggle.
+
+Commands: node --check tools/export-environment32-spike.mjs;
+node tools/export-environment32-spike.mjs (PASS); Node native assert check
+(PASS dimensions, binary opaque palette, white majority, exact 4x preview);
+git diff --check (PASS). Original sampled threshold export rejected visually
+because fine generated dither broke up during reduction. Final native Bayer
+export inspected. Alignment/seams and the sideways vertical fence need art
+review before integration. No installed/generated game assets changed; no
+AVR build, make gen, full gate or commit for this review-only artwork pass.
+
+Storage: 38 GiB free; existing build/ remains 4.0 GiB untouched; new retained
+source/prompt/native/preview/manifest total 3.2 MiB. No scratch or compiler
+outputs created, no cleanup needed. Wall time approximately 8 minutes total;
+no workers or build lane used.
+
+## CreatureGathererFX-l6k — browse all artwork spikes (2026-10-12)
+
+Added docs/index.html, a thumbnail gallery for preserved environment/redraw
+versions, latest 32px sheet, NPC/player sprites, creature concepts and battle
+experiments. Preview buttons open a full image dialog with 1x/2x/4x zoom.
+All eleven other docs HTML pages link to the gallery and both environment
+viewers. Historical environment links select their version via query string.
+Updated battle reference generator navigation so rebuilding those pages keeps
+the gallery reachable. Existing viewer controls and artwork preserved.
+
+Validation: Node local-link assertions PASS (12 pages, 78 gallery references);
+inline gallery/32px scripts parse; node --check docs/assets/world-environment-viewer.js
+and tools/generate-battle-reference.mjs PASS;
+node --test tools/tests/world-traversal-viewer_test.mjs: 17 pass, 0 fail;
+git diff --check PASS. No firmware/build/packed assets changed; no AVR gate.
+Wall time approximately 6 minutes; no workers or build outputs. Existing build/
+left untouched; no disposable outputs to clean. Changes remain uncommitted.
+
+## CreatureGathererFX-7lm — player-scale 32px scenery and river village (2026-10-12)
+
+Built-in imagegen expanded the white-ground/dithered art with 16 additional
+32px cells: paths, water banks/bridge, compact 64x32 cottage, garden/bench,
+tree/hedge/rocks/sign. Original sheet retained. New concept and exact prompt
+are under docs/assets/world-environment-32-spike/expansion/. Native sheet
+128x128, binary opaque; 4884 black/11500 white pixels; 2048 B raw1bpp.
+Generator made water dark, land white; water repeats/shore joins remain art
+review items. Export uses area sampling plus native4x4 Bayer dithering.
+
+Authored scene.json has 67 placements on16px layout coordinates,32px art.
+384x256 full scene, three128x64 crops and exact original masked16px player
+facings. Browser shows scene, player-position presets, camera pans/click,
+original/expansion sheets, grid and integer zoom. Gallery links scene and new
+assets. Cottage camera adjusted to retain the entire64x32 house in view.
+
+Commands: node tools/export-environment32-spike.mjs
+docs/assets/world-environment-32-spike/expansion PASS;
+node tools/compose-environment32-scene.mjs PASS;
+node --test tools/tests/environment32-scene_test.mjs 3/3 PASS (binary pixels,
+exact tile composition, exact terrain/player viewport pixels);
+node --check docs/assets/environment32-viewer.js PASS;
+local gallery/viewer reference assertions100/100 PASS; git diff --check PASS.
+Review-only: no AVR build, generation, cart mutation, firmware gate or commit.
+Scene/viewport artwork inspected, browser GUI not used. Wall time ~10 minutes;
+no workers/build lane. Storage38 GiB free, spike assets5.4 MiB total (~2.2 MiB
+added); existing builds untouched; no disposable compiler/staging outputs.
+
+## CreatureGathererFX-k4z — town/city/cave and native device-size view (2026-10-12)
+
+Reused existing80 native32px tiles to author three new384x256 layouts under
+docs/assets/world-environment-32-spike/scenes/:town56placements,city71,cave72.
+Each has3 exact128x64 crops with original16px masked player; river67 retained.
+Viewer selects all4 scenes, dynamically updates crops/player facing, and keeps
+a permanent native128x64CSS-pixel display beside the inspection zoom1/2/4/8x.
+Native frame copies before camera-outline rendering and never scales with zoom.
+Browser pixels do not calibrate physical OLED dimensions. Gallery deep links
+all3 new scenes. No new image generation, shipping assets or firmware changes.
+
+Commands: node tools/compose-environment32-scene.mjs PASS4scenes/12crops;
+node --test tools/tests/environment32-scene_test.mjs
+tools/tests/environment32-viewer_test.mjs PASS14/14;
+node --check tools/compose-environment32-scene.mjs and
+docs/assets/environment32-viewer.js PASS; gallery/viewer local references
+109/109PASS; git diff --check PASS. Artwork scene exports inspected.
+No AVR build/generation/gate or commit for review-only composition work.
+Wall time approximately8minutes, no workers/build lane.38GiB free; spike
+assets5.6MiB total (~0.2MiB added), existing builds untouched, no disposable
+staging/compiler outputs to clean.
+
+## CreatureGathererFX-2rc — simultaneous examples and dark cave (2026-10-12)
+
+All five32px scene variants now visible together:river,town,city,lightcave,
+darkcave. Each card has full arrangement and3native128x64 +2x views.
+Dark variant uses exact CSS palette inversion; camera inspector inverts
+terrain/player before copying game/native frame, keeps outline unflipped.
+No source pixels or new illustration generated. Existing inspector retained.
+Composer publishes cards/data reproducibly from authored scenes.
+
+Commands: node tools/compose-environment32-scene.mjs PASS;
+node --test tools/tests/environment32-scene_test.mjs
+tools/tests/environment32-viewer_test.mjs PASS15/15, including simultaneous
+visibility, native sizing, inversion pipeline and exact source composition.
+git diff --check PASS. No builds/generation or commit. Parent wall time
+approximately4minutes for this slice; overlap with Luna comparison taskrnq.
+No staging/cache outputs; originals retained.
+
+## CreatureGathererFX-jp8.10 — Lure demo playtest fixes (2026-10-12)
+
+Slower encounters, item-model lure life, and a boot intro card.
+
+Changed:
+- src/engine/world/LureZone.hpp: `lureChargeOf(tier)` now forwards
+  `item::lureChargeOf(tier < 2 ? tier : 2)` -> 16/32/64 steps (was 4/8/12).
+  Added `showIntro()/dismissIntro()/introActive()/introInput(buttons)`.
+- src/engine/world/LureZone.cpp: `gIntroActive`; introInput clears on any
+  `PICKER_BTN_*` edge.
+- src/engine/world/StepEvent.cpp: `ENCOUNTER_STEP_PERCENT` 25 -> 10 (comment
+  "One in four" -> "One in ten"). Shared shipping constant, no wedge fork.
+- src/engine/world/World.cpp: runMap freezes and returns while `introActive()`,
+  consuming `pickerButtons()`; picker branch keeps priority after.
+- src/engine/world/LureZoneView.cpp: `drawIntro()` (fill black + six lines,
+  title y=4 then y=14/24/34/44/54, x=4, widths 50/95/90/60/95/65 = the
+  generated bitmap widths); drawOverlay draws it before the message path.
+- CreatureGathererFX.ino: `LureZone::showIntro()` after `seedLureWedge()`.
+- data/text/strings.txt + fxsprites.toml: six `lureTextIntro*` strings/order.
+  `make gen` regenerated src/fxdata.h (only tracked generated change).
+
+Tests:
+- tst/step_test.hpp: tier-zero charge 4->16; add forcedRoll 9 (enter) / 10
+  (refuse) boundary asserts beside 99/0; re-seed cache between battle entries.
+- tst/lure_zone_test.hpp: charge 16/32/64 asserts, tier-2 deposit = 64, intro
+  lifecycle show -> active -> no-op on 0 -> any edge dismisses.
+- tools/tests/fixtures/fxlayout-expand-20.toml: exclude the six new text
+  symbols from the 304-declaration migration proof (same pattern as jp8.9).
+- tools/tests/pack-parity_test.sh: baseline SHA updated to the new packed image
+  (new text block), comment added.
+
+Commands / results (PATH=cgfx-tools bin prefix on every make; ARDENS as given):
+- `make test` PASS: host 283220/0, world 258/0; LureStepTest, LureZoneStateTest,
+  LurePickerTest green including the new asserts.
+- `make testvm` PASS: 343/0.
+- `make gen` PASS; `make verify-generated` PASS (exit 0); `make
+  test-generated-libs` 40+5 PASS; `make test-pack-parity` PASS
+  (expected SHA 3471e18d...b0b622e0).
+- `make fxtest-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_world_player.ino
+  BUILD_DIR=build/lure-demo-fx AVR_FXTEST_CPP_FLAGS="-mrelax -mcall-prologues
+  -fno-move-loop-invariants -mstrict-X -DFX_READ_COUNTER -DCGFX_LURE_WEDGE"`
+  PASS: test_world_player 43/0 (headroom 684), test_stack 4/0, painted
+  headroom 484 (unchanged vs baseline).
+- Lure-demo build `make ram BUILD_DIR=build/lure-demo AVR_SHIPPING_CPP_FLAGS=
+  "-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X
+  -DCGFX_SHIPPING_NO_USB -fno-inline-small-functions -DCGFX_BATTLE_NO_FACTS
+  -DCGFX_LURE_WEDGE" AVR_FLASH_BUDGET=29184` (clean cache, recompiled):
+  flash 24,278 / 29,184 (was 24,086; +192) ; static 1,760 / 2,560
+  (was 1,759; +1); free SRAM 800 B.
+- Plain shipping `make ram BUILD_DIR=build/jp8.9-ram` (clean cache): 25,626 /
+  1,760, free 800. Wedge demo is smaller because it dead-strips the save-load
+  path (no separate plain-shipping delta recorded; dispatch scoped the delta to
+  the demo build).
+
+Deviations: none functional. drawText widths use the generated bitmap widths
+((chars+1)*5, matching jp8.9 callers), not the literal source-string length, so
+no line is clipped. Intro card render is code-verified (host state tests +
+runMap branch); no manual visual check per AGENTS hard rules.
+
+Storage: df 37 GiB free before and after (>10 GiB reserve); build/ 4.0 GiB
+(<5 GiB). Cleaned compiler caches of build/lure-demo, build/jp8.9-ram and the
+device run; no new repo copies. Wall time ~18 min (worker), single build lane.
+
+Do NOT commit/push — orchestrator commits.
+
+## CreatureGathererFX-rnq — Luna existing-world arrangements and comparison (2026-10-12)
+
+Two user-requested gpt-6-luna workers arranged classic16 combined atlas and
+native redrawv4/v5 into town/city/cave. Worker-owned generators:
+node tools/arrange-classic16-spike.mjs and
+node tools/arrange-redraw16-spike.mjs, both PASS. Exact sources, placements,
+view/facing metadata and PNGs retained under docs/assets/world-arranged-comparison/.
+Parent requested one art-readability revision: classic city/cave camera framing
+and redraw city building/cave rock choices. Revised outputs visually inspected.
+Source correspondence/seams remain historical art-review limitations.
+
+Parent node tools/compare-world-arrangements.mjs PASS4sets/16native128x64
+cells and4full-town/city/cave arrangement sheets. Native contact616x328; exact
+2x1232x656. Every set appears on the same docs HTML page with native1x and
+2x previews, plus all full sheets open by default. Gallery links comparison.
+
+LATEST OWNER CORRECTION: player must not invert in dark cave. Dark terrain
+now exported first, followed by original16px masked player. All4sets have
+separate darkcave PNGs; all3views preserve every opaque player pixel and its
+white outline. No CSS whole-frame inversion. Supersedes2rc initial palette
+behavior. Updated composer/inspector/static cards/comparison and documentation.
+
+Commands: node tools/compose-environment32-scene.mjs PASS5scenes/15crops;
+node tools/compare-world-arrangements.mjs PASS;
+node --test tools/tests/environment32-scene_test.mjs
+tools/tests/environment32-viewer_test.mjs
+tools/tests/world-arranged-comparison_test.mjs PASS23/23; local page/gallery
+references201/201PASS; node --check on all5arranger/composer/viewer tools PASS;
+git diff --check PASS. No AVR build/makegen/firmware gate or commit for
+review-only assets. Two Luna worker wall times approximately5minutes each
+including visual revisions; parent/orchestrator approximately12minutes across
+comparison and correction. Retained evidence is native sources/manifests,
+arranger scripts, exact scene PNGs, comparison sheets, permanent tests.
+Storage37GiB free;32pxspike5.7MiB;comparison724KiB. Workers removed their
+temporary enlarged previews; no AVR/cache/staging outputs created. Existing
+build trees untouched. All changes remain uncommitted.

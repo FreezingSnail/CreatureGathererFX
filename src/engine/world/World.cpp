@@ -301,6 +301,11 @@ void WorldEngine::inputFromButtons(WorldTransient &world, uint8_t buttons) {
 
 void WorldEngine::runMap(WorldTransient &world) {
     syncFromLocation(world);
+    // The boot intro card freezes the world; any fresh button edge dismisses it.
+    if (LureZone::introActive()) {
+        LureZone::introInput(pickerButtons());
+        return;
+    }
     // A deposited material picker freezes world movement while it is open.
     if (LureZone::pickerOpen()) {
         LureZone::pickerInput(pickerButtons());

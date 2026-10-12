@@ -24,8 +24,8 @@ bool wildDemoEncounterPending = true;
 Encounter::Rng testRng = nullptr;
 #endif
 
-// One in four encounter-prop steps rolls a wild encounter.
-constexpr uint8_t ENCOUNTER_STEP_PERCENT = 25;
+// One in ten encounter-prop steps rolls a wild encounter.
+constexpr uint8_t ENCOUNTER_STEP_PERCENT = 10;
 
 uint8_t rollRange(uint8_t lower, uint8_t upper) {
 #if defined(TEST) || defined(FX_READ_COUNTER)
