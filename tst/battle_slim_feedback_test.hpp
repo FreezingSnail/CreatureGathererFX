@@ -44,10 +44,10 @@ inline void SlimFeedbackTest(TestSuite &suite)
     test.assert(fxDataFake::lastDataAddress > 0x010000u, true,
                 "cached creature and move addresses retain their high bytes");
     test.assert(feedback.done(), false, "feedback remains through its hold");
-    for (uint8_t tick = 0; tick < 3; ++tick) feedback.update(false);
-    test.assert(feedback.done(), false, "A cannot finish before four ticks");
+    for (uint8_t tick = 0; tick < FEEDBACK_MIN_DWELL_TICKS - 2; ++tick) feedback.update(false);
+    test.assert(feedback.done(), false, "A cannot finish before the minimum dwell");
     feedback.update(true);
-    test.assert(feedback.done(), true, "fresh A finishes after four ticks");
+    test.assert(feedback.done(), true, "fresh A finishes after the minimum dwell");
     feedback.update(false);
     test.assert(feedback.done(), true, "completed feedback stays done");
 
@@ -96,10 +96,10 @@ inline void SlimFeedbackTest(TestSuite &suite)
     test.assert(fxDataFake::lastDataAddress,
                 static_cast<uint32_t>(battleEscaped + 39u),
                 "terminal outcome overrides the action caption");
-    for (uint8_t tick = 0; tick < 25; ++tick) feedback.update(false);
-    test.assert(feedback.done(), false, "terminal feedback holds for 26 ticks");
+    for (uint8_t tick = 0; tick + 1 < FEEDBACK_HOLD_TICKS; ++tick) feedback.update(false);
+    test.assert(feedback.done(), false, "terminal feedback holds for its full dwell");
     feedback.update(false);
-    test.assert(feedback.done(), true, "terminal feedback completes on tick 26");
+    test.assert(feedback.done(), true, "terminal feedback completes on the hold tick");
 
     feedback.begin(result, state);
     FxReadCounter::resetFrame();
