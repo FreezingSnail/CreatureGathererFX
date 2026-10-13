@@ -190,6 +190,45 @@ export function validateSprite(image, size) {
   if (!opaque || !transparent || !white) throw Error('Empty/unmasked sprite');
   return { opaque, transparent, white };
 }
+// Parse a constexpr value (address or geometry size) from src/fxdata.h.
+export function fxdataConstant(header, name) {
+  const match = header.match(new RegExp(`constexpr\\s+u?int(?:8|16|24|32)_t\\s+${name}\\s*=\\s*(0x[0-9A-Fa-f]+|\\d+)`));
+  if (!match) throw Error(`src/fxdata.h does not declare ${name}`);
+  return Number(match[1]);
+}
+// Compare a monochrome source sheet against the bytes cgfx-tools packs into the
+// cart. Frames are row-major (columns = sheet width / frameWidth). Overview
+// sheets store one pixel byte per column per 8-row page; sheets with
+// transparent pixels interleave a pixel and a mask byte ("plus mask"). A pixel
+// bit is set where the source red channel is non-zero, a mask bit where alpha
+// is non-zero. The fxlayout image entries carry a 4-byte big-endian width and
+// height header before the frames; the legacy Sprites.txt sets do not.
+export function packedSheetDiff(sheet, packed, address,
+    { frameWidth, frameHeight, hasHeader = false, plusMask = false }) {
+  const columns = Math.floor(sheet.width / frameWidth);
+  const pages = Math.ceil(frameHeight / 8);
+  const frames = columns * Math.floor(sheet.height / frameHeight);
+  const stride = frameWidth * pages * (plusMask ? 2 : 1);
+  const base = address + (hasHeader ? 4 : 0), diffs = [];
+  for (let frame = 0; frame < frames && diffs.length <= 4; frame++) {
+    const originX = (frame % columns) * frameWidth, originY = Math.floor(frame / columns) * frameHeight;
+    for (let page = 0; page < pages && diffs.length <= 4; page++) for (let x = 0; x < frameWidth && diffs.length <= 4; x++) {
+      let pixel = 0, mask = 0;
+      for (let bit = 0; bit < 8; bit++) {
+        const y = page * 8 + bit;
+        if (y >= frameHeight) continue;
+        const i = ((originY + y) * sheet.width + originX + x) * 4;
+        if (sheet.pixels[i] !== 0) pixel |= 1 << bit;
+        if (plusMask && sheet.pixels[i + 3] !== 0) mask |= 1 << bit;
+      }
+      const at = base + frame * stride + (page * frameWidth + x) * (plusMask ? 2 : 1);
+      if (packed[at] !== pixel || (plusMask && packed[at + 1] !== mask)) {
+        diffs.push({ frame, page, x, pixel, mask, cartPixel: packed[at], cartMask: packed[at + 1] });
+      }
+    }
+  }
+  return { frames, stride, columns, diffs };
+}
 function paste(target, source, ox, oy, scale = 1) {
   for (let y = 0; y < source.height * scale; y++) for (let x = 0; x < source.width * scale; x++) {
     const from = (Math.floor(y / scale) * source.width + Math.floor(x / scale)) * 4;
