@@ -91,6 +91,7 @@ inline void WarpVmTest(TestRunner &runner) {
     compare(bounds, nullptr, 7, 0, 7, false);
     uint8_t slot[128] = {};
     compare(bounds, slot, 7, 0, 7, false);
+#ifndef CGFX_COMPACT_WARP_VM
     for (uint8_t at = 0; at < 126; at += 6) {
         slot[at] = op(VmOpcode::If);
         slot[at+1] = 0;
@@ -102,9 +103,11 @@ inline void WarpVmTest(TestRunner &runner) {
     compare(bounds, slot, 7, 0, 7, false);
     slot[126] = op(VmOpcode::End);
     compare(bounds, slot, 7, 0, 7);
+#endif
     const uint8_t edge[] = {op(VmOpcode::TpIf),0,255,0,255,0,0,0,2,op(VmOpcode::End)};
     std::memset(slot, 0, sizeof(slot)); std::memcpy(slot, edge, sizeof(edge));
     compare(bounds, slot, To1D(255,255), 0, To1D(0,2));
+#ifndef CGFX_COMPACT_WARP_VM
     const uint8_t jump[] = {op(VmOpcode::If),0,0,0,1,255,op(VmOpcode::TpIf),0,1,0,1,0,0,0,0,op(VmOpcode::End)};
     std::memcpy(slot, jump, sizeof(jump));
     compare(bounds, slot, To1D(1,1), 0, To1D(1,1));
@@ -137,6 +140,17 @@ inline void WarpVmTest(TestRunner &runner) {
     std::memcpy(longSlot+180, teleport, sizeof(teleport));
     compare(cap, longSlot, To1D(1,1), 0, To1D(1,1), true, 189);
     suite.addTest(cap);
+#else
+    suite.addTest(bounds);
+    Test branches("validated conditional branches");
+    const uint8_t conditional[] = {op(VmOpcode::If),1,0,0,0,9,
+        op(VmOpcode::TpIf),0,1,0,1,0,0,0,0,op(VmOpcode::End)};
+    std::memset(slot, 0, sizeof(slot));
+    std::memcpy(slot, conditional, sizeof(conditional));
+    compare(branches, slot, To1D(1,1), 0, To1D(0,0));
+    compare(branches, slot, To1D(1,1), 1, To1D(1,1));
+    suite.addTest(branches);
+#endif
     FLAG_BIT_ARRAY[0] = 0;
     runner.addTestSuite(suite);
 }

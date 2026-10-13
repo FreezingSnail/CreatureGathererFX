@@ -40,17 +40,22 @@ void put(std::vector<uint8_t>& image, std::size_t slot,
 
 int main() {
     std::vector<uint8_t> image(kImageSize, 0);
-    put(image, 0, {static_cast<uint8_t>(VmOpcode::If), 1, 2, 3, 4, 5,
-                   static_cast<uint8_t>(VmOpcode::End)});
-    put(image, 32, {static_cast<uint8_t>(VmOpcode::TpIf), 1, 2, 3, 4, 5, 6, 7, 8,
+    put(image, 0, {static_cast<uint8_t>(VmOpcode::If), 0, 0, 0, 1, 9,
+                   static_cast<uint8_t>(VmOpcode::TpIf), 0, 1, 0, 1,
+                   0, 0, 0, 0, static_cast<uint8_t>(VmOpcode::End)});
+    put(image, 32, {static_cast<uint8_t>(VmOpcode::TpIf), 0, 1, 0, 2, 0, 3, 0, 4,
                     static_cast<uint8_t>(VmOpcode::End)});
     put(image, 33, {static_cast<uint8_t>(VmOpcode::End)});
-    require(accepts(image), "canonical three-script image rejected");
+    std::string canonicalError;
+    const bool canonicalAccepted = accepts(image, {0, 0}, &canonicalError);
+    if (!canonicalAccepted) std::cerr << canonicalError << '\n';
+    require(canonicalAccepted, "canonical three-script image rejected");
     require(accepts(std::vector<uint8_t>(kImageSize, 0)), "all-zero image rejected");
 
     image.assign(kImageSize, 0);
-    put(image, 1, {static_cast<uint8_t>(VmOpcode::If), 0xff, 0xff, 0xff, 0xff, 0xff,
-                   static_cast<uint8_t>(VmOpcode::End)});
+    put(image, 1, {static_cast<uint8_t>(VmOpcode::If), 0, 0, 0, 1, 9,
+                   static_cast<uint8_t>(VmOpcode::TpIf), 0, 255, 0, 255,
+                   0, 0, 0, 0, static_cast<uint8_t>(VmOpcode::End)});
     require(accepts(image), "0xFF operands treated as commands");
 
     const uint8_t unsupported[] = {
@@ -73,8 +78,11 @@ int main() {
     image.assign(kImageSize, 0);
     std::vector<uint8_t> noEnd(21 * 6, static_cast<uint8_t>(VmOpcode::If));
     for (std::size_t i = 0; i < 21; ++i) {
-        std::fill(noEnd.begin() + i * 6 + 1,
-                  noEnd.begin() + i * 6 + 6, 1);
+        noEnd[i * 6 + 1] = 0;
+        noEnd[i * 6 + 2] = 0;
+        noEnd[i * 6 + 3] = 0;
+        noEnd[i * 6 + 4] = 1;
+        noEnd[i * 6 + 5] = 1;
     }
     noEnd.push_back(static_cast<uint8_t>(VmOpcode::TpIf));
     noEnd.push_back(1);
@@ -84,6 +92,44 @@ int main() {
     require(!accepts(image, {0, 0}, &diagnostic), "missing-End/truncated slot accepted");
     require(diagnostic.find("slot 9 offset 126") != std::string::npos,
             "truncation diagnostic lacks slot/offset");
+
+    const std::vector<uint8_t> validIf = {
+        static_cast<uint8_t>(VmOpcode::If), 0, 0, 0, 1, 9,
+        static_cast<uint8_t>(VmOpcode::TpIf), 0, 1, 0, 1,
+        0, 0, 0, 0, static_cast<uint8_t>(VmOpcode::End)
+    };
+    const auto rejectsScript = [&](std::vector<uint8_t> script,
+                                   const char* diagnosticText) {
+        image.assign(kImageSize, 0);
+        put(image, 11, script);
+        std::string error;
+        require(!accepts(image, {0, 0}, &error), "invalid compact semantics accepted");
+        require(error.find(diagnosticText) != std::string::npos,
+                "semantic rejection diagnostic mismatch");
+    };
+    auto invalid = validIf;
+    invalid[1] = 2;
+    rejectsScript(invalid, "invalid If condition");
+    invalid = validIf;
+    const std::size_t flagCapacity = sizeof(FLAG_BIT_ARRAY) * 8;
+    invalid[2] = static_cast<uint8_t>(flagCapacity >> 8);
+    invalid[3] = static_cast<uint8_t>(flagCapacity);
+    rejectsScript(invalid, "flag index exceeds generated capacity");
+    invalid = validIf;
+    invalid[4] = 2;
+    rejectsScript(invalid, "invalid If branch encoding");
+    invalid = validIf;
+    invalid[5] = 0;
+    rejectsScript(invalid, "invalid If branch encoding");
+    invalid = validIf;
+    invalid[5] = 8; // Lands inside the final TpIf coordinate.
+    rejectsScript(invalid, "not a command boundary");
+    invalid = validIf;
+    invalid[5] = 100;
+    rejectsScript(invalid, "not a command boundary");
+    invalid = validIf;
+    invalid[7] = 1; // x=257 in the TpIf source coordinate.
+    rejectsScript(invalid, "TpIf coordinate exceeds map bounds");
     require(!accepts(std::vector<uint8_t>(kImageSize - 1, 0)), "short image accepted");
     image.push_back(0);
     require(!accepts(image), "long image accepted");

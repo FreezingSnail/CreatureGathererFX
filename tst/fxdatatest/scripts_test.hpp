@@ -145,6 +145,28 @@ inline void testCompactWarps(FxTest &test, ScriptVm &vm, uint8_t *slot) {
             test.expectEq(FxReadCounter::count(), 1, F("World A reads one FX slot"));
         }
     }
+
+    // Chunk 1625 (tile 200,200) is an authored zero-filled script slot. Run
+    // the actual interaction route to prove a blank chunk leaves gameplay
+    // location and the overlaid movement/facing bytes untouched.
+    const uint16_t emptyLocation=To1D(200,200);
+    const uint16_t emptyChunk=Chunk::chunkOfLocation(emptyLocation);
+    FX::readDataBytes(Chunk::scriptSlotAddr(scripts,emptyChunk),slot,128);
+    bool zeroSlot=true;
+    for(uint8_t at=0;at<128;++at) zeroSlot &= slot[at]==0;
+    test.expectEq(zeroSlot,true,F("empty chunk script is zero-filled"));
+    gameState.playerLocation=emptyLocation;
+    WorldEngine::init(worldState());
+    const WorldMotion savedMotion=worldState().motion;
+    arduboy.currentButtonState=A_BUTTON;
+    arduboy.previousButtonState=0;
+    FxReadCounter::resetFrame();
+    WorldEngine::interact();
+    test.expectEq(gameState.playerLocation,emptyLocation,F("empty chunk interaction is a no-op"));
+    test.expectEq(memcmp(&worldState().motion,&savedMotion,sizeof(savedMotion)),0,
+                  F("empty chunk preserves movement and facing"));
+    test.expectEq(FxReadCounter::count(),1,F("empty chunk reads one FX slot"));
+    arduboy.currentButtonState=arduboy.previousButtonState=0;
 #endif
 
     // Full world mode honors an active popup; compact mode has no popup route.
@@ -179,6 +201,7 @@ inline void testCompactWarps(FxTest &test, ScriptVm &vm, uint8_t *slot) {
 }
 
 inline void testCompactBounds(FxTest &test, ScriptVm &vm, uint8_t *slot) {
+#ifndef CGFX_COMPACT_WARP_VM
     vm.initWarpVM(nullptr,0,0);
     test.expectEq(vm.valid,false,F("null compact slot rejected"));
     vm.runWarpVM();
@@ -231,6 +254,24 @@ inline void testCompactBounds(FxTest &test, ScriptVm &vm, uint8_t *slot) {
     vm.runWarpVM();
     test.expectEq(gameState.playerLocation,To1D(1,1),F("compact runner stops after30 commands"));
     test.expectEq(vm.ptr==longSlot,true,F("compact cap resets cursor"));
+#else
+    memset(slot,0,128);
+    gameState.playerLocation=To1D(17,18);
+    vm.initWarpVM(slot,0,0);
+    vm.runWarpVM();
+    test.expectEq(gameState.playerLocation, To1D(17,18),
+                  F("empty compact slot is a no-op"));
+    memset(slot,0,128);
+    slot[0]=static_cast<uint8_t>(VmOpcode::TpIf);
+    slot[2]=slot[4]=255;
+    slot[8]=2;
+    slot[9]=static_cast<uint8_t>(VmOpcode::End);
+    gameState.playerLocation=To1D(255,255);
+    vm.initWarpVM(slot,0,0);
+    vm.runWarpVM();
+    test.expectEq(gameState.playerLocation, To1D(0,2),
+                  F("compact interpreter reads 255 coordinates"));
+#endif
 }
 
 } // namespace scripts_test_detail
