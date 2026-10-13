@@ -1,0 +1,167 @@
+# First-beta content contract (jp8.11.2).
+#
+# Single machine-readable source for the bounded first area: coordinates,
+# starter party, plant/renewable lure model, the five ten-slot encounter
+# tables, the fixed boss, evolution edges and battle label widths. Dependent
+# beads (jp8.11.3/6/11/13/14/24) generate runtime data from this file; they do
+# not reinterpret these values.
+#
+# Authored subset only (tables, bare keys, strings, ints, bools, int arrays,
+# string arrays) so the native authoring test's small reader and cgfx-tools'
+# TOML parser agree. Keep new content inside this subset.
+
+contract = "first-beta"
+revision = "2026-10-12"
+scope = "beta-area"
+
+# Bounds are inclusive tile coordinates. The area must stay self-contained:
+# empty GID 0 blocks movement, so only cells inside these bounds are authored.
+[area]
+min_x = 8
+max_x = 23
+min_y = 0
+max_y = 11
+start_x = 11
+start_y = 5
+rest_x = 10
+rest_y = 4
+box_x = 9
+box_y = 2
+plant_x = 14
+plant_y = 2
+boss_x = 21
+boss_y = 9
+
+# Ordinary new games start here with an empty bag (no debug grants).
+[party]
+bag_empty = true
+
+[[party.member]]
+species = 0
+level = 3
+full_hp = true
+moves = [8, 9, 10, 11]
+
+[[party.member]]
+species = 3
+level = 3
+full_hp = true
+moves = [12, 13, 14, 15]
+
+[[party.member]]
+species = 6
+level = 3
+full_hp = true
+moves = [4, 5, 6, 7]
+
+# The pocket plant yields one type-0 / tier-1 lure (canonical item id
+# type*3+tier = 1) so a fresh player can gather before any encounter.
+[plant_source]
+lure_type = 0
+lure_tier = 1
+item_id = 1
+count = 1
+
+# Renewable acquisition math: a tier-1 lure gathers at rate 1<<tier = 2/turn.
+# The encounter need is clamp(8 + level/2, 8, 24); levels 2..5 give 9..10, so
+# 2 x 6 = 12 >= 10 within the six-turn flee window, without KO or first-battle
+# luck.
+[renewable]
+lure_type = 0
+lure_tier = 1
+rate = 2
+need_min = 9
+need_max = 10
+turns = 6
+
+# Exactly five ten-slot tables: the base mixed roster plus the four supported
+# lure type groups (LureZone type ids 0..3). Only the first-area species are
+# allowed; placeholder item species (21/22) and later/expansion ids (>=32) are
+# excluded.
+[encounters]
+allowed_species = [0, 3, 6, 9, 10, 12, 13, 14]
+level_min = 2
+level_max = 5
+table_count = 5
+slots_per_table = 10
+
+[[encounters.table]]
+name = "base"
+lure_type = -1
+species = [0, 3, 6, 9, 10, 12, 13, 14, 0, 6]
+
+[[encounters.table]]
+name = "spirit"
+lure_type = 0
+species = [9, 9, 0, 6, 9, 13, 3, 9, 14, 9]
+
+[[encounters.table]]
+name = "water"
+lure_type = 1
+species = [6, 6, 3, 6, 9, 6, 14, 6, 0, 6]
+
+[[encounters.table]]
+name = "wind"
+lure_type = 2
+species = [0, 13, 0, 13, 9, 0, 13, 6, 0, 13]
+
+[[encounters.table]]
+name = "earth"
+lure_type = 3
+species = [3, 14, 3, 14, 9, 3, 14, 6, 3, 14]
+
+# One trainer creature 31 at a fixed level, faced from (boss_x, boss_y). No
+# gathering or escape; a single victory flag gates the ending and no reward is
+# repeated. The flag does not exist yet: jp8.11.13 owns creating it via the
+# generator (do not hand-edit generated flags).
+[boss]
+species = 31
+level = 8
+trainer = true
+gather_allowed = false
+escape_allowed = false
+repeat_reward = false
+victory_flag = "flag_beta_complete"
+
+# Exactly the three named first-stage evolution edges, each at level 8 (which
+# must equal the source creature's authored evelevel). No inferred id adjacency.
+[[evolution.edge]]
+from_id = 0
+to_id = 1
+level = 8
+
+[[evolution.edge]]
+from_id = 3
+to_id = 4
+level = 8
+
+[[evolution.edge]]
+from_id = 6
+to_id = 7
+level = 8
+
+# Battle label widths use the canonical 5-pixel glyph stride, so width is
+# glyph_width * len(text). Text must match the authored creature label in
+# data/text/strings.txt.
+[labels]
+glyph_width = 5
+
+[[labels.creature]]
+species = 0
+text = "SquibbleSnail"
+width = 65
+
+[[labels.creature]]
+species = 3
+text = "SkitterCrab"
+width = 55
+
+[[labels.creature]]
+species = 6
+text = "squid"
+width = 25
+
+[[labels.creature]]
+species = 31
+text = "ardu"
+width = 20
