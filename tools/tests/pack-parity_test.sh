@@ -37,7 +37,12 @@ perturbed_layout=$fixtures/fxlayout-expand-20-perturbed.toml
 # jp8.11.2 authors the first-beta area corridor in maps/world_map.json (walkable
 # pocket floor GID 275 at (12,8) and x12..20,y9), so the raw_map payload and
 # therefore fxdata.bin change; intentional rebaseline.
-expected=94f9f6c95b9aab47036dda8725a22a75d5015f58e5b042bb672e64038b0963bd
+# le5: the native `--project` generator now emits fxdata/generated/map.bin (the
+# chunked big-endian map_data field) from the authored map instead of relying on
+# the stale 2025-06-22 worktree artifact, so the map_data payload and therefore
+# fxdata.bin change. Previous fixture map.bin sha256 de43a603..., regenerated
+# a950e357...; previous cart sha256 94f9f6c9..., regenerated 36a3bd23....
+expected=36a3bd234ff9b6a9b444b5fd1f38f3c671dfffd90918758827c6dc38839fe06b
 
 for layout in "$old_layout" "$new_layout" "$perturbed_layout"; do
     test -f "$layout" || {
