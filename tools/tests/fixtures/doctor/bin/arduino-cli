@@ -1,16 +1,28 @@
 #!/bin/sh
+# Mock arduino-cli for tools/tests/doctor_test.sh (never touches the real toolchain).
+# Env plane (separate, no legacy key drift):
+#   DOCTOR_MOCK_ARDUINO       = missing -> no installed cores and no standalone libs
+#   DOCTOR_MOCK_ARDUINO_LIBS  = missing -> empty standalone `lib list` (core bundles still apply)
+#   DOCTOR_MOCK_ARDUINO_DATA  = data root reported by `config get directories.data`;
+#                               bundled libraries live at
+#                               <root>/packages/<vendor>/hardware/<arch>/<version>/libraries/<lib>
 case "${1:-}" in
     version) printf '%s\n' 'arduino-cli 1.0.0' ;;
     core)
-        if [ "${2:-}" = list ]; then
-            if [ "${DOCTOR_MOCK_ARDUINO:-}" != missing ]; then
-                printf '%s\n' 'arduino:avr 1.0.0 Arduino AVR Boards' 'arduboy-homemade:avr 1.0.0 Arduboy Homemade';
-            fi
+        if [ "${2:-}" = list ] && [ "${DOCTOR_MOCK_ARDUINO:-}" != missing ]; then
+            printf '%s\n' 'arduino:avr 1.0.0 Arduino AVR Boards' 'arduboy-homemade:avr 1.4.0 Arduboy Homemade';
         fi
         ;;
     lib)
-        if [ "${2:-}" = list ] && [ "${DOCTOR_MOCK_ARDUINO:-}" != missing ]; then
+        if [ "${2:-}" = list ] \
+            && [ "${DOCTOR_MOCK_ARDUINO:-}" != missing ] \
+            && [ "${DOCTOR_MOCK_ARDUINO_LIBS:-}" != missing ]; then
             printf '%s\n' 'Arduboy2 7.0.0' 'ArdBitmap 1.0.0';
+        fi
+        ;;
+    config)
+        if [ "${2:-}" = get ] && [ "${3:-}" = directories.data ]; then
+            printf '%s\n' "${DOCTOR_MOCK_ARDUINO_DATA:-/nonexistent-doctor-core-root}"
         fi
         ;;
 esac

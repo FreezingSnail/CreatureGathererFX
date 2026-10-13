@@ -120,7 +120,7 @@ setup:
 		'For manual setup, see each remedy printed by make doctor.'
 
 doctor:
-	@CXX="$(CXX)" ARDUINO_CLI="$(ARDUINO_CLI)" ARDENS="$(ARDENS)" ./tools/doctor.sh
+	@CXX="$(CXX)" ARDUINO_CLI="$(ARDUINO_CLI)" FQBN="$(FQBN)" ARDENS="$(ARDENS)" ./tools/doctor.sh
 
 # Common source files for main tests
 TEST_SOURCES = src/lib/Blit.cpp \
