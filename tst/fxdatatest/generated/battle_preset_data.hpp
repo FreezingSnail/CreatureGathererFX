@@ -37,6 +37,14 @@ const Preset utility BATTLE_PRESET_STORAGE = {
     },
     1
 };
+const Preset beta BATTLE_PRESET_STORAGE = {
+    {
+        { 0, 3, { 8, 9, 10, 11 } },
+        { 3, 3, { 12, 13, 14, 15 } },
+        { 6, 3, { 4, 5, 6, 7 } },
+    },
+    0
+};
 inline Preset copyPreset(const Preset &source) {
 Preset value;
 #ifdef __AVR__

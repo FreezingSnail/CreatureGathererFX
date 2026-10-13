@@ -7987,3 +7987,55 @@ Exact focused verification (from CG; all PASS):
 
 Deviations: recon said emit-tool-version-stamp currently fails/empties; on this worktree `make gen` happened to succeed because gen-data rewrites `tool_version` earlier in the same run, but the latent generator-schema path is now fixed by using `fxdata_tool_version`. `install.sh` untouched (no change required); `toolchain.lock` untouched; no release/tag. No commit/push in either repo (orchestrator commits CG); sibling tool repo left dirty with pre-existing unrelated changes. Worker wall time ≈ 45 min.
 Storage: `df -h .` 22GiB free (>10GiB reserve); reused `build/box-adoption-gate` (57MiB, one lane); no `cgfx-pack.*` stage remained after any run.
+
+## jp8.11.2 — Author and validate the bounded first-area content contract (worker)
+
+FAILING-FIRST (before any change):
+```
+$ node --test tools/tests/beta-area_test.mjs
+Could not find 'tools/tests/beta-area_test.mjs'
+```
+File absent as expected; contract + native validation not yet authored.
+
+STORAGE BEFORE (2026-10-12T21:24 local):
+- `df -h .` 415Gi used / 21Gi avail (>10GiB reserve). `du -sh build` 3.8G; `build/box-adoption-gate` 57M.
+- Worktree @f245462 with pre-existing unrelated dirty files (Makefile, README.md, src/vm/ScriptVM.*, tools/check-world-script-profile.cpp, tools/tests/world-script-profile_test.cpp, tst/fxdatatest/scripts_test.hpp, tst/script_tests/warp_test.hpp) — not touched by this bead.
+
+### jp8.11.2 outcome — PASS (all focused verification green)
+
+Changed files (owned only):
+- `data/beta-area.toml` (new) — the machine-readable first-beta contract: bounds x8..23,y0..11; start(11,5), box(9,2), plant(14,2), rest(10,4), boss(21,9); starter party species 0/3/6 level 3 fullHP with four authored move ids each ([8,9,10,11]/[12,13,14,15]/[4,5,6,7]); empty bag; plant source type0/tier1 item 1; renewable model (rate 2, need 9..10, six turns); five ten-slot encounter tables (base + spirit/water/wind/earth type groups 0..3) over species {0,3,6,9,10,12,13,14} levels 2..5; boss trainer creature 31 level 8, no gather/escape, one flag `flag_beta_complete`, no repeat reward; evolution edges 0->1/3->4/6->7 at level 8; label widths (glyph stride 5: SquibbleSnail 65, SkitterCrab 55, squid 25, ardu 20).
+- `maps/world_map.json` — authored the connected corridor: set GID 275 (walkable+encounter pocket floor) at tiles (12,8) and x12..20,y9 (10 cells). Exactly 10 lines changed; every other byte preserved. Pins kept: tiles[2][9]=545, tiles[2][14]=551, tiles[7][12]=275.
+- `data/battle-presets.toml` — added a `beta` preset (species 0/3/6 level 3, four authored moves each, trainer triple mirrors the roster). Existing opening/switch_drill/utility presets untouched.
+- `tools/tests/beta-area_test.mjs` (new) — native authoring validation (see below).
+- `tools/tests/pack-parity_test.sh` — rebaselined `expected` with provenance (packed bytes changed with the map).
+- (generated via `make gen`) `tst/fxdatatest/generated/battle_preset_data.hpp` gained `BattlePresets::beta`; `fxdata/generated/raw_map.bin` reflects the corridor.
+
+Interfaces exposed to dependent beads:
+- `data/beta-area.toml` schema (TOML subset): `[area]`, `[party]` + `[[party.member]]`, `[plant_source]`, `[renewable]`, `[encounters]` + `[[encounters.table]]`, `[boss]`, `[[evolution.edge]]`, `[labels]` + `[[labels.creature]]`.
+- `BattlePresets::beta` preset symbol (for jp8.11.24 ordinary boot).
+- Boss victory flag name pinned as `flag_beta_complete`; creating it belongs to jp8.11.13 (generated flags not hand-edited).
+
+Failing-first: `node --test tools/tests/beta-area_test.mjs` → `Could not find 'tools/tests/beta-area_test.mjs'` (recorded above before changes).
+
+Exact commands and results (all from repo root; cgfx-tools on PATH, ARDENS set):
+- `node --test tools/tests/beta-area_test.mjs` → tests 10 / pass 10 / fail 0. Initially (pre-gen) the reachability test failed with the intended actionable gate: `stale generated collision at (12,8): raw_map has 0, world_map.json has 275; run \`make gen\``.
+- `make gen BUILD_DIR=build/box-adoption-gate` → `Packed FX image: …/cgfx-pack.<tmp>/dist/fxdata.bin` (6.5 s wall).
+- `make verify-generated BUILD_DIR=build/box-adoption-gate` → exit 0.
+- `make test-generated-libs BUILD_DIR=build/box-adoption-gate` → `generated-libs: 40 passed, 0 failed`, `generated-libs-invariants: 5 passed, 0 failed`, `arena-demo-data: … PASS`, `first-unqualified-alias: 28 passed, 0 failed`.
+- `make test-pack-parity BUILD_DIR=build/box-adoption-gate` → `layout equivalence: PASS`, perturbation PASS, `pack parity: PASS`.
+- `make test-manifest BUILD_DIR=build/box-adoption-gate` → `fxdata-manifest: PASS`, `ensure-generated: PASS`.
+- `node --test tools/tests/lure-world-spike_test.mjs tools/tests/world-arranged-comparison_test.mjs` → 9 pass / 0 fail (map pins held).
+
+Pack parity SHAs (intentional rebaseline, map payload only; save region unchanged):
+- `dist/fxdata.bin` 757ac12ea78e8beb40b31f51a41d815c05c9acec7ad88c89c51db6979f532322 → 94f9f6c95b9aab47036dda8725a22a75d5015f58e5b042bb672e64038b0963bd
+- `dist/fxdata-data.bin` eb36245178447ceda4be7a19409c4cf730267759219a257c2bfede3d0f9160c9 → 9a5d09f0875908ac79957eb0a86d0c0f34c105bd05ed902cd7433ff7d85753f9
+- `dist/fxdata-save.bin` unchanged 2d864c0b789a43214eee8524d3182075125e5ca2cd527f3582ec87ffd94076bc
+- `src/fxdata.h` unchanged (tile values changed, layout sizes did not).
+
+Notes/deviations:
+- `data/movelists.csv` is transposed: each row is a move (0..31), each column a species id; a 1 means the species may learn that move. The starter move sets were chosen from these columns and match creatures.json moveList exactly: species 0 {1,4,8,9,10,11}, species 3 {1,11,12,13,14,15}, species 6 {1,4,5,6,7,13}.
+- No `strftime`/float used; contract is integer/bool/string only. No files outside ownership changed; pre-existing unrelated dirty files left untouched.
+- The empty-tile GID 0 blocks movement, so the corridor plus the existing clearing forms a self-contained area without new barrier tiles; `maps/tiles.tsx` required no change (GID 275 is the existing walkable+encounter pocket floor). No new tile was introduced, so no global-collision side effects.
+
+Storage handoff: `df -h .` 416Gi used / 20Gi avail (>10GiB reserve). `du -sh build` 3.8G (unchanged); `build/box-adoption-gate` 57M → 123M (shared lane, retained for the orchestrator's final gate). No `cgfx-pack.*` stage remained after any run. Worker wall time ≈ 12 min.

@@ -34,7 +34,10 @@ perturbed_layout=$fixtures/fxlayout-expand-20-perturbed.toml
 # jiu: generator identity carries crate version + built source revision, so the
 # generator_version stamp grows from "cgfx-tools 0.2.0" to "cgfx-tools
 # 0.3.0+g<short8>" and shifts later packed addresses; intentional rebaseline.
-expected=757ac12ea78e8beb40b31f51a41d815c05c9acec7ad88c89c51db6979f532322
+# jp8.11.2 authors the first-beta area corridor in maps/world_map.json (walkable
+# pocket floor GID 275 at (12,8) and x12..20,y9), so the raw_map payload and
+# therefore fxdata.bin change; intentional rebaseline.
+expected=94f9f6c95b9aab47036dda8725a22a75d5015f58e5b042bb672e64038b0963bd
 
 for layout in "$old_layout" "$new_layout" "$perturbed_layout"; do
     test -f "$layout" || {
