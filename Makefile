@@ -11,10 +11,11 @@ MINI_FQBN ?= arduboy-homemade:avr:arduboy-mini
 AVR_RELAX_FLAGS ?= -mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X
 # Propagate only world-profile selection to tests, preserving their USB entry.
 WORLD_VM_PROFILE_FLAGS = $(filter -DCGFX_FULL_WORLD_VM -DCGFX_FULL_WORLD_VM=%,$(AVR_SHIPPING_CPP_FLAGS))
+COMPACT_WARP_VM_FLAGS = $(filter -DCGFX_COMPACT_WARP_VM -DCGFX_COMPACT_WARP_VM=%,$(AVR_SHIPPING_CPP_FLAGS))
 BATTLE_AUTO_REPLACE_FLAGS = $(filter -DCGFX_BATTLE_AUTO_REPLACE -DCGFX_BATTLE_AUTO_REPLACE=%,$(AVR_SHIPPING_CPP_FLAGS))
 # Instrument FX test firmware with the logical read counter while preserving
 # the stock USB main used by the serial P/F harness.
-AVR_FXTEST_CPP_FLAGS ?= $(AVR_RELAX_FLAGS) -DFX_READ_COUNTER $(WORLD_VM_PROFILE_FLAGS) $(BATTLE_AUTO_REPLACE_FLAGS)
+AVR_FXTEST_CPP_FLAGS ?= $(AVR_RELAX_FLAGS) -DFX_READ_COUNTER $(WORLD_VM_PROFILE_FLAGS) $(COMPACT_WARP_VM_FLAGS) $(BATTLE_AUTO_REPLACE_FLAGS)
 AVR_FXTEST_BUILD_PROPERTIES ?= --build-property "compiler.cpp.extra_flags=$(AVR_FXTEST_CPP_FLAGS)" \
 	--build-property "compiler.c.extra_flags=$(AVR_RELAX_FLAGS)" \
 	--build-property "compiler.c.elf.extra_flags=$(AVR_RELAX_FLAGS)"
@@ -26,7 +27,7 @@ AVR_FXTEST_COMPACT_RESULT_BUILD_PROPERTIES ?= --build-property "compiler.cpp.ext
 	--build-property "compiler.c.elf.extra_flags=$(AVR_RELAX_FLAGS)"
 # Only shipping FX/Mini sketches compile their no-USB main. Device-test
 # sketches keep the stock core main so Serial P/F output remains available.
-AVR_SHIPPING_CPP_FLAGS ?= $(AVR_RELAX_FLAGS) -DCGFX_SHIPPING_NO_USB -fno-inline-small-functions -DCGFX_BATTLE_NO_FACTS -DCGFX_BATTLE_COMPACT_RESULT
+AVR_SHIPPING_CPP_FLAGS ?= $(AVR_RELAX_FLAGS) -DCGFX_SHIPPING_NO_USB -fno-inline-small-functions -DCGFX_BATTLE_NO_FACTS -DCGFX_BATTLE_COMPACT_RESULT -DCGFX_COMPACT_WARP_VM
 AVR_SHIPPING_BUILD_PROPERTIES ?= --build-property "compiler.cpp.extra_flags=$(AVR_SHIPPING_CPP_FLAGS)" \
 	--build-property "compiler.c.extra_flags=$(AVR_RELAX_FLAGS)" \
 	--build-property "compiler.c.elf.extra_flags=$(AVR_RELAX_FLAGS)"
@@ -73,7 +74,7 @@ AVR_SIZE ?= $(shell command -v avr-size 2>/dev/null || find "$(HOME)/Library/Ard
 
 CPPFLAGS ?= -I.
 CXXFLAGS ?= -std=c++17 -w -O0 -g3
-TEST_CPPFLAGS = -I tst/host $(WORLD_VM_PROFILE_FLAGS) $(BATTLE_AUTO_REPLACE_FLAGS)
+TEST_CPPFLAGS = -I tst/host $(WORLD_VM_PROFILE_FLAGS) $(COMPACT_WARP_VM_FLAGS) $(BATTLE_AUTO_REPLACE_FLAGS)
 TEST_FLAGS = -DTEST
 DEBUG_FLAGS = -DDEBUG
 
@@ -425,7 +426,7 @@ test-world-script-profile:
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) tools/tests/world-script-profile_test.cpp -o "$(WORLD_SCRIPT_PROFILE_TEST_BIN)"
 	"$(WORLD_SCRIPT_PROFILE_TEST_BIN)"
 
-$(WORLD_SCRIPT_PROFILE_BIN): tools/check-world-script-profile.cpp src/vm/opcodes.hpp
+$(WORLD_SCRIPT_PROFILE_BIN): tools/check-world-script-profile.cpp src/vm/opcodes.hpp src/flags/flag_bit_array.hpp
 	@mkdir -p "$(dir $@)"
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) tools/check-world-script-profile.cpp -o "$@"
 

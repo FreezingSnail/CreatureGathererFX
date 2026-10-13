@@ -58,14 +58,17 @@ See [native previews and art notes](docs/world-environment-32-spike.html#lure-wo
 ## World script profile
 
 Shipping world interactions use the compact `If`, `TpIf`, and `End` profile
-for the three authored warps. The interpreter keeps the 128-byte command-boundary
-scan, big-endian operands, flag and jump checks, and 30-command execution cap.
+for the three authored warps. Default builds select `CGFX_COMPACT_WARP_VM`: a
+single forward pass over each 128-byte slot with big-endian operands and live
+player-position checks. The build validator checks flag capacity, conditions,
+branch encoding, forward jumps onto command boundaries, and map coordinates
+before firmware compilation. Zero-filled slots leave gameplay state unchanged.
 Default world interactions omit popup handling because this profile cannot queue
 messages. Tactical battle AI, battle menus, and battle rendering use the same paths.
 
-Define `CGFX_FULL_WORLD_VM` in the shipping C++ flags to select the full world
+Replace `CGFX_COMPACT_WARP_VM` with `CGFX_FULL_WORLD_VM` in the shipping C++ flags to select the full world
 interpreter and popup behavior. `ScriptVm::initVM/run` remain available to callers;
-`initWarpVM/runWarpVM` reject unsupported streams. The generated-content guard
+the full interpreter retains its runtime bounds checks. The generated-content guard
 rejects full-only commands or script text in a default build, including commands
 inside skipped branches. Choose the full profile when authoring that content.
 

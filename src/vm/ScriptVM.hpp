@@ -3,6 +3,10 @@
 
 #include "../GameState.hpp"
 
+#if defined(CGFX_COMPACT_WARP_VM) && defined(CGFX_FULL_WORLD_VM)
+#error "compact warp VM and full world VM are mutually exclusive"
+#endif
+
 #define MAP_WIDTH 256
 #define MAP_HEIGHT 256
 #define To1D(x, y) ((y) * MAP_WIDTH + (x))

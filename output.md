@@ -8040,6 +8040,48 @@ Notes/deviations:
 
 Storage handoff: `df -h .` 416Gi used / 20Gi avail (>10GiB reserve). `du -sh build` 3.8G (unchanged); `build/box-adoption-gate` 57M → 123M (shared lane, retained for the orchestrator's final gate). No `cgfx-pack.*` stage remained after any run. Worker wall time ≈ 12 min.
 
+## box.10 — Adopt the validated compact warp VM on current main
+
+Adapted retained `1as.11` to `f2454626a70db7959c1a7fad58ce0ebaab2f93ce`, preserving the newer shipping battle flags. Default FX/Mini and host/device tests select the checked single-pass `If/TpIf/End` interpreter. The full-world opt-in retains runtime checks and rejects simultaneous compact/full selection. The host validator guarantees generated flag capacity, condition/branch encoding, positive forward skips onto command boundaries through End, map coordinates, 128-byte slots and empty text. No VM scratch removal, creature HP/save-format work or neighboring retained saving is included.
+
+Fresh same-source measurements with unchanged optimization/battle flags (candidate adds only the compact selection): FX 25,218 -> 24,986 B flash (**-232 B**), static SRAM 1,760 -> 1,760 B. Mini 24,986/1,760 B. Full-world opt-in 26,510/1,845 B. Painted stack 484 B, unchanged from the recorded current-main checkpoint (415 B after the 69 B ISR allowance); focused stack 4/0 and scripts 72/0. Native host 283,220/0, world 258/0, compact VM 278/0; full VM host 243/0. Host malformed-data validation replaces corresponding shipping defenses; live location, immediate teleport return, zero-slot no-op, motion/facing preservation and one interaction-slot metadata read are covered.
+
+Exact focused commands, from the repository root; logs under `build/box-adoption-gate/reports/10/`:
+
+```sh
+export PATH=/Users/connorfranc/Applications/CreatureGathererTools/bin:$PATH
+export ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+make ram BUILD_DIR=build/box-adoption-gate # control, then candidate; save each ELF
+make test-world-script-profile world-script-profile-check BUILD_DIR=build/box-adoption-gate
+make test testvm test-world-script-profile BUILD_DIR=build/box-adoption-gate
+make testvm BUILD_DIR=build/box-adoption-gate TEST_CPPFLAGS='-I tst/host -DCGFX_FULL_WORLD_VM'
+make fxtest-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_scripts.ino BUILD_DIR=build/box-adoption-gate
+make mini BUILD_DIR=build/box-adoption-gate
+make ram BUILD_DIR=build/box-adoption-gate AVR_SHIPPING_CPP_FLAGS='-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X -DCGFX_SHIPPING_NO_USB -fno-inline-small-functions -DCGFX_BATTLE_NO_FACTS -DCGFX_BATTLE_COMPACT_RESULT -DCGFX_FULL_WORLD_VM'
+```
+
+Root alone owned the AVR/generation/packing/gate lane. Concurrent `jp8.11.2` edits to area content, presets, packed parity and its report were preserved. That work landed separately as `47ef9b06bc4f11cb57514414359505ee2a321758` during verification. The original f245462 gate passed all 35 FX suites, then the same 84 MiB archive source at `/private/tmp/cgfx-box10-gate-source/CreatureGathererFX` was updated with that commit's seven changed tracked files before the settled current-main gate. Only this exact VM patch and one explicit legacy map prerequisite were added. It reuses the same absolute shared build/gate directories without copying caches or metadata. Current-main control with the original shipping flags still measures 25,218/1,760 B. Generated `src/fxdata.h` matches the worktree; current-main cart parity is checked against the content commit's baseline.
+
+Gate attempt 1 failed before tests: clean archive lacks legacy ignored `fxdata/generated/map.bin`, already tracked by `le5` (no in-tree generator). Retained attempt logs and supplied only that unchanged 128 KiB prerequisite, SHA-256 `de43a603929bf6ca4e6a7f74f218cf07e9bc93acefe2995700f0a5e802cd9d31`; this is not a claim that `le5` is fixed. No VM code changed between gate attempts; the final repeat accounts for the newly landed content commit.
+
+Exact isolated gate and parity commands:
+
+```sh
+make -C /private/tmp/cgfx-box10-gate-source/CreatureGathererFX final-gate BUILD_DIR=/Users/connorfranc/code/CreatureGathererFX/build/box-adoption-gate FINAL_GATE_LOG_DIR=/Users/connorfranc/code/CreatureGathererFX/build/box-adoption-gate/final-gate
+make -C /private/tmp/cgfx-box10-gate-source/CreatureGathererFX ram BUILD_DIR=/Users/connorfranc/code/CreatureGathererFX/build/box-adoption-gate AVR_SHIPPING_CPP_FLAGS='-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X -DCGFX_SHIPPING_NO_USB -fno-inline-small-functions -DCGFX_BATTLE_NO_FACTS -DCGFX_BATTLE_COMPACT_RESULT'
+make -C /private/tmp/cgfx-box10-gate-source/CreatureGathererFX test-pack-parity BUILD_DIR=/Users/connorfranc/code/CreatureGathererFX/build/box-adoption-gate
+```
+
+The first gate against newly landed47ef9b0 passed34FXsuites but exposed two stale `test_tiles` assertions: the old empty sample at12,8 is now corridorGID275. Filed companion `04n`; preserved the failing current-main logs, kept12,8 as a positive corridor/collision sample and moved the empty negative sample to adjacent13,8 (authoredGID0 and packedword0). Focused repaired tiles106/0; no firmware/content changes. The repair has its own exact patch/report and separate commit. Settled gate rerun includes both immutable patches.
+
+Settled current-main **final-gate PASS**: all35FXsuites, native host283220/world258/VM278 with0failures, scripts72/0, repaired tiles106/0 and stack4/0 painted484B; shipping24,986B flash/1,760B static SRAM/800B physical free. Current-main `test-pack-parity` PASS (layout equivalence and negative perturbation proof included), cart SHA-256 `94f9f6c95b9aab47036dda8725a22a75d5015f58e5b042bb672e64038b0963bd` matches the separately committed content baseline. Header and packed cart compare byte-identical to the worktree. The VM changes do not change packed bytes. Independent Sol review: **REVIEW: APPROVED** for the exact source adaptation, required verification and storage/report handoff.
+
+Storage after preserving evidence: cleanup preview then apply216eligible compiler/cache candidates (5,410,314B), then removed positively identified238MiB disposable FX-suite staging and the reconstructable87MiB archive source. Reports and selected ELFs are retained; no unknown old evidence removed. `df -h . /private/tmp`:19GiB free (above10GiB reserve); `du -sh build`:3.8GiB, shared `build/box-adoption-gate`:66MiB, this report directory1.2MiB; old `/private/tmp/cgfx-1as-spike`:4.4GiB untouched. No pack stage remains. Exact cleanup: `make clean-build-artifacts BUILD_DIR=build/box-adoption-gate`, then same with `CLEAN_APPLY=1`; removed only owned `build/box-adoption-gate/fxtest` and `/private/tmp/cgfx-box10-gate-source`.
+
+Recorded wall time through2026-10-13 02:08:58UTC:46m19s from first control at01:22:39. Root implementation/focused phase5m03s before first gate; settled final gate01:49:42–02:01:33 = **11m51s**. Prior f245462 gate and stale-tile current-main gate approximately8m each; remaining roughly13m orchestration includes source isolation, current control, companion fixture repair, report/review and cleanup. Independent read-only Sol review overlapped this workflow. No separate worker build lane.
+
+Evidence: `reports/10/{candidate.patch,control.elf,candidate.elf,current-control.elf,final.elf,map-prerequisite.bin,*log}` and shared `final-gate/{check,ram}.log`. Source patch SHA-256 `be8390c9be635e325ea45e8e39515b9f5b2cd766c4ab61bf64090d93f100fa3a`; original control ELF `81cbc8b9e31a58b532fc6ad08f10dc470a22b63db78a232683420ff8651bd21e`, current-main control `ba5c9e01a6f19610dce63458181d29de9a9420173f2b24dcc0fbda9487e7494a`, settled final ELF `4ee7bd7fa9b055b17fe08fd8d7e5b8018cad99cf74942c95a07028163edfcb31`. Inventory and sprite stashes remain untouched. No push or Dolt remote sync.
+
 ## 04n — Refresh the empty-tile device sample after first-area corridor authoring
 
 Main47ef9b0 intentionally changes12,8 to corridorGID275. The box.10 current-main gate found `test_tiles`102/2: `south empty raw tile id got275want0` and `empty tile collision got1want0`; the other34FXsuites passed. This companion repairs only the test fixture, preserving the corridor as a positive tile/collision sample and selecting adjacent13,8 for the original empty blocked sample. Native Node inspection proves authored values12,8=275 and13,8=0; generated raw words are17683 and0. The property-window row keeps the two samples in their matching columns. Firmware/content remain unchanged.

@@ -254,8 +254,12 @@ void ScriptVm::initWarpVM(uint8_t *script, uint16_t current, uint16_t target) {
     this->endPtr = script;
     this->currentTile = current;
     this->targetTile = target;
-    this->valid = false;
+    this->valid = script != nullptr && script[0] != 0;
 
+#ifdef CGFX_COMPACT_WARP_VM
+    return;
+#else
+    this->valid = false;
     if (script == nullptr) return;
 
     // Find End only at command boundaries. Operand bytes may themselves be
@@ -283,9 +287,51 @@ void ScriptVm::initWarpVM(uint8_t *script, uint16_t current, uint16_t target) {
         if (operandBytes > 128 - offset) return;
         offset += operandBytes;
     }
+#endif
 }
 
 void ScriptVm::runWarpVM() {
+#ifdef CGFX_COMPACT_WARP_VM
+    // Build-time validation guarantees a forward-only If/TpIf/End slot.
+    if (!this->valid || this->base == nullptr) return;
+    uint8_t offset = 0;
+    for (;;) {
+        switch (static_cast<VmOpcode>(this->base[offset++])) {
+        case VmOpcode::TpIf: {
+            uint16_t x = (static_cast<uint16_t>(this->base[offset]) << 8) |
+                         this->base[offset + 1];
+            uint16_t y = (static_cast<uint16_t>(this->base[offset + 2]) << 8) |
+                         this->base[offset + 3];
+            offset += 4;
+            uint16_t start = To1D(x, y);
+            x = (static_cast<uint16_t>(this->base[offset]) << 8) |
+                this->base[offset + 1];
+            y = (static_cast<uint16_t>(this->base[offset + 2]) << 8) |
+                this->base[offset + 3];
+            offset += 4;
+            if (gameState.playerLocation == start) {
+                gameState.playerLocation = To1D(x, y);
+                return;
+            }
+            break;
+        }
+        case VmOpcode::If: {
+            const uint8_t condition = this->base[offset++];
+            const uint16_t flag = (static_cast<uint16_t>(this->base[offset]) << 8) |
+                                  this->base[offset + 1];
+            offset += 2;
+            ++offset; // encoded branch kind; both kinds use the same skip length
+            const uint8_t skip = this->base[offset++];
+            const bool set = gameState.getFlag(flag);
+            if ((condition == 0 && !set) || (condition == 1 && set)) offset += skip;
+            break;
+        }
+        case VmOpcode::End:
+        default:
+            return;
+        }
+    }
+#else
     if (!this->valid || this->base == nullptr) return;
 
     for (uint8_t commands = 0; commands < 30; ++commands) {
@@ -354,6 +400,7 @@ void ScriptVm::runWarpVM() {
         }
     }
     this->end();
+#endif
 }
 
 uint16_t ScriptVm::readUInt16() {
