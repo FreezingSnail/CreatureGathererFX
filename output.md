@@ -8480,3 +8480,112 @@ gen runs, full gate set, follow-up beads, report).
 Acceptance proved: selected beta assets have exact binary palette, valid masks,
 published dimensions/frames and deterministic generation; broader art separately
 tracked (b2a.7, b2a.8). `bd close b2a.5` (no commit — orchestrator commits).
+
+---
+
+## zdl — Reconcile active savings and inventory records (2026-10-13)
+
+Owner requested DeepSeek orchestration through the OpenCode MCP. Read-only
+source/evidence audit at HEAD `6ef0a3c`, reviewed independently by root. Session
+`ses_ec8ae8e3dffe6VB3Wqrb7xe3NK`, model `opencode-go/deepseek-v4.1-flash`;
+initial audit and correction follow-up both completed successfully. Root owns
+Beads/report writes. No firmware, generated data, stash, build or test changes.
+
+### Disposition
+
+| Bead | Current implementation/evidence | Remaining acceptance and resume step |
+|---|---|---|
+| box | Parent stays in progress; earlier .2–.9 adoptions are recorded above, and .10 landed in `2efcc49`. | .11–.14 remain unfinished; parent cannot close. Resume .11 → .12 → .13 → .14, then mgc.8 and its other prerequisites. |
+| box.11 | Research prepared, not adopted. `Encounter.cpp` still validates table contents and select-time spans/species. Native profile validator and focused encounter device suite are absent from main. | Adapt 1as.13 to current live lures; establish authored/packed validation before removing runtime scans; permanent host/device proof, independent adaptation review, fresh control/candidate measurement, stack and settled final gate. This leaf is unblocked by closed .10. |
+| box.12 | Research prepared, not adopted. `PlantStage::incrementAll()` still calls increment for each of 32 fields. | Blocked by .11. Adapt byte-wise modulo-four advancement, add/reuse exhaustive host and focused device coverage, measure against the settled preceding main, prove stack and final gate. |
+| box.13 | Research prepared, not adopted. `journalDecode()` still invokes `journalBlank()`; append separately refuses nonblank tails. | Blocked by .12. Use the corrected final 1as.16 patch; preserve append refusal, marker-last/readback, replay and power-cut behavior. Review current adaptation; measure and gate separately. |
+| jp8.5.16 | Seven-file screen WIP is retained in the named stash; `InventoryMenu` and `SelectItem` are absent from main. | Blocked by jp8.5.13 Player-owned bag persistence, itself blocked by jp8.2.6/mgc.8. Port selected hunks after that foundation; prove ordinary world controls, cached kind/id selection, four rows, empty/mixed/full bags, transition-only metadata and resource fit. |
+
+All five keep their existing `in_progress` status and assignees. A clean source
+tree, missing adoption reports and an idle build lane do not establish owner
+abandonment. Their notes now explicitly distinguish retained preparation from
+completed adoption and name blockers and executable next steps. None has a
+`human` label; no feature or parent was closed. Existing dependencies agree with
+the audited implementation, so no dependency changes or duplicate residual
+beads were needed. zdl closes only the reconciliation task.
+
+### Retained work
+
+Inventory stash commit `acd01dc69e646520aa5e915149376966a32fad20`, currently
+`stash@{0}`: “Preserve unfinished inventory menu before 1as savings adoption”,
+based on `b2bdb09`. Its tracked changes are Makefile, draw.h, MenuIntent.hpp and
+tst/main.cpp. Third parent `42ca9b16424765842246fe5064d8d666fdfed513` holds
+InventoryMenu.cpp/.hpp and tst/inventory_menu_test.hpp. It contains a 40-byte AVR
+cache and an absolute-cursor selection; the current contract's visible-row
+selection and cached semantic kind/id must be reconciled explicitly. The stash
+does not wire the required fresh-B open/close or movement freeze into ordinary
+world flow. Preserve both existing stashes; never restore the whole stash or
+discard it as part of adoption.
+
+Retained research root: `/private/tmp/cgfx-1as-spike/artifacts`. Verified exact
+independent patches and SHA-256:
+
+```
+1as.13-independent.patch
+1a2df1b7427670b2283a599a01a305831813d864f6497bb4d9d3792be20aec8a
+1as.14-independent.patch
+ede556a8b69e2026104021dc7d8bf89227858f6f825eb1c9a0c17bef778329e0
+1as.16-final-independent.patch
+fddddaa1db786d449995748d1fedcd1e291eb324fe4b89fca7661f4f5823860d
+```
+
+Corresponding cumulative patches and per-item reports also remain there.
+Do not use `1as.16-discarded-mixed-*`: their controls mixed in plant savings.
+The research deltas (-34 B encounter, -56 B plants, -16 B independent journal)
+are historical and cannot be added to the current budget. The research stack
+fixture failure is also historical, not evidence of a current-main failure.
+
+Root corrected two audit conclusions using primary evidence: 1as.13 Beads
+notes confirm Sol APPROVED the exact final patches despite stale “pending”
+report prose; and .10 is the latest adoption, not the only adopted saving.
+Root also rejected an unsupported open-issue count and the inference that
+missing live evidence proves abandonment. DeepSeek acknowledged the corrections.
+Fresh adaptation review and current-main acceptance remain required.
+
+### Exact audit commands and verification limits
+
+```
+git status --short --branch
+bd list --status=in_progress --limit 0
+bd show CreatureGathererFX-box CreatureGathererFX-box.11 CreatureGathererFX-box.12 CreatureGathererFX-box.13 CreatureGathererFX-jp8.5.16 --json
+bd show CreatureGathererFX-jp8.5.13 CreatureGathererFX-box.14 --json
+bd show CreatureGathererFX-1as.13 --json
+bd blocked --json
+git stash list --format='%gd %H %s'
+git stash show --stat --include-untracked stash@{0}
+git show 'stash@{0}^3:src/engine/menu/InventoryMenu.hpp'
+git show 'stash@{0}^3:src/engine/menu/InventoryMenu.cpp'
+git log -12 --format='%h %ad %s' --date=iso-strict -- src/engine/world/Encounter.cpp src/plants/PlantGamestate.cpp src/save/Journal.cpp src/engine/menu/InventoryMenu.cpp
+rg -n 'journalBlank|incrementAll|SelectItem' src/save/Journal.cpp src/plants/PlantStage.cpp src/engine/menu/MenuIntent.hpp
+cat docs/reviews/1as-final-report.md
+shasum -a 256 /private/tmp/cgfx-1as-spike/artifacts/1as.13-independent.patch /private/tmp/cgfx-1as-spike/artifacts/1as.14-independent.patch /private/tmp/cgfx-1as-spike/artifacts/1as.16-final-independent.patch
+ps -axo pid,etime,command
+df -h . /private/tmp
+du -sh build
+du -sh build/box-adoption-gate .battle-carve-spike
+```
+
+Additional read-only file/line, history and report reads supported the audit;
+Beads mutations were limited to the zdl lifecycle and append-only reconciliation
+notes on the five existing records. Process inspection initially hit the sandbox
+restriction and succeeded via the approved escalated ps command. No AVR compiler
+or generator was observed running; other OpenCode/Codex processes existed, so
+this was not treated as proof that every owner session was inactive.
+No host/device tests, generation, resource measurements or final gate were run:
+the accepted deliverable is evidence reconciliation, not firmware adoption.
+
+### Storage and wall time
+
+Repository build outputs remain 3.8 GiB; shared `build/box-adoption-gate` 129 MiB;
+existing `.battle-carve-spike` 779 MiB is preserved. Disk check showed 15 GiB
+free (above the 10 GiB reserve). No compiler/cache cleanup or evidence deletion
+was necessary for this audit. Research patches remain in their existing tmp
+location and must be preserved before any future tmp cleanup; the named stash
+remains in Git. No new build trees or source snapshots were created.
+DeepSeek audit plus correction approximately 5 minutes; root review, persistence
+and handoff approximately 8 minutes total. Gate time: 0 (not required for audit).
