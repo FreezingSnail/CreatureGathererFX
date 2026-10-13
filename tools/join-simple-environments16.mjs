@@ -74,4 +74,92 @@ const gallery=`<section id="combined16"><h2>Combined16×16 tile sheet</h2><p>The
 const page='docs/world-environment-32-spike.html';let html=fs.readFileSync(page,'utf8');
 if(!html.includes('<!-- combined16-start -->'))html=html.replace('<!-- simple-examples-start -->','<!-- combined16-start -->\n<!-- combined16-end -->\n<!-- simple-examples-start -->');
 html=html.replace(/<!-- combined16-start -->[\s\S]*?<!-- combined16-end -->/,'<!-- combined16-start -->\n'+gallery+'\n<!-- combined16-end -->');fs.writeFileSync(page,html);
+
+// ---------------------------------------------------------------------------
+// Shipping install: write the approved simple redraw of the selected base
+// catalogue cells into the ordinary game sheets at their existing GIDs. This is
+// the only writer of images/tiles_16x16.png and images/tiles.png (or the Tiled
+// source); every other cell is copied through byte-for-byte. The review
+// catalogue above stays review-only; no appended32px cell is installed.
+// ---------------------------------------------------------------------------
+const shippingMapPath=base+'/simple/shipping-map.json';
+const windowDX=[-4,5],windowDY=[-3,2]; // readStartX(-3 or-4)..+8, readStartY(-2 or-3)..+4
+// The single authored border cell at(4,4), west of the area. It is not inside the
+// exact render-window union but sits in the same authored wall family one step
+// beyond it; installing it removes any future legacy/simple seam there.
+const borderExtras=[38];
+const readPixels=file=>decodePng(fs.readFileSync(file));
+function write(file,buffer){if(!fs.existsSync(file)||!fs.readFileSync(file).equals(buffer))fs.writeFileSync(file,buffer);}
+function areaBounds(){
+  const text=fs.readFileSync('data/beta-area.toml','utf8');
+  return Object.fromEntries(['min_x','max_x','min_y','max_y','start_x','start_y'].map(key=>{
+    const m=text.match(new RegExp('^\\s*'+key+'\\s*=\\s*(-?\\d+)\\s*$','m'));
+    assert.ok(m,`data/beta-area.toml is missing ${key}`);
+    return [key,Number(m[1])];
+  }));
+}
+const area=areaBounds();
+const collisionPath='fxdata/generated/raw_map.bin';
+assert.ok(fs.existsSync(collisionPath),'run `make gen` before the shipping install');
+const collision=fs.readFileSync(collisionPath);
+assert.equal(collision.length,256*256*2,'raw_map.bin must hold256x256 property words');
+const wordAt=(x,y)=>collision.readUInt16LE((y*256+x)*2);
+const gidAt=(x,y)=>wordAt(x,y)&0x03ff;
+const walkable=(x,y)=>x>=0&&y>=0&&x<256&&y<256&&gidAt(x,y)!==0&&((wordAt(x,y)>>10&0x3f)&1)!==0;
+const startX=area.start_x,startY=area.start_y;
+assert.ok(walkable(startX,startY),'beta start cell must be walkable');
+const reachable=new Set([startX+','+startY]),queue=[[startX,startY]];
+while(queue.length){
+  const [x,y]=queue.shift();
+  for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){
+    const nx=x+dx,ny=y+dy,key=nx+','+ny;
+    if(reachable.has(key)||!walkable(nx,ny))continue;
+    reachable.add(key);queue.push([nx,ny]);
+  }
+}
+const betaGids=new Set(),visibleGids=new Set();
+for(let y=area.min_y;y<=area.max_y;y++)for(let x=area.min_x;x<=area.max_x;x++){
+  const g=gidAt(x,y);if(g)betaGids.add(g);
+}
+for(const key of reachable){
+  const [x,y]=key.split(',').map(Number);
+  for(let dx=windowDX[0];dx<=windowDX[1];dx++)for(let dy=windowDY[0];dy<=windowDY[1];dy++){
+    const cx=x+dx,cy=y+dy;
+    if(cx<0||cy<0||cx>=256||cy>=256)continue;
+    const g=gidAt(cx,cy);if(g)visibleGids.add(g);
+  }
+}
+const entries=[];
+for(const g of [...betaGids].sort((a,b)=>a-b)){
+  entries.push({cell:g,shippingGid:g,visibility:'beta-area',reason:`non-empty GID inside the first-beta area x${area.min_x}..${area.max_x},y${area.min_y}..${area.max_y}`});
+}
+for(const g of [...visibleGids].filter(g=>!betaGids.has(g)).sort((a,b)=>a-b)){
+  entries.push({cell:g,shippingGid:g,visibility:'visible-margin',reason:'non-empty GID inside the render window of a reachable beta cell'});
+}
+for(const g of borderExtras){
+  assert.ok(!betaGids.has(g)&&!visibleGids.has(g),`border extra ${g} is already covered`);
+  entries.push({cell:g,shippingGid:g,visibility:'adjacent-border',reason:'authored border cell in the visible-neighbourhood wall family west of the area'});
+}
+const shippingGids=new Set();
+for(const entry of entries){
+  assert.ok(entry.cell>=1&&entry.cell<=baseCount,`mapping cell ${entry.cell} is inside the base catalogue`);
+  assert.ok(entry.shippingGid>=1&&entry.shippingGid<=1023,`shipping GID ${entry.shippingGid} is a10-bit tile id`);
+  assert.ok(!shippingGids.has(entry.shippingGid),`shipping GID ${entry.shippingGid} is mapped twice`);
+  shippingGids.add(entry.shippingGid);
+}
+const shippingMapping={reviewOnly:false,catalogueSource:baseSource,cell:[16,16],sheet:[original.width,original.height],columns,installed:entries};
+write(shippingMapPath,Buffer.from(JSON.stringify(shippingMapping,null,2)+'\n'));
+for(const path of ['images/tiles_16x16.png','images/tiles.png']){
+  const sheet=readPixels(path);
+  assert.deepEqual([sheet.width,sheet.height],[original.width,original.height],`${path} must stay ${original.width}x${original.height}`);
+  for(const {cell} of entries){
+    const index=cell-1,col=index%columns,row=Math.floor(index/columns);
+    for(let y=0;y<16;y++)for(let x=0;x<16;x++){
+      const si=((row*16+y)*original.width+col*16+x)*4;
+      sheet.pixels.set(original.pixels.subarray(si,si+4),((row*16+y)*original.width+col*16+x)*4);
+    }
+  }
+  write(path,encodePng(sheet));
+}
 console.log(`PASS: ${baseCount} original cells +${count*4} unscaled scenery cells =${atlas.width*atlas.height/256} native16px cells; hybrid town and3 device crops`);
+console.log(`PASS: installed${entries.length} simple cells (${betaGids.size} beta +${visibleGids.size-betaGids.size} visible margin +${borderExtras.length} adjacent border) into the shipping tile sheets; mapping${shippingMapPath}`);

@@ -1,0 +1,159 @@
+{
+  "reviewOnly": false,
+  "catalogueSource": "docs/assets/world-environment-32-spike/simple/legacy16/atlas16.png",
+  "cell": [
+    16,
+    16
+  ],
+  "sheet": [
+    256,
+    768
+  ],
+  "columns": 16,
+  "installed": [
+    {
+      "cell": 258,
+      "shippingGid": 258,
+      "visibility": "beta-area",
+      "reason": "non-empty GID inside the first-beta area x8..23,y0..11"
+    },
+    {
+      "cell": 260,
+      "shippingGid": 260,
+      "visibility": "beta-area",
+      "reason": "non-empty GID inside the first-beta area x8..23,y0..11"
+    },
+    {
+      "cell": 261,
+      "shippingGid": 261,
+      "visibility": "beta-area",
+      "reason": "non-empty GID inside the first-beta area x8..23,y0..11"
+    },
+    {
+      "cell": 262,
+      "shippingGid": 262,
+      "visibility": "beta-area",
+      "reason": "non-empty GID inside the first-beta area x8..23,y0..11"
+    },
+    {
+      "cell": 267,
+      "shippingGid": 267,
+      "visibility": "beta-area",
+      "reason": "non-empty GID inside the first-beta area x8..23,y0..11"
+    },
+    {
+      "cell": 274,
+      "shippingGid": 274,
+      "visibility": "beta-area",
+      "reason": "non-empty GID inside the first-beta area x8..23,y0..11"
+    },
+    {
+      "cell": 275,
+      "shippingGid": 275,
+      "visibility": "beta-area",
+      "reason": "non-empty GID inside the first-beta area x8..23,y0..11"
+    },
+    {
+      "cell": 276,
+      "shippingGid": 276,
+      "visibility": "beta-area",
+      "reason": "non-empty GID inside the first-beta area x8..23,y0..11"
+    },
+    {
+      "cell": 290,
+      "shippingGid": 290,
+      "visibility": "beta-area",
+      "reason": "non-empty GID inside the first-beta area x8..23,y0..11"
+    },
+    {
+      "cell": 291,
+      "shippingGid": 291,
+      "visibility": "beta-area",
+      "reason": "non-empty GID inside the first-beta area x8..23,y0..11"
+    },
+    {
+      "cell": 292,
+      "shippingGid": 292,
+      "visibility": "beta-area",
+      "reason": "non-empty GID inside the first-beta area x8..23,y0..11"
+    },
+    {
+      "cell": 297,
+      "shippingGid": 297,
+      "visibility": "beta-area",
+      "reason": "non-empty GID inside the first-beta area x8..23,y0..11"
+    },
+    {
+      "cell": 298,
+      "shippingGid": 298,
+      "visibility": "beta-area",
+      "reason": "non-empty GID inside the first-beta area x8..23,y0..11"
+    },
+    {
+      "cell": 545,
+      "shippingGid": 545,
+      "visibility": "beta-area",
+      "reason": "non-empty GID inside the first-beta area x8..23,y0..11"
+    },
+    {
+      "cell": 551,
+      "shippingGid": 551,
+      "visibility": "beta-area",
+      "reason": "non-empty GID inside the first-beta area x8..23,y0..11"
+    },
+    {
+      "cell": 7,
+      "shippingGid": 7,
+      "visibility": "visible-margin",
+      "reason": "non-empty GID inside the render window of a reachable beta cell"
+    },
+    {
+      "cell": 8,
+      "shippingGid": 8,
+      "visibility": "visible-margin",
+      "reason": "non-empty GID inside the render window of a reachable beta cell"
+    },
+    {
+      "cell": 15,
+      "shippingGid": 15,
+      "visibility": "visible-margin",
+      "reason": "non-empty GID inside the render window of a reachable beta cell"
+    },
+    {
+      "cell": 23,
+      "shippingGid": 23,
+      "visibility": "visible-margin",
+      "reason": "non-empty GID inside the render window of a reachable beta cell"
+    },
+    {
+      "cell": 24,
+      "shippingGid": 24,
+      "visibility": "visible-margin",
+      "reason": "non-empty GID inside the render window of a reachable beta cell"
+    },
+    {
+      "cell": 30,
+      "shippingGid": 30,
+      "visibility": "visible-margin",
+      "reason": "non-empty GID inside the render window of a reachable beta cell"
+    },
+    {
+      "cell": 47,
+      "shippingGid": 47,
+      "visibility": "visible-margin",
+      "reason": "non-empty GID inside the render window of a reachable beta cell"
+    },
+    {
+      "cell": 63,
+      "shippingGid": 63,
+      "visibility": "visible-margin",
+      "reason": "non-empty GID inside the render window of a reachable beta cell"
+    },
+    {
+      "cell": 38,
+      "shippingGid": 38,
+      "visibility": "adjacent-border",
+      "reason": "authored border cell in the visible-neighbourhood wall family west of the area"
+    }
+  ]
+}

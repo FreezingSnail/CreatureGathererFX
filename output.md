@@ -8215,3 +8215,131 @@ build budget and >=10 GiB reserve. Clean-control extracts are under /private/var
   current raw_map ABI and the encoded `mapWordFixtures`; device chunk words 0/3/2047 = [7,0,0] as
   `tables_test` pins.
 - Wall time: worker ~50 min (recon, sibling fix/build, clean control, worktree verify, device).
+
+---
+
+## cf7 — Install selected simple catalogue subset into shipping tiles
+
+### Pre-change state (recorded before any edit), 2026-10-12
+Worktree HEAD 40b4c1906623ceefbcc569ff3f2d8ae59a6be244; only `.beads/interactions.jsonl` modified.
+Tracked blobs: images/tiles.png=`af2ad14a` (256x768, bitdepth2, colortype3 palette, PLTE=4 grays
+000000/555555/AAAAAA/FFFFFF), images/tiles_16x16.png=`21271bd4` (256x768 RGBA8), atlas16.png=`59bf277b`.
+
+Beta area = x8..23, y0..11 (data/beta-area.toml first-beta). Generated collision
+(fxdata/generated/raw_map.bin) makes 39 walkable cells reachable from start (11,5), sealed inside
+the area (bbox x9..20, y2..9). Beta GIDs actually used = 15:
+258,260,261,262,267,274,275,276,290,291,292,297,298,545,551.
+
+Measured per-GID pixel diff count vs the approved simple redraw
+(docs/assets/world-environment-32-spike/simple/legacy16/atlas16.png, id-aligned base 768 cells,
+catalogue 1-based cell id == GID). Each count is differing pixels / 256 across all 4 channels:
+- beta: 258=69, 260=23, 261=58, 262=65, 267=116, 274=64, **275=90**, 276=**0**, 290=14, 291=32,
+  292=5, 297=119, 298=103, **545=209**, **551=215**
+- visible margin candidates: 7=12, 8=23, 15=68, 23=15, 24=24, 30=39, 38=80, 47=30, 63=114
+(dispatch claimed every beta GID differs; measured GID 276 is already pixel-identical — 0 diff.
+All other listed counts match the dispatch's examples exactly.)
+
+Render window derivation (src/engine/draw.h drawMapFast): player sits at viewport (3,2);
+viewportStartX=playerX-3, viewportStartY=playerY-2; walking LEFT decrements readStartX (xOffset=+step),
+walking UP decrements readStartY (rows=5). xOffset,yOffset in [-15,15]. Screen is 8x4 tiles (128x64).
+Union over a player cell = columns playerX-4..playerX+5, rows playerY-3..playerY+2. Union over the 39
+reachable cells = visible columns 5..25, rows -1..11. Non-empty GIDs there = {7,8,15,23,24,30,47,63}.
+GID 38 (single authored cell at (4,4)) is outside this exact union (min visible column 5); it is the
+dispatch's enumerated visible-neighbourhood border tile and will be installed as a documented superset.
+
+`tiles` pack format (empirically confirmed against dist/fxdata-data.bin at src/fxdata.h offset
+`tiles=0x00CE04`): 768 frames x 32 bytes, no header; frame f = GID-1 -> sheet cell col=f%16,
+row=floor(f/16); 32 bytes = 2 pages x 16 columns, bit = (channel==255).
+
+Storage before: `df -h .` 18 GiB free; `du -sh build` 3.8 G; `build/box-adoption-gate` 80 M.
+Current cart SHA-256 dist/fxdata.bin = 36a3bd234ff9b6a9b444b5fd1f38f3c671dfffd90918758827c6dc38839fe06b
+(matches pack-parity_test.sh expected=36a3bd23...).
+
+
+### cf7 implementation report (2026-10-12, worker)
+
+#### What changed
+- `tools/creature-sprite-export.mjs`: `decodePng` now also reads non-interlaced indexed PNGs
+  (color type 3, bit depth 1/2/4/8, optional tRNS) and expands to RGBA8. RGB8/RGBA8 paths are
+  byte-for-byte unchanged; needed to read the legacy palette `images/tiles.png` (2bpp, 4 grays).
+- `tools/join-simple-environments16.mjs`: added the **shipping install phase**. It derives the
+  selected cells from `data/beta-area.toml` + generated collision + the render window, writes the
+  approved simple redraw cells from `simple/legacy16/atlas16.png` into `images/tiles_16x16.png` and
+  `images/tiles.png` at the same GIDs, and authors `docs/assets/world-environment-32-spike/simple/
+  shipping-map.json`. Review-only catalogue outputs are untouched (idempotent).
+- `tools/tests/join-simple-environments16_test.mjs`: +4 permanent tests (mapping completeness, byte
+  install/monochrome/HEAD preservation, tiles.tsx props, packed `tiles` frames).
+- `tools/tests/pack-parity_test.sh`: rebaselined `expected=` with provenance comment.
+- New `docs/assets/world-environment-32-spike/simple/shipping-map.json` (24 entries).
+
+#### Mapping (24 cells; catalogue 1-based cell id == shipping GID; id-aligned)
+| class | GIDs (cell == GID) |
+|---|---|
+| beta-area | 258,260,261,262,267,274,275,276,290,291,292,297,298,545,551 |
+| visible-margin | 7,8,15,23,24,30,47,63 |
+| adjacent-border | 38 |
+
+Derivation: 39 walkable cells reachable from start (11,5) (sealed in x9..20,y2..9). Render window
+(draw.h) = readStartX(playerX-3 or-4)+0..8 => columns playerX-4..playerX+5; readStartY(playerY-2
+or-3)+0..4 => rows playerY-3..playerY+2. Union over reachable cells = columns 5..25, rows -1..11;
+non-empty GIDs = {7,8,15,23,24,30,47,63}. GID 38 (single authored cell at (4,4)) is the dispatch's
+enumerated visible-neighbourhood border tile, one step beyond the exact union; installed as a
+documented superset (class adjacent-border).
+
+#### Per-GID pixel diff vs `simple/legacy16/atlas16.png`
+Before (differing px /256), recorded pre-change: 258=69,260=23,261=58,262=65,267=116,274=64,
+275=90,276=0,290=14,291=32,292=5,297=119,298=103,545=209,551=215,7=12,8=23,15=68,23=15,24=24,
+30=39,38=80,47=30,63=114. (Dispatch said all beta GIDs differ; measured GID 276 was already
+pixel-identical — 0 diff. All other examples matched exactly.)
+After install: every installed cell is a byte-exact catalogue copy => 0/256 for all 24 GIDs
+(asserted by the new test). Both sheets stay 256x768, 16 columns, RGBA8.
+
+#### Packed-cart verification (control vs candidate)
+Same-source control = HEAD `images/tiles*.png` (blob `af2ad14a`/`21271bd4`), regenerated and
+measured, then the install restored and regenerated.
+- Control cart `dist/fxdata.bin` SHA-256 = 36a3bd234ff9b6a9b444b5fd1f38f3c671dfffd90918758827c6dc38839fe06b
+  (reproduced HEAD baseline exactly) → Candidate = cb170b6ae45545af483dc66ea04c7361fdb9cb03c8a49827c0a0344d439e2c9b.
+- Cart delta: 46 changed byte ranges, all inside the `tiles` symbol payload
+  [0xce04, 0x12e04) (min 0xcec4, max 0x112e3). No other symbol bytes move; `src/fxdata.h`
+  addresses unchanged (data-only install without size change).
+- Flash/RAM: control == candidate: Program `RAM_FLASH_BYTES=24986`, static `RAM_STATIC_BYTES=1760`,
+  `RAM_FREE_BYTES=800` (AVR_STATIC_RAM_FREE_BYTES=400). Whole-image identical; no VS address shift.
+
+#### Exact commands and results
+Env prefix: `PATH=/Users/connorfranc/Applications/CreatureGathererTools/bin:$PATH ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens`
+- `make gen BUILD_DIR=build/box-adoption-gate` rc=0 (6.8 s; idempotent)
+- `make verify-generated BUILD_DIR=build/box-adoption-gate` rc=0
+- `make test-pack-parity BUILD_DIR=build/box-adoption-gate` rc=0 (layout equivalence PASS, pack parity PASS)
+- `make test BUILD_DIR=build/box-adoption-gate` rc=0 (host + world suites; 258 world tests PASSED)
+- `node --test tools/tests/lure-world-spike_test.mjs` 4/4 pass
+- `node --test tools/tests/join-simple-environments16_test.mjs` 7/7 pass
+- `node --test tools/tests/*.mjs` 107/107 pass (confirms decodePng change is regression-free)
+- `make fxtest-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_world_player.ino BUILD_DIR=build/box-adoption-gate` rc=0:
+  `test_stack PASSED=4 FAILED=0`, stack headroom `0x1E4` (484 B); `test_world_player PASSED=43 FAILED=0`
+- `make ram BUILD_DIR=build/box-adoption-gate` rc=0 (figures above)
+Logs: `/tmp/cf7-*.log`; evidence copies under
+`/private/var/folders/jg/8jm42wy11_v5r99zyc44s2s40000gn/T/opencode/cf7/` (control/candidate carts + installed PNGs).
+
+#### Docs churn
+None. `make gen` regenerates the lure-world review crops from `images/tiles_16x16.png` as `legacy`;
+after the install those tracked PNGs (`docs/assets/.../lure-world/{boot,container,plant,terrain}.png`,
+`manifest.json`) and the combined16 catalogue + `docs/world-environment-32-spike.html` were all
+byte-identical (the joiner's `write` is compare-before-write and the review catalogue depends only
+on unchanged atlas32 sources).
+
+#### Deviations
+- Included the dispatch's enumerated border GID 38 as a documented `adjacent-border` superset
+  (outside the exact render-window union; identical authored wall family).
+- Dispatch's "every beta GID differs" is inexact: GID 276 was already pixel-identical.
+- No firmware/engine source touched; no ignore exceptions; no CGFX_LURE_WEDGE gating.
+
+#### Storage handoff
+Before: 18 GiB free, `du -sh build` 3.8 G, `build/box-adoption-gate` 80 M.
+After: 17 GiB free (>=10 GiB reserve), `du -sh build` 3.8 G, `build/box-adoption-gate` 130 M.
+No abandoned `cgfx-pack.*` stages. `build/box-adoption-gate/fxtest` (another worker's outputs) not cleaned.
+
+#### Wall time
+Worker ~28 min (recon/derivation, joiner+test implementation, control/candidate gen+ram, host/device gates).
+
+#### Status
+All acceptance criteria met; `bd close cf7` (no commit — orchestrator commits).
