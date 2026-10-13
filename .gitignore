@@ -49,3 +49,7 @@ harness/workspaces/shiva/
 !tools/tests/fixtures/fxdata-manifest/**/fxdata/generated/data.bin
 !tools/tests/fixtures/fxdata-manifest/*/dist/
 !tools/tests/fixtures/fxdata-manifest/*/dist/**
+
+# Doctor fixture installed-core metadata (selected-core bundled libraries)
+!tools/tests/fixtures/doctor/core-data/**/libraries/
+!tools/tests/fixtures/doctor/core-data/**/libraries/**
