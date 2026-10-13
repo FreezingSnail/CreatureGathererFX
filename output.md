@@ -7943,3 +7943,47 @@ Exact verification (from CG; all exit 0):
 
 Deviations: clean-archive `gen` stops at `pack` on the pre-existing missing `map.bin` (out of scope; sibling `le5`). Tool repo left dirty as required; nothing committed or reverted there. No commit/push in either repo (orchestrator commits CG). Worker wall time ≈ 35 min.
 Storage: `df -h .` 23GiB free (above 10GiB reserve); reused `build/box-adoption-gate` (57MiB, one lane); no cgfx-pack stage remained; extract removed.
+
+---
+
+## CreatureGathererFX-jiu — distinguish installed native generator by release + source revision
+
+Problem: every compatible/incompatible cgfx-tools build reported `cgfx-tools 0.2.0`; manifest identity could not distinguish same-version builds. Acceptance: selected installed tool has a reproducible distinguishable identity and required capabilities; doctor and generation checks agree on it.
+
+Identity (decision 1): crate version + reproducible built source revision.
+- Tool repo `crates/core/Cargo.toml` `version = "0.2.0"` -> `"0.3.0"`; `Cargo.lock` refreshed by cargo.
+- New `crates/core/build.rs` runs `git rev-parse --short=8 HEAD` and emits `cargo:rustc-env=CGFX_TOOLS_REVISION=<short8>` (fallback `unknown` when git metadata is unavailable -> `+gunknown`).
+- `crates/core/src/manifest.rs` adds `pub const TOOL_IDENTITY: &str = concat!(env!("CARGO_PKG_VERSION"), "+g", env!("CGFX_TOOLS_REVISION"))`; manifest `tool_version` = `cgfx-tools {TOOL_IDENTITY}`.
+- `crates/core/src/cli.rs`: clap `#[command(version = TOOL_IDENTITY)]`, so `--version` prints the same single token. Test `version_banner_uses_stable_binary_name` and `tests/manifest.rs` updated to the shared const.
+
+Identity strings / hashes:
+- Old installed binary: `cgfx-tools 0.2.0`; sha256 `d4f9537be46cb2752aa4105333769fbcb10f63f4a49ea9c7362b6a8f50720435`.
+- New: `cgfx-tools 0.3.0+ga9dc6400` (tool HEAD `a9dc6400`); repo+installed binary sha256 `77bb1e1dd3dbbebcce52cdacd9045ff0e6d53db27eae0f194dac3c3d00c308e0`.
+- Rebuild from the same revision (`touch build.rs; cargo build --locked --release -p cgfx-core --bin cgfx-tools`) -> identical `cgfx-tools 0.3.0+ga9dc6400` and identical binary sha256 (reproducible). A different revision differs by construction: `HEAD~1 = ee2ee45b` would print `0.3.0+gee2ee45b` (reasoned, not built).
+- Installed via `cp -f target/release/cgfx-tools /Users/connorfranc/Applications/CreatureGathererTools/bin/cgfx-tools`.
+
+Manifest + doctor agreement (decision 2):
+- `tools/doctor.sh` converted to `#!/usr/bin/env bash` (the manifest lib uses process substitution) and sources `tools/fxdata-manifest-lib.sh`. New check: when the manifest exists and its `generator.name` is `cgfx-tools`, resolve its identity with `fxdata_tool_version` and FAIL with a clear message when the PATH binary's `--version` token differs; PASS `cgfx-tools identity matches manifest generator (<token>)` on agreement. Capability/version failures unchanged.
+- Demonstrated detection pre-regen: `FAIL cgfx-tools identity: PATH binary (0.3.0+ga9dc6400) differs from manifest generator (0.2.0)` -> `doctor: NOT READY`.
+
+Stamp extraction (decision 3): `tools/emit-tool-version-stamp.sh` now sources the manifest lib and uses `fxdata_tool_version` (handles legacy `tool_version` and canonical `generator.version`), keeping the C++-safe charset guard (now allowing `+` and the `cgfx-tools ` prefix). Regeneration rewrote `fxdata/generated/tool_version.bin` = `cgfx-tools 0.3.0+ga9dc6400\0` and `tst/fxdatatest/generated/version_data.hpp` = `"cgfx-tools 0.3.0+ga9dc6400"` (generated, not hand-edited).
+
+Fixtures (decision 4): `tools/tests/doctor_test.sh` assertion -> `version=0.3.0+gdeadbeef` + `PASS manifest: fresh (generator=cgfx-tools:0.3.0+gdeadbeef)` + new agreement PASS assertion + new negative: `DOCTOR_MOCK_CGFX_VERSION='cgfx-tools 0.3.0+g00000000'` -> `FAIL cgfx-tools identity: PATH binary (0.3.0+g00000000) differs from manifest generator (0.3.0+gdeadbeef)`. `tools/tests/fixtures/doctor/bin/cgfx-tools` prints `cgfx-tools 0.3.0+gdeadbeef` (with `DOCTOR_MOCK_CGFX_VERSION` override); `tools/tests/fixtures/fxdata-manifest/valid/.../manifest.json` generator.version aligned to `0.3.0+gdeadbeef`. All capability/malformed/stale negatives kept.
+
+Regenerated set: `fxdata/generated/manifest.json` generator.version `0.2.0` -> `0.3.0+ga9dc6400`; `fxdata/generated/tool_version.bin`; `tst/fxdatatest/generated/version_data.hpp`; tracked `src/fxdata.h` (identity grew 9 bytes, so `generator_version` shifted later packed addresses; `FX_DATA_BYTES` 748468 -> 748478). `fxdata/generated/*` and `dist/*` are gitignored.
+
+Pack parity: `dist/fxdata.bin` `c024abf4a7f47a665f724cfa83402f3e48b4c6b2184706bc57ba1ae8f84ba7f9` -> `757ac12ea78e8beb40b31f51a41d815c05c9acec7ad88c89c51db6979f532322`; `dist/fxdata-data.bin` `04f92688…` -> `eb36245178447ceda4be7a19409c4cf730267759219a257c2bfede3d0f9160c9`; `dist/fxdata-save.bin` unchanged (`2d864c0b…`). Intentional rebaseline: `tools/tests/pack-parity_test.sh` `expected=` updated with a provenance comment (the generator identity stamp grew, shifting later addresses).
+
+Tool-repo `cargo test -p cgfx-core --no-fail-fast` (counts): lib 201 passed/0 failed; bins 0/0; arena_demo 2; bw_placeholders 5; cli_wfc 7; fixtures 1; fxpack_font 5; fxpack_header 6; fxpack_image 4; fxpack_layout 7; fxpack_pack 8; fxpack_parity 6; fxpack_save 6; fxpack_spec 21; fxpack_sprite 6; fxpack_symbol 2; go_parity 8; json_parser 1; map4chunks 6; wfcmap_capture 8; wfcmap_generate 10; wfcmap_schema 7. Pre-existing unrelated failures: `fxpack_carray` 20 passed / 4 failed (`enumerates_real_opponent_declarations` 25 vs 20, `enumerates_real_team_declarations` 67 vs 35, `enumerates_real_legacy_sprite_declarations`, `enumerates_real_generated_sprite_declarations`); `tests/manifest.rs` 1 passed / 1 failed (`full_project_manifest_lists_complete_hashed_regenerated_artifact_inventory` panics in `run_project`: testdata `data/opponents.csv:2: second party member: moves[1] has unknown move "zap"` — pre-existing dirty-testdata data mismatch, before the identity assertion).
+
+Exact focused verification (from CG; all PASS):
+- `PATH=…/CreatureGathererTools/bin:$PATH ARDENS=…/Ardens make gen BUILD_DIR=build/box-adoption-gate` -> `Packed FX image: build/box-adoption-gate/cgfx-pack.*/dist/fxdata.bin` (~7s); re-run byte-identical (REGEN-DETERMINISTIC: PASS).
+- `… make verify-generated BUILD_DIR=build/box-adoption-gate` -> exit 0.
+- `… make test-generated-libs BUILD_DIR=build/box-adoption-gate` -> `arena-demo-data: … PASS`, `first-unqualified-alias: 28 passed, 0 failed`.
+- `… make test-pack-parity BUILD_DIR=build/box-adoption-gate` -> `layout equivalence: PASS`, perturbation PASS, `pack parity: PASS`.
+- `… make test-manifest BUILD_DIR=build/box-adoption-gate` -> `ensure-generated: PASS`.
+- `… make test-doctor BUILD_DIR=build/box-adoption-gate` -> `doctor: PASS`.
+- `… make doctor BUILD_DIR=build/box-adoption-gate` -> `PASS cgfx-tools: … version=0.3.0+ga9dc6400`, `PASS cgfx-tools project capabilities`, `PASS cgfx-tools identity matches manifest generator (0.3.0+ga9dc6400)`, `PASS manifest: fresh (generator=cgfx-tools:0.3.0+ga9dc6400)`, `doctor: READY`.
+
+Deviations: recon said emit-tool-version-stamp currently fails/empties; on this worktree `make gen` happened to succeed because gen-data rewrites `tool_version` earlier in the same run, but the latent generator-schema path is now fixed by using `fxdata_tool_version`. `install.sh` untouched (no change required); `toolchain.lock` untouched; no release/tag. No commit/push in either repo (orchestrator commits CG); sibling tool repo left dirty with pre-existing unrelated changes. Worker wall time ≈ 45 min.
+Storage: `df -h .` 22GiB free (>10GiB reserve); reused `build/box-adoption-gate` (57MiB, one lane); no `cgfx-pack.*` stage remained after any run.

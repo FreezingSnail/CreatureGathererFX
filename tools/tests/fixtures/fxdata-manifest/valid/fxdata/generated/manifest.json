@@ -1,6 +1,6 @@
 {
   "schema_version":1,
-  "generator":{"name":"cgfx-tools","version":"1.2.3"},
+  "generator":{"name":"cgfx-tools","version":"0.3.0+gdeadbeef"},
   "target":"fxdata/fxdata.txt",
   "inputs":[
     {"path":"cgfx-project.json","sha256":"218589323cbe80b7ed077e3ee36f1663e7cb5f8f4e4ad02c938ad8a5c2c5a6b9"},

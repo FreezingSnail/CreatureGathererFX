@@ -1,8 +1,10 @@
-#!/bin/sh
+#!/usr/bin/env bash
 # Report local CreatureGathererFX readiness without installing or configuring anything.
 set -u
 
 script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
+# shellcheck source=fxdata-manifest-lib.sh
+source "$script_dir/fxdata-manifest-lib.sh"
 root=${DOCTOR_ROOT:-$(CDPATH= cd -- "$script_dir/.." && pwd -P)}
 cxx=${CXX:-g++}
 arduino_cli=${ARDUINO_CLI:-arduino-cli}
@@ -131,6 +133,24 @@ if cgfx_tool=$(command -v cgfx-tools 2>/dev/null); then
         remedy 'rebuild/install cgfx-tools from current CreatureGathererTools source and put its bin directory first on PATH; version alone does not establish compatibility'
     else
         pass 'cgfx-tools project capabilities'
+    fi
+    # Identity agreement: the installed binary must be the build that recorded
+    # the generation manifest. A matching capability set with a different
+    # identity means the manifest is stale or the wrong generator produced it.
+    if test -n "$cgfx_version" && test -f "$manifest"; then
+        generator_name=$(awk -F '"' '/^[[:space:]]*"generator"[[:space:]]*:/ { print $6; exit }' "$manifest")
+        if test "$generator_name" = cgfx-tools; then
+            manifest_identity=$(fxdata_tool_version "$manifest" 2>/dev/null) || manifest_identity=
+            if test -z "$manifest_identity"; then
+                fail "cgfx-tools identity: manifest generator version unreadable: $manifest"
+                remedy 'regenerate with the selected cgfx-tools on PATH: make gen'
+            elif test "$manifest_identity" != "$cgfx_version"; then
+                fail "cgfx-tools identity: PATH binary ($cgfx_version) differs from manifest generator ($manifest_identity)"
+                remedy 'regenerate with the selected cgfx-tools (make gen) or install the generator that produced the manifest'
+            else
+                pass "cgfx-tools identity matches manifest generator ($manifest_identity)"
+            fi
+        fi
     fi
 else
     fail 'cgfx-tools: not found on PATH'

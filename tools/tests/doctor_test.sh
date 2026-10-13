@@ -22,11 +22,22 @@ run_doctor() {
 output=$(ARDENS= run_doctor "$valid")
 printf '%s\n' "$output" | grep -Fq "host: $(uname -s) $(uname -m)"
 printf '%s\n' "$output" | grep -Fq 'PASS cgfx-tools: path='
-printf '%s\n' "$output" | grep -Fq 'version=0.2.0'
+printf '%s\n' "$output" | grep -Fq 'version=0.3.0+gdeadbeef'
 printf '%s\n' "$output" | grep -Fq 'PASS cgfx-tools project capabilities'
-printf '%s\n' "$output" | grep -Fq 'PASS manifest: fresh (generator=cgfx-tools:1.2.3)'
+printf '%s\n' "$output" | grep -Fq 'PASS cgfx-tools identity matches manifest generator (0.3.0+gdeadbeef)'
+printf '%s\n' "$output" | grep -Fq 'PASS manifest: fresh (generator=cgfx-tools:0.3.0+gdeadbeef)'
 printf '%s\n' "$output" | grep -Fq 'SKIP Ardens: not requested'
 printf '%s\n' "$output" | grep -Fq 'doctor: READY'
+
+# Same capabilities and version shape, but the installed binary is not the
+# build that recorded the manifest: doctor must reject the identity mismatch
+# instead of trusting the version token alone.
+if output=$(DOCTOR_MOCK_CGFX_VERSION='cgfx-tools 0.3.0+g00000000' run_doctor "$valid"); then
+    printf '%s\n' 'identity mismatch unexpectedly passed' >&2
+    exit 1
+fi
+printf '%s\n' "$output" | grep -Fq 'FAIL cgfx-tools identity: PATH binary (0.3.0+g00000000) differs from manifest generator (0.3.0+gdeadbeef)'
+printf '%s\n' "$output" | grep -Fq 'remedy: regenerate with the selected cgfx-tools (make gen) or install the generator that produced the manifest'
 
 # Same advertised version as the compatible fixture, but each missing
 # required generation mode must independently reject the binary.
