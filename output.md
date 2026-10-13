@@ -7842,3 +7842,58 @@ Validation:
 - Reconcile sources: `/private/tmp/cgfx-box-adopt-9/{source,source-clean}` (base `1fea6c8`), `/private/tmp/cgfx-base-1fea6c8` clean archive, reviewed patch `/private/tmp/cgfx-1as-spike/artifacts/1as.10-independent.patch`. Abandoned `cgfx-pack.OBEsGp` stage from the interrupted October 11 attempt removed before this lane ran.
 
 Storage: no new build root; reused `build/box-adoption-gate` (one lane). Wall time approximately 30 minutes for reconcile, host/device checks, both size builds and the integrated gate. No failed gate; no push.
+
+## CreatureGathererFX-0nm — recognize libraries bundled in the selected Arduboy core (2026-10-13)
+
+Bug/perf: real `make doctor` reported `FAIL Arduboy cores and libraries (missing libraries: Arduboy2 ArdBitmap)` because doctor only grepped standalone `arduino-cli lib list`. The selected installed core `arduboy-homemade:avr 1.4.0` bundles Arduboy2/ArdBitmap, so the host was falsely NOT READY.
+
+Change:
+- `tools/doctor.sh`: default `FQBN=arduboy-homemade:avr:arduboy-fx`; a required library now passes when found standalone in `lib list` OR bundled under the SELECTED core's installed tree `<data>/packages/<vendor>/hardware/<arch>/<version>/libraries/<lib>`, where `<data>` = `arduino-cli config get directories.data` (non-mutating) and vendor/arch come from the FQBN prefix. `core list`/`lib list` command failures remain failures; no install/network/fallback.
+- `Makefile` `doctor:` passes `FQBN="$(FQBN)"` so the project FQBN reaches doctor.
+- `tools/tests/fixtures/doctor/bin/arduino-cli`: mock also handles `config get directories.data` via `DOCTOR_MOCK_ARDUINO_DATA`; `DOCTOR_MOCK_ARDUINO_LIBS=missing` empties standalone `lib list`. Env plane limited to `DOCTOR_MOCK_ARDUINO` (legacy general missing), `DOCTOR_MOCK_ARDUINO_LIBS`, `DOCTOR_MOCK_ARDUINO_DATA`.
+- `tools/tests/fixtures/doctor/core-data/{bundled,unrelated}`: selected-core and unrelated-core bundled-library trees.
+- `tools/tests/doctor_test.sh`: added bundled success (READY), unrelated-core-only rejection (NOT READY, `missing libraries: Arduboy2 ArdBitmap` + remedy), genuine missing rejection (same detail + remedy); every pre-existing assertion preserved.
+- `.gitignore`: negations so the `libraries` fixture dirs are tracked (the global `libraries` rule ignored them).
+
+Verification (exact):
+- `PATH=/Users/connorfranc/Applications/CreatureGathererTools/bin:$PATH ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens make test-doctor BUILD_DIR=build/box-adoption-gate` -> `./tools/tests/doctor_test.sh` / `doctor: PASS`; wall 5.4s.
+- Same with `ARDENS=` -> `doctor: PASS` (SKIP path intact).
+- Real host, before: `doctor: NOT READY` (missing libraries). After: `PASS Arduboy cores and libraries` / `doctor: READY`.
+- `sh -n` clean on `doctor.sh`, `doctor_test.sh`, mock.
+
+Deviations: one transient `make test-doctor` timeout (120s) during the parallel fxdata-manifest fixture staging; immediate rerun passed in 5s, no change made. No commit/push (orchestrator commits). Storage: `df -h .` 23GiB free, above the 10GiB reserve; reused `build/box-adoption-gate`.
+
+## CreatureGathererFX-6ea — manifest fixtures reproducible from a clean source checkout (2026-10-12)
+
+Tracked the immutable `tools/tests/fixtures/fxdata-manifest/*/dist/` fixture bytes that the broad `dist/` rule (and `*.bin`) had been ignoring, with the narrowest fixture-local exceptions. No fixture byte was altered; no production `dist/` output was exempted; no fixture was borrowed from the worktree during proof.
+
+Changes:
+- `.gitignore`: added `!tools/tests/fixtures/fxdata-manifest/*/dist/` and `!tools/tests/fixtures/fxdata-manifest/*/dist/**` (single level under the fixture root). `git add --dry-run dist/` still refuses the production tree; `git check-ignore` still reports `dist/` for the root cart. (The unrelated doctor-fixture negations already staged by bead 0nm are untouched and coexist.)
+- Staged the exact 23 existing dist bytes with `git add tools/tests/fixtures/fxdata-manifest/*/dist/` (9 fixture dirs: changed-image/changed-input/deterministic/missing-output/orphan-image/unexpected-image/unexpected-output/valid; `no-image` intentionally has none; `orphan-image` intentionally has only `fxdata.bin`+`fxdata-data.bin`). `git ls-files --stage ... | wc -l` = 23 (mode 100644, staged). Bytes kept byte-exact:
+  - `fxdata.bin` observed `5f0ba3b7…` (valid/missing-output/orphan-image/unexpected-image/unexpected-output), `753726ad…` (changed-input/deterministic), `6d0d1560…` (changed-image, the deliberately mutated one).
+  - `fxdata-data.bin` `7c7218e1…`, `fxdata-save.bin` `744048ad…` unchanged.
+
+Clean-checkout proof (no worktree borrowing):
+- `tree=$(git write-tree)` on the staged index -> `8a112ac46cf2a34a9f85202736ae4e37a3858310`.
+- `git archive --format=tar "$tree" | tar -x -C /private/var/folders/jg/8jm42wy11_v5r99zyc44s2s40000gn/T/cgfx-6ea-clean` -> extract contains 23 dist files, no `.git`.
+- `diff` of `shasum -a 256` lists worktree vs extract: **IDENTICAL: all 23 dist bytes match**.
+- From inside the extract: `PATH=…/CreatureGathererTools/bin:$PATH ./tools/tests/fxdata-manifest_test.sh` -> `fxdata-manifest: PASS` (exit 0). Native bash suite; no Python/perl; nothing in /tmp.
+
+Negative fixtures still fail for their intended reason (assert exits 1 with the exact expected message + `remedy: run make gen`):
+- changed-input: `changed inputs: data/source.json (expected 94e5c924…, observed 1d44a474…)`.
+- missing-output: `missing outputs output: fxdata/generated/data.bin`.
+- unexpected-output: `unexpected outputs artifact: fxdata/generated/unexpected.txt`.
+- malformed-manifest: `malformed manifest:` (awk `expected opening object`).
+- changed-image: `changed image: dist/fxdata.bin (expected 5f0ba3b7…, observed 6d0d1560…)` — the tracked mutated byte is the one the negative check needs.
+- unexpected-image: `unexpected image artifact: dist/fxdata-save.bin`.
+- orphan-image: `missing image output: dist/fxdata-save.bin`.
+
+Required focused verification (worktree):
+- `PATH=…/CreatureGathererTools/bin:$PATH ARDENS=…/Ardens make test-manifest BUILD_DIR=build/box-adoption-gate` -> `fxdata-manifest: PASS`, `ensure-generated: PASS` (exit 0).
+- `… make test-generated-libs BUILD_DIR=build/box-adoption-gate` -> `generated-libs: 40 passed, 0 failed`, `generated-libs-invariants: 5 passed, 0 failed`, `arena-demo-data: … PASS`, `first-unqualified-alias: 28 passed, 0 failed` (exit 0).
+
+`make gen` (triggered by test-manifest's ensure-generated cache check) left no unexpected tracked changes; `git status` shows only my staged `.gitignore`+23 dist entries plus the pre-existing other-bead staging and the unstaged `.beads/interactions.jsonl`.
+
+Deviations: an early foreground run of the fixture suite exceeded a 120s tool timeout with no output; reran and completed (`PASS`) with no source change. Root cause looked like a transient shell-pipe stall, not the suite (isolated `assert` runs finished in <1s).
+
+No commit/push (orchestrator commits). Wall time ~25 minutes. Storage: `df -h .` 23GiB free (above reserve); reused `build/box-adoption-gate` (57MiB); scratch `cgfx-6ea-clean` extract under the approved temp root.
