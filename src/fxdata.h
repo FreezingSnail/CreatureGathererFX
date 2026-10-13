@@ -92,7 +92,7 @@ namespace MoveData
   constexpr uint24_t move29 = 0x0006CB;
   constexpr uint24_t move30 = 0x0006D6;
   constexpr uint24_t move31 = 0x0006DB;
-  constexpr uint24_t move32 = 0x0006E5;
+  constexpr uint24_t move44 = 0x0006E5;
   constexpr uint24_t move33 = 0x0006EC;
   constexpr uint24_t move34 = 0x0006F4;
   constexpr uint24_t move36 = 0x0006F9;

@@ -256,9 +256,9 @@ namespace = "MoveData"
 source = { carray = { path = "../../../fxdata/generated/moves.txt", symbol = "move31" } }
 
 [[entry]]
-name = "move32"
+name = "move44"
 namespace = "MoveData"
-source = { carray = { path = "../../../fxdata/generated/moves.txt", symbol = "move32" } }
+source = { carray = { path = "../../../fxdata/generated/moves.txt", symbol = "move44" } }
 
 [[entry]]
 name = "move33"
