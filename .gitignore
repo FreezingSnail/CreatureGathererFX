@@ -47,3 +47,5 @@ harness/workspaces/shiva/
 
 # Committed binary inputs for provenance contract tests
 !tools/tests/fixtures/fxdata-manifest/**/fxdata/generated/data.bin
+!tools/tests/fixtures/fxdata-manifest/*/dist/
+!tools/tests/fixtures/fxdata-manifest/*/dist/**

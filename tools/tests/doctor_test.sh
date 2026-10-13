@@ -7,6 +7,7 @@ doctor="$root/tools/doctor.sh"
 valid="$root/tools/tests/fixtures/fxdata-manifest/valid/fxdata"
 stale="$root/tools/tests/fixtures/fxdata-manifest/changed-input/fxdata"
 mock_bin="$root/tools/tests/fixtures/doctor/bin"
+core_data="$root/tools/tests/fixtures/doctor/core-data"
 
 run_doctor() {
     PATH="$mock_bin:$PATH" \
@@ -58,6 +59,32 @@ if output=$(DOCTOR_MOCK_ARDUINO=missing run_doctor "$valid"); then
     exit 1
 fi
 printf '%s\n' "$output" | grep -Fq 'FAIL Arduboy cores and libraries'
+printf '%s\n' "$output" | grep -Fq 'remedy: run SETUP_APPLY=1 tools/setup.sh, or install the listed cores/libraries manually'
+
+# Bundled success: no standalone libraries, but the FQBN's selected installed
+# core supplies Arduboy2/ArdBitmap under its bundled libraries directory.
+if ! output=$(DOCTOR_MOCK_ARDUINO_LIBS=missing DOCTOR_MOCK_ARDUINO_DATA="$core_data/bundled" run_doctor "$valid"); then
+    printf '%s\n' 'selected-core bundled libraries unexpectedly failed' >&2
+    exit 1
+fi
+printf '%s\n' "$output" | grep -Fq 'PASS Arduboy cores and libraries'
+printf '%s\n' "$output" | grep -Fq 'doctor: READY'
+
+# Unrelated core only: a different installed core bundles the libraries, so the
+# selected core still lacks them and the required-library remedy must remain.
+if output=$(DOCTOR_MOCK_ARDUINO_LIBS=missing DOCTOR_MOCK_ARDUINO_DATA="$core_data/unrelated" run_doctor "$valid"); then
+    printf '%s\n' 'unrelated-core bundled libraries unexpectedly passed' >&2
+    exit 1
+fi
+printf '%s\n' "$output" | grep -Fq 'FAIL Arduboy cores and libraries (missing libraries: Arduboy2 ArdBitmap)'
+printf '%s\n' "$output" | grep -Fq 'remedy: run SETUP_APPLY=1 tools/setup.sh, or install the listed cores/libraries manually'
+
+# Genuine missing dependency: neither standalone nor bundled in the selected core.
+if output=$(DOCTOR_MOCK_ARDUINO_LIBS=missing DOCTOR_MOCK_ARDUINO_DATA="$core_data/absent" run_doctor "$valid"); then
+    printf '%s\n' 'genuinely missing libraries unexpectedly passed' >&2
+    exit 1
+fi
+printf '%s\n' "$output" | grep -Fq 'FAIL Arduboy cores and libraries (missing libraries: Arduboy2 ArdBitmap)'
 printf '%s\n' "$output" | grep -Fq 'remedy: run SETUP_APPLY=1 tools/setup.sh, or install the listed cores/libraries manually'
 
 if output=$(run_doctor "$stale"); then

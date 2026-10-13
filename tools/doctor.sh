@@ -6,6 +6,7 @@ script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 root=${DOCTOR_ROOT:-$(CDPATH= cd -- "$script_dir/.." && pwd -P)}
 cxx=${CXX:-g++}
 arduino_cli=${ARDUINO_CLI:-arduino-cli}
+: "${FQBN:=arduboy-homemade:avr:arduboy-fx}"
 manifest_assert=${DOCTOR_ASSERT:-$root/tools/assert-fxdata-manifest.sh}
 fxdata_file=${DOCTOR_FXDATA:-$root/fxlayout.toml}
 manifest=${DOCTOR_MANIFEST:-$root/fxdata/generated/manifest.json}
@@ -54,6 +55,15 @@ if arduino_path=$(command -v "$arduino_cli" 2>/dev/null); then
     core_status=$?
     lib_output=$($arduino_cli lib list 2>&1)
     lib_status=$?
+    # Selected core id is the FQBN prefix before the board segment. A required
+    # library is satisfied by a standalone install (lib list) or by the selected
+    # installed core's bundled libraries under
+    # <data>/packages/<vendor>/hardware/<arch>/<version>/libraries/<lib>.
+    # Collector: arduino-cli config get directories.data (non-mutating).
+    core_data=$($arduino_cli config get directories.data 2>/dev/null)
+    core_vendor=${FQBN%%:*}
+    core_arch=${FQBN#*:}
+    core_arch=${core_arch%%:*}
     missing_cores=
     missing_libs=
     if test "$core_status" -ne 0 || ! printf '%s\n' "$core_output" | grep -Fq 'arduboy-homemade:avr'; then
@@ -62,12 +72,25 @@ if arduino_path=$(command -v "$arduino_cli" 2>/dev/null); then
     if test "$core_status" -ne 0 || ! printf '%s\n' "$core_output" | grep -Fq 'arduino:avr'; then
         test -n "$missing_cores" && missing_cores="$missing_cores arduino:avr" || missing_cores='arduino:avr'
     fi
-    if test "$lib_status" -ne 0 || ! printf '%s\n' "$lib_output" | grep -Fq 'Arduboy2'; then
-        missing_libs='Arduboy2'
-    fi
-    if test "$lib_status" -ne 0 || ! printf '%s\n' "$lib_output" | grep -Fq 'ArdBitmap'; then
-        test -n "$missing_libs" && missing_libs="$missing_libs ArdBitmap" || missing_libs='ArdBitmap'
-    fi
+    for required_lib in Arduboy2 ArdBitmap; do
+        lib_present=0
+        if test "$lib_status" -ne 0; then
+            lib_present=0
+        elif printf '%s\n' "$lib_output" | grep -Fq "$required_lib"; then
+            lib_present=1
+        else
+            for candidate in \
+                "$core_data"/packages/"$core_vendor"/hardware/"$core_arch"/*/libraries/"$required_lib"; do
+                if test -d "$candidate"; then
+                    lib_present=1
+                    break
+                fi
+            done
+        fi
+        if test "$lib_present" -eq 0; then
+            test -n "$missing_libs" && missing_libs="$missing_libs $required_lib" || missing_libs="$required_lib"
+        fi
+    done
     if test -z "$missing_cores" && test -z "$missing_libs"; then
         pass 'Arduboy cores and libraries'
     else
