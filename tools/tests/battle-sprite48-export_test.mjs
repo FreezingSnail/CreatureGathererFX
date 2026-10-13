@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { decodePng, validateSprite } from '../creature-sprite-export.mjs';
+import { decodePng, validateSprite, packedSheetDiff, fxdataConstant } from '../creature-sprite-export.mjs';
 import { mirrorHorizontal } from '../battle-sprite48-export.mjs';
 
 test('reviewed front orientation is baked into exports and backs are never mirrored', () => {
@@ -77,5 +77,32 @@ test('all128 packed battle frames match the native viewer sprites byte for byte'
       const i = address + 4 + frame * 576 + (page * 48 + x) * 2;
       assert.equal(packed[i], pixel); assert.equal(packed[i + 1], mask);
     }
+  }
+});
+
+test('packed battle options and effects match their source sheets byte for byte', () => {
+  const header = fs.readFileSync('src/fxdata.h', 'utf8');
+  const packed = fs.readFileSync('dist/fxdata-data.bin');
+  const options = decodePng(fs.readFileSync('images/Battleoptions48_128x16.png'));
+  const width = fxdataConstant(header, 'battleOptions48Width');
+  const height = fxdataConstant(header, 'battleOptions48Height');
+  const frames = fxdataConstant(header, 'battleOptions48Frames');
+  assert.equal(width, 128); assert.equal(height, 16); assert.equal(frames, 4);
+  assert.equal(options.width, width); assert.equal(options.height, height * 4);
+  const optionsAddress = fxdataConstant(header, 'battleOptions48');
+  assert.equal(packed.readUInt16BE(optionsAddress), width);
+  assert.equal(packed.readUInt16BE(optionsAddress + 2), height);
+  assert.deepEqual(packedSheetDiff(options, packed, optionsAddress,
+    { frameWidth: width, frameHeight: height, hasHeader: true, plusMask: false }).diffs, []);
+  for (const symbol of ['basicBeamR', 'basicBeamL', 'BasicWaveR', 'BasicWaveL']) {
+    const sheet = decodePng(fs.readFileSync(`images/battleEffects/${symbol}_32x32.png`));
+    assert.equal(sheet.width, 256); assert.equal(sheet.height, 32);
+    for (let i = 0; i < sheet.pixels.length; i += 4) {
+      assert([0, 255].includes(sheet.pixels[i]), `${symbol} has a non-binary palette`);
+      assert.equal(sheet.pixels[i], sheet.pixels[i + 1]); assert.equal(sheet.pixels[i], sheet.pixels[i + 2]);
+      assert([0, 255].includes(sheet.pixels[i + 3]));
+    }
+    assert.deepEqual(packedSheetDiff(sheet, packed, fxdataConstant(header, symbol),
+      { frameWidth: 32, frameHeight: 32, plusMask: true }).diffs, [], `${symbol} packed bytes differ`);
   }
 });

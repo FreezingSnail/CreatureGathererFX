@@ -8343,3 +8343,140 @@ Worker ~28 min (recon/derivation, joiner+test implementation, control/candidate 
 
 #### Status
 All acceptance criteria met; `bd close cf7` (no commit — orchestrator commits).
+
+---
+
+## b2a.5 — Native1bpp acceptance for the selected first-beta assets
+
+Contract revision 2026-10-12 (refreshed by y50). Baseline HEAD 1451643
+(`Install the approved simple tile subset into the shipping sheets`). Worker 2026-10-12/13.
+
+### What changed
+- `tools/creature-sprite-export.mjs`: added `fxdataConstant(header,name)` and
+  `packedSheetDiff(sheet,packed,address,{frameWidth,frameHeight,hasHeader,plusMask})`,
+  which mirror the cgfx-tools pack rule (row-major frames; overview pixel byte =
+  red!=0; plus-mask interleaves a pixel/mask byte per column; mask byte = alpha!=0;
+  fxlayout image entries carry a 4-byte BE width/height header).
+- `tools/tests/creature-sprite-export_test.mjs`: two new tests
+  (`world player shipping sheet is binary and packs the published plus-mask frames`,
+  `drawn menu, digit and font sheets are binary and match their packed cart bytes`).
+- `tools/tests/battle-sprite48-export_test.mjs`: one new test
+  (`packed battle options and effects match their source sheets byte for byte`).
+- No image, fxsprites.toml, fxlayout.toml, AVR source or generated file changed.
+  No SELECTED-BETA defect was found, so acceptance is proved natively and broader
+  art is filed as b2a.7 / b2a.8 (below).
+
+### Inventory (shipping sheets after cf7; HEAD 1451643)
+Frames are the drawn frame count; `src/fxdata.h` publishes explicit constants only
+for the five fxlayout entries, so the legacy Sprites.txt frame counts are derived
+from the filename `_WxH` cell size and verified against the packed bytes.
+
+| sheet | role | dims / frames | palette | draw mask mode | src reference | class |
+|---|---|---|---|---|---|---|
+| images/tiles_16x16.png | world tiles | 256x768 / 768 16px | 0/255 + a255 | OVERWRITE (draw.h:429) | `tiles` | SELECTED-BETA-ACCEPTED (cf7) |
+| images/Playerchibi_16x16.png | player | 96x32 / 12 16px | 0/255 + a0/255 | PLUSMASK (draw.h:439) | `worldPlayerSprites` (+W/H/Frames consts) | SELECTED-BETA-ACCEPTED |
+| images/Battlecreatures_48x48.png | battle sprites | 96x3072 / 128 48px | 0/255 + a0/255 | PLUSMASK (BattleScene.cpp:53, draw.h:317, MenuV2Legacy.cpp:52) | `battleSprites48` (+consts) | SELECTED-BETA-ACCEPTED |
+| images/Battleoptions48_128x16.png | options menu | 128x64 / 4 128x16 | 0/255 + a255 | OVERWRITE (MenuV2Legacy.cpp:35, BattleMenu.cpp:250) | `battleOptions48` (+consts) | SELECTED-BETA-ACCEPTED |
+| images/LureWorld_16x16.png | lure scenery | 192x128 / 96 16px | 0/255 + a255 | OVERWRITE (draw.h:425) | `lureWorldTiles` (+consts) | SELECTED-BETA-ACCEPTED |
+| images/battleMenu_128x24.png | dialog menu bg | 128x24 / 1 | 0/255 + a255 | OVERWRITE (DialogMenu.cpp:73) | `battleMenu` | SELECTED-BETA-ACCEPTED |
+| images/numberswhite_7x8.png | battle digits | 70x80 / 100 7x8 | 0/255 + a0/255 | PLUSMASK (common.hpp:25) | `numberswhite` | SELECTED-BETA-ACCEPTED |
+| images/numbersblack_7x8.png | battle digits | 70x80 / 100 7x8 | 0/255 + a0/255 | PLUSMASK (common.hpp:32) | `numbersblack` | SELECTED-BETA-ACCEPTED |
+| images/singlenumberswhite_3x8.png | hundreds digit | 3x80 / 10 3x8 | 0/255 + a0/255 | PLUSMASK (common.hpp:24, ArenaView.cpp:11/15) | `singlenumberswhite` | SELECTED-BETA-ACCEPTED |
+| images/singlenumbersblack_3x8.png | hundreds digit | 3x80 / 10 3x8 | 0/255 + a0/255 | PLUSMASK (common.hpp:31) | `singlenumbersblack` | SELECTED-BETA-ACCEPTED |
+| images/ArduFontTrimmed_5x6.png (`fontTrimmed`) | glyph font | 375x6 / 75 5x6 | 0/255 + a255 | OVERWRITE (Text.cpp:13) | `fontTrimmed` (+consts) | SELECTED-BETA-ACCEPTED |
+| images/battleEffects/{basicBeamR,basicBeamL,BasicWaveR,BasicWaveL}_32x32.png | battle effects | 256x32 / 8 32px | 0/255 + a0/255 | PLUSMASK (BattlePresenter.cpp:674) | `basicBeamR`… | SELECTED-BETA-ACCEPTED (art redraw tracked in 86e) |
+| images/characterSheet_16x16.png | legacy | 16x192 | 0/255 + a255 | none | none | BROADER-LATER |
+| images/fieldBacground_128x32.png | removed battle field | 128x32 | gray 64 present (non-binary) | none (unreferenced) | none | BROADER-LATER (b2a.7) |
+| images/NewecreatureSprites_32x32.png | legacy | 64x2048 | 0/255 + a0/255 | none | none | BROADER-LATER |
+| images/fightMenu_128x24.png | legacy | 128x96 | 0/255 + a255 | none | none | BROADER-LATER |
+| images/ArduFont_5x6.png | legacy font | 615x6 | 0/255 + a255 | none | none | BROADER-LATER |
+| images/moveInfo_60x30.png | legacy move info | 60x30 | 0/255 + a255 | none (symbol unused) | none | BROADER-LATER |
+| images/worldTiles_16x16.png | legacy | 64x64 | 0/255 + a255 | none | none | BROADER-LATER |
+| images/maskedFont_16x24.png | legacy | 512x96 | 0/255 + a0/255 | none | none | BROADER-LATER |
+| images/npc_16x16.png | legacy npc | 16x16 | 0/255 + a0/255 | none | none | BROADER-LATER |
+| images/ecreatureSprites_32x32.png | legacy | 32x1024 | 0/255 + a0/255 | none | none | BROADER-LATER |
+| images/arduboyFont_6x8.png | legacy font | 1536x8 | 0/255 + a255 | none (comment only) | none | BROADER-LATER |
+| images/blankMenu_128x24.png | legacy menu | 128x25 (packs as 128x24) | 0/255 + a0/255 | none | none | BROADER-LATER (b2a.7) |
+| images/ArduFontTrimmed_5x6.png (legacy Sprites.txt copy) | duplicate font | 375x6 | 0/255 + a255 | none | none | BROADER-LATER |
+| images/tilesheet_16x16.png | legacy | 128x64 | 0/255 + a255 | none | none | BROADER-LATER |
+| images/letters_16x16.png | legacy | 256x256 | partial alpha (non-binary mask) | none | none | BROADER-LATER (b2a.7) |
+| images/creatureSprites_32x32.png | legacy | 32x1024 | 0/255 + a0/255 | none (comment only) | none | BROADER-LATER |
+| images/tiles.png | Tiled tileset source (not packed) | 256x768 | legacy 4-gray 0/85/170/255 | n/a | maps/tiles.tsx, ardurpg.toml | BROADER-LATER (b2a.8) |
+
+Defect list: **none inside the SELECTED set**. Every referenced sheet is binary and
+its packed cart bytes equal the source. The only non-binary/mis-sized sources
+(`fieldBacground_128x32` gray 64 + unreferenced, `letters_16x16` partial alpha +
+unreferenced, `blankMenu_128x24` 25px source packed as 128x24 + unreferenced,
+`tiles.png` legacy 4-gray Tiled source) are not drawn in the first area and are
+filed as b2a.7 / b2a.8, not fixed here (per contract).
+
+### Native test evidence
+```
+node --test tools/tests/creature-sprite-export_test.mjs tools/tests/battle-sprite48-export_test.mjs \
+  tools/tests/join-simple-environments16_test.mjs tools/tests/lure-world-spike_test.mjs
+# tests 26  pass 26  fail 0
+```
+New checks cover: Playerchibi frame geometry (16x16 x 12) + PLUSMASK packed bytes;
+battleMenu/numberswhite/numbersblack/singlenumberswhite/singlenumbersblack packed
+bytes + binary palette; fontTrimmed 5x6 x 75 geometry + packed bytes; battleOptions48
+header/frames/OVERWRITE packed bytes; the four battle-effect sheets binary palette +
+PLUSMASK packed bytes.
+
+### Determinism (two `make gen` runs)
+```
+run1 packed FX image: build/box-adoption-gate/cgfx-pack.JyEd1c/dist/fxdata.bin
+run2 packed FX image: build/box-adoption-gate/cgfx-pack.ObMOn9/dist/fxdata.bin
+git status --short  ->  only the 3 tool/test edits + .beads/interactions.jsonl (claim)
+shasum -a256 dist/fxdata.bin      cb170b6ae45545af483dc66ea04c7361fdb9cb03c8a49827c0a0344d439e2c9b  (both runs)
+shasum -a256 dist/fxdata-data.bin ae80f36a77d7d980cf7291bd073fc09a57575a95364c6edbe1755ae09ee952fd  (both runs)
+```
+No `cgfx-pack.*` stage remained after either run. Packed bytes did not change, so
+`tools/tests/pack-parity_test.sh` was not re-baselined.
+
+### Gate commands and results
+```
+PATH=/Users/connorfranc/Applications/CreatureGathererTools/bin:$PATH \
+ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens make gen BUILD_DIR=build/box-adoption-gate
+  -> PASS (two runs, identical dist hashes)
+... make verify-generated    -> exit 0 (no output)
+... make test-generated-libs -> generated-libs 40/0 PASS; invariants 5/0 PASS; arena-demo PASS; first-unqualified-alias 28/0 PASS
+... make test-pack-parity    -> layout equivalence PASS; perturbation PASS; pack parity PASS
+... make test                -> host suite Total Failed 0; world suite Total Passed 258 / Failed 0
+... make fxtest-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_world_player.ino
+      test_stack      PASSED=4  FAILED=0  stack headroom 484 B
+      test_world_player PASSED=43 FAILED=0
+... make ram                 -> RAM_FLASH_BYTES=24986/29696; RAM_STATIC_BYTES=1760/2560; RAM_FREE_BYTES=800
+```
+
+### Resource impact
+Art/JS-only change: no AVR source touched, so program flash and static SRAM are
+unchanged. Current HEAD figure 24,986 B flash / 1,760 B static SRAM / 484 B painted
+stack headroom (baseline reported 25,218/1,760/484 at a19fcfc; the flash delta is
+from intervening commits, not this bead).
+
+### Filed follow-ups
+- CreatureGathererFX-b2a.7 (P3): disposition the ~85,902 B of unreferenced packed
+  legacy sheets and normalize their non-binary sources.
+- CreatureGathererFX-b2a.8 (P3): normalize the legacy 4-gray palette of the Tiled
+  source sheet images/tiles.png outside the cf7-installed cells.
+
+### Deviations
+- The contract says "fix one actual asset set per child if the remaining scope is
+  large". Scope was small: no SELECTED-set defect exists, so acceptance is proved
+  natively instead of forcing an art change.
+- `dist/fxdata.bin` (not only `dist/fxdata-data.bin`) was used as the payload for the
+  pre-existing battle48/options test; the new tests use `dist/fxdata-data.bin`.
+
+### Storage handoff
+Before: 13 GiB free, `du -sh build` 3.8 G, `build/box-adoption-gate` 128 M.
+After: 13 GiB free (>=10 GiB reserve), `du -sh build` 3.8 G, `build/box-adoption-gate`
+130 M. No abandoned `cgfx-pack.*` stages; another worker's fxtest outputs untouched.
+
+### Wall time
+Worker ~55 min (recon/inventory, pack-rule derivation, tool helper + 3 tests, two
+gen runs, full gate set, follow-up beads, report).
+
+### Status
+Acceptance proved: selected beta assets have exact binary palette, valid masks,
+published dimensions/frames and deterministic generation; broader art separately
+tracked (b2a.7, b2a.8). `bd close b2a.5` (no commit — orchestrator commits).

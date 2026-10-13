@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { decodePng, encodePng, bounds, exportView, validateSprite, atlasCells } from '../creature-sprite-export.mjs';
+import { decodePng, encodePng, bounds, exportView, validateSprite, atlasCells, packedSheetDiff, fxdataConstant } from '../creature-sprite-export.mjs';
 
 function image(width, height) { return { width, height, pixels: new Uint8Array(width * height * 4) }; }
 function rect(im, x, y, w, h, shade = 255, alpha = 255) {
@@ -98,4 +98,57 @@ test('paired sheets preserve every individual view in front/back and concept ord
       );
     }
   }
+});
+// ---------------------------------------------------------------------------
+// Selected first-beta shipping sheets. cf7 installed the tiles and the four
+// fxlayout image entries (battle48/options/player/lure) render the first area;
+// battleMenu, the digit sheets and fontTrimmed are the remaining drawn 1bpp
+// cart sheets. Each is checked for a binary palette, geometry against the
+// published src/fxdata.h constants, and packed cart bytes equal to the source.
+// ---------------------------------------------------------------------------
+test('world player shipping sheet is binary and packs the published plus-mask frames', () => {
+  const header = fs.readFileSync('src/fxdata.h', 'utf8');
+  const sheet = decodePng(fs.readFileSync('images/Playerchibi_16x16.png'));
+  const width = fxdataConstant(header, 'worldPlayerSpritesWidth');
+  const height = fxdataConstant(header, 'worldPlayerSpritesHeight');
+  const frames = fxdataConstant(header, 'worldPlayerSpritesFrames');
+  assert.equal(width, 16); assert.equal(height, 16); assert.equal(frames, 12);
+  assert.equal(sheet.width, width * 6); assert.equal(sheet.height, height * 2);
+  for (let i = 0; i < sheet.pixels.length; i += 4) {
+    assert([0, 255].includes(sheet.pixels[i]));
+    assert.equal(sheet.pixels[i], sheet.pixels[i + 1]); assert.equal(sheet.pixels[i], sheet.pixels[i + 2]);
+    assert([0, 255].includes(sheet.pixels[i + 3]));
+  }
+  const packed = fs.readFileSync('dist/fxdata-data.bin');
+  const address = fxdataConstant(header, 'worldPlayerSprites');
+  assert.equal(packed.readUInt16BE(address), width); assert.equal(packed.readUInt16BE(address + 2), height);
+  const result = packedSheetDiff(sheet, packed, address, { frameWidth: width, frameHeight: height, hasHeader: true, plusMask: true });
+  assert.equal(result.frames, frames); assert.deepEqual(result.diffs, []);
+});
+test('drawn menu, digit and font sheets are binary and match their packed cart bytes', () => {
+  const header = fs.readFileSync('src/fxdata.h', 'utf8');
+  const packed = fs.readFileSync('dist/fxdata-data.bin');
+  const sheets = [
+    { symbol: 'battleMenu', file: 'images/battleMenu_128x24.png', frameWidth: 128, frameHeight: 24, hasHeader: false, plusMask: false },
+    { symbol: 'numberswhite', file: 'images/numberswhite_7x8.png', frameWidth: 7, frameHeight: 8, hasHeader: false, plusMask: true },
+    { symbol: 'numbersblack', file: 'images/numbersblack_7x8.png', frameWidth: 7, frameHeight: 8, hasHeader: false, plusMask: true },
+    { symbol: 'singlenumberswhite', file: 'images/singlenumberswhite_3x8.png', frameWidth: 3, frameHeight: 8, hasHeader: false, plusMask: true },
+    { symbol: 'singlenumbersblack', file: 'images/singlenumbersblack_3x8.png', frameWidth: 3, frameHeight: 8, hasHeader: false, plusMask: true },
+    { symbol: 'fontTrimmed', file: 'images/ArduFontTrimmed_5x6.png', frameWidth: 5, frameHeight: 6, hasHeader: true, plusMask: false },
+  ];
+  for (const spec of sheets) {
+    const sheet = decodePng(fs.readFileSync(spec.file));
+    for (let i = 0; i < sheet.pixels.length; i += 4) {
+      assert([0, 255].includes(sheet.pixels[i]), `${spec.file} has a non-binary palette`);
+      assert.equal(sheet.pixels[i], sheet.pixels[i + 1]); assert.equal(sheet.pixels[i], sheet.pixels[i + 2]);
+      assert([0, 255].includes(sheet.pixels[i + 3]));
+    }
+    const result = packedSheetDiff(sheet, packed, fxdataConstant(header, spec.symbol), spec);
+    assert.deepEqual(result.diffs, [], `${spec.symbol} packed bytes differ from ${spec.file}`);
+  }
+  assert.equal(fxdataConstant(header, 'fontTrimmedWidth'), 5);
+  assert.equal(fxdataConstant(header, 'fontTrimmedHeight'), 6);
+  assert.equal(fxdataConstant(header, 'fontTrimmedFrames'),
+    packedSheetDiff(decodePng(fs.readFileSync('images/ArduFontTrimmed_5x6.png')), packed, 0,
+      { frameWidth: 5, frameHeight: 6 }).frames);
 });
