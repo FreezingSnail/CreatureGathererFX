@@ -7897,3 +7897,49 @@ Required focused verification (worktree):
 Deviations: an early foreground run of the fixture suite exceeded a 120s tool timeout with no output; reran and completed (`PASS`) with no source change. Root cause looked like a transient shell-pipe stall, not the suite (isolated `assert` runs finished in <1s).
 
 No commit/push (orchestrator commits). Wall time ~25 minutes. Storage: `df -h .` 23GiB free (above reserve); reused `build/box-adoption-gate` (57MiB); scratch `cgfx-6ea-clean` extract under the approved temp root.
+
+## CreatureGathererFX-xax — generate MoveData name declarations from canonical move names (2026-10-12)
+
+Bug: `fxlayout.toml` entry `source = { expand = { path = "fxdata/generated/moves.txt" } }` consumed an ignored, stale `fxdata/generated/moves.txt` (Aug 2025, positional `move32` for Deluge). A fresh tracked checkout had no `moves.txt` and the generator never made one, so the MoveData name declarations could not be produced.
+
+Root cause: `write_moves()` in CreatureGathererTools `crates/core/src/builder.rs` wrote only `moves.bin` + `moves.hpp`; the `moves.txt` FX input was a preserved legacy artifact.
+
+Sibling-tool changes (`/Users/connorfranc/code/CreatureGathererTools`, dirty tree; only files this bead owns):
+- `crates/core/src/builder.rs`: `write_moves()` now also writes `moves.txt` with exactly the same bytes as `moves.hpp` (both share the single `hpp` text from `build_moves`). Module doc updated.
+- `crates/core/src/lib.rs`: added `ArtifactInput::in_output(output_dir, "moves.txt", move_source)` so the native manifest inventory matches the emitted files (the `manifest.rs` test asserts `output_artifact_names == names_on_disk`).
+- `crates/core/src/builder.rs` tests: extended `write_moves_outputs_files` to assert `moves.txt == moves.hpp == EXPECTED_MOVES_HPP`; added `build_moves_uses_canonical_id_symbols_for_declaration_and_pointers` (Deluge id 44 => `uint8_t move44[] = "Deluge\0";` in the declaration and `move44` in the pointer table; asserts no `move32` fallback).
+- Required capabilities (consumables/map/sprite/fixture/pack) untouched.
+
+Tool build + install (single lane; tool `target/` cache 8.5G reused, `df` 23GiB free > 10GiB reserve):
+- `cargo build --locked --release -p cgfx-core --bin cgfx-tools` -> Finished (1 pre-existing warning `unused import crate::writer::u24::U24`).
+- Installed binary sha256 before `c092712d5c0e2d2ff6a66e4f697a5e8e4b5bf3a620c8a678a676593e6f39cdaf` (Oct 5) -> after `d4f9537be46cb2752aa4105333769fbcb10f63f4a49ea9c7362b6a8f50720435`; `cgfx-tools 0.2.0`. Copied over `~/Applications/CreatureGathererTools/bin/cgfx-tools` only (did not run `install.sh`).
+
+Native Rust tests `cargo test -p cgfx-core`: lib 201 passed/0 failed; other binaries 2/5/7/1 passed; `tests/fxpack_carray.rs` 20 passed / **4 failed pre-existing and unrelated** (`enumerates_real_generated_sprite_declarations` 203 vs 130, `enumerates_real_legacy_sprite_declarations` index10 2998 vs 1974, `enumerates_real_opponent_declarations` 25 vs 20, `enumerates_real_team_declarations` 67 vs 35). Those four read CG `Sprites.txt`/`teams.txt`/`opponents.txt`, which this bead neither generates nor modifies, and the dirty tool working tree already carries modified expectations for a different CG state. The moves test `enumerates_real_move_declarations` (45 declarations) passes.
+
+CG changes:
+- `tools/tests/fixtures/fxlayout-old-304.toml`: `move32` -> `move44` for both the entry `name` and the `carray.symbol` (the hand-expanded equivalence fixture must name the same Deluge slot the canonical generator now emits; without this `--assert-layout-equivalent` cannot resolve the symbol).
+- `src/fxdata.h`: regenerated (single line).
+- `fxdata/generated/moves.txt`: stale ignored file deleted, then produced by `make gen`; byte-identical to `moves.hpp` (sha256 `3d59901f1105f33929e8ca77dcc9ca6a7df6f38d56c1e3b5072b49193e28df8a`), `moves.bin` `2bb02b47…`.
+- `output.md`: this report.
+
+Layout comparison vs accepted baseline:
+- `fxdata/generated/moves.txt` declaration order unchanged (45 MoveData fields = 44 name arrays + `moveNames`); symbol ids `0..31,44,33,34,36..43,255` at the same positions as the canonical `data/json/moves.json` id order.
+- Single symbol change: Deluge slot 33 `move32` -> `move44`; its published address is unchanged (`MoveData::move44 = 0x0006E5`, was `move32 = 0x0006E5`), and `moveNames = 0x000746` unchanged.
+- Packed image bytes **unchanged**: `dist/fxdata.bin c024abf4a7f47a665f724cfa83402f3e48b4c6b2184706bc57ba1ae8f84ba7f9`, `dist/fxdata-data.bin 04f92688167c9e150679c4b2ef4f2cb07fb9116fe9d6d727205b0d98aad2321a`, `dist/fxdata-save.bin 2d864c0b…` — declaration order governs addresses, so the pointer table values and string bytes are identical. No parity rebaseline required; the recon-anticipated byte delta did not materialize.
+- `git diff src/fxdata.h`: exactly one line, `move32` -> `move44`, same address. No other tracked generated delta (`fxdata/generated/*`, `dist/*` are ignored; `src/vm/opcodes.hpp`, `src/flags/*` unchanged).
+
+Fresh tracked-input archive proof (no stale artifact copied):
+- `git archive HEAD` -> `/private/var/folders/jg/8jm42wy11_v5r99zyc44s2s40000gn/T/xax-clean-48188`; extract has no `fxdata/generated/` at all.
+- `make -C <extract> gen BUILD_DIR=/Users/connorfranc/code/CreatureGathererFX/build/box-adoption-gate PATH=…/CreatureGathererTools/bin:$PATH` -> `gen-data` produced `fxdata/generated/moves.txt` (1956 B, line 34 `uint8_t move44[] = "Deluge\0";`, pointer table `…move31, move44, move33…`), byte-identical to `moves.hpp` and to the worktree copy. `pack` then failed only on the unrelated legacy `map.bin` prerequisite (`entry "map_data": raw source …/fxdata/generated/map.bin does not exist`); `map.bin` has no generator in-tree and is the subject of the blocked sibling `le5`. The move-name acceptance is proven; the worktree packed image (with `map.bin` present) is byte-unchanged from baseline.
+- Extract removed after the proof.
+
+Exact verification (from CG; all exit 0):
+- `PATH=…/CreatureGathererTools/bin:$PATH ARDENS=…/Ardens make gen BUILD_DIR=build/box-adoption-gate` -> `Packed FX image: build/box-adoption-gate/cgfx-pack.*/dist/fxdata.bin` (6.7s), no cgfx-pack stage left behind.
+- `make verify-generated BUILD_DIR=build/box-adoption-gate` -> exit 0 (silent PASS).
+- `make test-generated-libs BUILD_DIR=build/box-adoption-gate` -> `generated-libs: 40 passed, 0 failed`, `generated-libs-invariants: 5 passed, 0 failed`, `arena-demo-data: … PASS`, `first-unqualified-alias: 28 passed, 0 failed`.
+- `make test-pack-parity BUILD_DIR=build/box-adoption-gate` -> `layout equivalence: PASS`, perturbation diagnostic PASS, `pack parity: PASS` (unchanged committed baseline).
+- `make test-manifest` -> `fxdata-manifest: PASS`, `ensure-generated: PASS`.
+- Extra safety: `make test BUILD_DIR=build/box-adoption-gate` host 258 passed/0 failed; `make testvm` 343 passed/0 failed.
+
+Deviations: clean-archive `gen` stops at `pack` on the pre-existing missing `map.bin` (out of scope; sibling `le5`). Tool repo left dirty as required; nothing committed or reverted there. No commit/push in either repo (orchestrator commits CG). Worker wall time ≈ 35 min.
+Storage: `df -h .` 23GiB free (above 10GiB reserve); reused `build/box-adoption-gate` (57MiB, one lane); no cgfx-pack stage remained; extract removed.
