@@ -42,7 +42,13 @@ perturbed_layout=$fixtures/fxlayout-expand-20-perturbed.toml
 # the stale 2025-06-22 worktree artifact, so the map_data payload and therefore
 # fxdata.bin change. Previous fixture map.bin sha256 de43a603..., regenerated
 # a950e357...; previous cart sha256 94f9f6c9..., regenerated 36a3bd23....
-expected=36a3bd234ff9b6a9b444b5fd1f38f3c671dfffd90918758827c6dc38839fe06b
+# cf7: install the approved simple redraw of the selected first-beta cells into
+# images/tiles_16x16.png and images/tiles.png at their existing GIDs (see
+# docs/assets/world-environment-32-spike/simple/shipping-map.json). Only the
+# `tiles` symbol payload bytes change; no FX address moves and the AVR image is
+# byte-identical (flash 24986 B / static SRAM 1760 B, control == candidate).
+# Previous cart sha256 36a3bd23..., regenerated cb170b6a....
+expected=cb170b6ae45545af483dc66ea04c7361fdb9cb03c8a49827c0a0344d439e2c9b
 
 for layout in "$old_layout" "$new_layout" "$perturbed_layout"; do
     test -f "$layout" || {

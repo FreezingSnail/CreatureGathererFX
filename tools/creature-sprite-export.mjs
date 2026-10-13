@@ -22,7 +22,7 @@ function chunk(type, data) {
 }
 export function decodePng(bytes) {
   if (!bytes.subarray(0, 8).equals(signature)) throw Error('Not a PNG');
-  let width, height, channels;
+  let width, height, channels, bitDepth, colorType, palette = null, transparency = null;
   const parts = [];
   for (let offset = 8; offset < bytes.length;) {
     const length = bytes.readUInt32BE(offset), end = offset + 8 + length;
@@ -32,25 +32,38 @@ export function decodePng(bytes) {
     if (crc(bytes.subarray(offset + 4, end)) !== bytes.readUInt32BE(end)) throw Error('PNG CRC mismatch');
     if (type === 'IHDR') {
       width = data.readUInt32BE(0); height = data.readUInt32BE(4);
-      if (data[8] !== 8 || ![2, 6].includes(data[9]) || data[12] !== 0) {
-        throw Error('Expected non-interlaced RGB8 or RGBA8 PNG');
+      bitDepth = data[8]; colorType = data[9];
+      if (data[12] !== 0) throw Error('Interlaced PNG is not supported');
+      if (colorType === 3) {
+        // Indexed PNGs (as authored for images/tiles.png) expand to RGBA8.
+        if (![1, 2, 4, 8].includes(bitDepth)) throw Error('Unsupported palette bit depth');
+        channels = 1;
+      } else {
+        if (bitDepth !== 8 || ![2, 6].includes(colorType)) {
+          throw Error('Expected non-interlaced RGB8 or RGBA8 PNG');
+        }
+        channels = colorType === 6 ? 4 : 3;
       }
-      channels = data[9] === 6 ? 4 : 3;
     }
+    if (type === 'PLTE') palette = data;
+    if (type === 'tRNS') transparency = data;
     if (type === 'IDAT') parts.push(data);
     offset = end + 4;
   }
   if (!width || !height || !channels) throw Error('Missing PNG header');
-  const row = width * channels, raw = zlib.inflateSync(Buffer.concat(parts));
+  if (colorType === 3 && !palette) throw Error('Indexed PNG is missing its palette');
+  const bytesPerPixel = colorType === 3 ? 1 : channels;
+  const row = Math.ceil(width * (colorType === 3 ? bitDepth : channels * 8) / 8);
+  const raw = zlib.inflateSync(Buffer.concat(parts));
   if (raw.length !== (row + 1) * height) throw Error('Unexpected scanline size');
   const scan = Buffer.alloc(row * height), pixels = new Uint8Array(width * height * 4);
   for (let y = 0; y < height; y++) {
     const filter = raw[y * (row + 1)];
     if (filter > 4) throw Error('Unknown PNG filter');
     for (let x = 0; x < row; x++) {
-      const left = x >= channels ? scan[y * row + x - channels] : 0;
+      const left = x >= bytesPerPixel ? scan[y * row + x - bytesPerPixel] : 0;
       const up = y ? scan[(y - 1) * row + x] : 0;
-      const diagonal = y && x >= channels ? scan[(y - 1) * row + x - channels] : 0;
+      const diagonal = y && x >= bytesPerPixel ? scan[(y - 1) * row + x - bytesPerPixel] : 0;
       let prediction = 0;
       if (filter === 1) prediction = left;
       if (filter === 2) prediction = up;
@@ -63,11 +76,22 @@ export function decodePng(bytes) {
       scan[y * row + x] = (raw[y * (row + 1) + 1 + x] + prediction) & 255;
     }
   }
-  for (let i = 0; i < width * height; i++) {
-    pixels[i * 4] = scan[i * channels];
-    pixels[i * 4 + 1] = scan[i * channels + 1];
-    pixels[i * 4 + 2] = scan[i * channels + 2];
-    pixels[i * 4 + 3] = channels === 4 ? scan[i * channels + 3] : 255;
+  if (colorType === 3) {
+    const perByte = 8 / bitDepth, mask = (1 << bitDepth) - 1;
+    for (let y = 0; y < height; y++) for (let x = 0; x < width; x++) {
+      const byte = scan[y * row + Math.floor(x / perByte)];
+      const index = (byte >> (8 - bitDepth * (x % perByte + 1))) & mask;
+      const p = index * 3, i = (y * width + x) * 4;
+      pixels[i] = palette[p]; pixels[i + 1] = palette[p + 1]; pixels[i + 2] = palette[p + 2];
+      pixels[i + 3] = transparency && index < transparency.length ? transparency[index] : 255;
+    }
+  } else {
+    for (let i = 0; i < width * height; i++) {
+      pixels[i * 4] = scan[i * channels];
+      pixels[i * 4 + 1] = scan[i * channels + 1];
+      pixels[i * 4 + 2] = scan[i * channels + 2];
+      pixels[i * 4 + 3] = channels === 4 ? scan[i * channels + 3] : 255;
+    }
   }
   return { width, height, pixels };
 }
