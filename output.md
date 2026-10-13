@@ -8039,3 +8039,19 @@ Notes/deviations:
 - The empty-tile GID 0 blocks movement, so the corridor plus the existing clearing forms a self-contained area without new barrier tiles; `maps/tiles.tsx` required no change (GID 275 is the existing walkable+encounter pocket floor). No new tile was introduced, so no global-collision side effects.
 
 Storage handoff: `df -h .` 416Gi used / 20Gi avail (>10GiB reserve). `du -sh build` 3.8G (unchanged); `build/box-adoption-gate` 57M → 123M (shared lane, retained for the orchestrator's final gate). No `cgfx-pack.*` stage remained after any run. Worker wall time ≈ 12 min.
+
+## 04n — Refresh the empty-tile device sample after first-area corridor authoring
+
+Main47ef9b0 intentionally changes12,8 to corridorGID275. The box.10 current-main gate found `test_tiles`102/2: `south empty raw tile id got275want0` and `empty tile collision got1want0`; the other34FXsuites passed. This companion repairs only the test fixture, preserving the corridor as a positive tile/collision sample and selecting adjacent13,8 for the original empty blocked sample. Native Node inspection proves authored values12,8=275 and13,8=0; generated raw words are17683 and0. The property-window row keeps the two samples in their matching columns. Firmware/content remain unchanged.
+
+Exact focused command (same root-owned AVR lane and snapshot as box.10):
+
+```sh
+PATH=/Users/connorfranc/Applications/CreatureGathererTools/bin:$PATH ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens make -C /private/tmp/cgfx-box10-gate-source/CreatureGathererFX fxtest-headless FXTEST_INOS=tst/fxdatatest/test_tiles.ino BUILD_DIR=/Users/connorfranc/code/CreatureGathererFX/build/box-adoption-gate
+```
+
+Focused `test_tiles` **106passed/0failed**, suite SRAM1668B (below2160B). Native permanent assertions remain in `tst/fxdatatest/tiles_test.hpp`; no test harness in temporary sources. Existing tests run in one controlled archive snapshot; shared build/gate paths and the documented legacy map prerequisite are described in box.10.
+
+Settled shared **final-gate PASS**:35FXsuites (tiles106/0, scripts72/0, stack4/0 painted484B); shipping24,986/1,760B includes the separately tracked box.10 saving. Independent Sol review: **REVIEW: APPROVED** for the fixture correction and shared verification/storage evidence. Exact repair patch `reports/10/04n.patch` SHA-256 `637ef3c7507780da3f4fd1cb4a4cc6bbf86ff0bf354d509b570a6cb2f9415bdd`; evidence `04n-{authoring,focused}.log` plus `current-{gate,check}-before-tile-fix.log` and final shared gate logs.
+
+Storage shared with box.10 after evidence retained and bounded cleanup:19GiB free; repository build3.8GiB/shared build66MiB; old4.4GiB spike untouched. Removed only disposable FX-suite staging and reconstructable archive, retaining exact patch/revision/map prerequisite and control/final ELFs/logs. Worker fixture preparation/focused phase approximately2min; shared settled gate11m51s; root reporting/review/cleanup shared with box.10 (approximately13min aggregate orchestration including its earlier gates/controls). Separate fixture commit; no push.

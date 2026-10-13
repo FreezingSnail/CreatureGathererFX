@@ -168,7 +168,8 @@ inline void test_tiles(FxTest &test) {
     const uint16_t floor = rawTileWordAt(12, 7);
     const uint16_t wallWest = rawTileWordAt(11, 7);
     const uint16_t wallEast = rawTileWordAt(13, 7);
-    const uint16_t emptySouth = rawTileWordAt(12, 8);
+    const uint16_t floorSouth = rawTileWordAt(12, 8);
+    const uint16_t emptySouthEast = rawTileWordAt(13, 8);
 
     test.expectEq(TileProps::tileId(floorNorth), 275, F("north raw tile id"));
     test.expectEq(TileProps::tileProps(floorNorth),
@@ -183,7 +184,8 @@ inline void test_tiles(FxTest &test) {
     test.expectEq(TileProps::hasTileProp(wallWest, TileProps::PROP_WALKABLE), false,
                   F("west wall is blocked"));
     test.expectEq(TileProps::tileId(wallEast), 261, F("east wall raw tile id"));
-    test.expectEq(TileProps::tileId(emptySouth), 0, F("south empty raw tile id"));
+    test.expectEq(TileProps::tileId(floorSouth), 275, F("south corridor raw tile id"));
+    test.expectEq(TileProps::tileId(emptySouthEast), 0, F("southeast empty raw tile id"));
 
     uint8_t storage[TilePropertyWindow::STORAGE_BYTES] = {};
     TilePropertyWindow window(storage);
@@ -200,7 +202,8 @@ inline void test_tiles(FxTest &test) {
     window.writeRow(2, row);
 
     memset(row, 0, sizeof(row));
-    row[3] = emptySouth;
+    row[3] = floorSouth;
+    row[4] = emptySouthEast;
     window.writeRow(3, row);
 
     test.expectEq(WorldCollision::canEnter(12, 6, 256, 256, storage), true,
@@ -211,7 +214,9 @@ inline void test_tiles(FxTest &test) {
                   F("west wall collision"));
     test.expectEq(WorldCollision::canEnter(13, 7, 256, 256, storage), false,
                   F("east wall collision"));
-    test.expectEq(WorldCollision::canEnter(12, 8, 256, 256, storage), false,
+    test.expectEq(WorldCollision::canEnter(12, 8, 256, 256, storage), true,
+                  F("walkable south corridor collision"));
+    test.expectEq(WorldCollision::canEnter(13, 8, 256, 256, storage), false,
                   F("empty tile collision"));
     test.expectEq(WorldCollision::canEnter(-1, 7, 256, 256, storage), false,
                   F("negative map edge collision"));
