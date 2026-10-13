@@ -8097,3 +8097,121 @@ Focused `test_tiles` **106passed/0failed**, suite SRAM1668B (below2160B). Native
 Settled shared **final-gate PASS**:35FXsuites (tiles106/0, scripts72/0, stack4/0 painted484B); shipping24,986/1,760B includes the separately tracked box.10 saving. Independent Sol review: **REVIEW: APPROVED** for the fixture correction and shared verification/storage evidence. Exact repair patch `reports/10/04n.patch` SHA-256 `637ef3c7507780da3f4fd1cb4a4cc6bbf86ff0bf354d509b570a6cb2f9415bdd`; evidence `04n-{authoring,focused}.log` plus `current-{gate,check}-before-tile-fix.log` and final shared gate logs.
 
 Storage shared with box.10 after evidence retained and bounded cleanup:19GiB free; repository build3.8GiB/shared build66MiB; old4.4GiB spike untouched. Removed only disposable FX-suite staging and reconstructable archive, retaining exact patch/revision/map prerequisite and control/final ELFs/logs. Worker fixture preparation/focused phase approximately2min; shared settled gate11m51s; root reporting/review/cleanup shared with box.10 (approximately13min aggregate orchestration including its earlier gates/controls). Separate fixture commit; no push.
+
+## CreatureGathererFX-le5 — Verify every authored generation prerequisite in a clean checkout (worker: DeepSeek V4.1 Flash)
+
+Contract revision 2026-10-12, design steps 1-3. NOT the xax fix (moves.txt already done).
+
+### Failing-first reproduction (recorded before change)
+```
+w=$(mktemp -d .../cgfx-le5.XXXXXX); git archive HEAD | tar -x -C "$w"; cd "$w"
+PATH=.../CreatureGathererTools/bin:$PATH make gen BUILD_DIR=$w/build
+```
+rc=2, tail:
+```
+loading layout spec .../build/cgfx-pack.XXXXXX/fxlayout.toml: entry "map_data":
+raw source .../fxdata/generated/map.bin does not exist (relative to ...)
+make: *** [pack] Error 1
+```
+Root cause: `fxdata/generated/*` is gitignored and `map.bin` had no native producer. The
+`cgfx-tools --project` path wrote raw_map.bin/scripts.bin/text.bin but not map.bin; `pack` then
+read `output_dir/map.bin` (layout key `map_data`) and failed when the stale 2025-06-22 worktree
+artifact was absent.
+
+### Input classification (HEAD tracking + presence after clean `make gen`)
+All declared inputs are TRACKED-authored or GENERATED-BY-STEP; every one is PRESENT in the clean
+extract after `make gen` (verified with `git cat-file -e HEAD:<p>` and `[ -f w3/<p> ]`).
+
+| Input | Class | Producer step |
+|---|---|---|
+| fxdata/data/{encounters,creatureData,event,mapData,movelists,menu,chunks}.txt | TRACKED-authored | — |
+| images/{ArduFontTrimmed_5x6,Battlecreatures_48x48,Battleoptions48_128x16,LureWorld_16x16,Playerchibi_16x16}.png | TRACKED-authored | — |
+| data/json/{creatures,moves}.json, maps/world_map.json, images/{tiles,npc_16x16}.png, data/{battle-presets,arena-demo}.toml, data/{opponents,arena,typetable,consumables}.csv, data/text/strings.txt, fxsprites images | TRACKED-authored | — |
+| fxdata/generated/{moves.txt,opponents.txt,creatureData.txt,movedata.txt,moves.bin,raw_map.bin,scripts.bin,text.bin,opcodes,flags,flag_*}.{txt,bin,hpp,cpp} | GENERATED | `cgfx-tools --project` (gen-data) / `--emit-fixtures` (gen-fixtures) |
+| fxdata/generated/map.bin | GENERATED (NEW) | `cgfx-tools --project` (gen-data) — was MISSING |
+| fxdata/generated/arena_demo.txt | GENERATED | `--project` + `--arena-csv` |
+| fxdata/generated/typetable.bin | GENERATED | `--type-table-csv` |
+| fxdata/generated/consumables.bin | GENERATED | `--consumables-csv` |
+| fxdata/generated/teams.txt | GENERATED | tools/emit-rust-teams.sh (gen-fixtures) |
+| fxdata/generated/tool_version.bin | GENERATED | tools/emit-tool-version-stamp.sh (gen-fixtures) |
+| fxdata/Sprites.txt, fxdata/battleEffects/Sprites.txt, fxdata/generated/Sprites.txt | GENERATED | `cgfx-tools --sprite-config` (gen-sprites) |
+| tst/fxdatatest/generated/*.hpp | GENERATED | `--project --emit-fixtures` (gen-fixtures) |
+
+The only MISSING prerequisite was `map.bin` (fxlayout `name="map_data"`).
+
+### Repair (preferred native path)
+Sibling tool `CreatureGathererTools` (dirty with pre-existing unrelated work; edited only le5-owned
+code, nothing committed/reverted):
+- `crates/core/src/builder.rs`: `write_map` now also writes `map.bin` = 2048 chunks × 32 tiles ×
+  u16 BIG-endian (64 B/chunk), a re-chunk of the same encoded `raw_map` words, via new
+  `chunk_map_be()`. Keeps raw_map.bin and map.bin word-identical (byte order/order only).
+- `crates/core/src/lib.rs`: `map.bin` added to the native manifest `artifact_inputs`
+  (required by the exact-inventory manifest test).
+- `crates/core/src/builder.rs` tests: new `write_map_emits_chunked_big_endian_map_bin`
+  (131072 B; chunk 0 word = tile|prop<<10 BE; chunk 1/32 words; full 2048-chunk equivalence to
+  raw_map re-chunk).
+Rebuilt + installed: `cargo build --locked --release -p cgfx-core --bin cgfx-tools` then copied
+`target/release/cgfx-tools` over `.../CreatureGathererTools/bin/cgfx-tools`. Version string stays
+`0.3.0+ga9dc6400` (sibling HEAD unchanged); the fix is an UNCOMMITTED sibling edit — the
+orchestrator must commit it in the sibling repo or a future clean tool rebuild drops it.
+
+CG repo change: `tools/tests/pack-parity_test.sh` baseline rebaseline only (map_data payload
+changed). No Makefile/fxlayout/.gitignore change was needed: the existing `cgfx-tools --project`
+step now produces map.bin and the existing `map_data` layout entry consumes it. Declaration order
+(ABI) unchanged; `map_data` firmware reads unchanged (only `tiles_test`/`tables_test` address math).
+
+### Pack-parity rebaseline provenance
+- fxdata.bin (cart):        old 94f9f6c95b9aab47036dda8725a22a75d5015f58e5b042bb672e64038b0963bd → new 36a3bd234ff9b6a9b444b5fd1f38f3c671dfffd90918758827c6dc38839fe06b
+- fxdata/generated/map.bin: old de43a603929bf6ca4e6a7f74f218cf07e9bc93acefe2995700f0a5e802cd9d31 (stale 2025-06-22 artifact) → new a950e3578bab8f6874c1fecd5b47168f95af1eebcc8ccc852c3b5395579c428d
+- Cause: native generation of `map_data` from the authored map replaced the stale worktree-only
+  artifact. Comment block added above `expected=` in the parity test.
+
+### Clean tracked-source control (no ignored outputs copied from the worktree)
+Staged the rebaseline; `tree=$(git write-tree)` = 61f6da6b0949246a427609f12209d9d8366d74f1;
+`git archive $tree | tar -x -C $w3`; then with PATH + BUILD_DIR=$w3/build:
+- make gen               rc=0
+- make verify-generated  rc=0
+- make test-manifest     rc=0
+- make test-generated-libs rc=0
+- make test-pack-parity  rc=0
+Clean extract cart `dist/fxdata.bin` SHA-256 = 36a3bd234ff9b6a9b444b5fd1f38f3c671dfffd90918758827c6dc38839fe06b.
+Worktree cart SHA-256 = 36a3bd234ff9b6a9b444b5fd1f38f3c671dfffd90918758827c6dc38839fe06b (identical; same tracked sources ⇒ same bytes).
+
+### Worktree re-verify (exact bead commands, BUILD_DIR=build/box-adoption-gate)
+PATH=.../CreatureGathererTools/bin:$PATH ARDENS=.../Ardens ... each:
+- make gen rc=0 (6.2 s; idempotent — a second gen left `git status` unchanged apart from the intended staged rebaseline and .beads/interactions.jsonl)
+- make verify-generated rc=0
+- make test-manifest rc=0
+- make test-generated-libs rc=0
+- make test-pack-parity rc=0
+Logs: build/box-adoption-gate/reports/le5-*.log
+
+### Touched device suite (map_data feeds the cart)
+`make fxtest-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_tiles.ino BUILD_DIR=build/box-adoption-gate`
+- test_tiles: PASSED=106 FAILED=0
+- test_stack: PASSED=4 FAILED=0; stack headroom=0x1E4 (484 B)
+Log: build/box-adoption-gate/reports/le5-fxtest-tiles.log
+
+### Sibling native tests (`cargo test -p cgfx-core --no-fail-fast`)
+Passing: lib 202, arena_demo 2, bw_placeholders 5, cli_wfc 7, fixtures 1, fxpack_font 5,
+fxpack_header 6, fxpack_image 4, fxpack_layout 7, fxpack_pack 8, fxpack_parity 6, fxpack_save 6,
+fxpack_spec 21, fxpack_sprite 6, fxpack_symbol 2, go_parity 8, json_parser 1, map4chunks 6,
+wfcmap_* 25.
+Pre-existing/unrelated failures (unchanged by this work, as expected):
+- fxpack_carray: 4 failed — `enumerates_real_{opponent,team,legacy_sprite,generated_sprite}_declarations` (count mismatch).
+- manifest: `full_project_manifest_lists_complete_hashed_regenerated_artifact_inventory` — fails
+  loading `crates/core/testdata/data/opponents.csv:2: ... unknown move "zap"` (test data, unrelated).
+
+### Storage handoff
+Before: `df -h .` 18 GiB free; `du -sh build` 3.8 G; `du -sh build/box-adoption-gate` 66 M.
+After:  18 GiB free; `du -sh build` 3.8 G; `du -sh build/box-adoption-gate` 80 M. Within the 5 GiB
+build budget and >=10 GiB reserve. Clean-control extracts are under /private/var/.../cgfx-le5*;
+`build/box-adoption-gate/fxtest` (another worker's active outputs) was not cleaned.
+
+### Deviations / notes
+- Sibling fix is uncommitted by instruction; MUST be committed in CreatureGathererTools for clean
+  checkouts to keep working (installed binary persists it locally only).
+- map.bin content is the encoded tile+property word (word-identical to raw_map.bin), matching the
+  current raw_map ABI and the encoded `mapWordFixtures`; device chunk words 0/3/2047 = [7,0,0] as
+  `tables_test` pins.
+- Wall time: worker ~50 min (recon, sibling fix/build, clean control, worktree verify, device).
