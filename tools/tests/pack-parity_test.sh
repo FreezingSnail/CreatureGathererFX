@@ -31,7 +31,10 @@ perturbed_layout=$fixtures/fxlayout-expand-20-perturbed.toml
 # reads it from the RAM property window instead of a per-press FX word read.
 # jp8.10 appends the six-line lure-demo intro card strings to the text block.
 # Append64 opaque lure-world render cells; all745392 prior payload bytes match the control.
-expected=c024abf4a7f47a665f724cfa83402f3e48b4c6b2184706bc57ba1ae8f84ba7f9
+# jiu: generator identity carries crate version + built source revision, so the
+# generator_version stamp grows from "cgfx-tools 0.2.0" to "cgfx-tools
+# 0.3.0+g<short8>" and shifts later packed addresses; intentional rebaseline.
+expected=757ac12ea78e8beb40b31f51a41d815c05c9acec7ad88c89c51db6979f532322
 
 for layout in "$old_layout" "$new_layout" "$perturbed_layout"; do
     test -f "$layout" || {

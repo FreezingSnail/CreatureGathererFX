@@ -7,7 +7,7 @@ using uint24_t = __uint24;
 // Initialize FX hardware using  FX::begin(FX_DATA_PAGE); in the setup() function.
 
 constexpr uint16_t FX_DATA_PAGE  = 0xf414;
-constexpr uint24_t FX_DATA_BYTES = 748468;
+constexpr uint24_t FX_DATA_BYTES = 748478;
 
 constexpr uint16_t FX_SAVE_PAGE  = 0xFF80;
 constexpr uint24_t FX_SAVE_BYTES = 32768;
@@ -544,42 +544,42 @@ constexpr uint24_t raw_map_data = 0x043605;
 constexpr uint24_t raw_map_text = 0x063605;
 constexpr uint24_t consumable_table = 0x063607;
 constexpr uint24_t generator_version = 0x063617;
-constexpr uint24_t scripts = 0x063628;
+constexpr uint24_t scripts = 0x063632;
 namespace ArenaDemoData
 {
-  constexpr uint24_t playerMembers = 0x0A3628;
-  constexpr uint24_t opponentTrainerIds = 0x0A365E;
-  constexpr uint24_t opponentSpecies = 0x0A3663;
-  constexpr uint24_t player_blitz = 0x0A3672;
-  constexpr uint24_t player_bulwark = 0x0A36A4;
-  constexpr uint24_t player_utility = 0x0A36EA;
-  constexpr uint24_t opponent_starter = 0x0A3730;
-  constexpr uint24_t opponent_speed = 0x0A3776;
-  constexpr uint24_t opponent_fortress = 0x0A37A8;
-  constexpr uint24_t opponent_tricks = 0x0A37F8;
-  constexpr uint24_t opponent_champion = 0x0A3834;
-  constexpr uint24_t playerLabels = 0x0A3884;
-  constexpr uint24_t opponentLabels = 0x0A388D;
-  constexpr uint24_t playerLabelWidths = 0x0A389C;
-  constexpr uint24_t opponentLabelWidths = 0x0A389F;
+  constexpr uint24_t playerMembers = 0x0A3632;
+  constexpr uint24_t opponentTrainerIds = 0x0A3668;
+  constexpr uint24_t opponentSpecies = 0x0A366D;
+  constexpr uint24_t player_blitz = 0x0A367C;
+  constexpr uint24_t player_bulwark = 0x0A36AE;
+  constexpr uint24_t player_utility = 0x0A36F4;
+  constexpr uint24_t opponent_starter = 0x0A373A;
+  constexpr uint24_t opponent_speed = 0x0A3780;
+  constexpr uint24_t opponent_fortress = 0x0A37B2;
+  constexpr uint24_t opponent_tricks = 0x0A3802;
+  constexpr uint24_t opponent_champion = 0x0A383E;
+  constexpr uint24_t playerLabels = 0x0A388E;
+  constexpr uint24_t opponentLabels = 0x0A3897;
+  constexpr uint24_t playerLabelWidths = 0x0A38A6;
+  constexpr uint24_t opponentLabelWidths = 0x0A38A9;
 }
 
-constexpr uint24_t battleSprites48 = 0x0A38A4;
+constexpr uint24_t battleSprites48 = 0x0A38AE;
 constexpr uint16_t battleSprites48Width  = 48;
 constexpr uint16_t battleSprites48Height = 48;
 constexpr uint8_t  battleSprites48Frames = 128;
 
-constexpr uint24_t battleOptions48 = 0x0B58A8;
+constexpr uint24_t battleOptions48 = 0x0B58B2;
 constexpr uint16_t battleOptions48Width  = 128;
 constexpr uint16_t battleOptions48Height = 16;
 constexpr uint8_t  battleOptions48Frames = 4;
 
-constexpr uint24_t worldPlayerSprites = 0x0B5CAC;
+constexpr uint24_t worldPlayerSprites = 0x0B5CB6;
 constexpr uint16_t worldPlayerSpritesWidth  = 16;
 constexpr uint16_t worldPlayerSpritesHeight = 16;
 constexpr uint8_t  worldPlayerSpritesFrames = 12;
 
-constexpr uint24_t lureWorldTiles = 0x0B5FB0;
+constexpr uint24_t lureWorldTiles = 0x0B5FBA;
 constexpr uint16_t lureWorldTilesWidth  = 16;
 constexpr uint16_t lureWorldTilesHeight = 16;
 constexpr uint8_t  lureWorldTilesFrames = 96;
