@@ -60,7 +60,8 @@ inline void test_battleutility(FxTest &test) {
     beginWild(state, 4, 10, false, 1);
     state.active[0].moveIds[0] = 0;
     state.active[0].moves[0] = Move(MoveBitSet{static_cast<uint8_t>(Type::SPIRIT), 10, 1, 0, 0});
-    spendMoveUse(state, Side::Player, 0);
+    spendMoveUse(state, Side::Player, 0,
+                 remainingMoveUses(state, Side::Player, 0));
     Consequence fact;
     applyEffect(state, Side::Player, Effect::ATKUP, fact);
     test.expectEq(applySwitch(state, Side::Player, 2, false, out), true, F("switch original slot two"));

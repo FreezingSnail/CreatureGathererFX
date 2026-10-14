@@ -8842,3 +8842,63 @@ Worker preparation ~7 minutes; root review/measurement/device/cleanup ~4 minutes
 with control/candidate builds ~12/7 seconds and device+stack ~24 seconds; full
 gate time zero. DeepSeek now prepares only nonoverlapping box.14 battle tests.
 Close box.13 and commit its files separately; no push or Dolt remote sync.
+
+---
+
+## box.14 — Reuse validated move PP at attack spending (2026-10-14)
+
+Control HEAD `8f88bdd`; adapted retained independent 1as.17 to current main.
+`resolveAction` validates the move and computes remaining uses before the
+status gate, then carries that value to `resolveAttack`/`spendMoveUse`.
+`gateTurn` changes neither moves, active original slots nor PP banks. No-PP
+refusal still consumes no RNG; PINNED skips, confused attacks and Gather
+self-hits spend nothing. Unlimited moves and original-slot banking are intact.
+The helper's eight direct native/device test callers now supply their explicit
+remaining-use query. No battle layout, gameplay policy or packed bytes changed.
+
+DeepSeek session `ses_ec7c66b41ffeWxX0J7FeGRGMNj` prepared the permanent host
+and compact-device mechanics tests. Root owns runtime/caller adaptation and
+verification. Independent Sol reviewer `box13_review`: **REVIEW: APPROVED**
+after correction of the new tests' too-lethal initial fixture. The PP fixture
+now keeps both combatants alive through repeated executions and asserts attack
+results; existing damage/outcome fixtures are untouched.
+
+Fresh default-shipping pair: **24,850 -> 24,844 B flash (-6 B)**; static SRAM
+**1,760 -> 1,760 B**. Host **316,374/0** (new PP mechanics **24/0**), world
+**258/0**, VM **278/0**. Actual Ardens: compact **42/0**, stack **4/0**, utility
+**49/0**, player-choice/slim **61/0**. Painted stack **486 B** (previous 484 B),
+417 B after the ISR allowance; utility transition headroom 715 B. Planning
+flash allowance is 4,340 B below 29,184; physical free flash 4,852 B.
+
+Exact commands used the PATH/Ardens recorded above and shared build lane:
+
+```
+make ram BUILD_DIR=build/box-adoption-gate                 # control, then candidate
+make test testvm BUILD_DIR=build/box-adoption-gate
+make fxtest-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_battle_compact.ino BUILD_DIR=build/box-adoption-gate
+make fxtest-headless FXTEST_INOS='tst/fxdatatest/test_battleutility.ino tst/fxdatatest/test_battle_slim.ino' BUILD_DIR=build/box-adoption-gate
+make clean-build-artifacts BUILD_DIR=build/box-adoption-gate
+make clean-build-artifacts BUILD_DIR=build/box-adoption-gate CLEAN_APPLY=1
+git diff --check
+```
+
+Failed attempts preserved: first compact device compilation found ambiguous
+`BattleState` in the new test, fixed by qualifying `battle::BattleState`;
+the first extra-suite command misspelled `test_battleutility.ino` with an
+underscore and failed before compilation. Both corrected focused reruns pass.
+No full gate per task under owner cadence; the settled batch gate is `mgc.8`.
+No regeneration/parity needed for this source-only change.
+
+Evidence `build/box-adoption-gate/reports/14`: final patch, preparation report,
+host/VM and focused serial logs including failed attempts, RAM pair,
+control/final ELFs, cleanup preview/application. Control ELF SHA-256
+`b4c991f56b910881fd9df4e63874a3d24b211024f389e9c71241f59a52b22102`;
+final `3cc86ee87ac71da1745110ceac305bcea1a87f17304d8fa7baccc4e404922100`.
+Storage before: 20 GiB free, build 526 MiB, lane 124 MiB. After focused suites:
+build 545 MiB, lane 143 MiB (30 MiB active compatible device staging); bounded
+cleanup removes ~2.7 MB of recognized outputs. No new build tree/source copy;
+unknown prior scratch/evidence and original stashes retained. Worker ~5 minutes;
+root review/measure/check/report ~6 minutes, integrated gate time zero.
+Close box.14 and commit separately, no push/Dolt sync. All retained box leaves
+are accepted; DeepSeek now prepares the `2ua` consumer audit and AVR VM-size
+assertion while root owns its separate resource adaptation.

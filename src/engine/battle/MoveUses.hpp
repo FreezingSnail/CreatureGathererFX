@@ -28,9 +28,9 @@ inline uint8_t remainingMoveUses(const BattleState &state, Side side,
     return spent >= limit ? 0 : static_cast<uint8_t>(limit - spent);
 }
 
-inline void spendMoveUse(BattleState &state, Side side, uint8_t slot)
+inline void spendMoveUse(BattleState &state, Side side, uint8_t slot,
+                         uint8_t remaining)
 {
-    const uint8_t remaining = remainingMoveUses(state, side, slot);
     if (remaining == 0 || remaining == UNLIMITED_MOVE_USES) return;
     state.moveUsesSpent[static_cast<uint8_t>(side)]
                        [state.activeSlot[static_cast<uint8_t>(side)]] +=

@@ -3,6 +3,8 @@
 #include "../src/engine/battle/BattleState.hpp"
 #include "../src/engine/battle/ActionResult.hpp"
 #include "../src/engine/battle/Damage.hpp"
+#include "../src/engine/battle/MoveUses.hpp"
+#include "../src/engine/battle/Resolve.hpp"
 
 #include <stddef.h>
 #include <type_traits>
@@ -228,9 +230,134 @@ void BattleDamageIntegrationTest(TestSuite &suite)
     suite.addTest(test);
 }
 
+namespace battle_moveuse_test_detail {
+
+inline uint8_t draws = 0;
+inline uint8_t roll(uint8_t) { ++draws; return 0; }
+
+inline Move makeFiniteMove(uint8_t power) {
+    return Move(MoveBitSet{
+        static_cast<uint8_t>(Type::SPIRIT), power, 1, 0, 0});
+}
+
+inline battle::BattleState field() {
+    battle::BattleState state = {};
+    for (uint8_t side = 0; side < 2; ++side) {
+        battle::Combatant &creature = state.active[side];
+        creature.id = static_cast<uint8_t>(side + 1);
+        creature.types = DualType(Type::SPIRIT, Type::NONE);
+        creature.level = 10;
+        creature.hp = creature.maxHp = creature.stats.hp = 200;
+        creature.stats.attack = 1;
+        creature.stats.defense = 100;
+        creature.stats.spcAtk = 1;
+        creature.stats.spcDef = 100;
+        creature.stats.speed = 10;
+        for (uint8_t slot = 0; slot < 4; ++slot) creature.moveIds[slot] = slot;
+        creature.moves[0] = makeFiniteMove(10); // two uses
+        creature.moves[1] = makeFiniteMove(5);  // unlimited basic attack
+        state.partyCount[side] = 1;
+        state.activeSlot[side] = 0;
+    }
+    return state;
+}
+
+} // namespace battle_moveuse_test_detail
+
+// Move-use spending mechanics that the validated-PP runtime reuse must keep:
+// one packed charge per finite attack, untouched unlimited counters, refusal
+// ahead of the status gate, and no charge for PINNED, confusion or Gather
+// self-hits, all banked by original party slot.
+void BattleMoveUseMechanicsTest(TestSuite &suite) {
+    using namespace battle;
+    using namespace battle_moveuse_test_detail;
+    Test test(__func__);
+    Rng rng = {roll};
+    battle::ActionResult out;
+
+    battle::BattleState state = field();
+    draws = 0;
+    resolveAction(state, Side::Player, {ActionKind::Attack, 0}, rng, out);
+    test.assert(out.kind, ResultKind::Attack, "finite attack executes");
+    test.assert((state.moveUsesSpent[0][0] >> 0) & 3, 1,
+                "finite attack spends exactly one use");
+    test.assert(state.moveUsesSpent[0][0], 1,
+                "spending leaves every other packed slot untouched");
+    test.assert(remainingMoveUses(state, Side::Player, 0), 1,
+                "first spend leaves a second use");
+    test.assert(draws, 0, "unstatused attack spends without gate RNG");
+    resolveAction(state, Side::Player, {ActionKind::Attack, 0}, rng, out);
+    test.assert(out.kind, ResultKind::Attack, "second finite attack executes");
+    test.assert(remainingMoveUses(state, Side::Player, 0), 0,
+                "second execution exhausts the finite move");
+
+    state = field();
+    for (uint8_t count = 0; count < 5; ++count)
+        resolveAction(state, Side::Player, {ActionKind::Attack, 1}, rng, out);
+    test.assert(out.kind, ResultKind::Attack, "unlimited attack executes");
+    test.assert(state.moveUsesSpent[0][0], 0,
+                "unlimited move leaves the packed counter unchanged");
+    test.assert(remainingMoveUses(state, Side::Player, 1), UNLIMITED_MOVE_USES,
+                "unlimited move stays permanently available");
+
+    // An exhausted move refuses before the status gate consumes RNG.
+    state = field();
+    state.moveUsesSpent[0][0] = 2; // two spent uses, the natural maximum
+    state.active[0].status.effects[0] = Effect::CONCUSED;
+    draws = 0;
+    resolveAction(state, Side::Player, {ActionKind::Attack, 0}, rng, out);
+    test.assert((out.flags & REFUSED) != 0, true, "exhausted move is refused");
+    test.assert(draws, 0, "no-PP refusal precedes the confusion gate");
+    test.assert(state.moveUsesSpent[0][0], 2,
+                "refused exhausted move spends nothing");
+
+    state = field();
+    state.active[0].status.effects[0] = Effect::PINNED;
+    draws = 0;
+    resolveAction(state, Side::Player, {ActionKind::Attack, 0}, rng, out);
+    test.assert((out.flags & STATUS_SKIPPED) != 0, true,
+                "PINNED still skips the attack");
+    test.assert(draws, 1, "PINNED consumes exactly one gate roll");
+    test.assert(state.moveUsesSpent[0][0], 0, "PINNED skip spends no use");
+
+    state = field();
+    state.active[0].status.effects[0] = Effect::CONCUSED;
+    draws = 0;
+    resolveAction(state, Side::Player, {ActionKind::Attack, 0}, rng, out);
+    test.assert((out.flags & SELF_HIT) != 0, true, "confusion self-hit resolves");
+    test.assert(draws, 1, "confusion consumes exactly one gate roll");
+    test.assert(state.moveUsesSpent[0][0], 0, "confusion self-hit spends no use");
+
+    state = field();
+    state.trainer = false;
+    state.gatherable = true;
+    state.active[0].status.effects[0] = Effect::CONCUSED;
+    state.moveUsesSpent[0][0] = 2;
+    draws = 0;
+    resolveAction(state, Side::Player, {ActionKind::Gather, 255}, rng, out);
+    test.assert((out.flags & SELF_HIT) != 0, true,
+                "Gather confusion self-hits at an exhausted slot zero");
+    test.assert(draws, 1, "Gather self-hit consumes exactly one gate roll");
+    test.assert(state.moveUsesSpent[0][0], 2, "Gather self-hit spends no PP");
+
+    // Uses bank with the active original party slot, not a stale field.
+    state = field();
+    state.partyCount[0] = 3;
+    state.activeSlot[0] = 2;
+    state.moveUsesSpent[0][2] = 0;
+    resolveAction(state, Side::Player, {ActionKind::Attack, 0}, rng, out);
+    test.assert((state.moveUsesSpent[0][2] >> 0) & 3, 1,
+                "spend lands in the active original slot");
+    test.assert(state.moveUsesSpent[0][0], 0,
+                "the stale slot-zero bank keeps its own uses");
+
+    suite.addTest(test);
+}
+
 void BattleSuite(TestRunner &runner) {
     TestSuite suite("Battle data contract suite");
     BattleDataContractTest(suite);
     BattleDamageIntegrationTest(suite);
+    BattleMoveUseMechanicsTest(suite);
     runner.addTestSuite(suite);
 }
