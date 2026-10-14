@@ -35,9 +35,10 @@ void captureLiveSaveState()
     memcpy(saveState.flags, gameState.flags, sizeof(FLAG_BIT_ARRAY));
     for (uint8_t i = 0; i < 3; ++i) {
         const uint8_t slot = storePartySlot(i);
+        const uint8_t hp = slot == 255 ? 0 : player.creatureHPs[i];
         saveState.partySlots[i] = slot;
-        saveState.partyHP[i] = player.creatureHPs[i];
-        storeSetPartyHP(i, player.creatureHPs[i]);
+        saveState.partyHP[i] = hp;
+        storeSetPartyHP(i, hp);
         if (slot == 255) continue;
         StoreRecord record;
         if (!storeRead(slot, record)) continue;
