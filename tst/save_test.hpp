@@ -300,9 +300,79 @@ inline void LiveReadBoundedTest(TestSuite &suite) {
     test.assert(flashFakeReadBytes()-bytes,32,"repeated reads stay 16 bytes each without rescan");
     suite.addTest(test);
 }
+// Player/SaveFile v3 integration: byte-exact non-threshold XP, level-change
+// threshold rewrite that leaves duplicates exact, slot/HP reassignment and
+// empty-slot mapping, all through SaveController begin/advance/load.
+inline void PlayerStoreIntegrationTest(TestSuite &suite) {
+    using namespace save_test_detail;Test test(__func__);
+    StoreRecord stored=creature(0);
+    // Fractional XP (126 -> level 5; the next threshold is 216) stays byte-exact
+    // while the RAM level still matches the stored exp-derived level.
+    fresh();
+    StoreRecord first=creature(126);uint8_t slotA=255;
+    test.assert(storeAdd(first,slotA),true,"seed non-threshold instance");
+    test.assert(storeAssign(0,slotA,17),true,"party references instance");
+    player=Player();player.party[0].load(first);player.creatureHPs[0]=17;
+    SaveController::begin(GameState_t::WORLD);
+    for(uint16_t i=0;i<256 && saveInProgress();++i) SaveController::advance();
+    test.assert(gameState.state==GameState_t::WORLD,true,"non-threshold save completes");
+    player=Player();test.assert(SaveController::load(),true,"non-threshold checkpoint reloads");
+    test.assert(storeRead(slotA,stored),true,"stored instance readable");
+    test.assert(stored.exp,126,"non-threshold XP preserved when level unchanged");
+    test.assert(stored.id,first.id,"party instance id preserved");
+    test.assert(memcmp(stored.moves,first.moves,4),0,"party instance moves preserved");
+    // A real level change rewrites only that record to the new threshold; a
+    // second duplicate instance keeps its exact fractional XP.
+    fresh();
+    StoreRecord member=creature(126);uint8_t slot0=255;
+    test.assert(storeAdd(member,slot0),true,"seed party instance");
+    StoreRecord dup=creature(130);uint8_t slot1=255;
+    test.assert(storeAdd(dup,slot1),true,"seed duplicate instance");
+    test.assert(storeAssign(0,slot0,17),true,"party references party instance");
+    player=Player();player.party[0].load(member);player.creatureHPs[0]=17;
+    SaveController::begin(GameState_t::WORLD);
+    for(uint16_t i=0;i<256 && saveInProgress();++i) SaveController::advance();
+    test.assert(gameState.state==GameState_t::WORLD,true,"baseline checkpoint save completes");
+    player=Player();test.assert(SaveController::load(),true,"baseline checkpoint reloads");
+    test.assert(storeRead(slot0,stored),true,"leveled instance readable");
+    test.assert(stored.exp,126,"baseline fractional XP survives reload");
+    player.party[0].level=6;
+    SaveController::begin(GameState_t::WORLD);
+    for(uint16_t i=0;i<256 && saveInProgress();++i) SaveController::advance();
+    test.assert(gameState.state==GameState_t::WORLD,true,"level-change save completes");
+    player=Player();test.assert(SaveController::load(),true,"level-change checkpoint reloads");
+    test.assert(storeRead(slot0,stored),true,"leveled instance readable after reload");
+    test.assert(stored.exp,levelExpThreshold(6),"level change rewrites only its threshold");
+    test.assert(storeRead(slot1,stored),true,"duplicate readable");
+    test.assert(stored.exp,130,"duplicate keeps its exact fractional XP");
+    // Duplicate identity/slot, explicit HP reassignment and empty entries.
+    fresh();
+    StoreRecord a=creature(126);uint8_t s0=255;
+    test.assert(storeAdd(a,s0),true,"seed first duplicate");
+    StoreRecord b=creature(200);uint8_t s1=255;
+    test.assert(storeAdd(b,s1),true,"seed second duplicate");
+    test.assert(storeAssign(0,s0,17),true,"party references first");
+    test.assert(storeAssign(0,s1,9),true,"explicit HP reassignment to second");
+    player=Player();player.party[0].load(b);player.creatureHPs[0]=9;
+    player.creatureHPs[2]=33; // deliberately nonzero live HP on an unassigned slot
+    SaveController::begin(GameState_t::WORLD);
+    for(uint16_t i=0;i<256 && saveInProgress();++i) SaveController::advance();
+    SaveFile loaded={};test.assert(storeBoot(loaded),true,"reassignment checkpoint boots");
+    test.assert(loaded.partySlots[0],s1,"reassigned party slot restored");
+    test.assert(loaded.partyHP[0],9,"explicit reassignment HP restored");
+    test.assert(loaded.partySlots[2],255,"empty party slot stays 255");
+    test.assert(loaded.partyHP[2],0,"empty party slot stores canonical zero HP");
+    player=Player();test.assert(SaveController::load(),true,"shipping load works");
+    test.assert(storePartySlot(0),s1,"reassigned party slot restores after load");
+    test.assert(player.party[0].id,b.id,"reassigned party identity restored");
+    test.assert(player.creatureHPs[0],9,"reassigned party HP restores after load");
+    test.assert(player.party[2].id,255,"empty entry restores id 255");
+    test.assert(player.creatureHPs[2],0,"empty entry restores HP zero");
+    suite.addTest(test);
+}
 inline void SaveSuite(TestRunner &runner) {
     TestSuite suite("Save Suite");CheckpointCollectionTest(suite);CollectionCapacityTest(suite);
     CheckpointCutTest(suite);JournalDecodeTest(suite);JournalPublicationTest(suite);ShippingSaveRestoreTest(suite);
     SaveFlagExtentTest(suite);GenerationWrapTest(suite);LegacyResetTest(suite);LiveReadBoundedTest(suite);
-    runner.addTestSuite(suite);
+    PlayerStoreIntegrationTest(suite);runner.addTestSuite(suite);
 }

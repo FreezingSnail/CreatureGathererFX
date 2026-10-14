@@ -359,6 +359,62 @@ inline void test_saveJournalPublication(FxTest &test)
 
 // Preserve the device-only status renderer coverage: the SAVING/FAILED glyphs
 // are internal-flash and must render while save flash is busy.
+inline void test_savePlayerStore(FxTest &test)
+{
+    using namespace save_fx_test_detail;
+    fresh();
+    StoreRecord member = creature(126);
+    uint8_t slot0 = 255;
+    test.expectEq(storeAdd(member, slot0), true, F("seed party instance"));
+    StoreRecord dup = creature(130);
+    uint8_t slot1 = 255;
+    test.expectEq(storeAdd(dup, slot1), true, F("seed duplicate instance"));
+    test.expectEq(storeAssign(0, slot0, 17), true, F("party references instance"));
+    player = Player();
+    player.party[0].load(member);
+    player.creatureHPs[0] = 17;
+    player.creatureHPs[2] = 33; // stale live HP on an unassigned slot must not persist
+    SaveController::begin(GameState_t::WORLD);
+    for (uint16_t i = 0; i < 256 && saveInProgress(); ++i) {
+        SaveController::advance();
+        FX::waitWhileBusy();
+    }
+    test.expectEq(gameState.state == GameState_t::WORLD, true, F("initial save completes"));
+    SaveFile initialCheckpoint = {};
+    test.expectEq(storeBoot(initialCheckpoint), true, F("initial checkpoint boots"));
+    test.expectEq(initialCheckpoint.partyHP[2], 0, F("empty HP is zero before load"));
+    player = Player();
+    test.expectEq(SaveController::load(), true, F("non-threshold checkpoint reloads"));
+    StoreRecord stored = {};
+    test.expectEq(storeRead(slot0, stored), true, F("stored instance readable"));
+    test.expectEq(stored.exp, 126, F("non-threshold XP preserved when level unchanged"));
+    player.party[0].level = 6;
+    SaveController::begin(GameState_t::WORLD);
+    for (uint16_t i = 0; i < 256 && saveInProgress(); ++i) {
+        SaveController::advance();
+        FX::waitWhileBusy();
+    }
+    test.expectEq(gameState.state == GameState_t::WORLD, true, F("level-change save completes"));
+    player = Player();
+    test.expectEq(SaveController::load(), true, F("level-change checkpoint reloads"));
+    test.expectEq(storeRead(slot0, stored), true, F("leveled instance readable"));
+    test.expectEq(stored.exp, levelExpThreshold(6), F("level change rewrites only its threshold"));
+    test.expectEq(storeRead(slot1, stored), true, F("duplicate readable"));
+    test.expectEq(stored.exp, 130, F("duplicate keeps its exact fractional XP"));
+    SaveFile loaded = {};
+    test.expectEq(storeBoot(loaded), true, F("player/store checkpoint boots"));
+    test.expectEq(loaded.partySlots[0], slot0, F("party slot restored"));
+    test.expectEq(loaded.partyHP[0], 17, F("explicit party HP restored"));
+    test.expectEq(loaded.partySlots[2], 255, F("empty party slot stays 255"));
+    test.expectEq(loaded.partyHP[2], 0, F("empty party slot stores zero HP"));
+    player = Player();
+    test.expectEq(SaveController::load(), true, F("shipping load works"));
+    test.expectEq(player.party[0].id, member.id, F("party id restored"));
+    test.expectEq(player.creatureHPs[0], 17, F("party HP restored"));
+    test.expectEq(player.party[2].id, 255, F("empty entry restores id 255"));
+    test.expectEq(player.creatureHPs[2], 0, F("empty entry restores HP zero"));
+}
+
 inline void test_saveStatusRender(FxTest &test)
 {
     using namespace save_fx_test_detail;
@@ -402,5 +458,6 @@ inline void test_save(FxTest &test)
     test_saveCollectionCapacity(test);
     test_saveCheckpointCuts(test);
     test_saveJournalPublication(test);
+    test_savePlayerStore(test);
     test_saveStatusRender(test);
 }
