@@ -8792,3 +8792,53 @@ checks 199 s, already-started full gate 586 s. DeepSeek session timestamps span
 17 minutes including review, tests, gate, cleanup and reporting. Close this
 adoption and commit separately; no push or Dolt remote sync. box.13 becomes
 the next eligible saving, using the revised focused-check cadence.
+
+---
+
+## box.13 — Journal decoder blank-scan removal (2026-10-14)
+
+Adopted the decoder-only current-main adaptation at control HEAD `88c4dfb`.
+The required byte-15 marker `0xA5` already implies that a record is nonblank.
+Append's all-FF scan, dirty-tail refusal, checksum, body readback, marker-last
+publication, replay and recovery remain unchanged; no save ABI or packed data
+changed. DeepSeek/OpenCode session `ses_ec7c66b41ffeWxX0J7FeGRGMNj` prepared
+permanent host/device decoding tests and the exact proposal. Independent Sol
+reviewer `box13_review`: **REVIEW: APPROVED**, no source findings.
+
+Fresh default-shipping pair in `build/box-adoption-gate`: control **24,870 B
+flash / 1,760 B static SRAM**, candidate **24,850 / 1,760 B**, delta **-20 / 0 B**.
+Actual Ardens journal-boot suite **290/0**, stack **4/0**, painted headroom
+**484 B**, unchanged (415 B after the 69 B ISR allowance). Candidate is 4,334 B
+below the 29,184 B planning ceiling. Host preparation passed **316,350/0**,
+world **258/0**, VM **278/0**; the exact candidate TU passed the same host
+suite and a marker-removal mutant failed nine assertions. `cmp` confirms the
+adopted `Journal.cpp` is byte-identical to that tested candidate TU. The report's
+old isolated-research stack failure is historical; current device checks pass.
+
+Commands used the tools PATH and Ardens executable recorded in box.12:
+
+```
+make ram BUILD_DIR=build/box-adoption-gate                  # control, then candidate
+cmp src/save/Journal.cpp build/box-adoption-gate/reports/13/proposed-Journal.cpp
+make fxtest-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_journal_boot.ino BUILD_DIR=build/box-adoption-gate
+make clean-build-artifacts BUILD_DIR=build/box-adoption-gate
+make clean-build-artifacts BUILD_DIR=build/box-adoption-gate CLEAN_APPLY=1
+git diff --check
+```
+
+No per-task full gate under the owner's revised cadence; the settled foundation
+batch gate remains `mgc.8`. No generation/parity rerun was needed: cart SHA-256
+remains `cb170b6ae45545af483dc66ea04c7361fdb9cb03c8a49827c0a0344d439e2c9b`.
+Evidence in `reports/13`: exact patch, preparation/candidate/mutant host logs,
+paired RAM reports, device/stack serial output, control/final ELFs and cleanup
+logs. Control ELF SHA-256 `86265a7a2f2338326ef34548a2c96d1c7541bf9b5b34140537363d60b08e1bbd`;
+final `b4c991f56b910881fd9df4e63874a3d24b211024f389e9c71241f59a52b22102`.
+Cleanup applied 108 recognized cache/object candidates (~2.7 MB); the active
+14 MiB focused device tree is compatible with the next item and retained within
+budget. Before: 20 GiB free, build 512 MiB, shared lane 109 MiB. After focused
+checks: build 529 MiB, shared 126 MiB; free space remains about 20 GiB.
+Existing unique 4.4 GiB `/private/tmp/cgfx-1as-spike` evidence is untouched.
+Worker preparation ~7 minutes; root review/measurement/device/cleanup ~4 minutes,
+with control/candidate builds ~12/7 seconds and device+stack ~24 seconds; full
+gate time zero. DeepSeek now prepares only nonoverlapping box.14 battle tests.
+Close box.13 and commit its files separately; no push or Dolt remote sync.
