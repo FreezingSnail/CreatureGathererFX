@@ -272,8 +272,37 @@ inline void LegacyResetTest(TestSuite &suite) {
     }
     suite.addTest(test);
 }
+// Bounded live-read proof: a checkpoint miss reads exactly one 8-byte record and
+// a pending-overlay hit reads exactly one 16-byte journal record; repeated reads
+// of an unchanged slot stay one bounded read each (no journal rescan). Deltas use
+// the test backend's read counters; no window cache or runtime change.
+inline void LiveReadBoundedTest(TestSuite &suite) {
+    using namespace save_test_detail;Test test(__func__);fresh();
+    SaveFile state=snapshot();StoreRecord record=creature();uint8_t slot=255;
+    test.assert(storeAdd(record,slot),true,"seed instance");
+    test.assert(save(state),SaveStep::Done,"seed checkpoint");
+    StoreRecord out={};
+    uint32_t calls=flashFakeReadCount(),bytes=flashFakeReadBytes();
+    test.assert(storeRead(1,out),true,"checkpoint miss read");
+    test.assert(flashFakeReadCount()-calls,1,"checkpoint miss performs one backend read");
+    test.assert(flashFakeReadBytes()-bytes,8,"checkpoint miss reads one 8-byte record");
+    StoreRecord pending=creature(41);
+    test.assert(storeWrite(1,pending),true,"pending overlay write");
+    calls=flashFakeReadCount();bytes=flashFakeReadBytes();
+    test.assert(storeRead(1,out),true,"pending overlay hit read");
+    test.assert(flashFakeReadCount()-calls,1,"pending hit performs one backend read");
+    test.assert(flashFakeReadBytes()-bytes,16,"pending hit reads one 16-byte journal record");
+    test.assert(out.exp,41,"pending hit returns overlay value");
+    calls=flashFakeReadCount();bytes=flashFakeReadBytes();
+    test.assert(storeRead(1,out),true,"repeated read one");
+    test.assert(storeRead(1,out),true,"repeated read two");
+    test.assert(flashFakeReadCount()-calls,2,"repeated reads issue one call each");
+    test.assert(flashFakeReadBytes()-bytes,32,"repeated reads stay 16 bytes each without rescan");
+    suite.addTest(test);
+}
 inline void SaveSuite(TestRunner &runner) {
     TestSuite suite("Save Suite");CheckpointCollectionTest(suite);CollectionCapacityTest(suite);
     CheckpointCutTest(suite);JournalDecodeTest(suite);JournalPublicationTest(suite);ShippingSaveRestoreTest(suite);
-    SaveFlagExtentTest(suite);GenerationWrapTest(suite);LegacyResetTest(suite);runner.addTestSuite(suite);
+    SaveFlagExtentTest(suite);GenerationWrapTest(suite);LegacyResetTest(suite);LiveReadBoundedTest(suite);
+    runner.addTestSuite(suite);
 }
