@@ -85,6 +85,30 @@ inline void CheckpointCutTest(TestSuite &suite) {
     test.assert(storeBoot(state),false,"invalid committed header rejected");test.assert(storeBootFailed(),true,"committed corruption fails closed");
     suite.addTest(test);
 }
+inline void JournalDecodeTest(TestSuite &suite) {
+    Test test(__func__);
+    uint8_t bytes[JOURNAL_RECORD_BYTES];
+    memset(bytes, 0xff, sizeof(bytes));
+    JournalRecord decoded = {};
+    test.assert(journalDecode(bytes, decoded), false, "blank record is not committed");
+    bytes[3] = 0x27;
+    test.assert(journalDecode(bytes, decoded), false, "dirty record without marker is not committed");
+    JournalRecord authored = {};
+    authored.seq = 19;
+    authored.op = static_cast<uint8_t>(LogOp::StoreAdd);
+    authored.slot = 0x1234;
+    authored.payload[0] = 0x5a;
+    uint8_t committed[JOURNAL_RECORD_BYTES];
+    test.assert(journalEncode(authored, committed), true, "record encoder publishes marker");
+    test.assert(journalDecode(committed, decoded), true, "committed record decodes");
+    test.assert(decoded.seq, authored.seq, "decoded sequence matches");
+    test.assert(decoded.op, authored.op, "decoded operation matches");
+    test.assert(decoded.slot, authored.slot, "decoded slot matches");
+    test.assert(decoded.payload[0], authored.payload[0], "decoded payload matches");
+    committed[14] ^= 1;
+    test.assert(journalDecode(committed, decoded), false, "bad checksum is rejected");
+    suite.addTest(test);
+}
 inline void JournalPublicationTest(TestSuite &suite) {
     using namespace save_test_detail;Test test(__func__);fresh();
     StoreRecord record=creature();flashFakeSetWriteLimit(15);
@@ -159,6 +183,6 @@ inline void SaveFlagExtentTest(TestSuite &suite) {
 }
 inline void SaveSuite(TestRunner &runner) {
     TestSuite suite("Save Suite");CheckpointCollectionTest(suite);CollectionCapacityTest(suite);
-    CheckpointCutTest(suite);JournalPublicationTest(suite);ShippingSaveRestoreTest(suite);
+    CheckpointCutTest(suite);JournalDecodeTest(suite);JournalPublicationTest(suite);ShippingSaveRestoreTest(suite);
     SaveFlagExtentTest(suite);runner.addTestSuite(suite);
 }

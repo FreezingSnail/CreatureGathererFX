@@ -38,6 +38,25 @@ inline bool saveTo(SaveFile &state, bool stopBeforeJournalCleanup = false)
 
 inline void run(FxTest &test)
 {
+    uint8_t bytes[JOURNAL_RECORD_BYTES];
+    memset(bytes, 0xff, sizeof(bytes));
+    JournalRecord decoded = {};
+    test.expectEq(journalDecode(bytes, decoded), false, F("blank record has no commit marker"));
+    bytes[3] = 0x27;
+    test.expectEq(journalDecode(bytes, decoded), false, F("dirty uncommitted record is rejected"));
+    JournalRecord authored = {};
+    authored.seq = 19;
+    authored.op = static_cast<uint8_t>(LogOp::StoreAdd);
+    authored.slot = 0x1234;
+    authored.payload[0] = 0x5a;
+    uint8_t committed[JOURNAL_RECORD_BYTES];
+    journalEncode(authored, committed);
+    test.expectEq(journalDecode(committed, decoded), true, F("committed record decodes"));
+    test.expectEq(decoded.slot, authored.slot, F("decoded slot matches"));
+    test.expectEq(decoded.payload[0], authored.payload[0], F("decoded payload matches"));
+    committed[14] ^= 1;
+    test.expectEq(journalDecode(committed, decoded), false, F("bad checksum is rejected"));
+
     JournalRecord unbooted = {};
     unbooted.op = 99;
     test.expectEq(journalAppend(unbooted), false,

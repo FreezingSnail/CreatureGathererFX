@@ -62,7 +62,7 @@ bool journalEncode(const JournalRecord &in, uint8_t out[JOURNAL_RECORD_BYTES])
 
 bool journalDecode(const uint8_t in[JOURNAL_RECORD_BYTES], JournalRecord &out)
 {
-    if (journalBlank(in) || in[15] != 0xa5 || in[14] != journalCheck(in)) {
+    if (in[15] != 0xa5 || in[14] != journalCheck(in)) {
         return false;
     }
 
