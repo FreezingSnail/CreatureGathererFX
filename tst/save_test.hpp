@@ -22,6 +22,32 @@ inline SaveStep save(SaveFile &state) {
 }
 inline StoreRecord creature(uint16_t exp=27) { return {0,exp,{8,32,32,32},0}; }
 inline void fresh() { flashFakeReset();storeFresh(); }
+
+// Independent Fletcher-16 oracle for the 12-byte normalized header. Reimplements
+// the bound-and-wrap rule so the test does not reuse the shipping checksum path.
+inline uint16_t fletcher16(const uint8_t bytes[12]) {
+    uint8_t a=0,b=0;
+    for(uint8_t i=0;i<12;++i){
+        uint16_t n=static_cast<uint16_t>(a)+bytes[i];
+        a=n>=255?static_cast<uint8_t>(n-255):static_cast<uint8_t>(n);
+        n=static_cast<uint16_t>(b)+a;
+        b=n>=255?static_cast<uint8_t>(n-255):static_cast<uint8_t>(n);
+    }
+    return static_cast<uint16_t>((static_cast<uint16_t>(b)<<8)|a);
+}
+// Test-only backend seeding: rewrite one committed checkpoint's generation and
+// re-derive its header checksum so a valid current-format fixture can start at
+// 0xFFFF. Only test storage changes; no production hook or API is added.
+inline void seedGeneration(uint16_t base,uint16_t generation) {
+    uint8_t header[14];
+    memcpy(header,flashFakeData()+base,sizeof(header));
+    header[4]=static_cast<uint8_t>(generation);
+    header[5]=static_cast<uint8_t>(generation>>8);
+    uint8_t check[12];memcpy(check,header,sizeof(check));check[9]=1;
+    const uint16_t sum=fletcher16(check);
+    header[12]=static_cast<uint8_t>(sum);header[13]=static_cast<uint8_t>(sum>>8);
+    flashFakeSetBytes(base,header,sizeof(header));
+}
 }
 inline void CheckpointCollectionTest(TestSuite &suite) {
     using namespace save_test_detail;Test test(__func__);fresh();
@@ -68,14 +94,39 @@ inline void CollectionCapacityTest(TestSuite &suite) {
 }
 inline void CheckpointCutTest(TestSuite &suite) {
     using namespace save_test_detail;Test test(__func__);
+    // Byte-write-budget boundaries of one save (erase 4096 + snapshot 96 +
+    // records 512 + header 14 + commit 2 + journal-erase 4096 + clear 1 = 8817):
+    //   0    before the inactive erase; nothing written
+    //   4096 inactive erase complete; no header yet
+    //   4608 mid record streaming; no header yet
+    //   4718 header written, commit bytes absent
+    //   4719 one of two commit bytes present
+    //   4720 commit complete -> new checkpoint authoritative
+    //   4730 cleanup-bit clear still blocked after the journal erase budget
+    //   8816 journal erased, cleanup bit still pending
+    //   8817 cleanup bit cleared
     const int32_t cuts[]={0,4096,4608,4718,4719,4720,4730,8816,8817};
+    const uint8_t emptyMoves[4]={0,0,0,0};
+    uint8_t expectedSnapshot[96];
+    saveFileEncode(snapshot(0),0,expectedSnapshot,96);
     for(int32_t cut:cuts) {
         fresh();SaveFile state=snapshot(11);test.assert(save(state),SaveStep::Done,"baseline checkpoint");
         StoreRecord record=creature();uint8_t slot;test.assert(storeAdd(record,slot),true,"postcheckpoint mutation");
         state.playerLocation=22;flashFakeSetWriteLimit(cut);save(state);flashFakeSetWriteLimit(-1);
         SaveFile loaded=snapshot();test.assert(storeBoot(loaded),true,"cut reboots into valid state");
-        test.assert(loaded.playerLocation,cut>=4720 ? 22 : 11,"commit markers define snapshot authority");
-        test.assert(storeRead(slot,record),true,"cut instance read");test.assert(record.exp,27,"checkpoint or valid journal retains add");
+        const uint16_t expectedLocation=cut>=4720 ? 22 : 11;
+        test.assert(loaded.playerLocation,expectedLocation,"commit markers define snapshot authority");
+        expectedSnapshot[0]=static_cast<uint8_t>(expectedLocation);
+        expectedSnapshot[1]=static_cast<uint8_t>(expectedLocation>>8);
+        uint8_t loadedSnapshot[96];saveFileEncode(loaded,0,loadedSnapshot,96);
+        test.assert(memcmp(loadedSnapshot,expectedSnapshot,96),0,"complete 96-byte snapshot matches authority");
+        for(uint8_t i=0;i<64;++i) {
+            StoreRecord got;test.assert(storeRead(i,got),true,"cut slot readable");
+            const bool added=i==slot;
+            test.assert(got.id,added?record.id:static_cast<uint8_t>(255),"cut record id");
+            test.assert(got.exp,added?record.exp:static_cast<uint16_t>(0),"cut record exp");
+            test.assert(memcmp(got.moves,added?record.moves:emptyMoves,4),0,"cut record moves");
+        }
         test.assert(storeBootFailed(),false,"cut cleanup completed");
     }
     fresh();SaveFile state=snapshot();flashFakeSetWriteLimit(4608);save(state);flashFakeSetWriteLimit(-1);
@@ -181,8 +232,48 @@ inline void SaveFlagExtentTest(TestSuite &suite) {
     test.assert(FLAG_BIT_ARRAY[0],0x69,"real generated flag byte round-trips");
     suite.addTest(test);
 }
+// Force the committed generation to 0xFFFF on a real, valid current-format
+// checkpoint, then save again and prove boot selects the wrapped generation 0
+// as the newer checkpoint (signed 16-bit adjacency), not just test arithmetic.
+inline void GenerationWrapTest(TestSuite &suite) {
+    using namespace save_test_detail;Test test(__func__);fresh();
+    SaveFile state=snapshot(7);test.assert(save(state),SaveStep::Done,"pre-wrap checkpoint");
+    seedGeneration(8192,0xFFFF);
+    SaveFile reload=snapshot();test.assert(storeBoot(reload),true,"0xFFFF checkpoint boots");
+    test.assert(reload.playerLocation,7,"seeded 0xFFFF checkpoint selected");
+    reload.playerLocation=0x1234;test.assert(save(reload),SaveStep::Done,"wrap save completes");
+    SaveFile wrapped=snapshot();test.assert(storeBoot(wrapped),true,"post-wrap boot");
+    test.assert(wrapped.playerLocation,0x1234,"0xFFFF -> 0 selects the wrapped newer checkpoint");
+    wrapped.playerLocation=0x5678;test.assert(save(wrapped),SaveStep::Done,"post-wrap continuation save");
+    SaveFile after=snapshot();test.assert(storeBoot(after),true,"post-wrap continuation boot");
+    test.assert(after.playerLocation,0x5678,"generation continues past the wrap");
+    suite.addTest(test);
+}
+// A recognized committed pre-v3 header (magic 0x43 0x47, version 1 or 2, commit
+// bytes present) must reset fresh with a clean journal rather than import its
+// arbitrary bytes. The existing corrupt-v3 case still fails closed.
+inline void LegacyResetTest(TestSuite &suite) {
+    using namespace save_test_detail;Test test(__func__);
+    for(uint8_t version=1;version<=2;++version) {
+        fresh();
+        uint8_t legacy[16]={};
+        legacy[0]=0x43;legacy[1]=0x47;legacy[2]=version;legacy[3]=16;
+        for(uint8_t i=4;i<14;++i) legacy[i]=0x5a; // arbitrary non-v3 payload
+        legacy[14]=0xa5;legacy[15]=0x5a;          // committed marker
+        flashFakeSetBytes(8192,legacy,sizeof(legacy));
+        SaveFile state=snapshot();
+        test.assert(storeBoot(state),false,"pre-v3 committed header resets fresh");
+        test.assert(storeBootFailed(),false,"pre-v3 reset is not a failure");
+        test.assert(journalCount(),0,"pre-v3 reset leaves a blank journal");
+        StoreRecord record={};
+        test.assert(storeRead(0,record),true,"reset collection is readable");
+        test.assert(record.id,255,"pre-v3 bytes are not imported as a creature");
+        test.assert(save(state),SaveStep::Done,"fresh save works after pre-v3 reset");
+    }
+    suite.addTest(test);
+}
 inline void SaveSuite(TestRunner &runner) {
     TestSuite suite("Save Suite");CheckpointCollectionTest(suite);CollectionCapacityTest(suite);
     CheckpointCutTest(suite);JournalDecodeTest(suite);JournalPublicationTest(suite);ShippingSaveRestoreTest(suite);
-    SaveFlagExtentTest(suite);runner.addTestSuite(suite);
+    SaveFlagExtentTest(suite);GenerationWrapTest(suite);LegacyResetTest(suite);runner.addTestSuite(suite);
 }

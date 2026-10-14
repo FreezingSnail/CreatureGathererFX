@@ -252,7 +252,23 @@ inline void test_saveCollectionCapacity(FxTest &test)
 inline void test_saveCheckpointCuts(FxTest &test)
 {
     using namespace save_fx_test_detail;
-    const int32_t cuts[] = {4718, 4720, 8816, 8817};
+    // Byte-write-budget boundaries of one save with the real device write-limit
+    // seam (the erase completes atomically, then the budget is reduced):
+    //   0    before the inactive erase; nothing written
+    //   4096 inactive erase complete; no header yet
+    //   4608 mid record streaming; no header yet
+    //   4718 header written, commit bytes absent
+    //   4719 one of two commit bytes present
+    //   4720 commit complete -> new checkpoint authoritative
+    //   4730 cleanup-bit clear blocked after the journal erase
+    //   8816 journal erased, cleanup bit still pending
+    //   8817 cleanup bit cleared
+    // (The 4608 below is the separate FIRST-save case, not prior-checkpoint 4608.)
+    const int32_t cuts[] = {0, 4096, 4608, 4718, 4719, 4720, 4730, 8816, 8817};
+    const StoreRecord expected = creature();
+    const uint8_t emptyMoves[4] = {0, 0, 0, 0};
+    uint8_t expectedSnapshot[96];
+    saveFileEncode(snapshot(0), 0, expectedSnapshot, 96);
     for (uint8_t c = 0; c < sizeof(cuts) / sizeof(cuts[0]); ++c) {
         fresh();
         SaveFile state = snapshot(11);
@@ -267,10 +283,26 @@ inline void test_saveCheckpointCuts(FxTest &test)
         cutEnd();
         SaveFile loaded = snapshot();
         test.expectEq(storeBoot(loaded), true, F("cut reboots into valid state"));
-        test.expectEq(loaded.playerLocation, cuts[c] >= 4720 ? 22 : 11,
+        const uint16_t expectedLocation = cuts[c] >= 4720 ? 22 : 11;
+        test.expectEq(loaded.playerLocation, expectedLocation,
                       F("commit markers define snapshot authority"));
-        test.expectEq(storeRead(slot, record), true, F("cut instance read"));
-        test.expectEq(record.exp, 27, F("checkpoint or valid journal retains add"));
+        expectedSnapshot[0] = static_cast<uint8_t>(expectedLocation);
+        expectedSnapshot[1] = static_cast<uint8_t>(expectedLocation >> 8);
+        uint8_t loadedSnapshot[96];
+        saveFileEncode(loaded, 0, loadedSnapshot, 96);
+        test.expectEq(memcmp(loadedSnapshot, expectedSnapshot, 96), 0,
+                      F("complete 96-byte snapshot matches authority"));
+        for (uint8_t i = 0; i < 64; ++i) {
+            StoreRecord got = {};
+            test.expectEq(storeRead(i, got), true, F("cut slot readable"));
+            const bool added = i == slot;
+            test.expectEq(got.id, added ? expected.id : static_cast<uint8_t>(255),
+                          F("cut record id"));
+            test.expectEq(got.exp, added ? expected.exp : static_cast<uint16_t>(0),
+                          F("cut record exp"));
+            test.expectEq(memcmp(got.moves, added ? expected.moves : emptyMoves, 4), 0,
+                          F("cut record moves"));
+        }
         test.expectEq(storeBootFailed(), false, F("cut cleanup completed"));
     }
     fresh();
