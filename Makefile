@@ -1,4 +1,4 @@
-.PHONY: help setup doctor plant test test-debug testvm testvm-debug sim sim-test gen gen-if-needed gen-data gen-sprites gen-fixtures pack full build mini ram run dev arena-demo lure-demo check final-gate verify-generated test-manifest test-generated-libs test-doctor test-fxtest-ram test-avr-build-budget test-world-script-profile world-script-profile-check fxtest fxtest-headless fxtest-spike fxtest-preflight fxtest-headless-preflight fxtest-build fxtest-run new-fxtest clean-build-artifacts test-clean-build-artifacts
+.PHONY: help setup doctor plant test test-debug testvm testvm-debug sim sim-test gen gen-if-needed gen-data gen-sprites gen-fixtures pack full build mini ram run dev arena-demo lure-demo check final-gate verify-generated test-manifest test-generated-libs test-doctor test-fxtest-ram test-avr-build-budget test-world-script-profile world-script-profile-check test-encounter-profile encounter-profile-check encounter-packed-profile-check fxtest fxtest-headless fxtest-spike fxtest-preflight fxtest-headless-preflight fxtest-build fxtest-run new-fxtest clean-build-artifacts test-clean-build-artifacts
 
 # Public command API. Override tool, board, and output variables per workspace/CI.
 CXX ?= g++
@@ -68,6 +68,9 @@ WORLD_SCRIPT_PROFILE_BIN ?= $(BUILD_DIR)/tools/check-world-script-profile
 WORLD_SCRIPT_PROFILE_TEST_BIN ?= $(BUILD_DIR)/tests/world-script-profile
 WORLD_SCRIPT_PROFILE_INPUT ?= fxdata/generated/scripts.bin
 WORLD_SCRIPT_PROFILE_TEXT ?= fxdata/generated/text.bin
+ENCOUNTER_PROFILE_BIN ?= $(BUILD_DIR)/tools/check-encounter-profile
+ENCOUNTER_PROFILE_TEST_BIN ?= $(BUILD_DIR)/tests/encounter-profile
+ENCOUNTER_PROFILE_INPUT ?= fxdata/data/encounters.txt
 RAM_ELF ?= $(BUILD_DIR)/CreatureGathererFX.ino.elf
 AVR_NM ?= $(shell command -v avr-nm 2>/dev/null || find "$(HOME)/Library/Arduino15/packages" "$(HOME)/.arduino15/packages" -type f -path '*/tools/avr-gcc/*/bin/avr-nm' -print -quit 2>/dev/null)
 AVR_SIZE ?= $(shell command -v avr-size 2>/dev/null || find "$(HOME)/Library/Arduino15/packages" "$(HOME)/.arduino15/packages" -type f -path '*/tools/avr-gcc/*/bin/avr-size' -print -quit 2>/dev/null)
@@ -192,7 +195,7 @@ endef
 
 full: gen build
 
-build: world-script-profile-check
+build: world-script-profile-check encounter-packed-profile-check
 	@mkdir -p "$(BUILD_DIR)"
 	@mkdir -p "$(ARDUINO_BUILD_PATH)/fx"
 	@set -eu; \
@@ -223,7 +226,7 @@ ram: build
 	"$(AVR_NM)" --print-size --size-sort --radix=d "$$elf" | awk '$$3 ~ /^[bBdD]$$/' | tail -15; \
 	echo 'RAM_TOP_SYMBOLS_END'
 
-mini: world-script-profile-check
+mini: world-script-profile-check encounter-packed-profile-check
 	@mkdir -p "$(BUILD_DIR)"
 	@mkdir -p "$(ARDUINO_BUILD_PATH)/mini"
 	@set -eu; \
@@ -372,7 +375,7 @@ gen-sprites:
 	@set -e; \
 	cgfx-tools --sprite-config fxsprites.toml
 
-pack:
+pack: encounter-profile-check
 	@set -e; \
 	mkdir -p "$(BUILD_DIR)" "$(DIST_DIR)"; \
 	stage="$$(cd "$$(mktemp -d "$(BUILD_DIR)/cgfx-pack.XXXXXX")" && pwd -P)"; \
@@ -388,9 +391,10 @@ pack:
 	mv -f "$$stage/dist/fxdata-data.bin" "$(DIST_DIR)/fxdata-data.bin"; \
 	mv -f "$$stage/dist/fxdata-save.bin" "$(DIST_DIR)/fxdata-save.bin"; \
 	./tools/record-fxdata-manifest.sh "$(FX_LAYOUT)" "$(FXDATA_MANIFEST)"; \
-	./tools/assert-fxdata-manifest.sh "$(FX_LAYOUT)" "$(FXDATA_MANIFEST)"
+	./tools/assert-fxdata-manifest.sh "$(FX_LAYOUT)" "$(FXDATA_MANIFEST)"; \
+	"$(ENCOUNTER_PROFILE_BIN)" "$(ENCOUNTER_PROFILE_INPUT)" src/fxdata.h "$(FXDATA_DATA_BIN)"
 
-check: gen test testvm test-world-script-profile test-manifest test-generated-libs test-fxtest-ram test-avr-build-budget verify-generated build fxtest
+check: gen test testvm test-world-script-profile test-encounter-profile test-manifest test-generated-libs test-fxtest-ram test-avr-build-budget verify-generated build fxtest
 
 # Final pre-commit gate. Keep the integrated check and shipping RAM build
 # sequential even when the caller invokes make with -j.
@@ -438,6 +442,25 @@ world-script-profile-check: $(WORLD_SCRIPT_PROFILE_BIN) $(WORLD_SCRIPT_PROFILE_I
 	else \
 		"$(WORLD_SCRIPT_PROFILE_BIN)" "$(WORLD_SCRIPT_PROFILE_INPUT)" "$(WORLD_SCRIPT_PROFILE_TEXT)"; \
 	fi
+
+# Encounter ABI validation. The authored check proves the encounter content
+# invariants once at generation; the packed check also proves the published
+# src/fxdata.h addresses match the authored bytes in the packed data image, so
+# shipping FX and Mini compile only against validated content.
+test-encounter-profile: encounter-profile-check
+	@mkdir -p "$(dir $(ENCOUNTER_PROFILE_TEST_BIN))"
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) tools/tests/encounter-profile_test.cpp -o "$(ENCOUNTER_PROFILE_TEST_BIN)"
+	"$(ENCOUNTER_PROFILE_TEST_BIN)"
+
+$(ENCOUNTER_PROFILE_BIN): tools/check-encounter-profile.cpp src/engine/world/Encounter.hpp src/engine/world/Chunk.hpp
+	@mkdir -p "$(dir $@)"
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) tools/check-encounter-profile.cpp -o "$@"
+
+encounter-profile-check: $(ENCOUNTER_PROFILE_BIN) $(ENCOUNTER_PROFILE_INPUT)
+	"$(ENCOUNTER_PROFILE_BIN)" --source "$(ENCOUNTER_PROFILE_INPUT)"
+
+encounter-packed-profile-check: encounter-profile-check src/fxdata.h $(FXDATA_DATA_BIN)
+	"$(ENCOUNTER_PROFILE_BIN)" "$(ENCOUNTER_PROFILE_INPUT)" src/fxdata.h "$(FXDATA_DATA_BIN)"
 
 test-doctor:
 	./tools/tests/doctor_test.sh

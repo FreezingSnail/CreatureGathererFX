@@ -190,14 +190,20 @@ void EncounterDecisionTest(TestSuite &suite) {
                 "invalid cache skips without RNG");
     test.assert(rngCalls, static_cast<uint8_t>(0), "invalid cache has no roll");
 
-    seedCache(cache, 0, 8, 2);
-    test.assert(Encounter::select(cache, party, forcedRng, Encounter::INERT_OFFSET, decision), false,
-                "reversed level bounds are malformed");
     seedCache(cache, 0, 1, 31);
     cache[4] = 32;
     forcedRoll = 4;
     test.assert(Encounter::select(cache, party, forcedRng, Encounter::INERT_OFFSET, decision), false,
                 "invalid creature ID skips safely");
+
+    // Authored/packed validation rejects malformed spans and bounds before
+    // shipping, so selection only refuses a wholly empty party; it must not roll.
+    seedCache(cache, 0, 1, 31);
+    for (uint8_t slot = 0; slot < PARTY_SIZE; ++slot) party[slot].level = 0;
+    rngCalls = 0;
+    test.assert(Encounter::select(cache, party, forcedRng, Encounter::INERT_OFFSET, decision), false,
+                "empty party has no encounter");
+    test.assert(rngCalls, static_cast<uint8_t>(0), "empty party has no roll");
 
     suite.addTest(test);
 }
@@ -270,13 +276,6 @@ void EncounterLureSelectionTest(TestSuite &suite) {
         test.assert(decision.creatureId, kFixtureTables[table][0],
                     "lure type maps through its nibble");
     }
-
-    // A nibble at or above tableCount must fail closed.
-    prepareFx(chunk, 0, 0, 1);
-    test.assert(Encounter::load(cache, chunk), true, "single-table zone loads");
-    forcedRoll = 0;
-    test.assert(Encounter::select(cache, party, forcedRng, 0, decision), false,
-                "offset at the table count is refused");
 
     suite.addTest(test);
 }
