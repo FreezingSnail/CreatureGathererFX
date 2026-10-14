@@ -8953,3 +8953,72 @@ No source copy, new compiler tree or stash changes. Worker ~3 minutes; root
 review/paired measurement/both-profile checks/report ~4 minutes, full gate
 time zero. Close 2ua and commit separately; no push/Dolt sync. DeepSeek now
 owns the nonoverlapping M1 acceptance audit documentation/report preparation.
+
+---
+
+## mgc.8 — Settled foundation budget and batch gate (2026-10-14)
+
+Source `9d2f6b7`, after separately reviewed/measured/committed box.13, box.14
+and 2ua. All 14 retained box leaves are closed; clean-generation prerequisites
+and the other mgc.8 blockers are closed. This is the owner's single settled
+batch checkpoint, not a per-task gate or acceptance of later beta features.
+DeepSeek's parallel M1 audit changed documentation only; firmware/generator
+inputs stayed fixed through the gate. No manual visual check was required.
+
+`make final-gate` passed **all 37 actual Ardens device suites**, **40,080
+assertions / 0 failures**, host **316,374/0**, world **258/0**, VM **278/0**,
+manifest/generated-library/profile/budget checks, and final shipping RAM.
+Separate simulator-state suite **316,551/0** and nonmutating generated checks
+passed before the gate. Native pack parity, layout equivalence and perturbation
+diagnostic passed after it. No tracked generated artifact changed, no skipped
+device stage, failed batch gate or subsequent firmware fix.
+
+| Current default shipping resource | Measured | Budget / reserve |
+|---|---:|---:|
+| Program flash | 24,844 B | 29,184 B planning, 29,696 B physical |
+| Static SRAM | 1,744 B | 2,160 B project ceiling |
+| Painted stack headroom | 502 B | minimum 219 B |
+| Effective exercised headroom after 69 B ISR allowance | 433 B | retain about 150 B |
+
+First-beta planning allowance: **4,340 B flash**, with the separate 512 B
+physical flash reserve retained. Static SRAM has **416 B** to its ceiling;
+painted headroom is **283 B above its minimum**. These are concurrent limits,
+not independent allocations: a new global or deeper/local-heavy call path
+spends exercised stack headroom. Acquisition, collection/bag UI, growth and
+other beta slices each require their own fresh whole-image pair and focused
+stack proof; no feature may assume all free static bytes are usable. The
+batch is -26 B flash / -16 B static versus its fresh 24,870/1,760 control;
+painted headroom increased from 484 to 502 B.
+
+Exact command environment:
+
+```
+PATH=/Users/connorfranc/Applications/CreatureGathererTools/bin:$PATH
+ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+make sim-test verify-generated BUILD_DIR=build/box-adoption-gate
+make final-gate BUILD_DIR=build/box-adoption-gate FINAL_GATE_LOG_DIR=build/box-adoption-gate/final-gate
+make test-pack-parity BUILD_DIR=build/box-adoption-gate
+make clean-build-artifacts BUILD_DIR=build/box-adoption-gate
+make clean-build-artifacts BUILD_DIR=build/box-adoption-gate CLEAN_APPLY=1
+rm -rf build/box-adoption-gate/fxtest
+git diff --check
+```
+
+Default shipping flags at that revision:
+`-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X -DCGFX_SHIPPING_NO_USB -fno-inline-small-functions -DCGFX_BATTLE_NO_FACTS -DCGFX_BATTLE_COMPACT_RESULT -DCGFX_COMPACT_WARP_VM`.
+C/linker extra flags retain `-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X`.
+
+Evidence `build/box-adoption-gate/reports/foundation`: copied complete check/RAM
+logs, concise gate console, simulator/provenance log, parity log, selected final
+ELF, cleanup preview/application; shared final-gate logs remain in place.
+ELF SHA-256 `f9c6243f7c0eb6cf67a93f5758f577b42d431b4dd560c20f4a6cd55b6c571411`;
+cart SHA-256 `cb170b6ae45545af483dc66ea04c7361fdb9cb03c8a49827c0a0344d439e2c9b`.
+No abandoned `cgfx-pack.*` stage remains. Bounded cleanup applied 108 recognized
+outputs (2,699,248 B), then removed this completed gate's identified 253 MiB
+device staging tree after preserving serial evidence. Storage before gate:
+20 GiB free, build555 MiB/shared153 MiB; peak build770 MiB/shared368 MiB;
+after cleanup **20 GiB free, build517 MiB/shared114 MiB**, reports5.8 MiB.
+Original stashes and unknown/unique prior scratch (4.4 GiB spike evidence) stay
+untouched. Gate ~7 minutes; root budget/report/cleanup ~2 minutes; no worker
+build lane. Close mgc.8 and the completed box/mgc resource epics; no push or
+Dolt remote sync. First-beta implementation acceptance remains open.
