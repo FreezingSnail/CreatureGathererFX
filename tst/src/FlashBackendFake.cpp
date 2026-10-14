@@ -10,6 +10,7 @@ uint8_t storage[FLASH_FAKE_BYTES];
 int32_t writeLimit = -1;
 bool busyFlag = false;
 uint32_t readCount = 0;
+uint32_t readByteTotal = 0;
 
 bool rangeValid(uint32_t addr, uint16_t len)
 {
@@ -52,6 +53,7 @@ void writeBytes(uint32_t addr, const uint8_t *data, uint16_t len)
 void readBytes(uint32_t addr, uint8_t *data, uint16_t len)
 {
     ++readCount;
+    readByteTotal += len;
     if (!rangeValid(addr, len)) {
         memset(data, 0xff, len);
         return;
@@ -79,6 +81,7 @@ void flashFakeReset()
     writeLimit = -1;
     busyFlag = false;
     readCount = 0;
+    readByteTotal = 0;
     storeFresh();
 }
 
@@ -109,9 +112,15 @@ uint32_t flashFakeReadCount()
     return readCount;
 }
 
+uint32_t flashFakeReadBytes()
+{
+    return readByteTotal;
+}
+
 void flashFakeResetReadCount()
 {
     readCount = 0;
+    readByteTotal = 0;
     storeFresh();
 }
 
