@@ -9022,3 +9022,53 @@ Original stashes and unknown/unique prior scratch (4.4 GiB spike evidence) stay
 untouched. Gate ~7 minutes; root budget/report/cleanup ~2 minutes; no worker
 build lane. Close mgc.8 and the completed box/mgc resource epics; no push or
 Dolt remote sync. First-beta implementation acceptance remains open.
+
+---
+
+## jp8.11.1 — Current M1 acceptance audit (2026-10-14)
+
+DeepSeek session `ses_ec7c66b41ffeWxX0J7FeGRGMNj` mapped eleven M1 criteria
+to current save sources, permanent tests and dated execution evidence in
+`docs/m1-storage.md`. Save code at `3ec1436` is identical to the settled
+`9d2f6b7` foundation. The audit changed no firmware or tests and ran no new
+test/build/generation commands; root's separately recorded foundation gate
+supplies current execution evidence, not proof of missing test cases.
+
+Independent Sol reviewer `box13_review` initially reported DRIFT for overstated
+recovery/legacy coverage, stale references, prototype disposition and HP
+implementation ownership. DeepSeek repaired document/report/proposed changes;
+final **REVIEW: APPROVED**, no material remaining issue. Host cuts prove location
+and one record's XP, not the entire snapshot/64 records; the audit now states
+that limitation. Separate first-save and prior-checkpoint cuts are distinguished.
+The obsolete top-of-document prototype claim and foundation-gate chronology
+were corrected. Unadopted working-table architecture stays historical; its
+outcome audit `jp8.2.14` remains open.
+
+Root applied the reviewed, append-only Beads reconciliations to existing
+`jp8.2.4/.5/.6/.7/.14` and this audit. Original acceptance, exact VERIFY commands,
+ownership, budget/workflow and issue statuses were preserved and checked after
+the updates. No duplicate residual bead, dependency change or unverified
+implementation closure was introduced. Remaining proofs:
+
+- `jp8.2.4`: generation wrap, complete recovered-state comparisons, missing
+  observable publication boundaries and recognized pre-v3 reset.
+- `jp8.2.5`: bounded pending-hit/checkpoint-read counts without journal rescans.
+- `jp8.2.6`: non-threshold exact XP, duplicate/empty-party mappings and device
+  shipping SaveController round trip.
+- `jp8.2.7`: post-integration full-journal, interruption/endurance and HP authority
+  matrix. Boxed HP implementation remains `jp8.11.22`; bag capture remains
+  `jp8.5.13`, both open. This audit does not implement either feature.
+- `jp8.2.14`: explicit outcome comparison for duplicate erase, XP loss and
+  accepted-mutation durability before retiring the experiment issue itself.
+
+Verification: read-only source/evidence review, valid proposed JSON, unchanged
+acceptance/VERIFY/workflow check across all six updated records, and
+`git diff --check`. No new firmware gate was needed for documentation.
+Evidence `build/box-adoption-gate/reports/m1-audit`: worker preparation/repair
+report, reviewed proposed updates and pre-update Beads snapshot; the durable
+criterion matrix and residual map are committed in `docs/m1-storage.md`.
+Worker initial audit ~3 minutes, repairs ~6 minutes; root review/reconciliation
+~5 minutes overlapping the foundation gate. Storage after cleanup:20 GiB free,
+build517 MiB/shared114 MiB, no new source/build trees. Close only `jp8.11.1`
+and commit audit documentation; leave residual acceptance open. No push or
+Dolt sync. `jp8.2.4` becomes eligible for bounded test preparation next.
