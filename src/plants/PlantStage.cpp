@@ -10,8 +10,10 @@ void PlantStage::increment(uint8_t index) {
 }
 
 void PlantStage::incrementAll() {
-    for (uint8_t i = 0; i < 32; i++) {
-        increment(i);
+    for (uint8_t i = 0; i < sizeof(value); ++i) {
+        const uint8_t old = value[i];
+        const uint8_t carries = static_cast<uint8_t>((old & 0x55u) << 1);
+        value[i] = static_cast<uint8_t>(old ^ 0x55u ^ carries);
     }
 }
 
