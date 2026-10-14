@@ -84,7 +84,8 @@ inline void BattleUtilityUsesTest(TestSuite &suite) {
     test.assert(remainingMoveUses(state, Side::Opponent, 0), 2, "opponent uses independent");
     state.activeSlot[0] = 2;
     test.assert(remainingMoveUses(state, Side::Player, 0), 2, "original party slot owns uses");
-    spendMoveUse(state, Side::Player, 0);
+    spendMoveUse(state, Side::Player, 0,
+                 remainingMoveUses(state, Side::Player, 0));
     state.activeSlot[0] = 0;
     test.assert(remainingMoveUses(state, Side::Player, 0), 0, "original spent bank restored");
     resetMoveUses(state);
@@ -103,7 +104,8 @@ inline void BattleUtilitySwitchAndMenuTest(TestSuite &suite) {
     beginWild(state, 4, 10, false, 1);
     state.active[0].moves[0] = utilityMove(10);
     state.active[0].moveIds[0] = 1;
-    spendMoveUse(state, Side::Player, 0);
+    spendMoveUse(state, Side::Player, 0,
+                 remainingMoveUses(state, Side::Player, 0));
     Consequence fact;
     applyEffect(state, Side::Player, Effect::ATKUP, fact);
     ActionResult out;
@@ -130,8 +132,10 @@ inline void BattleUtilitySwitchAndMenuTest(TestSuite &suite) {
     auto &live = session.stateForTest();
     live.active[0].moves[0] = utilityMove(10);
     live.active[0].moveIds[0] = 1;
-    spendMoveUse(live, Side::Player, 0);
-    spendMoveUse(live, Side::Player, 0);
+    spendMoveUse(live, Side::Player, 0,
+                 remainingMoveUses(live, Side::Player, 0));
+    spendMoveUse(live, Side::Player, 0,
+                 remainingMoveUses(live, Side::Player, 0));
     test.assert(session.moves().remainingUses[0], 0, "menu snapshot reports exhaustion");
     test.assert(session.submitIntent({MenuIntentKind::SelectMove, 0}), false, "menu rejects exhausted selection");
     test.assert(session.awaitingPlayer(), true, "refused selection keeps choice open");
@@ -216,7 +220,9 @@ inline void BattleUtilityTacticalAiTest(TestSuite &suite) {
     test.assert(chooseAction(state, Side::Player).index, 0, "special buff ignored for physical attacker");
     state.active[0].moves[0] = Move(MoveBitSet{static_cast<uint8_t>(Type::SPIRIT), 5, 0, 0, 0});
     test.assert(chooseAction(state, Side::Player).index, 1, "special attacker chooses special buff");
-    for (uint8_t count = 0; count < 3; ++count) spendMoveUse(state, Side::Player, 1);
+    for (uint8_t count = 0; count < 3; ++count)
+        spendMoveUse(state, Side::Player, 1,
+                     remainingMoveUses(state, Side::Player, 1));
     test.assert(chooseAction(state, Side::Player).index, 0, "exhausted buff ignored");
     resetMoveUses(state);
     state.active[0].moves[1] = utilityMove(0, Effect::INFSED);
@@ -228,8 +234,10 @@ inline void BattleUtilityTacticalAiTest(TestSuite &suite) {
     test.assert(chooseAction(state, Side::Player).index, 0, "existing regen not reapplied");
     state.active[0].status.clearEffects();
     state.active[0].effectTurns = 0;
-    spendMoveUse(state, Side::Player, 1);
-    spendMoveUse(state, Side::Player, 1);
+    spendMoveUse(state, Side::Player, 1,
+                 remainingMoveUses(state, Side::Player, 1));
+    spendMoveUse(state, Side::Player, 1,
+                 remainingMoveUses(state, Side::Player, 1));
     test.assert(chooseAction(state, Side::Player).index, 0, "exhausted healing ignored");
     resetMoveUses(state);
     state.active[0].hp = 200;

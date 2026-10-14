@@ -164,9 +164,10 @@ bool appendFact(ActionResult &out, const Consequence &fact)
 #endif
 
 void resolveAttack(BattleState &state, Side actor, uint8_t moveSlot,
-                   bool selfHit, Rng &rng, ActionResult &out)
+                   bool selfHit, uint8_t remainingUses, Rng &rng,
+                   ActionResult &out)
 {
-    if (!selfHit) spendMoveUse(state, actor, moveSlot);
+    if (!selfHit) spendMoveUse(state, actor, moveSlot, remainingUses);
     const uint8_t actorIndex = sideIndex(actor);
     const Side targetSide = selfHit ? actor : otherSide(actor);
     const uint8_t targetIndex = sideIndex(targetSide);
@@ -245,7 +246,7 @@ void resolveGather(BattleState &state, Side actor, Rng &rng,
     }
     if (gate == TurnGate::SelfHit) {
         if (validMove(state.active[sideIndex(actor)], 0)) {
-            resolveAttack(state, actor, 0, true, rng, out);
+            resolveAttack(state, actor, 0, true, 0, rng, out);
         } else {
             resolveSkip(state, actor, true, false, out);
         }
@@ -328,8 +329,13 @@ void resolveAction(BattleState &state, Side actor, BattleAction action,
 
     switch (action.kind) {
     case ActionKind::Attack: {
-        if (!validMove(state.active[actorIndex], action.index) ||
-            remainingMoveUses(state, actor, action.index) == 0) {
+        if (!validMove(state.active[actorIndex], action.index)) {
+            resolveSkip(state, actor, true, false, out);
+            break;
+        }
+        const uint8_t remainingUses =
+            remainingMoveUses(state, actor, action.index);
+        if (remainingUses == 0) {
             resolveSkip(state, actor, true, false, out);
             break;
         }
@@ -339,7 +345,7 @@ void resolveAction(BattleState &state, Side actor, BattleAction action,
             break;
         }
         resolveAttack(state, actor, action.index,
-                      gate == TurnGate::SelfHit, rng, out);
+                      gate == TurnGate::SelfHit, remainingUses, rng, out);
         break;
     }
     case ActionKind::Skip:

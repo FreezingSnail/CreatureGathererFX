@@ -3,6 +3,7 @@
 #include "fxtest.hpp"
 #include "src/engine/battle/BattleFeedback.hpp"
 #include "src/engine/battle/BattleSession.hpp"
+#include "src/engine/battle/MoveUses.hpp"
 #include "src/engine/battle/Resolve.hpp"
 #include "src/lib/FxReadCounter.hpp"
 
@@ -40,7 +41,129 @@ inline battle::BattleState state() {
     }
     return result;
 }
+
+// Durable variant for repeated-execution PP checks: the shared outcome fixture
+// can KO the single trainer creature on the first hit, which would make later
+// executions vacuous. High defense and low attack keep both actors alive.
+inline battle::BattleState durable() {
+    battle::BattleState result = state();
+    for (uint8_t side = 0; side < 2; ++side) {
+        battle::Combatant &creature = result.active[side];
+        creature.hp = creature.maxHp = creature.stats.hp = 200;
+        creature.stats.attack = 1;
+        creature.stats.spcAtk = 1;
+        creature.stats.defense = 100;
+        creature.stats.spcDef = 100;
+    }
+    return result;
+}
 } // namespace battle_compact_test_detail
+
+// Move-use spending mechanics for the compact resolver: one packed charge per
+// finite attack, untouched unlimited counters, refusal ahead of the status
+// gate, and no charge for PINNED, confusion or Gather self-hits, all banked by
+// the active original party slot.
+inline void test_battle_compact_moveuses(FxTest &test) {
+    using namespace battle;
+    using namespace battle_compact_test_detail;
+    Rng rng = {roll};
+    ActionResult result = {};
+
+    battle::BattleState stateUnderTest = durable();
+    draws = 0;
+    resolveAction(stateUnderTest, Side::Player,
+                  {ActionKind::Attack, 0}, rng, result);
+    test.expectEq(static_cast<uint8_t>(result.kind),
+                  static_cast<uint8_t>(ResultKind::Attack),
+                  F("finite attack executes"));
+    test.expectEq((stateUnderTest.moveUsesSpent[0][0] >> 0) & 3, 1,
+                  F("finite attack spends exactly one use"));
+    test.expectEq(draws, 0, F("unstatused finite attack needs no gate RNG"));
+    resolveAction(stateUnderTest, Side::Player,
+                  {ActionKind::Attack, 0}, rng, result);
+    test.expectEq(static_cast<uint8_t>(result.kind),
+                  static_cast<uint8_t>(ResultKind::Attack),
+                  F("second finite attack still executes"));
+    test.expectEq((stateUnderTest.moveUsesSpent[0][0] >> 0) & 3, 2,
+                  F("second finite attack spends the last use"));
+
+    stateUnderTest = durable();
+    stateUnderTest.active[0].moveIds[1] = 1;
+    stateUnderTest.active[0].moves[1] = Move(MoveBitSet{
+        static_cast<uint8_t>(Type::SPIRIT), 5, 1, 0, 0});
+    for (uint8_t count = 0; count < 5; ++count)
+        resolveAction(stateUnderTest, Side::Player,
+                      {ActionKind::Attack, 1}, rng, result);
+    test.expectEq(static_cast<uint8_t>(result.kind),
+                  static_cast<uint8_t>(ResultKind::Attack),
+                  F("unlimited attack executes each time"));
+    test.expectEq(stateUnderTest.moveUsesSpent[0][0], 0,
+                  F("unlimited move keeps packed uses zero"));
+    test.expectEq(remainingMoveUses(stateUnderTest, Side::Player, 1),
+                  UNLIMITED_MOVE_USES, F("unlimited move stays usable"));
+
+    stateUnderTest = durable();
+    stateUnderTest.moveUsesSpent[0][0] = 2;
+    stateUnderTest.active[0].status.effects[0] = Effect::CONCUSED;
+    draws = 0;
+    resolveAction(stateUnderTest, Side::Player,
+                  {ActionKind::Attack, 0}, rng, result);
+    test.expectEq((result.flags & REFUSED) != 0, true,
+                  F("exhausted move is refused"));
+    test.expectEq(draws, 0, F("no-PP refusal precedes the confusion gate"));
+    test.expectEq(stateUnderTest.moveUsesSpent[0][0], 2,
+                  F("refused exhausted move spends nothing"));
+
+    stateUnderTest = durable();
+    stateUnderTest.active[0].status.effects[0] = Effect::PINNED;
+    draws = 0;
+    resolveAction(stateUnderTest, Side::Player,
+                  {ActionKind::Attack, 0}, rng, result);
+    test.expectEq((result.flags & STATUS_SKIPPED) != 0, true,
+                  F("PINNED still skips the attack"));
+    test.expectEq(draws, 1, F("PINNED consumes exactly one gate roll"));
+    test.expectEq(stateUnderTest.moveUsesSpent[0][0], 0,
+                  F("PINNED skip spends no use"));
+
+    stateUnderTest = durable();
+    stateUnderTest.active[0].status.effects[0] = Effect::CONCUSED;
+    draws = 0;
+    resolveAction(stateUnderTest, Side::Player,
+                  {ActionKind::Attack, 0}, rng, result);
+    test.expectEq((result.flags & SELF_HIT) != 0, true,
+                  F("confusion self-hit resolves"));
+    test.expectEq(draws, 1, F("confusion consumes exactly one gate roll"));
+    test.expectEq(stateUnderTest.moveUsesSpent[0][0], 0,
+                  F("confusion self-hit spends no use"));
+
+    stateUnderTest = durable();
+    stateUnderTest.trainer = false;
+    stateUnderTest.gatherable = true;
+    stateUnderTest.active[0].status.effects[0] = Effect::CONCUSED;
+    stateUnderTest.moveUsesSpent[0][0] = 2;
+    draws = 0;
+    resolveAction(stateUnderTest, Side::Player,
+                  {ActionKind::Gather, 255}, rng, result);
+    test.expectEq((result.flags & SELF_HIT) != 0, true,
+                  F("Gather confusion self-hits at exhausted slot zero"));
+    test.expectEq(draws, 1, F("Gather self-hit consumes one gate roll"));
+    test.expectEq(stateUnderTest.moveUsesSpent[0][0], 2,
+                  F("Gather self-hit spends no PP"));
+
+    stateUnderTest = durable();
+    stateUnderTest.partyCount[0] = 3;
+    stateUnderTest.activeSlot[0] = 2;
+    stateUnderTest.moveUsesSpent[0][2] = 0;
+    resolveAction(stateUnderTest, Side::Player,
+                  {ActionKind::Attack, 0}, rng, result);
+    test.expectEq(static_cast<uint8_t>(result.kind),
+                  static_cast<uint8_t>(ResultKind::Attack),
+                  F("original-slot spend attack executes"));
+    test.expectEq((stateUnderTest.moveUsesSpent[0][2] >> 0) & 3, 1,
+                  F("spend targets the active original slot"));
+    test.expectEq(stateUnderTest.moveUsesSpent[0][0], 0,
+                  F("stale slot-zero field keeps its bank"));
+}
 
 inline void test_battle_compact(FxTest &test) {
     using namespace battle;
@@ -132,4 +255,6 @@ inline void test_battle_compact(FxTest &test) {
                   F("gather kind retained"));
     test.expectEq(stateUnderTest.gather.progress, 2,
                   F("gather progress remains in battle state"));
+
+    test_battle_compact_moveuses(test);
 }
