@@ -9072,3 +9072,32 @@ Worker initial audit ~3 minutes, repairs ~6 minutes; root review/reconciliation
 build517 MiB/shared114 MiB, no new source/build trees. Close only `jp8.11.1`
 and commit audit documentation; leave residual acceptance open. No push or
 Dolt sync. `jp8.2.4` becomes eligible for bounded test preparation next.
+
+# CreatureGathererFX-2w8
+
+Playable 128x64 battle design mock under `mock/`, following the `~/monhun-ardu/mock` pattern: logic+render in `mock/battle-mock.js` (browser boot + CommonJS exports for tests), co-located `mock/battle-mock.test.js`, generated `mock/data.js`, `mock/index.html` with key legend. Three designs on the real roster:
+
+- A `current`: shipping 8-type dual-type move menu (baseline).
+- B `trim`: 4-type single-type cycle (flame > bloom > tide > stone > flame) with per-move ▲/▼/·/× final-modifier arrows, optional press-turn (super-effective hit acts again, capped once per side per turn), optional exact foe HP.
+- C `duel`: simultaneous hidden-stance RPS, 3- or 4-stance cycle, affinity ×1.5, AI counters your last pick at the read-rate slider.
+
+Generated from `data/json/creatures.json`, `data/json/moves.json`, `data/typetable.csv`, the 48x48 sprite manifest and `ArduFontTrimmed_5x6.png` by `tools/battle-design-spike-data.mjs`. Damage, HP, move-use limits, speed order and STAB are ported from `Damage.cpp`, `Type.hpp` (exponent combine clamp) and `MoveUses.hpp` with stat stages at 0; the AI is a simplified damage-scoring stand-in for the tactical AI. Omitted: statuses, stages, effects, accuracy, party/switching, escape/gather, animations; feedback text replaces the staged presenter.
+
+Commands and results:
+
+```text
+node tools/battle-design-spike-data.mjs
+PASS: wrote mock/data.js (64 creatures, 44 moves, 75 glyphs, 25010 bytes)
+node --test mock/battle-mock.test.js          -> 14 pass / 0 fail
+node --test tools/tests/battle-design-spike-data_test.mjs   -> 7 pass / 0 fail
+node --test tools/tests/battle-design-spike-frame_test.mjs  -> 5 pass / 0 fail
+node tools/battle-design-spike-preview.mjs    -> previews + icons.png in docs/assets/battle-design-spike/
+```
+
+The frame test renders through the real browser boot path with stubbed DOM/canvas and decoded sprite PNGs (`tools/battle-design-spike-frame.mjs`).
+
+Deviation: no desktop browser was connected this session, so visuals were verified through the headless frame harness previews rather than live screenshots. No firmware/AVR source was touched; generation and AVR gates were not run.
+
+Open findings for the owner: arrows include STAB because that is the damage actually dealt; the foe-HP toggle replaces the FOE label + type icons (the 12 px panel cannot hold label, icons and numbers); press-turn is capped at one extra action per side per turn to prevent loops; the wind icon is the weakest of the eight at 8x8.
+
+Wall time: ~2h orchestrator (design, implementation, harness, preview verification).
