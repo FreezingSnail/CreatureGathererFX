@@ -8697,3 +8697,98 @@ control 88 s, candidate 6 s, host 5 s, focused device 19 s, settled gate 423 s,
 Mini 13 s. Root orchestration approximately 40 minutes including cleanup wait;
 no additional gate was needed after source settled. Close box.11 after the
 above acceptance; commit this saving separately, no push or Dolt remote sync.
+
+---
+
+## box.12 — Adopt byte-wise packed plant advancement (2026-10-13)
+
+Control HEAD `8828cc7`; default shipping flags unchanged. DeepSeek/OpenCode
+session `ses_ec819bc88ffeJUgE9rglQbTgaP` prepared permanent host/device tests
+and the current-main proposal. Root applied only `PlantStage::incrementAll`:
+eight packed bytes now advance four independent two-bit fields per byte using
+`old ^ 0x55 ^ ((old & 0x55) << 1)`. Single-slot increment, all 32 stages,
+eight-byte serialization/save ABI, and committed step-128 timing are preserved.
+No generator, authored data, encounter/lure or other saving changed.
+
+Independent Sol reviewer `box12_review`: APPROVED. Root resolved its
+nonblocking device-cycle observation before execution: all four passes now
+assert the independent expected bytes, including the fourth-pass wraparound.
+The independent oracle uses per-slot addition rather than the shipping XOR
+formula. Host/device coverage includes all 256 byte patterns at every byte
+position, two mixed surroundings, single-slot locality and tick 127/128.
+Device assertion count is 33,122, within the harness's 16-bit counters.
+
+### Fresh resource pair and verification
+
+| Image | Program flash | Static SRAM |
+|---|---:|---:|
+| Control shipping FX | 24,928 B | 1,760 B |
+| Candidate/final shipping FX | 24,870 B | 1,760 B |
+| Delta | **-58 B** | **0 B** |
+
+Painted stack headroom remains 484 B. Final firmware has 4,826 B below the
+29,696 B physical flash limit and 4,314 B below the 29,184 B planning ceiling;
+static SRAM remains 400 B below the 2,160 B project ceiling. This is a fresh
+current-source win, not the historical research's -56 B estimate.
+
+Commands used `PATH=/Users/connorfranc/Applications/CreatureGathererTools/bin:$PATH`;
+device/gate commands also set
+`ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens`.
+
+```
+make ram BUILD_DIR=build/box-adoption-gate                 # fresh control PASS
+git apply build/box-adoption-gate/reports/12/proposed-runtime.patch
+make ram BUILD_DIR=build/box-adoption-gate                 # candidate PASS
+make test testvm BUILD_DIR=build/box-adoption-gate
+make fxtest-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_plant_stage.ino BUILD_DIR=build/box-adoption-gate
+make final-gate BUILD_DIR=build/box-adoption-gate FINAL_GATE_LOG_DIR=build/box-adoption-gate/final-gate
+make clean-build-artifacts BUILD_DIR=build/box-adoption-gate
+make clean-build-artifacts BUILD_DIR=build/box-adoption-gate CLEAN_APPLY=1
+rm -rf build/box-adoption-gate/fxtest
+rm -f build/box-adoption-gate/reports/12/candidate.elf
+git diff --check
+```
+
+Host 316,341/0 (PlantStage 33,258/0), world 258/0, VM 278/0. Focused actual
+device plant-stage 33,122/0 and stack 4/0, painted 484 B. The already-running
+full gate passed **all 37 device suites**, host/VM/manifest/generated-library
+checks and the final shipping RAM report. No gate failed and no tracked
+generated artifact changed. FX image SHA-256 remains
+`cb170b6ae45545af483dc66ea04c7361fdb9cb03c8a49827c0a0344d439e2c9b`;
+no packed-data change required another parity run.
+
+### Owner gate-cadence change
+
+While this gate was near completion, the owner instructed: “dont need full
+gate each task”. Its completed result is retained; no extra broad check was
+run. For subsequent tasks, focused native/VM checks, fresh paired resource
+measurements and touched device+stack checks establish task acceptance;
+`final-gate` runs at a batch/integration or release checkpoint. This explicit
+instruction overrides older per-bead/per-commit boilerplate. Recorded in
+Beads memory `gate-cadence` and the box parent notes; future dispatches must
+follow it. Independent review, hardware outcomes and resource reserve remain
+required.
+
+### Evidence, storage and wall time
+
+Evidence under `build/box-adoption-gate/reports/12`: worker report/proposal,
+exact final patch, control/final ELFs, paired RAM logs, host log, focused
+plant/stack serial log and copied full-gate check/RAM/console logs, cleanup
+preview/application. Control ELF SHA-256
+`7d274fbc0d5ade18b35ce7747263a68210b1b1292cc4ff4a0a5b2173d43246fd`;
+final ELF `86265a7a2f2338326ef34548a2c96d1c7541bf9b5b34140537363d60b08e1bbd`.
+The redundant byte-identical candidate ELF was removed after final preservation.
+
+Before: 13 GiB free, build 3.8 GiB, shared build 109 MiB. After preserving
+diagnostics, bounded cleanup removed 108 generated cache/object candidates
+(2,699,652 B), plus the 252 MiB device staging tree belonging to this completed
+37-suite lane. After: 13 GiB free, build 3.8 GiB, shared build 109 MiB, bead
+evidence 572 KiB. No abandoned `cgfx-pack.*` remained. Earlier bead evidence,
+unknown scratch roots and both original stashes were preserved.
+
+Timed root log spans: control 19 s, candidate 7 s, focused device 24 s, native
+checks 199 s, already-started full gate 586 s. DeepSeek session timestamps span
+322 s (its preparation report estimated 18 minutes). Root orchestration about
+17 minutes including review, tests, gate, cleanup and reporting. Close this
+adoption and commit separately; no push or Dolt remote sync. box.13 becomes
+the next eligible saving, using the revised focused-check cadence.
