@@ -49,7 +49,9 @@ void invalidate(uint8_t *cache);
 // Select exactly one of the ten table slots and apply the cached level rule.
 // `lureTableOffset` is LureZone::tableOffset(): a lure type (0..3) selects a
 // lure-biased table through the cached nibbles, while INERT_OFFSET keeps the
-// base table. An out-of-range nibble fails closed.
+// base table. Authored/packed validation bounds every table span, species ID,
+// level bound and lure nibble for shipping content, so selection re-checks only
+// the cache-valid state, the drawn slot and a nonempty party.
 // Empty party slots contribute level zero while the divisor remains PARTY_SIZE.
 bool select(const uint8_t *cache, const Creature party[PARTY_SIZE], Rng rng,
             uint8_t lureTableOffset, Decision &out);

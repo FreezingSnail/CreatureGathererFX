@@ -8589,3 +8589,111 @@ location and must be preserved before any future tmp cleanup; the named stash
 remains in Git. No new build trees or source snapshots were created.
 DeepSeek audit plus correction approximately 5 minutes; root review, persistence
 and handoff approximately 8 minutes total. Gate time: 0 (not required for audit).
+
+---
+
+## box.11 — Adopt validated encounter selection on current main (2026-10-13)
+
+Control source HEAD `aa8baf9`; default shipping flags unchanged. DeepSeek
+OpenCode session `ses_ec8a469ccffe297kWLnjVRO3qU` prepared the native validator,
+tests and Makefile wiring plus a proposed runtime patch. Root reviewed/applied
+the runtime adaptation and owned the only AVR/generation/gate lane, reusing
+`build/box-adoption-gate`. No inventory stash or later saving was applied.
+
+### Change and invariant proof
+
+`Encounter::select` omits duplicate span, lure-index and full-table scans.
+Checked load still establishes cache validity; native authoring and packed-image
+validation now prove every zone span, all four lure mappings, all species and
+inclusive level bounds. Shipping FX and Mini validate authored bytes against
+the generated `EncounterFXData` addresses and actual packed image before
+compilation; generation validates before packing and again after packing.
+The integrated check includes permanent native validator tests.
+
+Live lure selection still reads its mapped table once at battle entry; inert
+selection remains RAM-only. Invalidated caches and wholly empty parties refuse
+without RNG, species zero remains valid, and selection preserves the single
+slot roll, three-slot level average, signed offset and inclusive clamp.
+Host tests no longer require shipping defenses for authored malformed bounds
+or impossible lure mappings; native authoring tests reject those cases instead.
+
+Independent Sol reviewer `box11_review`: APPROVED after two device-test fixes:
+derive zone/table/species expectations through published FX addresses instead
+of hardcoded authored records, and wrap the final device assertion label in
+`F(...)`. Test-only expectation reads occur before counter resets. The device
+suite covers base/live lures, species zero, a valid map chunk with no zone,
+empty-party no-roll and transition-only metadata. Both findings were fixed
+before any device execution or the settled gate. No gate attempt failed.
+The preparation report's historical stack-compaction caveat did not reproduce:
+current `test_stack` passed all four assertions.
+
+### Fresh whole-image measurements
+
+| Image | Program flash | Static SRAM | Physical flash free |
+|---|---:|---:|---:|
+| Control shipping FX | 24,986 B | 1,760 B | 4,710 B |
+| Candidate/final shipping FX | 24,928 B | 1,760 B | 4,768 B |
+| Final Mini | 24,928 B | 1,760 B | 4,768 B |
+| Delta | **-58 B** | **0 B** | **+58 B** |
+
+Final SRAM is 400 B below the 2,160 B static ceiling; painted stack headroom
+remains 484 B. Final flash is 4,256 B below the 29,184 B planning ceiling.
+These are current-source paired measurements, not the research's -34 B estimate.
+Control ELF SHA-256 `5febd97578c1f22a2bab41c2fcfa13d7d47ec2539fecf421461d5e5793a94f09`;
+final ELF `7d274fbc0d5ade18b35ce7747263a68210b1b1292cc4ff4a0a5b2173d43246fd`.
+
+### Exact commands and results
+
+AVR/generation commands used
+`PATH=/Users/connorfranc/Applications/CreatureGathererTools/bin:$PATH` and device
+commands also set
+`ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens`.
+
+```
+make ram BUILD_DIR=build/box-adoption-gate                       # fresh control PASS
+git apply build/box-adoption-gate/reports/11/proposed-runtime.patch
+make ram BUILD_DIR=build/box-adoption-gate                       # candidate PASS
+make test testvm test-encounter-profile BUILD_DIR=build/box-adoption-gate
+make fxtest-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_encounter.ino BUILD_DIR=build/box-adoption-gate
+make final-gate BUILD_DIR=build/box-adoption-gate FINAL_GATE_LOG_DIR=build/box-adoption-gate/final-gate
+make test-pack-parity BUILD_DIR=build/box-adoption-gate
+make mini BUILD_DIR=build/box-adoption-gate
+make clean-build-artifacts BUILD_DIR=build/box-adoption-gate
+make clean-build-artifacts BUILD_DIR=build/box-adoption-gate CLEAN_APPLY=1
+rm -rf build/box-adoption-gate/fxtest
+rm -f build/box-adoption-gate/reports/11/candidate.elf
+git diff --check
+```
+
+Host 283,219/0; world 258/0; VM 278/0; native encounter-profile tests PASS.
+Focused device encounter 47/0 and stack 4/0 (484 B painted). Settled final gate
+PASS, **all 36 device suites**, same host/world/VM results, generated-manifest
+and library consistency checks PASS, final RAM 24,928/1,760 B.
+Pack layout equivalence, perturbation diagnostic and packed-byte parity PASS;
+no unexpected tracked generated diff or layout change. FX image SHA-256 remains
+`cb170b6ae45545af483dc66ea04c7361fdb9cb03c8a49827c0a0344d439e2c9b`.
+Mini PASS with the same resource figures and both encounter validator stages.
+
+### Evidence, storage and wall time
+
+Compact evidence under `build/box-adoption-gate/reports/11`: worker report,
+proposed and exact final patches, control/final ELFs, control/candidate/settled
+RAM logs, host log, focused encounter/stack log, copied full-gate check log,
+gate console log, Mini/parity logs and cleanup preview/application logs.
+Selected control/final ELFs were preserved before shared outputs were reused;
+the byte-identical redundant candidate ELF was removed.
+
+Before: 14 GiB free, build 3.8 GiB, shared build 131 MiB. Gate-created disposable
+device stages totaled 245 MiB; all 36 were positively identified as this lane's
+completed suites. After preserving serial diagnostics, the bounded cleanup
+removed 216 generated cache/object candidates (5,400,926 B), then the completed
+device staging tree was removed. After: 14 GiB free, build 3.8 GiB, shared build
+108 MiB, this bead's evidence 608 KiB. No `cgfx-pack.*` stage remained; unknown
+scratch/source evidence was untouched. Both original stashes remain unchanged,
+including inventory commit `acd01dc69e646520aa5e915149376966a32fad20`.
+
+Worker preparation approximately 65 minutes (its report). Root timed log spans:
+control 88 s, candidate 6 s, host 5 s, focused device 19 s, settled gate 423 s,
+Mini 13 s. Root orchestration approximately 40 minutes including cleanup wait;
+no additional gate was needed after source settled. Close box.11 after the
+above acceptance; commit this saving separately, no push or Dolt remote sync.

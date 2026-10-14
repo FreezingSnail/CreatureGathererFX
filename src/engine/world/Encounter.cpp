@@ -127,25 +127,20 @@ uint8_t partyAverageLevel(const Creature party[PARTY_SIZE]) {
 
 bool select(const uint8_t *cache, const Creature party[PARTY_SIZE], Rng rng,
             uint8_t lureTableOffset, Decision &out) {
-    if (cache[CACHE_VALID_OFFSET] != 1 ||
-        cache[CACHE_TABLE_COUNT_OFFSET] == 0 ||
-        cache[CACHE_TABLE_BASE_OFFSET] >= TABLE_COUNT ||
-        static_cast<uint16_t>(cache[CACHE_TABLE_BASE_OFFSET]) +
-                cache[CACHE_TABLE_COUNT_OFFSET] > TABLE_COUNT) {
-        return false;
-    }
+    if (cache[CACHE_VALID_OFFSET] != 1) return false;
 
     const uint8_t tableBase = cache[CACHE_TABLE_BASE_OFFSET];
     uint8_t tableIndex = tableBase;
     if (lureTableOffset != INERT_OFFSET) {
-        const uint8_t lureOffset = lureNibble(cache, lureTableOffset & 0x03u);
-        if (lureOffset >= cache[CACHE_TABLE_COUNT_OFFSET]) return false;
-        tableIndex = static_cast<uint8_t>(tableBase + lureOffset);
-        if (tableIndex >= TABLE_COUNT) return false;
+        tableIndex = static_cast<uint8_t>(
+            tableBase + lureNibble(cache, lureTableOffset & 0x03u));
     }
 
     // The cache holds the base table; a lure-biased pick fetches its table
-    // once at battle entry. The inert path stays RAM-only.
+    // once at battle entry. The inert path stays RAM-only. Authored and packed
+    // validation prove every table span, species ID, level bound and lure
+    // nibble, so the cache-valid state, the drawn slot and a nonempty party are
+    // the only selection-time concerns left.
     uint8_t lureTable[TABLE_BYTES];
     const uint8_t *table = cache;
     if (tableIndex != cache[CACHE_TABLE_INDEX_OFFSET]) {
@@ -154,7 +149,6 @@ bool select(const uint8_t *cache, const Creature party[PARTY_SIZE], Rng rng,
         FxRead::bytes(address, lureTable, TABLE_BYTES);
         table = lureTable;
     }
-    if (!validTable(table)) return false;
 
     bool hasParty = false;
     for (uint8_t slot = 0; slot < PARTY_SIZE; ++slot) {
