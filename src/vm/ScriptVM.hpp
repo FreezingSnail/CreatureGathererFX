@@ -38,8 +38,6 @@
 
 class ScriptVm {
   public:
-    int8_t memory[8];
-    uint8_t stack[8];
     uint16_t currentTile;
     uint16_t targetTile;
 

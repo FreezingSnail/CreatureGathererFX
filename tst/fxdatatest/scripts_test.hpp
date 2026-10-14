@@ -12,6 +12,14 @@
 #include "src/vm/ScriptVM.hpp"
 #include "src/vm/opcodes.hpp"
 
+#ifdef __AVR__
+// AVR ScriptVm must be the borrowed-slot cursor only: currentTile and
+// targetTile (2+2), the borrowed base/ptr/endPtr (2+2+2) and valid (1).
+// The unused memory[8]/stack[8] placeholder arrays must not survive.
+static_assert(sizeof(ScriptVm) == 11,
+              "AVR ScriptVm is the borrowed-slot cursor only");
+#endif
+
 namespace scripts_test_detail {
 
 inline uint16_t readScriptTextCount() {
