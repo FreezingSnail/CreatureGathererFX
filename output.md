@@ -8902,3 +8902,54 @@ root review/measure/check/report ~6 minutes, integrated gate time zero.
 Close box.14 and commit separately, no push/Dolt sync. All retained box leaves
 are accepted; DeepSeek now prepares the `2ua` consumer audit and AVR VM-size
 assertion while root owns its separate resource adaptation.
+
+---
+
+## 2ua — Remove unused ScriptVm arrays (2026-10-14)
+
+Control HEAD `3ec1436`. Deleted only `memory[8]` and `stack[8]` from
+`ScriptVM.hpp`; current/target tiles, borrowed base/ptr/endPtr, valid flag,
+opcodes, bounds and command cap are unchanged. All consumers were searched:
+the arrays had no users, serialization or offset dependencies. The unrelated
+menu stack is intact. DeepSeek prepared that consumer audit and a permanent
+AVR-only `sizeof(ScriptVm)==11` assertion in the scripts device suite.
+Independent Sol reviewer `box13_review`: **REVIEW: APPROVED**, no findings.
+
+Fresh default-shipping pair: flash **24,844 -> 24,844 B**, static SRAM
+**1,760 -> 1,744 B (-16 B)**. Compact VM **278/0**, profile-validator cases
+pass; compact device scripts **72/0**, stack **4/0**. Full-world profile VM
+**243/0**, actual device scripts **17/0**, stack **4/0**. Both device builds
+compile the 11-byte assertion. Painted stack is **502 B** in both profiles,
+up 16 B from 486 B (433 B after the 69 B ISR allowance); transition headroom
+596 B. Default shipping has 4,340 B planning flash allowance, 416 B below
+the static SRAM ceiling; no inferred fit based solely on free static bytes.
+
+Exact commands with the tools PATH and Ardens recorded above:
+
+```
+make ram BUILD_DIR=build/box-adoption-gate                 # control, then candidate
+make testvm test-world-script-profile BUILD_DIR=build/box-adoption-gate
+make fxtest-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_scripts.ino BUILD_DIR=build/box-adoption-gate
+make testvm BUILD_DIR=build/box-adoption-gate AVR_SHIPPING_CPP_FLAGS='-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X -DCGFX_SHIPPING_NO_USB -fno-inline-small-functions -DCGFX_BATTLE_NO_FACTS -DCGFX_BATTLE_COMPACT_RESULT -DCGFX_FULL_WORLD_VM'
+make fxtest-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_scripts.ino BUILD_DIR=build/box-adoption-gate AVR_SHIPPING_CPP_FLAGS='-mrelax -mcall-prologues -fno-move-loop-invariants -mstrict-X -DCGFX_SHIPPING_NO_USB -fno-inline-small-functions -DCGFX_BATTLE_NO_FACTS -DCGFX_BATTLE_COMPACT_RESULT -DCGFX_FULL_WORLD_VM'
+make clean-build-artifacts BUILD_DIR=build/box-adoption-gate
+make clean-build-artifacts BUILD_DIR=build/box-adoption-gate CLEAN_APPLY=1
+git diff --check
+```
+
+No failed check or generated change. Full profile overrides reused the same
+device paths; the foundation gate returns to default flags and recompiles
+those paths. No per-task full gate under owner cadence; `mgc.8` is next.
+Evidence `reports/2ua`: exact patch, consumer audit, paired RAM logs,
+compact/full native and serial logs, control/final ELFs, cleanup logs. The
+worker report's OPEN/box.14-in-progress status is a preparation snapshot;
+root claimed this task after box.14 committed and performed the acceptance
+above. Control ELF SHA-256
+`3cc86ee87ac71da1745110ceac305bcea1a87f17304d8fa7baccc4e404922100`;
+final `f9c6243f7c0eb6cf67a93f5758f577b42d431b4dd560c20f4a6cd55b6c571411`.
+Storage: 20 GiB free, build 555 MiB/shared153 MiB at verification; bounded
+cleanup preview/applied, compatible active caches retained for batch gate.
+No source copy, new compiler tree or stash changes. Worker ~3 minutes; root
+review/paired measurement/both-profile checks/report ~4 minutes, full gate
+time zero. Close 2ua and commit separately; no push/Dolt sync. DeepSeek now
+owns the nonoverlapping M1 acceptance audit documentation/report preparation.
