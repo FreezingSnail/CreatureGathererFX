@@ -9386,3 +9386,34 @@ Launcher highlight for the recommended spelling: F card in mock/index.html now c
 border and a "recommended" tag, and mock/duel-bonus.html's canvas gets the matching accent border so
 the window reads as the same highlighted demo when opened directly. No behavior change; existing
 suites unchanged (22 mock + 5 annotate + 8 frame pass).
+
+# CreatureGathererFX-cz1u
+
+Duel AI personas + read-rate spike, per the owner's answers.
+
+- Persona engine in mock/battle-mock.js: `random`, `reader` (counter your last revealed type),
+  `frequency` (your most-used), `anti-repeat` (discounts your last pick), `exploiter` (modal type of
+  your picks made after it read you; challenge areas only). Player history = last 8 revealed types +
+  post-read counts; personas reuse across trainer groups (owner intent).
+- Fallback when no counter exists is now uniform random (boost preference removed; no boost/utility
+  moves exist in this prototype). Switching documented as the real-game answer for those spots, not
+  simulated in the 1v1 prototype.
+- Persona selector added to all four duel windows; AI READ tag stays a debug checkbox.
+- tools/battle-duel-spike.mjs: read-rate matrix over persona x rate x player policy, deterministic
+  seeds; tools/tests/battle-duel-spike_test.mjs asserts determinism, accounting, that rotation
+  exploits a full-rate reader (33% -> 100% player wins) and that readers beat random players more as
+  the rate rises (57% -> 38% player wins at 120 duels/cell).
+
+```text
+node --test mock/battle-mock.test.js                       -> 24 pass / 0 fail (personas, fallback, history)
+node --test tools/tests/battle-duel-spike_test.mjs         -> 4 pass / 0 fail (new)
+node --test tools/tests/battle-design-spike-frame_test.mjs -> 8 pass / 0 fail
+node --test tools/tests/battle-design-spike-annotate_test.mjs -> 5 pass / 0 fail
+node --test tools/tests/battle-design-spike-data_test.mjs  -> 8 pass / 0 fail
+node --test tools/tests/battle-matchup-solver_test.mjs     -> 4 pass / 0 fail
+node --test tools/tests/battle-design-spike-matrix_test.mjs-> 3 pass / 0 fail
+node tools/battle-duel-spike.mjs --battles 120             -> matrix printed (see docs table)
+```
+
+Finding for persona defaults: full-rate single-pattern readers are exploitable by rotation; pin
+defaults below ~75% until personas mix fallbacks, and treat exploiter as challenge-tier.

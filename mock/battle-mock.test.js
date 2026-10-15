@@ -382,6 +382,68 @@ test('bonus spelling: flat numbers, x1.5 only on a winning creature-matchup hit'
   assert.equal(M.duelCreatureBonus(state, 0, 'fire'), 1);
 });
 
+test('personas: frequency, anti-repeat and exploiter guess the player type', () => {
+  const index = (name) => M.DATA.creatures.findIndex((entry) => entry.name === name);
+  const build = (persona) => {
+    // Player = ember (fire moves). AI = bigsquid (water moves, beats fire).
+    const state = M.newMock({ mode: 'duel', scoring: 'bonus', you: index('ember'), foe: index('bigsquid'), seed: 9 });
+    state.duel.aiPersona = persona;
+    state.duel.aiRead = 100;
+    M.startBattle(state);
+    return state;
+  };
+  // frequency: history fire/fire/plant -> expects fire -> water beats fire.
+  const frequency = build('frequency');
+  frequency.duelState.history = ['fire', 'fire', 'plant'];
+  M.duelPick(frequency, 0);
+  assert.equal(M.duelOptions(frequency, 1)[frequency.duelState.picks[1]].type, 'water');
+  assert.equal(frequency.duelState.aiRead, true);
+  // anti-repeat: history fire/plant -> last (plant) discounted -> expects fire.
+  const anti = build('anti-repeat');
+  anti.duelState.history = ['fire', 'plant'];
+  M.duelPick(anti, 0);
+  assert.equal(M.duelOptions(anti, 1)[anti.duelState.picks[1]].type, 'water');
+  // exploiter: no post-read samples -> falls back to frequency; with samples it uses them.
+  const exploiter = build('exploiter');
+  exploiter.duelState.history = ['plant', 'plant'];
+  exploiter.duelState.postReadCounts = { fire: 3 };
+  M.duelPick(exploiter, 0);
+  assert.equal(M.duelOptions(exploiter, 1)[exploiter.duelState.picks[1]].type, 'water');
+  // reader keeps the old behaviour: counter the last revealed type.
+  const reader = build('reader');
+  reader.duelState.history = ['fire'];
+  M.duelPick(reader, 0);
+  assert.equal(M.duelOptions(reader, 1)[reader.duelState.picks[1]].type, 'water');
+  // random never fires a read even with history.
+  const random = build('random');
+  random.duelState.history = ['fire', 'fire', 'fire', 'fire'];
+  M.duelPick(random, 0);
+  assert.equal(random.duelState.aiRead, false);
+});
+
+test('fallback when no counter exists is uniform random, not a boost preference', () => {
+  const index = (name) => M.DATA.creatures.findIndex((entry) => entry.name === name);
+  // player = ember (fire moves); AI = bell (spirit move, cannot beat fire).
+  const state = M.newMock({ mode: 'duel', scoring: 'bonus', you: index('ember'), foe: index('bell'), seed: 4 });
+  state.duel.aiRead = 100;
+  state.duel.aiPersona = 'reader';
+  M.startBattle(state);
+  state.duelState.history = ['fire'];
+  M.duelPick(state, 0);
+  assert.equal(state.duelState.aiRead, false, 'no counter -> no read flag');
+  assert.equal(state.duelState.picks[1], 0, 'single option picked');
+  // Player history recording feeds the models.
+  const recorded = M.newMock({ mode: 'duel', scoring: 'bonus', you: 10, foe: 12, seed: 2 });
+  M.startBattle(recorded);
+  recorded.duelState.readFiredPrev = true;
+  M.recordPlayerPick(recorded, 'fire');
+  recorded.duelState.thisReadFired = true;
+  M.recordPlayerPick(recorded, 'plant');
+  assert.deepEqual(recorded.duelState.history, ['fire', 'plant']);
+  assert.deepEqual(recorded.duelState.postReadCounts, { fire: 1 });
+  assert.equal(recorded.duelState.readFiredPrev, true);
+});
+
 test('duel AI keeps its pick inside its own option list for both engines', () => {
   for (const [duelKind, scoring] of [['wheel', 'power'], ['wheel', 'flat'], ['stances', 'power']]) {
     const state = M.newMock({ mode: 'duel', duelKind, scoring, you: 10, foe: 12, seed: 7, aiRead: 100 });
