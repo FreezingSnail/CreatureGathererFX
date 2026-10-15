@@ -9498,3 +9498,30 @@ node tools/battle-design-spike-preview.mjs                 -> duel frames show p
 
 New coverage: teams roll distinct 3v3 deterministically per seed; targeted switch picks the slot;
 KO revert vs promote across three members; AI targets the counter-holding member; no random swaps.
+
+# CreatureGathererFX-kx7o
+
+Owner: the duel's creature-type bonus should negative out too — include the weak modifier.
+
+- duelCreatureBonus -> matchup modifier: 1.5 beating any of the opposing creature's types, 0.5 losing
+  to one (and beating none), 1 neutral. Applied to every hit a side deals: full wins, chips, trades,
+  and default wins on incoming swaps (attacker's move vs the arrival). No immunity; beats-any wins ties.
+- Pick cells mark ↑ (bonus) and ↓ (weak); result lines add WEAK WIN / WEAK LOSE beside BONUS and base
+  RPS lines. AI (bonus spelling, not reading) picks from the best available modifier tier so it does
+  not feed weak moves.
+- Numbers: bonus 21 / chip 6, base 14 / 4, weak 7 / 2, trade 9 / 6 or 3 depending on matchup.
+- Pages, launcher card, annotate legend row 9/10 and docs updated.
+
+```text
+node --test mock/battle-mock.test.js                       -> 29 pass / 0 fail (weak numbers + AI tiering)
+node --test tools/tests/battle-duel-spike_test.mjs         -> 4 pass / 0 fail
+node --test tools/tests/battle-design-spike-annotate_test.mjs -> 5 pass / 0 fail
+node --test tools/tests/battle-design-spike-frame_test.mjs -> 8 pass / 0 fail
+node --test tools/tests/battle-design-spike-data_test.mjs  -> 8 pass / 0 fail
+node --test tools/tests/battle-matchup-solver_test.mjs     -> 4 pass / 0 fail
+node --test tools/tests/battle-design-spike-matrix_test.mjs-> 5 pass / 0 fail
+node tools/battle-design-spike-preview.mjs                 -> marker check frame shows ▼ on weak picks
+```
+
+Verified visually: ember (fire moves) vs squid (water) renders ▼ on both cells (×0.5) with the same
+frame layout; bonus frames still show ↑ where the move beats the target's type.

@@ -350,7 +350,7 @@ test('pure RPS scoring ignores power and affinity with fixed damage', () => {
   assert.equal(power.duelState.lines[0], 'WHEEL WIN');
 });
 
-test('bonus spelling: flat numbers, x1.5 only on a winning creature-matchup hit', () => {
+test('bonus spelling scales hits by the creature matchup, penalty included', () => {
   const index = (name) => M.DATA.creatures.findIndex((entry) => entry.name === name);
   const run = (scoring, foeIndex, pick, youIndex = index('ember')) => {
     const state = duelMock({ scoring, you: youIndex, foe: foeIndex, seed: 3 });
@@ -367,12 +367,19 @@ test('bonus spelling: flat numbers, x1.5 only on a winning creature-matchup hit'
   const bonusHedge = run('bonus', index('hedge'), [0, 0]);
   assert.equal(bonusHedge.line, 'BONUS WIN');
   assert.equal(bonusHedge.dealt, 21);
-  assert.equal(bonusHedge.taken, 4);
-  // fire vs lightning creature (zip) with a spirit move: clash win, no creature bonus -> 14.
-  const plainZip = run('bonus', index('zip'), [0, 1]);
-  assert.equal(plainZip.line, 'RPS WIN');
-  assert.equal(plainZip.dealt, 14);
-  assert.equal(plainZip.taken, 4);
+  assert.equal(bonusHedge.taken, 2); // our chip also loses the matchup (plant move vs their fire type)
+  // fire vs lightning creature (zip) with a spirit move: clash win but the move
+  // type loses to the creature's type -> weak win, 14 * 0.5 = 7.
+  const weakZip = run('bonus', index('zip'), [0, 1]);
+  assert.equal(weakZip.line, 'WEAK WIN');
+  assert.equal(weakZip.dealt, 7);
+  assert.equal(weakZip.taken, 2); // their spirit chip loses to our fire type
+  // fire vs water creature (squid): fire loses the clash and the matchup:
+  // foe water beats fire -> 21 against, our chip 4 * 0.5 = 2.
+  const weakLoss = run('bonus', index('squid'), [0, 0]);
+  assert.equal(weakLoss.line, 'BONUS LOSE');
+  assert.equal(weakLoss.dealt, 2);
+  assert.equal(weakLoss.taken, 21);
   // Pure spelling stays 14 regardless, on the same matchup.
   const pureHedge = run('flat', index('hedge'), [0, 0]);
   assert.equal(pureHedge.line, 'RPS WIN');
@@ -381,21 +388,38 @@ test('bonus spelling: flat numbers, x1.5 only on a winning creature-matchup hit'
   const stoke = run('bonus', index('hedge'), [0, 0]);
   const burn = run('bonus', index('hedge'), [1, 0]);
   assert.equal(stoke.dealt, burn.dealt);
-  // Trade stays 6 both, no bonus.
+  // Trade scales both sides by their own matchup modifier: ember vs ember is neutral.
   const trade = run('bonus', index('hedge'), [0, 0], index('hedge'));
   assert.equal(trade.line, 'TRADE');
   assert.equal(trade.dealt, 6);
   assert.equal(trade.taken, 6);
-  // Foe-side bonus mirrors: their winning hit is x1.5 when their move beats your creature type.
+  // Foe-side bonus mirrors: their winning hit is scaled when their move beats your creature type.
   const foeBonus = run('bonus', index('zip'), [0, 0], index('squid')); // zap (lightning) > splash (water)
   assert.equal(foeBonus.line, 'BONUS LOSE');
-  assert.equal(foeBonus.dealt, 4);
+  assert.equal(foeBonus.dealt, 2);
   assert.equal(foeBonus.taken, 21);
-  // Helper still reports the multiplier the cell marker uses.
+  // Helper reports the multiplier the cell markers use, penalty included.
   const vsHedge = duelMock({ scoring: 'bonus', you: index('ember'), foe: index('hedge'), seed: 1 });
   assert.equal(M.duelCreatureBonus(vsHedge, 0, 'fire'), 1.5);
   const vsZip = duelMock({ scoring: 'bonus', you: index('ember'), foe: index('zip'), seed: 1 });
-  assert.equal(M.duelCreatureBonus(vsZip, 0, 'fire'), 1);
+  assert.equal(M.duelCreatureBonus(vsZip, 0, 'fire'), 0.5);
+  const vsSquid = duelMock({ scoring: 'bonus', you: index('ember'), foe: index('squid'), seed: 1 });
+  assert.equal(M.duelCreatureBonus(vsSquid, 0, 'water'), 1, 'mirror type is neutral');
+  assert.equal(M.duelCreatureBonus(vsSquid, 0, 'fire'), 0.5, 'fire loses to water');
+});
+
+test('bonus AI prefers the best matchup tier and never feeds weak picks when avoidable', () => {
+  const index = (name) => M.DATA.creatures.findIndex((entry) => entry.name === name);
+  // AI ScatterCrab [earth, lightning] vs player squid [water]:
+  // earth loses to water (weak), lightning beats water (bonus) -> always bolt when not reading.
+  for (let seed = 1; seed <= 6; seed++) {
+    const state = duelMock({ scoring: 'bonus', you: index('squid'), foe: index('ScatterCrab'), seed });
+    state.duel.aiPersona = 'reader';
+    state.duel.aiRead = 0;
+    M.duelPick(state, 0);
+    const pick = state.duelState.picks[1];
+    assert.equal(M.duelOptions(state, 1)[pick].type, 'lightning', `seed ${seed}`);
+  }
 });
 
 test('personas: frequency, anti-repeat and exploiter guess the player type', () => {
