@@ -1,0 +1,23 @@
+html, body { margin: 0; background: #181818; color: #bbb; font: 12px/1.6 ui-monospace, Menlo, monospace; }
+#wrap { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 16px; }
+h1 { font-size: 14px; color: #eee; margin: 4px 0 0; font-weight: normal; letter-spacing: .04em; }
+h2 { font-size: 13px; color: #ddd; margin: 10px 0 2px; font-weight: normal; }
+canvas { width: 640px; height: 320px; image-rendering: pixelated; background: #000; border: 1px solid #333; }
+table { border-collapse: collapse; max-width: 900px; }
+td, th { padding: 1px 12px 1px 0; white-space: nowrap; vertical-align: top; text-align: left; font-weight: normal; }
+.k { color: #eee; }
+#controls { display: flex; flex-wrap: wrap; gap: 8px 18px; max-width: 900px; }
+#controls label { color: #999; }
+#controls select, #controls button { background: #222; color: #eee; border: 1px solid #444; border-radius: 4px; font: inherit; padding: 1px 6px; }
+#controls input[type=range] { width: 120px; vertical-align: middle; }
+#status { color: #8c8; max-width: 900px; word-break: break-word; }
+.note { max-width: 900px; color: #888; }
+a { color: #bbb; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; max-width: 900px; width: 100%; }
+.card { border: 1px solid #333; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+.card img { width: 100%; image-rendering: pixelated; border: 1px solid #222; background: #000; }
+.card h3 { margin: 0; font-size: 13px; color: #eee; font-weight: normal; }
+.card p { margin: 0; color: #999; }
+.card button { align-self: flex-start; }
+.launcher { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.launcher input { background: #222; color: #eee; border: 1px solid #444; border-radius: 4px; font: inherit; padding: 1px 6px; width: 70px; }

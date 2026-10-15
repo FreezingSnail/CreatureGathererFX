@@ -159,6 +159,7 @@ function computeDamage(attacker, defender, move, mode) {
 function newMock(options = {}) {
   const state = {
     mode: options.mode || 'current', // current | trim | duel
+    lockMode: options.lockMode === true, // variant windows pin their design
     trim: {
       typeMode: options.typeMode || '4single',
       arrows: options.arrows !== false,
@@ -427,6 +428,7 @@ function duelUpdate(state, dt) {
 
 /* ---------- step: consume fresh input edges, advance timers ---------- */
 function setMode(state, mode) {
+  if (state.lockMode) return;
   state.mode = mode;
   state.scene = 'setup';
 }
@@ -434,9 +436,11 @@ function step(state, input) {
   const edges = (input && input.edges) || [];
   const dt = (input && input.dtMs) || 0;
   for (const edge of edges) {
-    if (edge === '1') { setMode(state, 'current'); continue; }
-    if (edge === '2') { setMode(state, 'trim'); continue; }
-    if (edge === '3') { setMode(state, 'duel'); continue; }
+    if (edge === '1' || edge === '2' || edge === '3') {
+      if (state.lockMode) continue;
+      setMode(state, edge === '1' ? 'current' : edge === '2' ? 'trim' : 'duel');
+      continue;
+    }
     if (state.scene === 'setup') {
       if (edge === 'left') state.youIndex = (state.youIndex + DATA.creatures.length - 1) % DATA.creatures.length;
       else if (edge === 'right') state.youIndex = (state.youIndex + 1) % DATA.creatures.length;
@@ -668,13 +672,23 @@ function render(ctx, state) {
 function boot() {
   const screen = document.getElementById('screen');
   const ctx = screen.getContext('2d');
+  const bodyMode = document.body && document.body.dataset && document.body.dataset.mode
+    ? document.body.dataset.mode : null;
+  const query = typeof location !== 'undefined' && typeof location.search === 'string' ? location.search : '';
+  const seedMatch = /[?&]seed=(\d+)/.exec(query);
+  const seed = seedMatch ? Number(seedMatch[1]) : undefined;
+
   const state = newMock({
+    mode: bodyMode || 'current',
+    lockMode: !!bodyMode,
+    seed,
     loadImage(src, done) {
       const img = new Image();
       img.onload = () => done(img);
       img.src = src;
     },
   });
+  window.__battleMock = state;
 
   const KEYMAP = {
     ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down',
@@ -705,22 +719,26 @@ function boot() {
 
   const modeRadios = document.querySelectorAll('input[name="mode"]');
   const control = (id) => document.getElementById(id);
+  const wire = (id, type, handler) => {
+    const element = control(id);
+    if (element) element.addEventListener(type, handler);
+  };
   for (const radio of modeRadios) radio.addEventListener('change', () => {
     if (radio.checked) { setMode(state, radio.value); syncControls(); }
   });
-  control('trim-type').addEventListener('change', (event) => { state.trim.typeMode = event.target.value; syncControls(); });
-  control('trim-arrows').addEventListener('change', (event) => { state.trim.arrows = event.target.checked; syncControls(); });
-  control('trim-press').addEventListener('change', (event) => { state.trim.pressTurn = event.target.checked; syncControls(); });
-  control('trim-foe').addEventListener('change', (event) => { state.trim.foeNumbers = event.target.checked; syncControls(); });
-  control('duel-stances').addEventListener('change', (event) => {
+  wire('trim-type', 'change', (event) => { state.trim.typeMode = event.target.value; syncControls(); });
+  wire('trim-arrows', 'change', (event) => { state.trim.arrows = event.target.checked; syncControls(); });
+  wire('trim-press', 'change', (event) => { state.trim.pressTurn = event.target.checked; syncControls(); });
+  wire('trim-foe', 'change', (event) => { state.trim.foeNumbers = event.target.checked; syncControls(); });
+  wire('duel-stances', 'change', (event) => {
     state.duel.stances = Number(event.target.value);
     setMode(state, state.mode);
     syncControls();
   });
-  control('duel-read').addEventListener('input', (event) => { state.duel.aiRead = Number(event.target.value); syncControls(); });
-  control('duel-explain').addEventListener('change', (event) => { state.duel.explain = event.target.checked; });
-  control('scale').addEventListener('change', (event) => applyScale(Number(event.target.value)));
-  control('new-seed').addEventListener('click', () => { newSeed(state); syncControls(); });
+  wire('duel-read', 'input', (event) => { state.duel.aiRead = Number(event.target.value); syncControls(); });
+  wire('duel-explain', 'change', (event) => { state.duel.explain = event.target.checked; });
+  wire('scale', 'change', (event) => applyScale(Number(event.target.value)));
+  wire('new-seed', 'click', () => { newSeed(state); syncControls(); });
 
   function applyScale(scale) {
     screen.style.width = `${W * scale}px`;
@@ -728,24 +746,26 @@ function boot() {
   }
   function syncControls() {
     for (const radio of modeRadios) radio.checked = radio.value === state.mode;
-    control('trim-type').value = state.trim.typeMode;
-    control('trim-arrows').checked = state.trim.arrows;
-    control('trim-press').checked = state.trim.pressTurn;
-    control('trim-foe').checked = state.trim.foeNumbers;
-    control('duel-stances').value = String(state.duel.stances);
-    control('duel-read').value = String(state.duel.aiRead);
-    control('duel-explain').checked = state.duel.explain;
-    const read = document.getElementById('duel-read-value');
-    if (read) read.textContent = `${state.duel.aiRead}%`;
-    control('seed-value').textContent = String(state.seed);
-    control('status').textContent = [
-      state.mode,
-      state.mode === 'trim' ? `${state.trim.typeMode} arrows:${state.trim.arrows ? 'on' : 'off'} press:${state.trim.pressTurn ? 'on' : 'off'}` : '',
-      state.mode === 'duel' ? `${state.duel.stances} stances ai-read:${state.duel.aiRead}%` : '',
-      `you:${creature(state.youIndex).name} foe:${creature(state.foeIndex).name}`,
-    ].filter(Boolean).join(' · ');
+    const set = (id, apply) => { const element = control(id); if (element) apply(element); };
+    set('trim-type', (element) => { element.value = state.trim.typeMode; });
+    set('trim-arrows', (element) => { element.checked = state.trim.arrows; });
+    set('trim-press', (element) => { element.checked = state.trim.pressTurn; });
+    set('trim-foe', (element) => { element.checked = state.trim.foeNumbers; });
+    set('duel-stances', (element) => { element.value = String(state.duel.stances); });
+    set('duel-read', (element) => { element.value = String(state.duel.aiRead); });
+    set('duel-explain', (element) => { element.checked = state.duel.explain; });
+    set('duel-read-value', (element) => { element.textContent = `${state.duel.aiRead}%`; });
+    set('seed-value', (element) => { element.textContent = String(state.seed); });
+    set('status', (element) => {
+      element.textContent = [
+        state.mode,
+        state.mode === 'trim' ? `${state.trim.typeMode} arrows:${state.trim.arrows ? 'on' : 'off'} press:${state.trim.pressTurn ? 'on' : 'off'}` : '',
+        state.mode === 'duel' ? `${state.duel.stances} stances ai-read:${state.duel.aiRead}%` : '',
+        `you:${creature(state.youIndex).name} foe:${creature(state.foeIndex).name}`,
+      ].filter(Boolean).join(' · ');
+    });
   }
-  applyScale(Number(control('scale').value) || 4);
+  applyScale(Number((control('scale') || {}).value) || 4);
   syncControls();
 
   let last = performance.now();

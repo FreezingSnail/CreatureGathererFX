@@ -4,121 +4,65 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Creature Gatherer battle mock</title>
-<style>
-  html, body { margin: 0; background: #181818; color: #bbb; font: 12px/1.6 ui-monospace, Menlo, monospace; }
-  #wrap { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 16px; }
-  h1 { font-size: 14px; color: #eee; margin: 4px 0 0; font-weight: normal; letter-spacing: .04em; }
-  canvas { width: 640px; height: 320px; image-rendering: pixelated; background: #000; border: 1px solid #333; }
-  table { border-collapse: collapse; max-width: 900px; }
-  td, th { padding: 1px 12px 1px 0; white-space: nowrap; vertical-align: top; text-align: left; font-weight: normal; }
-  .k { color: #eee; }
-  #controls { display: flex; flex-wrap: wrap; gap: 8px 18px; max-width: 900px; }
-  #controls label { color: #999; }
-  #controls select, #controls button { background: #222; color: #eee; border: 1px solid #444; border-radius: 4px; font: inherit; padding: 1px 6px; }
-  #controls input[type=range] { width: 120px; vertical-align: middle; }
-  #status { color: #8c8; }
-  #legend { margin-top: 6px; border-top: 1px solid #333; }
-  #legend th { color: #888; padding: 4px 14px 2px 0; }
-  #legend .w { color: #eee; }
-  #duel-read-value { color: #ddd; }
-  .note { max-width: 900px; color: #888; }
-  a { color: #bbb; }
-</style>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div id="wrap">
-  <h1>Creature Gatherer battle mock — 128×64 · bead 2w8</h1>
-  <canvas id="screen" width="128" height="64"></canvas>
+  <h1>Creature Gatherer battle mock — playable 128×64 design spike · bead 2w8</h1>
+  <p class="note" style="text-align:center;max-width:640px">Each design runs in its own window so they can sit side by side.
+    All three use the same roster, generated data, production damage/move-use rules and the same seed if you pass one.</p>
+  <div class="launcher">
+    <label>seed <input id="seed-in" type="number" min="1" max="65535" value="1234"></label>
+    <button type="button" id="open-all">open all three</button>
+  </div>
+  <div class="cards">
+    <div class="card">
+      <h3>A · current — shipping 8-type dual menu</h3>
+      <img src="../docs/assets/battle-design-spike/current-choice.png" alt="current menu frame">
+      <p>Baseline: the shipping menu, nothing tells you the matchup. Foe HP hidden like production.</p>
+      <button type="button" data-variant="current">open current window</button>
+    </div>
+    <div class="card">
+      <h3>B · trim — 4-type cycle + arrows + press-turn</h3>
+      <img src="../docs/assets/battle-design-spike/trim-choice.png" alt="trim menu frame">
+      <p>▲/▼/·/× on every move row (final modifier incl. STAB), optional exact foe HP, optional
+        press-turn extra action, type mode 4-single / 8-single / 8-dual.</p>
+      <button type="button" data-variant="trim">open trim window</button>
+    </div>
+    <div class="card">
+      <h3>C · duel — simultaneous hidden stances</h3>
+      <img src="../docs/assets/battle-design-spike/duel-choice.png" alt="duel stance row frame">
+      <p>Both pick hidden, 550 ms reveal, damage per clash; 3- or 4-stance cycle, affinity ×1.5,
+        AI read slider, AI READ tag.</p>
+      <button type="button" data-variant="duel">open duel window</button>
+    </div>
+  </div>
   <table>
     <tr>
+      <th>keys in a window</th>
       <td><span class="k">Arrows</span> move cursor</td>
       <td><span class="k">Z</span> / <span class="k">Space</span> A: confirm / advance</td>
-      <td><span class="k">X</span> B: back to setup</td>
-      <td><span class="k">1</span> current &nbsp;<span class="k">2</span> trim &nbsp;<span class="k">3</span> duel</td>
+      <td><span class="k">X</span> back to setup</td>
     </tr>
   </table>
-  <div id="controls">
-    <label><input type="radio" name="mode" value="current" checked> A current</label>
-    <label><input type="radio" name="mode" value="trim"> B trim</label>
-    <label><input type="radio" name="mode" value="duel"> C duel</label>
-    <label>trim types
-      <select id="trim-type">
-        <option value="4single" selected>4 single</option>
-        <option value="8single">8 single</option>
-        <option value="8dual">8 dual</option>
-      </select>
-    </label>
-    <label><input type="checkbox" id="trim-arrows" checked> arrows</label>
-    <label><input type="checkbox" id="trim-press" checked> press-turn</label>
-    <label><input type="checkbox" id="trim-foe" checked> foe HP</label>
-    <label>duel
-      <select id="duel-stances">
-        <option value="3" selected>3 stances</option>
-        <option value="4">4 stances</option>
-      </select>
-    </label>
-    <label>AI read <input type="range" id="duel-read" min="0" max="100" value="45"> <span id="duel-read-value">45%</span></label>
-    <label><input type="checkbox" id="duel-explain" checked> AI READ tag</label>
-    <label>scale
-      <select id="scale">
-        <option value="1">1×</option>
-        <option value="3">3×</option>
-        <option value="4">4×</option>
-        <option value="5" selected>5×</option>
-        <option value="8">8×</option>
-      </select>
-    </label>
-    <label>seed <span id="seed-value">–</span> <button id="new-seed" type="button">reroll</button></label>
-  </div>
-  <div id="status">ready</div>
-  <table id="legend">
-    <tr>
-      <th>mode</th>
-      <th>what it tests</th>
-    </tr>
-    <tr>
-      <td class="w">A · current</td>
-      <td>shipping 8-type dual-type menu: nothing tells you the matchup. Memorize-to-play baseline.</td>
-    </tr>
-    <tr>
-      <td class="w">B · trim</td>
-      <td>4-type single-type cycle (flame &gt; bloom &gt; tide &gt; stone &gt; flame) with ▲/▼/·/× on every
-        move row, optional foe HP numbers, optional press-turn (super hit acts again).</td>
-    </tr>
-    <tr>
-      <td class="w">C · duel</td>
-      <td>simultaneous hidden stance pick, 550 ms reveal, damage per clash; 3- or 4-stance cycle,
-        affinity stance ×1.5, AI counters your last pick at the read rate.</td>
-    </tr>
-    <tr>
-      <th>readout</th>
-      <th>meaning</th>
-    </tr>
-    <tr>
-      <td class="w">center column</td>
-      <td>FOE row: label or exact HP (trim) + foe type icons; bar. YOU row: HP numbers + bar.
-        Move detail under YOU: type icon, power, remaining uses (<span class="k">*</span> = unlimited).</td>
-    </tr>
-    <tr>
-      <td class="w">▲ ▼ · ×</td>
-      <td>final damage modifier for that move including STAB (the number you would actually deal).</td>
-    </tr>
-    <tr>
-      <td class="w">EXTRA TURN</td>
-      <td>press-turn fired: the same move acts again this turn (both sides can trigger it).</td>
-    </tr>
-    <tr>
-      <td class="w">AFF / R3</td>
-      <td>duel: your affinity stance, and the current round.</td>
-    </tr>
-  </table>
-  <p class="note">Data, damage, HP and move-use limits are generated/ported from the shipping data and C++
-    (Damage.cpp, Type.hpp, MoveUses.hpp) at stat stages 0. Not simulated: statuses, stages, effects,
-    accuracy, party/switching, escape/gather, animations. Foe HP is hidden in mode A like production.
-    Data: <code>node tools/battle-design-spike-data.mjs</code> · tests:
-    <code>node --test mock/battle-mock.test.js</code>.</p>
+  <p class="note">Variant windows lock their design; number keys 1/2/3 do nothing there. Rerolling a seed in one window
+    does not change the others. Fidelity: damage/HP/uses/speed/STAB ported from Damage.cpp, Type.hpp and MoveUses.hpp
+    with stat stages at 0; statuses, effects, party/switch and animations are omitted. Data:
+    <code>node tools/battle-design-spike-data.mjs</code> · tests: <code>node --test mock/battle-mock.test.js</code>.</p>
 </div>
-<script src="data.js"></script>
-<script src="battle-mock.js"></script>
+<script>
+  const seedInput = document.getElementById('seed-in');
+  seedInput.value = String((Date.now() & 0xffff) || 1);
+  function openVariant(variant) {
+    const url = `${variant}.html?seed=${encodeURIComponent(seedInput.value || '1')}`;
+    window.open(url, `battle-${variant}`, 'width=1000,height=840');
+  }
+  for (const button of document.querySelectorAll('[data-variant]')) {
+    button.addEventListener('click', () => openVariant(button.dataset.variant));
+  }
+  document.getElementById('open-all').addEventListener('click', () => {
+    for (const variant of ['current', 'trim', 'duel']) openVariant(variant);
+  });
+</script>
 </body>
 </html>
