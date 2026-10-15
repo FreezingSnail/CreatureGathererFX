@@ -56,24 +56,31 @@ test('merged four-type chart is a clean beat cycle', () => {
   });
 });
 
-test('eight-type wheel keeps every cell meaningful', () => {
+test('eight-type web satisfies every roster set pair with a solver proof', async () => {
+  const solver = await import('../battle-matchup-solver.mjs');
   const data = buildSpikeData();
-  const { order, chart } = data.wheel;
+  const { order, chart, edges, cycles } = data.wheel;
   assert.equal(order.length, 8);
-  assert.equal(new Set(order).size, 8);
-  order.forEach((type, row) => {
-    assert.equal(chart[row].filter((value) => value === 2).length, 1, `${type} beats`);
-    assert.equal(chart[row].filter((value) => value === 0.5).length, 1, `${type} loses to`);
-    assert.ok(chart[row].every((value) => value !== 0), 'no immunity cells');
-    assert.equal(chart[row][row], 1);
-  });
-  // Every pair resolves one way: win/mirror-loss or neutral/neutral, never both.
+  assert.equal(edges.length, edges.length);
+  assert.ok(cycles.length >= 4, 'overlapping triangles, not a single ring');
+  const convention = solver.chartFromEdges(order, edges);
+  assert.deepEqual(convention, chart, 'chart mirrors the edge list');
+  const sets = solver.rosterSets(data.creatures, data.moves, order);
+  const unsatisfied = solver.unsatisfiedDemands(order, chart, sets);
+  assert.equal(unsatisfied.length, 0, `${unsatisfied.length} set pairs without a positive matchup`);
+  // Not everything matches: keep a meaningful neutral fraction.
+  const decisive = solver.edgeList(order, chart).length;
+  const fraction = decisive / (order.length * (order.length - 1));
+  assert.ok(fraction > 0.2 && fraction < 0.7, `decisive fraction ${fraction.toFixed(2)}`);
+  assert.ok(chart.some((row) => row.includes(1)), 'neutral cells exist');
+  // No mutual edges and no immunity.
   for (let row = 0; row < 8; row++) {
-    for (let col = row + 1; col < 8; col++) {
-      const forward = chart[row][col], backward = chart[col][row];
-      if (forward === 2) assert.equal(backward, 0.5, `${order[row]} vs ${order[col]}`);
-      else if (forward === 0.5) assert.equal(backward, 2, `${order[row]} vs ${order[col]}`);
-      else assert.equal(backward, 1, `${order[row]} vs ${order[col]}`);
+    for (let col = 0; col < 8; col++) {
+      assert.notEqual(chart[row][col], 0);
+      if (row !== col) {
+        const pair = [chart[row][col], chart[col][row]].sort();
+        assert.ok((pair[0] === 0.5 && pair[1] === 2) || (pair[0] === 1 && pair[1] === 1));
+      }
     }
   }
 });

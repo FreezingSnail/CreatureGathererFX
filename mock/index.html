@@ -44,10 +44,13 @@
       <button type="button" data-variant="duel">open wheel window</button>
     </div>
   </div>
-  <h2>8-type wheel (whole matrix, row attacks column)</h2>
-  <p class="note" style="text-align:center">wind &gt; earth &gt; lightning &gt; water &gt; fire &gt; plant &gt; spirit &gt; elder &gt; wind —
-    every type beats the next one clockwise and loses to the previous; all other pairs are neutral. No immunities,
-    so every pick stays live.</p>
+  <h2>8-type matchup web (row attacks column)</h2>
+  <p class="note" style="text-align:center">25 beats edges over 8 types, built from four seeded triangles
+    (fire&gt;plant&gt;water&gt;fire, earth&gt;lightning&gt;water&gt;earth, fire&gt;wind&gt;earth&gt;fire,
+    plant&gt;spirit&gt;elder&gt;plant) plus solver-completion edges: 16 triangles, 45% of pairs decisive,
+    the rest deliberately neutral. No immunities. A solver (<code>tools/battle-wheel-solve.mjs</code>)
+    proves every roster move-set pair has at least one positive matchup; the generator refuses to build
+    if that fails.</p>
   <div class="matrix" data-matrix="wheel"></div>
   <h2>4-type stance cycle (kept demo)</h2>
   <p class="note" style="text-align:center">flame &gt; bloom &gt; tide &gt; stone &gt; flame — used by the stance duel window.</p>

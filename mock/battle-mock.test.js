@@ -155,29 +155,31 @@ test('move uses deplete and unusable moves drop out of the cursor set', () => {
   assert.equal(M.firstUsable(state.battle), M.usableSlots(state, 0)[0] ?? 255);
 });
 
-test('8-type wheel: each type beats one, loses to one, no immunity cells', () => {
-  const { order, chart } = M.DATA.wheel;
+test('8-type web: overlapping triangles, no mutual edges, neutral cells kept', () => {
+  const { order, chart, edges, cycles } = M.DATA.wheel;
   assert.equal(order.length, 8);
-  assert.deepEqual(order, ['wind', 'earth', 'lightning', 'water', 'fire', 'plant', 'spirit', 'elder']);
-  order.forEach((type, row) => {
-    assert.equal(chart[row].filter((value) => value === 2).length, 1, `${type} wins`);
-    assert.equal(chart[row].filter((value) => value === 0.5).length, 1, `${type} loses`);
-    assert.equal(chart[row].filter((value) => value === 1).length, 6);
-    assert.ok(chart[row].every((value) => value !== 0), 'no immunity in the wheel');
-    assert.equal(chart[row][row], 1);
+  assert.ok(edges.length >= 20 && edges.length < 56, 'web is neither a ring nor a full tournament');
+  assert.ok(cycles.length >= 4, `several triangles (${cycles.length})`);
+  assert.ok(cycles.length < 56, 'not every triple is a triangle');
+  for (const [from, to] of edges) {
+    assert.equal(chart[order.indexOf(from)][order.indexOf(to)], 2, `${from}>${to} chart`);
+    assert.equal(chart[order.indexOf(to)][order.indexOf(from)], 0.5, `${to}<${from} chart`);
+  }
+  for (let row = 0; row < 8; row++) {
+    for (let col = 0; col < 8; col++) {
+      assert.notEqual(chart[row][col], 0, 'no immunity cells');
+      if (row === col) continue;
+      const pair = [chart[row][col], chart[col][row]].sort();
+      assert.ok((pair[0] === 0.5 && pair[1] === 2) || (pair[0] === 1 && pair[1] === 1),
+        `pair ${order[row]}/${order[col]} resolves one way`);
+    }
+  }
+  assert.ok(chart.some((row) => row.includes(1)), 'some pairs stay neutral');
+  // Every type must have at least one win and one loss (no dead type).
+  order.forEach((type, index) => {
+    assert.ok(chart[index].filter((value) => value === 2).length >= 1, `${type} has a win`);
+    assert.ok(chart.map((row) => row[index]).filter((value) => value === 2).length >= 1, `${type} has an answer`);
   });
-  // Ring edges: the intuitive chain the design documents.
-  assert.equal(M.wheelValue('wind', 'earth'), 2);
-  assert.equal(M.wheelValue('earth', 'lightning'), 2);
-  assert.equal(M.wheelValue('lightning', 'water'), 2);
-  assert.equal(M.wheelValue('water', 'fire'), 2);
-  assert.equal(M.wheelValue('fire', 'plant'), 2);
-  assert.equal(M.wheelValue('plant', 'spirit'), 2);
-  assert.equal(M.wheelValue('spirit', 'elder'), 2);
-  assert.equal(M.wheelValue('elder', 'wind'), 2);
-  assert.equal(M.wheelValue('earth', 'wind'), 0.5);
-  assert.ok(M.wheelBeats('fire', 'plant'));
-  assert.ok(!M.wheelBeats('plant', 'fire'));
 });
 
 test('duel uses each creature\'s own moves and the wheel decides the clash', () => {
