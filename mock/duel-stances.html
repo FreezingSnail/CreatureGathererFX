@@ -9,7 +9,11 @@
 <body data-mode="duel" data-duel="stances">
 <div id="wrap">
   <h1>C · duel stances — 4-type cycle, hidden picks</h1>
-  <canvas id="screen" width="128" height="64"></canvas>
+  <div class="stage-wrap">
+    <canvas id="screen" width="128" height="64"></canvas>
+    <div class="annotate-layer" data-annotate-layer hidden></div>
+  </div>
+  <div class="annotate-legend" data-annotate-legend hidden></div>
   <table>
     <tr>
       <td><span class="k">Left / Right</span> pick stance</td>
@@ -18,6 +22,7 @@
     </tr>
   </table>
   <div id="controls">
+    <label><input type="checkbox" id="annotate" checked> annotate</label>
     <label>stances
       <select id="duel-stances">
         <option value="3" selected>3 stances</option>
@@ -48,5 +53,6 @@
 <script src="data.js"></script>
 <script src="battle-mock.js"></script>
 <script src="matrix.js"></script>
+<script src="annotate.js"></script>
 </body>
 </html>
