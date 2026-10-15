@@ -9198,3 +9198,31 @@ node --test tools/tests/battle-design-spike-matrix_test.mjs -> 3 pass / 0 fail
 
 Lore flags for the owner: spirit>water, spirit>lightning, earth>plant direction calls; the solver's
 preference list in battle-wheel-solve.mjs is the place to re-rank them.
+
+# CreatureGathererFX-hl2o
+
+Owner report: a duel wheel footer appeared to show one option and asked whether creatures have only
+two moves. Two causes found and fixed:
+
+- Data: equipped move counts are 1 x3, 2 x12, 3 x3, 4 x46 — fifteen creatures field fewer than
+  three moves (bell: wisper + Sharpen; SquibbleSnail: breeze only; slot 32 is the empty sentinel).
+  The mock shows real kits; the disclosure now appears on the launcher, duel wheel window and docs.
+- Bug: status-type moves (Sharpen) had no icon, so drawIcon silently drew nothing and the cell
+  looked empty. Added status and none icons; new regression test asserts every move type in the
+  data resolves to an 8x8 icon.
+
+Also: duel wheel window title/h1 corrected (still said "simultaneous hidden stances"); the status
+line now shows you/foe move counts (`you:bell[2m] foe:SquibbleSnail[1m]`); frame harness key() now
+accepts logical names (left/right/up/down/a/b) via aliases.
+
+```text
+node --test mock/battle-mock.test.js                       -> 19 pass / 0 fail
+node --test tools/tests/battle-design-spike-data_test.mjs  -> 8 pass / 0 fail
+node --test tools/tests/battle-matchup-solver_test.mjs     -> 4 pass / 0 fail
+node --test tools/tests/battle-design-spike-frame_test.mjs -> 6 pass / 0 fail
+node --test tools/tests/battle-design-spike-matrix_test.mjs-> 3 pass / 0 fail
+node tools/battle-design-spike-preview.mjs                 -> previews regenerated
+```
+
+Verified with a headless bell-vs-snail frame: both cells render (spirit attack + status plus),
+cursor on the status move selects the second cell and shows power 0.
