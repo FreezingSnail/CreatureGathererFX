@@ -9558,3 +9558,23 @@ node --test tools/tests/battle-design-spike-data_test.mjs  -> 8 pass / 0 fail
 node --test tools/tests/battle-matchup-solver_test.mjs     -> 4 pass / 0 fail
 node tools/battle-design-spike-preview.mjs                 -> previews regenerated (default table 8)
 ```
+
+# CreatureGathererFX-3cfu
+
+Type-table choice is now in the demo end to end:
+
+- Launcher (mock/index.html) gains a **type table** select (8 · full web / 6 / 5 / 4 · cycle, with
+  fact counts); open-one and open-all pass it to each window as `?matrix=N`.
+- Duel windows boot with the query table (invalid values fall back to 8) and keep the in-window
+  **types** selector; the on-page x/y table follows the live selection.
+- Frame harness setControl now fires input+change so select controls are exercisable; new frame test
+  covers query selection, in-window switching (resets to setup), and invalid-query fallback.
+
+```text
+node --test tools/tests/battle-design-spike-frame_test.mjs -> 9 pass / 0 fail
+node --test mock/battle-mock.test.js                       -> 29 pass / 0 fail
+node --test tools/tests/battle-duel-spike_test.mjs         -> 4 pass / 0 fail
+node --test tools/tests/battle-design-spike-annotate_test.mjs -> 5 pass / 0 fail
+node --test tools/tests/battle-design-spike-matrix_test.mjs -> 7 pass / 0 fail
+node --test tools/tests/battle-matrices-spike_test.mjs     -> 5 pass / 0 fail
+```

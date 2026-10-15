@@ -107,6 +107,26 @@ test('bonus window boots with bonus scoring and draws type badges', () => {
   assert.ok(badgePixels > 20, `type badges painted (${badgePixels} pixels)`);
 });
 
+test('type table can be chosen from the query and from the in-window selector', () => {
+  // Launcher passes ?matrix=N; the duel boots with that table.
+  const harness = createHarness({ mode: 'duel', duel: 'wheel', scoring: 'bonus', search: '?seed=77&matrix=5' });
+  harness.advances(2);
+  assert.equal(harness.state().duel.matrixId, '5');
+  // In-window selector switches the live table and resets to setup.
+  harness.setControl('duel-matrix', '4');
+  assert.equal(harness.state().duel.matrixId, '4');
+  assert.equal(harness.state().scene, 'setup');
+  // Invalid query values are ignored (falls back to the default 8).
+  const fallback = createHarness({ mode: 'duel', duel: 'wheel', search: '?matrix=99' });
+  fallback.advances(2);
+  assert.equal(fallback.state().duel.matrixId, '8');
+  // Battle starts fine on the folded table (folded resolution numbers are covered
+  // by tools/tests/battle-matrices-spike_test.mjs).
+  harness.press('z');
+  harness.advances(2);
+  assert.equal(harness.state().scene, 'battle');
+});
+
 test('mode edges 1/2/3 switch scenes from the keyboard', () => {
   const harness = createHarness();
   harness.press('2');

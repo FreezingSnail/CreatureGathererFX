@@ -1113,12 +1113,15 @@ function boot() {
   const query = typeof location !== 'undefined' && typeof location.search === 'string' ? location.search : '';
   const seedMatch = /[?&]seed=(\d+)/.exec(query);
   const seed = seedMatch ? Number(seedMatch[1]) : undefined;
+  const matrixMatch = /[?&]matrix=(\d+)/.exec(query);
+  const matrixId = matrixMatch && ['8', '6', '5', '4'].includes(matrixMatch[1]) ? matrixMatch[1] : undefined;
 
   const state = newMock({
     mode: bodyMode || 'current',
     lockMode: !!bodyMode,
     duelKind: bodyDuel || undefined,
     scoring: bodyScoring || undefined,
+    matrixId,
     seed,
     loadImage(src, done) {
       const img = new Image();

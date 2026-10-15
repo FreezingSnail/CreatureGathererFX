@@ -14,6 +14,14 @@
   <p class="note" style="text-align:center;max-width:640px">Is 8 types too many to memorize? Compare the <a href="matrices.html">type-count tables (8 / 6 / 5 / 4)</a> and pick one in any duel window's <b>types</b> selector.</p>
   <div class="launcher">
     <label>seed <input id="seed-in" type="number" min="1" max="65535" value="1234"></label>
+    <label>type table
+      <select id="table-in">
+        <option value="8" selected>8 · full web (25 facts)</option>
+        <option value="6">6 (15 facts)</option>
+        <option value="5">5 (10 facts)</option>
+        <option value="4">4 · cycle (6 facts)</option>
+      </select>
+    </label>
     <button type="button" id="open-all">open all four</button>
   </div>
   <div class="cards">
@@ -94,8 +102,9 @@
 <script>
   const seedInput = document.getElementById('seed-in');
   seedInput.value = String((Date.now() & 0xffff) || 1);
+  const tableInput = document.getElementById('table-in');
   function openVariant(variant) {
-    const url = `${variant}.html?seed=${encodeURIComponent(seedInput.value || '1')}`;
+    const url = `${variant}.html?seed=${encodeURIComponent(seedInput.value || '1')}&matrix=${tableInput.value}`;
     window.open(url, `battle-${variant}`, 'width=1000,height=840');
   }
   for (const button of document.querySelectorAll('[data-variant]')) {
