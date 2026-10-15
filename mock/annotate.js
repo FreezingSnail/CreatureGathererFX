@@ -27,13 +27,13 @@
     ['1', 'FOE sprite — opponent creature (front view).'],
     ['2', 'Your sprite — your creature (back view).'],
     ['3', 'Type badges (both corners) — the creature\'s types; follows the active type mode.'],
-    ['4', 'FOE HP — bar, plus exact numbers in the duel windows.'],
-    ['5', 'Your HP — numbers and bar.'],
+    ['4', 'FOE HP — bar, exact numbers, and team pips (three squares: filled = alive, underline = active).'],
+    ['5', 'Your HP — numbers, bar and team pips.'],
     ['6', 'Round number (R#).'],
     ['7', scoring === 'power'
       ? 'Selected move: type icon + power.'
       : 'Selected move: type icon only — moves carry no power in this spelling.'],
-    ['8', 'Your picks — attack moves plus the swap cell (bench creature); the white box is the cursor. Switching forfeits the round: the other side lands a default win.'],
+    ['8', 'Your picks — attack moves plus the swap cell (switch to the next living member); the white box is the cursor. Switching forfeits the round: the other side lands a default win.'],
     ['9', scoring === 'power'
       ? '✱ on a cell = affinity (move type is your creature\'s type), ×1.5.'
       : scoring === 'bonus'
