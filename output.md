@@ -9117,3 +9117,33 @@ node --test tools/tests/battle-design-spike-data_test.mjs -> 7 pass / 0 fail
 node --test tools/tests/battle-design-spike-frame_test.mjs-> 6 pass / 0 fail (adds locked-window + seed test)
 node tools/battle-design-spike-preview.mjs                -> previews regenerated
 ```
+
+# CreatureGathererFX-0335
+
+Eight-type wheel matrix for hidden simultaneous picks, implemented in the mock duel.
+
+Ring: `wind > earth > lightning > water > fire > plant > spirit > elder > wind`. Each type beats the
+next one and loses to the previous; everything else is neutral. No immunity cells, so every pick
+stays live. Matrix source is `WHEEL` in `tools/battle-design-spike-data.mjs`; playable at
+`mock/duel.html`; rationale and flags in `docs/battle-wheel-matrix.md`. Firmware note: the ring is
+8 successor indices (~8 B) instead of the 81-cell packed chart (21 B).
+
+Duel mode now uses each creature's own equipped moves (hidden pick), affinity when the move type is
+the creature's type, and the wheel to decide win/lose/trade. Stance selection and the 3/4-stance
+option are gone; the 'duel-stances' control was removed from `mock/duel.html`.
+
+```text
+node tools/battle-design-spike-data.mjs                    -> 64 creatures, wheel emitted
+node --test mock/battle-mock.test.js                       -> 16 pass / 0 fail
+node --test tools/tests/battle-design-spike-data_test.mjs  -> 8 pass / 0 fail
+node --test tools/tests/battle-design-spike-frame_test.mjs -> 6 pass / 0 fail
+node tools/battle-design-spike-preview.mjs                 -> duel previews regenerated
+```
+
+Roster data check for the intended three-move design (level-8 generated kits): distinct move types
+per creature 1x7, 2x37, 3x18, 4x2; 44 creatures need an authoring pass to field three distinct-type
+moves. Move-type carriers: earth 23, plant 23, water 16, elder 16, spirit 15, wind 12, lightning 12,
+fire 10. Every creature already has a STAB move.
+
+Flagged for the owner: spirit>elder and elder>wind are the two weakest lore links; duplicates exist
+(ember fields two fire moves) and are shown as-is.

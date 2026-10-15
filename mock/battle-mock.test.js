@@ -155,40 +155,70 @@ test('move uses deplete and unusable moves drop out of the cursor set', () => {
   assert.equal(M.firstUsable(state.battle), M.usableSlots(state, 0)[0] ?? 255);
 });
 
-test('duel cycle order and beats are consistent for 3 and 4 stances', () => {
-  const three = M.newMock({ mode: 'duel', stances: 3 });
-  const four = M.newMock({ mode: 'duel', stances: 4 });
-  const t = M.stanceSet(three), f = M.stanceSet(four);
-  assert.deepEqual(t, ['flame', 'bloom', 'tide']);
-  assert.deepEqual(f, ['flame', 'bloom', 'tide', 'stone']);
-  for (const order of [t, f]) {
-    for (let i = 0; i < order.length; i++) {
-      assert.ok(M.beats(order, order[i], order[(i + 1) % order.length]));
-      assert.ok(!M.beats(order, order[i], order[i]));
-      assert.ok(!M.beats(order, order[(i + 1) % order.length], order[i]));
-    }
-  }
+test('8-type wheel: each type beats one, loses to one, no immunity cells', () => {
+  const { order, chart } = M.DATA.wheel;
+  assert.equal(order.length, 8);
+  assert.deepEqual(order, ['wind', 'earth', 'lightning', 'water', 'fire', 'plant', 'spirit', 'elder']);
+  order.forEach((type, row) => {
+    assert.equal(chart[row].filter((value) => value === 2).length, 1, `${type} wins`);
+    assert.equal(chart[row].filter((value) => value === 0.5).length, 1, `${type} loses`);
+    assert.equal(chart[row].filter((value) => value === 1).length, 6);
+    assert.ok(chart[row].every((value) => value !== 0), 'no immunity in the wheel');
+    assert.equal(chart[row][row], 1);
+  });
+  // Ring edges: the intuitive chain the design documents.
+  assert.equal(M.wheelValue('wind', 'earth'), 2);
+  assert.equal(M.wheelValue('earth', 'lightning'), 2);
+  assert.equal(M.wheelValue('lightning', 'water'), 2);
+  assert.equal(M.wheelValue('water', 'fire'), 2);
+  assert.equal(M.wheelValue('fire', 'plant'), 2);
+  assert.equal(M.wheelValue('plant', 'spirit'), 2);
+  assert.equal(M.wheelValue('spirit', 'elder'), 2);
+  assert.equal(M.wheelValue('elder', 'wind'), 2);
+  assert.equal(M.wheelValue('earth', 'wind'), 0.5);
+  assert.ok(M.wheelBeats('fire', 'plant'));
+  assert.ok(!M.wheelBeats('plant', 'fire'));
 });
 
-test('duel resolves damage on the correct sides with affinity bonus', () => {
-  const state = M.newMock({ mode: 'duel', you: 10, foe: 12, seed: 3, stances: 3 });
+test('duel uses each creature\'s own moves and the wheel decides the clash', () => {
+  const state = M.newMock({ mode: 'duel', you: 10, foe: 12, seed: 3 });
   M.startBattle(state);
-  const you = M.creature(10), foe = M.creature(12);
-  assert.equal(you.merged[0], 'flame'); // ember has flame affinity
-  // Force player win: flame beats bloom if foe has bloom affinity (hedge).
-  state.foeIndex = M.DATA.creatures.findIndex((entry) => entry.name === 'hedge');
+  const mine = M.duelMoves(state, 0);
+  assert.deepEqual(mine.map((move) => move.type), ['fire', 'fire']);
+  assert.ok(M.hasAffinity(state, 0, mine[0]), 'fire move on a fire creature is affinity');
   const beforeYou = state.duelState.hp[0], beforeFoe = state.duelState.hp[1];
-  state.duelState.picks = [0, 1]; // flame vs bloom
+  // ember stoke (fire) vs hedge root (plant): fire beats plant -> wheel win.
+  state.duelState.picks = [0, 0];
   M.duelResolve(state);
-  assert.ok(state.duelState.hp[1] < beforeFoe, 'foe took damage');
-  assert.ok(state.duelState.hp[0] < beforeYou, 'chip damage on the winner too');
+  assert.equal(state.duelState.lines[0], 'WHEEL WIN');
+  assert.ok(beforeFoe - state.duelState.hp[1] > beforeYou - state.duelState.hp[0], 'winner deals more than chip');
   assert.equal(state.duelState.phase, 'result');
-  // Loser takes more than the chip damage dealt back.
-  assert.ok(beforeFoe - state.duelState.hp[1] > beforeYou - state.duelState.hp[0]);
   state.duelState.timer = 0;
   M.duelUpdate(state, 2000);
   assert.equal(state.duelState.phase, 'choice');
   assert.equal(state.duelState.round, 2);
+});
+
+test('duel losses and trades resolve on the correct sides', () => {
+  const state = M.newMock({ mode: 'duel', you: 10, foe: 12, seed: 3 });
+  M.startBattle(state);
+  // Reverse the pick sides: used only to prove the loser branch; force by swapping creatures.
+  state.youIndex = M.DATA.creatures.findIndex((entry) => entry.name === 'hedge');
+  state.foeIndex = M.DATA.creatures.findIndex((entry) => entry.name === 'ember');
+  M.startBattle(state);
+  const beforeYou = state.duelState.hp[0], beforeFoe = state.duelState.hp[1];
+  state.duelState.picks = [0, 0]; // plant move vs fire move: plant loses to fire
+  M.duelResolve(state);
+  assert.equal(state.duelState.lines[0], 'WHEEL LOSE');
+  assert.ok(beforeYou - state.duelState.hp[0] > beforeFoe - state.duelState.hp[1], 'loser takes the full hit');
+  // Trade: same type on both sides.
+  const same = M.newMock({ mode: 'duel', you: 10, foe: 10, seed: 3 });
+  M.startBattle(same);
+  const tradeYou = same.duelState.hp[0], tradeFoe = same.duelState.hp[1];
+  same.duelState.picks = [0, 0];
+  M.duelResolve(same);
+  assert.equal(same.duelState.lines[0], 'TRADE');
+  assert.ok(same.duelState.hp[0] < tradeYou && same.duelState.hp[1] < tradeFoe, 'trade chips both sides');
 });
 
 test('duel flow advances through step() edges and timers', () => {
@@ -202,6 +232,20 @@ test('duel flow advances through step() edges and timers', () => {
   assert.equal(state.duelState.phase, 'result');
   M.step(state, { edges: [], dtMs: 1400 });
   assert.equal(state.duelState.phase, 'choice');
+});
+
+test('duel AI keeps its pick inside its own move list', () => {
+  const state = M.newMock({ mode: 'duel', you: 10, foe: 12, seed: 7, aiRead: 100 });
+  M.startBattle(state);
+  const count = M.duelMoves(state, 1).length;
+  for (let i = 0; i < 20; i++) {
+    state.duelState.last = [M.duelMoves(state, 0)[0].type, null];
+    M.duelPick(state, 0);
+    const aiIndex = state.duelState.picks[1];
+    assert.ok(aiIndex >= 0 && aiIndex < count, `AI pick ${aiIndex} within 0..${count - 1}`);
+    state.duelState.phase = 'choice';
+    state.duelState.picks = [null, null];
+  }
 });
 
 test('ai pick never returns a depleted or absent slot', () => {
