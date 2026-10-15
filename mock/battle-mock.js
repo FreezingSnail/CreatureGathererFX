@@ -185,6 +185,7 @@ function newMock(options = {}) {
     duel: {
       kind: options.duelKind || 'wheel', // wheel | stances
       scoring: options.scoring || 'power', // power | flat (pure) | bonus (recommended)
+      partySize: options.partySize || 2, // 1 = benchless (spike tool isolates AI reads)
       aiPersona: options.aiPersona || 'reader',
       stances: options.stances || 3,
       aiRead: options.aiRead ?? 45,
@@ -220,8 +221,17 @@ function startBattle(state) {
   state.rng = makeRng(state.seed);
   const you = creature(state.youIndex), foe = creature(state.foeIndex);
   if (state.mode === 'duel') {
+    const party = (index) => (state.duel.partySize === 1
+      ? [index]
+      : [index, benchIndexFor(index)]);
+    const youParty = party(state.youIndex), foeParty = party(state.foeIndex);
     state.duelState = {
-      hp: [you.maxHp, foe.maxHp],
+      partyIndex: [youParty, foeParty],
+      activeSlot: [0, 0],
+      hp: [
+        youParty.map((index) => creature(index).maxHp),
+        foeParty.map((index) => creature(index).maxHp),
+      ],
       picks: [null, null],
       last: [null, null],
       history: [],
@@ -388,8 +398,23 @@ function stanceBeats(order, stance, other) {
   const step = (order.indexOf(other) - order.indexOf(stance) + order.length) % order.length;
   return step === 1;
 }
+// Duel parties: active + one bench creature per side (bench = next roster
+// entry in this prototype). Switching forfeits the round: the side that did
+// not switch lands a default win on the incoming creature.
+const benchIndexFor = (index) => (index + 1) % DATA.creatures.length;
+const duelCreature = (state, side) => {
+  const party = state.duelState.partyIndex[side];
+  return creature(party[state.duelState.activeSlot[side]]);
+};
+const duelBench = (state, side) => {
+  const party = state.duelState.partyIndex[side];
+  return party.length > 1 ? creature(party[1 - state.duelState.activeSlot[side]]) : null;
+};
+const sideAlive = (state, side) => state.duelState.hp[side].some((hp) => hp > 0);
+const isSwitchPick = (pick) => pick === -1;
+
 function duelMoves(state, side) {
-  const creature_ = side === 0 ? creature(state.youIndex) : creature(state.foeIndex);
+  const creature_ = duelCreature(state, side);
   return creature_.moves
     .filter((id) => id != null)
     .map((id) => DATA.moves[id])
@@ -404,7 +429,7 @@ function wheelValue(moveType, defendType) {
 }
 const wheelBeats = (a, b) => wheelValue(a, b) === 2;
 function hasAffinity(state, side, move) {
-  const creature_ = side === 0 ? creature(state.youIndex) : creature(state.foeIndex);
+  const creature_ = duelCreature(state, side);
   return creature_.types.includes(move.type);
 }
 // Options a side can pick this round, in display order.
@@ -413,7 +438,7 @@ function duelOptions(state, side) {
   return duelMoves(state, side);
 }
 function duelOptionAffinity(state, side, option) {
-  const creature_ = side === 0 ? creature(state.youIndex) : creature(state.foeIndex);
+  const creature_ = duelCreature(state, side);
   return duelKind(state) === 'stances'
     ? creature_.merged[0] === option.type
     : creature_.types.includes(option.type);
@@ -486,10 +511,29 @@ function aiDuelPick(state) {
   }
   const guessed = predictPlayerType(state);
   const counters = guessed ? counterOptions(state, guessed) : [];
-  if (!counters.length) return state.rng.int(options.length);
-  duelState.aiRead = true;
-  duelState.thisReadFired = true;
-  return counters[state.rng.int(counters.length)];
+  if (counters.length) {
+    duelState.aiRead = true;
+    duelState.thisReadFired = true;
+    return counters[state.rng.int(counters.length)];
+  }
+  // No counter in the active kit: switch to the bench when it holds one
+  // (switching forfeits the round by default-win rule, so it costs).
+  if (guessed && duelKind(state) === 'wheel' && benchCounterExists(state, guessed)) {
+    duelState.aiRead = true;
+    duelState.thisReadFired = true;
+    return -1;
+  }
+  return state.rng.int(options.length); // fallback: uniform, no boost preference
+}
+
+function benchCounterExists(state, targetType) {
+  const bench = duelBench(state, 1);
+  if (!bench) return false;
+  return bench.moves
+    .filter((id) => id != null)
+    .map((id) => DATA.moves[id])
+    .filter((move) => isSpikeMove(move))
+    .some((move) => wheelBeats(move.type, targetType));
 }
 function duelPick(state, index) {
   const duelState = state.duelState;
@@ -505,23 +549,50 @@ const FLAT_WIN = 14, FLAT_CHIP = 4, FLAT_TRADE = 6;
 // Creature-type bonus: your move's type against the opposing creature's types.
 // 1.5 when it beats any of them, else 1 (bonus-only, no penalty).
 function duelCreatureBonus(state, side, moveType) {
-  const defender = side === 0 ? creature(state.foeIndex) : creature(state.youIndex);
+  const defender = duelCreature(state, side === 0 ? 1 : 0);
   const beaten = defender.types.some((type) => wheelBeats(moveType, type));
   return beaten ? 1.5 : 1;
+}
+
+// Post-resolution housekeeping: promote a living bench member when the active
+// creature faints (a KO'd incoming swap reverts to the outgoing creature).
+function syncActiveSlots(state) {
+  const duelState = state.duelState;
+  for (const side of [0, 1]) {
+    if (duelState.hp[side][duelState.activeSlot[side]] <= 0 && duelState.hp[side][1 - duelState.activeSlot[side]] > 0) {
+      duelState.activeSlot[side] = 1 - duelState.activeSlot[side];
+    }
+  }
 }
 
 function duelResolve(state) {
   const duelState = state.duelState;
   const roll = () => 0.85 + state.rng.next() * 0.3;
+  const youSwitch = isSwitchPick(duelState.picks[0]);
+  const foeSwitch = isSwitchPick(duelState.picks[1]);
+
   if (duelKind(state) === 'stances') {
     const order = stanceSet(state);
-    const you = creature(state.youIndex), foe = creature(state.foeIndex);
-    const yourStance = order[duelState.picks[0]] ?? order[0];
-    const foeStance = order[duelState.picks[1]] ?? order[0];
+    const you = duelCreature(state, 0), foe = duelCreature(state, 1);
+    const yourStance = youSwitch ? null : (order[duelState.picks[0]] ?? order[0]);
+    const foeStance = foeSwitch ? null : (order[duelState.picks[1]] ?? order[0]);
     const affinity = (creature_, stance) => (creature_.merged[0] === stance ? 1.5 : 1);
     const chip = (attack) => Math.max(1, Math.round((3 + attack * 0.25) * roll()));
     let yourDamage = 0, foeDamage = 0;
-    if (yourStance === foeStance) {
+    if (youSwitch && foeSwitch) {
+      duelState.activeSlot[0] = 1 - duelState.activeSlot[0];
+      duelState.activeSlot[1] = 1 - duelState.activeSlot[1];
+      duelState.lines = ['SWAP', 'both sides switch'];
+      duelState.last = [null, null];
+    } else if (youSwitch || foeSwitch) {
+      const switcher = youSwitch ? 0 : 1;
+      const attacker = 1 - switcher;
+      duelState.activeSlot[switcher] = 1 - duelState.activeSlot[switcher];
+      if (attacker === 1) foeDamage = Math.round(FLAT_WIN * roll());
+      else yourDamage = Math.round(FLAT_WIN * roll());
+      duelState.lines = ['DEFAULT WIN', `-${yourDamage} -${foeDamage}`];
+      duelState.last = [yourStance, foeStance];
+    } else if (yourStance === foeStance) {
       yourDamage = chip(you.stats.attack);
       foeDamage = chip(foe.stats.attack);
       duelState.lines = ['TIE', `-${yourDamage} -${foeDamage}`];
@@ -534,24 +605,43 @@ function duelResolve(state) {
       yourDamage = Math.max(1, Math.round((2 + you.stats.attack * 0.2) * roll()));
       duelState.lines = ['CLASH LOSE', `-${yourDamage} -${foeDamage}`];
     }
-    duelState.hp[0] = Math.max(0, duelState.hp[0] - foeDamage);
-    duelState.hp[1] = Math.max(0, duelState.hp[1] - yourDamage);
-    duelState.last = [duelState.picks[0], duelState.picks[1]];
-    recordPlayerPick(state, yourStance);
+    duelState.hp[0][duelState.activeSlot[0]] = Math.max(0, duelState.hp[0][duelState.activeSlot[0]] - foeDamage);
+    duelState.hp[1][duelState.activeSlot[1]] = Math.max(0, duelState.hp[1][duelState.activeSlot[1]] - yourDamage);
+    syncActiveSlots(state);
+    if (!youSwitch) recordPlayerPick(state, yourStance);
     duelState.phase = 'result';
     duelState.timer = 1300;
     return;
   }
+
   const mine = duelMoves(state, 0), theirs = duelMoves(state, 1);
-  const yourMove = mine[duelState.picks[0]] || mine[0];
-  const foeMove = theirs[duelState.picks[1]] || theirs[0];
-  const relation = wheelValue(yourMove.type, foeMove.type);
+  const yourMove = youSwitch ? null : (mine[duelState.picks[0]] || mine[0]);
+  const foeMove = foeSwitch ? null : (theirs[duelState.picks[1]] || theirs[0]);
   let yourDamage = 0, foeDamage = 0;
-  if (state.duel.scoring === 'flat' || state.duel.scoring === 'bonus') {
+  const scoring = state.duel.scoring;
+
+  if (youSwitch && foeSwitch) {
+    duelState.activeSlot[0] = 1 - duelState.activeSlot[0];
+    duelState.activeSlot[1] = 1 - duelState.activeSlot[1];
+    duelState.lines = ['SWAP', 'both sides switch'];
+    duelState.last = [null, null];
+  } else if (youSwitch || foeSwitch) {
+    const switcher = youSwitch ? 0 : 1;
+    duelState.activeSlot[switcher] = 1 - duelState.activeSlot[switcher];
+    const attackerSide = 1 - switcher;
+    const attackerMove = attackerSide === 0 ? yourMove : foeMove;
+    const incoming = duelCreature(state, switcher);
+    const bonus = scoring === 'bonus' && attackerMove.type &&
+      incoming.types.some((type) => wheelBeats(attackerMove.type, type)) ? 1.5 : 1;
+    const hit = Math.round(FLAT_WIN * bonus);
+    if (attackerSide === 0) yourDamage = hit; else foeDamage = hit;
+    duelState.lines = ['DEFAULT WIN', `-${yourDamage} -${foeDamage}`];
+    duelState.last = [yourMove ? yourMove.type : null, foeMove ? foeMove.type : null];
+  } else if (scoring === 'flat' || scoring === 'bonus') {
     // Flat numbers: relation decides. In the bonus spelling a winning hit is
     // x1.5 when the move type beats the opposing creature's type.
-    const hit = (side, move) => (state.duel.scoring === 'bonus' && duelCreatureBonus(state, side, move.type) > 1
-      ? 1.5 : 1);
+    const relation = wheelValue(yourMove.type, foeMove.type);
+    const hit = (side, move) => (scoring === 'bonus' && duelCreatureBonus(state, side, move.type) > 1 ? 1.5 : 1);
     if (relation === 2) {
       yourDamage = Math.round(FLAT_WIN * hit(0, yourMove));
       foeDamage = FLAT_CHIP;
@@ -566,6 +656,7 @@ function duelResolve(state) {
       duelState.lines = ['TRADE', `-${yourDamage} -${foeDamage}`];
     }
   } else {
+    const relation = wheelValue(yourMove.type, foeMove.type);
     const stab = (side, move) => (hasAffinity(state, side, move) ? 1.5 : 1);
     const yourPower = (4 + yourMove.power * 1.2) * stab(0, yourMove);
     const foePower = (4 + foeMove.power * 1.2) * stab(1, foeMove);
@@ -584,10 +675,14 @@ function duelResolve(state) {
       duelState.lines = ['TRADE', `-${yourDamage} -${foeDamage}`];
     }
   }
-  duelState.hp[0] = Math.max(0, duelState.hp[0] - foeDamage);
-  duelState.hp[1] = Math.max(0, duelState.hp[1] - yourDamage);
-  duelState.last = [yourMove.type, foeMove.type];
-  recordPlayerPick(state, yourMove.type);
+
+  duelState.hp[0][duelState.activeSlot[0]] = Math.max(0, duelState.hp[0][duelState.activeSlot[0]] - foeDamage);
+  duelState.hp[1][duelState.activeSlot[1]] = Math.max(0, duelState.hp[1][duelState.activeSlot[1]] - yourDamage);
+  syncActiveSlots(state);
+  if (yourMove) {
+    duelState.last = [yourMove.type, foeMove ? foeMove.type : null];
+    recordPlayerPick(state, yourMove.type);
+  }
   duelState.phase = 'result';
   duelState.timer = 1300;
 }
@@ -611,9 +706,9 @@ function duelUpdate(state, dt) {
   } else if (duelState.phase === 'result') {
     duelState.timer -= dt;
     if (duelState.timer <= 0) {
-      if (duelState.hp[0] <= 0 || duelState.hp[1] <= 0) {
-        state.endText = duelState.hp[0] <= 0 && duelState.hp[1] <= 0 ? 'DRAW'
-          : duelState.hp[1] <= 0 ? 'WIN' : 'LOSE';
+      if (!sideAlive(state, 0) || !sideAlive(state, 1)) {
+        state.endText = !sideAlive(state, 0) && !sideAlive(state, 1) ? 'DRAW'
+          : !sideAlive(state, 1) ? 'WIN' : 'LOSE';
         state.scene = 'end';
       } else {
         duelState.round += 1;
@@ -651,10 +746,14 @@ function step(state, input) {
       if (state.mode === 'duel') {
         const duelState = state.duelState;
         if (duelState.phase === 'choice') {
-          const count = Math.max(1, duelOptions(state, 0).length);
+          const options = duelOptions(state, 0);
+          const showSwap = duelState.hp[0][1 - duelState.activeSlot[0]] > 0;
+          const count = Math.max(1, options.length + (showSwap ? 1 : 0));
           if (edge === 'left' || edge === 'up') duelState.cursor = (duelState.cursor + count - 1) % count;
           else if (edge === 'right' || edge === 'down') duelState.cursor = (duelState.cursor + 1) % count;
-          else if (edge === 'a' && duelOptions(state, 0).length) duelPick(state, duelState.cursor);
+          else if (edge === 'a' && options.length) {
+            duelPick(state, duelState.cursor >= options.length ? -1 : duelState.cursor);
+          }
         }
       } else {
         const battleState = state.battle;
@@ -724,8 +823,8 @@ function drawSprite(ctx, state, file, x, y) {
 
 // Type badges pinned to the creature art: black plate + white icon so the
 // creature's type is readable without leaving the sprite.
-function drawTypeBadges(ctx, state) {
-  const foe = creature(state.foeIndex), you = creature(state.youIndex);
+function drawTypeBadges(ctx, state, foeOverride, youOverride) {
+  const foe = foeOverride || creature(state.foeIndex), you = youOverride || creature(state.youIndex);
   const draw = (types, side) => {
     types.slice(0, 2).forEach((type, index) => {
       const x = side === 0 ? 1 + index * 12 : 113 - index * 12;
@@ -835,19 +934,24 @@ function drawEnd(ctx, state) {
 function drawDuelMoveRow(ctx, state) {
   const duelState = state.duelState;
   const options = duelOptions(state, 0);
-  const count = Math.max(1, Math.min(options.length, 4));
+  const showSwap = duelState.hp[0][1 - duelState.activeSlot[0]] > 0;
+  const count = Math.max(1, Math.min(options.length + (showSwap ? 1 : 0), 5));
   const cell = Math.floor(120 / count);
   for (let index = 0; index < count; index++) {
-    const option = options[index];
     const x = 4 + index * cell, y = 48;
     const selected = duelState.cursor === index;
     if (selected) rect(ctx, x, y, cell - 2, 14, true);
-    drawIcon(ctx, typeIcon(option.type), x + Math.floor((cell - 2 - 8) / 2), y + 2, !selected);
-    // Pick markers per cell: ✱ affinity (power spelling), ↑ creature-type bonus.
-    let marker = null;
-    if (state.duel.scoring === 'power' && duelOptionAffinity(state, 0, option)) marker = '*';
-    else if (state.duel.scoring === 'bonus' && duelCreatureBonus(state, 0, option.type) > 1) marker = 'up';
-    if (marker) drawSymbol(ctx, marker, x + cell - 10, y + 2, !selected);
+    if (index < options.length) {
+      const option = options[index];
+      drawIcon(ctx, typeIcon(option.type), x + Math.floor((cell - 2 - 8) / 2), y + 2, !selected);
+      // Pick markers per cell: ✱ affinity (power spelling), ↑ creature-type bonus.
+      let marker = null;
+      if (state.duel.scoring === 'power' && duelOptionAffinity(state, 0, option)) marker = '*';
+      else if (state.duel.scoring === 'bonus' && duelCreatureBonus(state, 0, option.type) > 1) marker = 'up';
+      if (marker) drawSymbol(ctx, marker, x + cell - 10, y + 2, !selected);
+    } else {
+      text(ctx, 'swap', x + Math.floor((cell - 2 - textWidth('swap')) / 2), y + 5, !selected);
+    }
   }
 }
 
@@ -869,18 +973,21 @@ function drawDuelFeedback(ctx, state) {
 
 function drawDuel(ctx, state) {
   const duelState = state.duelState;
-  const you = creature(state.youIndex), foe = creature(state.foeIndex);
+  const you = duelCreature(state, 0), foe = duelCreature(state, 1);
   drawSprite(ctx, state, foe.front, 0, 0);
   drawSprite(ctx, state, you.back, 80, 0);
-  drawTypeBadges(ctx, state);
+  drawTypeBadges(ctx, state, foe, you);
   const showFoe = state.trim.foeNumbers;
-  drawHpPanel(ctx, 0, foe, duelState.hp[1], showFoe);
-  drawHpPanel(ctx, 1, you, duelState.hp[0], true);
+  drawHpPanel(ctx, 0, foe, duelState.hp[1][duelState.activeSlot[1]], showFoe);
+  drawHpPanel(ctx, 1, you, duelState.hp[0][duelState.activeSlot[0]], true);
   if (duelState.phase === 'choice') {
     const options = duelOptions(state, 0);
     text(ctx, `R${num(duelState.round)}`, 48, 41, true);
-    const option = options[Math.min(duelState.cursor, options.length - 1)];
-    if (option) {
+    const onSwap = duelState.cursor >= options.length;
+    const option = onSwap ? null : options[Math.min(duelState.cursor, options.length - 1)];
+    if (onSwap) {
+      text(ctx, 'swap', 60, 41, true);
+    } else if (option) {
       drawIcon(ctx, typeIcon(option.type), 60, 40);
       if (state.duel.scoring === 'power' && option.power != null) {
         const label = num(option.power);
@@ -1033,6 +1140,7 @@ if (typeof module !== 'undefined' && module.exports) {
     duelMoves, wheelValue, wheelBeats, hasAffinity, duelCreatureBonus,
     duelKind, stanceSet, stanceBeats, duelOptions, duelOptionAffinity,
     DUEL_PERSONAS, duelPersona, predictPlayerType, counterOptions, recordPlayerPick,
+    duelCreature, duelBench, benchCounterExists, sideAlive, isSwitchPick,
     creature, moveOf, activeMode, typesOf, drawIcon, text, glyphRows,
     ICONS, MERGED_ICONS, SYMBOLS, DATA, W, H, SPRITE_BASE, isSpikeMove,
   };

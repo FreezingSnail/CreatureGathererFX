@@ -15,7 +15,7 @@ export function loadMock() {
   return require(path.join(repo, 'mock/battle-mock.js'));
 }
 
-// Mixed matchup (both sides can win cells under the bonus spelling):
+// Balanced 1v1 matchup (used with partySize 1 to isolate the read model):
 // player ScrambleSnail [wind, plant] vs AI ScatterCrab [earth, lightning].
 export const SPIKE_MATCHUP = { you: 'ScrambleSnail', foe: 'ScatterCrab' };
 
@@ -23,6 +23,16 @@ function playerPick(mock, state, policy, rng) {
   const options = mock.duelOptions(state, 0);
   if (options.length <= 1 || policy === 'random') return rng.int(options.length);
   const lastAi = state.duelState.last[1];
+  if (policy === 'swap') {
+    const lastAiType = state.duelState.last[1];
+    if (lastAiType && !options.some((option) => mock.wheelBeats(option.type, lastAiType))) {
+      const bench = mock.duelBench(state, 0);
+      const benchMoves = bench ? bench.moves.filter((id) => id != null).map((id) => mock.DATA.moves[id])
+        .filter((move) => move.type !== 'status' && move.type !== 'none') : [];
+      if (benchMoves.some((move) => mock.wheelBeats(move.type, lastAiType))) return -1;
+    }
+    return rng.int(options.length);
+  }
   if (policy === 'counter' && lastAi) {
     const counters = options
       .map((option, index) => ({ option, index }))
@@ -50,6 +60,7 @@ export function playDuel({ persona, readRate, policy, seed, matchup = SPIKE_MATC
     seed,
     aiRead: readRate,
     aiPersona: persona,
+    partySize: 1, // isolate the read model from bench pairings
   });
   mock.startBattle(state);
   let rngState = (seed * 2654435761) >>> 0 || 1;
@@ -86,7 +97,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const battles = arg('battles', 200);
   const rates = [0, 25, 50, 75, 100];
   const personas = ['reader', 'frequency', 'anti-repeat', 'exploiter'];
-  const policies = ['random', 'counter', 'anti-repeat'];
+  const policies = ['random', 'counter', 'anti-repeat', 'swap'];
   console.log(`matchup ${SPIKE_MATCHUP.you} (player) vs ${SPIKE_MATCHUP.foe} (AI), ${battles} duels/cell`);
   for (const persona of personas) {
     for (const policy of policies) {

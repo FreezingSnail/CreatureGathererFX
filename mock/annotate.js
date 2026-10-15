@@ -33,17 +33,17 @@
     ['7', scoring === 'power'
       ? 'Selected move: type icon + power.'
       : 'Selected move: type icon only — moves carry no power in this spelling.'],
-    ['8', 'Your picks — the creature\'s attack moves (status moves excluded); the white box is the cursor.'],
+    ['8', 'Your picks — attack moves plus the swap cell (bench creature); the white box is the cursor. Switching forfeits the round: the other side lands a default win.'],
     ['9', scoring === 'power'
       ? '✱ on a cell = affinity (move type is your creature\'s type), ×1.5.'
       : scoring === 'bonus'
         ? '↑ on a cell = your move type beats the foe creature\'s type: a winning hit does ×1.5.'
         : 'No markers in this spelling — power and affinity are ignored.'],
     ['10', scoring === 'flat'
-      ? 'Result — RPS WIN / RPS LOSE (flat 14 / 4) or TRADE (6 both).'
+      ? 'Result — RPS WIN / RPS LOSE (flat 14 / 4), TRADE (6 both), or DEFAULT WIN (14) when the other side swaps.'
       : scoring === 'bonus'
-        ? 'Result — BONUS WIN / BONUS LOSE when the ×1.5 fired (21), else RPS WIN / RPS LOSE (14); TRADE = 6 both.'
-        : 'Result — WHEEL WIN / WHEEL LOSE (damage scales with power) or TRADE.'],
+        ? 'Result — BONUS WIN / BONUS LOSE when the ×1.5 fired (21), else RPS WIN / RPS LOSE (14); TRADE = 6 both; DEFAULT WIN = 14/21 when the other side swaps.'
+        : 'Result — WHEEL WIN / WHEEL LOSE (damage scales with power), TRADE, or DEFAULT WIN when the other side swaps.'],
     ['11', 'AI READ — appears when the AI countered your previous type at the read rate.'],
   ];
 
