@@ -38,6 +38,9 @@ const DATA = (typeof module !== 'undefined' && module.exports && typeof require 
 const MATRIX_DATA = (typeof module !== 'undefined' && module.exports && typeof require === 'function')
   ? require('./matrices.js')
   : (typeof window !== 'undefined' ? window.CGFX_MATRICES : null);
+const TEAM_DATA = (typeof module !== 'undefined' && module.exports && typeof require === 'function')
+  ? require('./teams.js')
+  : (typeof window !== 'undefined' ? window.CGFX_TEAMS : null);
 
 const W = 128, H = 64;
 const SPRITE_BASE = '../docs/assets/battle-sprites48/';
@@ -161,6 +164,8 @@ function newMock(options = {}) {
       kind: options.duelKind || 'wheel', // wheel | stances
       scoring: options.scoring || 'power', // power | flat (pure) | bonus (recommended)
       matrixId: options.matrixId || '8', // type-count table: 8 | 6 | 5 | 4
+      presetYou: options.presetYou || null, // authored sample team id, or null = random
+      presetFoe: options.presetFoe || null,
       teamSize: options.teamSize || 3, // 3v3 by default; 1 = benchless spike mode
       aiPersona: options.aiPersona || 'reader',
       stances: options.stances || 3,
@@ -197,11 +202,15 @@ function startBattle(state) {
   state.rng = makeRng(state.seed);
   const you = creature(state.youIndex), foe = creature(state.foeIndex);
   if (state.mode === 'duel') {
-    // Teams are rolled from the battle seed: 3v3 by default, benchless at 1.
-    const youParty = rollTeam(state, state.duel.teamSize);
-    const foeParty = rollTeam(state, state.duel.teamSize);
+    // Teams are rolled from the battle seed (3v3 by default) unless an authored
+    // preset is selected; presets carry retyped member types for the matchup.
+    const youPreset = presetTeam(state, state.duel.presetYou);
+    const foePreset = presetTeam(state, state.duel.presetFoe);
+    const youParty = youPreset ? youPreset.indices : rollTeam(state, state.duel.teamSize);
+    const foeParty = foePreset ? foePreset.indices : rollTeam(state, state.duel.teamSize);
     state.duelState = {
       partyIndex: [youParty, foeParty],
+      partyTypes: [youPreset ? youPreset.types : null, foePreset ? foePreset.types : null],
       activeSlot: [0, 0],
       hp: [
         youParty.map((index) => creature(index).maxHp),
@@ -413,6 +422,30 @@ function rollTeam(state, count) {
   return picks;
 }
 
+// Authored sample team -> member indices plus retyped member types (or null for
+// a random roll). Returns null when the preset is unknown.
+function presetTeam(state, presetId) {
+  const teams = TEAM_DATA && TEAM_DATA.teams ? TEAM_DATA.teams : [];
+  const team = teams.find((entry) => entry.id === presetId);
+  if (!team) return null;
+  const indices = team.members.map((member) => DATA.creatures.findIndex((entry) => entry.name === member.creature));
+  if (indices.some((index) => index < 0)) return null; // authored data is validated by tests
+  return { indices, types: team.members.map((member) => member.type), name: team.name };
+}
+
+// Effective creature types for the duel: retyped override when the party came
+// from a preset, otherwise the folded raw types of the active creature.
+function duelTypeList(state, side) {
+  const slot = state.duelState.activeSlot[side];
+  const overrideSlots = state.duelState.partyTypes ? state.duelState.partyTypes[side] : null;
+  const override = overrideSlots ? overrideSlots[slot] : null;
+  if (override) return [override];
+  const matrix = duelMatrix(state);
+  const raw = duelCreature(state, side).types;
+  const folded = raw.map((type) => foldType(matrix, type)).filter((type) => matrix.order.includes(type));
+  return folded.length ? [...new Set(folded)] : raw;
+}
+
 const duelCreature = (state, side) => {
   const party = state.duelState.partyIndex[side];
   return creature(party[state.duelState.activeSlot[side]]);
@@ -474,7 +507,7 @@ function duelOptionAffinity(state, side, option) {
   const creature_ = duelCreature(state, side);
   return duelKind(state) === 'stances'
     ? creature_.merged[0] === option.type
-    : creature_.types.includes(option.type);
+    : duelTypeList(state, side).includes(option.type);
 }
 // AI personas: trainer groups reuse these. `memory` picks how the AI guesses
 // the player's hidden type; null readRate means the window's rate slider.
@@ -604,9 +637,9 @@ const FLAT_WIN = 14, FLAT_CHIP = 4, FLAT_TRADE = 6;
 // creature's types. x1.5 when it beats any of them, x0.5 when it loses to one
 // (and beats none), else 1. Bonus and penalty both apply to the damage dealt.
 function duelCreatureBonus(state, side, moveType) {
-  const defender = duelCreature(state, side === 0 ? 1 : 0);
-  if (defender.types.some((type) => duelBeats(state, moveType, type))) return 1.5;
-  if (defender.types.some((type) => duelValue(state, moveType, type) === 0.5)) return 0.5;
+  const defenderTypes = duelTypeList(state, side === 0 ? 1 : 0);
+  if (defenderTypes.some((type) => duelBeats(state, moveType, type))) return 1.5;
+  if (defenderTypes.some((type) => duelValue(state, moveType, type) === 0.5)) return 0.5;
   return 1;
 }
 
@@ -699,9 +732,10 @@ function duelResolve(state) {
     const attackerSide = 1 - switcher;
     const attackerMove = attackerSide === 0 ? yourMove : foeMove;
     const incoming = duelCreature(state, switcher);
+    const incomingTypes = duelTypeList(state, switcher);
     const modifier = scoring === 'bonus' && attackerMove.type
-      ? (incoming.types.some((type) => duelBeats(state, attackerMove.type, type)) ? 1.5
-        : incoming.types.some((type) => duelValue(state, attackerMove.type, type) === 0.5) ? 0.5 : 1)
+      ? (incomingTypes.some((type) => duelBeats(state, attackerMove.type, type)) ? 1.5
+        : incomingTypes.some((type) => duelValue(state, attackerMove.type, type) === 0.5) ? 0.5 : 1)
       : 1;
     const hit = Math.max(1, Math.round(FLAT_WIN * modifier));
     if (attackerSide === 0) yourDamage = hit; else foeDamage = hit;
@@ -898,7 +932,7 @@ function drawSprite(ctx, state, file, x, y) {
 
 // Type badges pinned to the creature art: black plate + white icon so the
 // creature's type is readable without leaving the sprite.
-function drawTypeBadges(ctx, state, foeOverride, youOverride) {
+function drawTypeBadges(ctx, state, foeOverride, youOverride, foeTypes, youTypes) {
   const foe = foeOverride || creature(state.foeIndex), you = youOverride || creature(state.youIndex);
   const draw = (types, side) => {
     types.slice(0, 2).forEach((type, index) => {
@@ -908,8 +942,8 @@ function drawTypeBadges(ctx, state, foeOverride, youOverride) {
       drawIcon(ctx, typeIcon(type), x + 1, 38, true);
     });
   };
-  draw(typesOf(foe, activeMode(state)), 0);
-  draw(typesOf(you, activeMode(state)), 1);
+  draw(foeTypes || typesOf(foe, activeMode(state)), 0);
+  draw(youTypes || typesOf(you, activeMode(state)), 1);
 }
 
 function drawHpPanel(ctx, side, creature_, hp, showNumbers) {
@@ -1067,7 +1101,7 @@ function drawDuel(ctx, state) {
   const you = duelCreature(state, 0), foe = duelCreature(state, 1);
   drawSprite(ctx, state, foe.front, 0, 0);
   drawSprite(ctx, state, you.back, 80, 0);
-  drawTypeBadges(ctx, state, foe, you);
+  drawTypeBadges(ctx, state, foe, you, duelTypeList(state, 1), duelTypeList(state, 0));
   const showFoe = state.trim.foeNumbers;
   drawHpPanel(ctx, 0, foe, duelState.hp[1][duelState.activeSlot[1]], showFoe);
   drawHpPanel(ctx, 1, you, duelState.hp[0][duelState.activeSlot[0]], true);
@@ -1182,6 +1216,28 @@ function boot() {
     if (state.mode === 'duel') state.scene = 'setup';
     syncControls();
   });
+  // Sample-team selects are populated from the authored team data.
+  const teams = TEAM_DATA && TEAM_DATA.teams ? TEAM_DATA.teams : [];
+  for (const id of ['team-you', 'team-foe']) {
+    const select = control(id);
+    if (!select || typeof document.createElement !== 'function' || typeof select.appendChild !== 'function') continue;
+    for (const team of teams) {
+      const option = document.createElement('option');
+      option.value = team.id;
+      option.textContent = team.name;
+      select.appendChild(option);
+    }
+  }
+  wire('team-you', 'change', (event) => {
+    state.duel.presetYou = event.target.value || null;
+    if (state.mode === 'duel') state.scene = 'setup';
+    syncControls();
+  });
+  wire('team-foe', 'change', (event) => {
+    state.duel.presetFoe = event.target.value || null;
+    if (state.mode === 'duel') state.scene = 'setup';
+    syncControls();
+  });
   wire('duel-read', 'input', (event) => { state.duel.aiRead = Number(event.target.value); syncControls(); });
   wire('duel-explain', 'change', (event) => { state.duel.explain = event.target.checked; });
   wire('scale', 'change', (event) => applyScale(Number(event.target.value)));
@@ -1201,6 +1257,8 @@ function boot() {
     set('duel-stances', (element) => { element.value = String(state.duel.stances); });
     set('duel-ai', (element) => { element.value = state.duel.aiPersona; });
     set('duel-matrix', (element) => { element.value = state.duel.matrixId; });
+    set('team-you', (element) => { element.value = state.duel.presetYou || ''; });
+    set('team-foe', (element) => { element.value = state.duel.presetFoe || ''; });
     set('duel-read', (element) => { element.value = String(state.duel.aiRead); });
     set('duel-explain', (element) => { element.checked = state.duel.explain; });
     set('duel-read-value', (element) => { element.textContent = `${state.duel.aiRead}%`; });
@@ -1214,7 +1272,8 @@ function boot() {
         state.mode === 'duel' && state.duel.kind === 'stances' ? `${state.duel.stances} stances ai:${state.duel.aiPersona} ${state.duel.aiRead}%` : '',
         state.mode === 'duel' && state.duel.kind === 'wheel' ? `duel wheel ${state.duel.scoring} ${state.duel.matrixId}t ai:${state.duel.aiPersona} ${state.duel.aiRead}%` : '',
         state.mode === 'duel' && state.duelState
-          ? `you:${state.duelState.partyIndex[0].map((index) => creature(index).name).join(',')} foe:${state.duelState.partyIndex[1].map((index) => creature(index).name).join(',')}`
+          ? `you:${state.duel.presetYou || 'random'} foe:${state.duel.presetFoe || 'random'} `
+            + `[${state.duelState.partyIndex[0].map((index) => creature(index).name).join(',')}]`
           : '',
         state.mode !== 'duel' ? `you:${creature(state.youIndex).name}[${count(you)}m] foe:${creature(state.foeIndex).name}[${count(foe)}m]` : '',
       ].filter(Boolean).join(' · ');
@@ -1247,7 +1306,8 @@ if (typeof module !== 'undefined' && module.exports) {
     DUEL_PERSONAS, duelPersona, predictPlayerType, counterOptions, recordPlayerPick,
     duelCreature, duelBench, benchCounterExists, benchCounterSlot, sideAlive, isSwitchPick,
     livingBenchSlots, switchTargetSlot, rollTeam, SWITCH_BASE,
-    duelMatrix, duelValue, duelBeats, foldType, MATRIX_DATA,
+    duelMatrix, duelValue, duelBeats, foldType, MATRIX_DATA, TEAM_DATA,
+    duelTypeList, presetTeam,
     creature, moveOf, activeMode, typesOf, drawIcon, text, glyphRows,
     ICONS, MERGED_ICONS, SYMBOLS, DATA, W, H, SPRITE_BASE, isSpikeMove,
   };

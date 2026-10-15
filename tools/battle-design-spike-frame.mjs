@@ -141,8 +141,9 @@ export function createHarness(options = {}) {
   const dataSource = fs.readFileSync(path.join(repo, 'mock/data.js'), 'utf8');
   const iconsSource = fs.readFileSync(path.join(repo, 'mock/icons.js'), 'utf8');
   const matricesSource = fs.readFileSync(path.join(repo, 'mock/matrices.js'), 'utf8');
+  const teamsSource = fs.readFileSync(path.join(repo, 'mock/teams.js'), 'utf8');
   const mockSource = fs.readFileSync(path.join(repo, 'mock/battle-mock.js'), 'utf8');
-  vm.runInContext(`${dataSource}\n${iconsSource}\n${matricesSource}\n${mockSource}`, context, { filename: 'battle-mock.js' });
+  vm.runInContext(`${dataSource}\n${iconsSource}\n${matricesSource}\n${teamsSource}\n${mockSource}`, context, { filename: 'battle-mock.js' });
 
   const KEY_ALIASES = {
     left: 'ArrowLeft', right: 'ArrowRight', up: 'ArrowUp', down: 'ArrowDown',

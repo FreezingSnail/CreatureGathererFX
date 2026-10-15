@@ -151,3 +151,13 @@ the folded types and classifies every matchup (run the tool for the full table):
 - Roster team counts per composition sum to C(64,3) = 41,664 in every table; the smallest pools are
   mono-flame (120 teams) and mono-earth/mono-fire (120) — no composition is unfillable.
 
+
+## Sample teams (5-type focus)
+
+`mock/teams.js` authors five sample teams from the census shapes: balanced
+(water+earth+plant), double anchor (water x2 + earth), support stack (spirit+fire+water), a retyped
+showcase (OrbitRelic retyped to water) and a mono-earth trap. Every duel window has **your team** and
+**foe team** selects — a preset team starts with those exact members and the chosen table, while
+"random 3v3" rolls from the seed. Preset members carry **retyped types**: the retype drives badges,
+matchup modifiers (↑/↓) and default-win checks, while each creature keeps its own moves, power and
+stats. Team data is validated by tests (ids, three real creatures per team, five-type member names).

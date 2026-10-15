@@ -90,6 +90,15 @@ harness.press('z');
 harness.advances(8, 100);
 writePreview(harness, 'duel-result.png');
 
+// Sample-team frame: 5-type table, balanced vs anchors presets.
+const teamHarness = createHarness({ mode: 'duel', duel: 'wheel', scoring: 'bonus', search: '?seed=21&matrix=5' });
+teamHarness.advances(2);
+teamHarness.setControl('team-you', 'balanced');
+teamHarness.setControl('team-foe', 'anchors');
+teamHarness.press('z');
+teamHarness.advances(2);
+writePreview(teamHarness, 'duel-teams.png');
+
 // Mode E: pure RPS (same web, flat scoring) in its own harness.
 // Mirror matchup (ember vs ember) so the trade frame is unmistakable on the card.
 const pureHarness = createHarness({ mode: 'duel', duel: 'wheel', scoring: 'flat', search: '?seed=13' });
