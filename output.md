@@ -9446,3 +9446,25 @@ node --test tools/tests/battle-matchup-solver_test.mjs     -> 4 pass / 0 fail
 node --test tools/tests/battle-design-spike-matrix_test.mjs-> 3 pass / 0 fail
 node tools/battle-design-spike-preview.mjs                 -> swap cell visible in duel frames
 ```
+
+# CreatureGathererFX-zl7e
+
+Matchup chart headers now use the type sprites.
+
+- Icon art moved to `mock/icons.js` (UMD: window.CGFX_ICONS / module.exports); battle-mock.js
+  consumes it in both environments, so badges, cells, centre strip and the chart share one source.
+- matrix.js renders row/column headers as the 8x8 art drawn to a data-URI sprite (18px, pixelated,
+  type name kept as alt/title); falls back to text headers when canvas is unavailable.
+- Pages load icons.js before battle-mock.js (all six windows) and before matrix.js (launcher);
+  frame harness runs icons.js in its VM context.
+
+```text
+node --test tools/tests/battle-design-spike-matrix_test.mjs -> 5 pass / 0 fail (sprite headers + text fallback)
+node --test mock/battle-mock.test.js                        -> 27 pass / 0 fail
+node --test tools/tests/battle-design-spike-frame_test.mjs  -> 8 pass / 0 fail
+node --test tools/tests/battle-design-spike-annotate_test.mjs -> 5 pass / 0 fail
+node --test tools/tests/battle-duel-spike_test.mjs          -> 4 pass / 0 fail
+node --test tools/tests/battle-design-spike-data_test.mjs   -> 8 pass / 0 fail
+node --test tools/tests/battle-matchup-solver_test.mjs      -> 4 pass / 0 fail
+node tools/battle-design-spike-preview.mjs                  -> frames unchanged (canvas sprites already used the art)
+```
