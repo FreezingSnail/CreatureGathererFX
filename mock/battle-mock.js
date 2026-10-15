@@ -774,10 +774,16 @@ function drawDuelMoveRow(ctx, state) {
   const count = Math.max(1, Math.min(options.length, 4));
   const cell = Math.floor(120 / count);
   for (let index = 0; index < count; index++) {
+    const option = options[index];
     const x = 4 + index * cell, y = 48;
     const selected = duelState.cursor === index;
     if (selected) rect(ctx, x, y, cell - 2, 14, true);
-    drawIcon(ctx, typeIcon(options[index].type), x + Math.floor((cell - 2 - 8) / 2), y + 2, !selected);
+    drawIcon(ctx, typeIcon(option.type), x + Math.floor((cell - 2 - 8) / 2), y + 2, !selected);
+    // Pick markers per cell: ✱ affinity (power spelling), ↑ creature-type bonus.
+    let marker = null;
+    if (state.duel.scoring === 'power' && duelOptionAffinity(state, 0, option)) marker = '*';
+    else if (state.duel.scoring === 'bonus' && duelCreatureBonus(state, 0, option.type) > 1) marker = 'up';
+    if (marker) drawSymbol(ctx, marker, x + cell - 10, y + 2, !selected);
   }
 }
 
@@ -811,10 +817,11 @@ function drawDuel(ctx, state) {
     text(ctx, `R${num(duelState.round)}`, 48, 41, true);
     const option = options[Math.min(duelState.cursor, options.length - 1)];
     if (option) {
-      drawIcon(ctx, typeIcon(option.type), 62, 40);
-      if (state.duel.scoring !== 'flat' && option.power != null) text(ctx, num(option.power), 72, 41, true);
-      if (state.duel.scoring === 'power' && duelOptionAffinity(state, 0, option)) drawSymbol(ctx, '*', 82, 41, true);
-      if (state.duel.scoring === 'bonus' && duelCreatureBonus(state, 0, option.type) > 1) drawSymbol(ctx, 'up', 82, 41, true);
+      drawIcon(ctx, typeIcon(option.type), 60, 40);
+      if (state.duel.scoring !== 'flat' && option.power != null) {
+        const label = num(option.power);
+        text(ctx, label, 80 - textWidth(label), 41, true);
+      }
     }
     drawDuelMoveRow(ctx, state);
   } else {
