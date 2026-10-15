@@ -10,7 +10,8 @@ import { createHarness, writePreview } from './battle-design-spike-frame.mjs';
 
 const repo = path.dirname(fileURLToPath(import.meta.url)) + '/..';
 const require = createRequire(import.meta.url);
-const { ICONS, MERGED_ICONS } = require(path.join(repo, 'mock/battle-mock.js'));
+const { ICONS, MERGED_ICONS, DATA } = require(path.join(repo, 'mock/battle-mock.js'));
+const creatureIndex = (name) => DATA.creatures.findIndex((entry) => entry.name === name);
 
 const harness = createHarness();
 const settle = (frames = 3, step = 150) => harness.advances(frames, step);
@@ -90,22 +91,29 @@ harness.advances(8, 100);
 writePreview(harness, 'duel-result.png');
 
 // Mode E: pure RPS (same web, flat scoring) in its own harness.
+// Mirror matchup (ember vs ember) so the trade frame is unmistakable on the card.
 const pureHarness = createHarness({ mode: 'duel', duel: 'wheel', scoring: 'flat' });
 pureHarness.advances(2);
+pureHarness.state().foeIndex = pureHarness.state().youIndex;
 pureHarness.press('z');
 pureHarness.advances(2);
 writePreview(pureHarness, 'duel-pure-choice.png');
 pureHarness.press('z');
+pureHarness.state().duelState.picks = [0, 0]; // both fire -> trade
 pureHarness.advances(8, 100);
 writePreview(pureHarness, 'duel-pure-result.png');
 
-// Mode F: creature-type bonus scoring.
+// Mode F: creature-type bonus scoring, water attacker vs fire target so the x1.5 bonus fires.
 const bonusHarness = createHarness({ mode: 'duel', duel: 'wheel', scoring: 'bonus' });
 bonusHarness.advances(2);
+const bonusState = bonusHarness.state();
+bonusState.youIndex = creatureIndex('bigsquid');
+bonusState.foeIndex = creatureIndex('ember');
 bonusHarness.press('z');
 bonusHarness.advances(2);
 writePreview(bonusHarness, 'duel-bonus-choice.png');
 bonusHarness.press('z');
+bonusHarness.state().duelState.picks = [0, 0]; // splash vs stoke: water beats fire, creature bonus
 bonusHarness.advances(8, 100);
 writePreview(bonusHarness, 'duel-bonus-result.png');
 

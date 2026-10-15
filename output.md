@@ -9280,3 +9280,28 @@ node tools/battle-design-spike-preview.mjs                 -> duel-bonus preview
 Tests prove: hedge (plant) — bonus replaces STAB, equal damage to power mode; zip (lightning, spirit
 move) — win without creature bonus lands power/1.5, so bonus mode correctly drops STAB; helper
 multiplier 1.5 vs 1. Badge pixels asserted in frame tests; icons sheet re-rendered for review.
+
+# CreatureGathererFX-ze1h
+
+Launcher clarity for the duel spellings (owner: "why duplicates", "which is which", "what are these
+symbols").
+
+- D/E/F share layout, web, sprites and badges, so choice-phase previews looked duplicated. Launcher
+  cards now carry explicit "look for" lines and D/E/F previews show distinct real result states:
+  D ember-vs-snail power win, E ember-vs-ember mirror TRADE -6 -6, F bigsquid water-vs-ember bonus
+  WHEEL WIN.
+- Symbol decode in the window notes: centre strip is R# round / move-type icon / power (0 = utility),
+  and per-cell markers now live on the move cells (✱ affinity under the power spelling, ↑ creature
+  bonus under the bonus spelling) instead of floating right of the strip.
+- Marker relocation removed the "+0" ambiguity the owner hit with bell's Sharpen (status icon + zero
+  power in the font's curly zero glyph).
+- Trim, power, pure and bonus windows each document the centre strip; trim also notes ✱ = unlimited uses.
+
+```text
+node tools/battle-design-spike-preview.mjs                 -> duel-pure/bonus previews are now distinct states
+node --test mock/battle-mock.test.js                       -> 21 pass / 0 fail
+node --test tools/tests/battle-design-spike-frame_test.mjs -> 8 pass / 0 fail
+node --test tools/tests/battle-design-spike-data_test.mjs  -> 8 pass / 0 fail
+node --test tools/tests/battle-matchup-solver_test.mjs     -> 4 pass / 0 fail
+node --test tools/tests/battle-design-spike-matrix_test.mjs-> 3 pass / 0 fail
+```

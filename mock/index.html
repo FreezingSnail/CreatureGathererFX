@@ -40,22 +40,25 @@
       <h3>D · duel power — moves with damage</h3>
       <img src="../docs/assets/battle-design-spike/duel-choice.png" alt="wheel duel frame">
       <p>Both pick hidden from their own creature's equipped moves; the 8-type web decides:
-        win = full hit scaled by move power (×1.5 affinity), lose = blocked + chip, neutral/mirror = trade.
-        Coverage differs per creature — 15 of 64 field fewer than three moves today.</p>
+        win = full hit scaled by move power, lose = blocked + chip, neutral/mirror = trade.
+        <b>Look for:</b> the power number in the centre and ✱ beside it on an affinity pick;
+        lines read WHEEL WIN / WHEEL LOSE.</p>
       <button type="button" data-variant="duel">open power window</button>
     </div>
     <div class="card">
       <h3>E · duel pure RPS — relation only</h3>
-      <img src="../docs/assets/battle-design-spike/duel-pure-choice.png" alt="pure RPS duel frame">
+      <img src="../docs/assets/battle-design-spike/duel-pure-result.png" alt="pure RPS mirror-trade frame">
       <p>Same web, same picks, but power, stats and affinity are ignored: win = flat 14, loss = chip 4,
-        trade = 6 both. Play D and E side by side to judge whether the numbers add decisions or noise.</p>
+        trade = 6 both. <b>Look for:</b> no power number, lines read RPS WIN / RPS LOSE, and the
+        ember-vs-ember preview trades for -6 -6.</p>
       <button type="button" data-variant="duel-pure">open pure window</button>
     </div>
     <div class="card">
       <h3>F · duel bonus — matchup vs the creature's type</h3>
-      <img src="../docs/assets/battle-design-spike/duel-bonus-choice.png" alt="creature-bonus duel frame">
-      <p>Clash decides win/lose/trade, power still scales damage, but a move whose type beats the opposing
-        creature's type hits ×1.5 (marked ↑). Type badges on each sprite show both creatures' types.</p>
+      <img src="../docs/assets/battle-design-spike/duel-bonus-result.png" alt="creature-bonus duel frame">
+      <p>Clash decides win/lose/trade and power still scales damage, but a move whose type beats the
+        opposing creature's type hits ×1.5. <b>Look for:</b> ↑ beside the power number (bonus active),
+        ✱ never appears here; preview shows bigsquid's water beating ember's fire.</p>
       <button type="button" data-variant="duel-bonus">open bonus window</button>
     </div>
   </div>
