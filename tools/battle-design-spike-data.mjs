@@ -8,6 +8,15 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { decodePng } from './creature-sprite-export.mjs';
+import {
+  chartFromEdges,
+  triangles,
+  unsatisfiedDemands,
+  rosterSets,
+} from './battle-matchup-solver.mjs';
+import { WHEEL } from './battle-wheel.mjs';
+
+export { WHEEL };
 
 const repo = path.dirname(fileURLToPath(import.meta.url)) + '/..';
 export const OUTPUT = 'mock/data.js';
@@ -28,13 +37,11 @@ export const MERGED = {
   cycle: ['flame', 'bloom', 'tide', 'stone'],
 };
 
-// 8-type wheel for the simultaneous-pick duel: each type beats exactly the next
-// entry (clockwise) and loses to the previous one; everything else is neutral.
-// One ring diagram teaches the entire 8x8 matrix, and no cell is immunity.
-export const WHEEL = {
-  order: ['wind', 'earth', 'lightning', 'water', 'fire', 'plant', 'spirit', 'elder'],
-};
-
+// 8-type matchup web for the simultaneous-pick duel: a directed graph of
+// "beats" edges made of overlapping 3-cycles; undecided pairs stay neutral.
+// Edges live in tools/battle-wheel.mjs; the solver
+// (tools/battle-matchup-solver.mjs) proves every roster move-set pair has at
+// least one positive matchup and proposes fixes for violations.
 const STAT_EFFECTS = ['ATKUP', 'SPDUP', 'DEFUP', 'SPCAUP', 'ATKDWN', 'SPDDWN'];
 
 function readJson(relative) {
@@ -169,10 +176,23 @@ export function buildSpikeData() {
       map: MERGED.map,
       chart: cycleChart(MERGED.order),
     },
-    wheel: {
-      order: WHEEL.order,
-      chart: cycleChart(WHEEL.order),
-    },
+    wheel: (() => {
+      const chart = chartFromEdges(WHEEL.order, WHEEL.edges);
+      const sets = rosterSets(creatures, moves, WHEEL.order);
+      const unsatisfied = unsatisfiedDemands(WHEEL.order, chart, sets);
+      if (unsatisfied.length) {
+        const first = unsatisfied.slice(0, 6)
+          .map(({ a, b }) => `${a.name} [${a.types.join('/')}] vs ${b.name} [${b.types.join('/')}]`)
+          .join('; ');
+        throw Error(`wheel coverage: ${unsatisfied.length} set pairs have no positive matchup: ${first}`);
+      }
+      return {
+        order: WHEEL.order,
+        edges: WHEEL.edges,
+        chart,
+        cycles: triangles(WHEEL.order, chart),
+      };
+    })(),
     font: { firstChar, width: 5, height: 6, glyphs },
     moves,
     creatures,

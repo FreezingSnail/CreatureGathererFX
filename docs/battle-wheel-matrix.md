@@ -1,77 +1,75 @@
-# Eight-type battle wheel (matchup matrix proposal)
+# Eight-type matchup web (matrix proposal)
 
 Status: spike proposal for the simultaneous-pick duel, 2026-10-14. Source of truth is
-`WHEEL` in `tools/battle-design-spike-data.mjs`, generated into `mock/data.js`; playable in
-`mock/duel.html`. Not adopted into firmware or the shipping damage chart.
+`tools/battle-wheel.mjs` (`WHEEL`), solved by `tools/battle-matchup-solver.mjs` /
+`tools/battle-wheel-solve.mjs`, generated into `mock/data.js`, playable in `mock/duel.html`.
+Not adopted into firmware or the shipping damage chart.
 
 The matrix renders as an x/y table (rows attack columns: ▲ win, ▼ lose, · neutral) on the launcher
-and inside both duel windows, where the setup creatures' row and column stay highlighted while
-playing (`mock/matrix.js`).
+and inside both duel windows, highlighting the setup creatures' row and column (`mock/matrix.js`).
 
-## The ring
+## Shape: overlapping triangles, not a single ring
+
+The web is a directed graph of 25 "beats" edges over the 8 types — 45% of ordered pairs are
+decisive, 55% are deliberately neutral. It contains 16 three-cycles; the four seeded triangles give
+it its readable skeleton:
 
 ```
-wind > earth > lightning > water > fire > plant > spirit > elder > wind
+fire  > plant > water > fire
+earth > lightning > water > earth
+fire  > wind  > earth > fire
+plant > spirit > elder > plant
 ```
 
-Each type beats exactly the next one clockwise and loses to the previous one. Every other pair is
-neutral. The full 8×8 matrix is therefore one diagram: eight icons in a ring with one arrow each.
+Completion edges (chosen by the solver, preference-ordered for causal readability):
+`wind>spirit`, `plant>lightning`, `earth>spirit`, `spirit>water`, `lightning>wind`, `earth>plant`,
+`wind>plant`, `spirit>lightning`, `fire>spirit`, `water>wind`, `lightning>fire`, `water>elder`,
+`elder>earth`.
 
-| you | beats | loses to | neutral vs |
-| --- | --- | --- | --- |
-| wind | earth | elder | lightning, water, fire, plant, spirit |
-| earth | lightning | wind | water, fire, plant, spirit, elder |
-| lightning | water | earth | fire, plant, spirit, elder, wind |
-| water | fire | lightning | plant, spirit, elder, wind, earth |
-| fire | plant | water | spirit, elder, wind, earth, lightning |
-| plant | spirit | fire | elder, wind, earth, lightning, water |
-| spirit | elder | plant | wind, earth, lightning, water, fire |
-| elder | wind | spirit | earth, lightning, water, fire, plant |
+No immunities and no mutual edges: every cell is win, loss, or neutral. Neutral is a real state —
+not every pair should resolve.
 
-## Why a ring
+## The solver guarantee
 
-- 64 cells collapse to 8 edges; learnable from one screen. Applies to the hidden simultaneous pick
-  where both sides know each other's type but not the pick.
-- No immunity cells: every move stays a live pick. A 0× cell in a hidden-pick game is a trap
-  option that punishes reading without offering counterplay.
-- Each matchup is decisive in exactly one direction, so "who wins the clash" is always well
-  defined and mirror picks are neutral trades.
-- Firmware-cheap: the ring is 8 successor indices (~8 B) versus the 81-cell packed chart (21 B).
-  A lookup is `(defender == next[attacker]) ? win : (attacker == next[defender]) ? loss : neutral`.
+`tools/battle-matchup-solver.mjs` derives the x/y chart from the edge list and checks demands over
+the actual roster move-sets (each creature's distinct move types):
 
-## Intuition audit
+- two distinct sets must have at least one decisive edge in either direction — a positive matchup
+  always exists between the sets;
+- identical sets need an internal edge (some pick beats another pick in the same set);
+- identical singleton sets are mirrors a matrix cannot fix; the solver reports them as data issues
+  rather than inventing self-loops.
 
-Solid links (6): wind>earth (erosion), earth>lightning (grounding), lightning>water (conduction),
-water>fire (dousing), fire>plant (burning), plant>spirit (nature entangles spirits).
+`node tools/battle-wheel-solve.mjs` re-derives the web for the current roster: it seeds the four
+triangles, greedily adds the edges that satisfy the most outstanding demands (preferring edges that
+close new triangles, then causal preference, then random across restarts), and prints the edge list
+to bake into `tools/battle-wheel.mjs`. The generator refuses to build `mock/data.js` if any demand
+is unsatisfied, and the data test re-runs the proof over all 64 creatures.
 
-Weakest links (flag for the owner): spirit>elder, elder>wind. If these read badly in play, options:
-swap the two mystical types into a different ring slot, or accept them as authored lore taught by
-the ring diagram.
+Current result: 25 edges, 16 triangles, 0 unsatisfied demands over 465 unique set pairs —
+329 have mutual counterplay, 136 are one-sided (only one side has a winning pick), 0 are dead.
+Three mirror data issues remain: wind, water and plant are each carried by two singleton
+creatures, so those mirror matchups have no positive pick either way until the creatures get
+more moves. The generator refuses to build `mock/data.js` if any demand is unsatisfied, and the
+data test re-runs the proof over all 64 creatures.
 
-## Notes for the three-move creature design
+## Roster context for three-move kits
 
-Current equipped moves (level-8 generated data, 2026-10-14):
+- distinct move types per creature: 1 type ×7, 2 ×37, 3 ×18, 4 ×2. 44 creatures need an authoring
+  pass to field three distinct-type moves.
+- move-type carriers: earth 23, plant 23, water 16, elder 16, spirit 15, wind 12, lightning 12, fire 10.
+- every creature already has a STAB move (affinity ×1.5 in the duel).
 
-- distinct move types per creature: 1 type ×7, 2 ×37, 3 ×18, 4 ×2 creatures. A "three moves with
-  three distinct types" rule needs an authoring pass for 44 of 64 creatures.
-- 7 creatures carry fewer than three moves at all.
-- move-type coverage across the roster: earth 23, plant 23, water 16, elder 16, spirit 15, wind 12,
-  lightning 12, fire 10.
-- Duplicate-type kits exist (ember: two fire moves). The mock shows them as-is so the noise is
-  visible during playtests.
-- Every creature already has at least one STAB move (affinity ×1.5 in the duel).
+## Play rules as implemented in the mock
 
-## Duels mechanics as implemented in the mock
-
-- Both sides pick one of their own creature's equipped moves, hidden.
-- Reveal after 550 ms. Win = full hit based on the winning move's power (×1.5 affinity), loser
-  deals chip; neutral or mirror = trade chip both ways. Uses are not tracked in duel mode yet.
-- The AI counters your last revealed type at the read-rate slider, otherwise picks a stronger move.
+- Both sides pick one of their own creature's moves, hidden; 550 ms reveal.
+- Win = full hit based on the winning move's power (×1.5 affinity), loser chips; neutral or mirror = trade chip.
+- The AI counters your last revealed type at the read-rate slider when a counter exists in its own moves.
+- Uses are not tracked in duel mode yet.
 
 ## Open questions
 
-1. Do spirit>elder and elder>wind survive play? Flagged as arbitrary.
-2. Ring-only (6 neutral cells per row) or add a second win/loss edge per type for richer matchups?
-3. Three moves per creature: who authors the 44 reworked kits, and how is type coverage balanced
-   across the roster (fire is the thinnest at 10 carriers)?
-4. Should duplicate-type moves be deduped to the strongest per type, or kept as authored?
+1. One-sided set pairs (no winning pick, e.g. wind/plant vs fire): author moves to remove them, or accept?
+2. Edge directions flagged as arbitrary by lore review: `spirit>water`, `spirit>lightning`, `earth>plant`.
+3. Preference list for the solver is hand-ordered; confirm the causal stories or re-rank.
+4. Three moves per creature: who authors the 44 reworked kits and the coverage balance?

@@ -9167,3 +9167,34 @@ node --test tools/tests/battle-design-spike-frame_test.mjs -> 6 pass / 0 fail
 node --test tools/tests/battle-design-spike-matrix_test.mjs-> 3 pass / 0 fail (new)
 node tools/battle-design-spike-preview.mjs                 -> stances-choice/result + wheel previews regenerated
 ```
+
+# CreatureGathererFX-779x
+
+Matchup matrix reworked from a single 8-ring to a web of overlapping triangles with deliberate
+neutral gaps, plus a solver that proves the set-coverage guarantee.
+
+- `tools/battle-wheel.mjs`: 25 beats edges / 56 ordered pairs (45% decisive, 55% neutral), 16
+  triangles. Seeded with four readable triangles (fire>plant>water>fire, earth>lightning>water>earth,
+  fire>wind>earth>fire, plant>spirit>elder>plant); 13 completion edges added by the solver.
+- `tools/battle-matchup-solver.mjs`: chartFromEdges (rejects conflicts/self-edges), triangles,
+  demands/satisfied/unsatisfiedDemands, randomized-restart greedy solveWeb with 3-cycle and causal
+  preference tie-breaks, mirror-set reporting. Guarantee semantics: two distinct move-sets need a
+  decisive edge in either direction; identical multi-type sets need an internal edge; identical
+  singleton sets are reported as data issues, not matrix problems.
+- `tools/battle-wheel-solve.mjs`: re-derives the web for the current roster and prints the edge list.
+- Generator guard: mock/data.js refuses to build with any unsatisfied demand.
+- Coverage result: 0 unsatisfied demands over 465 unique set pairs (329 mutual counterplay, 136
+  one-sided, 0 dead). Mirror data issues: wind, water, plant each carried by two singleton creatures.
+
+```text
+node tools/battle-design-spike-data.mjs                     -> 64 creatures, 25-edge web emitted
+node tools/battle-wheel-solve.mjs                           -> edges 25, outstanding 0, triangles 16
+node --test mock/battle-mock.test.js                        -> 18 pass / 0 fail
+node --test tools/tests/battle-design-spike-data_test.mjs   -> 8 pass / 0 fail
+node --test tools/tests/battle-matchup-solver_test.mjs      -> 4 pass / 0 fail (new)
+node --test tools/tests/battle-design-spike-frame_test.mjs  -> 6 pass / 0 fail
+node --test tools/tests/battle-design-spike-matrix_test.mjs -> 3 pass / 0 fail
+```
+
+Lore flags for the owner: spirit>water, spirit>lightning, earth>plant direction calls; the solver's
+preference list in battle-wheel-solve.mjs is the place to re-rank them.
