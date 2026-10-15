@@ -37,12 +37,19 @@
       <button type="button" data-variant="duel-stances">open stances window</button>
     </div>
     <div class="card">
-      <h3>D · duel wheel — your creature's own moves</h3>
+      <h3>D · duel power — moves with damage</h3>
       <img src="../docs/assets/battle-design-spike/duel-choice.png" alt="wheel duel frame">
       <p>Both pick hidden from their own creature's equipped moves; the 8-type web decides:
-        win = full hit, lose = blocked + chip, neutral/mirror = trade. Coverage differs per creature —
-        current authored kits give 15 of 64 creatures fewer than three moves (some have one).</p>
-      <button type="button" data-variant="duel">open wheel window</button>
+        win = full hit scaled by move power (×1.5 affinity), lose = blocked + chip, neutral/mirror = trade.
+        Coverage differs per creature — 15 of 64 field fewer than three moves today.</p>
+      <button type="button" data-variant="duel">open power window</button>
+    </div>
+    <div class="card">
+      <h3>E · duel pure RPS — relation only</h3>
+      <img src="../docs/assets/battle-design-spike/duel-pure-choice.png" alt="pure RPS duel frame">
+      <p>Same web, same picks, but power, stats and affinity are ignored: win = flat 14, loss = chip 4,
+        trade = 6 both. Play D and E side by side to judge whether the numbers add decisions or noise.</p>
+      <button type="button" data-variant="duel-pure">open pure window</button>
     </div>
   </div>
   <h2>8-type matchup web (row attacks column)</h2>
@@ -82,7 +89,7 @@
     button.addEventListener('click', () => openVariant(button.dataset.variant));
   }
   document.getElementById('open-all').addEventListener('click', () => {
-    for (const variant of ['current', 'trim', 'duel-stances', 'duel']) openVariant(variant);
+    for (const variant of ['current', 'trim', 'duel-stances', 'duel', 'duel-pure']) openVariant(variant);
   });
 </script>
 </body>

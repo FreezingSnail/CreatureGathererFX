@@ -9226,3 +9226,28 @@ node tools/battle-design-spike-preview.mjs                 -> previews regenerat
 
 Verified with a headless bell-vs-snail frame: both cells render (spirit attack + status plus),
 cursor on the status move selects the second cell and shows power 0.
+
+# CreatureGathererFX-0tuc
+
+Two spellings of the duel spike, playable side by side:
+
+- D `mock/duel.html` — power: win = 4 + 1.2 x move power (x1.5 affinity), loser chips
+  2 + 0.25 x own power, neutral/mirror trades. Unchanged formulas, now labelled power scoring.
+- E `mock/duel-pure.html` — pure RPS: relation only, power/stats/affinity ignored. Win 14,
+  chip 4, trade 6 both (FLAT_* constants in mock/battle-mock.js).
+
+Engine: `state.duel.scoring` ('power' | 'flat') selected by the body `data-scoring` attribute; the
+AI in flat mode counters last type or picks uniformly, in power mode prefers the strongest counter.
+Pure window hides power digits and the AFF marker (they do not exist there). Launcher opens five
+windows; both duels share the web, option source and seed for direct comparison.
+
+```text
+node --test mock/battle-mock.test.js                       -> 20 pass / 0 fail (adds flat scoring test)
+node --test tools/tests/battle-design-spike-frame_test.mjs -> 7 pass / 0 fail (adds pure boot test)
+node --test tools/tests/battle-design-spike-data_test.mjs  -> 8 pass / 0 fail
+node --test tools/tests/battle-matchup-solver_test.mjs     -> 4 pass / 0 fail
+node --test tools/tests/battle-design-spike-matrix_test.mjs-> 3 pass / 0 fail
+node tools/battle-design-spike-preview.mjs                 -> duel-pure-choice/result previews added
+```
+
+Verified pure result frame headless: RPS WIN -14 -4 with flat numbers independent of move power.

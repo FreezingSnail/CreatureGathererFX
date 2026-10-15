@@ -50,8 +50,11 @@ All integers are explicitly serialized little-endian. Never persist runtime
 The occupied extent is [0, 624). The sole record address helper is
 `checkpointBase + 112 + slot * 8`, with `slot < 64` enforced before reads/writes.
 Unoccupied records have id 0xFF; other bytes are canonical zero. StoreRecord stays
-id(1), exp(2), moves(4), reserved(1). Experience determines level. The reserved
-record byte remains zero/default, not checkpoint metadata.
+id(1), exp(2), moves(4), hpEncoded(1). Experience determines level. Byte 7 is
+backward-compatible per-instance HP: zero means legacy/default full HP; values
+1 through 255 encode actual HP as `value - 1`, including KO as 1. Authored data
+must keep every supported maximum at or below 254 so the encoding is lossless.
+Tombstones always encode byte 7 as zero.
 
 The fixed 96-byte snapshot is:
 
@@ -79,8 +82,13 @@ v1/v2 saves are intentionally reset at v3. No legacy migration parser is shipped
 ## Journal and live reads
 
 Keep the existing 16-byte journal record format and op numeric values. `StoreAdd`
-also replaces the value of an occupied slot for experience/move updates. Its first
-eight payload bytes are the StoreRecord. `StoreRemove` addresses a slot.
+also replaces the value of an occupied slot for experience/move/HP updates. Its first
+eight payload bytes are the StoreRecord, including byte-7 HP. On checkpoint publication,
+current party HP from the existing 96-byte snapshot is mirrored into each matching party
+StoreRecord; boxed records retain their own byte-7 value. During journal replay, nonzero
+StoreRecord HP on a party slot supersedes an older snapshot value, while legacy zero leaves
+snapshot/PartyAssign HP authoritative. A later PartyAssign takes precedence over an earlier
+record update. `StoreRemove` addresses a slot.
 `PartyAssign` uses record.slot as the creature slot, payload[0] as party index,
 and payload[1] as the new occupant's HP. 0xFFFF is the unassign sentinel and
 requires HP zero. Runtime and boot replay both require party index < 3, a live

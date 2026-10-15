@@ -120,6 +120,7 @@ export function createHarness(options = {}) {
   documentStub.body.dataset = {};
   if (options.mode) documentStub.body.dataset.mode = options.mode;
   if (options.duel) documentStub.body.dataset.duel = options.duel;
+  if (options.scoring) documentStub.body.dataset.scoring = options.scoring;
   const windowStub = {
     addEventListener(type, handler) {
       if (!windowListeners.has(type)) windowListeners.set(type, []);
