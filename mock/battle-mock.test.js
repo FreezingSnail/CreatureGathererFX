@@ -87,6 +87,22 @@ function battleMock(options = {}) {
 // Active-slot HP accessor for duel tests.
 const hp = (state, side) => state.duelState.hp[side][state.duelState.activeSlot[side]];
 
+// Pin a duel side to exact creatures so tests stay deterministic (random team
+// rolling is covered by its own test).
+function pinTeam(state, side, indices) {
+  state.duelState.partyIndex[side] = [...indices];
+  state.duelState.hp[side] = indices.map((index) => M.creature(index).maxHp);
+  state.duelState.activeSlot[side] = 0;
+}
+
+function duelMock({ you, foe, teamSize = 1, ...options } = {}) {
+  const state = M.newMock({ mode: 'duel', teamSize, you, foe, ...options });
+  M.startBattle(state);
+  if (you != null) pinTeam(state, 0, [you]);
+  if (foe != null) pinTeam(state, 1, [foe]);
+  return state;
+}
+
 test('speed order puts the faster side first and the player wins ties', () => {
   const state = battleMock();
   state.battle.you.stats.speed = 10;
@@ -187,8 +203,7 @@ test('8-type web: overlapping triangles, no mutual edges, neutral cells kept', (
 
 test('status and utility moves are excluded from every pick list', () => {
   for (let index = 0; index < M.DATA.creatures.length; index++) {
-    const state = M.newMock({ mode: 'duel', you: index, foe: index, seed: 1 });
-    M.startBattle(state);
+    const state = duelMock({ you: index, foe: index, seed: 1 });
     for (const option of M.duelMoves(state, 0)) {
       assert.ok(option.type !== 'status' && option.type !== 'none', `${option.name} must not be a pick`);
     }
@@ -209,8 +224,7 @@ test('every move type has a drawable icon (including status and none)', () => {
 });
 
 test('duel uses each creature\'s own moves and the wheel decides the clash', () => {
-  const state = M.newMock({ mode: 'duel', you: 10, foe: 12, seed: 3 });
-  M.startBattle(state);
+  const state = duelMock({ you: 10, foe: 12, seed: 3 });
   const mine = M.duelMoves(state, 0);
   assert.deepEqual(mine.map((move) => move.type), ['fire', 'fire']);
   assert.ok(M.hasAffinity(state, 0, mine[0]), 'fire move on a fire creature is affinity');
@@ -228,20 +242,15 @@ test('duel uses each creature\'s own moves and the wheel decides the clash', () 
 });
 
 test('duel losses and trades resolve on the correct sides', () => {
-  const state = M.newMock({ mode: 'duel', you: 10, foe: 12, seed: 3 });
-  M.startBattle(state);
-  // Reverse the pick sides: used only to prove the loser branch; force by swapping creatures.
-  state.youIndex = M.DATA.creatures.findIndex((entry) => entry.name === 'hedge');
-  state.foeIndex = M.DATA.creatures.findIndex((entry) => entry.name === 'ember');
-  M.startBattle(state);
+  const index = (name) => M.DATA.creatures.findIndex((entry) => entry.name === name);
+  const state = duelMock({ you: index('hedge'), foe: index('ember'), seed: 3 });
   const beforeYou = hp(state, 0), beforeFoe = hp(state, 1);
   state.duelState.picks = [0, 0]; // plant move vs fire move: plant loses to fire
   M.duelResolve(state);
   assert.equal(state.duelState.lines[0], 'WHEEL LOSE');
   assert.ok(beforeYou - hp(state, 0) > beforeFoe - hp(state, 1), 'loser takes the full hit');
   // Trade: same type on both sides.
-  const same = M.newMock({ mode: 'duel', you: 10, foe: 10, seed: 3 });
-  M.startBattle(same);
+  const same = duelMock({ you: 10, foe: 10, seed: 3 });
   const tradeYou = hp(same, 0), tradeFoe = hp(same, 1);
   same.duelState.picks = [0, 0];
   M.duelResolve(same);
@@ -262,6 +271,20 @@ test('duel flow advances through step() edges and timers', () => {
   assert.equal(state.duelState.phase, 'choice');
 });
 
+test('teams roll 3v3 from the seed and are deterministic per seed', () => {
+  const a = M.newMock({ mode: 'duel', seed: 21 });
+  M.startBattle(a);
+  assert.equal(a.duelState.partyIndex[0].length, 3);
+  assert.equal(a.duelState.partyIndex[1].length, 3);
+  for (const side of [0, 1]) {
+    assert.equal(new Set(a.duelState.partyIndex[side]).size, 3, 'distinct members');
+    assert.deepEqual(a.duelState.hp[side], a.duelState.partyIndex[side].map((i) => M.creature(i).maxHp));
+  }
+  const b = M.newMock({ mode: 'duel', seed: 21 });
+  M.startBattle(b);
+  assert.deepEqual(a.duelState.partyIndex, b.duelState.partyIndex, 'same seed, same teams');
+});
+
 test('stance duel: cycle order, options and beats for 3 and 4 stances', () => {
   const three = M.newMock({ mode: 'duel', duelKind: 'stances', stances: 3 });
   const four = M.newMock({ mode: 'duel', duelKind: 'stances', stances: 4 });
@@ -270,16 +293,15 @@ test('stance duel: cycle order, options and beats for 3 and 4 stances', () => {
   for (const state of [three, four]) {
     const order = M.stanceSet(state);
     assert.equal(M.duelOptions(state, 0).length, order.length);
-    for (let index = 0; index < order.length; index++) {
-      assert.ok(M.stanceBeats(order, order[index], order[(index + 1) % order.length]));
-      assert.ok(!M.stanceBeats(order, order[(index + 1) % order.length], order[index]));
+    for (let position = 0; position < order.length; position++) {
+      assert.ok(M.stanceBeats(order, order[position], order[(position + 1) % order.length]));
+      assert.ok(!M.stanceBeats(order, order[(position + 1) % order.length], order[position]));
     }
   }
 });
 
 test('stance duel resolves damage with affinity on the correct sides', () => {
-  const state = M.newMock({ mode: 'duel', duelKind: 'stances', you: 10, foe: 12, seed: 3 });
-  M.startBattle(state);
+  const state = duelMock({ duelKind: 'stances', you: 10, foe: 12, seed: 3 });
   assert.equal(M.duelKind(state), 'stances');
   const beforeYou = hp(state, 0), beforeFoe = hp(state, 1);
   state.duelState.picks = [0, 1]; // flame vs bloom: flame wins
@@ -287,8 +309,7 @@ test('stance duel resolves damage with affinity on the correct sides', () => {
   assert.equal(state.duelState.lines[0], 'CLASH WIN');
   assert.ok(beforeFoe - hp(state, 1) > beforeYou - hp(state, 0), 'winner deals more than chip');
   // Mirror pick trades chip.
-  const tie = M.newMock({ mode: 'duel', duelKind: 'stances', you: 10, foe: 12, seed: 3 });
-  M.startBattle(tie);
+  const tie = duelMock({ duelKind: 'stances', you: 10, foe: 12, seed: 3 });
   const tieYou = hp(tie, 0), tieFoe = hp(tie, 1);
   tie.duelState.picks = [0, 0];
   M.duelResolve(tie);
@@ -297,20 +318,17 @@ test('stance duel resolves damage with affinity on the correct sides', () => {
 });
 
 test('pure RPS scoring ignores power and affinity with fixed damage', () => {
-  const state = M.newMock({ mode: 'duel', scoring: 'flat', you: 10, foe: 12, seed: 3 });
-  M.startBattle(state);
+  const index = (name) => M.DATA.creatures.findIndex((entry) => entry.name === name);
+  const state = duelMock({ scoring: 'flat', you: index('ember'), foe: index('hedge'), seed: 3 });
   assert.equal(state.duel.scoring, 'flat');
-  // ember wisper? no: ember stoke (fire) vs hedge root (plant): fire beats plant -> flat win.
-  state.foeIndex = M.DATA.creatures.findIndex((entry) => entry.name === 'hedge');
   const beforeYou = hp(state, 0), beforeFoe = hp(state, 1);
-  state.duelState.picks = [0, 0];
+  state.duelState.picks = [0, 0]; // stoke (fire) vs root (plant): fire beats plant -> flat win
   M.duelResolve(state);
   assert.equal(state.duelState.lines[0], 'RPS WIN');
   assert.equal(beforeFoe - hp(state, 1), 14, 'flat win damage');
   assert.equal(beforeYou - hp(state, 0), 4, 'flat chip damage');
   // Same picks, different creature/move powers: still the same fixed numbers.
-  const other = M.newMock({ mode: 'duel', scoring: 'flat', you: 63, foe: 12, seed: 3 });
-  M.startBattle(other);
+  const other = duelMock({ scoring: 'flat', you: 63, foe: index('hedge'), seed: 3 });
   const otherYou = hp(other, 0), otherFoe = hp(other, 1);
   other.duelState.picks = [0, 0]; // OrbitRelic elderBurst (elder) vs hedge root (plant)
   M.duelResolve(other);
@@ -326,9 +344,7 @@ test('pure RPS scoring ignores power and affinity with fixed damage', () => {
     assert.equal(otherFoe - hp(other, 1), 6);
   }
   // Power scoring keeps scaling with power (control).
-  const power = M.newMock({ mode: 'duel', scoring: 'power', you: 10, foe: 12, seed: 3 });
-  M.startBattle(power);
-  power.foeIndex = M.DATA.creatures.findIndex((entry) => entry.name === 'hedge');
+  const power = duelMock({ scoring: 'power', you: index('ember'), foe: index('hedge'), seed: 3 });
   power.duelState.picks = [0, 0];
   M.duelResolve(power);
   assert.equal(power.duelState.lines[0], 'WHEEL WIN');
@@ -337,8 +353,7 @@ test('pure RPS scoring ignores power and affinity with fixed damage', () => {
 test('bonus spelling: flat numbers, x1.5 only on a winning creature-matchup hit', () => {
   const index = (name) => M.DATA.creatures.findIndex((entry) => entry.name === name);
   const run = (scoring, foeIndex, pick, youIndex = index('ember')) => {
-    const state = M.newMock({ mode: 'duel', scoring, you: youIndex, foe: foeIndex, seed: 3 });
-    M.startBattle(state);
+    const state = duelMock({ scoring, you: youIndex, foe: foeIndex, seed: 3 });
     const beforeFoe = hp(state, 1), beforeYou = hp(state, 0);
     state.duelState.picks = pick;
     M.duelResolve(state);
@@ -377,11 +392,9 @@ test('bonus spelling: flat numbers, x1.5 only on a winning creature-matchup hit'
   assert.equal(foeBonus.dealt, 4);
   assert.equal(foeBonus.taken, 21);
   // Helper still reports the multiplier the cell marker uses.
-  const vsHedge = M.newMock({ mode: 'duel', scoring: 'bonus', you: index('ember'), foe: index('hedge'), seed: 1 });
-  M.startBattle(vsHedge);
+  const vsHedge = duelMock({ scoring: 'bonus', you: index('ember'), foe: index('hedge'), seed: 1 });
   assert.equal(M.duelCreatureBonus(vsHedge, 0, 'fire'), 1.5);
-  const vsZip = M.newMock({ mode: 'duel', scoring: 'bonus', you: index('ember'), foe: index('zip'), seed: 1 });
-  M.startBattle(vsZip);
+  const vsZip = duelMock({ scoring: 'bonus', you: index('ember'), foe: index('zip'), seed: 1 });
   assert.equal(M.duelCreatureBonus(vsZip, 0, 'fire'), 1);
 });
 
@@ -389,10 +402,9 @@ test('personas: frequency, anti-repeat and exploiter guess the player type', () 
   const index = (name) => M.DATA.creatures.findIndex((entry) => entry.name === name);
   const build = (persona) => {
     // Player = ember (fire moves). AI = bigsquid (water moves, beats fire).
-    const state = M.newMock({ mode: 'duel', scoring: 'bonus', you: index('ember'), foe: index('bigsquid'), seed: 9 });
+    const state = duelMock({ scoring: 'bonus', you: index('ember'), foe: index('bigsquid'), seed: 9 });
     state.duel.aiPersona = persona;
     state.duel.aiRead = 100;
-    M.startBattle(state);
     return state;
   };
   // frequency: history fire/fire/plant -> expects fire -> water beats fire.
@@ -406,7 +418,7 @@ test('personas: frequency, anti-repeat and exploiter guess the player type', () 
   anti.duelState.history = ['fire', 'plant'];
   M.duelPick(anti, 0);
   assert.equal(M.duelOptions(anti, 1)[anti.duelState.picks[1]].type, 'water');
-  // exploiter: no post-read samples -> falls back to frequency; with samples it uses them.
+  // exploiter: post-read samples override frequency.
   const exploiter = build('exploiter');
   exploiter.duelState.history = ['plant', 'plant'];
   exploiter.duelState.postReadCounts = { fire: 3 };
@@ -427,17 +439,15 @@ test('personas: frequency, anti-repeat and exploiter guess the player type', () 
 test('fallback when no counter exists is uniform random, not a boost preference', () => {
   const index = (name) => M.DATA.creatures.findIndex((entry) => entry.name === name);
   // player = ember (fire moves); AI = bell (spirit move, cannot beat fire).
-  const state = M.newMock({ mode: 'duel', scoring: 'bonus', you: index('ember'), foe: index('bell'), seed: 4 });
+  const state = duelMock({ scoring: 'bonus', you: index('ember'), foe: index('bell'), seed: 4 });
   state.duel.aiRead = 100;
   state.duel.aiPersona = 'reader';
-  M.startBattle(state);
   state.duelState.history = ['fire'];
   M.duelPick(state, 0);
   assert.equal(state.duelState.aiRead, false, 'no counter -> no read flag');
   assert.equal(state.duelState.picks[1], 0, 'single option picked');
   // Player history recording feeds the models.
-  const recorded = M.newMock({ mode: 'duel', scoring: 'bonus', you: 10, foe: 12, seed: 2 });
-  M.startBattle(recorded);
+  const recorded = duelMock({ scoring: 'bonus', you: index('ember'), foe: index('bell'), seed: 2 });
   recorded.duelState.readFiredPrev = true;
   M.recordPlayerPick(recorded, 'fire');
   recorded.duelState.thisReadFired = true;
@@ -449,22 +459,20 @@ test('fallback when no counter exists is uniform random, not a boost preference'
 
 test('switching forfeits the round: the non-switcher lands a default win', () => {
   const index = (name) => M.DATA.creatures.findIndex((entry) => entry.name === name);
-  const state = M.newMock({ mode: 'duel', scoring: 'bonus', you: index('hedge'), foe: index('ember'), seed: 3 });
-  M.startBattle(state);
-  // Party exists with two members per side.
-  assert.equal(state.duelState.partyIndex[0].length, 2);
-  assert.ok(state.duelState.hp[0][1] > 0, 'bench alive');
-  // Attack vs attack first: player hedge root (plant) vs ember stoke (fire) -> lose 4, chip 4? (plant loses to fire).
-  const attack = M.newMock({ mode: 'duel', scoring: 'bonus', you: index('hedge'), foe: index('ember'), seed: 3 });
-  M.startBattle(attack);
+  const hedge = index('hedge'), ember = index('ember'), cloud = index('cloud'), cuircuit = index('cuircuit');
+  const make = () => {
+    const state = duelMock({ scoring: 'bonus', you: hedge, foe: ember, seed: 3 });
+    pinTeam(state, 0, [hedge, cloud]);
+    pinTeam(state, 1, [ember, cuircuit]);
+    return state;
+  };
+  const attack = make();
   attack.duelState.picks = [0, 0];
   M.duelResolve(attack);
   const clashLines = attack.duelState.lines[0];
-  // Now player switches while the foe attacks: default win for the foe against the incoming creature.
-  const swap = M.newMock({ mode: 'duel', scoring: 'bonus', you: index('hedge'), foe: index('ember'), seed: 3 });
-  M.startBattle(swap);
-  const incomingIndex = swap.duelState.partyIndex[0][1];
-  const incoming = M.creature(incomingIndex);
+  // Player switches (-1 = next living member) while the foe attacks: default win for the foe.
+  const swap = make();
+  const incoming = M.creature(cloud);
   const emberMove = M.duelMoves(swap, 1)[0];
   const expectedBonus = incoming.types.some((type) => M.wheelBeats(emberMove.type, type)) ? 21 : 14;
   swap.duelState.picks = [-1, 0];
@@ -472,10 +480,15 @@ test('switching forfeits the round: the non-switcher lands a default win', () =>
   assert.equal(swap.duelState.lines[0], 'DEFAULT WIN');
   assert.equal(swap.duelState.activeSlot[0], 1, 'player swap applied');
   assert.equal(hp(swap, 0), incoming.maxHp - expectedBonus, `incoming takes the default win (${expectedBonus})`);
-  assert.equal(hp(swap, 1), M.creature(index('ember')).maxHp, 'attacker untouched');
+  assert.equal(hp(swap, 1), M.creature(ember).maxHp, 'attacker untouched');
+  // Targeted switch (AI-style encoding) goes to the requested slot.
+  const targeted = make();
+  pinTeam(targeted, 0, [hedge, cloud, hedge]);
+  targeted.duelState.picks = [M.SWITCH_BASE + 2, 0];
+  M.duelResolve(targeted);
+  assert.equal(targeted.duelState.activeSlot[0], 2, 'targeted slot chosen');
   // Both sides switch: no damage at all.
-  const both = M.newMock({ mode: 'duel', scoring: 'bonus', you: index('hedge'), foe: index('ember'), seed: 3 });
-  M.startBattle(both);
+  const both = make();
   const beforeHp = JSON.parse(JSON.stringify(both.duelState.hp));
   both.duelState.picks = [-1, -1];
   M.duelResolve(both);
@@ -484,19 +497,20 @@ test('switching forfeits the round: the non-switcher lands a default win', () =>
   assert.ok(clashLines.length > 0);
 });
 
-test('a KO on the incoming swap reverts to the outgoing creature, and the side dies only when both faint', () => {
+test('a KO on the incoming swap reverts to the outgoing creature, and the side dies only when all faint', () => {
   const index = (name) => M.DATA.creatures.findIndex((entry) => entry.name === name);
-  const state = M.newMock({ mode: 'duel', scoring: 'bonus', you: index('hedge'), foe: index('ember'), seed: 3 });
-  M.startBattle(state);
-  state.duelState.hp[0][1] = 5; // fragile bench
+  const hedge = index('hedge'), ember = index('ember'), cloud = index('cloud');
+  const state = duelMock({ scoring: 'bonus', you: hedge, foe: ember, seed: 3 });
+  pinTeam(state, 0, [hedge, cloud]);
+  state.duelState.hp[0][1] = 5; // fragile incoming
   state.duelState.picks = [-1, 0];
   M.duelResolve(state);
   assert.equal(state.duelState.hp[0][1], 0, 'incoming faints');
   assert.equal(state.duelState.activeSlot[0], 0, 'reverted to the outgoing creature');
   assert.ok(M.sideAlive(state, 0), 'side still alive');
-  // Fresh battle: fainting the active promotes the living bench.
-  const promoted = M.newMock({ mode: 'duel', scoring: 'bonus', you: index('hedge'), foe: index('ember'), seed: 3 });
-  M.startBattle(promoted);
+  // Fainting the active promotes a living bench member.
+  const promoted = duelMock({ scoring: 'bonus', you: hedge, foe: ember, seed: 3 });
+  pinTeam(promoted, 0, [hedge, cloud]);
   promoted.duelState.hp[0][0] = 3;
   promoted.duelState.picks = [0, 0];
   M.duelResolve(promoted);
@@ -504,45 +518,37 @@ test('a KO on the incoming swap reverts to the outgoing creature, and the side d
   assert.equal(promoted.duelState.activeSlot[0], 1, 'bench promoted');
   assert.ok(M.sideAlive(promoted, 0), 'side alive with the bench');
   promoted.duelState.hp[0][1] = 0;
-  assert.equal(M.sideAlive(promoted, 0), false, 'side dead when both faint');
+  assert.equal(M.sideAlive(promoted, 0), false, 'side dead when all faint');
 });
 
 test('the AI switches when only the bench holds a counter for its guess', () => {
   const index = (name) => M.DATA.creatures.findIndex((entry) => entry.name === name);
-  // Player picks fire (ember). AI active = squid (water moves: beats fire -> has a counter, no switch).
-  const hasCounter = M.newMock({ mode: 'duel', scoring: 'bonus', you: index('ember'), foe: index('squid'), seed: 3 });
+  const hasCounter = duelMock({ scoring: 'bonus', you: index('ember'), foe: index('squid'), seed: 3 });
   hasCounter.duel.aiPersona = 'reader';
   hasCounter.duel.aiRead = 100;
-  M.startBattle(hasCounter);
   hasCounter.duelState.history = ['fire'];
   M.duelPick(hasCounter, 0);
-  assert.notEqual(hasCounter.duelState.picks[1], -1, 'active counter is used directly');
-  // AI active = bell (spirit only); bench = roster next. Force a bench with a fire counter to prove the switch path.
-  const swapping = M.newMock({ mode: 'duel', scoring: 'bonus', you: index('ember'), foe: index('bell'), seed: 3 });
+  assert.ok(hasCounter.duelState.picks[1] < M.SWITCH_BASE, 'active counter is used directly');
+  const swapping = duelMock({ scoring: 'bonus', you: index('ember'), foe: index('bell'), seed: 3 });
+  pinTeam(swapping, 1, [index('bell'), index('bigsquid')]);
   swapping.duel.aiPersona = 'reader';
   swapping.duel.aiRead = 100;
-  M.startBattle(swapping);
-  const waterIndex = index('bigsquid');
-  swapping.duelState.partyIndex[1] = [swapping.duelState.partyIndex[1][0], waterIndex];
   swapping.duelState.history = ['fire'];
   M.duelPick(swapping, 0);
-  assert.equal(swapping.duelState.picks[1], -1, 'switched to the bench counter');
+  assert.equal(swapping.duelState.picks[1], M.SWITCH_BASE + 1, 'switched to the bench counter');
   assert.equal(swapping.duelState.aiRead, true);
-  // No counter anywhere: falls back to a random attack (never a random switch).
-  const noCounter = M.newMock({ mode: 'duel', scoring: 'bonus', you: index('ember'), foe: index('bell'), seed: 3 });
+  const noCounter = duelMock({ scoring: 'bonus', you: index('ember'), foe: index('bell'), seed: 3 });
+  pinTeam(noCounter, 1, [index('bell'), index('bell')]);
   noCounter.duel.aiPersona = 'reader';
   noCounter.duel.aiRead = 100;
-  M.startBattle(noCounter);
   noCounter.duelState.history = ['fire'];
-  noCounter.duelState.partyIndex[1] = [noCounter.duelState.partyIndex[1][0], index('bell')];
   M.duelPick(noCounter, 0);
-  assert.notEqual(noCounter.duelState.picks[1], -1);
+  assert.ok(noCounter.duelState.picks[1] < M.SWITCH_BASE, 'no random switches');
 });
 
 test('duel AI keeps its pick inside its own option list for both engines', () => {
   for (const [duelKind, scoring] of [['wheel', 'power'], ['wheel', 'flat'], ['stances', 'power']]) {
-    const state = M.newMock({ mode: 'duel', duelKind, scoring, you: 10, foe: 12, seed: 7, aiRead: 100 });
-    M.startBattle(state);
+    const state = duelMock({ duelKind, scoring, you: 10, foe: 12, seed: 7, aiRead: 100 });
     const count = M.duelOptions(state, 1).length;
     for (let i = 0; i < 10; i++) {
       state.duelState.last = [M.duelOptions(state, 0)[0].type, null];

@@ -60,9 +60,14 @@ export function playDuel({ persona, readRate, policy, seed, matchup = SPIKE_MATC
     seed,
     aiRead: readRate,
     aiPersona: persona,
-    partySize: 1, // isolate the read model from bench pairings
+    teamSize: 1, // isolate the read model from team pairings
   });
   mock.startBattle(state);
+  // Pin the configured matchup: teamSize 1, one specific creature per side.
+  const youIdx = index(matchup.you), foeIdx = index(matchup.foe);
+  state.duelState.partyIndex = [[youIdx], [foeIdx]];
+  state.duelState.hp = [[mock.creature(youIdx).maxHp], [mock.creature(foeIdx).maxHp]];
+  state.duelState.activeSlot = [0, 0];
   let rngState = (seed * 2654435761) >>> 0 || 1;
   const rng = { int: (n) => { rngState ^= rngState << 13; rngState >>>= 0; rngState ^= rngState >>> 17; rngState ^= rngState << 5; rngState >>>= 0; return rngState % n; } };
   let rounds = 0;

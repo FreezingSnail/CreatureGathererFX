@@ -9468,3 +9468,33 @@ node --test tools/tests/battle-design-spike-data_test.mjs   -> 8 pass / 0 fail
 node --test tools/tests/battle-matchup-solver_test.mjs      -> 4 pass / 0 fail
 node tools/battle-design-spike-preview.mjs                  -> frames unchanged (canvas sprites already used the art)
 ```
+
+# CreatureGathererFX-hqpi
+
+Duel teams are now 3v3, rolled randomly from the battle seed when the battle starts (reroll the seed
+for new teams). Setup screen notes the roll; the status line lists both teams.
+
+Engine changes (mock/battle-mock.js):
+- teamSize option (default 3; 1 = benchless spike mode); party/hp arrays sized accordingly.
+- Switch pick encoding: -1 = next living member (player swap cell), 100+slot = targeted switch; the
+  AI returns 100+slot for the living member that holds a counter when its active kit has none.
+- KO on an incoming swap reverts to the outgoing creature; otherwise the first living member
+  promotes; a side is dead only when all members have fainted.
+- HP rows gain team pips (filled = alive, underline = active); swap cell appears while any living
+  non-active member exists; centre shows 'swap' when the cell is selected.
+- Spike tool pins one creature per side so the read model stays isolated; curves unchanged
+  (reader vs random 58% -> 33%; rotation exploit 62% -> 100%).
+
+```text
+node --test mock/battle-mock.test.js                       -> 28 pass / 0 fail (team roll + switch encodes)
+node --test tools/tests/battle-duel-spike_test.mjs         -> 4 pass / 0 fail
+node --test tools/tests/battle-design-spike-annotate_test.mjs -> 5 pass / 0 fail
+node --test tools/tests/battle-design-spike-frame_test.mjs -> 8 pass / 0 fail
+node --test tools/tests/battle-design-spike-data_test.mjs  -> 8 pass / 0 fail
+node --test tools/tests/battle-matchup-solver_test.mjs     -> 4 pass / 0 fail
+node --test tools/tests/battle-design-spike-matrix_test.mjs-> 5 pass / 0 fail
+node tools/battle-design-spike-preview.mjs                 -> duel frames show pips + swap cell
+```
+
+New coverage: teams roll distinct 3v3 deterministically per seed; targeted switch picks the slot;
+KO revert vs promote across three members; AI targets the counter-holding member; no random swaps.

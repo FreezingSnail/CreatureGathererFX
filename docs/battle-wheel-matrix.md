@@ -93,12 +93,13 @@ data test re-runs the proof over all 64 creatures.
   personas mix in fallbacks.
 - Switching is the real-game answer to "no counter available"; this 1v1 prototype documents it as
   the next structural mechanic rather than simulating it.
-- **Switching** forfeits the round: parties are two creatures per side (bench = next roster entry in this
-  prototype) and picking the swap cell hands the other side a default win on the incoming creature —
-  flat 14, or 21 in the bonus spelling when the attacker's move type beats the arrival. Both sides
-  switching deals no damage. A KO on an incoming swap reverts to the outgoing creature; a side loses
-  only when both members have fainted. The AI switches only when its active kit holds no counter and
-  the bench does.
+- **Switching** forfeits the round: teams are 3v3, rolled randomly from the battle seed at start
+  (rerolling the seed rerolls teams; the spike uses one pinned creature per side to isolate the read
+  model). Picking the swap cell sends out the next living member and hands the other side a default
+  win on the arrival — flat 14, or 21 in the bonus spelling when the attacker's move type beats it.
+  Both sides switching deals no damage. A KO on an incoming swap reverts to the outgoing creature; a
+  side loses only when all three members have fainted. The AI switches only when its active kit
+  holds no counter for its guess and a living member does; it picks the member holding the counter.
 - Uses are not tracked in duel mode yet.
 
 ## Open questions
