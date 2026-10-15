@@ -31,3 +31,14 @@ a { color: #bbb; }
 .matrix .m-flat, .matrix .m-mirror { color: #555; }
 .matrix .hl-row, .matrix .hl-col { background: #1d241d; }
 .matrix .hl-x { background: #2a3a2a; }
+.stage-wrap { position: relative; display: inline-block; }
+.annotate-layer { position: absolute; inset: 0; pointer-events: none; }
+.annotate-layer .chip {
+  position: absolute; transform: translate(-50%, -50%);
+  background: #000; border: 1px solid #fff; color: #fff; border-radius: 3px;
+  font: 700 11px ui-monospace, Menlo, monospace; padding: 0 4px; line-height: 15px;
+}
+.annotate-legend { max-width: 900px; }
+.annotate-legend table { border-collapse: collapse; }
+.annotate-legend th { color: #eee; padding: 1px 8px 1px 0; text-align: right; vertical-align: top; }
+.annotate-legend td { color: #999; padding: 1px 0; }

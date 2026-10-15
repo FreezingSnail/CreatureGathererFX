@@ -13,7 +13,7 @@ const require = createRequire(import.meta.url);
 const { ICONS, MERGED_ICONS, DATA } = require(path.join(repo, 'mock/battle-mock.js'));
 const creatureIndex = (name) => DATA.creatures.findIndex((entry) => entry.name === name);
 
-const harness = createHarness();
+const harness = createHarness({ search: '?seed=11' }); // pinned seed: previews are reproducible
 const settle = (frames = 3, step = 150) => harness.advances(frames, step);
 
 // Type icon sheet (8 types + 4 merged placeholders) at 6x for legibility review.
@@ -70,7 +70,7 @@ settle();
 writePreview(harness, 'trim-dual-choice.png');
 
 // Mode C: stance duel (4-type cycle) in its own harness.
-const stancesHarness = createHarness({ mode: 'duel', duel: 'stances' });
+const stancesHarness = createHarness({ mode: 'duel', duel: 'stances', search: '?seed=12' });
 stancesHarness.advances(2);
 stancesHarness.press('z');
 stancesHarness.advances(2);
@@ -92,7 +92,7 @@ writePreview(harness, 'duel-result.png');
 
 // Mode E: pure RPS (same web, flat scoring) in its own harness.
 // Mirror matchup (ember vs ember) so the trade frame is unmistakable on the card.
-const pureHarness = createHarness({ mode: 'duel', duel: 'wheel', scoring: 'flat' });
+const pureHarness = createHarness({ mode: 'duel', duel: 'wheel', scoring: 'flat', search: '?seed=13' });
 pureHarness.advances(2);
 pureHarness.state().foeIndex = pureHarness.state().youIndex;
 pureHarness.press('z');
@@ -104,7 +104,7 @@ pureHarness.advances(8, 100);
 writePreview(pureHarness, 'duel-pure-result.png');
 
 // Mode F: creature-type bonus scoring, water attacker vs fire target so the x1.5 bonus fires.
-const bonusHarness = createHarness({ mode: 'duel', duel: 'wheel', scoring: 'bonus' });
+const bonusHarness = createHarness({ mode: 'duel', duel: 'wheel', scoring: 'bonus', search: '?seed=14' });
 bonusHarness.advances(2);
 const bonusState = bonusHarness.state();
 bonusState.youIndex = creatureIndex('bigsquid');

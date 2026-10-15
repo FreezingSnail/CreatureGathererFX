@@ -9327,3 +9327,29 @@ node --test tools/tests/battle-matchup-solver_test.mjs     -> 4 pass / 0 fail
 node --test tools/tests/battle-design-spike-matrix_test.mjs-> 3 pass / 0 fail
 node tools/battle-design-spike-preview.mjs                 -> previews regenerated
 ```
+
+# CreatureGathererFX-iirn
+
+Explainer overlay for the RPS windows (C stances, D power, E pure, F bonus).
+
+- `mock/annotate.js`: numbered chips pinned to every region (percentage positions so they follow
+  the canvas scale control) plus a legend table under the canvas. Toggle: the `annotate` checkbox in
+  each duel window's controls (on by default).
+- Legends are spelling-aware: E explains that power/affinity are ignored and markers absent; F
+  explains the ↑ creature-type bonus; D explains ✱ affinity; C explains the stance row, AFF and tie
+  results. Shared rows cover sprites, type badges, both HP panels, round, picks, result lines and the
+  AI READ tag.
+- Windows gained the overlay containers and script; checklist label fix for the wheel pages
+  ("pick move" instead of "pick stance").
+- Preview seeds pinned per harness (`?seed=11..14`) so regenerated preview PNGs are byte-stable
+  across runs (verified two consecutive runs produce identical hashes).
+
+```text
+node --test tools/tests/battle-design-spike-annotate_test.mjs -> 5 pass / 0 fail (new)
+node --test mock/battle-mock.test.js                          -> 22 pass / 0 fail
+node --test tools/tests/battle-design-spike-frame_test.mjs    -> 8 pass / 0 fail
+node --test tools/tests/battle-design-spike-data_test.mjs     -> 8 pass / 0 fail
+node --test tools/tests/battle-matchup-solver_test.mjs        -> 4 pass / 0 fail
+node --test tools/tests/battle-design-spike-matrix_test.mjs   -> 3 pass / 0 fail
+node tools/battle-design-spike-preview.mjs                    -> reproducible frames (pinned seeds)
+```
