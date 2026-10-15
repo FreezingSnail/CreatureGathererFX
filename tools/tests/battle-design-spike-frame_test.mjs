@@ -58,6 +58,22 @@ test('duel mode reveals picks and resolves a round', () => {
   assert.notEqual(hash(harness.frame), reveal, 'result frame differs');
 });
 
+test('variant windows lock their design and honor the seed query', () => {
+  const harness = createHarness({ mode: 'duel', search: '?seed=4242' });
+  harness.advances(2);
+  const state = harness.state();
+  assert.equal(state.mode, 'duel');
+  assert.equal(state.lockMode, true);
+  assert.equal(state.seed, 4242);
+  harness.press('1'); // design switching is locked in a variant window
+  harness.advances(1);
+  assert.equal(state.mode, 'duel');
+  harness.press('z');
+  harness.advances(2);
+  assert.equal(state.scene, 'battle');
+  assert.ok(harness.spritePixels() > 200, 'duel battle renders in the locked window');
+});
+
 test('mode edges 1/2/3 switch scenes from the keyboard', () => {
   const harness = createHarness();
   harness.press('2');

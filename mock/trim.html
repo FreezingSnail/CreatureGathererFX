@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Battle mock · trim</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-mode="trim">
+<div id="wrap">
+  <h1>B · trim — 4-type cycle + arrows + press-turn</h1>
+  <canvas id="screen" width="128" height="64"></canvas>
+  <table>
+    <tr>
+      <td><span class="k">Arrows</span> move cursor</td>
+      <td><span class="k">Z</span> / <span class="k">Space</span> A: confirm / advance</td>
+      <td><span class="k">X</span> back to setup</td>
+    </tr>
+  </table>
+  <div id="controls">
+    <label>types
+      <select id="trim-type">
+        <option value="4single" selected>4 single</option>
+        <option value="8single">8 single</option>
+        <option value="8dual">8 dual</option>
+      </select>
+    </label>
+    <label><input type="checkbox" id="trim-arrows" checked> arrows</label>
+    <label><input type="checkbox" id="trim-press" checked> press-turn</label>
+    <label><input type="checkbox" id="trim-foe" checked> foe HP</label>
+    <label>scale
+      <select id="scale">
+        <option value="1">1×</option>
+        <option value="3">3×</option>
+        <option value="4">4×</option>
+        <option value="5" selected>5×</option>
+        <option value="8">8×</option>
+      </select>
+    </label>
+    <label>seed <span id="seed-value">–</span> <button id="new-seed" type="button">reroll</button></label>
+  </div>
+  <div id="status">ready</div>
+  <p class="note">Cycle: flame &gt; bloom &gt; tide &gt; stone &gt; flame (one weakness, one resist each). Arrows show the
+    final modifier including STAB. Press-turn: a super-effective hit acts again, capped once per side per turn.
+    Foe HP toggle replaces the FOE label and type icons — the 12 px panel cannot hold all three.</p>
+  <p><a href="index.html">← mock index</a></p>
+</div>
+<script src="data.js"></script>
+<script src="battle-mock.js"></script>
+</body>
+</html>

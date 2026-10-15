@@ -39,7 +39,7 @@ function elementStub(properties = {}) {
   };
 }
 
-export function createHarness() {
+export function createHarness(options = {}) {
   const imageCache = new Map();
   let now = 0;
   let rafCallback = null;
@@ -109,6 +109,7 @@ export function createHarness() {
   });
 
   const documentStub = {
+    body: elementStub(),
     getElementById: getElement,
     querySelectorAll(selector) {
       if (selector === 'input[name="mode"]') return modeRadios;
@@ -116,6 +117,7 @@ export function createHarness() {
       return [];
     },
   };
+  documentStub.body.dataset = options.mode ? { mode: options.mode } : {};
   const windowStub = {
     addEventListener(type, handler) {
       if (!windowListeners.has(type)) windowListeners.set(type, []);
@@ -126,6 +128,7 @@ export function createHarness() {
   const context = vm.createContext({
     window: windowStub,
     document: documentStub,
+    location: { search: options.search || '' },
     performance: { now: () => now },
     requestAnimationFrame(callback) { rafCallback = callback; },
     Image: StubImage,
@@ -138,6 +141,8 @@ export function createHarness() {
 
   const harness = {
     frame,
+    window: windowStub,
+    state: () => windowStub.__battleMock,
     key(key, type) {
       const event = new StubEvent(type);
       event.key = key;

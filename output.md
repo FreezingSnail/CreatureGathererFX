@@ -9101,3 +9101,19 @@ Deviation: no desktop browser was connected this session, so visuals were verifi
 Open findings for the owner: arrows include STAB because that is the damage actually dealt; the foe-HP toggle replaces the FOE label + type icons (the 12 px panel cannot hold label, icons and numbers); press-turn is capped at one extra action per side per turn to prevent loops; the wind icon is the weakest of the eight at 8x8.
 
 Wall time: ~2h orchestrator (design, implementation, harness, preview verification).
+
+# CreatureGathererFX-6qd
+
+Split the mock into a launcher (`mock/index.html`) plus one window per design: `mock/current.html`,
+`mock/trim.html`, `mock/duel.html` (shared `mock/style.css`). Each window pins its design
+(`lockMode`; number keys 1/2/3 ignored) and accepts `?seed=<n>` so the three can run the same RNG
+for side-by-side comparison. The launcher has a shared seed field and per-design cards with the
+committed preview frames. Boot is now null-safe for absent controls, and exposes
+`window.__battleMock` as a debug/state hook.
+
+```text
+node --test mock/battle-mock.test.js                      -> 14 pass / 0 fail
+node --test tools/tests/battle-design-spike-data_test.mjs -> 7 pass / 0 fail
+node --test tools/tests/battle-design-spike-frame_test.mjs-> 6 pass / 0 fail (adds locked-window + seed test)
+node tools/battle-design-spike-preview.mjs                -> previews regenerated
+```
