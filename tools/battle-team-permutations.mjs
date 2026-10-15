@@ -1,7 +1,9 @@
 #!/usr/bin/env node
-// 4-type team permutation census: every 3-creature team composition from the
-// four folded types, every matchup between them, and the roster-level team
+// Type-count team permutation census: every 3-creature team composition from
+// the folded types, every matchup between them, and the roster-level team
 // counts that can fill each composition.
+//
+// Run: node tools/battle-team-permutations.mjs [4|5|6|8]  (default 4)
 //
 // Run: node tools/battle-team-permutations.mjs
 // Test: node --test tools/tests/battle-team-permutations_test.mjs
@@ -13,12 +15,13 @@ import { FOLDS } from './battle-matrices-spike.mjs';
 const repo = path.dirname(fileURLToPath(import.meta.url)) + '/..';
 export const TEAM_SIZE = 3;
 
-function load() {
+function load(types) {
   const require = createRequire(import.meta.url);
   const matrices = require(path.join(repo, 'mock/matrices.js'));
   const data = require(path.join(repo, 'mock/data.js'));
-  const table = matrices.matrices.find((matrix) => matrix.id === '4');
-  return { table, data, fold: FOLDS[4] };
+  const table = matrices.matrices.find((matrix) => matrix.id === String(types));
+  if (!table) throw Error(`no generated table for ${types} types`);
+  return { table, data, fold: FOLDS[Number(types)] };
 }
 
 // All multisets (unordered compositions) of `slots` picks from `types`.
@@ -92,8 +95,8 @@ export function rosterCounts(combos, creatures, fold) {
   return { counts, pool };
 }
 
-export function census() {
-  const { table, data, fold } = load();
+export function census(types = '4') {
+  const { table, data, fold } = load(String(types));
   const combos = typeCombos(table.order, TEAM_SIZE);
   const sequences = typeSequences(table.order, TEAM_SIZE);
   const { counts, pool } = rosterCounts(combos, data.creatures, fold);
@@ -127,16 +130,15 @@ export function census() {
   return { table, combos, sequences, pairs, records, pool };
 }
 
-export function report() {
-  const { table, combos, sequences, pairs, records, pool } = census();
+export function report(types = '4') {
+  const { table, combos, sequences, pairs, records, pool } = census(types);
   const lines = [];
-  lines.push(`4-type table: ${table.order.join(' > beats > ')} (${table.edges.length} edges)`);
+  lines.push(`${table.order.length}-type table: ${table.order.join(' > beats > ')} (${table.edges.length} edges)`);
   lines.push(`roster pools (primary folded type): ${JSON.stringify(pool)}`);
-  lines.push(`3-creature compositions: ${combos.length} multisets, ${sequences.length} ordered sequences, `
-    + `${typeSequences(table.order, 3).length} sequences / ${combos.length} multisets, `
+  lines.push(`${table.order.length} types, 3-creature compositions: ${combos.length} multisets, ${sequences.length} ordered sequences, `
     + `${combos.length * (combos.length + 1) / 2} unordered matchup pairs`);
   const distinct = sequences.filter((sequence) => new Set(sequence).size === 3).length;
-  lines.push(`distinct-type permutations P(4,3): ${distinct}`);
+  lines.push(`distinct-type permutations P(${table.order.length},3): ${distinct}`);
   lines.push('');
   lines.push('composition                 roster teams  adv  mut  dis  dead  selfDead');
   for (const record of records) {
@@ -158,5 +160,7 @@ export function report() {
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  console.log(report());
+  const requested = process.argv[2] || '4';
+  if (!['4', '5', '6', '8'].includes(requested)) throw Error('usage: [4|5|6|8]');
+  console.log(report(requested));
 }

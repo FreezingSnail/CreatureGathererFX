@@ -128,21 +128,26 @@ data test re-runs the proof over all 64 creatures.
 3. Preference list for the solver is hand-ordered; confirm the causal stories or re-rank.
 4. Three moves per creature: who authors the 44 reworked kits and the coverage balance?
 
-## Four-type team composition census
+## Type-count team composition census
 
-`node tools/battle-team-permutations.mjs` enumerates every 3-creature team composition from the four
-folded types and classifies every matchup (run the tool for the full table):
+`node tools/battle-team-permutations.mjs [4|5|6|8]` enumerates every 3-creature team composition from
+the folded types and classifies every matchup (run the tool for the full table):
 
-- 4 types, 3 slots: **20 unordered compositions** (C(6,3)), **64 ordered sequences** (4^3),
-  **24 distinct-type permutations** (P(4,3)), **210 unordered matchup pairs**.
-- Roster pools by primary folded type: tide 20, bloom 18, stone 16, flame 10 — so the largest
-  composition pool is flame+bloom+tide at 3600 creature-level teams, the smallest mono-flame at 120;
-  all compositions sum to C(64,3) = 41,664 teams.
-- Matchup classes: **156 mutual**, **50 one-sided**, **4 dead**. The only dead pairs are the four
-  mono-type mirrors (flame x3, bloom x3, tide x3, stone x3) — no internal edge, so they cannot have
-  a positive matchup against themselves.
-- Most dominant compositions (net one-sided wins): bloom+bloom+bloom, tide+tide+tide, then
-  bloom+bloom+tide and bloom+tide+tide. The fully balanced compositions (adv = dis = 0) are
-  flame+bloom+tide and flame+bloom+stone.
-- Design read: mono-type teams are trap picks (mirror-dead and net negative); bloom and tide beat
-  two types each so they anchor strong teams, while flame (beats only bloom) plays support.
+| types | compositions | sequences | distinct triples | matchup pairs | mutual / one-sided / dead | pools (roster) |
+| --- | --- | --- | --- | --- | --- | --- |
+| 4 | 20 | 64 | 24 | 210 | 156 / 50 / 4 | tide 20, bloom 18, stone 16, flame 10 |
+| 5 | 35 | 125 | 60 | 630 | 493 / 132 / 5 | water 20, spirit 13, plant 11, earth 10, fire 10 |
+| 6 | 56 | 216 | 120 | 1596 | — | see tool |
+| 8 | 120 | 512 | 336 | 7260 | — | see tool |
+
+- Dead pairs are always the mono-type mirrors (one per type): no internal edge can exist, so a team
+  of three identical types cannot have a positive matchup against itself. 4 types → 4 dead,
+  5 types → 5 dead.
+- 4-type dominance: bloom and tide beat two types each and anchor strong comps; flame (beats only
+  bloom) is support; perfectly balanced comps are flame+bloom+tide and flame+bloom+stone.
+- 5-type dominance: the web is a full tournament (10 edges, every pair decided); water (3 wins) and
+  earth (3 wins) anchor, spirit and fire (1 win each) are support; water+earth+plant and
+  water+fire+plant are perfectly balanced (adv = dis = 0).
+- Roster team counts per composition sum to C(64,3) = 41,664 in every table; the smallest pools are
+  mono-flame (120 teams) and mono-earth/mono-fire (120) — no composition is unfillable.
+
