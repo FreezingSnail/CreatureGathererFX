@@ -99,4 +99,14 @@ pureHarness.press('z');
 pureHarness.advances(8, 100);
 writePreview(pureHarness, 'duel-pure-result.png');
 
+// Mode F: creature-type bonus scoring.
+const bonusHarness = createHarness({ mode: 'duel', duel: 'wheel', scoring: 'bonus' });
+bonusHarness.advances(2);
+bonusHarness.press('z');
+bonusHarness.advances(2);
+writePreview(bonusHarness, 'duel-bonus-choice.png');
+bonusHarness.press('z');
+bonusHarness.advances(8, 100);
+writePreview(bonusHarness, 'duel-bonus-result.png');
+
 console.log('PASS: wrote previews and icons.png to docs/assets/battle-design-spike/');

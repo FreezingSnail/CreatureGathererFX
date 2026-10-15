@@ -9251,3 +9251,32 @@ node tools/battle-design-spike-preview.mjs                 -> duel-pure-choice/r
 ```
 
 Verified pure result frame headless: RPS WIN -14 -4 with flat numbers independent of move power.
+
+# CreatureGathererFX-ea8k
+
+Type legibility + third duel spelling.
+
+- Refined 8x8 icons: spirit (ghost with hem), wind (bold swirl), earth (mountain over ground),
+  fire (tapered flame); water/lightning/plant/elder kept; status/none icons from the previous bead.
+- Creature type badges: white-framed black chips pinned to each sprite (foe bottom-left, you
+  bottom-right, dual types side by side) in battle, setup and every duel window; they follow the
+  active type mode (4-type merged icons in trim-4, 8-type elsewhere). Center-column foe icons removed
+  as redundant.
+- New spelling scoring='bonus' (mock/duel-bonus.html): clash decides win/lose/trade, damage scales
+  with move power, and a hit is x1.5 when the move's type beats the opposing creature's type (both
+  sides, bonus-only, no penalty); affinity/STAB is ignored in this spelling. Up-arrow marks bonus
+  picks; the power spelling now marks affinity with ✱ instead of ↑. AI scores effective (bonus) power.
+- Launcher opens six windows; D/E/F share web, options and seed for side-by-side reads.
+
+```text
+node --test mock/battle-mock.test.js                       -> 21 pass / 0 fail (bonus scoring proof)
+node --test tools/tests/battle-design-spike-frame_test.mjs -> 8 pass / 0 fail (bonus boot + badge pixels)
+node --test tools/tests/battle-design-spike-data_test.mjs  -> 8 pass / 0 fail
+node --test tools/tests/battle-matchup-solver_test.mjs     -> 4 pass / 0 fail
+node --test tools/tests/battle-design-spike-matrix_test.mjs-> 3 pass / 0 fail
+node tools/battle-design-spike-preview.mjs                 -> duel-bonus previews added, all frames re-rendered
+```
+
+Tests prove: hedge (plant) — bonus replaces STAB, equal damage to power mode; zip (lightning, spirit
+move) — win without creature bonus lands power/1.5, so bonus mode correctly drops STAB; helper
+multiplier 1.5 vs 1. Badge pixels asserted in frame tests; icons sheet re-rendered for review.

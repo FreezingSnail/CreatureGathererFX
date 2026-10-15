@@ -51,19 +51,19 @@ function makeRng(seedValue) {
 const ICONS = {
   spirit: [
     '..####..', '.#....#.', '#.#..#.#', '#......#',
-    '#......#', '#.#..#.#', '.#....#.', '..####..'],
+    '#......#', '#.#..#.#', '#.#..#.#', '.#.##.#.'],
   water: [
     '...#....', '..###...', '.#####..', '.#####..',
     '#######.', '#######.', '.#####..', '..###...'],
   wind: [
-    '........', '.#####..', '#.....#.', '.....#..',
-    '..####..', '.#......', '#.....#.', '.#####..'],
+    '.#####..', '##...##.', '.....#..', '..####..',
+    '.#......', '#....##.', '##...##.', '.#####..'],
   earth: [
-    '...#....', '..###...', '.#####..', '#######.',
-    '.......#', '...####.', '.#######', '#######.'],
+    '........', '...#....', '..###...', '.#####..',
+    '#######.', '#######.', '........', '#######.'],
   fire: [
     '...#....', '..##....', '..###...', '.#####..',
-    '.######.', '.######.', '..####..', '...#....'],
+    '.#####..', '.#####..', '..###...', '...#....'],
   lightning: [
     '....###.', '...###..', '..###...', '.#####..',
     '...###..', '...##...', '..##....', '..#.....'],
@@ -434,9 +434,12 @@ function aiDuelPick(state) {
     }
   }
   if (state.duel.scoring === 'flat') return state.rng.int(options.length);
+  const effective = (option) => (state.duel.scoring === 'bonus'
+    ? option.power * duelCreatureBonus(state, 1, option.type)
+    : option.power);
   let best = 0, bestScore = -1;
   for (let index = 0; index < options.length; index++) {
-    const score = options[index].power + state.rng.next() * 5;
+    const score = effective(options[index]) + state.rng.next() * 5;
     if (score > bestScore) { bestScore = score; best = index; }
   }
   return best;
@@ -449,6 +452,14 @@ function duelPick(state, index) {
 }
 // Pure-RPS scoring: the relation alone decides, no power and no affinity.
 const FLAT_WIN = 14, FLAT_CHIP = 4, FLAT_TRADE = 6;
+
+// Creature-type bonus: your move's type against the opposing creature's types.
+// 1.5 when it beats any of them, else 1 (bonus-only, no penalty).
+function duelCreatureBonus(state, side, moveType) {
+  const defender = side === 0 ? creature(state.foeIndex) : creature(state.youIndex);
+  const beaten = defender.types.some((type) => wheelBeats(moveType, type));
+  return beaten ? 1.5 : 1;
+}
 
 function duelResolve(state) {
   const duelState = state.duelState;
@@ -502,8 +513,11 @@ function duelResolve(state) {
       duelState.lines = ['TRADE', `-${yourDamage} -${foeDamage}`];
     }
   } else {
-    const yourPower = (4 + yourMove.power * 1.2) * (hasAffinity(state, 0, yourMove) ? 1.5 : 1);
-    const foePower = (4 + foeMove.power * 1.2) * (hasAffinity(state, 1, foeMove) ? 1.5 : 1);
+    const scoring = state.duel.scoring;
+    const bonus = (side, move) => (scoring === 'bonus' ? duelCreatureBonus(state, side, move.type) : 1);
+    const stab = (side, move) => (scoring === 'power' && hasAffinity(state, side, move) ? 1.5 : 1);
+    const yourPower = (4 + yourMove.power * 1.2) * stab(0, yourMove) * bonus(0, yourMove);
+    const foePower = (4 + foeMove.power * 1.2) * stab(1, foeMove) * bonus(1, foeMove);
     const chip = (power) => Math.max(1, Math.round((2 + power * 0.25) * roll()));
     if (relation === 2) {
       yourDamage = Math.max(1, Math.round(yourPower * roll()));
@@ -644,6 +658,22 @@ function drawSprite(ctx, state, file, x, y) {
   }
 }
 
+// Type badges pinned to the creature art: black plate + white icon so the
+// creature's type is readable without leaving the sprite.
+function drawTypeBadges(ctx, state) {
+  const foe = creature(state.foeIndex), you = creature(state.youIndex);
+  const draw = (types, side) => {
+    types.slice(0, 2).forEach((type, index) => {
+      const x = side === 0 ? 1 + index * 12 : 113 - index * 12;
+      rect(ctx, x - 1, 36, 12, 12, true); // white frame so the chip reads over art
+      rect(ctx, x, 37, 10, 10, false);
+      drawIcon(ctx, typeIcon(type), x + 1, 38, true);
+    });
+  };
+  draw(typesOf(foe, activeMode(state)), 0);
+  draw(typesOf(you, activeMode(state)), 1);
+}
+
 function drawHpPanel(ctx, side, creature_, hp, showNumbers) {
   const barY = side === 0 ? 10 : 35;
   if (side === 0 && showNumbers) text(ctx, `${num(hp)}/${num(creature_.maxHp)}`, 48, 1, true);
@@ -660,8 +690,6 @@ function drawBattleCenter(ctx, state) {
   const showFoe = state.mode === 'trim' && state.trim.foeNumbers;
   drawHpPanel(ctx, 0, battleState.foe, battleState.hp[1], showFoe);
   drawHpPanel(ctx, 1, battleState.you, battleState.hp[0], true);
-  if (!showFoe) typesOf(battleState.foe, activeMode(state)).slice(0, 2)
-    .forEach((type, index) => drawIcon(ctx, typeIcon(type), 64 + index * 9, 2));
   if (battleState.phase === 'choice') {
     const move = moveOf(battleState.you, battleState.cursor);
     if (!move) { text(ctx, 'no moves', 48, 41, true); return; }
@@ -703,6 +731,7 @@ function drawBattleMenu(ctx, state) {
 function drawBattle(ctx, state) {
   drawSprite(ctx, state, state.battle.foe.front, 0, 0);
   drawSprite(ctx, state, state.battle.you.back, 80, 0);
+  drawTypeBadges(ctx, state);
   drawBattleCenter(ctx, state);
   if (state.battle.phase === 'choice') drawBattleMenu(ctx, state);
   else {
@@ -720,6 +749,7 @@ function drawSetup(ctx, state) {
   const you = creature(state.youIndex), foe = creature(state.foeIndex);
   drawSprite(ctx, state, foe.front, 0, 0);
   drawSprite(ctx, state, you.back, 80, 0);
+  drawTypeBadges(ctx, state);
   const youName = you.name.slice(0, 12), foeName = foe.name.slice(0, 12);
   text(ctx, youName, 2, 49, true);
   text(ctx, foeName, W - 2 - textWidth(foeName), 49, true);
@@ -772,19 +802,19 @@ function drawDuel(ctx, state) {
   const you = creature(state.youIndex), foe = creature(state.foeIndex);
   drawSprite(ctx, state, foe.front, 0, 0);
   drawSprite(ctx, state, you.back, 80, 0);
+  drawTypeBadges(ctx, state);
   const showFoe = state.trim.foeNumbers;
   drawHpPanel(ctx, 0, foe, duelState.hp[1], showFoe);
   drawHpPanel(ctx, 1, you, duelState.hp[0], true);
-  if (!showFoe) typesOf(foe, activeMode(state)).slice(0, 2)
-    .forEach((type, index) => drawIcon(ctx, typeIcon(type), 64 + index * 9, 2));
   if (duelState.phase === 'choice') {
     const options = duelOptions(state, 0);
     text(ctx, `R${num(duelState.round)}`, 48, 41, true);
     const option = options[Math.min(duelState.cursor, options.length - 1)];
     if (option) {
       drawIcon(ctx, typeIcon(option.type), 62, 40);
-      if (state.duel.scoring === 'power' && option.power != null) text(ctx, num(option.power), 72, 41, true);
-      if (state.duel.scoring === 'power' && duelOptionAffinity(state, 0, option)) drawSymbol(ctx, 'up', 82, 41, true);
+      if (state.duel.scoring !== 'flat' && option.power != null) text(ctx, num(option.power), 72, 41, true);
+      if (state.duel.scoring === 'power' && duelOptionAffinity(state, 0, option)) drawSymbol(ctx, '*', 82, 41, true);
+      if (state.duel.scoring === 'bonus' && duelCreatureBonus(state, 0, option.type) > 1) drawSymbol(ctx, 'up', 82, 41, true);
     }
     drawDuelMoveRow(ctx, state);
   } else {
@@ -927,7 +957,7 @@ if (typeof module !== 'undefined' && module.exports) {
     usableSlots, firstUsable, cycleCursor, duelPick, duelResolve, duelUpdate,
     newSeed, makeRng, computeDamage, attackModifier, combineModifier,
     applyDamageModifier, modifierFor, arrowFor, moveTypeFor,
-    duelMoves, wheelValue, wheelBeats, hasAffinity,
+    duelMoves, wheelValue, wheelBeats, hasAffinity, duelCreatureBonus,
     duelKind, stanceSet, stanceBeats, duelOptions, duelOptionAffinity,
     creature, moveOf, activeMode, typesOf, drawIcon, text, glyphRows,
     ICONS, MERGED_ICONS, SYMBOLS, DATA, W, H, SPRITE_BASE,

@@ -315,6 +315,38 @@ test('pure RPS scoring ignores power and affinity with fixed damage', () => {
   assert.equal(power.duelState.lines[0], 'WHEEL WIN');
 });
 
+test('bonus scoring applies the creature-type matchup instead of affinity', () => {
+  const index = (name) => M.DATA.creatures.findIndex((entry) => entry.name === name);
+  const run = (scoring, foeIndex, pick) => {
+    const state = M.newMock({ mode: 'duel', scoring, you: 10, foe: foeIndex, seed: 3 });
+    M.startBattle(state);
+    const before = state.duelState.hp[1];
+    state.duelState.picks = pick;
+    M.duelResolve(state);
+    assert.equal(state.duelState.lines[0], 'WHEEL WIN');
+    return before - state.duelState.hp[1];
+  };
+  // hedge (plant) with root: fire beats plant -> creature bonus applies.
+  // Power mode gets x1.5 from STAB, bonus mode from the creature matchup: equal damage.
+  const powerHedge = run('power', index('hedge'), [0, 0]);
+  const bonusHedge = run('bonus', index('hedge'), [0, 0]);
+  assert.ok(Math.abs(powerHedge - bonusHedge) <= 1,
+    `hedge: creature bonus replaces STAB (${powerHedge} vs ${bonusHedge})`);
+  // zip (lightning) with smite (spirit): fire beats spirit (win) but not lightning (no creature bonus).
+  // Power mode keeps STAB; bonus mode has neither. Damage ratio ~1.5.
+  const powerZip = run('power', index('zip'), [0, 1]);
+  const bonusZip = run('bonus', index('zip'), [0, 1]);
+  assert.ok(powerZip > bonusZip, `STAB only under power (${powerZip} vs ${bonusZip})`);
+  assert.ok(Math.abs(powerZip - Math.round(bonusZip * 1.5)) <= 1,
+    `creature-neutral bonus = power / 1.5 (${powerZip} vs ${bonusZip})`);
+  // Helper reports the multiplier the UI marks with the up arrow.
+  const state = M.newMock({ mode: 'duel', scoring: 'bonus', you: 10, foe: index('hedge'), seed: 1 });
+  M.startBattle(state);
+  assert.equal(M.duelCreatureBonus(state, 0, 'fire'), 1.5);
+  state.foeIndex = index('zip');
+  assert.equal(M.duelCreatureBonus(state, 0, 'fire'), 1);
+});
+
 test('duel AI keeps its pick inside its own option list for both engines', () => {
   for (const [duelKind, scoring] of [['wheel', 'power'], ['wheel', 'flat'], ['stances', 'power']]) {
     const state = M.newMock({ mode: 'duel', duelKind, scoring, you: 10, foe: 12, seed: 7, aiRead: 100 });
