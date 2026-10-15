@@ -179,6 +179,7 @@ function newMock(options = {}) {
     },
     duel: {
       kind: options.duelKind || 'wheel', // wheel | stances
+      scoring: options.scoring || 'power', // power | flat (flat = pure RPS)
       stances: options.stances || 3,
       aiRead: options.aiRead ?? 45,
       explain: options.explain !== false,
@@ -427,10 +428,12 @@ function aiDuelPick(state) {
       .filter((entry) => wheelBeats(entry.option.type, last));
     if (counters.length) {
       duelState.aiRead = true;
+      if (state.duel.scoring === 'flat') return counters[state.rng.int(counters.length)].index;
       counters.sort((a, b) => b.option.power - a.option.power);
       return counters[0].index;
     }
   }
+  if (state.duel.scoring === 'flat') return state.rng.int(options.length);
   let best = 0, bestScore = -1;
   for (let index = 0; index < options.length; index++) {
     const score = options[index].power + state.rng.next() * 5;
@@ -444,6 +447,9 @@ function duelPick(state, index) {
   duelState.phase = 'reveal';
   duelState.timer = 550;
 }
+// Pure-RPS scoring: the relation alone decides, no power and no affinity.
+const FLAT_WIN = 14, FLAT_CHIP = 4, FLAT_TRADE = 6;
+
 function duelResolve(state) {
   const duelState = state.duelState;
   const roll = () => 0.85 + state.rng.next() * 0.3;
@@ -479,22 +485,39 @@ function duelResolve(state) {
   const yourMove = mine[duelState.picks[0]] || mine[0];
   const foeMove = theirs[duelState.picks[1]] || theirs[0];
   const relation = wheelValue(yourMove.type, foeMove.type);
-  const yourPower = (4 + yourMove.power * 1.2) * (hasAffinity(state, 0, yourMove) ? 1.5 : 1);
-  const foePower = (4 + foeMove.power * 1.2) * (hasAffinity(state, 1, foeMove) ? 1.5 : 1);
-  const chip = (power) => Math.max(1, Math.round((2 + power * 0.25) * roll()));
   let yourDamage = 0, foeDamage = 0;
-  if (relation === 2) {
-    yourDamage = Math.max(1, Math.round(yourPower * roll()));
-    foeDamage = chip(foeMove.power);
-    duelState.lines = ['WHEEL WIN', `-${yourDamage} -${foeDamage}`];
-  } else if (relation === 0.5) {
-    foeDamage = Math.max(1, Math.round(foePower * roll()));
-    yourDamage = chip(yourMove.power);
-    duelState.lines = ['WHEEL LOSE', `-${yourDamage} -${foeDamage}`];
+  if (state.duel.scoring === 'flat') {
+    // Pure RPS: relation only, fixed damage, no power or affinity.
+    if (relation === 2) {
+      yourDamage = FLAT_WIN;
+      foeDamage = FLAT_CHIP;
+      duelState.lines = ['RPS WIN', `-${yourDamage} -${foeDamage}`];
+    } else if (relation === 0.5) {
+      foeDamage = FLAT_WIN;
+      yourDamage = FLAT_CHIP;
+      duelState.lines = ['RPS LOSE', `-${yourDamage} -${foeDamage}`];
+    } else {
+      yourDamage = FLAT_TRADE;
+      foeDamage = FLAT_TRADE;
+      duelState.lines = ['TRADE', `-${yourDamage} -${foeDamage}`];
+    }
   } else {
-    yourDamage = chip(foeMove.power);
-    foeDamage = chip(yourMove.power);
-    duelState.lines = ['TRADE', `-${yourDamage} -${foeDamage}`];
+    const yourPower = (4 + yourMove.power * 1.2) * (hasAffinity(state, 0, yourMove) ? 1.5 : 1);
+    const foePower = (4 + foeMove.power * 1.2) * (hasAffinity(state, 1, foeMove) ? 1.5 : 1);
+    const chip = (power) => Math.max(1, Math.round((2 + power * 0.25) * roll()));
+    if (relation === 2) {
+      yourDamage = Math.max(1, Math.round(yourPower * roll()));
+      foeDamage = chip(foeMove.power);
+      duelState.lines = ['WHEEL WIN', `-${yourDamage} -${foeDamage}`];
+    } else if (relation === 0.5) {
+      foeDamage = Math.max(1, Math.round(foePower * roll()));
+      yourDamage = chip(yourMove.power);
+      duelState.lines = ['WHEEL LOSE', `-${yourDamage} -${foeDamage}`];
+    } else {
+      yourDamage = chip(foeMove.power);
+      foeDamage = chip(yourMove.power);
+      duelState.lines = ['TRADE', `-${yourDamage} -${foeDamage}`];
+    }
   }
   duelState.hp[0] = Math.max(0, duelState.hp[0] - foeDamage);
   duelState.hp[1] = Math.max(0, duelState.hp[1] - yourDamage);
@@ -760,8 +783,8 @@ function drawDuel(ctx, state) {
     const option = options[Math.min(duelState.cursor, options.length - 1)];
     if (option) {
       drawIcon(ctx, typeIcon(option.type), 62, 40);
-      if (option.power != null) text(ctx, num(option.power), 72, 41, true);
-      if (duelOptionAffinity(state, 0, option)) drawSymbol(ctx, 'up', 82, 41, true);
+      if (state.duel.scoring === 'power' && option.power != null) text(ctx, num(option.power), 72, 41, true);
+      if (state.duel.scoring === 'power' && duelOptionAffinity(state, 0, option)) drawSymbol(ctx, 'up', 82, 41, true);
     }
     drawDuelMoveRow(ctx, state);
   } else {
@@ -784,6 +807,8 @@ function boot() {
     ? document.body.dataset.mode : null;
   const bodyDuel = document.body && document.body.dataset && document.body.dataset.duel
     ? document.body.dataset.duel : null;
+  const bodyScoring = document.body && document.body.dataset && document.body.dataset.scoring
+    ? document.body.dataset.scoring : null;
   const query = typeof location !== 'undefined' && typeof location.search === 'string' ? location.search : '';
   const seedMatch = /[?&]seed=(\d+)/.exec(query);
   const seed = seedMatch ? Number(seedMatch[1]) : undefined;
@@ -792,6 +817,7 @@ function boot() {
     mode: bodyMode || 'current',
     lockMode: !!bodyMode,
     duelKind: bodyDuel || undefined,
+    scoring: bodyScoring || undefined,
     seed,
     loadImage(src, done) {
       const img = new Image();
@@ -874,7 +900,7 @@ function boot() {
         state.mode === 'duel' ? `duel ${state.duel.kind}` : state.mode,
         state.mode === 'trim' ? `${state.trim.typeMode} arrows:${state.trim.arrows ? 'on' : 'off'} press:${state.trim.pressTurn ? 'on' : 'off'}` : '',
         state.mode === 'duel' && state.duel.kind === 'stances' ? `${state.duel.stances} stances ai-read:${state.duel.aiRead}%` : '',
-        state.mode === 'duel' && state.duel.kind === 'wheel' ? `ai-read:${state.duel.aiRead}%` : '',
+        state.mode === 'duel' && state.duel.kind === 'wheel' ? `duel wheel ${state.duel.scoring} ai-read:${state.duel.aiRead}%` : '',
         `you:${you.name}[${count(you)}m] foe:${foe.name}[${count(foe)}m]`,
       ].filter(Boolean).join(' · ');
     });

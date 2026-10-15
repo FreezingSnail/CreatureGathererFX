@@ -78,7 +78,7 @@ stancesHarness.press('z');
 stancesHarness.advances(8, 100);
 writePreview(stancesHarness, 'stances-result.png');
 
-// Mode D: wheel duel (8 types, own moves).
+// Mode D: wheel duel (8 types, own moves, power scoring).
 harness.switchMode('duel');
 harness.press('z');
 settle();
@@ -88,5 +88,15 @@ writePreview(harness, 'duel-choice.png');
 harness.press('z');
 harness.advances(8, 100);
 writePreview(harness, 'duel-result.png');
+
+// Mode E: pure RPS (same web, flat scoring) in its own harness.
+const pureHarness = createHarness({ mode: 'duel', duel: 'wheel', scoring: 'flat' });
+pureHarness.advances(2);
+pureHarness.press('z');
+pureHarness.advances(2);
+writePreview(pureHarness, 'duel-pure-choice.png');
+pureHarness.press('z');
+pureHarness.advances(8, 100);
+writePreview(pureHarness, 'duel-pure-result.png');
 
 console.log('PASS: wrote previews and icons.png to docs/assets/battle-design-spike/');

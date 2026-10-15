@@ -66,8 +66,13 @@ data test re-runs the proof over all 64 creatures.
 ## Play rules as implemented in the mock
 
 - Both sides pick one of their own creature's moves, hidden; 550 ms reveal.
-- Win = full hit based on the winning move's power (×1.5 affinity), loser chips; neutral or mirror = trade chip.
-- The AI counters your last revealed type at the read-rate slider when a counter exists in its own moves.
+- **Power spelling** (`mock/duel.html`): win = full hit scaled by the winning move's power
+  (4 + 1.2 × power, ×1.5 affinity), loser chips 2 + 0.25 × own power; neutral or mirror = trade chip.
+- **Pure-RPS spelling** (`mock/duel-pure.html`): power, stats and affinity are ignored; the relation
+  alone scores — win 14, chip 4, trade 6 both.
+- Both windows share the web, option source and seed, so they can run side by side.
+- The AI counters your last revealed type at the read-rate slider when a counter exists in its own moves
+  (power spelling then prefers the strongest counter).
 - Uses are not tracked in duel mode yet.
 
 ## Open questions

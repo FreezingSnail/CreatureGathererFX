@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Battle mock · duel wheel</title>
+<title>Battle mock · duel power</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body data-mode="duel">
 <div id="wrap">
-  <h1>D · duel wheel — your creature's own moves</h1>
+  <h1>D · duel power — moves with damage</h1>
   <canvas id="screen" width="128" height="64"></canvas>
   <table>
     <tr>
@@ -38,9 +38,9 @@
     Win = full hit (your move power, ×1.5 when the move type is your creature's type), lose = blocked plus chip,
     neutral or mirror = trade chip. The footer row shows your creature's equipped moves as type icons; AFF marks
     an affinity pick. Note: current authored kits give 15 of 64 creatures fewer than three moves (bell has two,
-    SquibbleSnail one), so some footers show fewer cells — three-move kits are an authoring pass. The AI counters
-    your previous type at the read rate when it has a counter; the highlighted table row/column follow the setup
-    creatures and the full web notes live on the <a href="index.html">mock index</a>.</p>
+    SquibbleSnail one), so some footers show fewer cells — three-move kits are an authoring pass. Twin window:
+    <a href="duel-pure.html">E · pure RPS</a> resolves the same web with no power at all. The AI counters your
+    previous type at the read rate when it has a counter; highlight follows the setup creatures.</p>
   <p><a href="index.html">← mock index</a></p>
 </div>
 <script src="data.js"></script>

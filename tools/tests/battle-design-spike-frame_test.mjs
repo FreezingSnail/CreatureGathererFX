@@ -65,6 +65,7 @@ test('variant windows lock their design and honor the seed query', () => {
   assert.equal(state.mode, 'duel');
   assert.equal(state.lockMode, true);
   assert.equal(state.seed, 4242);
+  assert.equal(state.duel.scoring, 'power', 'default scoring');
   harness.press('1'); // design switching is locked in a variant window
   harness.advances(1);
   assert.equal(state.mode, 'duel');
@@ -72,6 +73,21 @@ test('variant windows lock their design and honor the seed query', () => {
   harness.advances(2);
   assert.equal(state.scene, 'battle');
   assert.ok(harness.spritePixels() > 200, 'duel battle renders in the locked window');
+});
+
+test('pure RPS window boots with flat scoring from its body attribute', () => {
+  const harness = createHarness({ mode: 'duel', duel: 'wheel', scoring: 'flat' });
+  harness.advances(2);
+  const state = harness.state();
+  assert.equal(state.duel.kind, 'wheel');
+  assert.equal(state.duel.scoring, 'flat');
+  harness.press('z');
+  harness.advances(2);
+  assert.equal(state.scene, 'battle');
+  harness.press('z');
+  harness.advances(8, 100);
+  const lines = harness.state().duelState.lines[0];
+  assert.ok(/RPS (WIN|LOSE)|TRADE/.test(lines), lines);
 });
 
 test('mode edges 1/2/3 switch scenes from the keyboard', () => {

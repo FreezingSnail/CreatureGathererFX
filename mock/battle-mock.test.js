@@ -277,16 +277,54 @@ test('stance duel resolves damage with affinity on the correct sides', () => {
   assert.ok(tie.duelState.hp[0] < tieYou && tie.duelState.hp[1] < tieFoe);
 });
 
+test('pure RPS scoring ignores power and affinity with fixed damage', () => {
+  const state = M.newMock({ mode: 'duel', scoring: 'flat', you: 10, foe: 12, seed: 3 });
+  M.startBattle(state);
+  assert.equal(state.duel.scoring, 'flat');
+  // ember wisper? no: ember stoke (fire) vs hedge root (plant): fire beats plant -> flat win.
+  state.foeIndex = M.DATA.creatures.findIndex((entry) => entry.name === 'hedge');
+  const beforeYou = state.duelState.hp[0], beforeFoe = state.duelState.hp[1];
+  state.duelState.picks = [0, 0];
+  M.duelResolve(state);
+  assert.equal(state.duelState.lines[0], 'RPS WIN');
+  assert.equal(beforeFoe - state.duelState.hp[1], 14, 'flat win damage');
+  assert.equal(beforeYou - state.duelState.hp[0], 4, 'flat chip damage');
+  // Same picks, different creature/move powers: still the same fixed numbers.
+  const other = M.newMock({ mode: 'duel', scoring: 'flat', you: 63, foe: 12, seed: 3 });
+  M.startBattle(other);
+  const otherYou = other.duelState.hp[0], otherFoe = other.duelState.hp[1];
+  other.duelState.picks = [0, 0]; // OrbitRelic elderBurst (elder) vs hedge root (plant)
+  M.duelResolve(other);
+  const relation = M.wheelValue(M.duelOptions(other, 0)[0].type, M.duelOptions(other, 1)[0].type);
+  if (relation === 2) {
+    assert.equal(otherFoe - other.duelState.hp[1], 14);
+    assert.equal(otherYou - other.duelState.hp[0], 4);
+  } else if (relation === 0.5) {
+    assert.equal(otherYou - other.duelState.hp[0], 14);
+    assert.equal(otherFoe - other.duelState.hp[1], 4);
+  } else {
+    assert.equal(otherYou - other.duelState.hp[0], 6);
+    assert.equal(otherFoe - other.duelState.hp[1], 6);
+  }
+  // Power scoring keeps scaling with power (control).
+  const power = M.newMock({ mode: 'duel', scoring: 'power', you: 10, foe: 12, seed: 3 });
+  M.startBattle(power);
+  power.foeIndex = M.DATA.creatures.findIndex((entry) => entry.name === 'hedge');
+  power.duelState.picks = [0, 0];
+  M.duelResolve(power);
+  assert.equal(power.duelState.lines[0], 'WHEEL WIN');
+});
+
 test('duel AI keeps its pick inside its own option list for both engines', () => {
-  for (const duelKind of ['wheel', 'stances']) {
-    const state = M.newMock({ mode: 'duel', duelKind, you: 10, foe: 12, seed: 7, aiRead: 100 });
+  for (const [duelKind, scoring] of [['wheel', 'power'], ['wheel', 'flat'], ['stances', 'power']]) {
+    const state = M.newMock({ mode: 'duel', duelKind, scoring, you: 10, foe: 12, seed: 7, aiRead: 100 });
     M.startBattle(state);
     const count = M.duelOptions(state, 1).length;
     for (let i = 0; i < 10; i++) {
       state.duelState.last = [M.duelOptions(state, 0)[0].type, null];
       M.duelPick(state, 0);
       const aiIndex = state.duelState.picks[1];
-      assert.ok(aiIndex >= 0 && aiIndex < count, `${duelKind} AI pick ${aiIndex} within 0..${count - 1}`);
+      assert.ok(aiIndex >= 0 && aiIndex < count, `${duelKind}/${scoring} AI pick ${aiIndex} within 0..${count - 1}`);
       state.duelState.phase = 'choice';
       state.duelState.picks = [null, null];
     }
