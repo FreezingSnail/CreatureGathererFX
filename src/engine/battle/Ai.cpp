@@ -82,7 +82,9 @@ BattleAction chooseVoluntarySwitch(const BattleState &state,
         candidate.stats.defense = slot.defense;
         candidate.stats.spcDef = slot.specialDefense;
         candidate.hp = slot.hp;
+#ifndef CGFX_DUEL_BATTLE
         candidate.statMods.modifiers = state.partyModifiers[side][original];
+#endif
         const uint8_t threat = bestLegalDamage(state, Side::Player, candidate);
         if (threat >= slot.hp) continue;
 

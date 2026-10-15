@@ -16,12 +16,19 @@
 #include "menu_test.hpp"
 #include "chunk_test.hpp"
 #include "dialog_test.hpp"
+// mode_state/transition drive the full battle flow and assume legacy immediate
+// resolution; the duel build adds 29/68-frame timing, so they belong to the
+// legacy contract run (no macro).
+#ifndef CGFX_DUEL_BATTLE
 #include "mode_state_test.hpp"
+#endif
 #include "world_interact_test.hpp"
 #include "step_test.hpp"
 #include "encounter_test.hpp"
 #include "lure_zone_test.hpp"
+#ifndef CGFX_DUEL_BATTLE
 #include "transition_test.hpp"
+#endif
 #include "fx_read_counter_test.hpp"
 #include "battle_view_test.hpp"
 #include "battle_test.hpp"
@@ -36,9 +43,14 @@
 #include "../src/globals.hpp"
 #include "../src/engine/menu/MenuV2.hpp"
 #include <cstring>
+// battle_session/flow/slim_session assert the legacy sequential two-actor
+// contract; the CGFX_DUEL_BATTLE build replaces that path, so they belong to
+// the legacy contract run (no macro).
+#ifndef CGFX_DUEL_BATTLE
 #include "battle_session_test.hpp"
 #include "battle_playback_test.hpp"
 #include "battle_flow_test.hpp"
+#endif
 #include "arena_lifecycle_test.hpp"
 #include "arena_catalog_test.hpp"
 #include "arena_navigation_test.hpp"
@@ -46,14 +58,24 @@
 #include "arena_flow_test.hpp"
 #include "battle_presets_test.hpp"
 #include "battle_item_test.hpp"
+// battle_utility asserts the PP/use-bank contract; the duel has no PP and
+// aliases moveUsesSpent, so it belongs to the legacy contract run (no macro).
+#ifndef CGFX_DUEL_BATTLE
 #include "battle_utility_test.hpp"
+#endif
 #include "battle_slim_test.hpp"
+#ifndef CGFX_DUEL_BATTLE
 #include "battle_slim_session_test.hpp"
+#endif
 #include "battle_slim_menu_test.hpp"
 #include "battle_slim_feedback_test.hpp"
 #ifdef BATTLE_SIMULATOR
 #include "battle_sim_state_test.hpp"
 #include "battle_sim_runner_test.hpp"
+#endif
+#ifdef CGFX_DUEL_BATTLE
+#include "duel_kernel_test.hpp"
+#include "duel_session_integration_test.hpp"
 #endif
 
 Player player = Player();
@@ -184,8 +206,10 @@ int main() {
     std::cout << "ChunkSuite finished" << std::endl;
     DialogSuite(tests);
     std::cout << "DialogSuite finished" << std::endl;
+#ifndef CGFX_DUEL_BATTLE
     ModeStateSuite(tests);
     std::cout << "ModeStateSuite finished" << std::endl;
+#endif
     WorldInteractionSuite(tests);
     std::cout << "WorldInteractionSuite finished" << std::endl;
     StepSuite(tests);
@@ -194,8 +218,10 @@ int main() {
     std::cout << "EncounterSuite finished" << std::endl;
     LureZoneSuite(tests);
     std::cout << "LureZoneSuite finished" << std::endl;
+#ifndef CGFX_DUEL_BATTLE
     TransitionSuite(tests);
     std::cout << "TransitionSuite finished" << std::endl;
+#endif
     FxReadCounterSuite(tests);
     std::cout << "FxReadCounterSuite finished" << std::endl;
     BattleViewSuite(tests);
@@ -211,11 +237,13 @@ int main() {
     BattlePresentationSuite(tests);
     BattleHpSpikeSuite(tests);
     std::cout << "BattlePresentationSuite finished" << std::endl;
+#ifndef CGFX_DUEL_BATTLE
     BattleSessionSuite(tests);
     std::cout << "BattleSessionSuite finished" << std::endl;
     // The compact flow suite covers single-phase feedback and action boundaries.
     BattleFlowSuite(tests);
     std::cout << "Slim battle frame controller finished" << std::endl;
+#endif
     ArenaLifecycleSuite(tests);
     ArenaCatalogSuite(tests);
     ArenaNavigationSuite(tests);
@@ -223,11 +251,21 @@ int main() {
     ArenaFlowSuite(tests);
     BattlePresetsSuite(tests);
     BattleItemSuite(tests);
+#ifndef CGFX_DUEL_BATTLE
     BattleUtilitySuite(tests);
+#endif
     battle_slim_fixture::BattleSlimScaffoldSuite(tests);
+#ifndef CGFX_DUEL_BATTLE
     battle_slim_session_test_detail::BattleSlimSessionSuite(tests);
+#endif
     BattleSlimMenuSuite(tests);
     battle_slim_feedback_fixture::SlimFeedbackSuite(tests);
+#ifdef CGFX_DUEL_BATTLE
+    std::cout << "DuelKernelSuite" << std::endl;
+    DuelKernelSuite(tests);
+    std::cout << "DuelSessionIntegrationSuite" << std::endl;
+    DuelSessionIntegrationSuite(tests);
+#endif
 #ifdef BATTLE_SIMULATOR
     BattleSimulatorStateSuite(tests);
     BattleSimulatorRunnerSuite(tests);

@@ -5,6 +5,18 @@
 #include "Resolve.hpp"
 #include "MoveUses.hpp"
 #include "../../player/Player.hpp"
+#ifdef CGFX_DUEL_BATTLE
+#include "DuelKernel.hpp"
+#endif
+#if defined(CGFX_DUEL_BATTLE) && defined(__AVR__)
+#include "../../fxdata.h"
+#include "../../lib/FxRead.hpp"
+// Resident chart cache for the canonical AVR duel route; loaded once per
+// encounter.
+namespace duel {
+uint8_t duelChart[TYPE_COUNT * TYPE_COUNT];
+}
+#endif
 
 #ifndef CGFX_BATTLE_AUTO_REPLACE
 #define CGFX_BATTLE_AUTO_REPLACE 0
@@ -43,6 +55,119 @@ BattleAction skipAction()
 {
     return {ActionKind::Skip, 255};
 }
+
+#ifdef CGFX_DUEL_BATTLE
+// Spike-inc.1 adapter (CreatureGathererFX-d73i.1). The authored 8->5 fold runs
+// at runtime only because step 4 has not emitted a build-time fold table yet;
+// the final authoring fold stays build-time. Attack eligibility mirrors the
+// mock: a slot is usable when its authored move type is a real attack type
+// (not STATUS/NONE). One option per usable authored slot, in slot order.
+// Temporary spike fixture persona/rate mapping so all four planned beta
+// personas are reachable and exercised: wild encounters never read (Random/0);
+// trainers rotate Reader 25% (introductory), Frequency 50% (ordinary) and
+// AntiRepeat 50% (boss) by trainer id. This maps onto real authored encounters
+// until step 4 emits authored persona/rate values.
+duel::Persona duelFixturePersona(const BattleState &state)
+{
+    if (!state.trainer) return duel::Persona::Random;
+    switch (state.trainerId % 3) {
+    case 0: return duel::Persona::Reader;
+    case 1: return duel::Persona::Frequency;
+    default: return duel::Persona::AntiRepeat;
+    }
+}
+
+uint8_t duelFixtureReadRate(const BattleState &state)
+{
+    if (!state.trainer) return 0;
+    return state.trainerId % 3 == 0 ? 25 : 50;
+}
+
+// At the shipping 52 FPS: 29 ticks = 557.7 ms for the concealed interval, 68
+// ticks = 1307.7 ms for the result dwell (the mock's 550 ms / 1300 ms).
+constexpr uint8_t DUEL_CONCEAL_TICKS = 29;
+constexpr uint8_t DUEL_RESULT_TICKS = 68;
+
+bool duelUsableAttack(const Move &move)
+{
+    return move.getMoveType() < 8;
+}
+
+uint8_t duelFoldAuthored(uint8_t authored)
+{
+    return duel::foldType(authored);
+}
+
+// Folded active creature types (1 or 2 distinct) for the matchup modifier.
+// Distinctness is checked AFTER folding: wind+water collapse to water and
+// elder+spirit collapse to spirit, so those dual types dedupe to one.
+uint8_t duelActiveTypes(const BattleState &state, uint8_t side, uint8_t *out)
+{
+    const DualType types = state.active[side].types;
+    const uint8_t first = static_cast<uint8_t>(types.getType1());
+    const uint8_t second = static_cast<uint8_t>(types.getType2());
+    out[0] = duelFoldAuthored(first);
+    const uint8_t foldedSecond = second == static_cast<uint8_t>(Type::NONE)
+        ? duel::NO_TYPE : duelFoldAuthored(second);
+    if (foldedSecond != duel::NO_TYPE && foldedSecond != out[0]) {
+        out[1] = foldedSecond;
+        return 2;
+    }
+    return 1;
+}
+
+// Options are the active member's usable authored attack slots in slot order.
+uint8_t duelUsableSlotCount(const BattleState &state, uint8_t side)
+{
+    const Combatant &active = state.active[side];
+    uint8_t count = 0;
+    for (uint8_t slot = 0; slot < 4; ++slot)
+        if (active.moveIds[slot] != 255 && duelUsableAttack(active.moves[slot]))
+            ++count;
+    return count;
+}
+
+uint8_t duelSlotForOption(const BattleState &state, uint8_t side, uint8_t option)
+{
+    const Combatant &active = state.active[side];
+    uint8_t index = 0;
+    for (uint8_t slot = 0; slot < 4; ++slot) {
+        if (active.moveIds[slot] == 255 || !duelUsableAttack(active.moves[slot]))
+            continue;
+        if (index == option) return slot;
+        ++index;
+    }
+    return 255;
+}
+
+uint8_t duelOptionType(const BattleState &state, uint8_t side, uint8_t option)
+{
+    const uint8_t slot = duelSlotForOption(state, side, option);
+    return slot == 255 ? duel::NO_TYPE
+                       : duelFoldAuthored(state.active[side].moves[slot].getMoveType());
+}
+
+// First living bench member (original slot) whose cached attack mask beats the
+// guessed type; 255 when none. Uses setup-cached masks only, no FX read.
+uint8_t duelBenchCounter(const BattleState &state, uint8_t side, uint8_t guessed)
+{
+    const uint8_t count = state.partyCount[side] > PARTY_SIZE
+        ? PARTY_SIZE : state.partyCount[side];
+    const uint8_t active = state.activeSlot[side];
+    for (uint8_t original = 0; original < count; ++original) {
+        if (original == active) continue;
+        const uint8_t benchIndex = original < active ? original
+                                                     : static_cast<uint8_t>(original - 1);
+        if (state.bench[side][benchIndex].hp == 0) continue;
+        const uint8_t mask = state.moveUsesSpent[side][original];
+        for (uint8_t type = 0; type < duel::TYPE_COUNT; ++type)
+            if (((mask >> type) & 1u) &&
+                duel::relation(type, guessed) == duel::REL_WIN)
+                return original;
+    }
+    return 255;
+}
+#endif
 
 #ifdef BATTLE_SIMULATOR
 constexpr uint8_t SIMULATOR_SPECIES_COUNT = 64;
@@ -110,6 +235,11 @@ BattleSession::BattleSession()
     : state_{}, result_{}, cursor_{}, rng_{nullptr}
 {
     resetActionResult(result_);
+#ifdef CGFX_DUEL_BATTLE
+    duelCommittedOpponent_ = {duel::ActionKind::Wait, duel::NO_SLOT};
+    duelHistoryCount_ = 0;
+    duelOptionCount_[0] = duelOptionCount_[1] = 0;
+#endif
     resetCursor(SessionPhase::Inactive);
 }
 
@@ -127,6 +257,14 @@ void BattleSession::resetCursor(SessionPhase phase)
     cursor_.invalidMask = 0;
     cursor_.flags = 0;
     cursor_.phase = phase;
+#ifdef CGFX_DUEL_BATTLE
+    // Commit the opponent's concealed pick once on Choice entry and mark the
+    // entry so the flow rebuilds its menu on this transition only.
+    if (phase == SessionPhase::Choice) {
+        duelCommitOpponent();
+        cursor_.flags |= 1u;
+    }
+#endif
 }
 
 void BattleSession::beginWild(uint8_t id, uint8_t level, bool gatherable,
@@ -134,6 +272,12 @@ void BattleSession::beginWild(uint8_t id, uint8_t level, bool gatherable,
 {
     ::battle::beginWild(state_, id, level, gatherable, tierRate);
     resetActionResult(result_);
+#if defined(CGFX_DUEL_BATTLE) && defined(__AVR__)
+    FxRead::bytes(duelChartFixture, duel::duelChart, sizeof(duel::duelChart));
+#endif
+#ifdef CGFX_DUEL_BATTLE
+    duelHistoryCount_ = 0; // history resets per encounter
+#endif
     resetCursor(state_.over ? SessionPhase::Ready : SessionPhase::Choice);
     if (state_.over) cursor_.next = NEXT_COMPLETE;
 }
@@ -142,6 +286,12 @@ void BattleSession::beginTrainer(uint8_t id)
 {
     ::battle::beginTrainer(state_, id);
     resetActionResult(result_);
+#if defined(CGFX_DUEL_BATTLE) && defined(__AVR__)
+    FxRead::bytes(duelChartFixture, duel::duelChart, sizeof(duel::duelChart));
+#endif
+#ifdef CGFX_DUEL_BATTLE
+    duelHistoryCount_ = 0; // history resets per encounter
+#endif
     resetCursor(state_.over ? SessionPhase::Ready : SessionPhase::Choice);
     if (state_.over) cursor_.next = NEXT_COMPLETE;
 }
@@ -155,9 +305,11 @@ bool BattleSession::beginPrepared(
 
     state_ = prepared;
     resetMoveUses(state_);
+#ifndef CGFX_DUEL_BATTLE
     for (uint8_t side = 0; side < 2; ++side)
         for (uint8_t slot = 0; slot < PARTY_SIZE; ++slot)
             state_.partyModifiers[side][slot] = 0;
+#endif
     resetActionResult(result_);
     resetCursor(SessionPhase::Choice);
     return true;
@@ -228,6 +380,26 @@ bool BattleSession::submitPlayerAction(BattleAction action)
 {
     if (state_.over) return false;
     cursor_.plan.action[static_cast<uint8_t>(Side::Player)] = action;
+#ifdef CGFX_DUEL_BATTLE
+    // The opponent's concealed pick was already committed on Choice entry; the
+    // legacy planner/mover must not run in the duel build.
+    cursor_.plan.action[static_cast<uint8_t>(Side::Opponent)] = skipAction();
+    cursor_.first = Side::Player;
+    cursor_.invalidMask = 0;
+    cursor_.flags = 0;
+    if (action.kind == ActionKind::Escape) {
+        // Wild escape is immediate: resolve on the acceptance frame, no
+        // concealed interval.
+        cursor_.next = 0;
+        duelResolveRound();
+    } else {
+        // Accept the pick, then hold the 29-frame concealed interval before
+        // revealing and resolving.
+        cursor_.next = DUEL_CONCEAL_TICKS;
+        cursor_.phase = SessionPhase::Concealed;
+    }
+    return true;
+#else
     cursor_.plan.action[static_cast<uint8_t>(Side::Opponent)] =
         chooseAction(state_, Side::Opponent);
     cursor_.first = firstMover(state_, cursor_.plan);
@@ -236,6 +408,7 @@ bool BattleSession::submitPlayerAction(BattleAction action)
     cursor_.flags = 0;
     cursor_.phase = SessionPhase::Ready;
     return true;
+#endif
 }
 
 bool BattleSession::submitIntent(MenuIntent intent)
@@ -244,7 +417,16 @@ bool BattleSession::submitIntent(MenuIntent intent)
         BattleAction action = skipAction();
         switch (intent.kind) {
         case MenuIntentKind::SelectMove:
-#ifndef __AVR__
+#if defined(CGFX_DUEL_BATTLE)
+            // Duel has no PP: a slot is selectable when it holds a usable
+            // authored attack. Empty/status/utility slots are not selectable.
+            if (intent.index >= 4 ||
+                state_.active[static_cast<uint8_t>(Side::Player)]
+                        .moveIds[intent.index] == 255 ||
+                !duelUsableAttack(state_.active[static_cast<uint8_t>(Side::Player)]
+                                      .moves[intent.index]))
+                return false;
+#elif !defined(__AVR__)
             // Native callers can synthesize intents; the AVR menu snapshot is
             // produced and consumed while the session is paused at this phase.
             if (intent.index >= 4 ||
@@ -258,7 +440,7 @@ bool BattleSession::submitIntent(MenuIntent intent)
             action = {ActionKind::Switch, intent.index};
             break;
         case MenuIntentKind::Pass:
-#ifndef __AVR__
+#if !defined(__AVR__) && !defined(CGFX_DUEL_BATTLE)
             for (uint8_t slot = 0; slot < 4; ++slot)
                 if (remainingMoveUses(state_, Side::Player, slot)) return false;
 #endif
@@ -295,8 +477,358 @@ bool BattleSession::submitIntent(MenuIntent intent)
     return false;
 }
 
+#ifdef CGFX_DUEL_BATTLE
+void BattleSession::duelRecordHistory(uint8_t type)
+{
+    if (duelHistoryCount_ < duel::HISTORY_CAP) {
+        duelHistory_[duelHistoryCount_++] = type;
+        return;
+    }
+    for (uint8_t i = 1; i < duel::HISTORY_CAP; ++i)
+        duelHistory_[i - 1] = duelHistory_[i];
+    duelHistory_[duel::HISTORY_CAP - 1] = type;
+}
+
+// Commit the opponent's concealed pick once, on entry to Choice, before the
+// player's current choice is accepted. Options are the active member's usable
+// authored attack slots; no legacy AI runs in this path.
+void BattleSession::duelCommitOpponent()
+{
+    const uint8_t opponentSide = static_cast<uint8_t>(Side::Opponent);
+    duelCommittedOpponent_ = {duel::ActionKind::Wait, duel::NO_SLOT};
+
+    const uint8_t options = duelUsableSlotCount(state_, opponentSide);
+    duelOptionCount_[opponentSide] = options;
+    if (options == 0) return; // unusable kit -> WAIT
+
+    const duel::Persona persona = duelFixturePersona(state_);
+    const bool reads = persona != duel::Persona::Random &&
+                       rng_.roll(100) < duelFixtureReadRate(state_);
+    if (reads) {
+        const uint8_t guessed = duel::predictPlayerType(
+            duelHistory_, duelHistoryCount_, persona, rng_);
+        if (guessed != duel::NO_TYPE) {
+            uint8_t counters[4];
+            uint8_t count = 0;
+            for (uint8_t o = 0; o < options; ++o)
+                if (duel::relation(duelOptionType(state_, opponentSide, o),
+                                   guessed) == duel::REL_WIN)
+                    counters[count++] = o;
+            if (count != 0) {
+                duelCommittedOpponent_ = {duel::ActionKind::Attack,
+                                          counters[rng_.roll(count)]};
+                return;
+            }
+            // No counter in the active kit: switch to the first living bench
+            // member that holds one, using the setup-cached attack masks.
+            const uint8_t bench = duelBenchCounter(state_, opponentSide, guessed);
+            if (bench != 255) {
+                duelCommittedOpponent_ = {duel::ActionKind::Switch, bench};
+                return;
+            }
+        }
+        // Fired read with no counter anywhere: uniform across every attack slot.
+        duelCommittedOpponent_ = {duel::ActionKind::Attack, rng_.roll(options)};
+        return;
+    }
+
+    // No read: prefer the best creature-matchup tier, then uniform.
+    uint8_t playerTypes[2];
+    const uint8_t playerTypeCount = duelActiveTypes(state_, 0, playerTypes);
+    uint8_t bestTier = 0;
+    for (uint8_t o = 0; o < options; ++o) {
+        const uint8_t tier = duel::creatureModifier(
+            duelOptionType(state_, opponentSide, o), playerTypes, playerTypeCount);
+        if (tier > bestTier) bestTier = tier;
+    }
+    uint8_t pool[4];
+    uint8_t count = 0;
+    for (uint8_t o = 0; o < options; ++o)
+        if (duel::creatureModifier(duelOptionType(state_, opponentSide, o),
+                                   playerTypes, playerTypeCount) == bestTier)
+            pool[count++] = o;
+    duelCommittedOpponent_ = {duel::ActionKind::Attack, pool[rng_.roll(count)]};
+}
+
+// One atomic round: attacks, switches and WAIT resolve together against the
+// same pre-hit state. Returns false only for the still-legacy gather/escape
+// bridge, which the caller then handles.
+bool BattleSession::duelResolveRound()
+{
+    const uint8_t playerSide = static_cast<uint8_t>(Side::Player);
+    const uint8_t opponentSide = static_cast<uint8_t>(Side::Opponent);
+    if (state_.active[playerSide].hp == 0 || state_.active[opponentSide].hp == 0)
+        return false;
+
+    const BattleAction playerAction = cursor_.plan.action[playerSide];
+    bool playerGathering = false;
+
+    // Escape is a wild-only action (the menu already withholds it from
+    // trainers). It is immediate and cancels the pending round.
+    if (playerAction.kind == ActionKind::Escape) {
+        if (state_.trainer) return false;
+        resetActionResult(result_);
+        result_.kind = ResultKind::Escape;
+        result_.actor = Side::Player;
+        result_.outcome = Outcome::Escaped;
+        state_.over = true;
+        cursor_.flags |= 2u; // result entry: the flow prepares feedback once
+        cursor_.next = DUEL_RESULT_TICKS;
+        cursor_.phase = SessionPhase::Result;
+        return true;
+    }
+
+    duel::Action playerDuel = {duel::ActionKind::Wait, duel::NO_SLOT};
+    switch (playerAction.kind) {
+    case ActionKind::Gather:
+        // Gather availability is a wild-encounter rule; the menu gates it, so a
+        // trainer/gatherable-less gather is a no-op rather than a legacy call.
+        if (state_.trainer || !state_.gatherable) return false;
+        playerGathering = true;
+        break;
+    case ActionKind::UseItem:
+        // No battle item interface; the round commits no attack.
+        break;
+    case ActionKind::Attack: {
+        // playerAction.index is a move slot; map it to its usable option index.
+        uint8_t option = 255;
+        uint8_t index = 0;
+        for (uint8_t slot = 0; slot < 4; ++slot) {
+            if (state_.active[playerSide].moveIds[slot] == 255 ||
+                !duelUsableAttack(state_.active[playerSide].moves[slot]))
+                continue;
+            if (slot == playerAction.index) { option = index; break; }
+            ++index;
+        }
+        if (option == 255) return false;
+        playerDuel = {duel::ActionKind::Attack, option};
+        break;
+    }
+    case ActionKind::Switch:
+        playerDuel = {duel::ActionKind::Switch, playerAction.index};
+        break;
+    case ActionKind::Skip:
+        playerDuel = {duel::ActionKind::Wait, duel::NO_SLOT};
+        break;
+    default:
+        return false;
+    }
+    duelOptionCount_[playerSide] = duelUsableSlotCount(state_, playerSide);
+
+    const duel::Action opponentDuel = duelCommittedOpponent_;
+    const bool playerSwitch = playerDuel.kind == duel::ActionKind::Switch;
+    const bool opponentSwitch = opponentDuel.kind == duel::ActionKind::Switch;
+
+    // Remember outgoing original slots so a swap-KO can revert to them.
+    uint8_t outgoing[2] = {255, 255};
+    if (playerSwitch) outgoing[playerSide] = state_.activeSlot[playerSide];
+    if (opponentSwitch) outgoing[opponentSide] = state_.activeSlot[opponentSide];
+
+    // Switches use the setup-owned transition so the incoming member's moves
+    // load at the transition boundary, then default wins read the new types.
+    if (playerSwitch &&
+        !applySwitch(state_, Side::Player, playerDuel.index, false, result_))
+        return false;
+    if (opponentSwitch &&
+        !applySwitch(state_, Side::Opponent, opponentDuel.index, false, result_))
+        return false;
+
+    uint8_t attackType[2] = {duel::NO_TYPE, duel::NO_TYPE};
+    if (playerDuel.kind == duel::ActionKind::Attack)
+        attackType[playerSide] = duelOptionType(state_, playerSide, playerDuel.index);
+    if (opponentDuel.kind == duel::ActionKind::Attack)
+        attackType[opponentSide] =
+            duelOptionType(state_, opponentSide, opponentDuel.index);
+
+    uint8_t playerTypes[2], opponentTypes[2];
+    const uint8_t playerTypeCount = duelActiveTypes(state_, playerSide, playerTypes);
+    const uint8_t opponentTypeCount =
+        duelActiveTypes(state_, opponentSide, opponentTypes);
+
+    uint8_t damage[2] = {0, 0};
+    const bool playerAttacks = attackType[playerSide] != duel::NO_TYPE;
+    const bool opponentAttacks = attackType[opponentSide] != duel::NO_TYPE;
+    if (playerSwitch && opponentSwitch) {
+        // Both swaps complete and deal zero damage.
+    } else if (playerAttacks && opponentAttacks) {
+        const uint8_t rel =
+            duel::relation(attackType[playerSide], attackType[opponentSide]);
+        const uint8_t playerMod = duel::creatureModifier(
+            attackType[playerSide], opponentTypes, opponentTypeCount);
+        const uint8_t opponentMod = duel::creatureModifier(
+            attackType[opponentSide], playerTypes, playerTypeCount);
+        if (rel == duel::REL_WIN) {
+            damage[opponentSide] = duel::scaleDamage(duel::DMG_WIN, playerMod);
+            damage[playerSide] = duel::scaleDamage(duel::DMG_CHIP, opponentMod);
+        } else if (rel == duel::REL_LOSE) {
+            damage[playerSide] = duel::scaleDamage(duel::DMG_WIN, opponentMod);
+            damage[opponentSide] = duel::scaleDamage(duel::DMG_CHIP, playerMod);
+        } else {
+            damage[playerSide] = duel::scaleDamage(duel::DMG_TRADE, playerMod);
+            damage[opponentSide] = duel::scaleDamage(duel::DMG_TRADE, opponentMod);
+        }
+    } else {
+        // Exactly one side lands a default win (the other switched or waited).
+        if (playerAttacks) {
+            damage[opponentSide] = duel::scaleDamage(
+                duel::DMG_WIN, duel::creatureModifier(attackType[playerSide],
+                                                      opponentTypes, opponentTypeCount));
+        } else if (opponentAttacks) {
+            damage[playerSide] = duel::scaleDamage(
+                duel::DMG_WIN, duel::creatureModifier(attackType[opponentSide],
+                                                      playerTypes, playerTypeCount));
+        }
+    }
+
+    // Gather adds tier progress BEFORE the opponent's default win. A KO this
+    // round blocks acquisition but never discards the added progress, so a
+    // surviving reserve keeps the gathered charge. Need/rate stay frozen.
+    if (playerGathering) {
+        const uint8_t need = state_.gather.need;
+        if (state_.gather.progress < need) {
+            const uint16_t updated =
+                static_cast<uint16_t>(state_.gather.progress) +
+                state_.gather.tierRate;
+            state_.gather.progress = updated >= need
+                ? need : static_cast<uint8_t>(updated);
+        }
+    }
+
+    // Capture the round's identity and pre-promotion faint mask before any KO
+    // auto-promotion transition, which rewrites its own scratch result.
+    const ResultKind roundKind =
+        playerGathering ? ResultKind::Gather : ResultKind::Attack;
+    const uint8_t roundIndex = playerAction.index;
+    for (uint8_t side = 0; side < 2; ++side) {
+        Combatant &active = state_.active[side];
+        active.hp = damage[side] >= active.hp
+            ? 0 : static_cast<uint8_t>(active.hp - damage[side]);
+    }
+    const bool playerFainted = state_.active[playerSide].hp == 0;
+    const bool opponentFainted = state_.active[opponentSide].hp == 0;
+    if (attackType[playerSide] != duel::NO_TYPE)
+        duelRecordHistory(attackType[playerSide]);
+
+    // KO resolution (the duel contract, independent of CGFX_BATTLE_AUTO_REPLACE):
+    // a swap-KO reverts to that side's outgoing member while it lives, and an
+    // ordinary KO promotes the first living original slot. A scratch result
+    // keeps the atomic round facts from being overwritten by the transition.
+    ActionResult promotion;
+    resetActionResult(promotion);
+    for (uint8_t side = 0; side < 2; ++side) {
+        if (state_.active[side].hp != 0) continue;
+        uint8_t target = 255;
+        if (outgoing[side] != 255 && outgoing[side] != state_.activeSlot[side]) {
+            const uint8_t original = outgoing[side];
+            const uint8_t bench = original < state_.activeSlot[side]
+                ? original : static_cast<uint8_t>(original - 1);
+            if (state_.bench[side][bench].hp != 0) target = original;
+        }
+        if (target == 255)
+            target = firstLiveBenchSlot(static_cast<Side>(side));
+        if (target != 255)
+            applySwitch(state_, static_cast<Side>(side), target, true, promotion);
+    }
+
+    // Acquisition blocks on the round's pre-promotion faint mask: an active KO'd
+    // this round cannot acquire even though a reserve now stands in. Progress
+    // earned before the hit is retained.
+    const bool acquisition = playerGathering && state_.gather.need != 0 &&
+        state_.gather.progress >= state_.gather.need &&
+        !playerFainted && !opponentFainted;
+
+    // Terminal order: KO wins over pending gather, which wins over the wild
+    // flee countdown. Every terminal KO outcome marks the battle over.
+    resetActionResult(result_);
+    result_.kind = roundKind;
+    result_.actor = Side::Player;
+    result_.index = roundIndex;
+    const bool playerAlive = !sideDefeated(state_, Side::Player);
+    const bool opponentAlive = !sideDefeated(state_, Side::Opponent);
+    if (!playerAlive && !opponentAlive) {
+        state_.over = true;
+        result_.outcome = Outcome::Draw;
+    } else if (!opponentAlive) {
+        state_.over = true;
+        result_.outcome = Outcome::Win;
+    } else if (!playerAlive) {
+        state_.over = true;
+        result_.outcome = Outcome::Lose;
+    } else if (acquisition) {
+        state_.over = true;
+        result_.outcome = Outcome::Gathered;
+    } else if (!state_.trainer && state_.gatherable &&
+               !playerFainted && !opponentFainted) {
+        // The archived end-turn resolver returns before the flee countdown when
+        // either active fainted this round, so the six-round clock pauses on a
+        // KO round (progress is retained; acquisition was already blocked).
+        if (state_.gather.fleeTurns != 0) --state_.gather.fleeTurns;
+        if (state_.gather.fleeTurns == 0) {
+            state_.over = true;
+            result_.outcome = Outcome::Fled;
+        }
+    }
+    if (playerFainted) result_.flags |= PLAYER_FAINTED;
+    if (opponentFainted) result_.flags |= OPPONENT_FAINTED;
+    cursor_.flags |= 2u; // result entry: the flow prepares feedback once
+
+    cursor_.next = DUEL_RESULT_TICKS;
+    cursor_.phase = SessionPhase::Result;
+    return true;
+}
+
+bool BattleSession::consumeChoiceEntry()
+{
+    const bool fresh = (cursor_.flags & 1u) != 0;
+    cursor_.flags &= static_cast<uint8_t>(~1u);
+    return fresh;
+}
+
+bool BattleSession::consumeResultEntry()
+{
+    const bool entered = (cursor_.flags & 2u) != 0;
+    cursor_.flags &= static_cast<uint8_t>(~2u);
+    return entered;
+}
+#endif
+
 bool BattleSession::advance()
 {
+#ifdef CGFX_DUEL_BATTLE
+    // Duel timing phases own these frames; no button edges are consumed here.
+    // The transition fires exactly on the frame the counter decrements to zero,
+    // giving exactly DUEL_CONCEAL_TICKS concealed updates and DUEL_RESULT_TICKS
+    // result updates.
+    if (cursor_.phase == SessionPhase::Concealed) {
+        if (cursor_.next > 0) {
+            --cursor_.next;
+            if (cursor_.next == 0) duelResolveRound(); // -> SessionPhase::Result
+        }
+        return false;
+    }
+    if (cursor_.phase == SessionPhase::Result) {
+        if (cursor_.next > 0) {
+            --cursor_.next;
+            if (cursor_.next == 0) {
+                if (result_.outcome != Outcome::None || state_.over) {
+                    syncPlayerHp();
+                    cursor_.phase = SessionPhase::Terminal;
+                } else {
+                    // The duel auto-promoted any KO before the dwell, so a
+                    // non-terminal round returns straight to a fresh Choice
+                    // (not the legacy Ready state).
+                    resetCursor(SessionPhase::Choice);
+                }
+            }
+        }
+        return false;
+    }
+    // Compile-time duel selection: the flag build never compiles or falls
+    // through into the legacy sequential resolver/AI/status/PP loop, so LTO is
+    // not credited with removing it and step 3 starts from an already-excluded
+    // route.
+    return false;
+#else
     if (cursor_.phase == SessionPhase::Replacement) {
 #if !CGFX_BATTLE_AUTO_REPLACE
         if (needsReplacement(Side::Player)) return false;
@@ -385,6 +917,7 @@ bool BattleSession::advance()
         return true;
     }
     return false;
+#endif
 }
 
 void BattleSession::finishNormalResult()
@@ -500,12 +1033,23 @@ BattleView BattleSession::view() const
     }
 
     for (uint8_t slot = 0; slot < 4; ++slot) {
+#ifdef CGFX_DUEL_BATTLE
+        // Only real attack slots are exposed (see moves()); no PP gating.
+        const uint8_t id =
+            state_.active[static_cast<uint8_t>(Side::Player)].moveIds[slot];
+        const bool usable = id != 255 &&
+            duelUsableAttack(state_.active[static_cast<uint8_t>(Side::Player)]
+                                 .moves[slot]);
+        out.moveIds[slot] = usable ? id : 255;
+        out.remainingUses[slot] = usable ? 255 : 0;
+#else
         out.moveIds[slot] = state_.active[static_cast<uint8_t>(Side::Player)]
             .moveIds[slot];
         out.remainingUses[slot] = remainingMoveUses(state_, Side::Player, slot);
         const uint8_t limit = moveUseLimit(state_.active[0].moves[slot]);
         if (limit != UNLIMITED_MOVE_USES)
             out.useLimitsPacked |= static_cast<uint8_t>(limit << (slot * 2));
+#endif
     }
     out.gatherProgress = state_.gather.progress;
     out.gatherNeed = state_.gather.need;
@@ -516,12 +1060,25 @@ MoveSnapshot BattleSession::moves() const
 {
     MoveSnapshot out = {};
     for (uint8_t slot = 0; slot < 4; ++slot) {
+#ifdef CGFX_DUEL_BATTLE
+        // Duel snapshot offers only real attack slots; status/utility/empty
+        // slots read as EMPTY_MOVE_ID so the old menu never gates on PP and a
+        // zero-attack kit falls through to the normal Pass/WAIT cell.
+        const uint8_t id =
+            state_.active[static_cast<uint8_t>(Side::Player)].moveIds[slot];
+        const bool usable = id != 255 &&
+            duelUsableAttack(state_.active[static_cast<uint8_t>(Side::Player)]
+                                 .moves[slot]);
+        out.moveIds[slot] = usable ? id : 255;
+        out.remainingUses[slot] = usable ? 255 : 0;
+#else
         out.moveIds[slot] = state_.active[static_cast<uint8_t>(Side::Player)]
             .moveIds[slot];
         out.remainingUses[slot] = remainingMoveUses(state_, Side::Player, slot);
         const uint8_t limit = moveUseLimit(state_.active[0].moves[slot]);
         if (limit != UNLIMITED_MOVE_USES)
             out.useLimitsPacked |= static_cast<uint8_t>(limit << (slot * 2));
+#endif
     }
     return out;
 }

@@ -116,11 +116,31 @@ optional submenus, and the directions to navigate. Trainer battles refuse Gather
 
 ## Arena demo (opt-in)
 
+The arena demo launches the current opt-in **RPS duel** engine from the existing arena bootstrap:
+`arena-demo` builds with the full shipping flags plus `-DCGFX_ARENA_DEMO` and
+`-DCGFX_DUEL_BATTLE`. Team selection, isolated FX data/save launch, and all override knobs
+(`ARENA_DEMO_BUILD_DIR`, `ARENA_DEMO_CART_DIR`, `ARENA_DEMO_CPP_FLAGS`, `ARENA_DEMO_FLASH_BUDGET`)
+are unchanged. `make arena-test` is an alias for the same launch.
+
 Build and launch the arena demo with:
 
 ```sh
 make arena-demo ARDENS=/path/to/Ardens
+# or the alias:
+make arena-test ARDENS=/path/to/Ardens
 ```
+
+To compile the arena+duel firmware without launching Ardens:
+
+```sh
+make ram BUILD_DIR=build \
+  AVR_SHIPPING_CPP_FLAGS='-mrelax -DCGFX_SHIPPING_NO_USB -fno-inline-small-functions -DCGFX_BATTLE_NO_FACTS -DCGFX_BATTLE_COMPACT_RESULT -DCGFX_COMPACT_WARP_VM -DCGFX_ARENA_DEMO -DCGFX_DUEL_BATTLE' \
+  AVR_FLASH_BUDGET=29184
+```
+
+The combat itself is the duel: hidden simultaneous picks, the 5-type relation, 14/4/6 damage with
+the x1.5/x0.5 creature-type matchup, switch/KO/draw, WAIT, and the fixture persona. The arena menus
+are the current (pre-compact) screens; only the battle engine changed.
 
 The target runs `make gen-if-needed`, builds into `build/arena-demo` using the opt-in
 `CGFX_ARENA_DEMO` define and a 29,184-byte arena flash ceiling, then launches Ardens with isolated FX data and save

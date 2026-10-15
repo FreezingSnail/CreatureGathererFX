@@ -7,6 +7,7 @@
 #include "../ModeState.hpp"
 #include "../../GameState.hpp"
 #include "../../globals.hpp"
+#include "../world/World.hpp"
 
 namespace BattleFlow {
 namespace {
@@ -20,6 +21,26 @@ void beginMenu(battle::BattleMode &mode) {
     ::new (static_cast<void *>(&mode.ui.menu)) battle::BattleMenu();
 }
 
+#ifdef CGFX_DUEL_BATTLE
+// Construct the correct UI union arm in the SAME update the session enters the
+// phase, so the frame's draw never reads a stale arm. Returns true when a fresh
+// arm was built this frame (the caller then consumes no button edge).
+bool duelSyncUi(battle::BattleMode &mode, battle::BattleSession &session) {
+    if (session.consumeResultEntry()) {
+        beginFeedback(mode);
+        return true;
+    }
+    if (session.consumeChoiceEntry()) {
+        beginMenu(mode);
+        const battle::BattleState &state = session.state();
+        mode.ui.menu.beginOptions(session.moves(), state.gatherable,
+                                  !state.trainer);
+        return true;
+    }
+    return false;
+}
+#endif
+
 void finishBattle(battle::BattleSession &session, TerminalCallback callback) {
     const battle::Outcome outcome = session.result().outcome;
 #if defined(TEST) || defined(FX_READ_COUNTER)
@@ -32,6 +53,14 @@ void finishBattle(battle::BattleSession &session, TerminalCallback callback) {
         callback(outcome);
         return;
     }
+    // Terminal Lose is recoverable: the next world frame restores the occupied
+    // party and returns to the authored first-beta start. Deferring past
+    // exitBattle keeps the single return edge out of a fresh interaction and
+    // lets the world rebuild its motion/property cache first.
+    // Lose is recoverable. A Draw grants no victory either and uses the same
+    // recovery so an exhausted party never returns to the world.
+    if (outcome == battle::Outcome::Lose || outcome == battle::Outcome::Draw)
+        WorldEngine::queueDefeatRecovery();
     exitBattle();
     gameState.state = GameState_t::WORLD;
 }
@@ -43,6 +72,17 @@ bool update(uint8_t edgeButtons, TerminalCallback onFinished) {
     battle::BattleSession &session = mode;
 
     if (!session.isActive()) return false;
+#ifdef CGFX_DUEL_BATTLE
+    // A finished duel result dwell is terminal (the duel never enters the
+    // Presenting phase).
+    if (session.exitReady()) {
+        finishBattle(session, onFinished);
+        return true;
+    }
+    // Construct any pending duel UI arm (result feedback or a fresh Choice
+    // menu) in this same update; consume no edge on a freshly built arm.
+    if (duelSyncUi(mode, session)) return false;
+#endif
 #if CGFX_DIALOG_QUEUE_ENABLED
     if (dialogMenu.peek()) dialogMenu.clear();
 #endif
@@ -85,6 +125,11 @@ bool update(uint8_t edgeButtons, TerminalCallback onFinished) {
         if (intent.kind != MenuIntentKind::None && session.submitIntent(intent)) {
             // Resolving starts on the next frame; this edge belongs only to the
             // accepted selection and is never replayed into another phase.
+#ifdef CGFX_DUEL_BATTLE
+            // An immediate Escape enters the result dwell on this frame, so
+            // build its feedback arm now rather than a frame late.
+            duelSyncUi(mode, session);
+#endif
         }
         return false;
     }
@@ -103,6 +148,12 @@ bool update(uint8_t edgeButtons, TerminalCallback onFinished) {
         }
         beginFeedback(mode);
     }
+#ifdef CGFX_DUEL_BATTLE
+    // advance() may have entered the result dwell this frame; build its arm now
+    // (unless the dwell already finalized to terminal, whose feedback arm is
+    // still the active one).
+    if (!session.exitReady()) duelSyncUi(mode, session);
+#endif
     return false;
 }
 

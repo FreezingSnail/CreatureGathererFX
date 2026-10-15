@@ -237,8 +237,15 @@ uint8_t render() {
     case GameState_t::BATTLE: {
         battle::BattleMode &mode = modeState.battle;
         battle::BattleScene::draw(battleSession().state());
+#ifdef CGFX_DUEL_BATTLE
+        // Feedback arm during the result dwell and the terminal-exit frame;
+        // otherwise the (concealed or choice) menu arm.
+        if (battleSession().duelFeedbackActive()) mode.ui.feedback.draw();
+        else if (mode.ui.menu.initialized()) mode.ui.menu.draw();
+#else
         if (battleSession().isPresenting()) mode.ui.feedback.draw();
         else if (mode.ui.menu.initialized()) mode.ui.menu.draw();
+#endif
         return 0;
     }
     case GameState_t::WORLD:

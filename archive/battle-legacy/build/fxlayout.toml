@@ -1,0 +1,133 @@
+# Native cgfx-tools declaration order mirrored by src/fxdata.h.
+
+[[entry]]
+source = { expand = { path = "fxdata/data/encounters.txt" } }
+
+[[entry]]
+source = { expand = { path = "fxdata/generated/opponents.txt" } }
+
+[[entry]]
+source = { expand = { path = "fxdata/data/creatureData.txt" } }
+
+[[entry]]
+source = { expand = { path = "fxdata/generated/moves.txt" } }
+
+[[entry]]
+source = { expand = { path = "fxdata/data/event.txt" } }
+
+[[entry]]
+source = { expand = { path = "fxdata/data/mapData.txt" } }
+
+[[entry]]
+source = { expand = { path = "fxdata/data/movelists.txt" } }
+
+[[entry]]
+source = { expand = { path = "fxdata/data/menu.txt" } }
+
+[[entry]]
+source = { expand = { path = "fxdata/generated/teams.txt" } }
+
+[[entry]]
+source = { expand = { path = "fxdata/data/chunks.txt" } }
+
+[[entry]]
+source = { expand = { path = "fxdata/Sprites.txt" } }
+
+[[entry]]
+source = { expand = { path = "fxdata/generated/Sprites.txt" } }
+
+[[entry]]
+source = { expand = { path = "fxdata/battleEffects/Sprites.txt" } }
+
+[[entry]]
+name = "fontTrimmed"
+source = { image = { path = "images/ArduFontTrimmed_5x6.png", width = 5, height = 6, shades = 2, spacing = 0 } }
+
+[[entry]]
+name = "type_table"
+source = { raw = "fxdata/generated/typetable.bin" }
+
+[[entry]]
+name = "move_table"
+source = { raw = "fxdata/generated/moves.bin" }
+
+[[entry]]
+name = "map_data"
+source = { raw = "fxdata/generated/map.bin" }
+
+[[entry]]
+name = "raw_map_data"
+source = { raw = "fxdata/generated/raw_map.bin" }
+
+[[entry]]
+name = "raw_map_text"
+source = { raw = "fxdata/generated/text.bin" }
+
+[[entry]]
+name = "consumable_table"
+source = { raw = "fxdata/generated/consumables.bin" }
+
+[[entry]]
+name = "generator_version"
+source = { raw = "fxdata/generated/tool_version.bin" }
+
+[[entry]]
+name = "scripts"
+source = { raw = "fxdata/generated/scripts.bin" }
+
+[[entry]]
+source = { expand = { path = "fxdata/generated/arena_demo.txt" } }
+
+# Append-only 48px layout spike: dimensions prefix, then 128 masked frames.
+[[entry]]
+name = "battleSprites48"
+source = { image = { path = "images/Battlecreatures_48x48.png", width = 48, height = 48, shades = 2, spacing = 0 } }
+
+[[entry]]
+name = "battleOptions48"
+source = { image = { path = "images/Battleoptions48_128x16.png", width = 128, height = 16, shades = 2, spacing = 0 } }
+
+# Append player frames without moving any existing FX field.
+[[entry]]
+name = "worldPlayerSprites"
+source = { image = { path = "images/Playerchibi_16x16.png", width = 16, height = 16, shades = 2, spacing = 0 } }
+
+# Append opt-in lure scenery; all existing field addresses stay fixed.
+[[entry]]
+name = "lureWorldTiles"
+source = { image = { path = "images/LureWorld_16x16.png", width = 16, height = 16, shades = 2, spacing = 0 } }
+
+[save]
+sectors = 8
+
+[[save.entry]]
+name = "save_main"
+offset = 0
+
+[[save.entry]]
+name = "save_log"
+offset = 4096
+
+[[save.entry]]
+name = "save_store_a"
+offset = 8192
+
+[[save.entry]]
+name = "save_store_b"
+offset = 12288
+
+[[save.entry]]
+name = "save_reserved_0"
+offset = 16384
+
+[[save.entry]]
+name = "save_reserved_1"
+offset = 20480
+
+[[save.entry]]
+name = "save_reserved_2"
+offset = 24576
+
+[[save.entry]]
+name = "save_reserved_3"
+offset = 28672

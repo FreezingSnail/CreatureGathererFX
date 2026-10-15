@@ -9698,3 +9698,428 @@ Filed the RPS duel battle system epic with the complete worked-example context:
 bd show CreatureGathererFX-d73i        -> epic + full design brief embedded
 git commit                             -> docs/duel-system-brief.md added
 ```
+
+# CreatureGathererFX-d73i.1 (spike 1: hidden round kernel, session and personas) — PARTIAL
+
+Status: in_progress. Source complete for the thin compile-time flag-ON slice, host-verified, and
+measured on AVR (paired control/candidate) plus a dedicated device suite. NOT yet complete: the
+29/68-tick concealed/result timing, a device run that exercises the session (not just the kernel),
+and a full wild/trainer device loop. No production default adopted; all new behavior is behind
+`CGFX_DUEL_BATTLE`; no generated artifact hand-edited; no git write.
+
+## Durable deliverable: archive/battle-legacy/
+Source-only reference of the pre-duel battle system, preserving original relative paths and outside
+`src` and test discovery. Size 1.6 MiB, 152 files. Includes `src/engine/battle/**`,
+`src/engine/arena/**`, `tools/battle-sim/**`, host + device battle/arena suites, authored battle
+data (`data/**`, `fxdata/data/*.txt`), build inputs (`fxdata.toml` snapshot, `fxlayout.toml`,
+`fxsprites.toml`), and battle docs. `README.md` records provenance (HEAD 4399e4fc…, read-only
+`git status`/`rev-parse`), tool versions, reproduction commands, shared-dependency references and
+known limitations; `INVENTORY.txt` has SHA-256 + size for every file. No build caches, generated
+artifacts, binary image trees or repo copies.
+
+## Source changes (flag-gated unless noted)
+- `src/engine/battle/DuelKernel.hpp` (new): 5-type kernel — PROGMEM win masks (10 edges),
+  fold, 14/4/6 scaling with x1.5/x0.5 advantage-first matchup, atomic simultaneous round
+  (attack/switch/WAIT, simultaneous KO/draw, swap-KO revert), personas
+  (Random/Reader/Frequency/AntiRepeat) with last-8 history and failed-read uniform fallback.
+- `src/engine/battle/BattleSession.{hpp,cpp}`: compile-time `CGFX_DUEL_BATTLE` route. Resident
+  duel state = 13 B (concealed opponent pick, history, per-side option count); no runtime toggle,
+  no globals, no duplicate option maps (options derived from the active's usable attack slots).
+  AI committed once on Choice entry; attack/switch/WAIT resolve atomically; KO auto-promotes the
+  first living original slot and swap-KO reverts to the outgoing member; gather/escape handled in
+  the duel path (no legacy resolver/status gates).
+- `src/engine/battle/BattleSetup.cpp`: caches each bench member's 5-bit folded attack mask at the
+  setup transition (no FX read during Choice), aliased into the unused `moveUsesSpent` storage;
+  AI bench-counter selection uses it after no active counter.
+- `src/engine/battle/BattleState.hpp`: reclaims `partyModifiers` (12 B, unused by the duel) under
+  the flag; `moveUsesSpent` kept as the mask alias.
+- `src/engine/battle/ActionResult.hpp`: adds appended `Outcome::Draw` (no value renumber).
+- `src/engine/battle/BattleFlow.cpp`: Draw uses defeat recovery.
+- `src/engine/battle/Ai.cpp`: guards the reclaimed `partyModifiers` use under the flag.
+- `tst/duel_kernel_test.hpp` (new) + `tst/main.cpp`: permanent host kernel suite; three legacy
+  sequential/PP suites assigned to the legacy contract run.
+- `tst/fxdatatest/{battle_duel_test.hpp,test_battle_duel.ino}` (new): device suite.
+- `Makefile`: `AVR_FXTEST_DUEL_BUILD_PROPERTIES` + a `test_battle_duel` branch so every TU compiles
+  the duel compact profile (sketch-local define would not reach separately compiled TUs).
+- `archive/battle-legacy/**` (new, durable).
+
+## Exact commands and results
+```sh
+make test BUILD_DIR=build                                   # -> 319514 passed / 0 failed; 258 / 0
+make test BUILD_DIR=build CPPFLAGS='-I. -DCGFX_DUEL_BATTLE' # -> 319344 passed / 0 failed; 258 / 0
+make ram BUILD_DIR=build                                    # control: 25242 flash / 1745 static
+make ram BUILD_DIR=build AVR_SHIPPING_CPP_FLAGS="$DUEL_SHIP_FLAGS"  # candidate: 26208 / 1753
+make fxtest-spike BUILD_DIR=build ARDENS=... \
+  AVR_FXTEST_CPP_FLAGS='-mrelax -DFX_READ_COUNTER -DCGFX_COMPACT_WARP_VM -DCGFX_BATTLE_NO_FACTS -DCGFX_BATTLE_COMPACT_RESULT -DCGFX_DUEL_BATTLE' \
+  FXTEST_SPIKE_INO=tst/fxdatatest/test_battle_duel.ino
+  # test_battle_duel PASSED=40 FAILED=0 -> P
+  # test_stack      PASSED=4  FAILED=0 -> P; mode transition headroom=613, stack headroom=514
+```
+`DUEL_SHIP_FLAGS='-mrelax -DCGFX_SHIPPING_NO_USB -fno-inline-small-functions -DCGFX_BATTLE_NO_FACTS -DCGFX_BATTLE_COMPACT_RESULT -DCGFX_COMPACT_WARP_VM -DCGFX_DUEL_BATTLE'`
+
+## Measured whole-image deltas (paired, BUILD_DIR=build)
+- Control: 25,242 B flash / 1,745 B static (limit 29,696 / 2,160). Candidate: 26,208 B flash /
+  1,753 B static. Delta: **+966 B flash, +8 B static**. Static verdict is the boot-time static
+  figure, not painted stack.
+- `ModeState` stays 193 B; `BattleMode` ≤191; duel session ≤164 — assertions kept intact, not
+  widened. Device compact duel ELF: 7,638 B program / 1,303 B data+bss (suite's own budget 2,160).
+- test_stack painted headroom 514 B (>=219 combined / >=150 transition) under duel compact flags.
+
+## Storage
+`df -h .`: 70 GiB free before/after. `du -sh build`: 841 MiB (budget 5 GiB). Evidence in
+`build/reports/d73i/` (control/candidate `.elf`, ram logs, host logs, fxtest log). No cleanup
+applied; lane cache reused; no generation/pack ran.
+
+## Remaining / incomplete (honest boundaries)
+1. 29-tick concealed commitment and 68-tick result interval are NOT implemented; timing belongs in
+   the Flow/session boundary and is unmeasured.
+2. The device suite exercises the kernel (40 assertions) and the duel-compact profile compiles all
+   session TUs, but no device run drives the session loop end-to-end (wild/trainer -> Choice ->
+   reveal -> replacement -> terminal). Painted stack for the session chain is unproven.
+3. Temporary fixture persona mapping (trainerId%3 -> Reader/Frequency/AntiRepeat; wild -> Random),
+   runtime fold, and device flag string deviation (plan's `DUEL_DEVICE_FLAGS` omit
+   NO_FACTS/COMPACT_RESULT; the suite now selects them via Makefile properties) all need orchestrator
+   amendment.
+4. `make check` was not run (no ARDENS wildcard pass); generation was not run, so no generated diff.
+5. Per plan, .1 does not authorize production adoption; later slices .2/.3/.4 not started.
+
+## Wall time
+Single dispatch session. Build timings: control ram 18.6 s, candidate ram ~11 s, fxtest-spike
+20.5 s; host builds ~5-15 s each. Source/inspection phases dominated.
+
+## d73i.1 addendum — concealed/dwell timing + compile-time selection (2026-10-15)
+
+Implemented under CGFX_DUEL_BATTLE:
+- 29-frame concealed commitment (`DUEL_CONCEAL_TICKS`) accepted on the player's commit
+  frame, then resolution on tick 0; wild escape resolves immediately (no concealed interval).
+- 68-frame result dwell (`DUEL_RESULT_TICKS`) before the next Choice or terminal; both timers
+  reuse the resident cursor byte (`cursor_.next`), no new resident flags.
+- `SessionPhase::Concealed` / `SessionPhase::Result`; `advance()` is a true compile-time
+  selection — the flag build compiles only the duel tick path and returns; the legacy
+  sequential resolver/AI/status/PP loop is inside `#else` and no longer compiled or reachable
+  under the flag (step 3 gets no free LTO credit).
+- BattleFlow: exitReady handled outside Presenting; a per-Choice `consumeChoiceEntry()` rebuilds
+  the menu on the transition only (no per-frame metadata reads); edges owned by phase.
+- Duel submit/moves path has no PP availability gates (host PP checks excluded under the flag).
+
+Updated paired whole-image (BUILD_DIR=build):
+- Control 25,242 B flash / 1,745 B static.
+- Candidate 22,840 B flash / 1,735 B static → **−2,402 B flash, −10 B static** (legacy route excluded).
+- Device: `test_battle_duel PASSED=40 FAILED=0`; `test_stack PASSED=4 FAILED=0`, painted
+  headroom 530 B (mode transition 633 B). Overlay asserts unchanged.
+- Host: legacy 319514/0; duel 319092/0.
+
+Still open: device proof that drives the real shipping session chain (setup→AI→resolve/switch→
+terminal→save) — pending the parallel `duel_session_integration_test.hpp` wiring; frame-time
+worst-path ≤19.23 ms; PROGMEM-vs-FX-chart variant A/B.
+
+## d73i.1 addendum 2 — snapshot filtering, session suite wiring, FX-chart blocker
+
+(1) Duel `moves()`/`view()` now filter status/utility/empty slots to EMPTY_MOVE_ID (255) with
+0 uses, so the temporary old menu offers only real attack cells and a zero-attack kit reaches the
+normal Pass/WAIT cell. Added duel slot validation in `submitIntent` (empty/status/utility slots are
+not selectable) without shipping guards for forged impossible intents.
+
+(2) Session suite wired: `tst/main.cpp` includes `duel_session_integration_test.hpp` and calls
+`DuelSessionIntegrationSuite(tests)` under `CGFX_DUEL_BATTLE`. Current duel host run:
+`319125 passed / 31 failed`. All 31 failures are the same shape — the suite calls `advance()` once
+and expects the atomic round to resolve; with the timers in place resolution fires on concealed
+tick 29 (finalize on result tick 68). The worker is updating the suite to drive exact 29/68 phases.
+
+(3) Updated paired whole-image (BUILD_DIR=build): control 25,242 f / 1,745 s → candidate
+23,862 f / 1,735 s = -1,380 f / -10 s. Device `test_battle_duel 40/0`; `test_stack 4/0`, headroom 532.
+
+(4) PROGMEM-win-mask vs cached-FX-chart A/B — NOT done; exact blocker:
+- The current authoring contract assigns the additive duel data output to step 4 ("current project
+  config exposes presets but no duel fold/retype contract") and step 1 says "Temporary fixture
+  tables supply folded types and teams until step 4. Do not mutate canonical authored eight-type
+  inputs for the control build."
+- Packing a chart requires appending an `fxlayout.toml` entry plus an authored source and running
+  `make gen`, which rewrites the committed generated set (`fxdata/generated/manifest.json`,
+  `src/fxdata.h`, `dist/*`, `tst/fxdatatest/generated/*`) and changes the permanent layout ABI and
+  the `test-pack-parity` baseline — a production-visible change step 1 is not authorized to adopt.
+- No `make gen` was run and no generated artifact was hand-edited, per the no-production-adoption /
+  no-hand-edit constraints.
+- Unblock options: (a) authorize a step-1 `raw` fixture-chart field and accept the generated-set +
+  parity-baseline change (baseline update in step 2), or (b) defer the FX-chart variant to step 4
+  where the additive duel output is defined.
+
+## d73i.1 addendum 3 — real session device proof + FX-chart A/B (chosen: PROGMEM)
+
+Session fix (real defect): duel Result finalize called `finishNormalResult()`, which saw
+`cursor_.next != NEXT_COMPLETE` and set the legacy `Ready` phase — a stall after the first round.
+Fixed flag-ON to `resetCursor(SessionPhase::Choice)` (re-commits AI + sets the choice-entry flag).
+
+Session suite wired: `tst/main.cpp` registers `DuelSessionIntegrationSuite(tests)`. Host duel now
+`319235/0` (was 31 failing). Device `test_battle_duel.ino` now includes the worker's
+`duel_session_integration_test.hpp` and runs `test_duel_session(test)` after the pure-kernel suite,
+with full `harness/fx_globals.hpp` (no FXTEST_MINIMAL), all TUs on the compact duel profile.
+Device result: `test_battle_duel PASSED=76 FAILED=0` (40 kernel + 36 session); `test_stack 4/0`,
+headroom 532 B (transition 633 B).
+
+FX-chart A/B (temporary, non-adopted; layout + parity baseline left unchanged):
+- Preserved `fxlayout.toml` bytes (sha256 37888538…); appended a temporary `duelChartFixture`
+  `raw` entry + `data/duelchart.bin` (25 authored relation bytes); `make gen`.
+- Variant `-DCGFX_DUEL_FX_CHART` caches the 25-cell chart at encounter entry (one transition read)
+  and looks up RAM; PROGMEM variant keeps the 5 win masks.
+- Paired whole-image (identical flags): PROGMEM 23862 f / 1735 s; FX-chart 23848 f / 1760 s.
+  → FX-chart is −14 B flash but +25 B static. SRAM is the binding resource and the flash delta is
+  marginal, so the **PROGMEM masks are the chosen implementation**.
+- Device 25-cell proof through the FX chart path: `test_battle_duel 40/0`.
+- Evidence retained: `build/reports/d73i/fxchart-variant/` (both source snapshots, appended
+  fxlayout, `duelchart.bin`, `fxdata.h` snapshot) + `ab-*.elf` + `ab-*.log` + `ab-fxchart-device.log`.
+- Reverted: restored original `fxlayout.toml` (sha256 match), removed `data/duelchart.bin`, `make gen`
+  again → `dist/fxdata.bin` sha256 `cb170b6a…` byte-identical; `make verify-generated` PASS;
+  `make test-pack-parity` PASS (layout equivalence + pack parity). No generated artifact left modified.
+
+Final shipping figures on the restored tree: control 25,248 f / 1,745 s → candidate (PROGMEM)
+23,860 f / 1,735 s = −1,388 f / −10 s.
+
+Still open: worst-path frame-time ≤19.23 ms measurement; device painted-stack specific to the
+session chain (test_stack headroom is reported but does not itself drive the duel session).
+
+## d73i.1 final — FX-chart selected; resource proof; ready for root review
+
+Chart A/B chosen implementation = the cached FX chart (smallest measured program flash within
+measured SRAM/stack/frame limits):
+- PROGMEM masks: 23,860 f / 1,735 s; session headroom 454 B; worst frame 7,428 µs.
+- FX chart:      23,846 f / 1,760 s; session headroom 429 B; worst frame 7,420 µs. → −14 B flash,
+  +25 B static, both far inside 2,160 B; headroom ≥219; frame ≤19,230. **Selected: FX chart.**
+- Layout: appended `duelChartFixture` (25-byte authored chart) `raw` entry; `make gen`; parity
+  baseline updated in `tools/tests/pack-parity_test.sh` with provenance comment. New cart sha256
+  `5c0d4e7d…`; `make verify-generated` PASS; `make test-pack-parity` PASS. AVR duel chart source is
+  `CGFX_DUEL_BATTLE` + `CGFX_DUEL_FX_CHART`; default duel remains opt-in.
+
+Control drift: latest paired control is 25,248 f / 1,745 s (was 25,242) — shared source changes in
+the working tree, not the duel; use the latest paired control.
+
+Resource device proof (`tst/fxdatatest/duel_resource_test.hpp`, painted stack + per-phase frame
+timing) driven through the real `BattleFlow::update`:
+- `test_battle_duel` (kernel 40 + session 36 + resource) PASSED = 86 / 0 on BOTH variants.
+- Cases: trainer3 setup (timed) + 8 revealed rounds (history), both-switch (player SelectParty +
+  AI-committed switch, incoming-slot HP preserved), ordinary-KO promotion on a real 3-member
+  trainer, terminal, save chain.
+- Per-phase max frame (FX): newChoice 7,208 µs, conceal 7,420 µs, result 7,208 µs. Terminal phase
+  shows 0 captured frames (frames are labelled by pre-frame state and the loop exits at exitReady);
+  worst overall 7,420 µs.
+
+Native: host duel 319,235 / 0 and 258 / 0 (`build/reports/d73i/host-duel-final.log`); host legacy
+319,514 / 0; `make testvm` 278 / 0.
+
+Evidence: `build/reports/d73i/` — final2-{control,progmem,fxchart}.log + .elf, resource-{progmem,fx}-
+final.log, host-duel-final.log, host-legacy-final.log, testvm-final.log, fxchart-variant/ source
+snapshots. ELF sha256: progmem 80245877…, fxchart f1e36537….
+
+Storage: `build/` 842 MiB (budget 5 GiB), reports 3.0 MiB, free 70 GiB; cleanup applied (108 ARDUINO
+cache/.o candidates); no leftover pack stages.
+
+Limitation: the 8-round history loop ran against a single trainer persona; per-persona
+Reader/Frequency/AntiRepeat triple coverage is not yet asserted. Terminal-phase frame max is not
+separately captured.
+
+## d73i.1 close-out — single AVR route, expanded resource proof, all gates pass
+
+Single AVR implementation: `CGFX_DUEL_BATTLE` now selects the cached FX-chart relation source on
+AVR (`defined(CGFX_DUEL_BATTLE) && defined(__AVR__)`); the PROGMEM win masks remain only for
+host/native kernel semantics tests. The separate `CGFX_DUEL_FX_CHART` strategy flag is gone; the
+unchosen AVR source lives in `build/reports/d73i/fxchart-variant/` as the evidence patch.
+
+Expanded resource proof (`duel_resource_test.hpp`) now covers: timed trainer setup + newChoice UI;
+8 revealed rounds for EACH temporary persona group (valid generated ids selected per `id % 3`,
+switch_drill preset); real both-switch (player SelectParty + AI-committed switch, incoming-slot HP
+preserved); ordinary-KO promotion on a real 3-member trainer; terminal reaching the world restore;
+and the save chain. All frames go through `BattleFlow::update` with battle-union reads guarded by
+game state.
+
+Final device (`test_battle_duel`, FXTEST_MS=30000): PASSED = 92 / 0. Per-phase worst frame —
+newChoice 7,272 µs, conceal 7,420 µs, result 7,196 µs, terminal 220 µs; worst 7,420 µs (≤19,230).
+Duel session painted headroom 404 B (≥219). test_stack 4/0 (507 B).
+
+Final native: host duel 0 fail, host legacy 0 fail, `make testvm` 0 fail.
+Final selected AVR candidate: 23,846 f / 1,760 s (control 25,248 f / 1,745 s); cart sha256
+`5c0d4e7d…`; candidate ELF sha256 `338558f4…`; `make verify-generated` PASS; `make test-pack-parity`
+PASS. Cleanup applied after evidence.
+
+## d73i.1 packaging split + counter-on device run (not READY: one coordinated test fix)
+
+Packaging (mine): split the device proof into `test_battle_duel.ino` (kernel 40 + real session)
+and new `test_duel_resources.ino` (resource only, full harness + `duel_resource_test.hpp`). Both
+`test_battle_duel` and `test_duel_resources` use the compact duel build-properties branch in the
+Makefile; `test_duel_resources` defaults to `FXTEST_MS_RESOURCES=30000`. Test-only
+`#error` checks require `FX_READ_COUNTER` (non-vacuous counters). Board budget unchanged (29696).
+
+Focused `fxtest-headless` with FULL flags incl `-DFX_READ_COUNTER`, FXTEST_MS=30000,
+FXTEST_INOS='test_battle_duel test_duel_resources test_stack':
+- sketches 24572 / 22994 / 19818 B (all ≤29696).
+- `test_duel_resources` PASSED **16/0**; counter-on painted headroom **428 B**, worst frame
+  **7580 µs**. `test_stack` 4/0 (507 B). `test_battle_duel` **86/1**.
+
+The single failure is `steady result frames stay metadata-free` (worker .5 header). With the counter
+ON it is non-vacuous and flags exactly ONE frame: the Result→Choice boundary, where the flow builds
+the fresh Choice menu (`beginOptions`, transition-time move-name reads) as required by defect A's
+same-frame arm construction. The same read on the initial Choice-entry frame is accepted by the
+worker's own line 119 (`options page opens`). The conceal loop excludes its transition frame by
+checking the post-update phase (line 145); the dwell loop does not (line 163 checks the count
+regardless of post-update phase). Fix is the worker's: gate line 163 on
+`battleSession().isResultDwell()` (as line 145 does), or exclude the boundary frame. Not editing
+their header.
+
+Final native: host duel 319250/0, legacy 0, VM 278/0. Paired: control 25248 f / 1745 s, candidate
+23966 f / 1760 s. Cart `5c0d4e7d…`; candidate ELF `538fb7ac…`; verify-generated PASS; pack-parity
+PASS. The FX route is now the single AVR route, so the prior 14 B PROGMEM-vs-FX A/B is frozen
+(PROGMEM masks remain for host kernel semantics only).
+
+# CreatureGathererFX-d73i.1 — FINAL (supersedes all earlier d73i.1 partial/counter-off sections)
+
+READY for root review. Earlier "PARTIAL" and any counter-off device numbers above are SUPERSEDED.
+
+Selected implementation: hidden-simultaneous 5-type duel kernel behind the single opt-in flag
+CGFX_DUEL_BATTLE. On AVR the relation source is the cached FX chart (loaded once at encounter
+entry); PROGMEM win masks remain only for host/native kernel semantics. Default whole-game duel
+flag stays OFF; .2–.4 not started; no production adoption; no git operations.
+
+Final source evidence bundle (matches the selected ELF; no repo/build/cache copies):
+build/reports/d73i/source-final/ — 23 allowlisted files + MANIFEST.txt (sha256 per file). Includes
+the changed/new battle sources, Makefile, root .ino, fxlayout.toml, data/duelchart.bin (FX chart),
+native + device tests (incl. worker-owned session headers, referenced only), the parity baseline
+script, generated manifest.json and the published src/fxdata.h. Repo HEAD 4399e4fc…; archive shared
+World/Player/save prereqs are the orchestrator-owned archive/battle-legacy supplement.
+
+Hashes:
+- Selected candidate ELF sha256 538fb7ac684f66cc08ffcca7a4fe7f95c801e26138667be26ed5f23c41b75663
+- Generated cart dist/fxdata.bin sha256 5c0d4e7da2c6e9b5130f5e3bf817fb172948534eb27899a96b1723a164298a05
+- fxlayout.toml sha256 bf878a345175993650578c7bc02f3de6102f2f65e7962ac2ab039695769acd71
+
+Exact flags: DUEL_SHIP_FLAGS='-mrelax -DCGFX_SHIPPING_NO_USB -fno-inline-small-functions
+-DCGFX_BATTLE_NO_FACTS -DCGFX_BATTLE_COMPACT_RESULT -DCGFX_COMPACT_WARP_VM -DCGFX_DUEL_BATTLE'
+(no separate chart flag). Device flags: '-mrelax -DFX_READ_COUNTER -DCGFX_COMPACT_WARP_VM
+-DCGFX_BATTLE_NO_FACTS -DCGFX_BATTLE_COMPACT_RESULT -DCGFX_DUEL_BATTLE'.
+
+Paired whole-image (BUILD_DIR=build, latest control): control 25,248 f / 1,745 s → candidate
+23,966 f / 1,760 s. Limits 29,696 / 2,160. (A prior 14 B PROGMEM-vs-FX pair is frozen; on the final
+source the FX route is the single AVR implementation.)
+
+Metadata-counter-ON focused device gate (FXTEST_MS=30000,
+FXTEST_INOS='test_battle_duel test_duel_resources test_stack'; sketches 24608 / 22994 / 19818 B):
+- test_battle_duel PASSED 87/0; test_duel_resources PASSED 16/0; test_stack PASSED 4/0.
+- Duel session painted headroom 428 B (>=219); worst frame 7580 us (<=19230); mode transition 608 B.
+- Both device headers carry a required-FX_READ_COUNTER compile check, so the metadata-read
+  assertions are non-vacuous.
+
+Final native: host duel 319,250 / 0 (log build/reports/d73i/host-duel-final.log); host legacy
+319,514 / 0; make testvm 278 / 0.
+
+Commands (exact): see logs under build/reports/d73i/ (final3-candidate.log, focused-device-final.log,
+host-duel-final.log, host-legacy-final.log, testvm-final.log, repair-candidate.elf). Verification:
+make verify-generated PASS; make test-pack-parity PASS.
+
+Storage/cleanup: build/ 842 MiB (budget 5 GiB), reports 348 KiB source-final + logs, free 70 GiB; no
+cgfx-pack.* stages; clean-build-artifacts applied after evidence.
+
+Wall times (measured build phases): control ram ~18 s, candidate ram ~11–16 s, focused fxtest gate
+(build+3 runs) ~90 s. Source/inspection phases dominated the dispatch; no single-shot timing
+recorded per phase.
+
+Known test-only boundary: the dwell metadata-read classification is post-update-state gated in the
+worker header (boundary frame excluded), matching defect-A same-frame UI construction.
+
+# d73i.1 — orchestrator review checkpoint (2026-10-15)
+
+Final same-source strategy measurement supersedes the earlier 14-byte comparison:
+`make ram BUILD_DIR=build AVR_SHIPPING_CPP_FLAGS='-mrelax -DCGFX_SHIPPING_NO_USB -fno-inline-small-functions -DCGFX_BATTLE_NO_FACTS -DCGFX_BATTLE_COMPACT_RESULT -DCGFX_COMPACT_WARP_VM -DCGFX_DUEL_BATTLE'`
+selected FX: **23,966 flash / 1,760 static SRAM**. Temporary PROGMEM comparison used
+that exact command plus `-DCGFX_DUEL_PGM_COMPARE`, and only the relation-selection
+and two encounter-load guards; **23,982 / 1,735**. FX saves 16 flash bytes for 25
+static bytes and meets the measured resource limits. No comparison flag remains in
+active source. Exact original file hashes were restored before rebuilding FX.
+Logs/ELFs: `build/reports/d73i/root-final-{progmem,fx}.{log,elf}`;
+original source hashes/backups retained alongside them. Rebuilt selected ELF SHA256
+538fb7ac684f66cc08ffcca7a4fe7f95c801e26138667be26ed5f23c41b75663
+matches the previously tested candidate exactly. Two serial builds took about
+one minute including inspection and source restoration.
+
+Control 25,248/1,745 -> selected 23,966/1,760: **-1,282 flash, +15 static**.
+Verified log totals: host duel319250/0 plus world258/0; legacy319514/0 plus
+world258/0; VM278/0. Focused counter-enabled device:87/0 +16/0 +4/0;
+painted live-session headroom428 B, transition608 B, worst frame7580 us.
+Final native evidence is `host-duel-repair.log` and `host-legacy-repair.log`
+(the earlier final-labelled log references above are superseded).
+Snapshot MANIFEST and legacy archive INVENTORY both verified against SHA256.
+Legacy reference archive retains old battle code and shared dirty prerequisites;
+`archive/battle-legacy/README.md` records provenance and reproduction limits.
+
+Cleanup preview and apply completed:108 candidates /2,729,467 bytes. Current build
+850 MiB, report evidence4.3 MiB, archive1.8 MiB, free disk70 GiB. One reused
+BUILD_DIR=build; no new build trees. Build lane released. No Git operations,
+remote sync, production default adoption, or full integrated gate performed.
+Support task .5 is complete. Spike .1 remains in_progress solely for the explicit
+owner measured-result acceptance checkpoint; .2-.4 remain unstarted. The plan
+requires owner acceptance before dispatching .2. Authorized spike implementation
+and focused verification are complete; full batch gate belongs after integration.
+
+# CreatureGathererFX-0ftc — arena demo launches the duel spike
+
+Scope (assigned files only): `Makefile`, `README.md`, this report. No implementation of .2–.4;
+no git operations; no GUI launch; no tests added/run.
+
+Change: `ARENA_DEMO_CPP_FLAGS` now appends `-DCGFX_DUEL_BATTLE` alongside the existing full
+shipping defaults (`$(AVR_SHIPPING_CPP_FLAGS)`) and `-DCGFX_ARENA_DEMO`, so `make arena-demo`
+launches the current RPS duel engine from the existing arena bootstrap. Added `arena-test` as an
+alias of `arena-demo` (also in `.PHONY` and `make help`). Isolated FX data/save launch and all
+override knobs (`ARENA_DEMO_BUILD_DIR`, `ARENA_DEMO_CART_DIR`, `ARENA_DEMO_CPP_FLAGS`,
+`ARENA_DEMO_FLASH_BUDGET`) are unchanged. README arena section documents the duel engine, the alias,
+and a no-GUI compile command.
+
+Bootstrap compatibility (read-only inspection, `src/engine/arena/ArenaDemo.cpp`): `startMatch()`
+calls `battleSession().beginTrainer(trainerId)` and the world loop drives `BattleFlow::update(...,
+arena::finishBattle)`; both are engine-agnostic, so the duel path runs and the finish callback
+restores the arena team screen. `applyPlayerTeam` loads authored kits via the normal creature store.
+
+Compile (no GUI), reused shared lane `BUILD_DIR=build`:
+```sh
+time make ram BUILD_DIR=build AVR_FLASH_BUDGET=29184 \
+  AVR_SHIPPING_CPP_FLAGS='-mrelax -DCGFX_SHIPPING_NO_USB -fno-inline-small-functions -DCGFX_BATTLE_NO_FACTS -DCGFX_BATTLE_COMPACT_RESULT -DCGFX_COMPACT_WARP_VM -DCGFX_ARENA_DEMO -DCGFX_DUEL_BATTLE'
+# exit 0, ~11.3 s; log: build/reports/d73i/arena-duel.log
+```
+Result: **24410 B flash / 1851 B static** vs arena flash budget 29184 and static budget 2160 (hardware SRAM 2560) — within
+budget, no deficit. Preserved ELF `build/reports/d73i/arena-duel.elf` (sha256 `fb4e843e…`).
+
+Dry-run check: `make -n arena-test` leaves `dist/fxdata.bin` byte-identical (no regeneration); the
+flags-only change needs no `gen`.
+
+Storage: `build/` 851 MiB (budget 5 GiB), free 70 GiB, no `cgfx-pack.*` stages; cleanup applied
+after preserving the ELF. Bead left open for root review (not closed).
+
+Launch (root to report): `make arena-test ARDENS=/path/to/Ardens ARENA_DEMO_BUILD_DIR=build`.
+
+# CreatureGathererFX-d73i.2 — compact duel pick row/feedback (IN PROGRESS)
+
+Claimed; owner steering authorizes continuing all serial spikes without intermediate evaluation;
+canonical target mock/duel-bonus.html matrix5 bonus scoring. No git; no .3/.4; no production default.
+Baseline: .1 selected 23966 f / 1760 s; current arena 24410 f / 1851 s.
+
+Pinned mock layout (read-only inspection of mock/battle-mock.js drawDuel*, matrix.js, icons.js):
+- pick row y=48, cells = min(attacks + SWAP, 5) with floor(120/cells) width; selected = filled cell;
+  per-cell type icon; bonus marker ↑/↓ from the creature matchup at (cell-10, +2); SWAP text cell.
+- centre: R# at (48,41), selected type icon at (60,40), swap text when on the swap cell.
+- footer feedback: rect y=48; both move icons at (6,50)+(30,50) with 'vs' at (18,51); line0 (42,48);
+  line1 (42,56) clipped to 17.
+- badges: foe bottom-left x=1+idx*12,y=36, you bottom-right x=113-idx*12,y=36; white 12x12 frame,
+  black 10x10 inner, type icon.
+- pips: foe y=2, you y=27 at x=72+slot*3; alive 2x3, active underline 2x1 at y+4.
+- captions: BONUS WIN/LOSE, WEAK WIN/LOSE, RPS WIN/LOSE, TRADE, DEFAULT WIN, SWAP, DRAW, WAIT.
+
+Increment landed this pass: `src/engine/battle/DuelPickRow.hpp` (duel-only selector model: 0..4 attack
+cells + SWAP suppressed with no living bench + WAIT cell for an unusable kit; wrap-around cursor;
+5-byte AVR assert) and permanent host suite `tst/duel_pick_row_test.hpp` (zero/one/four attacks,
+swap suppression, unusable-kit WAIT, wrap guards) registered in `tst/main.cpp` under CGFX_DUEL_BATTLE.
+
+Verified: `make test BUILD_DIR=build CPPFLAGS='-I. -DCGFX_DUEL_BATTLE'` → 319272 / 0 (was 319250),
+258 / 0. Log `build/reports/d73i/d73i2-host-1.log`.
+
+Remaining (not done this pass — session budget reached): the duel draw path (pick row + centre +
+badges + pips + feedback reveal of both type icons and both damage values), authored captions/icons
+via make gen, session feedback-payload plumbing replacing the temporary menu/feedback under
+CGFX_DUEL_BATTLE, the no-legacy-options-page removal, touched counter-enabled device/resource/stack
+suites with framebuffer assertions, and the paired whole-image step-2 measurement vs a preserved
+same-flags control. No generation run; no AVR build this pass; no cleanup needed. .2 left open.

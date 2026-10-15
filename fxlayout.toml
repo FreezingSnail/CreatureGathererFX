@@ -97,6 +97,10 @@ source = { image = { path = "images/Playerchibi_16x16.png", width = 16, height =
 name = "lureWorldTiles"
 source = { image = { path = "images/LureWorld_16x16.png", width = 16, height = 16, shades = 2, spacing = 0 } }
 
+
+[[entry]]
+name = "duelChartFixture"
+source = { raw = "data/duelchart.bin" }
 [save]
 sectors = 8
 

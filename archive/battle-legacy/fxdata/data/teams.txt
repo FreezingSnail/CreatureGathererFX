@@ -1,0 +1,99 @@
+namespace Teams {
+    namespace StockCreatures {
+        uint8_t null[] = {0,0,0,0,0};
+        uint8_t SquibbleSnail[] = {0,1,4,10,9};
+        uint8_t SquableSnail[] = {1,1,5,10,27}; 
+        uint8_t ScrambleSnail[] = {2,5,10,19,26}; 
+        uint8_t SkitterCrab[] = {3,1,11,12,15}; 
+        uint8_t ScatterCrab[] = {4,1,11,12,20}; 
+        uint8_t ShatterCrab[] = {5,0,12,21,24}; 
+        uint8_t squid[] = {6,1,13,6,7}; 
+        uint8_t bigsquid[] = {7,6,7,16,14}; 
+        uint8_t BiggestSquid[] = {8,16,6,15,23}; 
+        uint8_t bell[] = {9,3,10,14,23}; 
+        uint8_t ember[] = {10,9,12,17,21}; 
+        uint8_t cuircuit[] = {11,12,17,21,2}; 
+        uint8_t hedge[] = {12,26,18,14,10}; 
+        uint8_t cloud[] = {13,10,7,23,26}; 
+        uint8_t rock[] = {14,28,16,15,2}; 
+        uint8_t wiggleworm[] = {15,17,12,24,2}; 
+        uint8_t waggleworm[] = {16,17,25,12,2}; 
+        uint8_t skimskate[] = {17,6,11,24,3}; 
+        uint8_t skimray[] = {18,0,6,10,26}; 
+        uint8_t billow[] = {19,2,10,20,24}; 
+        uint8_t howl[] = {20,24,22,10,15}; 
+        uint8_t item[] = {21,3,6,23,25}; 
+        uint8_t item2[] = {22,29,25,23,18}; 
+        uint8_t zip[] = {23,7,11,21,1}; 
+        uint8_t zap[] = {24,3,6,25,22}; 
+        uint8_t suculent[] = {25,26,12,1,14}; 
+        uint8_t cactus[] = {26,25,20,15,3}; 
+        uint8_t flickerfly[] = {27,17,8,11,1}; 
+        uint8_t flitfly[] = {28,26,23,17,5}; 
+        uint8_t dragon[] = {29,31,29,25,6};
+        uint8_t skull[] = {30,29,17,0,12}; 
+        uint8_t ardu[] = {31,3,31,22,10}; 
+        uint8_t NibWeevil[] = {32,26,32,32,32};
+        uint8_t HuskWeevil[] = {33,26,12,32,32};
+        uint8_t GranaryWeevil[] = {34,26,12,32,32};
+        uint8_t DewBud[] = {35,26,4,32,32};
+        uint8_t NectarBloom[] = {36,26,4,32,32};
+        uint8_t Sporeling[] = {37,26,1,32,32};
+        uint8_t SporeKeeper[] = {38,26,1,32,32};
+        uint8_t MossMole[] = {39,12,26,32,32};
+        uint8_t Conelet[] = {40,4,12,32,32};
+        uint8_t SpireSquid[] = {41,4,29,32,32};
+        uint8_t Horseshoe[] = {42,4,12,32,32};
+        uint8_t Shieldshoe[] = {43,12,29,32,32};
+        uint8_t SiltSkorp[] = {44,4,12,32,32};
+        uint8_t ReefReaper[] = {45,4,29,32,32};
+        uint8_t Platefin[] = {46,4,12,32,32};
+        uint8_t AncientJaw[] = {47,4,29,32,32};
+        uint8_t CoalGrub[] = {48,16,12,32,32};
+        uint8_t CinderCocoon[] = {49,16,12,32,32};
+        uint8_t FurnaceBeetle[] = {50,16,12,32,32};
+        uint8_t Flintling[] = {51,12,20,32,32};
+        uint8_t GeodeGuard[] = {52,12,20,32,32};
+        uint8_t Tuftling[] = {53,8,26,32,32};
+        uint8_t GustTuft[] = {54,8,26,32,32};
+        uint8_t StaticMite[] = {55,20,26,32,32};
+        uint8_t ChimeSeed[] = {56,1,26,32,32};
+        uint8_t BoughBell[] = {57,1,26,32,32};
+        uint8_t ShardWisp[] = {58,1,12,32,32};
+        uint8_t Reliquary[] = {59,1,29,32,32};
+        uint8_t SaplingSage[] = {60,26,29,32,32};
+        uint8_t GroveKeeper[] = {61,29,26,32,32};
+        uint8_t FossilBloom[] = {62,29,26,32,32};
+        uint8_t OrbitRelic[] = {63,29,1,32,32};
+    } namespace_end
+
+    namespace Names {
+        uint8_t jimbo[] = "jimbo\0";
+    } namespace_end
+
+
+    uint24_t teamList[] = {
+	{SquibbleSnail , SkitterCrab , squid , 32 , 32 , 32 , jimbo},
+	{SquableSnail , ScatterCrab , bigsquid , 32 , 32 , 32 , jimbo},
+	{ScrambleSnail , ShatterCrab , BiggestSquid , 32 , 32 , 32 , jimbo},
+	{SquibbleSnail , SquableSnail , ScrambleSnail , 32 , 32 , 32 , jimbo},
+	{SkitterCrab , ScatterCrab , ShatterCrab , 32 , 32 , 32 , jimbo},
+	{squid , bigsquid , BiggestSquid , 32 , 32 , 32 , jimbo},
+	{cuircuit , zip , zap , 32 , 32 , 32 , jimbo},
+	{ember , flickerfly , flitfly , 32 , 32 , 32 , jimbo},
+	{hedge , suculent , cactus , 32 , 32 , 32 , jimbo},
+	{cloud , billow , howl , 32 , 32 , 32 , jimbo},
+	{rock , wiggleworm , waggleworm , 32 , 32 , 32 , jimbo},
+	{waggleworm , skimray , howl , 32 , 32 , 32 , jimbo},
+	{zap , cactus , flitfly , 32 , 32 , 32 , jimbo},
+	{BiggestSquid , skimray , zap , 32 , 32 , 32 , jimbo},
+	{ShatterCrab , waggleworm , cactus , 32 , 32 , 32 , jimbo},
+	{ScrambleSnail , howl , flitfly , 32 , 32 , 32 , jimbo},
+	{bell , item , item2 , 32 , 32 , 32 , jimbo},
+	{skimray , skimray , skimray , 32 , 32 , 32 , jimbo},
+	{dragon , skull , ardu , 32 , 32 , 32 , jimbo},
+};
+
+
+
+} namespace_end

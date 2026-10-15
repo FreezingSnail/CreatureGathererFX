@@ -1,4 +1,4 @@
-.PHONY: help setup doctor plant test test-debug testvm testvm-debug sim sim-test gen gen-if-needed gen-data gen-sprites gen-fixtures pack full build mini ram run dev arena-demo lure-demo check final-gate verify-generated test-manifest test-generated-libs test-doctor test-fxtest-ram test-avr-build-budget test-world-script-profile world-script-profile-check test-encounter-profile encounter-profile-check encounter-packed-profile-check fxtest fxtest-headless fxtest-spike fxtest-preflight fxtest-headless-preflight fxtest-build fxtest-run new-fxtest clean-build-artifacts test-clean-build-artifacts
+.PHONY: help setup doctor plant test test-debug testvm testvm-debug sim sim-test gen gen-if-needed gen-data gen-sprites gen-fixtures pack full build mini ram run dev arena-demo arena-test lure-demo check final-gate verify-generated test-manifest test-generated-libs test-doctor test-fxtest-ram test-avr-build-budget test-world-script-profile world-script-profile-check test-encounter-profile encounter-profile-check encounter-packed-profile-check fxtest fxtest-headless fxtest-spike fxtest-preflight fxtest-headless-preflight fxtest-build fxtest-run new-fxtest clean-build-artifacts test-clean-build-artifacts
 
 # Public command API. Override tool, board, and output variables per workspace/CI.
 CXX ?= g++
@@ -23,6 +23,12 @@ AVR_FXTEST_NO_FACTS_BUILD_PROPERTIES ?= --build-property "compiler.cpp.extra_fla
 	--build-property "compiler.c.extra_flags=$(AVR_RELAX_FLAGS)" \
 	--build-property "compiler.c.elf.extra_flags=$(AVR_RELAX_FLAGS)"
 AVR_FXTEST_COMPACT_RESULT_BUILD_PROPERTIES ?= --build-property "compiler.cpp.extra_flags=$(AVR_FXTEST_CPP_FLAGS) -DCGFX_BATTLE_NO_FACTS -DCGFX_BATTLE_COMPACT_RESULT" \
+	--build-property "compiler.c.extra_flags=$(AVR_RELAX_FLAGS)" \
+	--build-property "compiler.c.elf.extra_flags=$(AVR_RELAX_FLAGS)"
+# The dedicated duel suite must compile every TU with the compact duel profile;
+# a sketch-local define alone would not reach separately compiled TUs and could
+# silently build a legacy implementation. Selected for test_battle_duel only.
+AVR_FXTEST_DUEL_BUILD_PROPERTIES ?= --build-property "compiler.cpp.extra_flags=$(AVR_FXTEST_CPP_FLAGS) -DCGFX_BATTLE_NO_FACTS -DCGFX_BATTLE_COMPACT_RESULT -DCGFX_DUEL_BATTLE" \
 	--build-property "compiler.c.extra_flags=$(AVR_RELAX_FLAGS)" \
 	--build-property "compiler.c.elf.extra_flags=$(AVR_RELAX_FLAGS)"
 # Only shipping FX/Mini sketches compile their no-USB main. Device-test
@@ -54,6 +60,9 @@ ARDENS ?= $(shell command -v Ardens 2>/dev/null)
 # 4096-byte checkpoint verify/erase cycles, so it needs more emulated time than
 # the former 3000 default; raise the window rather than drop device coverage.
 FXTEST_MS ?= 12000
+# The duel resource suite renders many full frames, so its serial capture needs
+# a longer default than the wildcard gate's ordinary suites.
+FXTEST_MS_RESOURCES ?= 30000
 FXTEST_RAM_BUDGET ?= 2160
 FXTEST_BUILD_DIR ?= $(BUILD_DIR)/fxtest
 FINAL_GATE_LOG_DIR ?= $(BUILD_DIR)/final-gate
@@ -95,7 +104,8 @@ help:
 		'  test-world-script-profile validate the compact world VM script profile' \
 		'  build    compile Arduboy FX sketch; prerequisite: $(ARDUINO_CLI); output: $(BUILD_DIR)' \
 		'  ram      build and report FX flash/RAM plus largest static symbols; prerequisite: $(ARDUINO_CLI), avr-size, avr-nm' \
-		'  arena-demo generate FX data, build the opt-in arena firmware, then launch Ardens' \
+		'  arena-demo generate FX data, build the opt-in arena+duel firmware, then launch Ardens' \
+		'  arena-test alias for arena-demo' \
 		'  lure-demo  generate FX data, build the opt-in lure-wedge firmware, then launch Ardens' \
 		'  test-avr-build-budget exercise the fail-closed shipping flash/RAM parser' \
 		'  final-gate  run the full check then the shipping RAM report; requires ARDENS' \
@@ -293,7 +303,9 @@ dev: gen
 # the split FX data/save inputs beside it, then launch Ardens.
 ARENA_DEMO_BUILD_DIR ?= build/arena-demo
 ARENA_DEMO_CART_DIR ?= $(ARENA_DEMO_BUILD_DIR)/isolated
-ARENA_DEMO_CPP_FLAGS ?= $(AVR_SHIPPING_CPP_FLAGS) -DCGFX_ARENA_DEMO
+# Full shipping defaults plus the arena UI and the opt-in duel engine, so the
+# arena demo launches the current RPS duel spike from the existing bootstrap.
+ARENA_DEMO_CPP_FLAGS ?= $(AVR_SHIPPING_CPP_FLAGS) -DCGFX_ARENA_DEMO -DCGFX_DUEL_BATTLE
 ARENA_DEMO_FLASH_BUDGET ?= 29184
 
 arena-demo:
@@ -312,6 +324,9 @@ arena-demo:
 	    file="$(ARENA_DEMO_BUILD_DIR)/CreatureGathererFX.ino.hex" \
 	    file="$(ARENA_DEMO_CART_DIR)/fxdata-data.bin" \
 	    save="$(ARENA_DEMO_CART_DIR)/fxdata-save.bin"
+
+# Convenience alias for the arena duel spike launch.
+arena-test: arena-demo
 
 # Opt-in lure playtest. Mirrors arena-demo: generate, build the wedge firmware
 # into an isolated directory, copy the split FX data/save inputs beside it, then
@@ -585,6 +600,10 @@ fxtest-build:
 		    ARDUINO_BUILD_CACHE_PATH="$(ARDUINO_BUILD_CACHE_PATH)" $(ARDUINO_CLI) compile --fqbn "$(FQBN)" \
 		        $(AVR_FXTEST_NO_FACTS_BUILD_PROPERTIES) \
 		        --build-path "$$stage/build" --output-dir "$$stage/output" "$$stage/$$ino.ino"; \
+		elif [ "$$ino" = "test_battle_duel" ] || [ "$$ino" = "test_duel_resources" ]; then \
+		    ARDUINO_BUILD_CACHE_PATH="$(ARDUINO_BUILD_CACHE_PATH)" $(ARDUINO_CLI) compile --fqbn "$(FQBN)" \
+		        $(AVR_FXTEST_DUEL_BUILD_PROPERTIES) \
+		        --build-path "$$stage/build" --output-dir "$$stage/output" "$$stage/$$ino.ino"; \
 		else \
 		    ARDUINO_BUILD_CACHE_PATH="$(ARDUINO_BUILD_CACHE_PATH)" $(ARDUINO_CLI) compile --fqbn "$(FQBN)" \
 		        $(AVR_FXTEST_BUILD_PROPERTIES) \
@@ -599,7 +618,9 @@ fxtest-run:
 		stage="$(FXTEST_BUILD_DIR)/$$name"; \
 		echo "=== $$name ==="; \
 		cp -f "$(FXDATA_BIN)" "$$stage/fxdata.bin"; \
-		if out="$$($(ARDENS) captureserial=$(FXTEST_MS) fxport=d1 display=ssd1306 file=$$stage/output/$$name.ino.hex file=$$stage/fxdata.bin 2>&1)"; then \
+		ms="$(FXTEST_MS)"; \
+		if [ "$$name" = "test_duel_resources" ]; then ms="$(FXTEST_MS_RESOURCES)"; fi; \
+		if out="$$($(ARDENS) captureserial=$$ms fxport=d1 display=ssd1306 file=$$stage/output/$$name.ino.hex file=$$stage/fxdata.bin 2>&1)"; then \
 			runner_status=0; \
 		else \
 			runner_status=$$?; \

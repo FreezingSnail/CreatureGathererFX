@@ -47,8 +47,11 @@ perturbed_layout=$fixtures/fxlayout-expand-20-perturbed.toml
 # docs/assets/world-environment-32-spike/simple/shipping-map.json). Only the
 # `tiles` symbol payload bytes change; no FX address moves and the AVR image is
 # byte-identical (flash 24986 B / static SRAM 1760 B, control == candidate).
-# Previous cart sha256 36a3bd23..., regenerated cb170b6a....
-expected=cb170b6ae45545af483dc66ea04c7361fdb9cb03c8a49827c0a0344d439e2c9b
+# d73i.1 spike: appended the authored duel relation chart field (duelChartFixture,
+# 25 bytes) at the end of the layout; later save-region addresses shift and the
+# selected AVR duel chart source reads it. Previous cart sha256 cb170b6a..., now
+# 5c0d4e7d.... Intentional rebaseline for the measured FX-chart duel variant.
+expected=5c0d4e7da2c6e9b5130f5e3bf817fb172948534eb27899a96b1723a164298a05
 
 for layout in "$old_layout" "$new_layout" "$perturbed_layout"; do
     test -f "$layout" || {
