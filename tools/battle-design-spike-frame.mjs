@@ -117,7 +117,9 @@ export function createHarness(options = {}) {
       return [];
     },
   };
-  documentStub.body.dataset = options.mode ? { mode: options.mode } : {};
+  documentStub.body.dataset = {};
+  if (options.mode) documentStub.body.dataset.mode = options.mode;
+  if (options.duel) documentStub.body.dataset.duel = options.duel;
   const windowStub = {
     addEventListener(type, handler) {
       if (!windowListeners.has(type)) windowListeners.set(type, []);

@@ -234,17 +234,53 @@ test('duel flow advances through step() edges and timers', () => {
   assert.equal(state.duelState.phase, 'choice');
 });
 
-test('duel AI keeps its pick inside its own move list', () => {
-  const state = M.newMock({ mode: 'duel', you: 10, foe: 12, seed: 7, aiRead: 100 });
+test('stance duel: cycle order, options and beats for 3 and 4 stances', () => {
+  const three = M.newMock({ mode: 'duel', duelKind: 'stances', stances: 3 });
+  const four = M.newMock({ mode: 'duel', duelKind: 'stances', stances: 4 });
+  assert.deepEqual(M.stanceSet(three), ['flame', 'bloom', 'tide']);
+  assert.deepEqual(M.stanceSet(four), ['flame', 'bloom', 'tide', 'stone']);
+  for (const state of [three, four]) {
+    const order = M.stanceSet(state);
+    assert.equal(M.duelOptions(state, 0).length, order.length);
+    for (let index = 0; index < order.length; index++) {
+      assert.ok(M.stanceBeats(order, order[index], order[(index + 1) % order.length]));
+      assert.ok(!M.stanceBeats(order, order[(index + 1) % order.length], order[index]));
+    }
+  }
+});
+
+test('stance duel resolves damage with affinity on the correct sides', () => {
+  const state = M.newMock({ mode: 'duel', duelKind: 'stances', you: 10, foe: 12, seed: 3 });
   M.startBattle(state);
-  const count = M.duelMoves(state, 1).length;
-  for (let i = 0; i < 20; i++) {
-    state.duelState.last = [M.duelMoves(state, 0)[0].type, null];
-    M.duelPick(state, 0);
-    const aiIndex = state.duelState.picks[1];
-    assert.ok(aiIndex >= 0 && aiIndex < count, `AI pick ${aiIndex} within 0..${count - 1}`);
-    state.duelState.phase = 'choice';
-    state.duelState.picks = [null, null];
+  assert.equal(M.duelKind(state), 'stances');
+  const beforeYou = state.duelState.hp[0], beforeFoe = state.duelState.hp[1];
+  state.duelState.picks = [0, 1]; // flame vs bloom: flame wins
+  M.duelResolve(state);
+  assert.equal(state.duelState.lines[0], 'CLASH WIN');
+  assert.ok(beforeFoe - state.duelState.hp[1] > beforeYou - state.duelState.hp[0], 'winner deals more than chip');
+  // Mirror pick trades chip.
+  const tie = M.newMock({ mode: 'duel', duelKind: 'stances', you: 10, foe: 12, seed: 3 });
+  M.startBattle(tie);
+  const tieYou = tie.duelState.hp[0], tieFoe = tie.duelState.hp[1];
+  tie.duelState.picks = [0, 0];
+  M.duelResolve(tie);
+  assert.equal(tie.duelState.lines[0], 'TIE');
+  assert.ok(tie.duelState.hp[0] < tieYou && tie.duelState.hp[1] < tieFoe);
+});
+
+test('duel AI keeps its pick inside its own option list for both engines', () => {
+  for (const duelKind of ['wheel', 'stances']) {
+    const state = M.newMock({ mode: 'duel', duelKind, you: 10, foe: 12, seed: 7, aiRead: 100 });
+    M.startBattle(state);
+    const count = M.duelOptions(state, 1).length;
+    for (let i = 0; i < 10; i++) {
+      state.duelState.last = [M.duelOptions(state, 0)[0].type, null];
+      M.duelPick(state, 0);
+      const aiIndex = state.duelState.picks[1];
+      assert.ok(aiIndex >= 0 && aiIndex < count, `${duelKind} AI pick ${aiIndex} within 0..${count - 1}`);
+      state.duelState.phase = 'choice';
+      state.duelState.picks = [null, null];
+    }
   }
 });
 

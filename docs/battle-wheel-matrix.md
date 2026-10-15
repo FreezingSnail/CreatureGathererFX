@@ -4,6 +4,10 @@ Status: spike proposal for the simultaneous-pick duel, 2026-10-14. Source of tru
 `WHEEL` in `tools/battle-design-spike-data.mjs`, generated into `mock/data.js`; playable in
 `mock/duel.html`. Not adopted into firmware or the shipping damage chart.
 
+The matrix renders as an x/y table (rows attack columns: ▲ win, ▼ lose, · neutral) on the launcher
+and inside both duel windows, where the setup creatures' row and column stay highlighted while
+playing (`mock/matrix.js`).
+
 ## The ring
 
 ```

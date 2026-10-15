@@ -68,7 +68,17 @@ harness.press('z');
 settle();
 writePreview(harness, 'trim-dual-choice.png');
 
-// Mode C: duel stance choice.
+// Mode C: stance duel (4-type cycle) in its own harness.
+const stancesHarness = createHarness({ mode: 'duel', duel: 'stances' });
+stancesHarness.advances(2);
+stancesHarness.press('z');
+stancesHarness.advances(2);
+writePreview(stancesHarness, 'stances-choice.png');
+stancesHarness.press('z');
+stancesHarness.advances(8, 100);
+writePreview(stancesHarness, 'stances-result.png');
+
+// Mode D: wheel duel (8 types, own moves).
 harness.switchMode('duel');
 harness.press('z');
 settle();
