@@ -9417,3 +9417,32 @@ node tools/battle-duel-spike.mjs --battles 120             -> matrix printed (se
 
 Finding for persona defaults: full-rate single-pattern readers are exploitable by rotation; pin
 defaults below ~75% until personas mix fallbacks, and treat exploiter as challenge-tier.
+
+# CreatureGathererFX-0f3k
+
+Switching rule + parties in the duel.
+
+- Rule: switching forfeits the round — the non-switcher lands a default win on the incoming
+  creature (flat 14; x1.5 = 21 in the bonus spelling when the attacker's move type beats the
+  arrival). Both switching = no damage. KO on an incoming swap reverts to the outgoing creature;
+  a side loses only when both members faint.
+- Parties: active + one bench per side (bench = next roster entry in this prototype). Swap cell in
+  the duel footer (cursor cycles moves + swap); AI swaps only when its active kit holds no counter
+  for its guess and the bench does.
+- Spike tool: `partySize` option (tools/battle-duel-spike.mjs runs partySize 1 to isolate the read
+  model). Finding while spiking: with neighbor benches and 1-2 move kits, the second creature
+  dominates outcomes (mirrored test parties produced ~0%/100% win rates) — argues for authored
+  parties once the 3-move kit pass happens.
+- Read-rate matrix after isolating: unchanged curves (reader vs random 57% -> 38%; reader at 100%
+  exploited by rotation 33% -> 100%), so the earlier persona guidance stands.
+
+```text
+node --test mock/battle-mock.test.js                       -> 27 pass / 0 fail (switch rules + KO revert)
+node --test tools/tests/battle-duel-spike_test.mjs         -> 4 pass / 0 fail
+node --test tools/tests/battle-design-spike-annotate_test.mjs -> 5 pass / 0 fail
+node --test tools/tests/battle-design-spike-frame_test.mjs -> 8 pass / 0 fail
+node --test tools/tests/battle-design-spike-data_test.mjs  -> 8 pass / 0 fail
+node --test tools/tests/battle-matchup-solver_test.mjs     -> 4 pass / 0 fail
+node --test tools/tests/battle-design-spike-matrix_test.mjs-> 3 pass / 0 fail
+node tools/battle-design-spike-preview.mjs                 -> swap cell visible in duel frames
+```
