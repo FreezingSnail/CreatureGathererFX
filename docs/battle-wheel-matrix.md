@@ -55,13 +55,12 @@ data test re-runs the proof over all 64 creatures.
 
 ## Roster context for three-move kits
 
-- equipped moves per creature: 1 ×3, 2 ×12, 3 ×3, 4 ×46. Fifteen creatures field fewer than three
-  moves (bell fields two: wisper + Sharpen; SquibbleSnail one), so some duel footers show fewer than
-  three cells. The mock shows the real kits; normalizing kits is an authoring pass.
-- distinct move types per creature: 1 type ×7, 2 ×37, 3 ×18, 4 ×2. 44 creatures need an authoring
-  pass to field three distinct-type moves.
+- Status/utility moves (type `status`/`none`) are excluded from every pick list in this spike.
+- usable attack moves per creature: 1 ×4, 2 ×13, 3 ×15, 4 ×32. Seventeen creatures field fewer than
+  three attack moves (bell and SquibbleSnail carry one each), so some footers show fewer cells.
+- distinct move types per creature (all moves, including status): 1 type ×7, 2 ×37, 3 ×18, 4 ×2.
 - move-type carriers: earth 23, plant 23, water 16, elder 16, spirit 15, wind 12, lightning 12, fire 10.
-- every creature already has a STAB move (affinity ×1.5 in the duel).
+- every creature already has a STAB move (affinity ×1.5 in the power duel).
 
 ## Play rules as implemented in the mock
 

@@ -26,9 +26,10 @@
  * C++ (Damage.cpp, Type.hpp, MoveUses.hpp) ported to integer JS with stat stages
  * at zero. The AI is a simplified damage-scoring stand-in for the tactical AI.
  * Not simulated: statuses, stages, effects, accuracy, party/switching, escape,
- * gather, animations. Feedback text replaces the staged presenter; HP updates
- * immediately. Sprite layout matches BattleLayout.hpp (foe 0,0; you 80,0; menu
- * y=48..63; HP column x=48..79; 48x48 front/back frames).
+ * gather, animations. Status/utility moves (type status/none) are excluded from
+ * every pick list in this spike. Feedback text replaces the staged presenter; HP
+ * updates immediately. Sprite layout matches BattleLayout.hpp (foe 0,0; you
+ * 80,0; menu y=48..63; HP column x=48..79; 48x48 front/back frames).
  */
 
 const DATA = (typeof module !== 'undefined' && module.exports && typeof require === 'function')
@@ -113,6 +114,10 @@ function glyphRows(char) {
 const typeIcon = (name) => ICONS[name] || MERGED_ICONS[name];
 const textWidth = (str) => str.length * 5;
 const num = (value) => String(value);
+
+// This spike excludes status/utility moves: they are not battlefield picks
+// under any of the duel spellings (and would only be menu noise in A/B).
+const isSpikeMove = (move) => move != null && move.type !== 'status' && move.type !== 'none';
 
 /* ---------- production rules ported (src/engine/battle + src/lib/Type) ---------- */
 // Modifier enum: 0 None, 1 Quarter, 2 Half, 3 Same, 4 Double, 5 Quadruple.
@@ -252,7 +257,7 @@ function usableSlots(state, side) {
   const creature_ = side === 0 ? state.battle.you : state.battle.foe;
   const slots = [];
   for (let slot = 0; slot < 4; slot++) {
-    if (creature_.moves[slot] == null) continue;
+    if (!isSpikeMove(moveOf(creature_, slot))) continue;
     if (state.battle.uses[side][slot] > 0) slots.push(slot);
   }
   return slots;
@@ -260,7 +265,8 @@ function usableSlots(state, side) {
 function firstUsable(battleState) {
   const slots = [];
   for (let slot = 0; slot < 4; slot++) {
-    if (battleState.you.moves[slot] == null) continue;
+    const move = moveOf(battleState.you, slot);
+    if (!isSpikeMove(move)) continue;
     if (battleState.uses[0][slot] > 0) slots.push(slot);
   }
   return slots.length ? slots[0] : 255;
@@ -379,7 +385,10 @@ function stanceBeats(order, stance, other) {
 }
 function duelMoves(state, side) {
   const creature_ = side === 0 ? creature(state.youIndex) : creature(state.foeIndex);
-  return creature_.moves.filter((id) => id != null).map((id) => DATA.moves[id]);
+  return creature_.moves
+    .filter((id) => id != null)
+    .map((id) => DATA.moves[id])
+    .filter((move) => isSpikeMove(move));
 }
 function wheelValue(moveType, defendType) {
   // 2 = beats, 0.5 = loses to, 1 = neutral (8-type wheel from data.js).
@@ -590,7 +599,7 @@ function step(state, input) {
           const count = Math.max(1, duelOptions(state, 0).length);
           if (edge === 'left' || edge === 'up') duelState.cursor = (duelState.cursor + count - 1) % count;
           else if (edge === 'right' || edge === 'down') duelState.cursor = (duelState.cursor + 1) % count;
-          else if (edge === 'a') duelPick(state, duelState.cursor);
+          else if (edge === 'a' && duelOptions(state, 0).length) duelPick(state, duelState.cursor);
         }
       } else {
         const battleState = state.battle;
@@ -708,7 +717,7 @@ function drawBattleMenu(ctx, state) {
   const usable = usableSlots(state, 0);
   for (let slot = 0; slot < 4; slot++) {
     const move = moveOf(battleState.you, slot);
-    if (!move) continue;
+    if (!isSpikeMove(move)) continue;
     const x = 4 + (slot % 2) * 64, y = 48 + Math.floor(slot / 2) * 8;
     const selected = battleState.phase === 'choice' && slot === battleState.cursor && usable.includes(slot);
     const depleted = battleState.uses[0][slot] === 0;
@@ -967,7 +976,7 @@ if (typeof module !== 'undefined' && module.exports) {
     duelMoves, wheelValue, wheelBeats, hasAffinity, duelCreatureBonus,
     duelKind, stanceSet, stanceBeats, duelOptions, duelOptionAffinity,
     creature, moveOf, activeMode, typesOf, drawIcon, text, glyphRows,
-    ICONS, MERGED_ICONS, SYMBOLS, DATA, W, H, SPRITE_BASE,
+    ICONS, MERGED_ICONS, SYMBOLS, DATA, W, H, SPRITE_BASE, isSpikeMove,
   };
 }
 if (typeof window !== 'undefined' && typeof document !== 'undefined') boot();
