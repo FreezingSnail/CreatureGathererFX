@@ -281,8 +281,11 @@ inline Outcome resolveRound(State &state, const Action actions[2],
             damage[0] = scaleDamage(DMG_WIN, mod1);
             damage[1] = scaleDamage(DMG_CHIP, mod0);
         } else {
-            damage[0] = scaleDamage(DMG_TRADE, mod0);
-            damage[1] = scaleDamage(DMG_TRADE, mod1);
+            // Trade: damage[side] is the amount RECEIVED, so the player's outgoing
+            // (scaled by its own matchup, mod0) lands on side 1, and the foe's
+            // outgoing (mod1) lands on side 0.
+            damage[1] = scaleDamage(DMG_TRADE, mod0);
+            damage[0] = scaleDamage(DMG_TRADE, mod1);
         }
     } else {
         // One side has an unusable kit and cannot supply an attack. Treat it

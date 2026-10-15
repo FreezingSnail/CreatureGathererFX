@@ -20,17 +20,10 @@ using duel::Feedback;
 // BattleState/DuelView include chain; a local alias would be ambiguous.
 
 // A packed move carrying only an authored type (0..7 attack, 8 STATUS, 15 NONE).
-inline Move attack(uint8_t authoredType)
-{
-    return Move(MoveBitSet{authoredType, 0, 0, 0, 0});
-}
-
-// Real setup clears every slot to the empty sentinel; Move() alone would read as
-// authored SPIRIT, so both the packed move and the id must be set.
 inline void emptySlots(battle::Combatant &combatant)
 {
     for (uint8_t slot = 0; slot < 4; ++slot) {
-        combatant.moves[slot] = Move();
+        combatant.moveTypes[slot] = EMPTY_MOVE_ID;
         combatant.moveIds[slot] = EMPTY_MOVE_ID;
     }
 }
@@ -38,7 +31,7 @@ inline void emptySlots(battle::Combatant &combatant)
 inline void setSlot(battle::Combatant &combatant, uint8_t slot,
                     uint8_t authoredType, uint8_t moveId)
 {
-    combatant.moves[slot] = attack(authoredType);
+    combatant.moveTypes[slot] = authoredType;
     combatant.moveIds[slot] = moveId;
 }
 
@@ -57,14 +50,14 @@ inline void DuelViewContractSuite(TestSuite &suite)
 
     Test test(__func__);
 
-    // --- usableAttack filter: authored attack types only ---------------------
-    test.assert(duel::usableAttack(attack(static_cast<uint8_t>(Type::SPIRIT))), true,
+    // --- usableAttackType filter: authored attack types only -----------------
+    test.assert(duel::usableAttackType(static_cast<uint8_t>(Type::SPIRIT)), true,
                 "spirit move is usable");
-    test.assert(duel::usableAttack(attack(static_cast<uint8_t>(Type::ELDER))), true,
+    test.assert(duel::usableAttackType(static_cast<uint8_t>(Type::ELDER)), true,
                 "elder move is usable");
-    test.assert(duel::usableAttack(attack(static_cast<uint8_t>(Type::STATUS))), false,
+    test.assert(duel::usableAttackType(static_cast<uint8_t>(Type::STATUS)), false,
                 "STATUS move is not usable");
-    test.assert(duel::usableAttack(attack(static_cast<uint8_t>(Type::NONE))), false,
+    test.assert(duel::usableAttackType(static_cast<uint8_t>(Type::NONE)), false,
                 "NONE move is not usable");
 
     // --- four attacks: count, folded types, original-slot conversion ---------

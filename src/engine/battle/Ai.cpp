@@ -1,3 +1,4 @@
+#ifndef CGFX_DUEL_BATTLE
 #include "Ai.hpp"
 
 #include "Damage.hpp"
@@ -220,3 +221,4 @@ BattleAction chooseAction(const BattleState &state, Side side)
 }
 
 } // namespace battle
+#endif // !CGFX_DUEL_BATTLE

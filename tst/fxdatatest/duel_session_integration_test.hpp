@@ -57,10 +57,6 @@ uint8_t scriptedRng(uint8_t bound) {
 const uint8_t SpiritAuthored = static_cast<uint8_t>(Type::SPIRIT);
 const uint8_t FireAuthored = static_cast<uint8_t>(Type::FIRE);
 
-Move attackMove(uint8_t authoredType) {
-    return Move(MoveBitSet{authoredType, 10, 0, 0, 0});
-}
-
 void preparePlayer() {
     battle::applyPlayerPreset(player, BattlePresets::opening);
 }
@@ -87,14 +83,14 @@ __attribute__((noinline)) void configureMatchup(uint8_t playerType, uint8_t play
         const_cast<battle::BattleState &>(battleSession().state());
     battle::Combatant &hero = state.active[static_cast<uint8_t>(battle::Side::Player)];
     hero.types = DualType(static_cast<Type>(playerType));
-    hero.hp = hero.maxHp = hero.stats.hp = playerHp;
-    hero.moves[0] = attackMove(playerMove);
+    hero.hp = hero.maxHp = playerHp;
+    hero.moveTypes[0] = playerMove;
 
     battle::Combatant &foe = state.active[static_cast<uint8_t>(battle::Side::Opponent)];
     foe.types = DualType(static_cast<Type>(opponentType));
-    foe.hp = foe.maxHp = foe.stats.hp = opponentHp;
+    foe.hp = foe.maxHp = opponentHp;
     for (uint8_t slot = 0; slot < 4; ++slot)
-        if (foe.moveIds[slot] != EMPTY_MOVE_ID) foe.moves[slot] = attackMove(opponentMove);
+        if (foe.moveIds[slot] != EMPTY_MOVE_ID) foe.moveTypes[slot] = opponentMove;
 }
 
 // Advance through the Concealed phase to the reveal (Result phase begins).
@@ -198,7 +194,7 @@ __attribute__((noinline)) void duelFlowWaitRoute(FxTest &test) {
     battle::BattleState &state =
         const_cast<battle::BattleState &>(battleSession().state());
     for (uint8_t slot = 0; slot < 4; ++slot) {
-        state.active[0].moves[slot] = Move();
+        state.active[0].moveTypes[slot] = EMPTY_MOVE_ID;
         state.active[0].moveIds[slot] = EMPTY_MOVE_ID;
     }
     state.active[0].types = DualType(static_cast<Type>(FireAuthored));
@@ -207,7 +203,7 @@ __attribute__((noinline)) void duelFlowWaitRoute(FxTest &test) {
     state.active[1].hp = state.active[1].maxHp = 100;
     for (uint8_t slot = 0; slot < 4; ++slot)
         if (state.active[1].moveIds[slot] != EMPTY_MOVE_ID)
-            state.active[1].moves[slot] = attackMove(SpiritAuthored);
+            state.active[1].moveTypes[slot] = SpiritAuthored;
 
     const battle::MoveSnapshot snapshot = battleSession().moves();
     bool allEmpty = true;
@@ -302,18 +298,16 @@ __attribute__((noinline)) void duelDeviceSwapKoRevert(FxTest &test) {
     state.bench[0][0].id = slot0Id;
     state.bench[0][0].level = slot0Level;
     state.bench[0][0].hp = 10; // incoming: dies to the default win
-    state.bench[0][0].types = DualType(static_cast<Type>(FireAuthored));
     state.bench[0][1].id = player.party[1].id;
     state.bench[0][1].level = player.party[1].level;
     state.bench[0][1].hp = 50; // living first-live slot that must NOT be chosen
-    state.bench[0][1].types = DualType(static_cast<Type>(SpiritAuthored));
 
     state.activeSlot[1] = 0;
     state.active[1].types = DualType(static_cast<Type>(SpiritAuthored));
     state.active[1].hp = state.active[1].maxHp = 100;
     for (uint8_t slot = 0; slot < 4; ++slot)
         if (state.active[1].moveIds[slot] != EMPTY_MOVE_ID)
-            state.active[1].moves[slot] = attackMove(SpiritAuthored);
+            state.active[1].moveTypes[slot] = SpiritAuthored;
 
     test.expectEq(battleSession().submitIntent({MenuIntentKind::SelectParty, 0}), 1,
                   F("the living incoming slot is selectable"));
@@ -384,6 +378,32 @@ __attribute__((noinline)) void duelDeviceGatherActiveKoPausesFlee(FxTest &test) 
 
 } // namespace duel_session_test_detail
 
+// Asymmetric trade through the real session (CreatureGathererFX-d73i.8 parity):
+// damage is RECEIVED. Player creature Fire, foe Water, both pick Spirit -> player
+// outgoing weak (3) hits the foe, foe outgoing bonus (9) hits the player. The
+// footer's outgoing order draws damage[opponent] first, so state.damage[0]=9 and
+// state.damage[1]=3.
+__attribute__((noinline)) void duelDeviceTradeScalesOutgoing(FxTest &test) {
+    using namespace duel_session_test_detail;
+    preparePlayer();
+    beginWildDuel(false, 0);
+    configureMatchup(FireAuthored, SpiritAuthored,
+                     static_cast<uint8_t>(Type::WATER), SpiritAuthored, 100, 100);
+
+    test.expectEq(battleSession().submitIntent({MenuIntentKind::SelectMove, 0}), 1,
+                  F("the spirit mirror trade submits"));
+    uint16_t revealTicks = 0;
+    test.expectEq(runToResult(battleSession(), revealTicks), 1, F("the trade reveals"));
+    test.expectEq(battleSession().state().active[0].hp, 91,
+                  F("player receives the foe's bonus outgoing"));
+    test.expectEq(battleSession().state().active[1].hp, 97,
+                  F("foe receives the player's weak outgoing"));
+    test.expectEq(battleSession().state().damage[0], 9, F("footer damage player"));
+    test.expectEq(battleSession().state().damage[1], 3, F("footer damage foe"));
+    test.expectEq(battleSession().state().feedback,
+                  static_cast<uint8_t>(duel::Feedback::Trade), F("trade caption"));
+}
+
 inline void test_duel_session(FxTest &test) {
     using namespace duel_session_test_detail;
     duelFlowConcealAndDwell(test);
@@ -393,4 +413,5 @@ inline void test_duel_session(FxTest &test) {
     duelDeviceSwapKoRevert(test);
     duelDeviceGatherKoKeepsProgress(test);
     duelDeviceGatherActiveKoPausesFlee(test);
+    duelDeviceTradeScalesOutgoing(test);
 }

@@ -99,6 +99,7 @@ int8_t boundedSpeedStage(int8_t stage)
     return stage;
 }
 
+#ifndef CGFX_DUEL_BATTLE
 uint16_t stagedSpeed(const Combatant &combatant)
 {
     const int8_t stage = boundedSpeedStage(
@@ -109,6 +110,7 @@ uint16_t stagedSpeed(const Combatant &combatant)
     }
     return static_cast<uint16_t>((speed * (2 + stage)) / 2u);
 }
+#endif
 
 uint8_t actionPriority(ActionKind kind)
 {
@@ -129,6 +131,7 @@ bool validMove(const Combatant &combatant, uint8_t slot)
     return slot < MOVE_COUNT && combatant.moveIds[slot] != 255;
 }
 
+#ifndef CGFX_DUEL_BATTLE
 Modifier attackEffectiveness(const Combatant &attacker,
                              const Combatant &defender, uint8_t moveSlot)
 {
@@ -148,6 +151,7 @@ Modifier attackEffectiveness(const Combatant &attacker,
     }
     return attackModifier(attacker, defender, moveType);
 }
+#endif
 
 #ifndef CGFX_BATTLE_NO_FACTS
 bool appendFact(ActionResult &out, const Consequence &fact)
@@ -163,6 +167,7 @@ bool appendFact(ActionResult &out, const Consequence &fact)
 }
 #endif
 
+#ifndef CGFX_DUEL_BATTLE
 void resolveAttack(BattleState &state, Side actor, uint8_t moveSlot,
                    bool selfHit, uint8_t remainingUses, Rng &rng,
                    ActionResult &out)
@@ -215,6 +220,7 @@ void resolveAttack(BattleState &state, Side actor, uint8_t moveSlot,
 #endif
     }
 }
+#endif
 
 void resolveSkip(BattleState &state, Side actor, bool refused,
                  bool statusSkipped, ActionResult &out)
@@ -226,6 +232,7 @@ void resolveSkip(BattleState &state, Side actor, bool refused,
     if (statusSkipped) out.flags |= STATUS_SKIPPED;
 }
 
+#ifndef CGFX_DUEL_BATTLE
 void resolveGather(BattleState &state, Side actor, Rng &rng,
                    ActionResult &out)
 {
@@ -262,6 +269,7 @@ void resolveGather(BattleState &state, Side actor, Rng &rng,
             : static_cast<uint8_t>(updated);
     }
 }
+#endif
 
 ResultKind extensionResult(ActionKind kind)
 {
@@ -293,6 +301,7 @@ uint8_t benchIndexForOriginalSlot(const BattleState &state, Side side,
 
 } // namespace
 
+#ifndef CGFX_DUEL_BATTLE
 Side firstMover(const BattleState &state, const TurnPlan &plan)
 {
     const uint8_t playerPriority = actionPriority(plan.action[0].kind);
@@ -445,6 +454,8 @@ void resolveEndTurn(BattleState &state, Rng &rng, bool acquisitionPending,
         }
     }
 }
+
+#endif
 
 bool sideDefeated(const BattleState &state, Side side)
 {

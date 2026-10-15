@@ -50,10 +50,11 @@ struct Cells {
 };
 
 // A usable authored attack slot has a real attack type (not STATUS/NONE). This
-// mirrors the mock's isSpikeMove filter and the session's eligibility rule.
-inline bool usableAttack(const Move &move)
+// mirrors the mock's isSpikeMove filter and the session's eligibility rule. The
+// compact duel representation stores the authored type directly per slot.
+inline bool usableAttackType(uint8_t authoredType)
 {
-    return move.getMoveType() < 8;
+    return authoredType < 8;
 }
 
 // Folded active creature types for one side (1 or 2 distinct after folding).
@@ -78,7 +79,7 @@ inline uint8_t usableOptionCount(const battle::BattleState &state, uint8_t side)
     const battle::Combatant &active = state.active[side];
     uint8_t count = 0;
     for (uint8_t slot = 0; slot < 4; ++slot)
-        if (active.moveIds[slot] != 255 && usableAttack(active.moves[slot]))
+        if (active.moveIds[slot] != 255 && usableAttackType(active.moveTypes[slot]))
             ++count;
     return count;
 }
@@ -89,7 +90,7 @@ inline uint8_t slotForOption(const battle::BattleState &state, uint8_t side,
     const battle::Combatant &active = state.active[side];
     uint8_t index = 0;
     for (uint8_t slot = 0; slot < 4; ++slot) {
-        if (active.moveIds[slot] == 255 || !usableAttack(active.moves[slot]))
+        if (active.moveIds[slot] == 255 || !usableAttackType(active.moveTypes[slot]))
             continue;
         if (index == option) return slot;
         ++index;
@@ -102,7 +103,7 @@ inline uint8_t optionType(const battle::BattleState &state, uint8_t side,
 {
     const uint8_t slot = slotForOption(state, side, option);
     return slot == 255 ? NO_TYPE
-                       : foldType(state.active[side].moves[slot].getMoveType());
+                       : foldType(state.active[side].moveTypes[slot]);
 }
 
 // True when any living member other than the active one exists (SWAP offered).

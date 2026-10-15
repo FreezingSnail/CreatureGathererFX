@@ -1,3 +1,4 @@
+#ifndef CGFX_DUEL_BATTLE
 #include "Effects.hpp"
 
 #ifdef __AVR__
@@ -256,3 +257,4 @@ TurnGate gateTurn(BattleState &state, Side side, Rng &rng)
 }
 
 } // namespace battle
+#endif // !CGFX_DUEL_BATTLE

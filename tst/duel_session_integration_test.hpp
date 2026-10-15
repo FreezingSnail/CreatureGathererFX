@@ -49,10 +49,6 @@ uint8_t scriptedRng(uint8_t bound) {
 const uint8_t SpiritAuthored = static_cast<uint8_t>(Type::SPIRIT);
 const uint8_t FireAuthored = static_cast<uint8_t>(Type::FIRE);
 
-Move attackMove(uint8_t authoredType) {
-    return Move(MoveBitSet{authoredType, 10, 0, 0, 0});
-}
-
 // Three authored species with full persistent HP, matching a real party that
 // enters an encounter. Party ids/levels/moves stay real for every later switch.
 void preparePlayer() {
@@ -70,14 +66,14 @@ void configureMatchup(battle::BattleSession &session, uint8_t playerType,
     battle::BattleState &state = session.stateForTest();
     battle::Combatant &hero = state.active[static_cast<uint8_t>(battle::Side::Player)];
     hero.types = DualType(static_cast<Type>(playerType));
-    hero.hp = hero.maxHp = hero.stats.hp = playerHp;
-    hero.moves[0] = attackMove(playerMove);
+    hero.hp = hero.maxHp = playerHp;
+    hero.moveTypes[0] = playerMove;
 
     battle::Combatant &foe = state.active[static_cast<uint8_t>(battle::Side::Opponent)];
     foe.types = DualType(static_cast<Type>(opponentType));
-    foe.hp = foe.maxHp = foe.stats.hp = opponentHp;
+    foe.hp = foe.maxHp = opponentHp;
     for (uint8_t slot = 0; slot < 4; ++slot)
-        if (foe.moveIds[slot] != EMPTY_MOVE_ID) foe.moves[slot] = attackMove(opponentMove);
+        if (foe.moveIds[slot] != EMPTY_MOVE_ID) foe.moveTypes[slot] = opponentMove;
 }
 
 // Advance through the Concealed phase to the reveal (Result phase begins).
@@ -346,16 +342,16 @@ void duelWaitReceivesDefaultWin(Test &test) {
 
     battle::BattleState &state = session.stateForTest();
     for (uint8_t slot = 0; slot < 4; ++slot) {
-        state.active[0].moves[slot] = Move();
+        state.active[0].moveTypes[slot] = EMPTY_MOVE_ID;
         state.active[0].moveIds[slot] = EMPTY_MOVE_ID;
     }
     state.active[0].types = DualType(static_cast<Type>(FireAuthored));
-    state.active[0].hp = state.active[0].maxHp = state.active[0].stats.hp = 100;
+    state.active[0].hp = state.active[0].maxHp = 100;
     state.active[1].types = DualType(static_cast<Type>(FireAuthored));
-    state.active[1].hp = state.active[1].maxHp = state.active[1].stats.hp = 100;
+    state.active[1].hp = state.active[1].maxHp = 100;
     for (uint8_t slot = 0; slot < 4; ++slot)
         if (state.active[1].moveIds[slot] != EMPTY_MOVE_ID)
-            state.active[1].moves[slot] = attackMove(SpiritAuthored);
+            state.active[1].moveTypes[slot] = SpiritAuthored;
 
     const battle::MoveSnapshot snapshot = session.moves();
     bool allEmpty = true;
@@ -397,23 +393,21 @@ void duelSwapKoRevertsToOutgoing(Test &test) {
     state.active[0].id = player.party[2].id;
     state.active[0].level = player.party[2].level;
     state.active[0].types = DualType(static_cast<Type>(SpiritAuthored));
-    state.active[0].hp = state.active[0].maxHp = state.active[0].stats.hp = 50;
+    state.active[0].hp = state.active[0].maxHp = 50;
 
     state.bench[0][0].id = slot0Id;
     state.bench[0][0].level = slot0Level;
     state.bench[0][0].hp = 10; // incoming: dies to the default win
-    state.bench[0][0].types = DualType(static_cast<Type>(FireAuthored));
     state.bench[0][1].id = player.party[1].id;
     state.bench[0][1].level = player.party[1].level;
     state.bench[0][1].hp = 50; // living first-live slot that must NOT be chosen
-    state.bench[0][1].types = DualType(static_cast<Type>(SpiritAuthored));
 
     state.activeSlot[1] = 0;
     state.active[1].types = DualType(static_cast<Type>(SpiritAuthored));
-    state.active[1].hp = state.active[1].maxHp = state.active[1].stats.hp = 100;
+    state.active[1].hp = state.active[1].maxHp = 100;
     for (uint8_t slot = 0; slot < 4; ++slot)
         if (state.active[1].moveIds[slot] != EMPTY_MOVE_ID)
-            state.active[1].moves[slot] = attackMove(SpiritAuthored);
+            state.active[1].moveTypes[slot] = SpiritAuthored;
 
     test.assert(session.submitIntent({MenuIntentKind::SelectParty, 0}), true,
                 "the living incoming slot is selectable");
@@ -628,10 +622,128 @@ void duelFleeCaption(Test &test) {
                 "an attack round banks no gather progress");
 }
 
+// An empty or fully KO'd player party fails real setup. The duel has no Ready
+// transition, so it must terminate at entry as a loss; the Flow then runs its
+// normal defeat recovery (no opponent action, no win, no reward).
+void duelExhaustedEntryIsLose(Test &test) {
+    // Empty party: no occupied slot at all.
+    player = Player();
+    battle::BattleSession wildEmpty;
+    wildEmpty.setRng({scriptedRng});
+    wildEmpty.beginWild(4, 1, false, 0);
+    test.assert(wildEmpty.isActive(), true, "empty-party wild entry stays active");
+    test.assert(wildEmpty.awaitingPlayer(), false, "empty-party wild entry takes no input");
+    test.assert(wildEmpty.exitReady(), true, "empty-party wild entry is terminal");
+    test.assert(wildEmpty.result().outcome, battle::Outcome::Lose,
+                "empty-party wild entry resolves as a loss");
+
+    battle::BattleSession trainerEmpty;
+    trainerEmpty.setRng({scriptedRng});
+    trainerEmpty.beginTrainer(0);
+    test.assert(trainerEmpty.exitReady(), true, "empty-party trainer entry is terminal");
+    test.assert(trainerEmpty.result().outcome, battle::Outcome::Lose,
+                "empty-party trainer entry resolves as a loss");
+
+    // All-KO party: occupied slots but every stored HP is zero.
+    preparePlayer();
+    for (uint8_t slot = 0; slot < PARTY_SIZE; ++slot) player.creatureHPs[slot] = 0;
+    battle::BattleSession wildKo;
+    wildKo.setRng({scriptedRng});
+    wildKo.beginWild(4, 1, false, 0);
+    test.assert(wildKo.exitReady(), true, "all-KO wild entry is terminal");
+    test.assert(wildKo.result().outcome, battle::Outcome::Lose,
+                "all-KO wild entry resolves as a loss");
+
+    battle::BattleSession trainerKo;
+    trainerKo.setRng({scriptedRng});
+    trainerKo.beginTrainer(0);
+    test.assert(trainerKo.exitReady(), true, "all-KO trainer entry is terminal");
+    test.assert(trainerKo.result().outcome, battle::Outcome::Lose,
+                "all-KO trainer entry resolves as a loss");
+}
+
+// The bench attack-type mask must derive from the real kit IDs. An empty slot
+// leaves moveList defaulted to a Move() that reads as authored SPIRIT, so a mask
+// that ignores the empty sentinel would invent a phantom spirit counter (and
+// spirit beats fire, a phantom counter to a fire pick).
+void duelBenchMaskSkipsEmptySlots(Test &test) {
+    preparePlayer();
+    // Two-member party: original slot 0 active, slot 1 the sole bench member.
+    for (uint8_t slot = 2; slot < PARTY_SIZE; ++slot) player.party[slot].level = 0;
+    player.party[0].level = 5;
+    player.party[1].level = 5;
+    player.creatureHPs[0] = 40;
+    player.creatureHPs[1] = 40;
+
+    // Bench member: one real plant attack, every other slot an empty sentinel.
+    player.party[1].moves[0] = 1; // a valid authored move id
+    player.party[1].moveList[0] =
+        Move(MoveBitSet{static_cast<uint8_t>(Type::PLANT), 10, 0, 0, 0});
+    for (uint8_t slot = 1; slot < 4; ++slot) {
+        player.party[1].moves[slot] = EMPTY_MOVE_ID;
+        player.party[1].moveList[slot] = Move();
+    }
+
+    battle::BattleSession session;
+    session.setRng({scriptedRng});
+    rngDraws = 0;
+    session.beginWild(4, 1, false, 0);
+
+    const uint8_t plantBit =
+        static_cast<uint8_t>(1u << duel::foldType(static_cast<uint8_t>(Type::PLANT)));
+    const uint8_t mask =
+        session.state().moveUsesSpent[static_cast<uint8_t>(battle::Side::Player)][1];
+    test.assert(mask, plantBit, "bench mask is exactly the real plant attack");
+    test.assert(static_cast<uint8_t>(mask & 1u), static_cast<uint8_t>(0),
+                "no phantom spirit bench bit from the empty slots");
+    test.assert(static_cast<uint8_t>(mask & static_cast<uint8_t>(1u << 3)),
+                static_cast<uint8_t>(0), "no phantom fire-counter bench bit");
+
+    // All-empty kit: the mask must be zero, and WAIT stays the only option.
+    for (uint8_t slot = 0; slot < 4; ++slot) {
+        player.party[1].moves[slot] = EMPTY_MOVE_ID;
+        player.party[1].moveList[slot] = Move();
+    }
+    player.creatureHPs[0] = 40;
+    player.creatureHPs[1] = 40;
+    battle::BattleSession emptyKit;
+    emptyKit.setRng({scriptedRng});
+    emptyKit.beginWild(4, 1, false, 0);
+    test.assert(emptyKit.state().moveUsesSpent[static_cast<uint8_t>(battle::Side::Player)][1],
+                static_cast<uint8_t>(0), "all-empty bench mask is zero");
+}
+
+// A trade scales each side's OUTGOING hit by its own matchup: damage is what the
+// side RECEIVES. Player Fire vs foe Water, both Spirit: player outgoing weak (3),
+// foe outgoing bonus (9), so the player takes 9 and the foe takes 3.
+void duelTradeScalesOutgoing(Test &test) {
+    preparePlayer();
+    battle::BattleSession session;
+    session.setRng({scriptedRng});
+    rngDraws = 0;
+    session.beginWild(4, 1, false, 0);
+    configureMatchup(session, FireAuthored, SpiritAuthored,
+                     static_cast<uint8_t>(Type::WATER), SpiritAuthored, 100, 100);
+
+    test.assert(session.submitIntent({MenuIntentKind::SelectMove, 0}), true,
+                "the spirit mirror trade submits");
+    uint16_t revealTicks = 0;
+    test.assert(runToResult(session, revealTicks), true, "the trade reveals");
+    test.assert(session.state().active[0].hp, static_cast<uint8_t>(91),
+                "player receives the foe's bonus outgoing");
+    test.assert(session.state().active[1].hp, static_cast<uint8_t>(97),
+                "foe receives the player's weak outgoing");
+    test.assert(session.state().damage[0], static_cast<uint8_t>(9),
+                "footer damage[player] is the received bonus");
+    test.assert(session.state().damage[1], static_cast<uint8_t>(3),
+                "footer damage[foe] is the received weak");
+    test.assert(session.state().feedback, static_cast<uint8_t>(duel::Feedback::Trade),
+                "trade caption");
+}
+
 } // namespace duel_session_test_detail
 
-inline void DuelSessionIntegrationSuite(TestRunner &runner) {
-    using namespace duel_session_test_detail;
+inline void DuelSessionIntegrationSuite(TestRunner &runner) {    using namespace duel_session_test_detail;
     TestSuite suite("Duel session integration");
 
     Test commit(__func__);
@@ -693,6 +805,18 @@ inline void DuelSessionIntegrationSuite(TestRunner &runner) {
     Test sync(__func__);
     duelOriginalSlotHpSync(sync);
     suite.addTest(sync);
+
+    Test exhausted(__func__);
+    duelExhaustedEntryIsLose(exhausted);
+    suite.addTest(exhausted);
+
+    Test benchMask(__func__);
+    duelBenchMaskSkipsEmptySlots(benchMask);
+    suite.addTest(benchMask);
+
+    Test trade(__func__);
+    duelTradeScalesOutgoing(trade);
+    suite.addTest(trade);
 
     runner.addTestSuite(suite);
 }

@@ -89,9 +89,9 @@ uint8_t duelFixtureReadRate(const BattleState &state)
 constexpr uint8_t DUEL_CONCEAL_TICKS = 29;
 constexpr uint8_t DUEL_RESULT_TICKS = 68;
 
-bool duelUsableAttack(const Move &move)
+bool duelUsableAttack(uint8_t authoredType)
 {
-    return move.getMoveType() < 8;
+    return authoredType < 8;
 }
 
 uint8_t duelFoldAuthored(uint8_t authored)
@@ -123,7 +123,7 @@ uint8_t duelUsableSlotCount(const BattleState &state, uint8_t side)
     const Combatant &active = state.active[side];
     uint8_t count = 0;
     for (uint8_t slot = 0; slot < 4; ++slot)
-        if (active.moveIds[slot] != 255 && duelUsableAttack(active.moves[slot]))
+        if (active.moveIds[slot] != 255 && duelUsableAttack(active.moveTypes[slot]))
             ++count;
     return count;
 }
@@ -133,7 +133,7 @@ uint8_t duelSlotForOption(const BattleState &state, uint8_t side, uint8_t option
     const Combatant &active = state.active[side];
     uint8_t index = 0;
     for (uint8_t slot = 0; slot < 4; ++slot) {
-        if (active.moveIds[slot] == 255 || !duelUsableAttack(active.moves[slot]))
+        if (active.moveIds[slot] == 255 || !duelUsableAttack(active.moveTypes[slot]))
             continue;
         if (index == option) return slot;
         ++index;
@@ -145,7 +145,7 @@ uint8_t duelOptionType(const BattleState &state, uint8_t side, uint8_t option)
 {
     const uint8_t slot = duelSlotForOption(state, side, option);
     return slot == 255 ? duel::NO_TYPE
-                       : duelFoldAuthored(state.active[side].moves[slot].getMoveType());
+                       : duelFoldAuthored(state.active[side].moveTypes[slot]);
 }
 
 // First living bench member (original slot) whose cached attack mask beats the
@@ -239,7 +239,6 @@ BattleSession::BattleSession()
 #ifdef CGFX_DUEL_BATTLE
     duelCommittedOpponent_ = {duel::ActionKind::Wait, duel::NO_SLOT};
     duelHistoryCount_ = 0;
-    duelOptionCount_[0] = duelOptionCount_[1] = 0;
 #endif
     resetCursor(SessionPhase::Inactive);
 }
@@ -286,6 +285,15 @@ void BattleSession::beginWild(uint8_t id, uint8_t level, bool gatherable,
 #endif
     resetCursor(state_.over ? SessionPhase::Ready : SessionPhase::Choice);
     if (state_.over) cursor_.next = NEXT_COMPLETE;
+#ifdef CGFX_DUEL_BATTLE
+    // An empty or fully KO'd player party fails real setup; the duel has no
+    // Ready transition, so terminate at entry as a loss. The normal Flow defeat
+    // recovery then runs (no reward, no win, no opponent action).
+    if (state_.over) {
+        result_.outcome = Outcome::Lose;
+        cursor_.phase = SessionPhase::Terminal;
+    }
+#endif
 }
 
 void BattleSession::beginTrainer(uint8_t id)
@@ -304,6 +312,14 @@ void BattleSession::beginTrainer(uint8_t id)
 #endif
     resetCursor(state_.over ? SessionPhase::Ready : SessionPhase::Choice);
     if (state_.over) cursor_.next = NEXT_COMPLETE;
+#ifdef CGFX_DUEL_BATTLE
+    // Exhausted player party (or no valid trainer party) at entry: terminate as
+    // a loss so the Flow's defeat recovery runs, matching the wild route.
+    if (state_.over) {
+        result_.outcome = Outcome::Lose;
+        cursor_.phase = SessionPhase::Terminal;
+    }
+#endif
 }
 
 #ifdef BATTLE_SIMULATOR
@@ -434,7 +450,7 @@ bool BattleSession::submitIntent(MenuIntent intent)
                 state_.active[static_cast<uint8_t>(Side::Player)]
                         .moveIds[intent.index] == 255 ||
                 !duelUsableAttack(state_.active[static_cast<uint8_t>(Side::Player)]
-                                      .moves[intent.index]))
+                                      .moveTypes[intent.index]))
                 return false;
 #elif !defined(__AVR__)
             // Native callers can synthesize intents; the AVR menu snapshot is
@@ -508,7 +524,6 @@ void BattleSession::duelCommitOpponent()
     duelCommittedOpponent_ = {duel::ActionKind::Wait, duel::NO_SLOT};
 
     const uint8_t options = duelUsableSlotCount(state_, opponentSide);
-    duelOptionCount_[opponentSide] = options;
     if (options == 0) return; // unusable kit -> WAIT
 
     const duel::Persona persona = duelFixturePersona(state_);
@@ -608,7 +623,7 @@ bool BattleSession::duelResolveRound()
         uint8_t index = 0;
         for (uint8_t slot = 0; slot < 4; ++slot) {
             if (state_.active[playerSide].moveIds[slot] == 255 ||
-                !duelUsableAttack(state_.active[playerSide].moves[slot]))
+                !duelUsableAttack(state_.active[playerSide].moveTypes[slot]))
                 continue;
             if (slot == playerAction.index) { option = index; break; }
             ++index;
@@ -626,7 +641,6 @@ bool BattleSession::duelResolveRound()
     default:
         return false;
     }
-    duelOptionCount_[playerSide] = duelUsableSlotCount(state_, playerSide);
 
     const duel::Action opponentDuel = duelCommittedOpponent_;
     const bool playerSwitch = playerDuel.kind == duel::ActionKind::Switch;
@@ -677,8 +691,11 @@ bool BattleSession::duelResolveRound()
             damage[playerSide] = duel::scaleDamage(duel::DMG_WIN, opponentMod);
             damage[opponentSide] = duel::scaleDamage(duel::DMG_CHIP, playerMod);
         } else {
-            damage[playerSide] = duel::scaleDamage(duel::DMG_TRADE, playerMod);
-            damage[opponentSide] = duel::scaleDamage(duel::DMG_TRADE, opponentMod);
+            // Trade: each side's outgoing hit scales by its OWN matchup and lands
+            // on the opponent, so damage[playerSide] (received) uses the foe's mod
+            // and damage[opponentSide] uses the player's mod (mock/duel-bonus).
+            damage[opponentSide] = duel::scaleDamage(duel::DMG_TRADE, playerMod);
+            damage[playerSide] = duel::scaleDamage(duel::DMG_TRADE, opponentMod);
         }
     } else {
         // Exactly one side lands a default win (the other switched or waited).
@@ -1108,7 +1125,7 @@ BattleView BattleSession::view() const
             state_.active[static_cast<uint8_t>(Side::Player)].moveIds[slot];
         const bool usable = id != 255 &&
             duelUsableAttack(state_.active[static_cast<uint8_t>(Side::Player)]
-                                 .moves[slot]);
+                                 .moveTypes[slot]);
         out.moveIds[slot] = usable ? id : 255;
         out.remainingUses[slot] = usable ? 255 : 0;
 #else
@@ -1137,7 +1154,7 @@ MoveSnapshot BattleSession::moves() const
             state_.active[static_cast<uint8_t>(Side::Player)].moveIds[slot];
         const bool usable = id != 255 &&
             duelUsableAttack(state_.active[static_cast<uint8_t>(Side::Player)]
-                                 .moves[slot]);
+                                 .moveTypes[slot]);
         out.moveIds[slot] = usable ? id : 255;
         out.remainingUses[slot] = usable ? 255 : 0;
 #else

@@ -87,15 +87,14 @@ class BattleSession {
     void finishNormalResult();
 
 #ifdef CGFX_DUEL_BATTLE
-    // Spike-inc.1 resident duel state (13 bytes). Options are derived on demand
+    // Spike-inc.1 resident duel state (11 bytes). Options are derived on demand
     // from the active member's usable authored attack slots (status/utility/
     // empty filtered, original slot order), so no duplicate option maps are
-    // stored; only the concealed opponent pick, the revealed history and the
-    // per-side usable-slot count are resident.
+    // stored; only the concealed opponent pick and the revealed history are
+    // resident.
     duel::Action duelCommittedOpponent_; // committed once on Choice entry
     uint8_t duelHistory_[duel::HISTORY_CAP];
     uint8_t duelHistoryCount_;
-    uint8_t duelOptionCount_[2];
 
     void duelCommitOpponent();
     void duelRecordHistory(uint8_t type);
