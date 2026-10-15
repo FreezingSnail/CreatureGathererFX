@@ -127,3 +127,22 @@ data test re-runs the proof over all 64 creatures.
 2. Edge directions flagged as arbitrary by lore review: `spirit>water`, `spirit>lightning`, `earth>plant`.
 3. Preference list for the solver is hand-ordered; confirm the causal stories or re-rank.
 4. Three moves per creature: who authors the 44 reworked kits and the coverage balance?
+
+## Four-type team composition census
+
+`node tools/battle-team-permutations.mjs` enumerates every 3-creature team composition from the four
+folded types and classifies every matchup (run the tool for the full table):
+
+- 4 types, 3 slots: **20 unordered compositions** (C(6,3)), **64 ordered sequences** (4^3),
+  **24 distinct-type permutations** (P(4,3)), **210 unordered matchup pairs**.
+- Roster pools by primary folded type: tide 20, bloom 18, stone 16, flame 10 — so the largest
+  composition pool is flame+bloom+tide at 3600 creature-level teams, the smallest mono-flame at 120;
+  all compositions sum to C(64,3) = 41,664 teams.
+- Matchup classes: **156 mutual**, **50 one-sided**, **4 dead**. The only dead pairs are the four
+  mono-type mirrors (flame x3, bloom x3, tide x3, stone x3) — no internal edge, so they cannot have
+  a positive matchup against themselves.
+- Most dominant compositions (net one-sided wins): bloom+bloom+bloom, tide+tide+tide, then
+  bloom+bloom+tide and bloom+tide+tide. The fully balanced compositions (adv = dis = 0) are
+  flame+bloom+tide and flame+bloom+stone.
+- Design read: mono-type teams are trap picks (mirror-dead and net negative); bloom and tide beat
+  two types each so they anchor strong teams, while flame (beats only bloom) plays support.

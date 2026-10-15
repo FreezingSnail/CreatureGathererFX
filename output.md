@@ -9578,3 +9578,24 @@ node --test tools/tests/battle-design-spike-annotate_test.mjs -> 5 pass / 0 fail
 node --test tools/tests/battle-design-spike-matrix_test.mjs -> 7 pass / 0 fail
 node --test tools/tests/battle-matrices-spike_test.mjs     -> 5 pass / 0 fail
 ```
+
+# CreatureGathererFX-j326
+
+4-type team permutation census (`node tools/battle-team-permutations.mjs`).
+
+- Counts: 4 types x 3 slots = 20 unordered compositions, 64 ordered sequences, 24 distinct-type
+  permutations (P(4,3)), 210 unordered matchup pairs (156 mutual / 50 one-sided / 4 dead).
+- The four dead pairs are the mono-type mirror teams (triple flame/bloom/tide/stone); they have no
+  internal edge so no positive matchup exists against themselves.
+- Roster pools by primary folded type: tide 20, bloom 18, stone 16, flame 10; composition team
+  counts run from 120 (flame x3) to 3600 (flame+bloom+tide) and sum to C(64,3) = 41,664.
+- Dominance: bloom+bloom+bloom and tide+tide+tide net the most one-sided wins; flame+bloom+tide and
+  flame+bloom+stone are perfectly balanced (adv = dis = 0); flame (beats bloom only) is support.
+- Tests: counts, classification coverage, mirror-edge rule, roster partition, fold pools.
+
+```text
+node tools/battle-team-permutations.mjs                      -> census table printed
+node --test tools/tests/battle-team-permutations_test.mjs    -> 5 pass / 0 fail (new)
+node --test mock/battle-mock.test.js                         -> 29 pass / 0 fail
+node --test tools/tests/battle-matrices-spike_test.mjs       -> 5 pass / 0 fail
+```
