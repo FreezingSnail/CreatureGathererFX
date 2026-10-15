@@ -11,15 +11,24 @@ import { fileURLToPath } from 'node:url';
 const repo = path.dirname(fileURLToPath(import.meta.url)) + '/../..';
 const require = createRequire(import.meta.url);
 const DATA = require(path.join(repo, 'mock/data.js'));
+const ICON_DATA = require(path.join(repo, 'mock/icons.js'));
 const source = fs.readFileSync(path.join(repo, 'mock/matrix.js'), 'utf8');
 
-function bootMatrix(container, battleMock) {
+function bootMatrix(container, battleMock, options = {}) {
   const documentStub = {
     readyState: 'complete',
     querySelectorAll: () => [container],
     addEventListener() {},
   };
-  const windowStub = { CGFX_SPIKE_DATA: DATA, __battleMock: battleMock };
+  if (options.canvas) {
+    documentStub.createElement = () => ({
+      width: 0,
+      height: 0,
+      getContext: () => ({ fillStyle: '', fillRect() {} }),
+      toDataURL: () => 'data:image/png;base64,SPRITE',
+    });
+  }
+  const windowStub = { CGFX_SPIKE_DATA: DATA, CGFX_ICONS: ICON_DATA, __battleMock: battleMock };
   vm.runInNewContext(source, {
     window: windowStub,
     document: documentStub,
@@ -28,6 +37,23 @@ function bootMatrix(container, battleMock) {
   });
   return windowStub;
 }
+
+test('wheel table headers render the shared type sprites', () => {
+  const container = { dataset: { matrix: 'wheel' }, innerHTML: '' };
+  bootMatrix(container, null, { canvas: true });
+  assert.ok(container.innerHTML.includes('class="m-icon"'), 'header sprites rendered');
+  assert.ok(container.innerHTML.includes('title="fire"'), 'sprite keeps the type name as tooltip');
+  for (const type of DATA.wheel.order) assert.ok(container.innerHTML.includes(`alt="${type}"`), type);
+  assert.ok(container.innerHTML.includes('m-win'), 'has ▲ cells');
+  assert.ok(container.innerHTML.includes('m-lose'), 'has ▼ cells');
+});
+
+test('without canvas the headers fall back to type names', () => {
+  const container = { dataset: { matrix: 'wheel' }, innerHTML: '' };
+  bootMatrix(container);
+  assert.ok(!container.innerHTML.includes('m-icon'), 'no sprites without canvas');
+  assert.ok(container.innerHTML.includes('fire'), 'text header instead');
+});
 
 test('wheel table renders all eight headers with win/lose marks', () => {
   const container = { dataset: { matrix: 'wheel' }, innerHTML: '' };

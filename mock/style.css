@@ -33,6 +33,9 @@ a { color: #bbb; }
 .matrix .m-flat, .matrix .m-mirror { color: #555; }
 .matrix .hl-row, .matrix .hl-col { background: #1d241d; }
 .matrix .hl-x { background: #2a3a2a; }
+.matrix img.m-icon { width: 18px; height: 18px; image-rendering: pixelated; vertical-align: middle; display: block; margin: 1px auto; }
+.matrix th { text-align: center; }
+.matrix .corner { text-align: left; }
 .stage-wrap { position: relative; display: inline-block; }
 .stage-wrap.recommended canvas { border: 2px solid #7d7; }
 .annotate-layer { position: absolute; inset: 0; pointer-events: none; }
