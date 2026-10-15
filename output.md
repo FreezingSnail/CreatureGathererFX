@@ -9379,3 +9379,10 @@ node tools/battle-design-spike-preview.mjs                 -> F frames show BONU
 Proofs in tests: bonus win vs plant creature = 21/chip 4; clash win without creature bonus = 14 (RPS
 WIN); pure spelling stays 14; damage identical for stoke (p6) and burn (p8) — power is gone; mirrored
 foe bonus = 21 against you; trade 6/6.
+
+# CreatureGathererFX-cx6q
+
+Launcher highlight for the recommended spelling: F card in mock/index.html now carries a 2px green
+border and a "recommended" tag, and mock/duel-bonus.html's canvas gets the matching accent border so
+the window reads as the same highlighted demo when opened directly. No behavior change; existing
+suites unchanged (22 mock + 5 annotate + 8 frame pass).
