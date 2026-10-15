@@ -8,6 +8,12 @@
 
   function source(kind) {
     const data = root.CGFX_SPIKE_DATA;
+    if (kind.startsWith('spike:')) {
+      const id = kind.slice('spike:'.length);
+      const entry = root.CGFX_MATRICES && root.CGFX_MATRICES.matrices
+        ? root.CGFX_MATRICES.matrices.find((matrix) => matrix.id === id) : null;
+      return entry ? { order: entry.order, chart: entry.chart } : null;
+    }
     return kind === 'stances' ? data.merged : data.wheel;
   }
 
@@ -49,14 +55,22 @@
     const you = data.creatures[state.youIndex];
     const foe = data.creatures[state.foeIndex];
     if (!you || !foe) return {};
-    return kind === 'stances'
-      ? { row: you.merged[0], col: foe.merged[0] }
-      : { row: you.types[0], col: foe.types[0] };
+    if (kind === 'stances') return { row: you.merged[0], col: foe.merged[0] };
+    const matrix = kind.startsWith('spike:') ? source(kind) : null;
+    const fold = (type) => (matrix && matrix.map ? (matrix.map[type] || type) : type);
+    return { row: fold(you.types[0]), col: fold(foe.types[0]) };
   }
 
   function render(container) {
-    const kind = container.dataset.matrix || 'wheel';
-    const { order, chart } = source(kind);
+    let kind = container.dataset.matrix || 'wheel';
+    const state = root.__battleMock;
+    // Duel windows follow the chosen type-count table live.
+    if (container.dataset.followDuel === 'on' && state && state.duel) {
+      kind = state.duel.kind === 'stances' ? 'stances' : `spike:${state.duel.matrixId || '8'}`;
+    }
+    const matrix = source(kind);
+    if (!matrix) return;
+    const { order, chart } = matrix;
     const marks = container.dataset.highlight === 'on' ? highlight(kind) : {};
     const labels = kind === 'stances' ? order : order;
     let html = '<table><tr><th class="corner">atk \\ def</th>'

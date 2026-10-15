@@ -29,7 +29,25 @@ Completion edges (chosen by the solver, preference-ordered for causal readabilit
 No immunities and no mutual edges: every cell is win, loss, or neutral. Neutral is a real state —
 not every pair should resolve.
 
-## The solver guarantee
+## Type-count spike (is 8 too many?)
+
+`tools/battle-matrices-spike.mjs` folds the authored roster into 4 / 5 / 6 types, solves a triangle
+web per count against the folded kits, and emits `mock/matrices.js`. Compare all four side by side at
+`mock/matrices.html`; any duel window's **types** selector plays the chosen table (`8 · full web`,
+`6`, `5`, `4 · cycle`), and the window's table follows the selection.
+
+| types | edges (facts to learn) | triangles | decisive / neutral |
+| --- | --- | --- | --- |
+| 8 | 25 | 16 | 45% / 55% |
+| 6 | 15 | 8 | 50% / 50% |
+| 5 | 10 | 3 | 50% / 50% |
+| 4 | 6 | 2 | 50% / 50% |
+
+Folds are successive: lightning→fire and elder→spirit (6), then wind→water (5), then the 4-type
+cycle (flame / bloom / tide / stone). Every table still satisfies the roster coverage demands with no
+unsatisfied set pairs; the 8-type table is exactly the live web. Learnability proxy is the edge count —
+8 types is 25 facts, 5 types is 10.
+
 
 `tools/battle-matchup-solver.mjs` derives the x/y chart from the edge list and checks demands over
 the actual roster move-sets (each creature's distinct move types):

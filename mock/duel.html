@@ -23,7 +23,15 @@
   </table>
   <div id="controls">
     <label><input type="checkbox" id="annotate" checked> annotate</label>
-<label>AI persona
+    <label>types
+      <select id="duel-matrix">
+        <option value="8" selected>8 · full web</option>
+        <option value="6">6</option>
+        <option value="5">5</option>
+        <option value="4">4 · cycle</option>
+      </select>
+    </label>
+    <label>AI persona
   <select id="duel-ai">
     <option value="random">random</option>
     <option value="reader" selected>reader (counters your last pick)</option>
@@ -47,7 +55,7 @@
   </div>
   <div id="status">ready</div>
   <h2>Matchup table (row attacks column)</h2>
-  <div class="matrix" data-matrix="wheel" data-highlight="on"></div>
+  <div class="matrix" data-matrix="wheel" data-highlight="on" data-follow-duel="on"></div>
   <p class="note">Both sides pick one of their own creature's moves, hidden, then reveal: the 8-type web decides.
     Win = full hit (your move power, ×1.5 when the move type is your creature's type), lose = blocked plus chip,
     neutral or mirror = trade chip. Type badges on each sprite show both creatures' types (white-framed chips);
@@ -62,6 +70,7 @@
 </div>
 <script src="data.js"></script>
 <script src="icons.js"></script>
+<script src="matrices.js"></script>
 <script src="battle-mock.js"></script>
 <script src="matrix.js"></script>
 <script src="annotate.js"></script>

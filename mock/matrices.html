@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Type-count matchup tables · Creature Gatherer</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="wrap">
+  <h1>Type-count tables — is 8 too many to memorize?</h1>
+  <p class="note" style="text-align:center;max-width:760px">Each table folds the authored 8 types into fewer and solves a
+    triangle web against the folded creature kits (<code>node tools/battle-matrices-spike.mjs</code>). Memorization load is the
+    edge count: every edge is one "beats" fact. Pick the count that stays learnable, then choose that table in any duel
+    window's <b>types</b> selector to play it.</p>
+  <div id="gallery"></div>
+  <p><a href="index.html">← mock index</a></p>
+</div>
+<script src="icons.js"></script>
+<script src="matrices.js"></script>
+<script src="matrix.js"></script>
+<script>
+  {
+    const data = window.CGFX_MATRICES;
+    const gallery = document.getElementById('gallery');
+    gallery.innerHTML = data.matrices.map((matrix) => {
+      const s = matrix.stats;
+      return '<section style="width:100%;max-width:900px">'
+        + `<h2>${matrix.label}</h2>`
+        + `<p class="note">${s.types} types · ${s.edges} edges (facts) · ${s.triangles} triangles · `
+        + `${s.decisivePercent}% of pairs decisive / ${s.neutralPercent}% neutral · coverage demands met: ${s.demands}</p>`
+        + `<div class="matrix" data-matrix="spike:${matrix.id}"></div>`
+        + '</section>';
+    }).join('');
+  }
+</script>
+</body>
+</html>

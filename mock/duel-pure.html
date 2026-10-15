@@ -23,7 +23,15 @@
   </table>
   <div id="controls">
     <label><input type="checkbox" id="annotate" checked> annotate</label>
-<label>AI persona
+    <label>types
+      <select id="duel-matrix">
+        <option value="8" selected>8 · full web</option>
+        <option value="6">6</option>
+        <option value="5">5</option>
+        <option value="4">4 · cycle</option>
+      </select>
+    </label>
+    <label>AI persona
   <select id="duel-ai">
     <option value="random">random</option>
     <option value="reader" selected>reader (counters your last pick)</option>
@@ -47,7 +55,7 @@
   </div>
   <div id="status">ready</div>
   <h2>Matchup table (row attacks column)</h2>
-  <div class="matrix" data-matrix="wheel" data-highlight="on"></div>
+  <div class="matrix" data-matrix="wheel" data-highlight="on" data-follow-duel="on"></div>
   <p class="note">Pure RPS: both sides pick one of their creature's moves, hidden, and only the type
     relation decides — move power, stats and affinity are ignored. Win deals a flat 14, the loser chips
     4 back, trade hits both for 6. Same 8-type web as the power duel (25 edges, 16 triangles); the
@@ -59,6 +67,7 @@
 </div>
 <script src="data.js"></script>
 <script src="icons.js"></script>
+<script src="matrices.js"></script>
 <script src="battle-mock.js"></script>
 <script src="matrix.js"></script>
 <script src="annotate.js"></script>

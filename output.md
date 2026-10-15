@@ -9525,3 +9525,36 @@ node tools/battle-design-spike-preview.mjs                 -> marker check frame
 
 Verified visually: ember (fire moves) vs squid (water) renders ▼ on both cells (×0.5) with the same
 frame layout; bonus frames still show ↑ where the move beats the target's type.
+
+# CreatureGathererFX-7v33
+
+Type-count tables spiked because 8 types may be too many to memorize.
+
+- tools/battle-matrices-spike.mjs folds the authored roster to 6/5/4 types (lightning->fire,
+  elder->spirit; then wind->water; then the 4-cycle), folds the 8-type web edges through the same
+  maps, and runs the solver per count until coverage demands are met. Emits mock/matrices.js.
+- mock/matrices.html gallery: all four tables with sprite headers plus stats (edges/triangles/
+  decisive split). Launcher links to it.
+- Playable: every duel window gained a **types** selector (8/6/5/4); the engine folds raw move and
+  creature types through the selected table for clash relations, creature-matchup modifiers, AI
+  counters and the default-win check, and the window's x/y table follows the selection live
+  (data-follow-duel + folding highlight).
+
+| types | edges | triangles | decisive / neutral |
+| --- | --- | --- | --- |
+| 8 | 25 | 16 | 45% / 55% |
+| 6 | 15 | 8 | 50% / 50% |
+| 5 | 10 | 3 | 50% / 50% |
+| 4 | 6 | 2 | 50% / 50% |
+
+```text
+node --test tools/tests/battle-matrices-spike_test.mjs    -> 5 pass / 0 fail (new)
+node --test tools/tests/battle-design-spike-matrix_test.mjs -> 7 pass / 0 fail (spike tables + follow-duel)
+node --test mock/battle-mock.test.js                       -> 29 pass / 0 fail
+node --test tools/tests/battle-duel-spike_test.mjs         -> 4 pass / 0 fail
+node --test tools/tests/battle-design-spike-frame_test.mjs -> 8 pass / 0 fail
+node --test tools/tests/battle-design-spike-annotate_test.mjs -> 5 pass / 0 fail
+node --test tools/tests/battle-design-spike-data_test.mjs  -> 8 pass / 0 fail
+node --test tools/tests/battle-matchup-solver_test.mjs     -> 4 pass / 0 fail
+node tools/battle-design-spike-preview.mjs                 -> previews regenerated (default table 8)
+```
