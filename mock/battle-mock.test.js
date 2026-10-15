@@ -182,6 +182,13 @@ test('8-type web: overlapping triangles, no mutual edges, neutral cells kept', (
   });
 });
 
+test('every move type has a drawable icon (including status and none)', () => {
+  for (const move of Object.values(M.DATA.moves)) {
+    const bits = M.ICONS[move.type] || M.MERGED_ICONS[move.type];
+    assert.ok(bits && bits.length === 8, `icon for type ${move.type}`);
+  }
+});
+
 test('duel uses each creature\'s own moves and the wheel decides the clash', () => {
   const state = M.newMock({ mode: 'duel', you: 10, foe: 12, seed: 3 });
   M.startBattle(state);

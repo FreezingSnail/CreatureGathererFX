@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Battle mock · duel</title>
+<title>Battle mock · duel wheel</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body data-mode="duel">
 <div id="wrap">
-  <h1>C · duel — simultaneous hidden stances</h1>
+  <h1>D · duel wheel — your creature's own moves</h1>
   <canvas id="screen" width="128" height="64"></canvas>
   <table>
     <tr>
@@ -36,10 +36,11 @@
   <div class="matrix" data-matrix="wheel" data-highlight="on"></div>
   <p class="note">Both sides pick one of their own creature's moves, hidden, then reveal: the 8-type web decides.
     Win = full hit (your move power, ×1.5 when the move type is your creature's type), lose = blocked plus chip,
-    neutral or mirror = trade chip. The web is 25 beats edges over 16 triangles — most pairs are deliberately
-    neutral. The footer row shows your creature's equipped moves as type icons; AFF marks an affinity pick.
-    The AI counters your previous type at the read rate when it has a counter. Highlighted row/column follow
-    the setup creatures; the full table and solver notes are on the <a href="index.html">mock index</a>.</p>
+    neutral or mirror = trade chip. The footer row shows your creature's equipped moves as type icons; AFF marks
+    an affinity pick. Note: current authored kits give 15 of 64 creatures fewer than three moves (bell has two,
+    SquibbleSnail one), so some footers show fewer cells — three-move kits are an authoring pass. The AI counters
+    your previous type at the read rate when it has a counter; the highlighted table row/column follow the setup
+    creatures and the full web notes live on the <a href="index.html">mock index</a>.</p>
   <p><a href="index.html">← mock index</a></p>
 </div>
 <script src="data.js"></script>

@@ -141,13 +141,17 @@ export function createHarness(options = {}) {
   const mockSource = fs.readFileSync(path.join(repo, 'mock/battle-mock.js'), 'utf8');
   vm.runInContext(`${dataSource}\n${mockSource}`, context, { filename: 'battle-mock.js' });
 
+  const KEY_ALIASES = {
+    left: 'ArrowLeft', right: 'ArrowRight', up: 'ArrowUp', down: 'ArrowDown',
+    a: 'z', b: 'x',
+  };
   const harness = {
     frame,
     window: windowStub,
     state: () => windowStub.__battleMock,
     key(key, type) {
       const event = new StubEvent(type);
-      event.key = key;
+      event.key = KEY_ALIASES[key] || key;
       event.preventDefault = () => {};
       for (const handler of windowListeners.get(type) ?? []) handler(event);
     },

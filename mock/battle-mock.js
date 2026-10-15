@@ -73,6 +73,12 @@ const ICONS = {
   elder: [
     '..####..', '.#....#.', '#..##..#', '#.####.#',
     '#..##..#', '.#....#.', '..####..', '...##...'],
+  status: [
+    '........', '...#....', '...#....', '..###...',
+    '...#....', '...#....', '........', '........'],
+  none: [
+    '........', '.######.', '.#....#.', '.#....#.',
+    '.#....#.', '.######.', '........', '........'],
 };
 const MERGED_ICONS = { flame: ICONS.fire, bloom: ICONS.plant, tide: ICONS.water, stone: ICONS.earth };
 
@@ -862,15 +868,14 @@ function boot() {
     set('duel-read-value', (element) => { element.textContent = `${state.duel.aiRead}%`; });
     set('seed-value', (element) => { element.textContent = String(state.seed); });
     set('status', (element) => {
+      const you = creature(state.youIndex), foe = creature(state.foeIndex);
+      const count = (entry) => entry.moves.filter((id) => id != null).length;
       element.textContent = [
         state.mode === 'duel' ? `duel ${state.duel.kind}` : state.mode,
         state.mode === 'trim' ? `${state.trim.typeMode} arrows:${state.trim.arrows ? 'on' : 'off'} press:${state.trim.pressTurn ? 'on' : 'off'}` : '',
-        state.mode === 'duel'
-          ? (state.duel.kind === 'stances'
-            ? `${state.duel.stances} stances ai-read:${state.duel.aiRead}%`
-            : `${duelMoves(state, 0).length} moves ai-read:${state.duel.aiRead}%`)
-          : '',
-        `you:${creature(state.youIndex).name} foe:${creature(state.foeIndex).name}`,
+        state.mode === 'duel' && state.duel.kind === 'stances' ? `${state.duel.stances} stances ai-read:${state.duel.aiRead}%` : '',
+        state.mode === 'duel' && state.duel.kind === 'wheel' ? `ai-read:${state.duel.aiRead}%` : '',
+        `you:${you.name}[${count(you)}m] foe:${foe.name}[${count(foe)}m]`,
       ].filter(Boolean).join(' · ');
     });
   }
