@@ -9305,3 +9305,25 @@ node --test tools/tests/battle-design-spike-data_test.mjs  -> 8 pass / 0 fail
 node --test tools/tests/battle-matchup-solver_test.mjs     -> 4 pass / 0 fail
 node --test tools/tests/battle-design-spike-matrix_test.mjs-> 3 pass / 0 fail
 ```
+
+# CreatureGathererFX-50ea (status-move exclusion)
+
+Owner: no status moves in this spike.
+
+- `isSpikeMove` filters type `status`/`none` moves from every pick list: duel options (all three
+  spellings), battle menu usableSlots/firstUsable/drawMenu, AI choice, and the duel commit guard.
+  Shipping data and the generator are untouched (a future A/B fidelity build can lift the filter).
+- Copy updated everywhere: duel window notes, trim note, launcher card, docs roster context.
+  Recounted usable attack moves per creature: 1 x4, 2 x13, 3 x15, 4 x32 — 17 creatures field fewer
+  than three attack moves (bell and SquibbleSnail one each). bell's Sharpen no longer appears.
+- New test: status/utility moves are excluded from every creature's duel options and from bell's
+  battle menu; icon coverage test still checks status/none icons exist for data completeness.
+
+```text
+node --test mock/battle-mock.test.js                       -> 22 pass / 0 fail
+node --test tools/tests/battle-design-spike-frame_test.mjs -> 8 pass / 0 fail
+node --test tools/tests/battle-design-spike-data_test.mjs  -> 8 pass / 0 fail
+node --test tools/tests/battle-matchup-solver_test.mjs     -> 4 pass / 0 fail
+node --test tools/tests/battle-design-spike-matrix_test.mjs-> 3 pass / 0 fail
+node tools/battle-design-spike-preview.mjs                 -> previews regenerated
+```

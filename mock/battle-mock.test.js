@@ -182,6 +182,23 @@ test('8-type web: overlapping triangles, no mutual edges, neutral cells kept', (
   });
 });
 
+test('status and utility moves are excluded from every pick list', () => {
+  const state = M.newMock({ mode: 'duel' });
+  for (let index = 0; index < M.DATA.creatures.length; index++) {
+    state.youIndex = index;
+    state.foeIndex = index;
+    for (const option of M.duelMoves(state, 0)) {
+      assert.ok(option.type !== 'status' && option.type !== 'none', `${option.name} must not be a pick`);
+    }
+  }
+  // bell keeps only wisper; its Sharpen (status) is gone from the battle menu too.
+  const bell = M.DATA.creatures.findIndex((entry) => entry.name === 'bell');
+  const battle = M.newMock({ mode: 'trim', you: bell, foe: 0, seed: 5 });
+  M.startBattle(battle);
+  const usable = M.usableSlots(battle, 0).map((slot) => M.moveOf(M.creature(bell), slot).name);
+  assert.deepEqual(usable, ['wisper']);
+});
+
 test('every move type has a drawable icon (including status and none)', () => {
   for (const move of Object.values(M.DATA.moves)) {
     const bits = M.ICONS[move.type] || M.MERGED_ICONS[move.type];
