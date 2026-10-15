@@ -7,8 +7,13 @@
 #include "opponent_test.hpp"
 #include "type_test.hpp"
 #include "effect_test.hpp"
+#ifndef CGFX_DUEL_BATTLE
+// battle_effects/setup assert the legacy stats/status/stat-stage and packed-Move
+// contracts that the compact duel representation removes; they belong to the
+// legacy contract run.
 #include "battle_effects_test.hpp"
 #include "battle_setup_test.hpp"
+#endif
 #include "gamestate_test.hpp"
 #include "save_test.hpp"
 #include "item_test.hpp"
@@ -31,10 +36,15 @@
 #endif
 #include "fx_read_counter_test.hpp"
 #include "battle_view_test.hpp"
+#ifndef CGFX_DUEL_BATTLE
+// battle_test/ai/resolve/faint assert the legacy packed-Move, stats, status and
+// stage mechanics; the compact duel representation removes those fields, so they
+// are part of the legacy contract run.
 #include "battle_test.hpp"
 #include "battle_ai_test.hpp"
 #include "battle_resolve_test.hpp"
 #include "battle_faint_test.hpp"
+#endif
 #include "battle_presentation_test.hpp"
 #include "battle_hp_spike_test.hpp"
 #include "renderer_test.hpp"
@@ -57,7 +67,10 @@
 #include "arena_view_test.hpp"
 #include "arena_flow_test.hpp"
 #include "battle_presets_test.hpp"
+#ifndef CGFX_DUEL_BATTLE
+// battle_item drives the legacy battle item route (stats/moves fields).
 #include "battle_item_test.hpp"
+#endif
 // battle_utility asserts the PP/use-bank contract; the duel has no PP and
 // aliases moveUsesSpent, so it belongs to the legacy contract run (no macro).
 #ifndef CGFX_DUEL_BATTLE
@@ -196,10 +209,12 @@ int main() {
     std::cout << "OpponentSuite finished" << std::endl;
     EffectSuite(tests);
     std::cout << "EffectSuite finished" << std::endl;
+#ifndef CGFX_DUEL_BATTLE
     BattleEffectsSuite(tests);
     std::cout << "BattleEffectsSuite finished" << std::endl;
     BattleSetupSuite(tests);
     std::cout << "BattleSetupSuite finished" << std::endl;
+#endif
     GameStateSuite(tests);
     std::cout << "GameStateSuite finished" << std::endl;
     SaveSuite(tests);
@@ -234,6 +249,7 @@ int main() {
     std::cout << "FxReadCounterSuite finished" << std::endl;
     BattleViewSuite(tests);
     std::cout << "BattleViewSuite finished" << std::endl;
+#ifndef CGFX_DUEL_BATTLE
     BattleSuite(tests);
     std::cout << "BattleSuite finished" << std::endl;
     BattleAiSuite(tests);
@@ -242,6 +258,7 @@ int main() {
     std::cout << "BattleResolveSuite finished" << std::endl;
     BattleFaintSwitchSuite(tests);
     std::cout << "BattleFaintSwitchSuite finished" << std::endl;
+#endif
     BattlePresentationSuite(tests);
     BattleHpSpikeSuite(tests);
     std::cout << "BattlePresentationSuite finished" << std::endl;
@@ -258,7 +275,9 @@ int main() {
     ArenaViewSuite(tests);
     ArenaFlowSuite(tests);
     BattlePresetsSuite(tests);
+#ifndef CGFX_DUEL_BATTLE
     BattleItemSuite(tests);
+#endif
 #ifndef CGFX_DUEL_BATTLE
     BattleUtilitySuite(tests);
 #endif

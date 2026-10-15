@@ -15,6 +15,7 @@ inline uint8_t moveUseLimit(const Move &move)
     return UNLIMITED_MOVE_USES;
 }
 
+#ifndef CGFX_DUEL_BATTLE
 inline uint8_t remainingMoveUses(const BattleState &state, Side side,
                                  uint8_t slot)
 {
@@ -27,6 +28,7 @@ inline uint8_t remainingMoveUses(const BattleState &state, Side side,
                            (slot * 2)) & 3;
     return spent >= limit ? 0 : static_cast<uint8_t>(limit - spent);
 }
+#endif
 
 inline void spendMoveUse(BattleState &state, Side side, uint8_t slot,
                          uint8_t remaining)

@@ -207,14 +207,14 @@ inline void duel_resource_test(FxTest &test)
         // Player active plant with a plant attack; history must read plant, so
         // round 1 attacks with plant.
         state.active[0].types = DualType(static_cast<Type>(PlantAuthored));
-        state.active[0].hp = state.active[0].maxHp = state.active[0].stats.hp = 100;
-        state.active[0].moves[0] = attackMove(PlantAuthored);
+        state.active[0].hp = state.active[0].maxHp = 100;
+        state.active[0].moveTypes[0] = PlantAuthored;
         // Foe active water, water-only kit (no plant counter).
         state.active[1].types = DualType(static_cast<Type>(WaterAuthored));
-        state.active[1].hp = state.active[1].maxHp = state.active[1].stats.hp = 100;
+        state.active[1].hp = state.active[1].maxHp = 100;
         for (uint8_t slot = 0; slot < 4; ++slot)
             if (state.active[1].moveIds[slot] != EMPTY_MOVE_ID)
-                state.active[1].moves[slot] = attackMove(WaterAuthored);
+                state.active[1].moveTypes[slot] = WaterAuthored;
         // Foe bench (original slot 1) provides the plant counter.
         state.moveUsesSpent[1][1] = EarthDuelBit;
 
@@ -260,10 +260,10 @@ inline void duel_resource_test(FxTest &test)
         battle::BattleState &state =
             const_cast<battle::BattleState &>(battleSession().state());
         state.active[0].types = DualType(static_cast<Type>(PlantAuthored));
-        state.active[0].moves[0] = attackMove(PlantAuthored); // beats fire -> KO on hp1
-        state.active[0].hp = state.active[0].maxHp = state.active[0].stats.hp = 100;
+        state.active[0].moveTypes[0] = PlantAuthored; // beats fire -> KO on hp1
+        state.active[0].hp = state.active[0].maxHp = 100;
         state.active[1].types = DualType(static_cast<Type>(FireAuthored));
-        state.active[1].hp = state.active[1].maxHp = state.active[1].stats.hp = 1;
+        state.active[1].hp = state.active[1].maxHp = 1;
         // beginTrainer gave the foe real bench members (living).
         battleSession().submitIntent({MenuIntentKind::SelectMove, 0});
         driveRound();

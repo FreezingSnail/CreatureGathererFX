@@ -1,3 +1,4 @@
+#ifndef CGFX_DUEL_BATTLE
 #include "Damage.hpp"
 #include "BattleState.hpp"
 #include "../../lib/Type.hpp"
@@ -123,3 +124,4 @@ uint8_t computeDamage(const Combatant &attacker, const Combatant &defender,
 }
 
 } // namespace battle
+#endif // !CGFX_DUEL_BATTLE

@@ -112,12 +112,25 @@ inline void test_stack(FxTest &test)
 
     player.basic();
     battleSession().beginTrainer(0);
+#ifdef CGFX_DUEL_BATTLE
+    // Drive the real duel chain through BattleSession::advance(): Choice entry
+    // commit, the 29-frame concealed interval, reveal/resolution, the 68-frame
+    // result dwell, KO replacement and the terminal boundary. advance() alone
+    // returning false at the choice frames is why the legacy loop below is not
+    // duel proof.
+    for (uint16_t step = 0; step < 20000 && !battleSession().exitReady(); ++step) {
+        if (battleSession().awaitingPlayer())
+            battleSession().submitIntent({MenuIntentKind::SelectMove, 0});
+        battleSession().advance();
+    }
+#else
     menu.printMenu(battleSession().view());
     battleSession().submitIntent({MenuIntentKind::SelectMove, 0});
     for (uint8_t action = 0; action < 8 && !battleSession().exitReady(); ++action) {
         if (!battleSession().advance()) break;
         battleSession().finishPresentation();
     }
+#endif
     battleSession().syncPlayerHp();
     exitBattle();
 

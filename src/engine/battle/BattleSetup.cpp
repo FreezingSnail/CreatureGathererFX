@@ -30,6 +30,10 @@ uint8_t duelAttackMask(const Creature &creature)
 {
     uint8_t mask = 0;
     for (uint8_t slot = 0; slot < 4; ++slot) {
+        // The authored kit IDs are authoritative: an empty/legacy slot leaves
+        // moveList defaulted to a Move() whose type reads as authored SPIRIT, so
+        // skipping validMoveId would invent a phantom spirit bench counter.
+        if (!validMoveId(creature.moves[slot])) continue;
         const uint8_t type = creature.moveList[slot].getMoveType();
         if (type < 8) mask |= static_cast<uint8_t>(1u << duel::foldType(type));
     }
@@ -44,6 +48,12 @@ void clearCombatant(Combatant &combatant)
     combatant.level = 0;
     combatant.hp = 0;
     combatant.maxHp = 0;
+#ifdef CGFX_DUEL_BATTLE
+    for (uint8_t slot = 0; slot < 4; ++slot) {
+        combatant.moveTypes[slot] = EMPTY_MOVE;
+        combatant.moveIds[slot] = EMPTY_MOVE;
+    }
+#else
     combatant.stats.attack = 0;
     combatant.stats.defense = 0;
     combatant.stats.hp = 0;
@@ -57,6 +67,7 @@ void clearCombatant(Combatant &combatant)
     combatant.status.clearEffects();
     combatant.statMods.clearModifiers();
     combatant.effectTurns = 0;
+#endif
 }
 
 void clearState(BattleState &state)
@@ -185,11 +196,13 @@ bool initializePlayer(BattleState &state)
         state.bench[static_cast<uint8_t>(Side::Player)][benchSlot].hp =
             player.creatureHPs[slot];
         const Creature &creature = player.party[slot];
+#ifndef CGFX_DUEL_BATTLE
         state.bench[static_cast<uint8_t>(Side::Player)][benchSlot].types = creature.types;
         state.bench[static_cast<uint8_t>(Side::Player)][benchSlot].defense =
             creature.statlist.defense;
         state.bench[static_cast<uint8_t>(Side::Player)][benchSlot].specialDefense =
             creature.statlist.spcDef;
+#endif
 #ifdef CGFX_DUEL_BATTLE
         // Bench attack-type mask, indexed by original slot in flag-ON builds.
         state.moveUsesSpent[static_cast<uint8_t>(Side::Player)][slot] =
@@ -254,10 +267,12 @@ uint8_t fillTrainer(BattleState &state, const OpponentSeed &seed, uint8_t count)
             creature.level;
         state.bench[static_cast<uint8_t>(Side::Opponent)][benchSlot].hp =
             creature.statlist.hp;
+#ifndef CGFX_DUEL_BATTLE
         BenchSlot &cached = state.bench[static_cast<uint8_t>(Side::Opponent)][benchSlot];
         cached.types = creature.types;
         cached.defense = creature.statlist.defense;
         cached.specialDefense = creature.statlist.spcDef;
+#endif
 #ifdef CGFX_DUEL_BATTLE
         // Bench attack-type mask, indexed by original slot in flag-ON builds.
         state.moveUsesSpent[static_cast<uint8_t>(Side::Opponent)][slot] =
@@ -365,11 +380,18 @@ void copyCreature(Combatant &destination, const Creature &source, uint8_t hp)
     destination.level = source.level;
     destination.hp = hp;
     destination.maxHp = source.statlist.hp;
+#ifdef CGFX_DUEL_BATTLE
+    for (uint8_t slot = 0; slot < 4; ++slot) {
+        destination.moveTypes[slot] = source.moveList[slot].getMoveType();
+        destination.moveIds[slot] = battleMoveId(source.moves[slot]);
+    }
+#else
     destination.stats = source.statlist;
     for (uint8_t slot = 0; slot < 4; ++slot) {
         destination.moves[slot] = source.moveList[slot];
         destination.moveIds[slot] = battleMoveId(source.moves[slot]);
     }
+#endif
 }
 
 void beginWild(BattleState &state, uint8_t creatureId, uint8_t level,
@@ -456,9 +478,11 @@ bool applySwitch(BattleState &state, Side side, uint8_t originalSlot,
     outgoing.id = state.active[sideIndex].id;
     outgoing.level = state.active[sideIndex].level;
     outgoing.hp = state.active[sideIndex].hp;
+#ifndef CGFX_DUEL_BATTLE
     outgoing.types = state.active[sideIndex].types;
     outgoing.defense = state.active[sideIndex].stats.defense;
     outgoing.specialDefense = state.active[sideIndex].stats.spcDef;
+#endif
     Combatant incoming;
     uint8_t reads = 0;
     if (!loadIncoming(state, side, originalSlot, incomingSlot, incoming, reads)) {

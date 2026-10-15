@@ -10350,3 +10350,88 @@ fixture unknown zap). No full native core pass claimed. Exact patches/logs are
 under build/reports/d73i/native-*; no game config integration before .4.
 Storage at checkpoint:57 GiB free, build1.5 GiB, reports5.9 MiB,
 legacy archive1.8 MiB. .2 worker retired; lane passes to .3 after commit.
+
+## d73i.3 — compact active duel representation (step 3) — READY for root review
+
+Owner-authorized serial spike 3. Build lane exclusive to this worker; host + AVR +
+device work done in `BUILD_DIR=build`, no Git mutations. Bead left **open** for root.
+
+### What changed (all behind `CGFX_DUEL_BATTLE`; legacy control kept compiling)
+
+- `src/engine/battle/BattleState.hpp`: duel `Combatant` drops `stats`/`status`/`statMods`/
+  `effectTurns` and replaces packed `Move moves[4]` (16 B) with authored `moveTypes[4]`
+  (4 B); `moveIds[4]` retained (custom/saved kits authoritative, duplicates kept,
+  255 = empty/WAIT). Duel `BenchSlot` drops write-only `types`/`defense`/`specialDefense`.
+  AVR asserts: `Combatant==13`, `BenchSlot==3`, `BattleState==60` (legacy 36/124 unchanged).
+- `src/engine/battle/BattleSetup.cpp`: duel paths of `clearCombatant`/`copyCreature`/
+  `applySwitch`/`initializePlayer`/`fillTrainer` use `moveTypes`; legacy branches guarded.
+- `src/engine/battle/BattleSession.{hpp,cpp}`: `duelOptionCount_[2]` (never read) removed;
+  duel helpers/resolver/view/moves use `moveTypes`; entry-terminal fix — an empty or
+  all-KO player party now sets `Outcome::Lose` + `SessionPhase::Terminal`, so the normal
+  Flow defeat recovery runs (no hang, no reward).
+- `src/engine/battle/DuelView.hpp`: `usableAttack(Move)` → `usableAttackType(uint8_t)`;
+  option helpers read `moveTypes`.
+- `src/engine/battle/BattleScene.cpp`: empty active (`level==0`) draws no sprite and no
+  type badge (no species-0 art / fold-of-NONE 255 chip); species 0 at level>0 still draws.
+- Legacy-TU guards: `Damage.cpp`/`Effects.cpp`/`Ai.cpp` whole-file `#ifndef`; `Resolve.cpp`
+  guards only the packed-Move/stat/status/effect functions, keeping `sideDefeated`/`canSwitch`
+  compiled for the duel build; `MoveUses.hpp` guards `remainingMoveUses`.
+- **TRADE mechanics repair (mock parity):** damage is RECEIVED, so the outgoing hit scales
+  by its owner's matchup. Fixed `DuelKernel.hpp` `resolveRound` and `BattleSession.cpp`
+  `duelResolveRound`. Player Fire vs foe Water, both Spirit → player receives 9, foe 3.
+
+### Tests added (permanent, co-located)
+
+- `tst/duel_kernel_test.hpp` (native), `tst/duel_session_integration_test.hpp` (host +
+  `tst/fxdatatest/duel_session_integration_test.hpp` device): asymmetric + advantage-first
+  dual TRADE regressions (outgoing scaling, HP, footer `state.damage[]` order, Trade caption);
+  empty/all-KO entry terminal-loss regressions; duel bench attack-mask regression
+  (plant-only mask, no phantom spirit/fire bits, all-empty mask 0).
+- `tst/fxdatatest/battle_duel_test.hpp`: kernel asymmetric + dual trade.
+- `tst/fxdatatest/duel_ui_test.hpp`: exhausted-entry Flow loss; render-before-first-update
+  empty-active framebuffer (foe x0..47 and player x80..127 stay black).
+- `tst/fxdatatest/stack_test.hpp`: duel branch drives the real Concealed/Result/terminal
+  chain (the legacy loop stopped at the first `false` advance).
+- Legacy host suites that assert the removed fields are excluded under `CGFX_DUEL_BATTLE`
+  in `tst/main.cpp` (battle_test/ai/resolve/faint/effects/setup/item); `encounter_test.hpp`
+  stat assert guarded. Legacy contracts still run in the no-macro build.
+
+### Measurements (whole image, same flags)
+
+| item | flash | static |
+| --- | --- | --- |
+| `.2` selected control (`d73i3-control.elf`, 18:50) | 24124 | 1760 |
+| `.3` candidate (`d73i3-candidate.elf`) | **23758** | 1760 |
+| Δ | **−366** | 0 |
+| legacy control (no duel flag) | 25238 | 1745 |
+
+`modeState` stays 193 (world-sized union) — no static SRAM claim from the battle struct,
+as documented. Control ELF `sha256 4594714e…`; candidate `sha256 7c7a7638…`.
+
+Device (duel compact profile, `FX_READ_COUNTER`, 30 s window):
+`test_battle_duel 105/0`, `test_duel_ui 58/0`, `test_duel_resources 16/0`
+(paint headroom **452** B, frame **8840** µs, mode-transition **617** B),
+`test_stack 4/0` (stack headroom **516** B). Focused legacy device:
+`test_save 3013/0`, `test_world_player 49/0`, `test_encounter 47/0`.
+
+Host: duel `240133/0` + world `258/0`; legacy `319514/0` + world `258/0`; VM `278/0`.
+
+Negative checks (temporarily reverted, then restored): removing the mask-sentinel skip
+fails 3 bench-mask asserts; reverting the production trade swap fails 4 trade asserts.
+
+### Archive
+
+`archive/battle-legacy/` unchanged (no mutation). Hash check via space-safe awk
+(`substr($0, index($0,$3))`) → **169/169 OK**. No archived TU is compiled: `arduino-cli`
+builds only the sketch root + `src/**`; zero `.o` under `build/**/sketch/archive`.
+
+### Deferred (optional, measured-only)
+
+`duel::duelChart` (25 B standalone global) could move into the battle-arm `ModeState`
+union (battle arm ≈116 B + 25 < 193) to recover static RAM with the union unchanged.
+Not attempted this pass: no budget pressure (1760/2160) and it must win a paired
+whole-image A/B. Recipe recorded; candidate for a follow-up increment.
+
+### Storage
+
+`df` free 57 GiB; `build/` 1.5 GiB. No new build trees; single lane reused.

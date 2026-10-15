@@ -135,6 +135,58 @@ void battle_duel_device_test(FxTest &test)
                       static_cast<uint8_t>(duel::Outcome::Draw), F("draw"));
     }
 
+    // Asymmetric trade: damage[side] is the amount RECEIVED, so each side's
+    // outgoing hit scales by its OWN matchup and lands on the opponent. Player
+    // creature Fire, foe Water, both pick Spirit: player outgoing is weak (3),
+    // foe outgoing is bonus (9) -> player takes 9, foe takes 3.
+    {
+        const uint8_t playerOpts[1] = {Spirit};
+        const uint8_t foeOpts[1] = {Spirit};
+        duel::State state = {};
+        state.sides[0].count = 1;
+        state.sides[0].active = 0;
+        state.sides[0].members[0] = makeMember(1, Fire, playerOpts, 1, 100);
+        state.sides[1].count = 1;
+        state.sides[1].active = 0;
+        state.sides[1].members[0] = makeMember(2, Water, foeOpts, 1, 100);
+        const duel::Action actions[2] = {{duel::ActionKind::Attack, 0},
+                                         {duel::ActionKind::Attack, 0}};
+        battle::Rng rng = makeRng();
+        duel::RoundResult out = {};
+        duel::resolveRound(state, actions, rng, out);
+        test.expectEq(out.relation, duel::REL_TRADE, F("trade relation"));
+        test.expectEq(out.damage[0], 9, F("trade: player receives foe bonus"));
+        test.expectEq(out.damage[1], 3, F("trade: foe receives player weak"));
+        test.expectEq(state.sides[0].members[0].hp, 91, F("trade player hp"));
+        test.expectEq(state.sides[1].members[0].hp, 97, F("trade foe hp"));
+    }
+
+    // Dual trade uses the advantage-first creature modifier on the outgoing hit:
+    // player dual {Water, Fire} vs foe {Spirit}, both Spirit moves. The foe's
+    // outgoing beats the player's fire type (bonus -> 9) and lands on the player;
+    // the player's outgoing is neutral on the mirrored spirit (6) and lands on
+    // the foe.
+    {
+        const uint8_t playerOpts[1] = {Spirit};
+        const uint8_t foeOpts[1] = {Spirit};
+        duel::State state = {};
+        state.sides[0].count = 1;
+        state.sides[0].active = 0;
+        state.sides[0].members[0] = makeMember(1, Water, playerOpts, 1, 100);
+        state.sides[0].members[0].typeCount = 2;
+        state.sides[0].members[0].types[1] = Fire;
+        state.sides[1].count = 1;
+        state.sides[1].active = 0;
+        state.sides[1].members[0] = makeMember(2, Spirit, foeOpts, 1, 100);
+        const duel::Action actions[2] = {{duel::ActionKind::Attack, 0},
+                                         {duel::ActionKind::Attack, 0}};
+        battle::Rng rng = makeRng();
+        duel::RoundResult out = {};
+        duel::resolveRound(state, actions, rng, out);
+        test.expectEq(out.damage[0], 9, F("dual trade: player receives foe bonus"));
+        test.expectEq(out.damage[1], 6, F("dual trade: foe receives player neutral"));
+    }
+
     // Switch incoming KO reverts to the outgoing (living) member.
     {
         const uint8_t playerOpts[1] = {Fire};

@@ -93,6 +93,9 @@ constexpr uint8_t DUEL_MARK_DOWN_DARK = 13;
 // player chips read bottom-right and foe chips bottom-left (mock).
 void drawBadges(const BattleState &state) {
     for (uint8_t side = 0; side < 2; ++side) {
+        // An empty active slot (level 0) has no real types; skip its badge so a
+        // drained side never renders a fold-of-NONE (type 255) chip.
+        if (state.active[side].level == 0) continue;
         const bool isPlayer = side == static_cast<uint8_t>(Side::Player);
         uint8_t types[2];
         const uint8_t count = duel::activeTypes(state, side, types);
@@ -227,6 +230,12 @@ void drawCreature(const Combatant &creature, uint8_t side) {
     const uint8_t x = side == static_cast<uint8_t>(Side::Player)
         ? battle_layout::playerX : 0;
     Blit::fillRect(x, 0, battle_layout::spriteSize, battle_layout::spriteSize, BLACK);
+#ifdef CGFX_DUEL_BATTLE
+    // level 0 is the empty-active sentinel (empty or exhausted party). Draw no
+    // sprite, so a drained slot never renders species 0 as an occupied creature.
+    // Species 0 at a real level is a normal creature and still draws.
+    if (creature.level == 0) return;
+#endif
     if (creature.id >= SPECIES_COUNT) return;
 
     const uint16_t frame = static_cast<uint16_t>(creature.id) * 2u +

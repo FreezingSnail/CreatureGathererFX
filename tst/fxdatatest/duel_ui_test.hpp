@@ -149,7 +149,7 @@ void duelDevicePickRowGeometry(FxTest &test) {
     state.bench[0][0].hp = 10;
     state.bench[0][1].hp = 10;
     for (uint8_t slot = 0; slot < 4; ++slot) {
-        state.active[0].moves[slot] = attackMove(SpiritAuthored);
+        state.active[0].moveTypes[slot] = SpiritAuthored;
         state.active[0].moveIds[slot] = slot;
     }
     BattleFlow::update(0); // choice entry -> pick row
@@ -249,7 +249,7 @@ void duelDeviceWaitRow(FxTest &test) {
     state.bench[0][0].hp = 10;
     state.bench[0][1].hp = 10;
     for (uint8_t slot = 0; slot < 4; ++slot) {
-        state.active[0].moves[slot] = Move();
+        state.active[0].moveTypes[slot] = EMPTY_MOVE_ID;
         state.active[0].moveIds[slot] = EMPTY_MOVE_ID;
     }
     BattleFlow::update(0);
@@ -260,6 +260,56 @@ void duelDeviceWaitRow(FxTest &test) {
     test.expectEq(duelAnyPixel(4, 61, 48, 61), 1, F("SWAP cell draws its label"));
     test.expectEq(duelAnyPixel(64, 121, 48, 61), 1, F("WAIT cell draws its label"));
     test.expectEq(duelAnyPixel(122, 127, 48, 61), 0, F("WAIT row stays inside 122px"));
+}
+
+// An exhausted player party fails real setup. The duel must terminate at entry
+// as a loss through the normal Flow defeat recovery: no opponent action, no
+// reward, and the world resumes. Drives the resident battleSession() so the real
+// Flow path (not just the session) is exercised.
+__attribute__((noinline)) void duelDeviceExhaustedEntryLoses(FxTest &test) {
+    preparePlayer();
+    for (uint8_t slot = 0; slot < PARTY_SIZE; ++slot) player.creatureHPs[slot] = 0;
+
+    menu.clear();
+    dialogMenu.clear();
+    enterBattle();
+    gameState.state = GameState_t::BATTLE;
+    battleSession().setRng({scriptedRng});
+    battleSession().beginWild(4, 1, false, 0);
+
+    test.expectEq(battleSession().isActive(), 1, F("exhausted entry stays active"));
+    test.expectEq(battleSession().awaitingPlayer(), 0, F("exhausted entry takes no input"));
+    test.expectEq(battleSession().exitReady(), 1, F("exhausted entry is terminal"));
+
+    // The terminal frame finishes the battle: defeat recovery returns to world.
+    test.expectEq(BattleFlow::update(0), 1, F("the terminal frame finishes the flow"));
+    test.expectEq(static_cast<uint32_t>(gameState.state),
+                  static_cast<uint32_t>(GameState_t::WORLD),
+                  F("defeat recovery returns to the world"));
+}
+
+// Render immediately after World->BATTLE, before the first Flow update closes
+// the terminal. A drained active must not paint a species-0 sprite or a type-255
+// badge; species 0 at a real level still draws (other tests cover that).
+__attribute__((noinline)) void duelDeviceEmptyEntryRender(FxTest &test) {
+    preparePlayer();
+    for (uint8_t slot = 0; slot < PARTY_SIZE; ++slot) player.creatureHPs[slot] = 0;
+
+    menu.clear();
+    dialogMenu.clear();
+    enterBattle();
+    gameState.state = GameState_t::BATTLE;
+    battleSession().setRng({scriptedRng});
+    battleSession().beginWild(4, 1, false, 0);
+    test.expectEq(battleSession().exitReady(), 1, F("exhausted entry is terminal"));
+
+    // Render before any Flow update (the first BATTLE frame's scene draw).
+    duelClearBuffer();
+    renderBattle();
+    test.expectEq(duelAnyPixel(0, 47, 0, 47), 0,
+                  F("empty foe slot leaves its sprite area black"));
+    test.expectEq(duelAnyPixel(80, 127, 0, 47), 0,
+                  F("empty player slot leaves its sprite area black"));
 }
 
 } // namespace duel_ui_test_detail
@@ -275,6 +325,8 @@ inline void test_duel_ui(FxTest &test) {
     duelDeviceThreeDigitHp(test);
     duelDevicePickRowGeometry(test);
     duelDeviceFeedback(test);
+    duelDeviceExhaustedEntryLoses(test);
+    duelDeviceEmptyEntryRender(test);
 }
 
 #endif // CGFX_DUEL_BATTLE

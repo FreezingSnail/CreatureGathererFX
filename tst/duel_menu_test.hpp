@@ -19,13 +19,12 @@ battle::BattleState oneAttackState()
     state.bench[0][0].hp = 10;
     state.bench[0][1].hp = 10; // living bench -> the SWAP cell is offered
     state.active[0].moveIds[0] = 0;
-    state.active[0].moves[0] = Move(MoveBitSet{
-        static_cast<uint8_t>(Type::SPIRIT), 10, 0, 0, 0});
+    state.active[0].moveTypes[0] = static_cast<uint8_t>(Type::SPIRIT);
     // Zero-init leaves slots 1..3 with move id 0 (a valid authored id), so the
     // unused slots must be explicitly emptied or they count as attack cells.
     for (uint8_t slot = 1; slot < 4; ++slot) {
-        state.active[0].moves[slot] = Move();
-        state.active[0].moveIds[slot] = 255;
+        state.active[0].moveTypes[slot] = EMPTY_MOVE_ID;
+        state.active[0].moveIds[slot] = EMPTY_MOVE_ID;
     }
     return state;
 }
@@ -38,7 +37,7 @@ battle::BattleState waitState()
     state.bench[0][0].hp = 10;
     state.bench[0][1].hp = 10;
     for (uint8_t slot = 0; slot < 4; ++slot) {
-        state.active[0].moves[slot] = Move();
+        state.active[0].moveTypes[slot] = EMPTY_MOVE_ID;
         state.active[0].moveIds[slot] = EMPTY_MOVE_ID;
     }
     return state;
