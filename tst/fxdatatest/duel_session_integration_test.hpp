@@ -29,6 +29,7 @@
 #endif
 
 #include "fxtest.hpp"
+#include "src/engine/battle/DuelView.hpp"
 #include "src/engine/battle/BattleFlow.hpp"
 #include "src/engine/battle/BattlePresets.hpp"
 #include "src/engine/battle/BattleScene.hpp"
@@ -110,10 +111,14 @@ bool runToResult(battle::BattleSession &session, uint16_t &ticks) {
 // (isResultDwell || exitReady), otherwise the initialized menu arm draws. Kept in
 // lockstep with that predicate so the read check measures the real union arm.
 __attribute__((noinline)) void renderBattle() {
-    battle::BattleScene::draw(battleSession().state());
-    if (battleSession().isResultDwell() || battleSession().exitReady())
-        modeState.battle.ui.feedback.draw();
-    else if (modeState.battle.ui.menu.initialized()) modeState.battle.ui.menu.draw();
+    // Lockstep with the production BATTLE dispatch: the scene owns the pick row,
+    // centre and result footer from resident state; the menu paints only its
+    // picker/action pages.
+    battle::BattleScene::draw(battleSession().state(),
+                              modeState.battle.ui.menu.duelCursor());
+    if (battleSession().state().feedback == 0 &&
+        modeState.battle.ui.menu.initialized())
+        modeState.battle.ui.menu.draw();
 }
 
 // One ordinary round through the live controller: 29 concealed frames with no
@@ -124,9 +129,8 @@ __attribute__((noinline)) void duelFlowConcealAndDwell(FxTest &test) {
     configureMatchup(FireAuthored, SpiritAuthored, FireAuthored, FireAuthored, 100, 100);
 
     test.expectEq(BattleFlow::update(0), 0, F("choice frame stays in battle"));
-    test.expectEq(modeState.battle.ui.menu.initialized(), 1, F("options page opens"));
-    BattleFlow::update(MENU_EDGE_A); // options page: open the move page
-    BattleFlow::update(MENU_EDGE_A); // move page: submit the lowest usable move
+    test.expectEq(modeState.battle.ui.menu.initialized(), 1, F("pick row opens"));
+    BattleFlow::update(MENU_EDGE_A); // pick row: commit the selected attack cell
     test.expectEq(battleSession().isResultDwell(), 0,
                   F("selection never resolves on its own edge"));
     test.expectEq(static_cast<uint32_t>(battleSession().result().kind),
@@ -211,9 +215,9 @@ __attribute__((noinline)) void duelFlowWaitRoute(FxTest &test) {
         if (snapshot.moveIds[slot] != EMPTY_MOVE_ID) allEmpty = false;
     test.expectEq(allEmpty, 1, F("an unusable kit exposes only empty cells"));
 
-    BattleFlow::update(0);            // consume the choice entry: options page
-    BattleFlow::update(MENU_EDGE_A);  // options page: open the move page
-    BattleFlow::update(MENU_EDGE_A);  // move page: no usable cell -> Pass (WAIT)
+    BattleFlow::update(0);               // consume the choice entry: pick row
+    BattleFlow::update(MENU_NAV_RIGHT);  // cursor -> WAIT (empty kit: swap then wait)
+    BattleFlow::update(MENU_EDGE_A);     // WAIT cell: Pass
     test.expectEq(battleSession().isResultDwell(), 0, F("WAIT starts concealed"));
     uint16_t revealTicks = 0;
     while (!battleSession().isResultDwell() && revealTicks < 200) {
@@ -231,8 +235,8 @@ __attribute__((noinline)) void duelFlowWaitRoute(FxTest &test) {
 __attribute__((noinline)) void duelFlowEscapeEntrySameFrame(FxTest &test) {
     preparePlayer();
     beginWildDuel(true, 1);
-    BattleFlow::update(0);              // choice entry -> options page
-    BattleFlow::update(MENU_NAV_RIGHT); // cursor -> GATHER
+    BattleFlow::update(0);              // choice entry -> pick row
+    BattleFlow::update(MENU_EDGE_B);    // open the wild action page
     BattleFlow::update(MENU_NAV_DOWN);  // cursor -> ESCAPE
     BattleFlow::update(MENU_EDGE_A);    // submit Escape -> immediate Result
     test.expectEq(battleSession().isResultDwell(), 1,
@@ -242,6 +246,9 @@ __attribute__((noinline)) void duelFlowEscapeEntrySameFrame(FxTest &test) {
                   F("the escape result is published"));
     test.expectEq(battleSession().consumeResultEntry(), 0,
                   F("escape constructs feedback on the same update"));
+    test.expectEq(battleSession().state().feedback,
+                  static_cast<uint8_t>(duel::Feedback::Escape),
+                  F("the footer shows the escaped caption"));
 }
 
 __attribute__((noinline)) void duelDeviceSimultaneousDraw(FxTest &test) {
@@ -268,6 +275,9 @@ __attribute__((noinline)) void duelDeviceSimultaneousDraw(FxTest &test) {
         battleSession().advance();
     test.expectEq(battleSession().exitReady(), 1, F("draw is terminal"));
     test.expectEq(player.creatureHPs[0], 0, F("draw syncs original slot 0"));
+    test.expectEq(battleSession().state().feedback,
+                  static_cast<uint8_t>(duel::Feedback::Draw),
+                  F("a simultaneous KO shows the DRAW caption"));
 }
 
 __attribute__((noinline)) void duelDeviceSwapKoRevert(FxTest &test) {
@@ -336,6 +346,9 @@ __attribute__((noinline)) void duelDeviceGatherKoKeepsProgress(FxTest &test) {
     test.expectEq(static_cast<uint32_t>(battleSession().result().outcome),
                   static_cast<uint32_t>(battle::Outcome::Lose),
                   F("the knockout blocks acquisition"));
+    test.expectEq(battleSession().state().feedback,
+                  static_cast<uint8_t>(duel::Feedback::Lose),
+                  F("a terminal knockout shows the defeat caption, not gathered"));
 }
 
 // A gather that KOs the active while a reserve lives pauses the flee countdown
@@ -364,6 +377,9 @@ __attribute__((noinline)) void duelDeviceGatherActiveKoPausesFlee(FxTest &test) 
     test.expectEq(battleSession().state().gather.fleeTurns, 1,
                   F("the flee countdown pauses on an active KO"));
     test.expectEq(state.activeSlot[0], 1, F("the living reserve promotes"));
+    test.expectEq(battleSession().state().feedback,
+                  static_cast<uint8_t>(duel::Feedback::Gather),
+                  F("a progress-only gather keeps the gather caption"));
 }
 
 } // namespace duel_session_test_detail

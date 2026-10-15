@@ -7,6 +7,7 @@
 #include "../../player/Player.hpp"
 #ifdef CGFX_DUEL_BATTLE
 #include "DuelKernel.hpp"
+#include "DuelView.hpp"
 #endif
 #if defined(CGFX_DUEL_BATTLE) && defined(__AVR__)
 #include "../../fxdata.h"
@@ -263,6 +264,7 @@ void BattleSession::resetCursor(SessionPhase phase)
     if (phase == SessionPhase::Choice) {
         duelCommitOpponent();
         cursor_.flags |= 1u;
+        state_.feedback = 0; // a fresh choice owns the pick row, not feedback
     }
 #endif
 }
@@ -277,6 +279,10 @@ void BattleSession::beginWild(uint8_t id, uint8_t level, bool gatherable,
 #endif
 #ifdef CGFX_DUEL_BATTLE
     duelHistoryCount_ = 0; // history resets per encounter
+    state_.round = 1;
+    state_.feedback = 0;
+    state_.damage[0] = state_.damage[1] = 0;
+    state_.reveal[0] = state_.reveal[1] = duel::NO_TYPE;
 #endif
     resetCursor(state_.over ? SessionPhase::Ready : SessionPhase::Choice);
     if (state_.over) cursor_.next = NEXT_COMPLETE;
@@ -291,6 +297,10 @@ void BattleSession::beginTrainer(uint8_t id)
 #endif
 #ifdef CGFX_DUEL_BATTLE
     duelHistoryCount_ = 0; // history resets per encounter
+    state_.round = 1;
+    state_.feedback = 0;
+    state_.damage[0] = state_.damage[1] = 0;
+    state_.reveal[0] = state_.reveal[1] = duel::NO_TYPE;
 #endif
     resetCursor(state_.over ? SessionPhase::Ready : SessionPhase::Choice);
     if (state_.over) cursor_.next = NEXT_COMPLETE;
@@ -572,6 +582,9 @@ bool BattleSession::duelResolveRound()
         result_.actor = Side::Player;
         result_.outcome = Outcome::Escaped;
         state_.over = true;
+        state_.feedback = static_cast<uint8_t>(duel::Feedback::Escape);
+        state_.reveal[playerSide] = state_.reveal[opponentSide] = duel::NO_TYPE;
+        state_.damage[playerSide] = state_.damage[opponentSide] = 0;
         cursor_.flags |= 2u; // result entry: the flow prepares feedback once
         cursor_.next = DUEL_RESULT_TICKS;
         cursor_.phase = SessionPhase::Result;
@@ -680,6 +693,32 @@ bool BattleSession::duelResolveRound()
         }
     }
 
+    // Publish the compact round facts the duel UI reveals: both folded move
+    // types, both damage amounts, and the caption kind. The player's relation is
+    // against the opponent's move; the bonus label rides on the winning side.
+    state_.reveal[playerSide] = attackType[playerSide];
+    state_.reveal[opponentSide] = attackType[opponentSide];
+    state_.damage[playerSide] = damage[playerSide];
+    state_.damage[opponentSide] = damage[opponentSide];
+    if (playerGathering) {
+        state_.feedback = static_cast<uint8_t>(duel::Feedback::Gather);
+    } else if (playerSwitch && opponentSwitch) {
+        state_.feedback = static_cast<uint8_t>(duel::Feedback::Swap);
+    } else if (playerAttacks && opponentAttacks) {
+        const uint8_t rel =
+            duel::relation(attackType[playerSide], attackType[opponentSide]);
+        const uint8_t yourMod = duel::creatureModifier(
+            attackType[playerSide], opponentTypes, opponentTypeCount);
+        const uint8_t foeMod = duel::creatureModifier(
+            attackType[opponentSide], playerTypes, playerTypeCount);
+        state_.feedback =
+            static_cast<uint8_t>(duel::attackFeedback(rel, yourMod, foeMod));
+    } else if (playerAttacks || opponentAttacks) {
+        state_.feedback = static_cast<uint8_t>(duel::Feedback::DefaultWin);
+    } else {
+        state_.feedback = static_cast<uint8_t>(duel::Feedback::Wait);
+    }
+
     // Gather adds tier progress BEFORE the opponent's default win. A KO this
     // round blocks acquisition but never discards the added progress, so a
     // surviving reserve keeps the gathered charge. Need/rate stay frozen.
@@ -768,6 +807,34 @@ bool BattleSession::duelResolveRound()
             result_.outcome = Outcome::Fled;
         }
     }
+    // A terminal outcome owns the footer caption so the result is never hidden:
+    // win/defeat/draw/flee and a successful acquisition replace the round
+    // spelling; a progress-only or KO-blocked gather keeps its in-progress
+    // "gather" caption (mock/duel-bonus.html endText + the plan's reuse of the
+    // existing terminal/gather/escape text).
+    switch (result_.outcome) {
+    case Outcome::Win:
+        state_.feedback = static_cast<uint8_t>(duel::Feedback::Win);
+        break;
+    case Outcome::Lose:
+        state_.feedback = static_cast<uint8_t>(duel::Feedback::Lose);
+        break;
+    case Outcome::Draw:
+        state_.feedback = static_cast<uint8_t>(duel::Feedback::Draw);
+        break;
+    case Outcome::Gathered:
+        state_.feedback = static_cast<uint8_t>(duel::Feedback::Gathered);
+        break;
+    case Outcome::Fled:
+        state_.feedback = static_cast<uint8_t>(duel::Feedback::Fled);
+        break;
+    case Outcome::Escaped:
+        state_.feedback = static_cast<uint8_t>(duel::Feedback::Escape);
+        break;
+    case Outcome::None:
+    default:
+        break;
+    }
     if (playerFainted) result_.flags |= PLAYER_FAINTED;
     if (opponentFainted) result_.flags |= OPPONENT_FAINTED;
     cursor_.flags |= 2u; // result entry: the flow prepares feedback once
@@ -816,7 +883,9 @@ bool BattleSession::advance()
                 } else {
                     // The duel auto-promoted any KO before the dwell, so a
                     // non-terminal round returns straight to a fresh Choice
-                    // (not the legacy Ready state).
+                    // (not the legacy Ready state). The round counter advances
+                    // once per fresh choice.
+                    ++state_.round;
                     resetCursor(SessionPhase::Choice);
                 }
             }

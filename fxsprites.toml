@@ -54,5 +54,8 @@ order = [
   "lureTextPrompt", "lureTextSet", "lureTextEmpty", "lureTextGathered",
   "lureTextExpired", "lureTextFooter",
   "lureTextIntroTitle", "lureTextIntroSet", "lureTextIntroBias",
-  "lureTextIntroSteps", "lureTextIntroGather", "lureTextIntroNoSave"
+  "lureTextIntroSteps", "lureTextIntroGather", "lureTextIntroNoSave",
+  "duelBonusWin", "duelBonusLose", "duelWeakWin", "duelWeakLose",
+  "duelRpsWin", "duelRpsLose", "duelTrade", "duelDefaultWin",
+  "duelSwap", "duelWait", "duelDraw", "duelVs", "duelRound"
 ]

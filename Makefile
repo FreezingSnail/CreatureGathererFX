@@ -600,7 +600,7 @@ fxtest-build:
 		    ARDUINO_BUILD_CACHE_PATH="$(ARDUINO_BUILD_CACHE_PATH)" $(ARDUINO_CLI) compile --fqbn "$(FQBN)" \
 		        $(AVR_FXTEST_NO_FACTS_BUILD_PROPERTIES) \
 		        --build-path "$$stage/build" --output-dir "$$stage/output" "$$stage/$$ino.ino"; \
-		elif [ "$$ino" = "test_battle_duel" ] || [ "$$ino" = "test_duel_resources" ]; then \
+		elif [ "$$ino" = "test_battle_duel" ] || [ "$$ino" = "test_duel_resources" ] || [ "$$ino" = "test_duel_ui" ]; then \
 		    ARDUINO_BUILD_CACHE_PATH="$(ARDUINO_BUILD_CACHE_PATH)" $(ARDUINO_CLI) compile --fqbn "$(FQBN)" \
 		        $(AVR_FXTEST_DUEL_BUILD_PROPERTIES) \
 		        --build-path "$$stage/build" --output-dir "$$stage/output" "$$stage/$$ino.ino"; \

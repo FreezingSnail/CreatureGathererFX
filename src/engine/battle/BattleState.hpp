@@ -67,12 +67,21 @@ struct BattleState {
     // Opponent-only guard: set when the AI switches, cleared when it acts.
     uint8_t switchLockMask : 2;
     uint8_t trainerId;
+#ifdef CGFX_DUEL_BATTLE
+    // Duel compact-UI facts (CreatureGathererFX-d73i.2): the 1-based round, the
+    // result caption kind (duel::Feedback), and the last round's two damage
+    // amounts and two revealed move types (folded; 255 = duel::NO_TYPE).
+    uint8_t round;
+    uint8_t feedback;
+    uint8_t damage[2];
+    uint8_t reveal[2];
+#endif
 };
 
 #ifdef __AVR__
 static_assert(sizeof(Combatant) == 36, "active combatant AVR contract");
 #ifdef CGFX_DUEL_BATTLE
-static_assert(sizeof(BattleState) == 112, "duel battle state AVR contract");
+static_assert(sizeof(BattleState) == 118, "duel battle state AVR contract");
 #else
 static_assert(sizeof(BattleState) == 124, "battle state AVR contract");
 #endif

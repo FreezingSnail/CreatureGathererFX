@@ -20,6 +20,7 @@
 #ifdef CGFX_DUEL_BATTLE
 
 #include "test.hpp"
+#include "../src/engine/battle/DuelView.hpp"
 #include "../src/engine/battle/BattleSession.hpp"
 #include "../src/engine/battle/BattleFlow.hpp"
 #include "../src/engine/battle/BattlePresets.hpp"
@@ -140,9 +141,8 @@ void duelConcealAndDwellFlow(Test &test) {
                      FireAuthored, 100, 100);
 
     test.assert(BattleFlow::update(0), false, "choice frame stays in battle");
-    test.assert(modeState.battle.ui.menu.initialized(), true, "options page opens");
-    BattleFlow::update(MENU_EDGE_A); // options page: open the move page
-    BattleFlow::update(MENU_EDGE_A); // move page: submit the lowest usable move
+    test.assert(modeState.battle.ui.menu.initialized(), true, "pick row opens");
+    BattleFlow::update(MENU_EDGE_A); // pick row: commit the selected attack cell
     test.assert(battleSession().isResultDwell(), false,
                 "selection never resolves on its own edge");
     test.assert(battleSession().result().kind, battle::ResultKind::None,
@@ -214,9 +214,8 @@ void duelEntryFlagsConsumedSameFrame(Test &test) {
     configureMatchup(battleSession(), FireAuthored, SpiritAuthored, FireAuthored,
                      FireAuthored, 100, 100);
 
-    BattleFlow::update(0);            // choice entry -> options page
-    BattleFlow::update(MENU_EDGE_A);  // open the move page
-    BattleFlow::update(MENU_EDGE_A);  // submit
+    BattleFlow::update(0);            // choice entry -> pick row
+    BattleFlow::update(MENU_EDGE_A);  // commit the selected attack cell
     uint16_t conceal = 0;
     while (!battleSession().isResultDwell() && conceal < 200) {
         BattleFlow::update(0);
@@ -251,8 +250,8 @@ void duelEscapeEntryConsumedSameFrame(Test &test) {
     battleSession().setRng({scriptedRng});
     battleSession().beginWild(4, 1, true, 1);
 
-    BattleFlow::update(0);              // choice entry -> options page
-    BattleFlow::update(MENU_NAV_RIGHT); // cursor -> GATHER
+    BattleFlow::update(0);              // choice entry -> pick row
+    BattleFlow::update(MENU_EDGE_B);    // open the wild action page
     BattleFlow::update(MENU_NAV_DOWN);  // cursor -> ESCAPE
     BattleFlow::update(MENU_EDGE_A);    // submit Escape -> immediate Result
     test.assert(battleSession().isResultDwell(), true,
@@ -331,6 +330,9 @@ void duelSimultaneousDraw(Test &test) {
     test.assert(session.exitReady(), true, "a draw is terminal");
     test.assert(player.creatureHPs[0], static_cast<uint8_t>(0),
                 "draw syncs the faint to its original slot");
+    test.assert(session.state().feedback,
+                static_cast<uint8_t>(duel::Feedback::Draw),
+                "a simultaneous KO shows the DRAW caption");
 }
 
 // An unusable kit carries empty sentinels in the shipping move snapshot and its
@@ -471,6 +473,9 @@ void duelGatherKoKeepsProgress(Test &test) {
                 "the knockout blocks acquisition");
     test.assert((session.result().flags & battle::PLAYER_FAINTED) != 0, true,
                 "the gathering active is flagged faint");
+    test.assert(session.state().feedback,
+                static_cast<uint8_t>(duel::Feedback::Lose),
+                "a terminal gather KO shows the defeat caption");
 }
 
 // A wild gather that KOs the active while a living reserve stands in must not
@@ -505,6 +510,9 @@ void duelGatherActiveKoPausesFleeCountdown(Test &test) {
                 "the flee countdown pauses on an active KO");
     test.assert(session.state().activeSlot[0], static_cast<uint8_t>(1),
                 "the living reserve promotes");
+    test.assert(session.state().feedback,
+                static_cast<uint8_t>(duel::Feedback::Gather),
+                "a progress-only gather keeps the gather caption");
 }
 
 // A surviving gather round banks progress and acquires.
@@ -526,6 +534,9 @@ void duelGatherAcquisition(Test &test) {
     test.assert(session.result().outcome, battle::Outcome::Gathered,
                 "a surviving full gather is acquired");
     test.assert(session.state().over, true, "acquisition closes the encounter");
+    test.assert(session.state().feedback,
+                static_cast<uint8_t>(duel::Feedback::Gathered),
+                "the footer shows the gathered caption on acquisition");
 }
 
 // Wild escape is immediate (no concealed interval) and cancels the round.
@@ -551,6 +562,9 @@ void duelEscapeCancelsRound(Test &test) {
                 "escape cancels the pending round (player HP unchanged)");
     test.assert(session.state().active[1].hp, opponentHp,
                 "escape cancels the pending round (opponent HP unchanged)");
+    test.assert(session.state().feedback,
+                static_cast<uint8_t>(duel::Feedback::Escape),
+                "the footer shows the escaped caption");
 
     uint16_t dwellTicks = 0;
     test.assert(runToBoundary(session, dwellTicks), true, "the escape dwell settles");
@@ -574,6 +588,8 @@ void duelOriginalSlotHpSync(Test &test) {
     uint16_t revealTicks = 0;
     test.assert(runToResult(session, revealTicks), true, "the winning round reveals");
     test.assert(session.result().outcome, battle::Outcome::Win, "the foe is defeated");
+    test.assert(session.state().feedback, static_cast<uint8_t>(duel::Feedback::Win),
+                "a terminal win shows the win caption");
     const uint8_t bench1Hp = session.state().bench[0][0].hp;
     const uint8_t bench2Hp = session.state().bench[0][1].hp;
 
@@ -584,6 +600,32 @@ void duelOriginalSlotHpSync(Test &test) {
                 "active original slot syncs its post-round HP");
     test.assert(player.creatureHPs[1], bench1Hp, "living bench original slot 1 syncs");
     test.assert(player.creatureHPs[2], bench2Hp, "living bench original slot 2 syncs");
+}
+
+// A surviving wild round whose flee countdown hits zero is Fled; the footer
+// shows the fled caption rather than a generic gather/round spelling.
+void duelFleeCaption(Test &test) {
+    preparePlayer();
+    battle::BattleSession session;
+    session.setRng({scriptedRng});
+    rngDraws = 0;
+    session.beginWild(4, 1, true, 0);
+    battle::BattleState &state = session.stateForTest();
+    state.gather.need = 8;
+    state.gather.fleeTurns = 1;
+    configureMatchup(session, FireAuthored, FireAuthored, FireAuthored,
+                     FireAuthored, 100, 100);
+
+    test.assert(session.submitIntent({MenuIntentKind::SelectMove, 0}), true,
+                "a wild attack submits");
+    uint16_t revealTicks = 0;
+    test.assert(runToResult(session, revealTicks), true, "the round reveals");
+    test.assert(session.result().outcome, battle::Outcome::Fled,
+                "a spent flee countdown flees");
+    test.assert(session.state().feedback, static_cast<uint8_t>(duel::Feedback::Fled),
+                "the footer shows the fled caption");
+    test.assert(session.state().gather.progress, static_cast<uint8_t>(0),
+                "an attack round banks no gather progress");
 }
 
 } // namespace duel_session_test_detail
@@ -639,6 +681,10 @@ inline void DuelSessionIntegrationSuite(TestRunner &runner) {
     Test gather(__func__);
     duelGatherAcquisition(gather);
     suite.addTest(gather);
+
+    Test flee(__func__);
+    duelFleeCaption(flee);
+    suite.addTest(flee);
 
     Test escape(__func__);
     duelEscapeCancelsRound(escape);

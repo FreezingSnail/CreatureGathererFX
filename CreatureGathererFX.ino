@@ -236,13 +236,17 @@ uint8_t render() {
 #endif
     case GameState_t::BATTLE: {
         battle::BattleMode &mode = modeState.battle;
-        battle::BattleScene::draw(battleSession().state());
 #ifdef CGFX_DUEL_BATTLE
-        // Feedback arm during the result dwell and the terminal-exit frame;
-        // otherwise the (concealed or choice) menu arm.
-        if (battleSession().duelFeedbackActive()) mode.ui.feedback.draw();
-        else if (mode.ui.menu.initialized()) mode.ui.menu.draw();
+        // The duel scene owns the pick row, centre and result footer, all drawn
+        // from resident state; the menu paints only its picker/action pages.
+        battle::BattleScene::draw(battleSession().state(),
+                                  mode.ui.menu.duelCursor());
+        if (battleSession().state().feedback == 0 && mode.ui.menu.initialized())
+            mode.ui.menu.draw();
 #else
+        battle::BattleScene::draw(battleSession().state());
+#endif
+#ifndef CGFX_DUEL_BATTLE
         if (battleSession().isPresenting()) mode.ui.feedback.draw();
         else if (mode.ui.menu.initialized()) mode.ui.menu.draw();
 #endif
