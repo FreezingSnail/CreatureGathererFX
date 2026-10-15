@@ -72,9 +72,10 @@ data test re-runs the proof over all 64 creatures.
 - **Pure-RPS spelling** (`mock/duel-pure.html`): power, stats and affinity are ignored; the relation
   alone scores — win 14, chip 4, trade 6 both.
 - **Creature-bonus spelling** (`mock/duel-bonus.html`) — recommended direction: moves carry no power
-  (flat 14 / 4 / 6), and a winning hit is ×1.5 (→ 21) when the move's type beats the *opposing
-  creature's type*, mirrored for the foe. No affinity. ↑ marks boosting picks; result lines read
-  BONUS WIN / BONUS LOSE when it fired.
+  (flat 14 / 4 / 6), and the creature-type matchup scales the damage each side deals — ×1.5 when the
+  move's type beats the opposing creature's type, ×0.5 when it loses to it, ×1 otherwise (applies to
+  full hits and chips, mirrored for the foe; no immunity, no affinity). ↑ / ↓ mark boosting and weak
+  picks; result lines read BONUS WIN/LOSE (×1.5), WEAK WIN/LOSE (×0.5) or RPS WIN/LOSE (base).
 - Type badges (white-framed chips) sit on each creature sprite in every window, so both creatures'
   types are visible while choosing.
 - All windows share the web, option source and seed, so they can run side by side.

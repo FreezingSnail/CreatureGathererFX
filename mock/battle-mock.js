@@ -513,7 +513,15 @@ function aiDuelPick(state) {
   const options = duelOptions(state, 1);
   const rate = persona.readRate != null ? persona.readRate : state.duel.aiRead;
   if (persona.memory === 'none' || state.rng.next() * 100 >= rate) {
-    return state.rng.int(options.length); // fallback: uniform, no boost preference
+    // No read this round: attack (never a random swap), preferring the best
+    // creature-type matchup tier so the AI does not feed weak picks.
+    if (state.duel.scoring === 'bonus' && duelKind(state) === 'wheel') {
+      const scored = options.map((option, index) => ({ option, index, modifier: duelCreatureBonus(state, 1, option.type) }));
+      const bestTier = Math.max(...scored.map((entry) => entry.modifier));
+      const pool = scored.filter((entry) => entry.modifier === bestTier);
+      return pool[state.rng.int(pool.length)].index;
+    }
+    return state.rng.int(options.length);
   }
   const guessed = predictPlayerType(state);
   const counters = guessed ? counterOptions(state, guessed) : [];
@@ -565,10 +573,14 @@ const FLAT_WIN = 14, FLAT_CHIP = 4, FLAT_TRADE = 6;
 
 // Creature-type bonus: your move's type against the opposing creature's types.
 // 1.5 when it beats any of them, else 1 (bonus-only, no penalty).
+// Creature-type matchup modifier: your move's type against the opposing
+// creature's types. x1.5 when it beats any of them, x0.5 when it loses to one
+// (and beats none), else 1. Bonus and penalty both apply to the damage dealt.
 function duelCreatureBonus(state, side, moveType) {
   const defender = duelCreature(state, side === 0 ? 1 : 0);
-  const beaten = defender.types.some((type) => wheelBeats(moveType, type));
-  return beaten ? 1.5 : 1;
+  if (defender.types.some((type) => wheelBeats(moveType, type))) return 1.5;
+  if (defender.types.some((type) => wheelValue(moveType, type) === 0.5)) return 0.5;
+  return 1;
 }
 
 // Post-resolution housekeeping: when the active creature faints, prefer the
@@ -660,28 +672,34 @@ function duelResolve(state) {
     const attackerSide = 1 - switcher;
     const attackerMove = attackerSide === 0 ? yourMove : foeMove;
     const incoming = duelCreature(state, switcher);
-    const bonus = scoring === 'bonus' && attackerMove.type &&
-      incoming.types.some((type) => wheelBeats(attackerMove.type, type)) ? 1.5 : 1;
-    const hit = Math.round(FLAT_WIN * bonus);
+    const modifier = scoring === 'bonus' && attackerMove.type
+      ? (incoming.types.some((type) => wheelBeats(attackerMove.type, type)) ? 1.5
+        : incoming.types.some((type) => wheelValue(attackerMove.type, type) === 0.5) ? 0.5 : 1)
+      : 1;
+    const hit = Math.max(1, Math.round(FLAT_WIN * modifier));
     if (attackerSide === 0) yourDamage = hit; else foeDamage = hit;
     duelState.lines = ['DEFAULT WIN', `-${yourDamage} -${foeDamage}`];
     duelState.last = [yourMove ? yourMove.type : null, foeMove ? foeMove.type : null];
   } else if (scoring === 'flat' || scoring === 'bonus') {
-    // Flat numbers: relation decides. In the bonus spelling a winning hit is
-    // x1.5 when the move type beats the opposing creature's type.
+    // Flat numbers: relation decides. In the bonus spelling the creature-type
+    // matchup scales the damage dealt: x1.5 beating their type, x0.5 losing to it.
     const relation = wheelValue(yourMove.type, foeMove.type);
-    const hit = (side, move) => (scoring === 'bonus' && duelCreatureBonus(state, side, move.type) > 1 ? 1.5 : 1);
+    const mod = (side, move) => (scoring === 'bonus' ? duelCreatureBonus(state, side, move.type) : 1);
+    const scaled = (base, multiplier) => Math.max(1, Math.round(base * multiplier));
+    const yourMod = mod(0, yourMove), foeMod = mod(1, foeMove);
     if (relation === 2) {
-      yourDamage = Math.round(FLAT_WIN * hit(0, yourMove));
-      foeDamage = FLAT_CHIP;
-      duelState.lines = [yourDamage > FLAT_WIN ? 'BONUS WIN' : 'RPS WIN', `-${yourDamage} -${foeDamage}`];
+      yourDamage = scaled(FLAT_WIN, yourMod);
+      foeDamage = scaled(FLAT_CHIP, foeMod);
+      duelState.lines = [yourMod > 1 ? 'BONUS WIN' : yourMod < 1 ? 'WEAK WIN' : 'RPS WIN',
+        `-${yourDamage} -${foeDamage}`];
     } else if (relation === 0.5) {
-      foeDamage = Math.round(FLAT_WIN * hit(1, foeMove));
-      yourDamage = FLAT_CHIP;
-      duelState.lines = [foeDamage > FLAT_WIN ? 'BONUS LOSE' : 'RPS LOSE', `-${yourDamage} -${foeDamage}`];
+      foeDamage = scaled(FLAT_WIN, foeMod);
+      yourDamage = scaled(FLAT_CHIP, yourMod);
+      duelState.lines = [foeMod > 1 ? 'BONUS LOSE' : foeMod < 1 ? 'WEAK LOSE' : 'RPS LOSE',
+        `-${yourDamage} -${foeDamage}`];
     } else {
-      yourDamage = FLAT_TRADE;
-      foeDamage = FLAT_TRADE;
+      yourDamage = scaled(FLAT_TRADE, yourMod);
+      foeDamage = scaled(FLAT_TRADE, foeMod);
       duelState.lines = ['TRADE', `-${yourDamage} -${foeDamage}`];
     }
   } else {
@@ -977,10 +995,14 @@ function drawDuelMoveRow(ctx, state) {
     if (index < options.length) {
       const option = options[index];
       drawIcon(ctx, typeIcon(option.type), x + Math.floor((cell - 2 - 8) / 2), y + 2, !selected);
-      // Pick markers per cell: ✱ affinity (power spelling), ↑ creature-type bonus.
+      // Pick markers per cell: ✱ affinity (power spelling); ↑ bonus / ↓ penalty
+      // from the creature-type matchup (bonus spelling).
       let marker = null;
       if (state.duel.scoring === 'power' && duelOptionAffinity(state, 0, option)) marker = '*';
-      else if (state.duel.scoring === 'bonus' && duelCreatureBonus(state, 0, option.type) > 1) marker = 'up';
+      else if (state.duel.scoring === 'bonus') {
+        const modifier = duelCreatureBonus(state, 0, option.type);
+        marker = modifier > 1 ? 'up' : modifier < 1 ? 'down' : null;
+      }
       if (marker) drawSymbol(ctx, marker, x + cell - 10, y + 2, !selected);
     } else {
       text(ctx, 'swap', x + Math.floor((cell - 2 - textWidth('swap')) / 2), y + 5, !selected);

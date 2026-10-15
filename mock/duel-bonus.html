@@ -49,11 +49,11 @@
   <h2>Matchup table (row attacks column)</h2>
   <div class="matrix" data-matrix="wheel" data-highlight="on"></div>
   <p class="note">Owner-preferred spelling: moves carry no power — the clash (your move vs their move) decides
-    win/lose/trade with the flat numbers (14 / 4 / 6), and a winning hit does ×1.5 (→ 21) when the move's type
-    beats the <em>opposing creature's type</em>; their hits get the same against you. No affinity, no power.
-    ↑ marks a boosting pick; the type badges on each sprite and the table highlight show the target. Pure
-    spelling without the bonus is <a href="duel-pure.html">E</a>; the power comparison is
-    <a href="duel.html">D</a>. Status/utility moves are excluded from this spike.</p>
+    win/lose/trade with the flat numbers (14 / 4 / 6), and the creature-type matchup scales the damage
+    you deal: ×1.5 when your move's type beats the <em>opposing creature's type</em>, ×0.5 when it loses
+    to it (marked ↑ / ↓ on the pick cells). Their hits are scaled the same way against your creature.
+    No affinity, no power. Pure spelling without the matchup is <a href="duel-pure.html">E</a>; the power
+    comparison is <a href="duel.html">D</a>. Status/utility moves are excluded from this spike.</p>
   <p class="note"><b>Centre strip:</b> R# = round, icon = the selected move's type, number = move power (0 = utility move). ↑ appears on the cell of a pick whose type beats the opposing creature's type (×1.5).</p>
   <p class="note"><b>Opponent AI:</b> personas (reader / frequency / anti-repeat / exploiter, plus random) are reused across trainer groups; pick yours in the controls. With no counter against its guess it picks uniformly at random — switching creatures is the real-game answer for that spot and is not in this 1v1 prototype. Teams are 3v3, rolled randomly from the seed when the battle starts (reroll the seed for new teams). Switching forfeits the round: the swap cell sends out the next living member and the other side lands a default win on the arrival (14, or 21 in the bonus spelling when their move beats it). The AI switches only when its active kit holds no counter for its guess and a living member does.</p>
   <p><a href="index.html">← mock index</a></p>
