@@ -184,7 +184,8 @@ function newMock(options = {}) {
     },
     duel: {
       kind: options.duelKind || 'wheel', // wheel | stances
-      scoring: options.scoring || 'power', // power | flat (flat = pure RPS)
+      scoring: options.scoring || 'power', // power | flat (pure) | bonus (recommended)
+      aiPersona: options.aiPersona || 'reader',
       stances: options.stances || 3,
       aiRead: options.aiRead ?? 45,
       explain: options.explain !== false,
@@ -223,6 +224,10 @@ function startBattle(state) {
       hp: [you.maxHp, foe.maxHp],
       picks: [null, null],
       last: [null, null],
+      history: [],
+      postReadCounts: {},
+      thisReadFired: false,
+      readFiredPrev: false,
       round: 1,
       cursor: 0,
       phase: 'choice', // choice | reveal | result
@@ -413,49 +418,78 @@ function duelOptionAffinity(state, side, option) {
     ? creature_.merged[0] === option.type
     : creature_.types.includes(option.type);
 }
+// AI personas: trainer groups reuse these. `memory` picks how the AI guesses
+// the player's hidden type; null readRate means the window's rate slider.
+// exploiter is for challenge areas only; random never reads.
+const DUEL_PERSONAS = {
+  random: { readRate: 0, memory: 'none' },
+  reader: { readRate: null, memory: 'last' },
+  frequency: { readRate: null, memory: 'frequency' },
+  'anti-repeat': { readRate: null, memory: 'antiRepeat' },
+  exploiter: { readRate: null, memory: 'exploiter' },
+};
+const duelPersona = (state) => DUEL_PERSONAS[state.duel.aiPersona] || DUEL_PERSONAS.reader;
+
+function modalOf(counts, rng) {
+  let best = [], bestCount = -1;
+  for (const [type, count] of Object.entries(counts)) {
+    if (count > bestCount) { best = [type]; bestCount = count; }
+    else if (count === bestCount) best.push(type);
+  }
+  return best.length ? best[rng.int(best.length)] : null;
+}
+
+function predictPlayerType(state) {
+  const persona = duelPersona(state);
+  const duelState = state.duelState;
+  const history = duelState.history || [];
+  if (!history.length) return null;
+  if (persona.memory === 'last') return history[history.length - 1];
+  if (persona.memory === 'exploiter') {
+    const post = duelState.postReadCounts || {};
+    const samples = Object.values(post).reduce((sum, count) => sum + count, 0);
+    if (samples >= 2) return modalOf(post, state.rng);
+  }
+  const counts = {};
+  history.forEach((type, index) => {
+    const discount = persona.memory === 'antiRepeat' && index === history.length - 1;
+    counts[type] = (counts[type] || 0) + (discount ? 0 : 1);
+  });
+  if (Object.values(counts).every((count) => count === 0)) return history[history.length - 1];
+  return modalOf(counts, state.rng);
+}
+
+// Option indexes whose type beats the guessed type (kind-aware relation).
+function counterOptions(state, targetType) {
+  if (duelKind(state) === 'stances') {
+    const order = stanceSet(state);
+    return order
+      .map((type, index) => ({ type, index }))
+      .filter((entry) => stanceBeats(order, entry.type, targetType))
+      .map((entry) => entry.index);
+  }
+  return duelOptions(state, 1)
+    .map((option, index) => ({ option, index }))
+    .filter((entry) => wheelBeats(entry.option.type, targetType))
+    .map((entry) => entry.index);
+}
+
 function aiDuelPick(state) {
   const duelState = state.duelState;
   duelState.aiRead = false;
-  const last = duelState.last[0];
-  const readRoll = last != null && state.rng.next() * 100 < state.duel.aiRead;
-  if (duelKind(state) === 'stances') {
-    const order = stanceSet(state);
-    if (readRoll) {
-      for (let index = 0; index < order.length; index++) {
-        if (stanceBeats(order, order[index], order[last])) {
-          duelState.aiRead = true;
-          return index;
-        }
-      }
-    }
-    return state.rng.int(order.length);
-  }
+  duelState.thisReadFired = false;
+  const persona = duelPersona(state);
   const options = duelOptions(state, 1);
-  if (readRoll) {
-    const counters = options
-      .map((option, index) => ({ option, index }))
-      .filter((entry) => wheelBeats(entry.option.type, last));
-    if (counters.length) {
-      duelState.aiRead = true;
-      if (state.duel.scoring === 'flat') return counters[state.rng.int(counters.length)].index;
-      counters.sort((a, b) => b.option.power - a.option.power);
-      return counters[0].index;
-    }
+  const rate = persona.readRate != null ? persona.readRate : state.duel.aiRead;
+  if (persona.memory === 'none' || state.rng.next() * 100 >= rate) {
+    return state.rng.int(options.length); // fallback: uniform, no boost preference
   }
-  if (state.duel.scoring === 'flat') return state.rng.int(options.length);
-  if (state.duel.scoring === 'bonus') {
-    // Prefer moves whose type beats the player's creature type.
-    const entries = options.map((option, index) => ({ option, index }));
-    const bonusOptions = entries.filter((entry) => duelCreatureBonus(state, 1, entry.option.type) > 1);
-    const pool = bonusOptions.length ? bonusOptions : entries;
-    return pool[state.rng.int(pool.length)].index;
-  }
-  let best = 0, bestScore = -1;
-  for (let index = 0; index < options.length; index++) {
-    const score = options[index].power + state.rng.next() * 5;
-    if (score > bestScore) { bestScore = score; best = index; }
-  }
-  return best;
+  const guessed = predictPlayerType(state);
+  const counters = guessed ? counterOptions(state, guessed) : [];
+  if (!counters.length) return state.rng.int(options.length);
+  duelState.aiRead = true;
+  duelState.thisReadFired = true;
+  return counters[state.rng.int(counters.length)];
 }
 function duelPick(state, index) {
   const duelState = state.duelState;
@@ -503,6 +537,7 @@ function duelResolve(state) {
     duelState.hp[0] = Math.max(0, duelState.hp[0] - foeDamage);
     duelState.hp[1] = Math.max(0, duelState.hp[1] - yourDamage);
     duelState.last = [duelState.picks[0], duelState.picks[1]];
+    recordPlayerPick(state, yourStance);
     duelState.phase = 'result';
     duelState.timer = 1300;
     return;
@@ -552,9 +587,22 @@ function duelResolve(state) {
   duelState.hp[0] = Math.max(0, duelState.hp[0] - foeDamage);
   duelState.hp[1] = Math.max(0, duelState.hp[1] - yourDamage);
   duelState.last = [yourMove.type, foeMove.type];
+  recordPlayerPick(state, yourMove.type);
   duelState.phase = 'result';
   duelState.timer = 1300;
 }
+// Player history for the persona models: last 8 revealed types plus counts of
+// picks made after an AI read fired (exploiter input).
+function recordPlayerPick(state, type) {
+  const duelState = state.duelState;
+  duelState.history = (duelState.history || []).concat(type).slice(-8);
+  if (duelState.readFiredPrev) {
+    duelState.postReadCounts = duelState.postReadCounts || {};
+    duelState.postReadCounts[type] = (duelState.postReadCounts[type] || 0) + 1;
+  }
+  duelState.readFiredPrev = !!duelState.thisReadFired;
+}
+
 function duelUpdate(state, dt) {
   const duelState = state.duelState;
   if (duelState.phase === 'reveal') {
@@ -925,6 +973,7 @@ function boot() {
     if (state.mode === 'duel') state.scene = 'setup';
     syncControls();
   });
+  wire('duel-ai', 'change', (event) => { state.duel.aiPersona = event.target.value; syncControls(); });
   wire('duel-read', 'input', (event) => { state.duel.aiRead = Number(event.target.value); syncControls(); });
   wire('duel-explain', 'change', (event) => { state.duel.explain = event.target.checked; });
   wire('scale', 'change', (event) => applyScale(Number(event.target.value)));
@@ -942,6 +991,7 @@ function boot() {
     set('trim-press', (element) => { element.checked = state.trim.pressTurn; });
     set('trim-foe', (element) => { element.checked = state.trim.foeNumbers; });
     set('duel-stances', (element) => { element.value = String(state.duel.stances); });
+    set('duel-ai', (element) => { element.value = state.duel.aiPersona; });
     set('duel-read', (element) => { element.value = String(state.duel.aiRead); });
     set('duel-explain', (element) => { element.checked = state.duel.explain; });
     set('duel-read-value', (element) => { element.textContent = `${state.duel.aiRead}%`; });
@@ -952,8 +1002,8 @@ function boot() {
       element.textContent = [
         state.mode === 'duel' ? `duel ${state.duel.kind}` : state.mode,
         state.mode === 'trim' ? `${state.trim.typeMode} arrows:${state.trim.arrows ? 'on' : 'off'} press:${state.trim.pressTurn ? 'on' : 'off'}` : '',
-        state.mode === 'duel' && state.duel.kind === 'stances' ? `${state.duel.stances} stances ai-read:${state.duel.aiRead}%` : '',
-        state.mode === 'duel' && state.duel.kind === 'wheel' ? `duel wheel ${state.duel.scoring} ai-read:${state.duel.aiRead}%` : '',
+        state.mode === 'duel' && state.duel.kind === 'stances' ? `${state.duel.stances} stances ai:${state.duel.aiPersona} ${state.duel.aiRead}%` : '',
+        state.mode === 'duel' && state.duel.kind === 'wheel' ? `duel wheel ${state.duel.scoring} ai:${state.duel.aiPersona} ${state.duel.aiRead}%` : '',
         `you:${you.name}[${count(you)}m] foe:${foe.name}[${count(foe)}m]`,
       ].filter(Boolean).join(' · ');
     });
@@ -982,6 +1032,7 @@ if (typeof module !== 'undefined' && module.exports) {
     applyDamageModifier, modifierFor, arrowFor, moveTypeFor,
     duelMoves, wheelValue, wheelBeats, hasAffinity, duelCreatureBonus,
     duelKind, stanceSet, stanceBeats, duelOptions, duelOptionAffinity,
+    DUEL_PERSONAS, duelPersona, predictPlayerType, counterOptions, recordPlayerPick,
     creature, moveOf, activeMode, typesOf, drawIcon, text, glyphRows,
     ICONS, MERGED_ICONS, SYMBOLS, DATA, W, H, SPRITE_BASE, isSpikeMove,
   };

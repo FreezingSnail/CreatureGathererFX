@@ -23,6 +23,15 @@
   </table>
   <div id="controls">
     <label><input type="checkbox" id="annotate" checked> annotate</label>
+<label>AI persona
+  <select id="duel-ai">
+    <option value="random">random</option>
+    <option value="reader" selected>reader (counters your last pick)</option>
+    <option value="frequency">frequency (counters your most-used)</option>
+    <option value="anti-repeat">anti-repeat (expects you to rotate)</option>
+    <option value="exploiter">exploiter (challenge areas)</option>
+  </select>
+</label>
     <label>AI read <input type="range" id="duel-read" min="0" max="100" value="45"> <span id="duel-read-value">45%</span></label>
     <label><input type="checkbox" id="duel-explain" checked> AI READ tag</label>
     <label>scale
@@ -46,6 +55,7 @@
     spelling without the bonus is <a href="duel-pure.html">E</a>; the power comparison is
     <a href="duel.html">D</a>. Status/utility moves are excluded from this spike.</p>
   <p class="note"><b>Centre strip:</b> R# = round, icon = the selected move's type, number = move power (0 = utility move). ↑ appears on the cell of a pick whose type beats the opposing creature's type (×1.5).</p>
+  <p class="note"><b>Opponent AI:</b> personas (reader / frequency / anti-repeat / exploiter, plus random) are reused across trainer groups; pick yours in the controls. With no counter against its guess it picks uniformly at random — switching creatures is the real-game answer for that spot and is not in this 1v1 prototype.</p>
   <p><a href="index.html">← mock index</a></p>
 </div>
 <script src="data.js"></script>

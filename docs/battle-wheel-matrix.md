@@ -78,8 +78,21 @@ data test re-runs the proof over all 64 creatures.
 - Type badges (white-framed chips) sit on each creature sprite in every window, so both creatures'
   types are visible while choosing.
 - All windows share the web, option source and seed, so they can run side by side.
-- The AI counters your last revealed type at the read-rate slider when a counter exists in its own moves
-  (power and bonus spellings prefer the strongest/effective counter).
+- The AI picks at the same moment you commit and only sees public information: your badges,
+  move types and revealed history — never your current pick.
+- **Personas** (reused across groups of trainers; selectable in every duel window):
+  `random`, `reader` (counters your last revealed type), `frequency` (your most-used),
+  `anti-repeat` (expects you to rotate — discounts your last pick), `exploiter` (counts your picks
+  made after it read you; challenge areas only). The read-rate slider is the chance the AI acts on
+  its model; fallback when no counter exists is uniform random — no boost/utility moves exist in
+  this prototype.
+- `AI READ` tag remains a debug tell (checkbox); ship decision open.
+- Read-rate spike (`node tools/battle-duel-spike.mjs --battles 120`): vs a random player, `reader`
+  at 0→100% moves player wins 57%→38%; a full-rate `reader` is exploited by predictable rotation
+  (anti-repeat policy: 33%→100% player wins), so persona defaults should sit below ~75% until
+  personas mix in fallbacks.
+- Switching is the real-game answer to "no counter available"; this 1v1 prototype documents it as
+  the next structural mechanic rather than simulating it.
 - Uses are not tracked in duel mode yet.
 
 ## Open questions
