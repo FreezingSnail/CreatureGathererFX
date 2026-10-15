@@ -67,12 +67,14 @@ data test re-runs the proof over all 64 creatures.
 - Both sides pick one of their own creature's moves, hidden; 550 ms reveal.
 - **Power spelling** (`mock/duel.html`): win = full hit scaled by the winning move's power
   (4 + 1.2 × power, ×1.5 affinity), loser chips 2 + 0.25 × own power; neutral or mirror = trade chip.
-  A ✱ next to the power marks an affinity (STAB) pick.
+  A ✱ next to the power marks an affinity (STAB) pick. Kept for comparison; the owner's direction is
+  no-power.
 - **Pure-RPS spelling** (`mock/duel-pure.html`): power, stats and affinity are ignored; the relation
   alone scores — win 14, chip 4, trade 6 both.
-- **Creature-bonus spelling** (`mock/duel-bonus.html`): power still scales damage and affinity is
-  ignored; instead a hit is ×1.5 when the move's type beats the *opposing creature's type* (either
-  side, marked ↑ next to the power). This is the matchup-against-the-target reading of the web.
+- **Creature-bonus spelling** (`mock/duel-bonus.html`) — recommended direction: moves carry no power
+  (flat 14 / 4 / 6), and a winning hit is ×1.5 (→ 21) when the move's type beats the *opposing
+  creature's type*, mirrored for the foe. No affinity. ↑ marks boosting picks; result lines read
+  BONUS WIN / BONUS LOSE when it fired.
 - Type badges (white-framed chips) sit on each creature sprite in every window, so both creatures'
   types are visible while choosing.
 - All windows share the web, option source and seed, so they can run side by side.

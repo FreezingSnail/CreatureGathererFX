@@ -443,12 +443,16 @@ function aiDuelPick(state) {
     }
   }
   if (state.duel.scoring === 'flat') return state.rng.int(options.length);
-  const effective = (option) => (state.duel.scoring === 'bonus'
-    ? option.power * duelCreatureBonus(state, 1, option.type)
-    : option.power);
+  if (state.duel.scoring === 'bonus') {
+    // Prefer moves whose type beats the player's creature type.
+    const entries = options.map((option, index) => ({ option, index }));
+    const bonusOptions = entries.filter((entry) => duelCreatureBonus(state, 1, entry.option.type) > 1);
+    const pool = bonusOptions.length ? bonusOptions : entries;
+    return pool[state.rng.int(pool.length)].index;
+  }
   let best = 0, bestScore = -1;
   for (let index = 0; index < options.length; index++) {
-    const score = effective(options[index]) + state.rng.next() * 5;
+    const score = options[index].power + state.rng.next() * 5;
     if (score > bestScore) { bestScore = score; best = index; }
   }
   return best;
@@ -459,7 +463,9 @@ function duelPick(state, index) {
   duelState.phase = 'reveal';
   duelState.timer = 550;
 }
-// Pure-RPS scoring: the relation alone decides, no power and no affinity.
+// Flat scoring: relation only, fixed damage, no power or affinity. Two
+// spellings ride on it — pure RPS (flat) and RPS plus the creature-type bonus
+// on winning hits (bonus).
 const FLAT_WIN = 14, FLAT_CHIP = 4, FLAT_TRADE = 6;
 
 // Creature-type bonus: your move's type against the opposing creature's types.
@@ -506,27 +512,28 @@ function duelResolve(state) {
   const foeMove = theirs[duelState.picks[1]] || theirs[0];
   const relation = wheelValue(yourMove.type, foeMove.type);
   let yourDamage = 0, foeDamage = 0;
-  if (state.duel.scoring === 'flat') {
-    // Pure RPS: relation only, fixed damage, no power or affinity.
+  if (state.duel.scoring === 'flat' || state.duel.scoring === 'bonus') {
+    // Flat numbers: relation decides. In the bonus spelling a winning hit is
+    // x1.5 when the move type beats the opposing creature's type.
+    const hit = (side, move) => (state.duel.scoring === 'bonus' && duelCreatureBonus(state, side, move.type) > 1
+      ? 1.5 : 1);
     if (relation === 2) {
-      yourDamage = FLAT_WIN;
+      yourDamage = Math.round(FLAT_WIN * hit(0, yourMove));
       foeDamage = FLAT_CHIP;
-      duelState.lines = ['RPS WIN', `-${yourDamage} -${foeDamage}`];
+      duelState.lines = [yourDamage > FLAT_WIN ? 'BONUS WIN' : 'RPS WIN', `-${yourDamage} -${foeDamage}`];
     } else if (relation === 0.5) {
-      foeDamage = FLAT_WIN;
+      foeDamage = Math.round(FLAT_WIN * hit(1, foeMove));
       yourDamage = FLAT_CHIP;
-      duelState.lines = ['RPS LOSE', `-${yourDamage} -${foeDamage}`];
+      duelState.lines = [foeDamage > FLAT_WIN ? 'BONUS LOSE' : 'RPS LOSE', `-${yourDamage} -${foeDamage}`];
     } else {
       yourDamage = FLAT_TRADE;
       foeDamage = FLAT_TRADE;
       duelState.lines = ['TRADE', `-${yourDamage} -${foeDamage}`];
     }
   } else {
-    const scoring = state.duel.scoring;
-    const bonus = (side, move) => (scoring === 'bonus' ? duelCreatureBonus(state, side, move.type) : 1);
-    const stab = (side, move) => (scoring === 'power' && hasAffinity(state, side, move) ? 1.5 : 1);
-    const yourPower = (4 + yourMove.power * 1.2) * stab(0, yourMove) * bonus(0, yourMove);
-    const foePower = (4 + foeMove.power * 1.2) * stab(1, foeMove) * bonus(1, foeMove);
+    const stab = (side, move) => (hasAffinity(state, side, move) ? 1.5 : 1);
+    const yourPower = (4 + yourMove.power * 1.2) * stab(0, yourMove);
+    const foePower = (4 + foeMove.power * 1.2) * stab(1, foeMove);
     const chip = (power) => Math.max(1, Math.round((2 + power * 0.25) * roll()));
     if (relation === 2) {
       yourDamage = Math.max(1, Math.round(yourPower * roll()));
@@ -827,7 +834,7 @@ function drawDuel(ctx, state) {
     const option = options[Math.min(duelState.cursor, options.length - 1)];
     if (option) {
       drawIcon(ctx, typeIcon(option.type), 60, 40);
-      if (state.duel.scoring !== 'flat' && option.power != null) {
+      if (state.duel.scoring === 'power' && option.power != null) {
         const label = num(option.power);
         text(ctx, label, 80 - textWidth(label), 41, true);
       }

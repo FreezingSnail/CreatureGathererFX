@@ -332,32 +332,50 @@ test('pure RPS scoring ignores power and affinity with fixed damage', () => {
   assert.equal(power.duelState.lines[0], 'WHEEL WIN');
 });
 
-test('bonus scoring applies the creature-type matchup instead of affinity', () => {
+test('bonus spelling: flat numbers, x1.5 only on a winning creature-matchup hit', () => {
   const index = (name) => M.DATA.creatures.findIndex((entry) => entry.name === name);
-  const run = (scoring, foeIndex, pick) => {
-    const state = M.newMock({ mode: 'duel', scoring, you: 10, foe: foeIndex, seed: 3 });
+  const run = (scoring, foeIndex, pick, youIndex = index('ember')) => {
+    const state = M.newMock({ mode: 'duel', scoring, you: youIndex, foe: foeIndex, seed: 3 });
     M.startBattle(state);
-    const before = state.duelState.hp[1];
+    const beforeFoe = state.duelState.hp[1], beforeYou = state.duelState.hp[0];
     state.duelState.picks = pick;
     M.duelResolve(state);
-    assert.equal(state.duelState.lines[0], 'WHEEL WIN');
-    return before - state.duelState.hp[1];
+    return {
+      line: state.duelState.lines[0],
+      dealt: beforeFoe - state.duelState.hp[1],
+      taken: beforeYou - state.duelState.hp[0],
+    };
   };
-  // hedge (plant) with root: fire beats plant -> creature bonus applies.
-  // Power mode gets x1.5 from STAB, bonus mode from the creature matchup: equal damage.
-  const powerHedge = run('power', index('hedge'), [0, 0]);
+  // fire beats plant (hedge creature): bonus win = round(14 * 1.5) = 21, chip 4.
   const bonusHedge = run('bonus', index('hedge'), [0, 0]);
-  assert.ok(Math.abs(powerHedge - bonusHedge) <= 1,
-    `hedge: creature bonus replaces STAB (${powerHedge} vs ${bonusHedge})`);
-  // zip (lightning) with smite (spirit): fire beats spirit (win) but not lightning (no creature bonus).
-  // Power mode keeps STAB; bonus mode has neither. Damage ratio ~1.5.
-  const powerZip = run('power', index('zip'), [0, 1]);
-  const bonusZip = run('bonus', index('zip'), [0, 1]);
-  assert.ok(powerZip > bonusZip, `STAB only under power (${powerZip} vs ${bonusZip})`);
-  assert.ok(Math.abs(powerZip - Math.round(bonusZip * 1.5)) <= 1,
-    `creature-neutral bonus = power / 1.5 (${powerZip} vs ${bonusZip})`);
-  // Helper reports the multiplier the UI marks with the up arrow.
-  const state = M.newMock({ mode: 'duel', scoring: 'bonus', you: 10, foe: index('hedge'), seed: 1 });
+  assert.equal(bonusHedge.line, 'BONUS WIN');
+  assert.equal(bonusHedge.dealt, 21);
+  assert.equal(bonusHedge.taken, 4);
+  // fire vs lightning creature (zip) with a spirit move: clash win, no creature bonus -> 14.
+  const plainZip = run('bonus', index('zip'), [0, 1]);
+  assert.equal(plainZip.line, 'RPS WIN');
+  assert.equal(plainZip.dealt, 14);
+  assert.equal(plainZip.taken, 4);
+  // Pure spelling stays 14 regardless, on the same matchup.
+  const pureHedge = run('flat', index('hedge'), [0, 0]);
+  assert.equal(pureHedge.line, 'RPS WIN');
+  assert.equal(pureHedge.dealt, 14);
+  // Damage ignores move power entirely: stoke (p6) and burn (p8) land the same numbers.
+  const stoke = run('bonus', index('hedge'), [0, 0]);
+  const burn = run('bonus', index('hedge'), [1, 0]);
+  assert.equal(stoke.dealt, burn.dealt);
+  // Trade stays 6 both, no bonus.
+  const trade = run('bonus', index('hedge'), [0, 0], index('hedge'));
+  assert.equal(trade.line, 'TRADE');
+  assert.equal(trade.dealt, 6);
+  assert.equal(trade.taken, 6);
+  // Foe-side bonus mirrors: their winning hit is x1.5 when their move beats your creature type.
+  const foeBonus = run('bonus', index('zip'), [0, 0], index('squid')); // zap (lightning) > splash (water)
+  assert.equal(foeBonus.line, 'BONUS LOSE');
+  assert.equal(foeBonus.dealt, 4);
+  assert.equal(foeBonus.taken, 21);
+  // Helper still reports the multiplier the cell marker uses.
+  const state = M.newMock({ mode: 'duel', scoring: 'bonus', you: index('ember'), foe: index('hedge'), seed: 1 });
   M.startBattle(state);
   assert.equal(M.duelCreatureBonus(state, 0, 'fire'), 1.5);
   state.foeIndex = index('zip');
