@@ -1,0 +1,22 @@
+case,source_boundary,diagnostic_replacement,build_status,flash_bytes,static_ram_bytes,bytes_released
+ai_damage_scorer_best_move,src/engine/battle/Ai.cpp,"chooseDamageAction uses first legal move instead of scanning for maximum damage",PASS,29620,1842,170
+ai_utility_setup_heal_policy,src/engine/battle/Ai.cpp,"chooseNonSwitchAction returns damage choice; no healing or setup selection",PASS,29576,1842,214
+ai_tactical_switch_risk_policy,src/engine/battle/Ai.cpp,"chooseAction returns preferred move without threatened-switch evaluation",PASS,29406,1842,384
+priority_speed_order,src/engine/battle/BattleSession.cpp,"first actor fixed to Player instead of action priority and staged-speed comparison",PASS,29512,1842,278
+type_chart_stab_resistance,src/engine/battle/Damage.cpp,"damage formula uses neutral modifier instead of matchup/status/STAB modifier; separate presenter lookup remains",MEASURED_OVER_BUDGET,29768,1842,22
+damage_stat_stages,src/engine/battle/Damage.cpp,"damage formula uses raw attack and defense terms without their stat stages",MEASURED_OVER_BUDGET,29712,1842,78
+physical_special_stat_selection,src/engine/battle/Damage.cpp,"damage formula forces physical attack and defense stats",MEASURED_OVER_BUDGET,29752,1842,38
+complete_computeDamage_core,src/engine/battle/Damage.cpp,"entire computeDamage entrypoint replaced with a zero-damage return; AI/attack selection and presentation remain linked",PASS,29014,1824,776
+move_effect_application,src/engine/battle/Resolve.cpp,"post-hit authored-effect loop removed; end-turn ticking remains",PASS,29128,1842,662
+status_action_gates,src/engine/battle/Resolve.cpp,"attack and gather gateTurn calls replaced with TurnGate::None",PASS,29550,1842,240
+end_turn_resolution_ticks_and_terminal_handling,src/engine/battle/BattleSession.cpp,"resolveEndTurn replaced by an empty EndTurn result, removing ticks and terminal handling",PASS,29356,1842,434
+move_use_consumption_limits,src/engine/battle/Resolve.cpp,"move-use spending and resolver exhaustion check removed; menu availability checks remain",MEASURED_OVER_BUDGET,29706,1842,84
+gather_progress_action,src/engine/battle/Resolve.cpp,"resolveGather replaced with a refused Gather result",PASS,29654,1842,136
+escape_terminal_action,src/engine/battle/Resolve.cpp,"Escape action always returns a refused result",MEASURED_OVER_BUDGET,29774,1842,16
+switch_apply_data_rebuild,src/engine/battle/BattleSetup.cpp,"applySwitch replaced with a refused Switch result; wild/trainer setup remains",PASS,28596,1842,1194
+battle_menu_input_router,src/engine/battle/BattleFlow.cpp,"menu.run replaced with a fixed SelectMove intent; battle menu drawing remains",PASS,28398,1830,1392
+battle_menu_draw,CreatureGathererFX.ino,"menu.printMenu(battleSession().view()) call removed",PASS,28800,1838,990
+battle_scene_sprite_and_hud_render,CreatureGathererFX.ino,"drawScene call removed, disconnecting creature sprites and HP bars",PASS,28848,1842,942
+battle_feedback_caption_render,src/engine/battle/BattlePresenter.cpp,"BattlePresenter::draw replaced by an empty method; timing and state transitions remain",PASS,28638,1842,1152
+wild_trainer_party_setup,src/engine/battle/BattleSession.cpp,"beginWild and beginTrainer setup calls replaced by an over-state",PASS,29210,1842,580
+whole_battle_family,CreatureGathererFX.ino; src/engine/world/StepEvent.cpp,"battle update/render/menu dispatch and encounter-to-battle startup removed; resulting battle runtime unlinks",PASS,11876,1784,17914

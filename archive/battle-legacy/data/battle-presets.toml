@@ -1,0 +1,80 @@
+[[preset]]
+name = "opening"
+trainer_species = ["SquibbleSnail", "SkitterCrab", "squid"]
+
+[[preset.player]]
+species = "SquibbleSnail"
+level = 31
+moves = ["breeze", "bellow", "none", "none"]
+
+[[preset.player]]
+species = "SkitterCrab"
+level = 31
+moves = ["dirtburst", "slipfall", "none", "none"]
+
+[[preset.player]]
+species = "squid"
+level = 31
+moves = ["splash", "squirt", "none", "none"]
+
+[[preset]]
+name = "switch_drill"
+trainer_species = ["SquableSnail", "ScatterCrab", "bigsquid"]
+
+[[preset.player]]
+species = "SquableSnail"
+level = 31
+moves = ["breeze", "bellow", "torrent", "none"]
+
+[[preset.player]]
+species = "ScatterCrab"
+level = 31
+moves = ["dirtburst", "slipfall", "dirtfall", "none"]
+
+[[preset.player]]
+species = "bigsquid"
+level = 31
+moves = ["splash", "squirt", "soak", "none"]
+
+[[preset]]
+name = "utility"
+trainer_species = ["SquableSnail", "ScatterCrab", "bigsquid"]
+
+[[preset.player]]
+species = "bell"
+level = 31
+moves = ["wisper", "Sharpen", "none", "none"]
+
+[[preset.player]]
+species = "rock"
+level = 31
+moves = ["dirtburst", "wisper", "Ironbody", "slipfall"]
+
+[[preset.player]]
+species = "hedge"
+level = 31
+moves = ["root", "rejuvinate", "pollen", "none"]
+
+# First-beta starter roster (jp8.11.2): species 0/3/6 at level 3, canonical
+# four authored moves each drawn from their data/movelists.csv masks and
+# already used by these species in creatures.json. Consumed by ordinary new
+# games (jp8.11.24); the trainer triple mirrors the player roster so the
+# preset resolves against the canonical opponent rows.
+[[preset]]
+name = "beta"
+trainer_species = ["SquibbleSnail", "SkitterCrab", "squid"]
+
+[[preset.player]]
+species = "SquibbleSnail"
+level = 3
+moves = ["breeze", "bellow", "torrent", "blow"]
+
+[[preset.player]]
+species = "SkitterCrab"
+level = 3
+moves = ["dirtburst", "slipfall", "dirtfall", "shatter"]
+
+[[preset.player]]
+species = "squid"
+level = 3
+moves = ["splash", "squirt", "soak", "current"]

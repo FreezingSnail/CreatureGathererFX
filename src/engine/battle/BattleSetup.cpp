@@ -5,6 +5,9 @@
 #include "../../lib/ReadData.hpp"
 #include "../../lib/FxReadCounter.hpp"
 #include "../../player/Player.hpp"
+#ifdef CGFX_DUEL_BATTLE
+#include "DuelKernel.hpp"
+#endif
 
 extern Player player;
 
@@ -16,6 +19,22 @@ constexpr uint8_t EMPTY_MOVE = 255;
 constexpr uint8_t SPECIES_COUNT = 64;
 #else
 constexpr uint8_t SPECIES_COUNT = 32;
+#endif
+
+#ifdef CGFX_DUEL_BATTLE
+// Folded 5-type attack mask of a creature's usable authored attack slots. Stored
+// at setup transition (the only place a bench member's moves are resident) and
+// aliased into the otherwise-unused moveUsesSpent storage in flag-ON builds, so
+// the AI can pick a bench counter with no FX read during Choice.
+uint8_t duelAttackMask(const Creature &creature)
+{
+    uint8_t mask = 0;
+    for (uint8_t slot = 0; slot < 4; ++slot) {
+        const uint8_t type = creature.moveList[slot].getMoveType();
+        if (type < 8) mask |= static_cast<uint8_t>(1u << duel::foldType(type));
+    }
+    return mask;
+}
 #endif
 
 void clearCombatant(Combatant &combatant)
@@ -43,9 +62,11 @@ void clearCombatant(Combatant &combatant)
 void clearState(BattleState &state)
 {
     resetMoveUses(state);
+#ifndef CGFX_DUEL_BATTLE
     for (uint8_t side = 0; side < 2; ++side)
         for (uint8_t slot = 0; slot < PARTY_SIZE; ++slot)
             state.partyModifiers[side][slot] = 0;
+#endif
     for (uint8_t side = 0; side < 2; ++side) {
         clearCombatant(state.active[side]);
         for (uint8_t slot = 0; slot < PARTY_SIZE - 1; ++slot) {
@@ -169,6 +190,11 @@ bool initializePlayer(BattleState &state)
             creature.statlist.defense;
         state.bench[static_cast<uint8_t>(Side::Player)][benchSlot].specialDefense =
             creature.statlist.spcDef;
+#ifdef CGFX_DUEL_BATTLE
+        // Bench attack-type mask, indexed by original slot in flag-ON builds.
+        state.moveUsesSpent[static_cast<uint8_t>(Side::Player)][slot] =
+            duelAttackMask(creature);
+#endif
         ++benchSlot;
     }
     return true;
@@ -232,6 +258,11 @@ uint8_t fillTrainer(BattleState &state, const OpponentSeed &seed, uint8_t count)
         cached.types = creature.types;
         cached.defense = creature.statlist.defense;
         cached.specialDefense = creature.statlist.spcDef;
+#ifdef CGFX_DUEL_BATTLE
+        // Bench attack-type mask, indexed by original slot in flag-ON builds.
+        state.moveUsesSpent[static_cast<uint8_t>(Side::Opponent)][slot] =
+            duelAttackMask(creature);
+#endif
     }
     return reads;
 }
@@ -439,9 +470,11 @@ bool applySwitch(BattleState &state, Side side, uint8_t originalSlot,
     }
     FxReadCounter::transitionExact(reads);
 
+#ifndef CGFX_DUEL_BATTLE
     state.partyModifiers[sideIndex][state.activeSlot[sideIndex]] =
         state.active[sideIndex].statMods.modifiers;
     incoming.statMods.modifiers = state.partyModifiers[sideIndex][originalSlot];
+#endif
     state.active[sideIndex] = incoming;
     state.activeSlot[sideIndex] = originalSlot;
     const uint8_t outgoingBenchSlot = activeSlot < originalSlot

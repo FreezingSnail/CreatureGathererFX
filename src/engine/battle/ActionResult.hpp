@@ -13,7 +13,10 @@ namespace battle {
 enum class ResultKind : uint8_t {
     None, Attack, Switch, Gather, Escape, Skip, EndTurn, UseItem
 };
-enum class Outcome : uint8_t { None, Win, Lose, Escaped, Gathered, Fled };
+// Draw is appended (not inserted) so existing serialized outcome values keep
+// their numeric identity. It is the duel's simultaneous-KO result; it grants
+// no victory and uses defeat recovery like a loss.
+enum class Outcome : uint8_t { None, Win, Lose, Escaped, Gathered, Fled, Draw };
 
 enum : uint8_t {
     SELF_HIT = 1u << 0, REFUSED = 1u << 1, STATUS_SKIPPED = 1u << 2,

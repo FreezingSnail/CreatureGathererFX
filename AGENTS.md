@@ -216,6 +216,42 @@ bd close <id>         # Complete work
 bd dolt push          # Push beads data to remote
 ```
 
+## Approval Gates and Dependencies
+
+Use the documented [Beads gates workflow](https://github.com/gastownhall/beads/blob/main/docs/workflows/gates.md)
+for work awaiting an owner's decision. Do not use `deferred`, `--defer`, or a far-future date
+to hold work for approval, hide it from the ready queue, or represent a dependency.
+Deferral means deliberate postponement; use it only when the owner explicitly requests postponement.
+
+- **Awaiting approval:** create a `human` gate and attach every issue covered by that decision.
+  Record the concrete plan/result and the approval required in the gate's reason.
+- **Awaiting other work:** add a blocking dependency with `bd dep add <work> <prerequisite>`.
+  Parent-child relationships describe hierarchy; they do not replace sequencing dependencies.
+- Keep waiting tasks `open` with their blocking edges; inspect `bd blocked` and `bd gate show`.
+  Do not claim or implement work while its approval gate is unresolved, even if a queue view suggests it.
+- Resolve a human gate only after the owner explicitly approves its stated condition. A correction,
+  status question, elapsed time, or approval of an earlier phase does not satisfy a later gate.
+- A gate with `--type human` represents a decision. It is distinct from the `human` issue label
+  described below, which reserves implementation authorship for the owner.
+
+```bash
+bd gate create --type human --blocks <work> --reason 'Owner approval of <plan/result>'
+bd gate add-waiter <gate> <other-work>  # register another waiter
+bd dep add <other-work> <gate>         # ensure a blocking edge exists
+bd dep add <later-work> <earlier-work>
+bd gate show <gate>
+bd blocked
+# Only after explicit approval of this gate's condition:
+bd gate resolve <gate> --reason 'Owner approved <plan/result> in this session'
+```
+
+When correcting an approval hold that was mistakenly deferred, create its gate/dependencies first,
+then run `bd undefer <work>` and `bd update <work> --defer ''` to clear both status and any scheduled
+date. Verify the task remains blocked and is absent from `bd ready`; update its current notes and
+planning documents to match. Do not resolve the approval gate as part of that correction.
+Check actual dependencies: in the installed CLI, `gate add-waiter` records waiters without adding
+their blocking edges. Use `bd dep add` for those edges explicitly.
+
 ## Human-Only Beads
 
 Beads labeled **`human`** are implemented by hand by the repository owner. The plan in the bead is

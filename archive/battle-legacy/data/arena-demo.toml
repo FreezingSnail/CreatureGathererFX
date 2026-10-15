@@ -1,0 +1,83 @@
+label_font = "../images/ArduFont_5x6.png"
+
+[[player_team]]
+key = "blitz"
+label = "Blitz"
+
+[[player_team.members]]
+species = "ScrambleSnail"
+level = 31
+moves = ["breeze", "bellow", "torrent", "seedfall"]
+
+[[player_team.members]]
+species = "ScatterCrab"
+level = 31
+moves = ["dirtburst", "slipfall", "dirtfall", "none"]
+
+[[player_team.members]]
+species = "bigsquid"
+level = 31
+moves = ["splash", "squirt", "soak", "none"]
+
+[[player_team]]
+key = "bulwark"
+label = "Bulwark"
+
+[[player_team.members]]
+species = "rock"
+level = 31
+moves = ["dirtburst", "wisper", "Ironbody", "slipfall"]
+
+[[player_team.members]]
+species = "ShatterCrab"
+level = 31
+moves = ["slipfall", "bolt", "plasma", "dirtburst"]
+
+[[player_team.members]]
+species = "item2"
+level = 31
+moves = ["wisper", "burst", "splash", "slam"]
+
+[[player_team]]
+key = "utility"
+label = "Utility"
+
+[[player_team.members]]
+species = "bell"
+level = 31
+moves = ["wisper", "Sharpen", "none", "none"]
+
+[[player_team.members]]
+species = "hedge"
+level = 31
+moves = ["root", "rejuvinate", "pollen", "none"]
+
+[[player_team.members]]
+species = "cloud"
+level = 31
+moves = ["blow", "zap", "sweep", "torrent"]
+
+[[opponent_team]]
+key = "starter"
+label = "Starter"
+trainer_species = ["SkitterCrab", "squid", "SquibbleSnail"]
+
+[[opponent_team]]
+key = "speed"
+label = "Speed"
+trainer_species = ["skimray", "waggleworm", "flitfly"]
+
+[[opponent_team]]
+key = "fortress"
+label = "Fortress"
+trainer_species = ["rock", "ShatterCrab", "BiggestSquid"]
+
+[[opponent_team]]
+key = "tricks"
+label = "Tricks"
+trainer_species = ["bell", "hedge", "cloud"]
+
+[[opponent_team]]
+key = "champion"
+label = "Champion"
+trainer_species = ["ardu", "dragon", "skull"]

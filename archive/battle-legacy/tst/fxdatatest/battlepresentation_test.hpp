@@ -1,0 +1,703 @@
+#pragma once
+
+#include "fxtest.hpp"
+#include "battlepresentation_fixture.hpp"
+#include "src/engine/draw.h"
+#include "src/lib/FxReadCounter.hpp"
+
+namespace battle_presentation_test_detail {
+extern "C" uint8_t __bss_end;
+const char captionRegressionText[] PROGMEM =
+    "\0hits itself\0could not act\0cannot do that\0did nothing\0switching\0"
+    "rose\0fell\0strengthened\0weakened\0lost hp\0healed hp\0gathered\0"
+    "fled\0no effect\0status applied";
+const char moveRegressionNames[] PROGMEM = "smite\0Sharpen\0deepthought\0Deluge";
+const char renamedMoveNames[] PROGMEM = "dirtburst\0pollenburst\0burst\0elderBurst";
+
+inline bool pixel(uint8_t x, uint8_t y) {
+    return (arduboy.getBuffer()[x + static_cast<uint16_t>(y / 8) * 128]
+            & (1u << (y % 8))) != 0;
+}
+
+inline uint16_t signature(uint8_t x, uint8_t firstPage, uint8_t width, uint8_t pages) {
+    uint16_t hash = 1;
+    for (uint8_t page = firstPage; page < firstPage + pages; ++page)
+        for (uint8_t col = x; col < x + width; ++col)
+            hash = static_cast<uint16_t>(hash * 33u + arduboy.getBuffer()[page * 128u + col]);
+    return hash;
+}
+
+inline bool hasInk(uint8_t x, uint8_t y, uint8_t width, uint8_t height, bool ink) {
+    for (uint8_t row = y; row < y + height; ++row)
+        for (uint8_t col = x; col < x + width; ++col)
+            if (pixel(col, row) == ink) return true;
+    return false;
+}
+
+// Compare every displayed pixel to independent font glyphs, rather than
+// redrawing through the name renderer (which would repeat its stride bug).
+inline bool moveLabelMatches(uint8_t slot, const char *text, bool selected) {
+    const uint8_t x = (slot & 1u) ? 68 : 4;
+    const uint8_t y = slot < 2 ? 48 : 56;
+    uint8_t column = 0;
+    uint8_t character = ' '; // The string asset includes a leading space.
+    do {
+        for (uint8_t c = 0; c < 5; ++c) {
+            uint8_t glyph = 0;
+            if (character != ' ')
+                FX::readDataBytes(ArduFontTrimmed +
+                    static_cast<uint24_t>(character - '0') * 5 + c, &glyph, 1);
+            for (uint8_t row = 0; row < 8; ++row) {
+                const bool ink = (glyph & (1u << row)) != 0;
+                if (pixel(x + column, y + row) != (selected ? ink : !ink))
+                    return false;
+            }
+            ++column;
+        }
+        character = pgm_read_byte(text++);
+    } while (character);
+    return true;
+}
+
+inline uint16_t rowSignature(uint8_t x, uint8_t y) {
+    uint16_t hash = 1;
+    for (uint8_t row = y; row < y + 8; ++row)
+        for (uint8_t col = x; col < x + 60; ++col)
+            hash = static_cast<uint16_t>(hash * 33u + pixel(col, row));
+    return hash;
+}
+
+inline void moveLabels(FxTest &test) {
+    // Different lengths, both columns/rows, ID zero, and the longest name.
+    const uint8_t offsets[] = {0, 6, 14, 26};
+    battle::BattleView view{};
+    view.moveIds[0] = 0;
+    view.moveIds[1] = 37;
+    view.moveIds[2] = 42;
+    view.moveIds[3] = DELUGE_MOVE_ID;
+    view.remainingUses[0] = 1;
+    view.remainingUses[1] = 2;
+    view.remainingUses[2] = 0;
+    view.remainingUses[3] = 255;
+    view.useLimitsPacked = 2u | (3u << 2) | (1u << 4);
+    menu.clear();
+    menu.openMenu(BATTLE_MOVE_SELECT, view);
+    test.expectEq(menu.moveNameAddresses[0] == amove0, true,
+                  F("slot zero caches published smite bitmap"));
+    test.expectEq(menu.moveNameAddresses[1] == amove37, true,
+                  F("slot one caches published Sharpen bitmap"));
+    test.expectEq(menu.moveNameAddresses[2] == amove42, true,
+                  F("slot two caches published deepthought bitmap"));
+    test.expectEq(menu.moveNameAddresses[3] == amove44, true,
+                  F("slot three caches published Deluge bitmap"));
+    for (uint8_t selected = 0; selected < 4; ++selected) {
+        menu.cursorIndex = selected;
+        arduboy.clear();
+        FxReadCounter::resetFrame();
+        menu.printMenu(view);
+        test.expectEq(FxReadCounter::count(), 0,
+                      F("move label drawing performs no metadata reads"));
+        for (uint8_t slot = 0; slot < 4; ++slot)
+            test.expectEq(moveLabelMatches(slot, moveRegressionNames + offsets[slot], slot == selected),
+                          true, F("move label matches full slot name and color"));
+        // Build the expected selected PP independently in an unused area.
+        Blit::fillRect(0, 0, 11, 5, BLACK);
+        if (view.remainingUses[selected] == 255) {
+            PpGlyph::draw(5, 1, 0b010111010);
+        } else {
+            PpGlyph::digit(0, 0, view.remainingUses[selected]);
+            PpGlyph::draw(4, 0, 0b001001010100100);
+            PpGlyph::digit(8, 0, (view.useLimitsPacked >> (selected * 2)) & 3);
+        }
+        bool ppMatches = true;
+        for (uint8_t row = 0; row < 5; ++row)
+            for (uint8_t col = 0; col < 11; ++col)
+                if (pixel(col, row) != pixel(61 + col, 29 + row)) ppMatches = false;
+        test.expectEq(ppMatches, true, F("selected PP matches the same move slot"));
+    }
+    // The raster labels must follow the authored move names after renames.
+    view.moveIds[0] = 12;
+    view.moveIds[1] = 25;
+    view.moveIds[2] = 28;
+    view.moveIds[3] = 29;
+    const uint8_t renamedOffsets[] = {0, 10, 22, 28};
+    menu.openMenu(BATTLE_MOVE_SELECT, view);
+    test.expectEq(menu.moveNameAddresses[0] == amove12, true,
+                  F("dirtburst caches its published bitmap"));
+    test.expectEq(menu.moveNameAddresses[1] == amove25, true,
+                  F("pollenburst caches its published bitmap"));
+    test.expectEq(menu.moveNameAddresses[2] == amove28, true,
+                  F("burst caches its published bitmap"));
+    test.expectEq(menu.moveNameAddresses[3] == amove29, true,
+                  F("elderBurst caches its published bitmap"));
+    for (uint8_t selected = 0; selected < 4; ++selected) {
+        menu.cursorIndex = selected;
+        arduboy.clear();
+        menu.printMenu(view);
+        for (uint8_t slot = 0; slot < 4; ++slot)
+            test.expectEq(moveLabelMatches(slot, renamedMoveNames + renamedOffsets[slot],
+                                          slot == selected), true,
+                          F("renamed move displays its authored name"));
+    }
+    menu.clear();
+}
+
+inline bool barEquals(uint8_t hp, int8_t shakeX = 0, int8_t shakeY = 0) {
+    const uint8_t width = static_cast<uint16_t>(hp) * 28 / 100;
+    for (uint8_t col = 0; col < 28; ++col)
+        if (pixel(50 + col, 11) != (col < width))
+            return false;
+    return true;
+}
+
+inline void render(const battle::BattlePresenter &presenter,
+                   const battle::BattleView &baseView) {
+    battle::BattleView view = baseView;
+    presenter.overlay(view);
+    arduboy.clear();
+    int8_t shakeX, shakeY;
+    presenter.sceneOffset(shakeX, shakeY);
+    drawScene(view, shakeX, shakeY);
+    presenter.draw();
+}
+
+inline void switchedSprites(FxTest &test) {
+    const uint8_t playerBefore = pgm_read_byte(&creatureFixtures->id);
+    const uint8_t opponentBefore = pgm_read_byte(
+        &(creatureFixtures[31].id));
+    test.expectEq(playerBefore != opponentBefore, true,
+                  F("switch fixture uses distinct creatures"));
+
+    for (uint8_t side = 0; side < 2; ++side) {
+        battle::BattleView view{};
+        view.active[0] = {playerBefore, 80, 100};
+        view.active[1] = {opponentBefore, 80, 100};
+        const uint8_t x = side == static_cast<uint8_t>(battle::Side::Player) ? 80 : 0;
+        const uint8_t incoming = side == static_cast<uint8_t>(battle::Side::Player)
+            ? opponentBefore : playerBefore;
+        arduboy.clear();
+        drawScene(view);
+        const uint16_t outgoing = signature(x, 0, 32, 4);
+
+        // Model the normal transition redraw: only the active view changes;
+        // the framebuffer still contains the outgoing masked sprite.
+        view.active[side].id = incoming;
+        drawScene(view);
+        const uint16_t switched = signature(x, 0, 32, 4);
+        arduboy.clear();
+        drawScene(view);
+        test.expectEq(switched, signature(x, 0, 32, 4),
+                      F("switch redraw matches incoming sprite on clean canvas"));
+        test.expectEq(switched != outgoing, true,
+                      F("switch replaces outgoing sprite pixels"));
+    }
+}
+
+inline bool blackFrom(uint8_t x, uint8_t y, uint8_t endX) {
+    for (; x < endX; ++x)
+        for (uint8_t row = y; row < y + 8; ++row)
+            if (pixel(x, row)) return false;
+    return true;
+}
+
+inline bool captionMatches(const battle::BattlePresenter &presenter,
+                           const battle::BattleView &view, const char *text,
+                           uint8_t x, uint8_t y, uint8_t width) {
+    arduboy.clear();
+    Blit::fillRect(0, 40, 128, 24, BLACK);
+    uint8_t glyphX = x;
+    for (;;) {
+        const uint8_t character = pgm_read_byte(text++);
+        if (character == 0) break;
+        if (character != ' ')
+            // The legacy declaration contains raw glyph pixels, independently
+            // of the native fontTrimmed image's four-byte header.
+            Blit::draw(glyphX, y, 5, 6, ArduFontTrimmed,
+                       FRAME(character - '0'), Blit::OVERWRITE);
+        glyphX += 6;
+    }
+    const uint16_t expected = signature(x, y / 8, width, 1);
+    render(presenter, view);
+    return expected == signature(x, y / 8, width, 1);
+}
+
+inline void effectivenessFeedback(FxTest &test, Modifier modifier,
+                                 uint8_t expectedWidth, const __FlashStringHelper *label) {
+    battle::ActionResult result{};
+    battle_presentation_fixture::fill(result, false);
+    result.effectiveness = modifier;
+    battle::BattlePresenter presenter;
+    presenter.begin(result);
+    for (uint8_t tick = 0; tick < battle::ANNOUNCE_TICKS; ++tick)
+        presenter.update(false);
+    test.expectEq(static_cast<uint8_t>(presenter.stage()),
+                  static_cast<uint8_t>(battle::PresenterStage::Impact),
+                  F("effectiveness enters impact feedback"));
+    render(presenter, battle_presentation_fixture::afterView(result));
+    test.expectEq(hasInk(3, 56, expectedWidth, 8, true), true, label);
+    test.expectEq(hasInk(3, 56, expectedWidth, 8, false), true,
+                  F("effectiveness text retains black background"));
+    test.expectEq(blackFrom(static_cast<uint8_t>(3 + expectedWidth), 56, 128), true,
+                  F("effectiveness blit stops at generated asset width"));
+    if (modifier == Modifier::None)
+        test.expectEq(captionMatches(presenter, battle_presentation_fixture::afterView(result),
+                                 captionRegressionText + 128, 3, 56, 54), true,
+                      F("no-effect caption matches exact glyphs"));
+    test.expectEq(hasInk(3, 48, 96, 6, true), true,
+                  F("post-damage line renders in caption font"));
+    test.expectEq(blackFrom(105, 48, 128), true,
+                  F("post-damage line stays within the panel"));
+}
+
+inline void damageLines(FxTest &test) {
+    using namespace battle;
+    const uint8_t amounts[] = {0, 1, 9, 10, 99, 100, 255, 25};
+    const char *const lines[] = {
+        PSTR("0 damage dealt"), PSTR("1 damage dealt"), PSTR("9 damage dealt"),
+        PSTR("10 damage dealt"), PSTR("99 damage dealt"),
+        PSTR("100 damage dealt"), PSTR("255 damage dealt"), PSTR("25 damage dealt")
+    };
+    for (uint8_t i = 0; i < sizeof(amounts); ++i) {
+        ActionResult result{};
+        battle_presentation_fixture::fill(result, false);
+        if (i & 1u) result.flags |= SELF_HIT;
+        const uint8_t target = (result.flags & SELF_HIT)
+            ? static_cast<uint8_t>(result.actor) : static_cast<uint8_t>(result.actor) ^ 1u;
+        result.maxHpBefore[target] = 255;
+        result.hpBefore[target] = i == 7 ? 60 : amounts[i];
+        result.hpAfter[target] = i == 7 ? 35 : 0;
+        BattlePresenter presenter;
+        presenter.begin(result);
+        for (uint8_t tick = 0; tick < ANNOUNCE_TICKS; ++tick)
+            presenter.update(false);
+        test.expectEq(captionMatches(presenter,
+                          battle_presentation_fixture::afterView(result), lines[i],
+                          3, 48, 102), true,
+                      F("damage digits and wording share exact font and baseline"));
+        test.expectEq(blackFrom(105, 48, 128), true,
+                      F("damage line leaves right edge black"));
+    }
+}
+
+inline void feedbackCategories(FxTest &test) {
+    using namespace battle;
+    ActionResult result{};
+    BattlePresenter presenter;
+    const uint8_t first = pgm_read_byte(&creatureFixtures->id);
+    const uint8_t last = pgm_read_byte(&(creatureFixtures[31].id));
+
+    resetActionResult(result);
+    result.kind = ResultKind::Switch;
+    result.actor = Side::Player;
+    result.index = last;
+    result.speciesBefore[0] = first;
+    result.speciesBefore[1] = last;
+    result.maxHpBefore[0] = result.maxHpBefore[1] = 100;
+    result.hpBefore[0] = result.hpAfter[0] = 80;
+    result.hpBefore[1] = result.hpAfter[1] = 60;
+    presenter.begin(result);
+    render(presenter, battle_presentation_fixture::afterView(result));
+    test.expectEq(hasInk(3, 40, 70, 8, true), true,
+                  F("switch announcement draws outgoing creature name"));
+    test.expectEq(hasInk(3, 48, 55, 6, true), true,
+                  F("switch announcement draws switching caption"));
+    test.expectEq(captionMatches(presenter, battle_presentation_fixture::afterView(result),
+                                 captionRegressionText + 54, 3, 48, 54), true,
+                  F("switch announcement caption matches its exact glyphs"));
+    test.expectEq(hasInk(3, 56, 70, 8, true), true,
+                  F("switch announcement draws incoming creature name"));
+    test.expectEq(pixel(127, 48), false, F("switch caption stays within framebuffer"));
+    for (uint8_t tick = 0; tick < ANNOUNCE_TICKS; ++tick) presenter.update(false);
+    render(presenter, battle_presentation_fixture::afterView(result));
+    test.expectEq(hasInk(3, 48, switchInTextWidth, 8, true), true,
+                  F("switch impact draws complete incoming message"));
+    test.expectEq(blackFrom(static_cast<uint8_t>(3 + switchInTextWidth), 48, 128), true,
+                  F("switch impact stops at generated raster width"));
+    test.expectEq(pixel(127, 56), false, F("switch text leaves the right edge black"));
+
+    // The longest type prefix plus its positive caption cannot fit on one row.
+    resetActionResult(result);
+    result.kind = ResultKind::EndTurn;
+    result.speciesBefore[0] = first;
+    result.speciesBefore[1] = last;
+    result.maxHpBefore[0] = result.maxHpBefore[1] = 100;
+    result.hpBefore[0] = result.hpAfter[0] = 80;
+    result.hpBefore[1] = result.hpAfter[1] = 60;
+    result.consequences[0] = {Effect::CHRGD, 0, 0};
+    presenter.begin(result);
+    render(presenter, battle_presentation_fixture::afterView(result));
+    test.expectEq(hasInk(3, 48, 50, 8, true), true,
+                  F("long consequence prefix renders on its own row"));
+    test.expectEq(hasInk(3, 56, 78, 6, true), true,
+                  F("long consequence caption wraps to the final panel row"));
+    test.expectEq(captionMatches(presenter, battle_presentation_fixture::afterView(result),
+                                 captionRegressionText + 74, 3, 56, 78), true,
+                  F("wrapped type-up caption matches its exact glyphs"));
+    test.expectEq(pixel(127, 56), false, F("wrapped consequence stays within framebuffer"));
+
+    // Terminal raster variants exercise each fixed outcome width at draw time.
+    for (uint8_t i = 0; i < 5; ++i) {
+        resetActionResult(result);
+        result.kind = ResultKind::EndTurn;
+        result.outcome = i == 0 ? Outcome::Win : i == 1 ? Outcome::Lose
+            : i == 2 ? Outcome::Escaped : i == 3 ? Outcome::Gathered : Outcome::Fled;
+        result.speciesBefore[0] = first;
+        result.speciesBefore[1] = last;
+        result.maxHpBefore[0] = result.maxHpBefore[1] = 100;
+        presenter.begin(result);
+        render(presenter, battle_presentation_fixture::afterView(result));
+        const uint8_t terminalWidth = i == 0 ? winTextWidth : i == 1 ? loseTextWidth
+            : i == 2 ? escapedTextWidth : 0;
+        if (terminalWidth != 0) {
+            test.expectEq(hasInk(3, 48, terminalWidth, 8, true), true,
+                          F("terminal text draws its complete generated raster"));
+            test.expectEq(blackFrom(static_cast<uint8_t>(3 + terminalWidth), 48, 128), true,
+                          F("terminal text stops at generated raster width"));
+        } else {
+            test.expectEq(hasInk(3, 48, 55, 6, true), true,
+                          F("gather and flee terminal captions render"));
+            test.expectEq(captionMatches(presenter, battle_presentation_fixture::afterView(result),
+                                         captionRegressionText + (i == 3 ? 114 : 123), 3, 48,
+                                         i == 3 ? 48 : 24), true,
+                          F("gather and flee captions match their exact glyphs"));
+        }
+        test.expectEq(pixel(127, 48), false, F("terminal text leaves the right edge black"));
+    }
+
+    for (uint8_t i = 0; i < 3; ++i) {
+        resetActionResult(result);
+        result.kind = ResultKind::Skip;
+        result.actor = Side::Player;
+        result.speciesBefore[0] = first;
+        result.speciesBefore[1] = last;
+        result.maxHpBefore[0] = result.maxHpBefore[1] = 100;
+        result.hpBefore[0] = result.hpAfter[0] = 80;
+        result.hpBefore[1] = result.hpAfter[1] = 60;
+        if (i == 0) result.flags = STATUS_SKIPPED;
+        else if (i == 1) result.flags = REFUSED;
+        presenter.begin(result);
+        render(presenter, battle_presentation_fixture::afterView(result));
+        const __FlashStringHelper *label = i == 0 ? F("status-skip caption renders")
+            : i == 1 ? F("refused caption renders") : F("no-action caption renders");
+        test.expectEq(hasInk(3, 48, 55, 6, true), true, label);
+        const uint8_t captionWidth = i == 0 ? 78 : i == 1 ? 84 : 66;
+        const uint8_t captionOffset = i == 0 ? 13 : i == 1 ? 27 : 42;
+        test.expectEq(captionMatches(presenter, battle_presentation_fixture::afterView(result),
+                                     captionRegressionText + captionOffset, 3, 48, captionWidth), true,
+                      F("consequence caption matches exact generated-font glyphs"));
+        test.expectEq(pixel(127, 48), false,
+                      F("consequence captions stay within framebuffer"));
+    }
+
+    for (uint8_t i = 0; i < 2; ++i) {
+        resetActionResult(result);
+        result.kind = ResultKind::EndTurn;
+        result.speciesBefore[0] = first;
+        result.speciesBefore[1] = last;
+        result.maxHpBefore[0] = result.maxHpBefore[1] = 100;
+        result.hpBefore[0] = result.hpAfter[0] = 80;
+        result.hpBefore[1] = result.hpAfter[1] = 60;
+        result.consequences[0] = {i == 0 ? Effect::SAPPD : Effect::INFSED,
+                                  0, static_cast<uint8_t>(i == 0 ? 70 : 90)};
+        presenter.begin(result);
+        render(presenter, battle_presentation_fixture::afterView(result));
+        test.expectEq(hasInk(3, 48, 45, 6, true), true,
+                      F("end-turn loss and healing captions render"));
+        test.expectEq(captionMatches(presenter, battle_presentation_fixture::afterView(result),
+                                     captionRegressionText + (i == 0 ? 96 : 104), 18, 48,
+                                     i == 0 ? 42 : 54), true,
+                      F("end-turn caption matches its exact glyphs"));
+        test.expectEq(pixel(127, 48), false,
+                      F("end-turn captions stay within framebuffer"));
+    }
+
+    for (uint8_t i = 0; i < 5; ++i) {
+        const Effect effect = i == 0 ? Effect::ATKUP : i == 1 ? Effect::ATKDWN
+            : i == 2 ? Effect::DPRSD : i == 3 ? Effect::PINNED : Effect::CONCUSED;
+        const uint8_t captionOffset = i == 0 ? 64 : i == 1 ? 69 : i == 2 ? 87
+            : i == 3 ? 138 : 1;
+        const uint8_t captionX = i < 2 ? 29 : i == 2 ? 39 : 3;
+        const uint8_t captionWidth = i == 0 || i == 1 ? 24 : i == 2 ? 48
+            : i == 3 ? 84 : 66;
+        resetActionResult(result);
+        result.kind = i == 3 ? ResultKind::Attack : ResultKind::EndTurn;
+        result.speciesBefore[0] = first;
+        result.speciesBefore[1] = last;
+        result.maxHpBefore[0] = result.maxHpBefore[1] = 100;
+        result.hpBefore[0] = result.hpAfter[0] = 80;
+        result.hpBefore[1] = result.hpAfter[1] = 60;
+        result.consequences[0] = {effect, 0, 0};
+        presenter.begin(result);
+        if (result.kind == ResultKind::Attack) {
+            for (uint8_t tick = 0; tick < ANNOUNCE_TICKS + IMPACT_TICKS; ++tick)
+                presenter.update(false);
+        }
+        render(presenter, battle_presentation_fixture::afterView(result));
+        const __FlashStringHelper *captionLabel = i == 0 ? F("stat-up caption exact")
+            : i == 1 ? F("stat-down caption exact") : i == 2 ? F("type-down caption exact")
+            : i == 3 ? F("status-applied caption exact") : F("self-hit caption exact");
+        test.expectEq(captionMatches(presenter, battle_presentation_fixture::afterView(result),
+                                     captionRegressionText + captionOffset, captionX, 48,
+                                     captionWidth), true, captionLabel);
+    }
+
+    resetActionResult(result);
+    result.kind = ResultKind::Gather;
+    result.actor = Side::Player;
+    result.speciesBefore[0] = first;
+    result.speciesBefore[1] = last;
+    result.maxHpBefore[0] = result.maxHpBefore[1] = 100;
+    result.hpBefore[0] = result.hpAfter[0] = 80;
+    result.hpBefore[1] = result.hpAfter[1] = 60;
+    presenter.begin(result);
+    render(presenter, battle_presentation_fixture::afterView(result));
+    test.expectEq(hasInk(3, 48, gatherTextWidth, 8, true), true,
+                  F("gather action draws its complete generated raster"));
+    test.expectEq(blackFrom(static_cast<uint8_t>(3 + gatherTextWidth), 48, 128), true,
+                  F("gather action stops at generated raster width"));
+}
+
+__attribute__((noinline)) inline void playback(FxTest &test, bool knockout) {
+    using namespace battle;
+    ActionResult result{};
+    BattlePresenter presenter;
+    battle_presentation_fixture::fill(result, knockout);
+    const BattleView baseView = battle_presentation_fixture::afterView(result);
+    FxReadCounter::resetFrame();
+    presenter.begin(result);
+    test.expectEq(FxReadCounter::count(), 2,
+                  F("begin resolves creature and move names at the transition"));
+    test.expectEq(FxReadCounter::markUpdate(), true, F("begin metadata is transition-only"));
+    arduboy.clear();
+    drawScene(baseView);
+    const uint16_t sprite = signature(0, 0, 32, 4);
+    render(presenter, baseView);
+    test.expectEq(FxReadCounter::count(), 2, F("draw streams pixels without metadata reads"));
+    test.expectEq(barEquals(60), true, F("render starts with before HP bar"));
+    test.expectEq(hasInk(3, 40, 75, 8, true), true, F("real FX creature name has ink"));
+    test.expectEq(hasInk(3, 56, 45, 8, true), true, F("real FX move name has ink"));
+    test.expectEq(hasInk(16, 0, 32, 32, true), true, F("real beam animation is visible"));
+    const uint16_t ordinaryFrame = signature(0, 0, 128, 8);
+    const uint16_t animation = signature(16, 0, 32, 4);
+    render(presenter, baseView); render(presenter, baseView);
+    test.expectEq(signature(0, 0, 128, 8), ordinaryFrame, F("repeated draw reproduces identical pixels"));
+    test.expectEq(static_cast<uint8_t>(presenter.stage()), static_cast<uint8_t>(PresenterStage::Announce),
+                  F("draw never advances stage"));
+    for (uint8_t tick = 0; tick < ANNOUNCE_TICKS - 1; ++tick) presenter.update(false);
+    render(presenter, baseView);
+    test.expectEq(signature(16, 0, 32, 4) != animation, true, F("announce timer advances actual beam frames"));
+    test.expectEq(barEquals(60), true, F("last announce frame retains old HP"));
+    FxReadCounter::resetFrame();
+    presenter.update(false);
+    test.expectEq(FxReadCounter::markUpdate(), true, F("impact update has no metadata reads"));
+    render(presenter, baseView);
+    int8_t shakeX, shakeY;
+    presenter.sceneOffset(shakeX, shakeY);
+    test.expectEq(barEquals(knockout ? 0 : 35, shakeX, shakeY), true,
+                  F("actual bar changes at shaken impact"));
+    test.expectEq(shakeX, -2, F("impact starts with bounded scene offset"));
+    test.expectEq(shakeY, 0, F("impact shake offset is deterministic"));
+    test.expectEq(signature(0, 0, 128, 8) != ordinaryFrame, true, F("impact has distinct visible output"));
+    for (uint8_t tick = 0; tick < 2; ++tick) {
+        FxReadCounter::resetFrame();
+        presenter.update(false);
+        test.expectEq(FxReadCounter::markUpdate(), true, F("shake updates have no FX reads"));
+    }
+    render(presenter, baseView);
+    test.expectEq(hasInk(3, 40, 75, 8, true), true,
+                  F("post-damage name retains white glyph pixels during shake"));
+    test.expectEq(hasInk(3, 40, 75, 8, false), true,
+                  F("post-damage name retains black background during shake"));
+    for (uint8_t tick = 2; tick < IMPACT_TICKS; ++tick) {
+        FxReadCounter::resetFrame();
+        presenter.update(false);
+        test.expectEq(FxReadCounter::markUpdate(), true, F("playback reads only at prepared transitions"));
+    }
+    presenter.sceneOffset(shakeX, shakeY);
+    test.expectEq(shakeX, 0, F("impact offset settles by end of effect"));
+    test.expectEq(shakeY, 0, F("vertical offset settles by end of effect"));
+    render(presenter, baseView);
+    test.expectEq(signature(0, 0, 32, 4), sprite, F("impact settles back to creature sprite position"));
+    if (knockout) {
+        test.expectEq(static_cast<uint8_t>(presenter.stage()), static_cast<uint8_t>(PresenterStage::Faint),
+                      F("KO has separate faint presentation"));
+        render(presenter, baseView);
+        test.expectEq(signature(0, 0, 32, 4), sprite, F("faint message retains sprite"));
+        test.expectEq(hasInk(3, 48, 45, 8, true), true, F("real faint bitmap has ink"));
+        for (uint8_t tick = 0; tick < FAINT_TICKS - 1; ++tick) presenter.update(false);
+        render(presenter, baseView);
+        test.expectEq(signature(0, 0, 32, 4), sprite, F("sprite remains until last faint frame"));
+        presenter.update(false); render(presenter, baseView);
+        test.expectEq(hasInk(0, 0, 32, 32, true), false, F("completed faint erases sprite"));
+    }
+    test.expectEq(presenter.done(), true, F("fixture playback completes with no input"));
+    render(presenter, baseView);
+    test.expectEq(barEquals(knockout ? 0 : 35), true, F("natural playback final HP exact"));
+
+    // A presses accelerate display only; final state and sprite rules survive.
+    FxReadCounter::resetFrame();
+    presenter.begin(result);
+    for (uint8_t stages = 0; stages < 3 && !presenter.done(); ++stages) {
+        presenter.update(true);
+        for (uint8_t tick = 1; tick < MIN_DWELL_TICKS; ++tick) presenter.update(false);
+    }
+    render(presenter, baseView);
+    test.expectEq(presenter.done(), true, F("fresh A acceleration completes naturally"));
+    test.expectEq(barEquals(knockout ? 0 : 35), true, F("accelerated final HP exact"));
+}
+
+inline uint16_t paint() {
+    const uint16_t top = static_cast<uint16_t>(SP) - 64;
+    for (volatile uint8_t *p = &__bss_end; reinterpret_cast<uint16_t>(p) < top; ++p) *p = 0xC5;
+    return top;
+}
+
+inline uint16_t lowWater(uint16_t top) {
+    for (volatile uint8_t *p = &__bss_end; reinterpret_cast<uint16_t>(p) < top; ++p)
+        if (*p != 0xC5) return reinterpret_cast<uint16_t>(p);
+    return top;
+}
+
+__attribute__((noinline)) inline void measuredChain() {
+    battle_presentation_fixture::shippingSpike();
+}
+
+__attribute__((noinline)) inline void measuredCaptionChain() {
+    battle_presentation_fixture::captionSpike();
+}
+} // namespace battle_presentation_test_detail
+
+inline void attackMoveRasters(FxTest &test) {
+    using namespace battle_presentation_test_detail;
+    for (uint8_t id = 0; id < 45; ++id) {
+        if (!validMoveId(id)) continue;
+        battle::ActionResult result{};
+        battle_presentation_fixture::fill(result, false);
+        result.index = id;
+        battle::BattlePresenter presenter;
+        presenter.begin(result);
+        arduboy.clear();
+        presenter.draw();
+        const uint8_t width = readMoveNameWidth(id);
+        const uint24_t address = readMoveNameAddress(id);
+        bool matches = true;
+        for (uint8_t col = 0; col < width; ++col) {
+            uint8_t glyph;
+            FX::readDataBytes(address + col, &glyph, 1);
+            for (uint8_t row = 0; row < 8; ++row)
+                if (pixel(3 + col, 56 + row) != ((glyph & (1u << row)) != 0)) matches = false;
+        }
+        test.expectEq(matches && blackFrom(3 + width, 56, 128), true,
+                      F("attack announcement matches complete authored move raster"));
+    }
+}
+
+inline void test_battlepresentation(FxTest &test) {
+    using namespace battle_presentation_test_detail;
+    playback(test, false);
+    playback(test, true);
+    switchedSprites(test);
+    damageLines(test);
+    effectivenessFeedback(test, Modifier::Quarter, 90,
+                          F("barely damages bitmap renders"));
+    effectivenessFeedback(test, Modifier::Half, 65,
+                          F("does some bitmap renders"));
+    effectivenessFeedback(test, Modifier::Double, 70,
+                          F("does great bitmap renders"));
+    effectivenessFeedback(test, Modifier::Quadruple, 90,
+                          F("devastating bitmap renders"));
+    effectivenessFeedback(test, Modifier::None, 90,
+                          F("no-effect caption renders"));
+    feedbackCategories(test);
+    moveLabels(test);
+    attackMoveRasters(test);
+
+    // Only populated slots cache metadata; selected PP remains visible above.
+    {
+        battle::BattleView moveView{};
+        moveView.moveIds[0] = 0;
+        moveView.moveIds[1] = DELUGE_MOVE_ID;
+        moveView.moveIds[2] = 32;
+        moveView.moveIds[3] = 255;
+        moveView.remainingUses[0] = 1;
+        moveView.remainingUses[1] = 255;
+        moveView.remainingUses[2] = 0;
+        moveView.useLimitsPacked = static_cast<uint8_t>(2u | (3u << 4));
+        menu.clear();
+        FxReadCounter::resetFrame();
+        menu.openMenu(BATTLE_MOVE_SELECT, moveView);
+        test.expectEq(FxReadCounter::count(), static_cast<uint8_t>(4),
+                      F("menu caches only valid move metadata"));
+        test.expectEq(menu.movesSnapshot().moveIds[0], static_cast<uint8_t>(0),
+                      F("move PP display retains first move ID"));
+        test.expectEq(menu.movesSnapshot().remainingUses[0], static_cast<uint8_t>(1),
+                      F("move PP display retains current uses"));
+        test.expectEq(menu.movesSnapshot().remainingUses[1], static_cast<uint8_t>(255),
+                      F("move PP display retains unlimited uses"));
+        arduboy.clear();
+        Blit::fillRect(0, 48, 128, 16, WHITE);
+        const uint16_t emptyLeft = rowSignature(4, 56);
+        const uint16_t emptyRight = rowSignature(68, 56);
+        FxReadCounter::resetFrame();
+        menu.printMenu(moveView);
+        test.expectEq(rowSignature(4, 56), emptyLeft,
+                      F("legacy empty move slot keeps blank backing art"));
+        test.expectEq(rowSignature(68, 56), emptyRight,
+                      F("absent move slot keeps blank backing art"));
+        test.expectEq(moveLabelMatches(0, PSTR("smite"), true), true,
+                      F("zero move ID renders its complete selected name"));
+        test.expectEq(moveLabelMatches(1, PSTR("Deluge"), false), true,
+                      F("unlimited move renders its complete name"));
+        test.expectEq(hasInk(61, 29, 11, 5, true), true,
+                      F("first move current/max PP renders in selected panel"));
+        test.expectEq(FxReadCounter::count(), 0,
+                      F("drawing move PP performs no FX reads"));
+    }
+
+    // Empty and absent move IDs never index the FX name table. Species zero
+    // is the generated first fixture and must still render; absent255 does not.
+    {
+        battle::ActionResult result{};
+        battle::BattlePresenter presenter;
+        battle_presentation_fixture::fill(result, false);
+        for (uint8_t edge = 0; edge < 2; ++edge) {
+            result.index = edge == 0 ? LEGACY_EMPTY_MOVE_ID : EMPTY_MOVE_ID;
+            FxReadCounter::resetFrame();
+            presenter.begin(result);
+            test.expectEq(FxReadCounter::count(), 1, F("empty/sentinel move omits table lookup"));
+            const battle::BattleView baseView = battle_presentation_fixture::afterView(result);
+            render(presenter, baseView);
+            test.expectEq(hasInk(3, 56, 75, 8, true), false, F("empty/sentinel move row stays blank"));
+            test.expectEq(hasInk(80, 0, 48, 32, true), true, F("generated species zero remains visible"));
+        }
+        result.speciesBefore[0] = 255;
+        FxReadCounter::resetFrame();
+        presenter.begin(result);
+        test.expectEq(FxReadCounter::count(), 0, F("absent species never indexes name table"));
+        const battle::BattleView baseView = battle_presentation_fixture::afterView(result);
+        render(presenter, baseView);
+        test.expectEq(hasInk(80, 0, 48, 32, true), false, F("absent species does not draw sprite"));
+    }
+
+    // Paint before entering the local result+presenter chain, so both borrowed
+    // result storage and the real FX renderer call depth count in this proof.
+    const uint16_t top = paint();
+    measuredChain();
+    const uint16_t headroom = lowWater(top) - reinterpret_cast<uint16_t>(&__bss_end);
+    Serial.print(F("presenter chain painted headroom=")); Serial.println(headroom);
+    Serial.print(F("presenter chain effective headroom=")); Serial.println(headroom >= 69 ? headroom - 69 : 0);
+    Serial.print(F("ActionResult bytes=")); Serial.println(sizeof(battle::ActionResult));
+    Serial.print(F("BattlePresenter bytes=")); Serial.println(sizeof(battle::BattlePresenter));
+    test.expectEq(headroom >= 219, true, F("presenter chain preserves 150 B after 69 B USB ISR"));
+
+    FxReadCounter::resetFrame();
+    const uint16_t captionTop = paint();
+    measuredCaptionChain();
+    const uint16_t captionHeadroom = lowWater(captionTop) - reinterpret_cast<uint16_t>(&__bss_end);
+    Serial.print(F("caption chain painted headroom=")); Serial.println(captionHeadroom);
+    Serial.print(F("caption chain effective headroom="));
+    Serial.println(captionHeadroom >= 69 ? captionHeadroom - 69 : 0);
+    test.expectEq(captionHeadroom >= 219, true, F("PSTR caption chain preserves 150 B after ISR"));
+    test.expectEq(FxReadCounter::count(), 1, F("repeated PSTR caption draws add no metadata reads"));
+    test.expectEq(hasInk(3, 48, 72, 8, true), true, F("PSTR caption renders white font glyphs"));
+}

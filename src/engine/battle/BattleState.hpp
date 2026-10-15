@@ -54,7 +54,12 @@ struct BattleState {
     uint8_t partyCount[2], activeSlot[2];
     // Two bits per move slot, indexed by original party slot (not bench order).
     uint8_t moveUsesSpent[2][PARTY_SIZE] = {};
+#ifndef CGFX_DUEL_BATTLE
+    // Stat-stage modifiers are a legacy-mechanics field. The duel has no
+    // stages, so the flag build reclaims these 12 bytes; moveUsesSpent is kept
+    // because the duel aliases it for per-member attack-type masks.
     uint16_t partyModifiers[2][PARTY_SIZE] = {};
+#endif
     GatherState gather;
     uint8_t gatherable : 1;
     uint8_t trainer : 1;
@@ -66,7 +71,11 @@ struct BattleState {
 
 #ifdef __AVR__
 static_assert(sizeof(Combatant) == 36, "active combatant AVR contract");
+#ifdef CGFX_DUEL_BATTLE
+static_assert(sizeof(BattleState) == 112, "duel battle state AVR contract");
+#else
 static_assert(sizeof(BattleState) == 124, "battle state AVR contract");
+#endif
 #endif
 
 } // namespace battle
