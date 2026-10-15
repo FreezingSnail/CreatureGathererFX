@@ -9147,3 +9147,23 @@ fire 10. Every creature already has a STAB move.
 
 Flagged for the owner: spirit>elder and elder>wind are the two weakest lore links; duplicates exist
 (ember fields two fire moves) and are shown as-is.
+
+# CreatureGathererFX-imha
+
+Kept every demo and made the matchup matrix readable as an x/y table.
+
+- Restored the merged 4-type stance duel as `mock/duel-stances.html` (3/4 stances, affinity, ties trade);
+  the wheel duel stays `mock/duel.html`. Both engines share the duel flow in `mock/battle-mock.js`
+  behind `state.duel.kind` (wheel | stances).
+- New shared renderer `mock/matrix.js`: x/y table, rows attack columns, ▲ win / ▼ lose / · neutral,
+  full type names, `data-highlight="on"` tinting the running mock's row/column from `window.__battleMock`.
+  Launcher shows both matrices; each duel window shows its own with live highlight.
+- Launcher opens four windows; all four share `?seed=` for comparable runs.
+
+```text
+node --test mock/battle-mock.test.js                       -> 18 pass / 0 fail
+node --test tools/tests/battle-design-spike-data_test.mjs  -> 8 pass / 0 fail
+node --test tools/tests/battle-design-spike-frame_test.mjs -> 6 pass / 0 fail
+node --test tools/tests/battle-design-spike-matrix_test.mjs-> 3 pass / 0 fail (new)
+node tools/battle-design-spike-preview.mjs                 -> stances-choice/result + wheel previews regenerated
+```

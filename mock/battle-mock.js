@@ -3,19 +3,24 @@
 /*
  * Creature Gatherer battle mock — 128x64 playable spike over the real roster.
  *
- * Goal: test how three battle designs communicate on the actual display, not art.
+ * Goal: test how battle designs communicate on the actual display, not art.
  *   A "current"  the shipping 8-type dual-type move menu.
  *   B "trim"     4-type single-type cycle + per-move effectiveness arrows +
  *                optional SMT-style press-turn (super hit acts again).
- *   C "duel"     simultaneous hidden-stance RPS: both pick, reveal, damage.
+ *   C "stances"  simultaneous hidden picks from the 4-type merged cycle
+ *                (flame > bloom > tide > stone), affinity when the stance is
+ *                the creature's own, ties trade chip.
+ *   D "wheel"    simultaneous hidden picks from each creature's own moves,
+ *                resolved by the 8-type wheel (docs/battle-wheel-matrix.md):
+ *                win = full hit, lose = blocked + chip, other pairs trade.
  *
  * Keys (browser):
  *   Arrows/WASD  move cursor / pick creature in setup
  *   Z or Space   A: confirm, advance feedback, start fight
  *   X            B: back to setup
- *   1 / 2 / 3    switch design (current / trim / duel)
+ *   1 / 2 / 3    switch design (current / trim / duel wheel)
  * Page controls tune: trim type mode, arrows, press-turn, foe HP readout,
- * duel stance count (3- or 4-cycle), and how often the AI reads your last pick.
+ * stance count for the stance duel, and how often the AI reads your last pick.
  *
  * Fidelity: damage, speed order, move-use limits and STAB follow the production
  * C++ (Damage.cpp, Type.hpp, MoveUses.hpp) ported to integer JS with stat stages
@@ -166,7 +171,12 @@ function newMock(options = {}) {
       pressTurn: options.pressTurn !== false,
       foeNumbers: options.foeNumbers !== false,
     },
-    duel: { aiRead: options.aiRead ?? 45, explain: options.explain !== false },
+    duel: {
+      kind: options.duelKind || 'wheel', // wheel | stances
+      stances: options.stances || 3,
+      aiRead: options.aiRead ?? 45,
+      explain: options.explain !== false,
+    },
     scene: 'setup', // setup | battle | end
     youIndex: options.you ?? 10,
     foeIndex: options.foe ?? 0,
@@ -350,7 +360,16 @@ function cycleCursor(state, direction) {
   state.battle.cursor = slots[(current < 0 ? 0 : current + direction + slots.length) % slots.length];
 }
 
-/* ---------- duel: hidden simultaneous pick from the creature's own moves ---------- */
+/* ---------- duel: hidden simultaneous picks ----------
+ * Two engines share the flow:
+ *   stances: both pick one of the 3/4 merged-cycle stances (flame/bloom/tide/stone).
+ *   wheel:   both pick one of their own creature's moves, resolved by the 8-type wheel. */
+const duelKind = (state) => state.duel.kind;
+const stanceSet = (state) => DATA.merged.order.slice(0, state.duel.stances);
+function stanceBeats(order, stance, other) {
+  const step = (order.indexOf(other) - order.indexOf(stance) + order.length) % order.length;
+  return step === 1;
+}
 function duelMoves(state, side) {
   const creature_ = side === 0 ? creature(state.youIndex) : creature(state.foeIndex);
   return creature_.moves.filter((id) => id != null).map((id) => DATA.moves[id]);
@@ -367,24 +386,48 @@ function hasAffinity(state, side, move) {
   const creature_ = side === 0 ? creature(state.youIndex) : creature(state.foeIndex);
   return creature_.types.includes(move.type);
 }
+// Options a side can pick this round, in display order.
+function duelOptions(state, side) {
+  if (duelKind(state) === 'stances') return stanceSet(state).map((type) => ({ type }));
+  return duelMoves(state, side);
+}
+function duelOptionAffinity(state, side, option) {
+  const creature_ = side === 0 ? creature(state.youIndex) : creature(state.foeIndex);
+  return duelKind(state) === 'stances'
+    ? creature_.merged[0] === option.type
+    : creature_.types.includes(option.type);
+}
 function aiDuelPick(state) {
   const duelState = state.duelState;
-  const mine = duelMoves(state, 1);
   duelState.aiRead = false;
-  const lastType = duelState.last[0];
-  if (lastType && state.rng.next() * 100 < state.duel.aiRead) {
-    const counters = mine
-      .map((move, index) => ({ move, index }))
-      .filter((entry) => wheelBeats(entry.move.type, lastType));
+  const last = duelState.last[0];
+  const readRoll = last != null && state.rng.next() * 100 < state.duel.aiRead;
+  if (duelKind(state) === 'stances') {
+    const order = stanceSet(state);
+    if (readRoll) {
+      for (let index = 0; index < order.length; index++) {
+        if (stanceBeats(order, order[index], order[last])) {
+          duelState.aiRead = true;
+          return index;
+        }
+      }
+    }
+    return state.rng.int(order.length);
+  }
+  const options = duelOptions(state, 1);
+  if (readRoll) {
+    const counters = options
+      .map((option, index) => ({ option, index }))
+      .filter((entry) => wheelBeats(entry.option.type, last));
     if (counters.length) {
       duelState.aiRead = true;
-      counters.sort((a, b) => b.move.power - a.move.power);
+      counters.sort((a, b) => b.option.power - a.option.power);
       return counters[0].index;
     }
   }
   let best = 0, bestScore = -1;
-  for (let index = 0; index < mine.length; index++) {
-    const score = mine[index].power + state.rng.next() * 5;
+  for (let index = 0; index < options.length; index++) {
+    const score = options[index].power + state.rng.next() * 5;
     if (score > bestScore) { bestScore = score; best = index; }
   }
   return best;
@@ -397,11 +440,39 @@ function duelPick(state, index) {
 }
 function duelResolve(state) {
   const duelState = state.duelState;
+  const roll = () => 0.85 + state.rng.next() * 0.3;
+  if (duelKind(state) === 'stances') {
+    const order = stanceSet(state);
+    const you = creature(state.youIndex), foe = creature(state.foeIndex);
+    const yourStance = order[duelState.picks[0]] ?? order[0];
+    const foeStance = order[duelState.picks[1]] ?? order[0];
+    const affinity = (creature_, stance) => (creature_.merged[0] === stance ? 1.5 : 1);
+    const chip = (attack) => Math.max(1, Math.round((3 + attack * 0.25) * roll()));
+    let yourDamage = 0, foeDamage = 0;
+    if (yourStance === foeStance) {
+      yourDamage = chip(you.stats.attack);
+      foeDamage = chip(foe.stats.attack);
+      duelState.lines = ['TIE', `-${yourDamage} -${foeDamage}`];
+    } else if (stanceBeats(order, yourStance, foeStance)) {
+      yourDamage = Math.max(1, Math.round((4 + you.stats.attack * 0.5) * affinity(you, yourStance) * roll()));
+      foeDamage = Math.max(1, Math.round((2 + foe.stats.attack * 0.2) * roll()));
+      duelState.lines = ['CLASH WIN', `-${yourDamage} -${foeDamage}`];
+    } else {
+      foeDamage = Math.max(1, Math.round((4 + foe.stats.attack * 0.5) * affinity(foe, foeStance) * roll()));
+      yourDamage = Math.max(1, Math.round((2 + you.stats.attack * 0.2) * roll()));
+      duelState.lines = ['CLASH LOSE', `-${yourDamage} -${foeDamage}`];
+    }
+    duelState.hp[0] = Math.max(0, duelState.hp[0] - foeDamage);
+    duelState.hp[1] = Math.max(0, duelState.hp[1] - yourDamage);
+    duelState.last = [duelState.picks[0], duelState.picks[1]];
+    duelState.phase = 'result';
+    duelState.timer = 1300;
+    return;
+  }
   const mine = duelMoves(state, 0), theirs = duelMoves(state, 1);
   const yourMove = mine[duelState.picks[0]] || mine[0];
   const foeMove = theirs[duelState.picks[1]] || theirs[0];
   const relation = wheelValue(yourMove.type, foeMove.type);
-  const roll = () => 0.85 + state.rng.next() * 0.3;
   const yourPower = (4 + yourMove.power * 1.2) * (hasAffinity(state, 0, yourMove) ? 1.5 : 1);
   const foePower = (4 + foeMove.power * 1.2) * (hasAffinity(state, 1, foeMove) ? 1.5 : 1);
   const chip = (power) => Math.max(1, Math.round((2 + power * 0.25) * roll()));
@@ -473,7 +544,7 @@ function step(state, input) {
       if (state.mode === 'duel') {
         const duelState = state.duelState;
         if (duelState.phase === 'choice') {
-          const count = Math.max(1, duelMoves(state, 0).length);
+          const count = Math.max(1, duelOptions(state, 0).length);
           if (edge === 'left' || edge === 'up') duelState.cursor = (duelState.cursor + count - 1) % count;
           else if (edge === 'right' || edge === 'down') duelState.cursor = (duelState.cursor + 1) % count;
           else if (edge === 'a') duelPick(state, duelState.cursor);
@@ -640,21 +711,21 @@ function drawEnd(ctx, state) {
 
 function drawDuelMoveRow(ctx, state) {
   const duelState = state.duelState;
-  const mine = duelMoves(state, 0);
-  const count = Math.max(1, Math.min(mine.length, 4));
+  const options = duelOptions(state, 0);
+  const count = Math.max(1, Math.min(options.length, 4));
   const cell = Math.floor(120 / count);
   for (let index = 0; index < count; index++) {
     const x = 4 + index * cell, y = 48;
     const selected = duelState.cursor === index;
     if (selected) rect(ctx, x, y, cell - 2, 14, true);
-    drawIcon(ctx, typeIcon(mine[index].type), x + Math.floor((cell - 2 - 8) / 2), y + 2, !selected);
+    drawIcon(ctx, typeIcon(options[index].type), x + Math.floor((cell - 2 - 8) / 2), y + 2, !selected);
   }
 }
 
 function drawDuelFeedback(ctx, state) {
   const duelState = state.duelState;
   rect(ctx, 0, 48, 128, 16, false);
-  const mine = duelMoves(state, 0), theirs = duelMoves(state, 1);
+  const mine = duelOptions(state, 0), theirs = duelOptions(state, 1);
   const yourMove = mine[duelState.picks[0]] || mine[0];
   const foeMove = theirs[duelState.picks[1]] || theirs[0];
   if (yourMove) {
@@ -678,13 +749,13 @@ function drawDuel(ctx, state) {
   if (!showFoe) typesOf(foe, activeMode(state)).slice(0, 2)
     .forEach((type, index) => drawIcon(ctx, typeIcon(type), 64 + index * 9, 2));
   if (duelState.phase === 'choice') {
-    const mine = duelMoves(state, 0);
+    const options = duelOptions(state, 0);
     text(ctx, `R${num(duelState.round)}`, 48, 41, true);
-    const move = mine[Math.min(duelState.cursor, mine.length - 1)];
-    if (move) {
-      drawIcon(ctx, typeIcon(move.type), 62, 40);
-      text(ctx, num(move.power), 72, 41, true);
-      if (hasAffinity(state, 0, move)) drawSymbol(ctx, 'up', 82, 41, true);
+    const option = options[Math.min(duelState.cursor, options.length - 1)];
+    if (option) {
+      drawIcon(ctx, typeIcon(option.type), 62, 40);
+      if (option.power != null) text(ctx, num(option.power), 72, 41, true);
+      if (duelOptionAffinity(state, 0, option)) drawSymbol(ctx, 'up', 82, 41, true);
     }
     drawDuelMoveRow(ctx, state);
   } else {
@@ -705,6 +776,8 @@ function boot() {
   const ctx = screen.getContext('2d');
   const bodyMode = document.body && document.body.dataset && document.body.dataset.mode
     ? document.body.dataset.mode : null;
+  const bodyDuel = document.body && document.body.dataset && document.body.dataset.duel
+    ? document.body.dataset.duel : null;
   const query = typeof location !== 'undefined' && typeof location.search === 'string' ? location.search : '';
   const seedMatch = /[?&]seed=(\d+)/.exec(query);
   const seed = seedMatch ? Number(seedMatch[1]) : undefined;
@@ -712,6 +785,7 @@ function boot() {
   const state = newMock({
     mode: bodyMode || 'current',
     lockMode: !!bodyMode,
+    duelKind: bodyDuel || undefined,
     seed,
     loadImage(src, done) {
       const img = new Image();
@@ -761,6 +835,11 @@ function boot() {
   wire('trim-arrows', 'change', (event) => { state.trim.arrows = event.target.checked; syncControls(); });
   wire('trim-press', 'change', (event) => { state.trim.pressTurn = event.target.checked; syncControls(); });
   wire('trim-foe', 'change', (event) => { state.trim.foeNumbers = event.target.checked; syncControls(); });
+  wire('duel-stances', 'change', (event) => {
+    state.duel.stances = Number(event.target.value);
+    if (state.mode === 'duel') state.scene = 'setup';
+    syncControls();
+  });
   wire('duel-read', 'input', (event) => { state.duel.aiRead = Number(event.target.value); syncControls(); });
   wire('duel-explain', 'change', (event) => { state.duel.explain = event.target.checked; });
   wire('scale', 'change', (event) => applyScale(Number(event.target.value)));
@@ -777,15 +856,20 @@ function boot() {
     set('trim-arrows', (element) => { element.checked = state.trim.arrows; });
     set('trim-press', (element) => { element.checked = state.trim.pressTurn; });
     set('trim-foe', (element) => { element.checked = state.trim.foeNumbers; });
+    set('duel-stances', (element) => { element.value = String(state.duel.stances); });
     set('duel-read', (element) => { element.value = String(state.duel.aiRead); });
     set('duel-explain', (element) => { element.checked = state.duel.explain; });
     set('duel-read-value', (element) => { element.textContent = `${state.duel.aiRead}%`; });
     set('seed-value', (element) => { element.textContent = String(state.seed); });
     set('status', (element) => {
       element.textContent = [
-        state.mode,
+        state.mode === 'duel' ? `duel ${state.duel.kind}` : state.mode,
         state.mode === 'trim' ? `${state.trim.typeMode} arrows:${state.trim.arrows ? 'on' : 'off'} press:${state.trim.pressTurn ? 'on' : 'off'}` : '',
-        state.mode === 'duel' ? `${duelMoves(state, 0).length} moves ai-read:${state.duel.aiRead}%` : '',
+        state.mode === 'duel'
+          ? (state.duel.kind === 'stances'
+            ? `${state.duel.stances} stances ai-read:${state.duel.aiRead}%`
+            : `${duelMoves(state, 0).length} moves ai-read:${state.duel.aiRead}%`)
+          : '',
         `you:${creature(state.youIndex).name} foe:${creature(state.foeIndex).name}`,
       ].filter(Boolean).join(' · ');
     });
@@ -813,6 +897,7 @@ if (typeof module !== 'undefined' && module.exports) {
     newSeed, makeRng, computeDamage, attackModifier, combineModifier,
     applyDamageModifier, modifierFor, arrowFor, moveTypeFor,
     duelMoves, wheelValue, wheelBeats, hasAffinity,
+    duelKind, stanceSet, stanceBeats, duelOptions, duelOptionAffinity,
     creature, moveOf, activeMode, typesOf, drawIcon, text, glyphRows,
     ICONS, MERGED_ICONS, SYMBOLS, DATA, W, H, SPRITE_BASE,
   };

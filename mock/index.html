@@ -10,10 +10,10 @@
 <div id="wrap">
   <h1>Creature Gatherer battle mock — playable 128×64 design spike · bead 2w8</h1>
   <p class="note" style="text-align:center;max-width:640px">Each design runs in its own window so they can sit side by side.
-    All three use the same roster, generated data, production damage/move-use rules and the same seed if you pass one.</p>
+    All use the same roster, generated data, production damage/move-use rules and the same seed if you pass one.</p>
   <div class="launcher">
     <label>seed <input id="seed-in" type="number" min="1" max="65535" value="1234"></label>
-    <button type="button" id="open-all">open all three</button>
+    <button type="button" id="open-all">open all four</button>
   </div>
   <div class="cards">
     <div class="card">
@@ -30,36 +30,30 @@
       <button type="button" data-variant="trim">open trim window</button>
     </div>
     <div class="card">
-      <h3>C · duel — hidden pick among your creature's moves</h3>
-      <img src="../docs/assets/battle-design-spike/duel-choice.png" alt="duel move row frame">
-      <p>Both pick hidden, reveal, and the 8-type wheel decides: win = full hit, lose = blocked + chip,
-        neutral/mirror = trade. Creatures field their own equipped moves, so coverage differs per creature.
-        AI read slider + AI READ tag.</p>
-      <button type="button" data-variant="duel">open duel window</button>
+      <h3>C · duel stances — 4-type cycle, hidden picks</h3>
+      <img src="../docs/assets/battle-design-spike/stances-choice.png" alt="stance duel frame">
+      <p>Both pick hidden from the 4-type merged cycle (flame/bloom/tide/stone), 3 or 4 stances,
+        affinity ×1.5, ties trade. The original RPS prototype, kept intact.</p>
+      <button type="button" data-variant="duel-stances">open stances window</button>
+    </div>
+    <div class="card">
+      <h3>D · duel wheel — your creature's own moves</h3>
+      <img src="../docs/assets/battle-design-spike/duel-choice.png" alt="wheel duel frame">
+      <p>Both pick hidden from their own creature's equipped moves; the 8-type wheel decides:
+        win = full hit, lose = blocked + chip, neutral/mirror = trade. Coverage differs per creature.</p>
+      <button type="button" data-variant="duel">open wheel window</button>
     </div>
   </div>
-  <h2>8-type wheel (the whole matrix)</h2>
+  <h2>8-type wheel (whole matrix, row attacks column)</h2>
   <p class="note" style="text-align:center">wind &gt; earth &gt; lightning &gt; water &gt; fire &gt; plant &gt; spirit &gt; elder &gt; wind —
     every type beats the next one clockwise and loses to the previous; all other pairs are neutral. No immunities,
     so every pick stays live.</p>
-  <div id="wheel-table"></div>
+  <div class="matrix" data-matrix="wheel"></div>
+  <h2>4-type stance cycle (kept demo)</h2>
+  <p class="note" style="text-align:center">flame &gt; bloom &gt; tide &gt; stone &gt; flame — used by the stance duel window.</p>
+  <div class="matrix" data-matrix="stances"></div>
   <script src="data.js"></script>
-  <script>
-    {
-      const order = window.CGFX_SPIKE_DATA.wheel.order;
-      const chart = window.CGFX_SPIKE_DATA.wheel.chart;
-      const mark = (value) => (value === 2 ? '<span style="color:#8c8">&#9650;</span>'
-        : value === 0.5 ? '<span style="color:#c88">&#9660;</span>' : '<span style="color:#555">&middot;</span>');
-      let html = '<table style="border-collapse:collapse"><tr><th></th>'
-        + order.map((type) => `<th style="padding:1px 6px;color:#888">${type.slice(0, 4)}</th>`).join('') + '</tr>';
-      order.forEach((type, row) => {
-        html += `<tr><th style="padding:1px 6px;color:#eee;text-align:right">${type}</th>`
-          + chart[row].map((value) => `<td style="padding:1px 6px;text-align:center">${mark(value)}</td>`).join('') + '</tr>';
-      });
-      html += '</table><p class="note" style="margin-top:6px">rows attack columns &#183; &#9650; super &#183; &#9660; resisted &#183; &middot; neutral</p>';
-      document.getElementById('wheel-table').innerHTML = html;
-    }
-  </script>
+  <script src="matrix.js"></script>
   <table>
     <tr>
       <th>keys in a window</th>
@@ -84,7 +78,7 @@
     button.addEventListener('click', () => openVariant(button.dataset.variant));
   }
   document.getElementById('open-all').addEventListener('click', () => {
-    for (const variant of ['current', 'trim', 'duel']) openVariant(variant);
+    for (const variant of ['current', 'trim', 'duel-stances', 'duel']) openVariant(variant);
   });
 </script>
 </body>
