@@ -9678,3 +9678,23 @@ node --test tools/tests/battle-design-spike-data_test.mjs  -> 8 pass / 0 fail
 node --test tools/tests/battle-matchup-solver_test.mjs     -> 4 pass / 0 fail
 node tools/battle-design-spike-preview.mjs                 -> duel frames re-rendered on the 5-type default
 ```
+
+# CreatureGathererFX-d73i (epic, planning intake)
+
+Filed the RPS duel battle system epic with the complete worked-example context:
+
+- docs/duel-system-brief.md: why now (8-type communication failure, over-budget control), the system
+  as validated (5-type web + fold map, flat 14/4/6 with x1.5/x0.5 creature matchup, hidden
+  simultaneous picks from creature moves, 3-member teams with retype overrides, switch = default win,
+  KO revert/promote, personas + read-rate findings), full inventory (mock files, 10 tool/test files,
+  84 tests, commit trail 2w8..ghom), asset list (existing icons/table/teams + new packed chart,
+  fold map, authored beta teams, caption strings), flash/RAM estimation with the audit caveats
+  (LTO non-additive; expect -3.5..-5.5 KB vs the 17,914 B battle family, RAM down), a 4-step measured
+  spike plan, and 9 open questions for Sol's in-depth planning.
+- Epic accepts: Sol's plan must resolve the open questions, produce child beads for the spike steps
+  with exact commands/budgets/evidence rules, and change no production behavior before measurement.
+
+```text
+bd show CreatureGathererFX-d73i        -> epic + full design brief embedded
+git commit                             -> docs/duel-system-brief.md added
+```
