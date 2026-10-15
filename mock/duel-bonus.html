@@ -8,7 +8,7 @@
 </head>
 <body data-mode="duel" data-duel="wheel" data-scoring="bonus">
 <div id="wrap">
-  <h1>F · duel bonus — matchup against the creature's type</h1>
+  <h1>F · duel bonus — no power, creature-type bonus (recommended)</h1>
   <div class="stage-wrap">
     <canvas id="screen" width="128" height="64"></canvas>
     <div class="annotate-layer" data-annotate-layer hidden></div>
@@ -39,12 +39,12 @@
   <div id="status">ready</div>
   <h2>Matchup table (row attacks column)</h2>
   <div class="matrix" data-matrix="wheel" data-highlight="on"></div>
-  <p class="note">Third spelling: the clash (your move vs their move) decides win/lose/trade as in
-    the power window, damage still scales with move power — but your hit is ×1.5 when your move's type
-    beats the <em>opposing creature's type</em>, and theirs likewise against you. STAB/affinity is not
-    applied here, so the only bonus is the creature matchup (marked ↑ next to power). The type badges on
-    each sprite show both creatures' types; the table row/column highlight follows the setup creatures.
-    Compare with <a href="duel.html">D · power</a> and <a href="duel-pure.html">E · pure</a>.</p>
+  <p class="note">Owner-preferred spelling: moves carry no power — the clash (your move vs their move) decides
+    win/lose/trade with the flat numbers (14 / 4 / 6), and a winning hit does ×1.5 (→ 21) when the move's type
+    beats the <em>opposing creature's type</em>; their hits get the same against you. No affinity, no power.
+    ↑ marks a boosting pick; the type badges on each sprite and the table highlight show the target. Pure
+    spelling without the bonus is <a href="duel-pure.html">E</a>; the power comparison is
+    <a href="duel.html">D</a>. Status/utility moves are excluded from this spike.</p>
   <p class="note"><b>Centre strip:</b> R# = round, icon = the selected move's type, number = move power (0 = utility move). ↑ appears on the cell of a pick whose type beats the opposing creature's type (×1.5).</p>
   <p><a href="index.html">← mock index</a></p>
 </div>

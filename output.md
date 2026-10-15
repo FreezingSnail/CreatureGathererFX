@@ -9353,3 +9353,29 @@ node --test tools/tests/battle-matchup-solver_test.mjs        -> 4 pass / 0 fail
 node --test tools/tests/battle-design-spike-matrix_test.mjs   -> 3 pass / 0 fail
 node tools/battle-design-spike-preview.mjs                    -> reproducible frames (pinned seeds)
 ```
+
+# CreatureGathererFX-ldo9
+
+Owner direction: no power on moves; the creature-type matchup bonus is the best mechanic.
+
+- F (`mock/duel-bonus.html`) is now that combination: flat numbers (win 14, chip 4, trade 6) with a
+  winning hit x1.5 (21) when the move's type beats the opposing creature's type; the foe's hits get
+  the same rule against your creature. No affinity, no power digits in the centre strip.
+- Result lines read BONUS WIN / BONUS LOSE when the multiplier fired, else RPS WIN / RPS LOSE.
+- AI in bonus mode prefers moves that boost against the player's creature type.
+- D (power + affinity) kept as the comparison spelling; E (pure) unchanged. Annotate legend, launcher
+  card, F window copy and docs/battle-wheel-matrix.md updated to the recommended direction.
+
+```text
+node --test mock/battle-mock.test.js                       -> 22 pass / 0 fail
+node --test tools/tests/battle-design-spike-annotate_test.mjs -> 5 pass / 0 fail
+node --test tools/tests/battle-design-spike-frame_test.mjs -> 8 pass / 0 fail
+node --test tools/tests/battle-design-spike-data_test.mjs  -> 8 pass / 0 fail
+node --test tools/tests/battle-matchup-solver_test.mjs     -> 4 pass / 0 fail
+node --test tools/tests/battle-design-spike-matrix_test.mjs-> 3 pass / 0 fail
+node tools/battle-design-spike-preview.mjs                 -> F frames show BONUS WIN -21 -4, no power digits
+```
+
+Proofs in tests: bonus win vs plant creature = 21/chip 4; clash win without creature bonus = 14 (RPS
+WIN); pure spelling stays 14; damage identical for stoke (p6) and burn (p8) — power is gone; mirrored
+foe bonus = 21 against you; trade 6/6.

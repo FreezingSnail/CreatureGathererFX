@@ -30,18 +30,20 @@
     ['4', 'FOE HP — bar, plus exact numbers in the duel windows.'],
     ['5', 'Your HP — numbers and bar.'],
     ['6', 'Round number (R#).'],
-    ['7', scoring === 'flat'
-      ? 'Selected move: type icon only — power is ignored in this spelling.'
-      : 'Selected move: type icon + power (0 would be a utility move; none exist in this spike).'],
+    ['7', scoring === 'power'
+      ? 'Selected move: type icon + power.'
+      : 'Selected move: type icon only — moves carry no power in this spelling.'],
     ['8', 'Your picks — the creature\'s attack moves (status moves excluded); the white box is the cursor.'],
     ['9', scoring === 'power'
       ? '✱ on a cell = affinity (move type is your creature\'s type), ×1.5.'
       : scoring === 'bonus'
-        ? '↑ on a cell = your move type beats the foe creature\'s type, ×1.5.'
+        ? '↑ on a cell = your move type beats the foe creature\'s type: a winning hit does ×1.5.'
         : 'No markers in this spelling — power and affinity are ignored.'],
     ['10', scoring === 'flat'
       ? 'Result — RPS WIN / RPS LOSE (flat 14 / 4) or TRADE (6 both).'
-      : 'Result — WHEEL WIN / WHEEL LOSE (damage scales with power) or TRADE.'],
+      : scoring === 'bonus'
+        ? 'Result — BONUS WIN / BONUS LOSE when the ×1.5 fired (21), else RPS WIN / RPS LOSE (14); TRADE = 6 both.'
+        : 'Result — WHEEL WIN / WHEEL LOSE (damage scales with power) or TRADE.'],
     ['11', 'AI READ — appears when the AI countered your previous type at the read rate.'],
   ];
 

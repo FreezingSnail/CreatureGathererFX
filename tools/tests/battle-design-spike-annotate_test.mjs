@@ -45,17 +45,19 @@ test('wheel power overlay: chips, legend, and toggle wiring', () => {
 
 test('pure overlay explains that power and affinity are ignored', () => {
   const { legend } = boot({ mode: 'duel', duel: 'wheel', scoring: 'flat' });
-  assert.ok(legend.innerHTML.includes('power is ignored'));
+  assert.ok(legend.innerHTML.includes('carry no power'));
   assert.ok(legend.innerHTML.includes('No markers in this spelling'));
   assert.ok(legend.innerHTML.includes('RPS WIN'));
   assert.ok(!legend.innerHTML.includes('✱ on a cell'));
 });
 
-test('bonus overlay explains the creature-type marker', () => {
+test('bonus overlay explains the flat numbers plus creature-type bonus', () => {
   const { legend } = boot({ mode: 'duel', duel: 'wheel', scoring: 'bonus' });
   assert.ok(legend.innerHTML.includes('beats the foe creature'));
   assert.ok(legend.innerHTML.includes('×1.5'));
-  assert.ok(!legend.innerHTML.includes('RPS WIN'));
+  assert.ok(legend.innerHTML.includes('BONUS WIN'));
+  assert.ok(legend.innerHTML.includes('RPS WIN'));
+  assert.ok(legend.innerHTML.includes('carry no power'));
 });
 
 test('stance overlay uses the 4-type cycle legend', () => {
