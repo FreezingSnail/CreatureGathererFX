@@ -81,3 +81,45 @@ test('highlight marks the running mock row and column', () => {
   assert.ok(container.innerHTML.includes('hl-x'), 'intersection highlighted');
   assert.ok(you.types.length && foe.types.length);
 });
+
+test('spike tables render from the generated matrices', () => {
+  const MATRICES = require(path.join(repo, 'mock/matrices.js'));
+  const container = { dataset: { matrix: 'spike:4' }, innerHTML: '' };
+  const documentStub = {
+    readyState: 'complete',
+    querySelectorAll: () => [container],
+    addEventListener() {},
+    createElement: () => ({ getContext: () => ({ fillStyle: '', fillRect() {} }), toDataURL: () => 'data:image/png;base64,SPRITE' }),
+  };
+  const windowStub = { CGFX_SPIKE_DATA: DATA, CGFX_ICONS: ICON_DATA, CGFX_MATRICES: MATRICES };
+  vm.runInNewContext(source, {
+    window: windowStub, document: documentStub, setInterval: () => 0, clearInterval: () => {},
+  });
+  const four = MATRICES.matrices.find((matrix) => matrix.id === '4');
+  for (const type of four.order) assert.ok(container.innerHTML.includes(`alt="${type}"`), type);
+  assert.ok(container.innerHTML.includes('m-win'), 'marks rendered');
+});
+
+test('duel windows follow the selected table', () => {
+  const MATRICES = require(path.join(repo, 'mock/matrices.js'));
+  const container = { dataset: { matrix: 'wheel', highlight: 'on', followDuel: 'on' }, innerHTML: '' };
+  const documentStub = {
+    readyState: 'complete',
+    querySelectorAll: () => [container],
+    addEventListener() {},
+    createElement: () => ({ getContext: () => ({ fillStyle: '', fillRect() {} }), toDataURL: () => 'data:image/png;base64,SPRITE' }),
+  };
+  const battleMock = { youIndex: 10, foeIndex: 0, duel: { kind: 'wheel', matrixId: '4', aiRead: 45 } };
+  const windowStub = {
+    CGFX_SPIKE_DATA: DATA, CGFX_ICONS: ICON_DATA, CGFX_MATRICES: MATRICES,
+    __battleMock: battleMock, CGFXM: null,
+  };
+  vm.runInNewContext(source, {
+    window: windowStub, document: documentStub, setInterval: () => 0, clearInterval: () => {},
+  });
+  const four = MATRICES.matrices.find((matrix) => matrix.id === '4');
+  for (const type of four.order) assert.ok(container.innerHTML.includes(`alt="${type}"`), type);
+  for (const type of DATA.wheel.order.slice(4)) {
+    assert.ok(!container.innerHTML.includes(`alt="${type}"`), `${type} belongs to the 8-type table`);
+  }
+});

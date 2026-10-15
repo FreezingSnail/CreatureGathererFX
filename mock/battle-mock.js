@@ -35,6 +35,9 @@
 const DATA = (typeof module !== 'undefined' && module.exports && typeof require === 'function')
   ? require('./data.js')
   : (typeof window !== 'undefined' ? window.CGFX_SPIKE_DATA : null);
+const MATRIX_DATA = (typeof module !== 'undefined' && module.exports && typeof require === 'function')
+  ? require('./matrices.js')
+  : (typeof window !== 'undefined' ? window.CGFX_MATRICES : null);
 
 const W = 128, H = 64;
 const SPRITE_BASE = '../docs/assets/battle-sprites48/';
@@ -157,6 +160,7 @@ function newMock(options = {}) {
     duel: {
       kind: options.duelKind || 'wheel', // wheel | stances
       scoring: options.scoring || 'power', // power | flat (pure) | bonus (recommended)
+      matrixId: options.matrixId || '8', // type-count table: 8 | 6 | 5 | 4
       teamSize: options.teamSize || 3, // 3v3 by default; 1 = benchless spike mode
       aiPersona: options.aiPersona || 'reader',
       stances: options.stances || 3,
@@ -434,6 +438,29 @@ function wheelValue(moveType, defendType) {
   return DATA.wheel.chart[row][col];
 }
 const wheelBeats = (a, b) => wheelValue(a, b) === 2;
+
+// Matrix-aware lookup for the duel: state.duel.matrixId selects one of the
+// type-count spike tables (8/6/5/4), folding raw type names through its map.
+function duelMatrix(state) {
+  const id = state.duel.matrixId || '8';
+  if (id !== '8' && MATRIX_DATA && MATRIX_DATA.matrices) {
+    const entry = MATRIX_DATA.matrices.find((matrix) => matrix.id === id);
+    if (entry) return entry;
+  }
+  return { order: DATA.wheel.order, chart: DATA.wheel.chart, map: null };
+}
+function foldType(matrix, type) {
+  if (!matrix.map) return type;
+  return matrix.map[type] || type;
+}
+function duelValue(state, moveType, defendType) {
+  const matrix = duelMatrix(state);
+  const row = matrix.order.indexOf(foldType(matrix, moveType));
+  const col = matrix.order.indexOf(foldType(matrix, defendType));
+  if (row < 0 || col < 0) return 1;
+  return matrix.chart[row][col];
+}
+const duelBeats = (state, a, b) => duelValue(state, a, b) === 2;
 function hasAffinity(state, side, move) {
   const creature_ = duelCreature(state, side);
   return creature_.types.includes(move.type);
@@ -501,7 +528,7 @@ function counterOptions(state, targetType) {
   }
   return duelOptions(state, 1)
     .map((option, index) => ({ option, index }))
-    .filter((entry) => wheelBeats(entry.option.type, targetType))
+    .filter((entry) => duelBeats(state, entry.option.type, targetType))
     .map((entry) => entry.index);
 }
 
@@ -551,7 +578,7 @@ function benchCounterSlot(state, targetType) {
       .filter((id) => id != null)
       .map((id) => DATA.moves[id])
       .filter((move) => isSpikeMove(move))
-      .some((move) => wheelBeats(move.type, targetType));
+      .some((move) => duelBeats(state, move.type, targetType));
     if (hasCounter) return slot;
   }
   return -1;
@@ -578,8 +605,8 @@ const FLAT_WIN = 14, FLAT_CHIP = 4, FLAT_TRADE = 6;
 // (and beats none), else 1. Bonus and penalty both apply to the damage dealt.
 function duelCreatureBonus(state, side, moveType) {
   const defender = duelCreature(state, side === 0 ? 1 : 0);
-  if (defender.types.some((type) => wheelBeats(moveType, type))) return 1.5;
-  if (defender.types.some((type) => wheelValue(moveType, type) === 0.5)) return 0.5;
+  if (defender.types.some((type) => duelBeats(state, moveType, type))) return 1.5;
+  if (defender.types.some((type) => duelValue(state, moveType, type) === 0.5)) return 0.5;
   return 1;
 }
 
@@ -673,8 +700,8 @@ function duelResolve(state) {
     const attackerMove = attackerSide === 0 ? yourMove : foeMove;
     const incoming = duelCreature(state, switcher);
     const modifier = scoring === 'bonus' && attackerMove.type
-      ? (incoming.types.some((type) => wheelBeats(attackerMove.type, type)) ? 1.5
-        : incoming.types.some((type) => wheelValue(attackerMove.type, type) === 0.5) ? 0.5 : 1)
+      ? (incoming.types.some((type) => duelBeats(state, attackerMove.type, type)) ? 1.5
+        : incoming.types.some((type) => duelValue(state, attackerMove.type, type) === 0.5) ? 0.5 : 1)
       : 1;
     const hit = Math.max(1, Math.round(FLAT_WIN * modifier));
     if (attackerSide === 0) yourDamage = hit; else foeDamage = hit;
@@ -683,7 +710,7 @@ function duelResolve(state) {
   } else if (scoring === 'flat' || scoring === 'bonus') {
     // Flat numbers: relation decides. In the bonus spelling the creature-type
     // matchup scales the damage dealt: x1.5 beating their type, x0.5 losing to it.
-    const relation = wheelValue(yourMove.type, foeMove.type);
+    const relation = duelValue(state, yourMove.type, foeMove.type);
     const mod = (side, move) => (scoring === 'bonus' ? duelCreatureBonus(state, side, move.type) : 1);
     const scaled = (base, multiplier) => Math.max(1, Math.round(base * multiplier));
     const yourMod = mod(0, yourMove), foeMod = mod(1, foeMove);
@@ -703,7 +730,7 @@ function duelResolve(state) {
       duelState.lines = ['TRADE', `-${yourDamage} -${foeDamage}`];
     }
   } else {
-    const relation = wheelValue(yourMove.type, foeMove.type);
+    const relation = duelValue(state, yourMove.type, foeMove.type);
     const stab = (side, move) => (hasAffinity(state, side, move) ? 1.5 : 1);
     const yourPower = (4 + yourMove.power * 1.2) * stab(0, yourMove);
     const foePower = (4 + foeMove.power * 1.2) * stab(1, foeMove);
@@ -1147,6 +1174,11 @@ function boot() {
     syncControls();
   });
   wire('duel-ai', 'change', (event) => { state.duel.aiPersona = event.target.value; syncControls(); });
+  wire('duel-matrix', 'change', (event) => {
+    state.duel.matrixId = event.target.value;
+    if (state.mode === 'duel') state.scene = 'setup';
+    syncControls();
+  });
   wire('duel-read', 'input', (event) => { state.duel.aiRead = Number(event.target.value); syncControls(); });
   wire('duel-explain', 'change', (event) => { state.duel.explain = event.target.checked; });
   wire('scale', 'change', (event) => applyScale(Number(event.target.value)));
@@ -1165,6 +1197,7 @@ function boot() {
     set('trim-foe', (element) => { element.checked = state.trim.foeNumbers; });
     set('duel-stances', (element) => { element.value = String(state.duel.stances); });
     set('duel-ai', (element) => { element.value = state.duel.aiPersona; });
+    set('duel-matrix', (element) => { element.value = state.duel.matrixId; });
     set('duel-read', (element) => { element.value = String(state.duel.aiRead); });
     set('duel-explain', (element) => { element.checked = state.duel.explain; });
     set('duel-read-value', (element) => { element.textContent = `${state.duel.aiRead}%`; });
@@ -1176,7 +1209,7 @@ function boot() {
         state.mode === 'duel' ? `duel ${state.duel.kind}` : state.mode,
         state.mode === 'trim' ? `${state.trim.typeMode} arrows:${state.trim.arrows ? 'on' : 'off'} press:${state.trim.pressTurn ? 'on' : 'off'}` : '',
         state.mode === 'duel' && state.duel.kind === 'stances' ? `${state.duel.stances} stances ai:${state.duel.aiPersona} ${state.duel.aiRead}%` : '',
-        state.mode === 'duel' && state.duel.kind === 'wheel' ? `duel wheel ${state.duel.scoring} ai:${state.duel.aiPersona} ${state.duel.aiRead}%` : '',
+        state.mode === 'duel' && state.duel.kind === 'wheel' ? `duel wheel ${state.duel.scoring} ${state.duel.matrixId}t ai:${state.duel.aiPersona} ${state.duel.aiRead}%` : '',
         state.mode === 'duel' && state.duelState
           ? `you:${state.duelState.partyIndex[0].map((index) => creature(index).name).join(',')} foe:${state.duelState.partyIndex[1].map((index) => creature(index).name).join(',')}`
           : '',
@@ -1211,6 +1244,7 @@ if (typeof module !== 'undefined' && module.exports) {
     DUEL_PERSONAS, duelPersona, predictPlayerType, counterOptions, recordPlayerPick,
     duelCreature, duelBench, benchCounterExists, benchCounterSlot, sideAlive, isSwitchPick,
     livingBenchSlots, switchTargetSlot, rollTeam, SWITCH_BASE,
+    duelMatrix, duelValue, duelBeats, foldType, MATRIX_DATA,
     creature, moveOf, activeMode, typesOf, drawIcon, text, glyphRows,
     ICONS, MERGED_ICONS, SYMBOLS, DATA, W, H, SPRITE_BASE, isSpikeMove,
   };
