@@ -17,6 +17,8 @@ a { color: #bbb; }
 .card { border: 1px solid #333; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
 .card img { width: 100%; image-rendering: pixelated; border: 1px solid #222; background: #000; }
 .card h3 { margin: 0; font-size: 13px; color: #eee; font-weight: normal; }
+.card.recommended { border: 2px solid #7d7; box-shadow: 0 0 0 1px #7d7; }
+.card.recommended .tag { color: #7d7; border: 1px solid #7d7; border-radius: 3px; padding: 0 4px; font-size: 10px; vertical-align: 1px; }
 .card p { margin: 0; color: #999; }
 .card button { align-self: flex-start; }
 .launcher { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
@@ -32,6 +34,7 @@ a { color: #bbb; }
 .matrix .hl-row, .matrix .hl-col { background: #1d241d; }
 .matrix .hl-x { background: #2a3a2a; }
 .stage-wrap { position: relative; display: inline-block; }
+.stage-wrap.recommended canvas { border: 2px solid #7d7; }
 .annotate-layer { position: absolute; inset: 0; pointer-events: none; }
 .annotate-layer .chip {
   position: absolute; transform: translate(-50%, -50%);
