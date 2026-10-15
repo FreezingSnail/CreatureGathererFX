@@ -51,6 +51,13 @@
         trade = 6 both. Play D and E side by side to judge whether the numbers add decisions or noise.</p>
       <button type="button" data-variant="duel-pure">open pure window</button>
     </div>
+    <div class="card">
+      <h3>F · duel bonus — matchup vs the creature's type</h3>
+      <img src="../docs/assets/battle-design-spike/duel-bonus-choice.png" alt="creature-bonus duel frame">
+      <p>Clash decides win/lose/trade, power still scales damage, but a move whose type beats the opposing
+        creature's type hits ×1.5 (marked ↑). Type badges on each sprite show both creatures' types.</p>
+      <button type="button" data-variant="duel-bonus">open bonus window</button>
+    </div>
   </div>
   <h2>8-type matchup web (row attacks column)</h2>
   <p class="note" style="text-align:center">25 beats edges over 8 types, built from four seeded triangles
@@ -89,7 +96,7 @@
     button.addEventListener('click', () => openVariant(button.dataset.variant));
   }
   document.getElementById('open-all').addEventListener('click', () => {
-    for (const variant of ['current', 'trim', 'duel-stances', 'duel', 'duel-pure']) openVariant(variant);
+    for (const variant of ['current', 'trim', 'duel-stances', 'duel', 'duel-pure', 'duel-bonus']) openVariant(variant);
   });
 </script>
 </body>

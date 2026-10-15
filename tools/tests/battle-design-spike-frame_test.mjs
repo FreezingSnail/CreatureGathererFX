@@ -90,6 +90,23 @@ test('pure RPS window boots with flat scoring from its body attribute', () => {
   assert.ok(/RPS (WIN|LOSE)|TRADE/.test(lines), lines);
 });
 
+test('bonus window boots with bonus scoring and draws type badges', () => {
+  const harness = createHarness({ mode: 'duel', duel: 'wheel', scoring: 'bonus' });
+  harness.advances(2);
+  const state = harness.state();
+  assert.equal(state.duel.scoring, 'bonus');
+  // Badge plates sit at the creature corners; check a badge pixel row is painted.
+  harness.press('z');
+  harness.advances(2);
+  assert.equal(state.scene, 'battle');
+  let badgePixels = 0;
+  for (let y = 37; y < 47; y++) {
+    for (let x = 0; x < 22; x++) badgePixels += harness.frame[y * 128 + x];
+    for (let x = 106; x < 128; x++) badgePixels += harness.frame[y * 128 + x];
+  }
+  assert.ok(badgePixels > 20, `type badges painted (${badgePixels} pixels)`);
+});
+
 test('mode edges 1/2/3 switch scenes from the keyboard', () => {
   const harness = createHarness();
   harness.press('2');

@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Battle mock · duel bonus</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-mode="duel" data-duel="wheel" data-scoring="bonus">
+<div id="wrap">
+  <h1>F · duel bonus — matchup against the creature's type</h1>
+  <canvas id="screen" width="128" height="64"></canvas>
+  <table>
+    <tr>
+      <td><span class="k">Left / Right</span> pick move</td>
+      <td><span class="k">Z</span> / <span class="k">Space</span> A: commit</td>
+      <td><span class="k">X</span> back to setup</td>
+    </tr>
+  </table>
+  <div id="controls">
+    <label>AI read <input type="range" id="duel-read" min="0" max="100" value="45"> <span id="duel-read-value">45%</span></label>
+    <label><input type="checkbox" id="duel-explain" checked> AI READ tag</label>
+    <label>scale
+      <select id="scale">
+        <option value="1">1×</option>
+        <option value="3">3×</option>
+        <option value="4">4×</option>
+        <option value="5" selected>5×</option>
+        <option value="8">8×</option>
+      </select>
+    </label>
+    <label>seed <span id="seed-value">–</span> <button id="new-seed" type="button">reroll</button></label>
+  </div>
+  <div id="status">ready</div>
+  <h2>Matchup table (row attacks column)</h2>
+  <div class="matrix" data-matrix="wheel" data-highlight="on"></div>
+  <p class="note">Third spelling: the clash (your move vs their move) decides win/lose/trade as in
+    the power window, damage still scales with move power — but your hit is ×1.5 when your move's type
+    beats the <em>opposing creature's type</em>, and theirs likewise against you. STAB/affinity is not
+    applied here, so the only bonus is the creature matchup (marked ↑ next to power). The type badges on
+    each sprite show both creatures' types; the table row/column highlight follows the setup creatures.
+    Compare with <a href="duel.html">D · power</a> and <a href="duel-pure.html">E · pure</a>.</p>
+  <p><a href="index.html">← mock index</a></p>
+</div>
+<script src="data.js"></script>
+<script src="battle-mock.js"></script>
+<script src="matrix.js"></script>
+</body>
+</html>
