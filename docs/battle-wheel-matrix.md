@@ -130,6 +130,9 @@ data test re-runs the proof over all 64 creatures.
 
 ## Type-count team composition census
 
+The **5-type table is the demo default** (owner decision, 2026-10-15); the duel windows and the
+launcher default to it, and sample teams in `mock/teams.js` are authored against its shapes.
+
 `node tools/battle-team-permutations.mjs [4|5|6|8]` enumerates every 3-creature team composition from
 the folded types and classifies every matchup (run the tool for the full table):
 

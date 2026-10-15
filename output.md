@@ -9649,3 +9649,32 @@ node --test tools/tests/battle-design-spike-data_test.mjs  -> 8 pass / 0 fail
 node --test tools/tests/battle-matchup-solver_test.mjs     -> 4 pass / 0 fail
 node tools/battle-design-spike-preview.mjs                 -> duel-teams.png added
 ```
+
+# CreatureGathererFX-ghom
+
+The 5-type table is now the demo default.
+
+- Engine: `duel.matrixId` defaults to '5'; duel window types selects default to 5 (labelled
+  '5 · default'); launcher type-table select defaults to 5 and the note says so. Docs marked.
+- Testing fixture policy: duelMock pins matrixId '8' for fixed expectations; tests that exercise
+  other tables select them explicitly; new mock test asserts the default and the wind->water fold;
+  frame tests assert the default/fallback value 5.
+- Read-rate spike stays pinned to the 8-type table: at 5 types the spike matchup degenerates
+  (ScrambleSnail's folded water move beats both of ScatterCrab's folded moves and the AI has no
+  counter), which flattened the curves to constants. That is a real design note: 5-type counterplay
+  lives in the cycle subsets (water>earth>fire>plant>water); matchups outside the cycle can be
+  one-sided.
+
+```text
+node --test mock/battle-mock.test.js                       -> 32 pass / 0 fail
+node --test tools/tests/battle-design-spike-frame_test.mjs -> 10 pass / 0 fail
+node --test tools/tests/battle-duel-spike_test.mjs         -> 4 pass / 0 fail
+node --test tools/tests/battle-teams_test.mjs              -> 2 pass / 0 fail
+node --test tools/tests/battle-team-permutations_test.mjs  -> 7 pass / 0 fail
+node --test tools/tests/battle-matrices-spike_test.mjs     -> 5 pass / 0 fail
+node --test tools/tests/battle-design-spike-matrix_test.mjs-> 7 pass / 0 fail
+node --test tools/tests/battle-design-spike-annotate_test.mjs -> 5 pass / 0 fail
+node --test tools/tests/battle-design-spike-data_test.mjs  -> 8 pass / 0 fail
+node --test tools/tests/battle-matchup-solver_test.mjs     -> 4 pass / 0 fail
+node tools/battle-design-spike-preview.mjs                 -> duel frames re-rendered on the 5-type default
+```

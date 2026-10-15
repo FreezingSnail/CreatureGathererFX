@@ -60,6 +60,7 @@ export function playDuel({ persona, readRate, policy, seed, matchup = SPIKE_MATC
     seed,
     aiRead: readRate,
     aiPersona: persona,
+    matrixId: '8', // read-rate baseline: mutual-counter matchups (the 5-type default can fold into one-sided pairs)
     teamSize: 1, // isolate the read model from team pairings
   });
   mock.startBattle(state);

@@ -163,7 +163,7 @@ function newMock(options = {}) {
     duel: {
       kind: options.duelKind || 'wheel', // wheel | stances
       scoring: options.scoring || 'power', // power | flat (pure) | bonus (recommended)
-      matrixId: options.matrixId || '8', // type-count table: 8 | 6 | 5 | 4
+      matrixId: options.matrixId || '5', // type-count table: 8 | 6 | 5 (default) | 4
       presetYou: options.presetYou || null, // authored sample team id, or null = random
       presetFoe: options.presetFoe || null,
       teamSize: options.teamSize || 3, // 3v3 by default; 1 = benchless spike mode
