@@ -95,8 +95,10 @@ function pinTeam(state, side, indices) {
   state.duelState.activeSlot[side] = 0;
 }
 
-function duelMock({ you, foe, teamSize = 1, ...options } = {}) {
-  const state = M.newMock({ mode: 'duel', teamSize, you, foe, ...options });
+function duelMock({ you, foe, teamSize = 1, matrixId = '8', ...options } = {}) {
+  // Tests pin the 8-type table unless they exercise another one; the demo
+  // default is 5.
+  const state = M.newMock({ mode: 'duel', teamSize, you, foe, matrixId, ...options });
   M.startBattle(state);
   if (you != null) pinTeam(state, 0, [you]);
   if (foe != null) pinTeam(state, 1, [foe]);
@@ -669,4 +671,17 @@ test('folded creature types drive badges and matchups in 5-type mode', () => {
   assert.deepEqual(M.duelTypeList(state, 1), ['water'], 'wind folds to water for badges');
   assert.deepEqual(M.duelTypeList(state, 0), ['earth']);
   assert.equal(M.duelValue(state, 'water', 'earth'), 2, 'water beats earth in the 5-type web');
+});
+
+test('demo default table is 5 and the fold drives the default matchup layer', () => {
+  const state = M.newMock({ mode: 'duel' });
+  assert.equal(state.duel.matrixId, '5');
+  M.startBattle(state);
+  // wind folds to water, lightning folds to fire in the 5-type table.
+  const wind = M.DATA.creatures.findIndex((entry) => entry.name === 'SquibbleSnail');
+  state.duelState.partyIndex[0] = [wind];
+  state.duelState.partyTypes[0] = null;
+  state.duelState.hp[0] = [M.creature(wind).maxHp];
+  state.duelState.activeSlot[0] = 0;
+  assert.deepEqual(M.duelTypeList(state, 0), ['water'], 'wind folds to water by default');
 });

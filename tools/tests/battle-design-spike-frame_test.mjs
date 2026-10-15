@@ -116,10 +116,14 @@ test('type table can be chosen from the query and from the in-window selector', 
   harness.setControl('duel-matrix', '4');
   assert.equal(harness.state().duel.matrixId, '4');
   assert.equal(harness.state().scene, 'setup');
-  // Invalid query values are ignored (falls back to the default 8).
+  // Invalid query values are ignored (falls back to the demo default 5).
   const fallback = createHarness({ mode: 'duel', duel: 'wheel', search: '?matrix=99' });
   fallback.advances(2);
-  assert.equal(fallback.state().duel.matrixId, '8');
+  assert.equal(fallback.state().duel.matrixId, '5');
+  // The demo default with no query at all is also 5.
+  const defaulted = createHarness({ mode: 'duel', duel: 'wheel' });
+  defaulted.advances(2);
+  assert.equal(defaulted.state().duel.matrixId, '5');
   // Battle starts fine on the folded table (folded resolution numbers are covered
   // by tools/tests/battle-matrices-spike_test.mjs).
   harness.press('z');

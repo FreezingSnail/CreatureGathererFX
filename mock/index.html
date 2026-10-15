@@ -11,14 +11,14 @@
   <h1>Creature Gatherer battle mock — playable 128×64 design spike · bead 2w8</h1>
   <p class="note" style="text-align:center;max-width:640px">Each design runs in its own window so they can sit side by side.
     All use the same roster, generated data, production damage/move-use rules and the same seed if you pass one.</p>
-  <p class="note" style="text-align:center;max-width:640px">Is 8 types too many to memorize? Compare the <a href="matrices.html">type-count tables (8 / 6 / 5 / 4)</a> and pick one in any duel window's <b>types</b> selector.</p>
+  <p class="note" style="text-align:center;max-width:640px">Type tables: <b>5 is the demo default</b> (10 facts). Compare <a href="matrices.html">8 / 6 / 5 / 4</a> on the gallery, pick one here or per window, and pick <b>sample teams</b> in the duel windows.</p>
   <div class="launcher">
     <label>seed <input id="seed-in" type="number" min="1" max="65535" value="1234"></label>
     <label>type table
       <select id="table-in">
-        <option value="8" selected>8 · full web (25 facts)</option>
+        <option value="8">8 · full web (25 facts)</option>
         <option value="6">6 (15 facts)</option>
-        <option value="5">5 (10 facts)</option>
+        <option value="5" selected>5 · default (10 facts)</option>
         <option value="4">4 · cycle (6 facts)</option>
       </select>
     </label>
