@@ -625,3 +625,48 @@ test('setup edges cycle creatures and A starts the fight', () => {
   assert.equal(state.scene, 'battle');
   assert.ok(state.battle || state.duelState);
 });
+
+test('sample teams build the party with retyped members', () => {
+  const index = (name) => M.DATA.creatures.findIndex((entry) => entry.name === name);
+  const state = M.newMock({
+    mode: 'duel', scoring: 'bonus', matrixId: '5', seed: 5,
+    presetYou: 'balanced', presetFoe: 'anchors',
+  });
+  M.startBattle(state);
+  assert.deepEqual(state.duelState.partyIndex[0], [index('squid'), index('SkitterCrab'), index('hedge')]);
+  assert.deepEqual(state.duelState.partyTypes[0], ['water', 'earth', 'plant']);
+  assert.deepEqual(state.duelState.partyTypes[1], ['water', 'water', 'earth']);
+  assert.equal(state.duelState.hp[0].length, 3);
+  // Retyped member drives the matchup: OrbitRelic is spirit/elder raw, typed
+  // water in the 'retyped' team, so fire loses to its creature type.
+  const retyped = M.newMock({
+    mode: 'duel', scoring: 'bonus', matrixId: '5', seed: 5, presetYou: 'retyped', presetFoe: 'balanced',
+  });
+  M.startBattle(retyped);
+  M.pinTeam ? null : null;
+  const orbit = M.DATA.creatures.findIndex((entry) => entry.name === 'OrbitRelic');
+  assert.ok(retyped.duelState.partyIndex[0].includes(orbit));
+  // Put OrbitRelic active and check the effective type list and fire matchup.
+  retyped.duelState.activeSlot[0] = retyped.duelState.partyIndex[0].indexOf(orbit);
+  assert.deepEqual(M.duelTypeList(retyped, 0), ['water']);
+  assert.equal(M.duelValue(retyped, 'fire', 'water'), 0.5, 'fire loses to the retyped water');
+  // Unknown preset ids fall back to a random roll.
+  const fallback = M.newMock({ mode: 'duel', matrixId: '5', seed: 5, presetYou: 'nope' });
+  M.startBattle(fallback);
+  assert.equal(fallback.duelState.partyTypes[0], null);
+  assert.equal(fallback.duelState.partyIndex[0].length, 3);
+});
+
+test('folded creature types drive badges and matchups in 5-type mode', () => {
+  const index = (name) => M.DATA.creatures.findIndex((entry) => entry.name === name);
+  const state = M.newMock({ mode: 'duel', scoring: 'bonus', matrixId: '5', seed: 5, teamSize: 1 });
+  M.startBattle(state);
+  // ScatterCrab (earth) active, foe raw wind creature: wind folds to water.
+  state.duelState.partyIndex = [[index('ScatterCrab')], [index('SquibbleSnail')]];
+  state.duelState.partyTypes = [null, null];
+  state.duelState.hp = [[M.creature(index('ScatterCrab')).maxHp], [M.creature(index('SquibbleSnail')).maxHp]];
+  state.duelState.activeSlot = [0, 0];
+  assert.deepEqual(M.duelTypeList(state, 1), ['water'], 'wind folds to water for badges');
+  assert.deepEqual(M.duelTypeList(state, 0), ['earth']);
+  assert.equal(M.duelValue(state, 'water', 'earth'), 2, 'water beats earth in the 5-type web');
+});

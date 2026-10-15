@@ -9621,3 +9621,31 @@ table. Tests extended for 5/6/8 counts; docs census table added.
 node tools/battle-team-permutations.mjs 5                    -> census printed
 node --test tools/tests/battle-team-permutations_test.mjs    -> 7 pass / 0 fail
 ```
+
+# CreatureGathererFX-t7q9
+
+Five-type demo with authored, retyped sample teams.
+
+- mock/teams.js: five teams from the census shapes — balanced (water+earth+plant, the perfectly
+  balanced comp), double anchor (water x2+earth, dominant), support stack (spirit+fire+water),
+  retyped showcase (OrbitRelic typed water over its raw spirit/elder), mono-earth trap (mirror-dead).
+- Engine: duel.presetYou/presetFoe build the party from a team id; partyTypes carries per-slot
+  retyped types used by badges, duelCreatureBonus (↑/↓), default-win checks and affinity; unknown
+  ids fall back to a random roll. Without a retype, badges show the folded raw types for the active
+  table (wind -> water in 5-type mode).
+- UI: every duel window has your team / foe team selects populated from the team data; status shows
+  preset ids. Preview frame duel-teams.png (5-type table, balanced vs anchors).
+
+```text
+node --test mock/battle-mock.test.js                       -> 31 pass / 0 fail (presets + folded badges)
+node --test tools/tests/battle-teams_test.mjs              -> 2 pass / 0 fail (new)
+node --test tools/tests/battle-design-spike-frame_test.mjs -> 10 pass / 0 fail (team selects)
+node --test tools/tests/battle-team-permutations_test.mjs  -> 7 pass / 0 fail
+node --test tools/tests/battle-matrices-spike_test.mjs     -> 5 pass / 0 fail
+node --test tools/tests/battle-design-spike-matrix_test.mjs-> 7 pass / 0 fail
+node --test tools/tests/battle-duel-spike_test.mjs         -> 4 pass / 0 fail
+node --test tools/tests/battle-design-spike-annotate_test.mjs -> 5 pass / 0 fail
+node --test tools/tests/battle-design-spike-data_test.mjs  -> 8 pass / 0 fail
+node --test tools/tests/battle-matchup-solver_test.mjs     -> 4 pass / 0 fail
+node tools/battle-design-spike-preview.mjs                 -> duel-teams.png added
+```

@@ -140,3 +140,21 @@ test('mode edges 1/2/3 switch scenes from the keyboard', () => {
   harness.advances(2);
   assert.ok(harness.spritePixels() > 200, 'duel battle renders');
 });
+
+test('sample team selects drive the duel party with retyped members', () => {
+  const harness = createHarness({ mode: 'duel', duel: 'wheel', scoring: 'bonus', search: '?seed=99' });
+  harness.advances(2);
+  harness.setControl('duel-matrix', '5');
+  harness.setControl('team-you', 'balanced');
+  harness.setControl('team-foe', 'anchors');
+  const state = harness.state();
+  assert.equal(state.duel.matrixId, '5');
+  assert.equal(state.duel.presetYou, 'balanced');
+  assert.equal(state.duel.presetFoe, 'anchors');
+  harness.press('z');
+  harness.advances(2);
+  assert.equal(state.scene, 'battle');
+  assert.equal(state.duelState.partyTypes[0].join('/'), 'water/earth/plant');
+  assert.equal(state.duelState.partyTypes[1].join('/'), 'water/water/earth');
+  assert.ok(state.duelState.hp[0].length === 3 && state.duelState.hp[1].length === 3);
+});
