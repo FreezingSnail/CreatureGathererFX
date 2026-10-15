@@ -51,7 +51,12 @@ perturbed_layout=$fixtures/fxlayout-expand-20-perturbed.toml
 # 25 bytes) at the end of the layout; later save-region addresses shift and the
 # selected AVR duel chart source reads it. Previous cart sha256 cb170b6a..., now
 # 5c0d4e7d.... Intentional rebaseline for the measured FX-chart duel variant.
-expected=5c0d4e7da2c6e9b5130f5e3bf817fb172948534eb27899a96b1723a164298a05
+# d73i.2 spike: appended the compact duel UI icon sheet (duelIcons, 14 masked
+# frames) and the authored DuelText captions to the live layout; existing field
+# addresses stay fixed except those after the text block, and the fixtures
+# exclude the new DuelText symbols to keep the 304-declaration migration proof.
+# Previous cart sha256 5c0d4e7d..., now ff695246.... Intentional rebaseline.
+expected=ff695246995db9dd62775118b3d94c66299a959d0b08c23d47fa5feb7eede074
 
 for layout in "$old_layout" "$new_layout" "$perturbed_layout"; do
     test -f "$layout" || {

@@ -220,3 +220,19 @@ namespace LureText {
     lureTextIntroGather = "A at plant: gather"
     lureTextIntroNoSave = "No demo save"
 }
+
+namespace DuelText {
+    duelBonusWin = "BONUS WIN"
+    duelBonusLose = "BONUS LOSE"
+    duelWeakWin = "WEAK WIN"
+    duelWeakLose = "WEAK LOSE"
+    duelRpsWin = "RPS WIN"
+    duelRpsLose = "RPS LOSE"
+    duelTrade = "TRADE"
+    duelDefaultWin = "DEFAULT WIN"
+    duelSwap = "SWAP"
+    duelWait = "WAIT"
+    duelDraw = "DRAW"
+    duelVs = "vs"
+    duelRound = "R"
+}

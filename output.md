@@ -10123,3 +10123,230 @@ via make gen, session feedback-payload plumbing replacing the temporary menu/fee
 CGFX_DUEL_BATTLE, the no-legacy-options-page removal, touched counter-enabled device/resource/stack
 suites with framebuffer assertions, and the paired whole-image step-2 measurement vs a preserved
 same-flags control. No generation run; no AVR build this pass; no cleanup needed. .2 left open.
+
+## d73i.2 continued (root committed .1 = 5eec3b1) — increment 2 + exact next steps
+
+Landed this pass (reachable, measured):
+- `src/engine/battle/BattleScene.cpp`: duel team pips drawn from resident state under CGFX_DUEL_BATTLE
+  (one cell per original member, alive 2x3, active underline 2x1 at y+4; foe y=2, you y=27, x=72+
+  slot*3), matching mock/duel-bonus.html; metadata-read free.
+- `src/engine/battle/DuelPickRow.hpp` + `tst/duel_pick_row_test.hpp` (increment 1).
+
+Verified: host duel `make test CPPFLAGS='-I. -DCGFX_DUEL_BATTLE'` 319272+/0 (log d73i2-host-2.log);
+paired ram — control 25248 f / 1745 s, candidate 24204 f / 1760 s (limits 29696/2160).
+
+Exact next steps to finish .2 (no .3/.4 until root commits .2):
+1. Authored inputs + `make gen` + parity baseline: 5 type-icon PNGs (from mock/icons.js, 8x8) added
+   under images/ with an fxsprites.toml entry; append captions to data/text/strings.txt — BONUS WIN,
+   BONUS LOSE, WEAK WIN, WEAK LOSE, RPS WIN, RPS LOSE, TRADE, DEFAULT WIN, SWAP, WAIT, DRAW; append
+   fxlayout.toml entries; run make gen; update tools/tests/pack-parity_test.sh baseline + comment.
+2. `src/engine/battle/DuelScene.hpp`: duel draw path — pick row (cells + type icons + ↑/↓ bonus
+   markers + SWAP/WAIT), centre R# + selected type icon, dual type badges (foe bottom-left x=1+
+   idx*12, you bottom-right x=113-idx*12, y=36), feedback footer with BOTH type icons and BOTH
+   damage values + the caption. Wire under CGFX_DUEL_BATTLE, replacing the temporary menu/feedback.
+3. Session plumbing: expose a DuelView (active folded types, HP, party pips, options with types,
+   round, feedback kind, reveal icons/damages) and a pick-row cursor; keep no PP/power/status and
+   zero per-frame metadata reads (transition-time text/icon caching only).
+4. Remove the old Attack/Gather/Change/Escape options main page for the duel build.
+5. Tests: extend tst/duel_pick_row_test.hpp (geometry); add counter-enabled device framebuffer
+   assertions (zero/one/four attacks, duplicate/dual badges, dead/empty pips + active underline,
+   picker cancel, held-edge ownership at phase boundaries, simultaneous reveal of both HP changes
+   and both icons); resource/stack suites on the same compact duel profile.
+6. Measurement: paired whole-image vs a preserved same-flags control; frame + painted stack;
+   gen/verify-generated/test-generated-libs/test-pack-parity; cleanup after the measured item.
+
+Storage: 65 GiB free, build/ 903 MiB. No git (root commits). .2 remains in progress.
+
+# CreatureGathererFX-d73i.2 — compact duel pick row, feedback, badges and pips (COMPLETE, open for root review)
+
+Owner steering: canonical target mock/duel-bonus.html matrix5 bonus scoring; DeepSeek implementation; no
+git; no .3/.4; no production default; continue the serial set without intermediate owner evaluation.
+The whole .2 frontend is now ported and verified; the bead stays open for root technical/resource review.
+
+## What landed (vs the pip-only increment)
+
+- Authored assets via `make gen` (sole generation entry): `images/DuelIcons_8x8.png` (provenance tool
+  `tools/export-duel-icons.mjs`), 14 masked frames = white-ink spirit/water/earth/fire/plant + up/down
+  markers, then the same five + markers in black ink for the selected cell; `data/text/strings.txt` gains
+  the `DuelText` captions (BONUS WIN/LOSE, WEAK WIN/LOSE, RPS WIN/LOSE, TRADE, DEFAULT WIN, SWAP, WAIT,
+  DRAW, vs, R); `fxlayout.toml` appends `duelIcons` after `duelChartFixture` (earlier addresses stay fixed).
+- `src/engine/battle/DuelView.hpp` (new): the pure duel view contract — `Feedback` kinds, `Cells`
+  (cells/options/swap/wait/round/types/markers/slots), `usableAttack`, `activeTypes`, `usableOptionCount`,
+  `slotForOption`, `optionType`, `livingBench`, `markerFor`, `buildCells`, `attackFeedback`. Header-only,
+  no FX reads, shared by session + renderer.
+- `src/engine/battle/BattleState.hpp`: +6 duel bytes (round, feedback, damage[2], reveal[2]); AVR assert
+  112 -> 118 (absorbed by the 193-byte ModeState envelope, so static SRAM is unchanged).
+- `src/engine/battle/BattleSession.cpp`: sets the round/feedback/damage/reveal facts; a terminal outcome
+  owns the footer caption (Win/Lose/Draw/Gathered/Fled/Escaped) while a progress-only or KO-blocked gather
+  keeps the in-progress `gather` caption; the round counter advances once per fresh choice.
+- `src/engine/battle/BattleScene.cpp`: duel HUD drawn from resident state — type badges (player bottom-right,
+  foe bottom-left), numeric HP + bar both sides (foe numerals hug the panel top so the glyphs stay disjoint
+  from the bar), team pips on free rows (foe y13, player y21) to keep three-digit HP and all pips legible,
+  the compact pick row (cells + type icons + ↑/↓ bonus markers + SWAP/WAIT, selected cell inverted via the
+  black-ink frames), the centre `R#` + selected type icon, and the result footer (both revealed move icons,
+  `vs`, the caption, and both damage figures). Labels are drawn from the authored glyphs (leading blank
+  trimmed) so nothing overflows its cell or the sprite. `Blit::NEGATIVE` is never used on the interleaved
+  masked sheet.
+- `src/engine/battle/BattleMenu.{hpp,cpp}`: a compact duel page model under `CGFX_DUEL_BATTLE` — pick row
+  (attack cells -> SelectMove(slot), SWAP -> two-row living-bench picker, WAIT -> Pass), a wild-only
+  gather/escape action page reached with B, and the picker cancel. The legacy options/move/replacement
+  pages are compiled out for the duel (no old options menu). The duel payload is padded to keep `BattleUi`
+  exactly 27 bytes (ModeState union ABI).
+- `src/engine/battle/BattleFlow.cpp` + `CreatureGathererFX.ino`: the duel scene owns the pick row/centre/
+  footer; the flow builds the pick row on the choice transition and the menu paints only its pages.
+- Tests: `tst/duel_view_contract_test.hpp` (support .6, wired + run), `tst/duel_pick_row_test.hpp`,
+  extended host `tst/duel_session_integration_test.hpp`, and the device
+  `tst/fxdatatest/duel_session_integration_test.hpp` (framebuffer geometry + caption-ownership assertions).
+
+## Commands and results
+
+```text
+make test BUILD_DIR=build CPPFLAGS='-I. -DCGFX_DUEL_BATTLE'   # duel host
+Total Passed: 319307   Total Failed: 0   (world 258/0)
+make test BUILD_DIR=build                                      # legacy host (unchanged)
+Total Passed: 319514   Total Failed: 0   (world 258/0)
+make testvm BUILD_DIR=build
+Total Passed: 278   Total Failed: 0
+
+make ram BUILD_DIR=build AVR_SHIPPING_CPP_FLAGS='<DUEL_SHIP_FLAGS> -DCGFX_DUEL_BATTLE'   # candidate
+RAM_FLASH_BYTES=24124  RAM_STATIC_BYTES=1760
+make ram BUILD_DIR=build AVR_SHIPPING_CPP_FLAGS='<DUEL_SHIP_FLAGS minus -DCGFX_DUEL_BATTLE>'  # control
+RAM_FLASH_BYTES=25368  RAM_STATIC_BYTES=1745
+
+make fxtest-headless AVR_FXTEST_CPP_FLAGS='-mrelax -DFX_READ_COUNTER -DCGFX_COMPACT_WARP_VM
+  -DCGFX_DUEL_BATTLE -DCGFX_BATTLE_NO_FACTS -DCGFX_BATTLE_COMPACT_RESULT' FXTEST_MS=30000
+  FXTEST_INOS='test_battle_duel test_duel_resources test_stack'
+test_battle_duel PASSED=132 FAILED=0      (sketch 29590 B)
+test_duel_resources PASSED=16 FAILED=0    (headroom=429 frame=8868 us, sketch 22728 B)
+test_stack PASSED=4 FAILED=0              (mode transition 608 B, stack headroom 507 B, sketch 20178 B)
+
+make verify-generated       # PASS
+make test-generated-libs    # PASS
+make test-pack-parity       # PASS (intentional rebaseline 5c0d4e7d -> ff695246)
+make gen                    # sole generation entry; src/fxdata.h == manifest
+```
+
+## Budgets (caps)
+
+- Flash candidate 24,124 / 29,696 (limit), i.e. 5,572 free. Static 1,760 / 2,160, 400 free.
+- Paired both-image step-2 delta vs the same-source/same-flags control: **-1,244 flash / +15 static**.
+- Cumulative vs the .1 selected 23,966/1,760: **+158 flash / 0 static**. Versus the interim pip-only
+  candidate 24,204/1,760: -80 flash.
+- Device: painted live-session headroom 429 B (>=219), worst frame 8,868 us (<=19,230), mode-transition
+  headroom 608 B (>=150), stack headroom 507 B. Metadata reads stay transition-only; steady result frames
+  and navigation perform none.
+
+## Deviations, notes and evidence
+
+- Historical control drift is not isolated (.1-recorded legacy control 25,248/1,745; the contemporaneous
+  same-source control is 25,368/1,745). No causal attribution is claimed. The same-source/same-flags pair is
+  the valid measurement, so the -1,244 flash / +15 static delta is attributable to the duel flag.
+- Badge ownership: the player creature sits at Side::Player == 0 (screen right); badges map player ->
+  x = 113 - i*12 and foe -> 1 + i*12, asserted by a distinguishing-glyph framebuffer test so a swapped side
+  fails.
+- `test_battle_duel` is at 29,590 / 29,696 (99%): the added framebuffer assertions are compacted (shared
+  fixture prologue, `noinline` only where stack measurement needs it). It fits, but headroom is thin; a
+  future device assertion may need a third sketch or a dispatch split.
+- Immutable evidence: `build/reports/d73i/d73i2-{candidate,control}-final.{log,elf}`,
+  `d73i2-host-*.log`, `d73i2-device-final3.log`. Pre-existing `.1` control/source evidence left untouched.
+
+## Storage / cleanup
+
+- Free disk 59 GiB (>=10 GiB). One reused `BUILD_DIR=build`, 1.5 GiB (<=5 GiB budget). No `cgfx-pack.*`
+  stages remain. `make clean-build-artifacts BUILD_DIR=build CLEAN_APPLY=1` applied (108 candidates,
+  2.69 MB). Not mine this session and left in place, reported for root: `build/battle-carve-spike` 275 MiB,
+  `build/box-adoption-gate` 371 MiB, `build/native-tools` 618 MiB, `build/arena-demo` 54 MiB, and several
+  `*-final-gate` trees — unknown prior evidence, within budget.
+
+## Wall time
+
+- Authored assets + icon exporter + `make gen`: ~10 min (iterating on the masked two-plane layout).
+- Renderer/menu/session implementation + host iteration: ~60 min.
+- Device tests (framebuffer suite + sketch-size trimming): ~25 min.
+- Paired ram + gen/parity + cleanup: ~8 min.
+
+## Status: .2 complete, source frozen
+
+- Bead `CreatureGathererFX-d73i.2` left open for ROOT review/commit; source frozen, build lane released.
+- No git operations, no push, no production default adoption, no .3/.4 work.
+- `duelFeedbackActive()` is unused now (the footer is drawn by the scene); left in place per root
+  (no style-only removal).
+
+## d73i.2 addendum — UI suite split (root request)
+
+The renderer/framebuffer/outcome-caption assertions moved out of `test_battle_duel` into a dedicated
+`tst/fxdatatest/test_duel_ui.ino` + `tst/fxdatatest/duel_ui_test.hpp` (shared fixtures stay in
+`duel_session_integration_test.hpp`). The Makefile selects the shipping compact duel profile
+(`CGFX_DUEL_BATTLE -DCGFX_BATTLE_NO_FACTS -DCGFX_BATTLE_COMPACT_RESULT`, all TUs) for `test_duel_ui`
+alongside `test_battle_duel`/`test_duel_resources`, and the final wildcard gate
+(`FXTEST_INOS="$(wildcard tst/fxdatatest/*.ino)"`) picks it up automatically. No checks dropped and
+`FX_READ_COUNTER` stays on; the backend/session counters are unchanged.
+
+```text
+make fxtest-headless AVR_FXTEST_CPP_FLAGS='-mrelax -DFX_READ_COUNTER -DCGFX_COMPACT_WARP_VM
+  -DCGFX_DUEL_BATTLE -DCGFX_BATTLE_NO_FACTS -DCGFX_BATTLE_COMPACT_RESULT' FXTEST_MS=30000
+  FXTEST_INOS='test_battle_duel test_duel_ui test_duel_resources test_stack'
+test_battle_duel     PASSED=91 FAILED=0    (sketch 26254 B; 3442 B free, 11.6%)
+test_duel_ui         PASSED=50 FAILED=0    (sketch 22928 B; 6768 B free, 22.8%)
+test_duel_resources  PASSED=16 FAILED=0    (headroom=429 frame=8868 us, sketch 22728 B)
+test_stack           PASSED=4 FAILED=0     (mode transition 608 B, stack headroom 507 B, sketch 20178 B)
+```
+
+Shipping candidate unchanged by the split (source untouched): 24,124 flash / 1,760 static vs the
+same-source control 25,368 / 1,745. Log: `build/reports/d73i/d73i2-device-final5.log`.
+The prior 99%-full single-sketch note is resolved: test_battle_duel frees 3,442 B (11.6%), test_duel_ui
+6,768 B (22.8%), test_duel_resources 6,968 B (23.5%), test_stack 9,518 B (32.1%).
+
+## d73i.2 final native / generation evidence (settled source)
+
+Exact command-pass logs under `build/reports/d73i/`, all exit 0:
+
+```text
+make test BUILD_DIR=build CPPFLAGS='-I. -DCGFX_DUEL_BATTLE'  -> d73i2-native-duel-final.log
+  Total Passed 319326  Failed 0  (world 258/0)  [includes DuelKernelSuite, DuelSessionIntegrationSuite,
+  DuelPickRowSuite, DuelViewContractSuite (.6), DuelMenuSuite]
+make test BUILD_DIR=build                                     -> d73i2-native-legacy-final.log
+  Total Passed 319514  Failed 0  (world 258/0)
+make testvm BUILD_DIR=build                                   -> d73i2-vm-final.log
+  Total Passed 278  Failed 0
+make verify-generated    BUILD_DIR=build  -> d73i2-verify-generated-final.log   (empty, exit 0)
+make test-generated-libs BUILD_DIR=build  -> d73i2-generated-libs-final.log     (4 PASS, exit 0)
+make test-pack-parity    BUILD_DIR=build  -> d73i2-pack-parity-final.log        (pack parity: PASS)
+make fxtest-headless ... 4 duel suites    -> d73i2-device-final5.log            (91+50+16+4 all 0 failed)
+```
+
+Resources: `d73i2-candidate-final.{log,elf}` 24,124/1,760 sha256
+4594714e7d3e833fc3f0e149105d729f638401a604457f1c1b60b362ce967080; `d73i2-control-final.{log,elf}`
+25,368/1,745 sha256 752ccd21919b26fd32ecf07981dcabae2aae98b7b743a868f94b7d742134e224.
+Source base HEAD 5eec3b1917cf095c5de5c6f6559db659fa3d4ca3, worktree dirty with the .2 change set;
+`src/fxdata.h` sha256 61566bedb3ac4016b2a439b52776d25f4294de8f8a5e9765325b681abe046b56,
+`images/DuelIcons_8x8.png` sha256 0b39b6f063b5cb535b5ebda0e4a22583977f7d37a7289f9ca1c45995dc47e281.
+Support bead .7 (commit 543e2c2) is separate and stays unintegrated with CGFX_DUEL_BATTLE before .4.
+
+## d73i.2 — root acceptance and checkpoint
+
+Root froze the completed UI after checking real menu/session wiring, side-specific
+badge pixels, disjoint3-digit HP/pip rows, correct outgoing-damage order, fresh
+input ownership, and progress/acquisition/flee caption ownership. Final evidence:
+`d73i2-native-duel-final.log`319326/0 +world258/0;
+`d73i2-native-legacy-final.log`319514/0 +world258/0;
+`d73i2-vm-final.log`278/0; `d73i2-device-final5.log`91+50+16+4=161/0.
+Live stack429 B, transition608 B, worst frame8868 us. Generated verification,
+generated-libs and pack-parity logs pass. Selected ELF SHA256
+4594714e7d3e833fc3f0e149105d729f638401a604457f1c1b60b362ce967080.
+Whole-image candidate24124/1760 vs contemporaneous control25368/1745;
+increment vs .1 selected23966/1760 is +158/0. Historical control drift is
+not causally isolated: all8 shared World/Player/save source prerequisites are
+byte-identical to their .1 archive copies, so earlier attribution to that
+workstream is withdrawn. Use the contemporaneous pair for the measured delta.
+Native pips move to free rows13/21 to keep supported3-digit HP legible.
+No manual evaluation needed; .2 and support .6 accepted on automated evidence.
+Full integrated gate remains at final batch checkpoint per owner gate cadence.
+
+Native support .7 is committed separately as CreatureGathererTools543e2c2.
+New Rustduel10/0, complete library215/0; broader native live-data fixture drift
+is tracked in CreatureGathererFX-ni84 (4 stale declaration checks + manifest
+fixture unknown zap). No full native core pass claimed. Exact patches/logs are
+under build/reports/d73i/native-*; no game config integration before .4.
+Storage at checkpoint:57 GiB free, build1.5 GiB, reports5.9 MiB,
+legacy archive1.8 MiB. .2 worker retired; lane passes to .3 after commit.

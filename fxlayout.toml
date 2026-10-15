@@ -101,6 +101,12 @@ source = { image = { path = "images/LureWorld_16x16.png", width = 16, height = 1
 [[entry]]
 name = "duelChartFixture"
 source = { raw = "data/duelchart.bin" }
+
+# d73i.2 compact duel UI: five folded-type icons then the up/down bonus markers,
+# appended after the duel chart so every earlier field address stays fixed.
+[[entry]]
+name = "duelIcons"
+source = { image = { path = "images/DuelIcons_8x8.png", width = 8, height = 8, shades = 2, spacing = 0 } }
 [save]
 sectors = 8
 

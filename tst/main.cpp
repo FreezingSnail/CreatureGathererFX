@@ -66,9 +66,14 @@
 #include "battle_slim_test.hpp"
 #ifndef CGFX_DUEL_BATTLE
 #include "battle_slim_session_test.hpp"
-#endif
+// battle_slim_menu asserts the legacy options/move/replacement pages, which the
+// CGFX_DUEL_BATTLE build replaces with the compact duel pick/picker/action pages.
 #include "battle_slim_menu_test.hpp"
+// battle_slim_feedback pins the legacy scene raster tail (player frame last) and
+// the legacy feedback footer; the duel scene appends badges/pips/footer, so it is
+// part of the legacy contract run.
 #include "battle_slim_feedback_test.hpp"
+#endif
 #ifdef BATTLE_SIMULATOR
 #include "battle_sim_state_test.hpp"
 #include "battle_sim_runner_test.hpp"
@@ -76,6 +81,9 @@
 #ifdef CGFX_DUEL_BATTLE
 #include "duel_kernel_test.hpp"
 #include "duel_session_integration_test.hpp"
+#include "duel_pick_row_test.hpp"
+#include "duel_view_contract_test.hpp"
+#include "duel_menu_test.hpp"
 #endif
 
 Player player = Player();
@@ -257,14 +265,30 @@ int main() {
     battle_slim_fixture::BattleSlimScaffoldSuite(tests);
 #ifndef CGFX_DUEL_BATTLE
     battle_slim_session_test_detail::BattleSlimSessionSuite(tests);
-#endif
+    // The legacy options/move/replacement menu contract is replaced by the duel
+    // pages, so it is not part of the duel build.
     BattleSlimMenuSuite(tests);
     battle_slim_feedback_fixture::SlimFeedbackSuite(tests);
+#endif
 #ifdef CGFX_DUEL_BATTLE
     std::cout << "DuelKernelSuite" << std::endl;
     DuelKernelSuite(tests);
     std::cout << "DuelSessionIntegrationSuite" << std::endl;
     DuelSessionIntegrationSuite(tests);
+    std::cout << "DuelPickRowSuite" << std::endl;
+    DuelPickRowSuite(tests);
+    std::cout << "DuelViewContractSuite" << std::endl;
+    {
+        TestSuite duelViewSuite("Duel view contract");
+        DuelViewContractSuite(duelViewSuite);
+        tests.addTestSuite(duelViewSuite);
+    }
+    std::cout << "DuelMenuSuite" << std::endl;
+    {
+        TestSuite duelMenuSuite("Duel menu pages");
+        DuelMenuSuite(duelMenuSuite);
+        tests.addTestSuite(duelMenuSuite);
+    }
 #endif
 #ifdef BATTLE_SIMULATOR
     BattleSimulatorStateSuite(tests);

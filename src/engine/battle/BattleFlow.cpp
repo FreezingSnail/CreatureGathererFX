@@ -27,14 +27,15 @@ void beginMenu(battle::BattleMode &mode) {
 // arm was built this frame (the caller then consumes no button edge).
 bool duelSyncUi(battle::BattleMode &mode, battle::BattleSession &session) {
     if (session.consumeResultEntry()) {
-        beginFeedback(mode);
+        // The result footer is drawn by BattleScene directly from the resident
+        // round facts, so no feedback arm is constructed; the entry still owns
+        // this frame's edge.
         return true;
     }
     if (session.consumeChoiceEntry()) {
         beginMenu(mode);
         const battle::BattleState &state = session.state();
-        mode.ui.menu.beginOptions(session.moves(), state.gatherable,
-                                  !state.trainer);
+        mode.ui.menu.beginDuel(state, state.gatherable, !state.trainer);
         return true;
     }
     return false;
@@ -104,6 +105,10 @@ bool update(uint8_t edgeButtons, TerminalCallback onFinished) {
 
     if (session.awaitingPlayer()) {
         if (!mode.ui.menu.initialized()) {
+#ifdef CGFX_DUEL_BATTLE
+            const battle::BattleState &state = session.state();
+            mode.ui.menu.beginDuel(state, state.gatherable, !state.trainer);
+#else
 #if !CGFX_BATTLE_AUTO_REPLACE
             if (session.awaitingReplacement()) {
                 mode.ui.menu.beginReplacement(session.replacementChoices());
@@ -114,6 +119,7 @@ bool update(uint8_t edgeButtons, TerminalCallback onFinished) {
                                           !state.trainer);
 #if !CGFX_BATTLE_AUTO_REPLACE
             }
+#endif
 #endif
             return false;
         }
