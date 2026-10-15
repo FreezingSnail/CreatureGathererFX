@@ -56,6 +56,28 @@ test('merged four-type chart is a clean beat cycle', () => {
   });
 });
 
+test('eight-type wheel keeps every cell meaningful', () => {
+  const data = buildSpikeData();
+  const { order, chart } = data.wheel;
+  assert.equal(order.length, 8);
+  assert.equal(new Set(order).size, 8);
+  order.forEach((type, row) => {
+    assert.equal(chart[row].filter((value) => value === 2).length, 1, `${type} beats`);
+    assert.equal(chart[row].filter((value) => value === 0.5).length, 1, `${type} loses to`);
+    assert.ok(chart[row].every((value) => value !== 0), 'no immunity cells');
+    assert.equal(chart[row][row], 1);
+  });
+  // Every pair resolves one way: win/mirror-loss or neutral/neutral, never both.
+  for (let row = 0; row < 8; row++) {
+    for (let col = row + 1; col < 8; col++) {
+      const forward = chart[row][col], backward = chart[col][row];
+      if (forward === 2) assert.equal(backward, 0.5, `${order[row]} vs ${order[col]}`);
+      else if (forward === 0.5) assert.equal(backward, 2, `${order[row]} vs ${order[col]}`);
+      else assert.equal(backward, 1, `${order[row]} vs ${order[col]}`);
+    }
+  }
+});
+
 test('production chart keeps authored 8x8 values', () => {
   const data = buildSpikeData();
   assert.deepEqual(data.typeOrder, ['spirit', 'water', 'wind', 'earth', 'fire', 'lightning', 'plant', 'elder']);

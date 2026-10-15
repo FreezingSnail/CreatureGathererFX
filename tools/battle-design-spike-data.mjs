@@ -28,6 +28,13 @@ export const MERGED = {
   cycle: ['flame', 'bloom', 'tide', 'stone'],
 };
 
+// 8-type wheel for the simultaneous-pick duel: each type beats exactly the next
+// entry (clockwise) and loses to the previous one; everything else is neutral.
+// One ring diagram teaches the entire 8x8 matrix, and no cell is immunity.
+export const WHEEL = {
+  order: ['wind', 'earth', 'lightning', 'water', 'fire', 'plant', 'spirit', 'elder'],
+};
+
 const STAT_EFFECTS = ['ATKUP', 'SPDUP', 'DEFUP', 'SPCAUP', 'ATKDWN', 'SPDDWN'];
 
 function readJson(relative) {
@@ -161,6 +168,10 @@ export function buildSpikeData() {
       order: MERGED.order,
       map: MERGED.map,
       chart: cycleChart(MERGED.order),
+    },
+    wheel: {
+      order: WHEEL.order,
+      chart: cycleChart(WHEEL.order),
     },
     font: { firstChar, width: 5, height: 6, glyphs },
     moves,

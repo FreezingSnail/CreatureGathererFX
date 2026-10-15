@@ -18,12 +18,6 @@
     </tr>
   </table>
   <div id="controls">
-    <label>stances
-      <select id="duel-stances">
-        <option value="3" selected>3 stances</option>
-        <option value="4">4 stances</option>
-      </select>
-    </label>
     <label>AI read <input type="range" id="duel-read" min="0" max="100" value="45"> <span id="duel-read-value">45%</span></label>
     <label><input type="checkbox" id="duel-explain" checked> AI READ tag</label>
     <label>scale
@@ -38,9 +32,11 @@
     <label>seed <span id="seed-value">–</span> <button id="new-seed" type="button">reroll</button></label>
   </div>
   <div id="status">ready</div>
-  <p class="note">Both sides pick hidden, 550 ms reveal, then damage per clash: the clash winner lands a full hit,
-    the loser chips back, ties hurt both. Using your affinity stance (AFF) adds ×1.5. The stance row is drawn in
-    cycle order; the AI counters your previous pick at the read rate.</p>
+  <p class="note">Both sides pick one of their own creature's moves, hidden, then reveal: the 8-type wheel decides.
+    Win = full hit (your move power, ×1.5 when the move type is your creature's type), lose = blocked plus chip,
+    neutral or mirror = trade chip. Wheel: wind &gt; earth &gt; lightning &gt; water &gt; fire &gt; plant &gt; spirit &gt; elder &gt; wind —
+    each type beats the next and loses to the previous; everything else is neutral. The footer row shows your
+    creature's equipped moves as type icons; AFF marks an affinity pick. The AI counters your previous type at the read rate.</p>
   <p><a href="index.html">← mock index</a></p>
 </div>
 <script src="data.js"></script>

@@ -30,13 +30,36 @@
       <button type="button" data-variant="trim">open trim window</button>
     </div>
     <div class="card">
-      <h3>C · duel — simultaneous hidden stances</h3>
-      <img src="../docs/assets/battle-design-spike/duel-choice.png" alt="duel stance row frame">
-      <p>Both pick hidden, 550 ms reveal, damage per clash; 3- or 4-stance cycle, affinity ×1.5,
-        AI read slider, AI READ tag.</p>
+      <h3>C · duel — hidden pick among your creature's moves</h3>
+      <img src="../docs/assets/battle-design-spike/duel-choice.png" alt="duel move row frame">
+      <p>Both pick hidden, reveal, and the 8-type wheel decides: win = full hit, lose = blocked + chip,
+        neutral/mirror = trade. Creatures field their own equipped moves, so coverage differs per creature.
+        AI read slider + AI READ tag.</p>
       <button type="button" data-variant="duel">open duel window</button>
     </div>
   </div>
+  <h2>8-type wheel (the whole matrix)</h2>
+  <p class="note" style="text-align:center">wind &gt; earth &gt; lightning &gt; water &gt; fire &gt; plant &gt; spirit &gt; elder &gt; wind —
+    every type beats the next one clockwise and loses to the previous; all other pairs are neutral. No immunities,
+    so every pick stays live.</p>
+  <div id="wheel-table"></div>
+  <script src="data.js"></script>
+  <script>
+    {
+      const order = window.CGFX_SPIKE_DATA.wheel.order;
+      const chart = window.CGFX_SPIKE_DATA.wheel.chart;
+      const mark = (value) => (value === 2 ? '<span style="color:#8c8">&#9650;</span>'
+        : value === 0.5 ? '<span style="color:#c88">&#9660;</span>' : '<span style="color:#555">&middot;</span>');
+      let html = '<table style="border-collapse:collapse"><tr><th></th>'
+        + order.map((type) => `<th style="padding:1px 6px;color:#888">${type.slice(0, 4)}</th>`).join('') + '</tr>';
+      order.forEach((type, row) => {
+        html += `<tr><th style="padding:1px 6px;color:#eee;text-align:right">${type}</th>`
+          + chart[row].map((value) => `<td style="padding:1px 6px;text-align:center">${mark(value)}</td>`).join('') + '</tr>';
+      });
+      html += '</table><p class="note" style="margin-top:6px">rows attack columns &#183; &#9650; super &#183; &#9660; resisted &#183; &middot; neutral</p>';
+      document.getElementById('wheel-table').innerHTML = html;
+    }
+  </script>
   <table>
     <tr>
       <th>keys in a window</th>
