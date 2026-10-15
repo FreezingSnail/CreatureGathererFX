@@ -55,3 +55,32 @@ test('roster pools fold the authored types onto the four-cycle', () => {
   assert.deepEqual(Object.keys(pool).sort(), ['bloom', 'flame', 'stone', 'tide']);
   assert.equal(Object.values(pool).reduce((sum, count) => sum + count, 0), 64);
 });
+
+test('five types, three slots: 35 compositions, 125 sequences, 60 distinct triples', () => {
+  const { table, combos, sequences, pairs, records } = census('5');
+  assert.equal(table.id, '5');
+  assert.equal(table.edges.length, 10, '5-type web is a full tournament (every pair decided)');
+  assert.equal(combos.length, 35); // C(7,3)
+  assert.equal(sequences.length, 125); // 5^3
+  assert.equal(sequences.filter((sequence) => new Set(sequence).size === 3).length, 60); // P(5,3)
+  assert.equal(pairs.length, 630); // C(35+1, 2)
+  const kinds = { mutual: 0, A: 0, B: 0, dead: 0 };
+  for (const pair of pairs) kinds[pair.kind] += 1;
+  assert.equal(kinds.dead, 5, 'only the five mono-type mirrors are dead');
+  assert.equal(records.filter((record) => record.selfDead).length, 5);
+  for (const record of records) {
+    assert.equal(record.advantages + record.mutual + record.disadvantages + record.dead, 34,
+      `${record.combo.join('+')} has 34 opponents`);
+  }
+  assert.equal(records.reduce((sum, record) => sum + record.teams, 0), choose(64, 3));
+});
+
+test('six and eight types stay enumerable but explode: counts grow with C(n+2,3)^2', () => {
+  const six = census('6');
+  assert.equal(six.combos.length, 56); // C(8,3)
+  assert.equal(six.sequences.length, 216); // 6^3
+  const eight = census('8');
+  assert.equal(eight.combos.length, 120); // C(10,3)
+  assert.equal(eight.sequences.length, 512); // 8^3
+  assert.equal(eight.pairs.length, 120 * 121 / 2);
+});

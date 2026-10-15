@@ -9599,3 +9599,25 @@ node --test tools/tests/battle-team-permutations_test.mjs    -> 5 pass / 0 fail 
 node --test mock/battle-mock.test.js                         -> 29 pass / 0 fail
 node --test tools/tests/battle-matrices-spike_test.mjs       -> 5 pass / 0 fail
 ```
+
+# CreatureGathererFX-h5el
+
+Team permutation tool generalized to `node tools/battle-team-permutations.mjs [4|5|6|8]`; ran the
+5-type census.
+
+| types | comps | sequences | distinct triples | pairs | mutual/one-sided/dead | pools |
+| --- | --- | --- | --- | --- | --- | --- |
+| 4 | 20 | 64 | 24 | 210 | 156/50/4 | tide 20 bloom 18 stone 16 flame 10 |
+| 5 | 35 | 125 | 60 | 630 | 493/132/5 | water 20 spirit 13 plant 11 earth 10 fire 10 |
+| 6 | 56 | 216 | 120 | 1596 | tool | wind 8 ... |
+| 8 | 120 | 512 | 336 | 7260 | tool | live web pools |
+
+5-type findings: the web is a full tournament (10 edges); water and earth (3 wins each) anchor,
+spirit and fire (1 win each) are support; perfectly balanced comps water+earth+plant and
+water+fire+plant; only the five mono-type mirrors are dead; roster counts sum to C(64,3) in every
+table. Tests extended for 5/6/8 counts; docs census table added.
+
+```text
+node tools/battle-team-permutations.mjs 5                    -> census printed
+node --test tools/tests/battle-team-permutations_test.mjs    -> 7 pass / 0 fail
+```
