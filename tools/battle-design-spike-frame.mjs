@@ -178,7 +178,8 @@ export function createHarness(options = {}) {
       const element = getElement(id);
       if (typeof value === 'boolean') element.checked = value;
       else element.value = String(value);
-      element.dispatchEvent(new StubEvent(typeof value === 'boolean' ? 'change' : 'input'));
+      element.dispatchEvent(new StubEvent('input'));
+      element.dispatchEvent(new StubEvent('change'));
     },
     whitePixels() {
       let count = 0;
