@@ -11104,3 +11104,16 @@ the deleted `data/json/moves.json`. Fixed:
 
 `node --test tools/tests/beta-area_test.mjs` → 10/10; full `node --test tools/tests/*.mjs mock/*.test.js`
 → 198/0.
+
+## 4w89.7 — moveset-mask integrated gate (PASS)
+
+`make final-gate BUILD_DIR=build ARDENS=...` (defaults are now duel) → `gate: PASS` (check + ram).
+
+All device suites PASS: fxdatatest 216/0, test_battle_duel 106/0, test_duel_ui 58/0, test_duel_resources 16/0,
+test_stack 4/0, test_save 3300/0, test_world_player 49/0, test_creatures 720/0, test_opponents 216/0,
+test_battlepresentation 311/0, test_journal_boot 290/0, test_arenacatalog 46/0, test_arenaview 70/0 and the rest.
+Retired move-dependent suites are gone from the run (no legacy battle suites).
+
+Shipping: `AVR_FLASH_BYTES=22408` (free 7288), `AVR_STATIC_RAM_BYTES=1687` (free 473). vs the pre-epic
+control 25238/1745 → −2830 flash / −58 static. Logs: `build/final-gate/{check,ram}.log`.
+Storage: 53 GiB free; build 2.1 GiB.
