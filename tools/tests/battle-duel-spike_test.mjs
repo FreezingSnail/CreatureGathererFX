@@ -1,13 +1,21 @@
 // Run: node --test tools/tests/battle-duel-spike_test.mjs
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import path from 'node:path';
+import { execFileSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import {
   loadMock, SPIKE_MATCHUP, DEFAULT_MATRIX_ID, DEFAULT_TEAM_SIZE, DEFAULT_MAX_ROUNDS,
   buildDuel, playerPick, playDuel, runMatrix, runReport, parseArgs, POLICIES,
   TEAM_PAIRS, runPairSweep, runPairSweepReport, formatPairSweepReport,
+  DUEL_SPIKE_SCHEMA_VERSION, buildJsonReport, buildPairSweepJson, buildProvenance,
+  canonicalJson, sha256Hex, fixtureHashes, PROVENANCE_FILES, READ_RATES,
 } from '../battle-duel-spike.mjs';
 
 const mock = loadMock();
+const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
+const TOOL = path.join(REPO, 'tools/battle-duel-spike.mjs');
+const HEX64 = /^[0-9a-f]{64}$/;
 const REQUIRED_POLICIES = ['random', 'repeat', 'counter', 'rotation', 'swap'];
 
 test('the balance-contract policies are present', () => {
@@ -209,3 +217,93 @@ test('pair-sweep report runs every sample pair across policies and flags cells',
   assert.match(text, /25 pairs/);
   assert.match(text, /flags:/);
 });
+
+test('canonicalJson sorts keys and sha256Hex is the standard digest', () => {
+  assert.equal(canonicalJson({ b: 1, a: [2, { d: 4, c: 3 }] }), '{"a":[2,{"c":3,"d":4}],"b":1}');
+  // Known-answer test: SHA-256("") and SHA-256("abc").
+  assert.equal(sha256Hex(''), 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855');
+  assert.equal(sha256Hex('abc'), 'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad');
+});
+
+test('provenance pins revision, seed keys, seam files and duel fixtures', () => {
+  const prov = buildProvenance({ battles: 7 });
+  assert.ok(prov.gitRevision === null || /^[0-9a-f]{40}$/.test(prov.gitRevision), prov.gitRevision);
+  assert.equal(typeof prov.gitDirty, 'boolean');
+  assert.match(prov.nodeVersion, /^v\d+/);
+  assert.deepEqual(prov.seedKeys, {
+    scheme: 'seed = 1..battles per cell (identical across cells)', battles: 7,
+  });
+  for (const rel of PROVENANCE_FILES) assert.match(prov.files[rel], HEX64, rel);
+  for (const key of ['creatures', 'matrix5', 'teams']) assert.match(prov.fixtures[key], HEX64, key);
+  // Fixture hashes are canonical and stable across calls.
+  assert.deepEqual(fixtureHashes(), fixtureHashes());
+  assert.notEqual(prov.fixtures.creatures, prov.fixtures.teams);
+});
+
+test('--json pair-sweep artifact is versioned, complete and self-consistent', () => {
+  const report = buildJsonReport(parseArgs(['--json', '--pair-sweep', '--battles', '2', '--rounds', '30']));
+  assert.equal(report.schemaVersion, DUEL_SPIKE_SCHEMA_VERSION);
+  assert.equal(report.mode, 'pair-sweep');
+  assert.equal(report.config.matrixId, '5');
+  assert.equal(report.config.teamSize, 3);
+  assert.equal(report.config.scoring, 'bonus');
+  assert.equal(report.config.maxRounds, 30);
+  assert.equal(report.config.battles, 2);
+  assert.equal(report.pairs.length, TEAM_PAIRS.length);
+  assert.ok(report.flagged.length <= report.pairs.length);
+  for (const pair of report.pairs) {
+    assert.equal(pair.wins + pair.losses + pair.draws + pair.timeouts, pair.total);
+    assert.equal(pair.total, 2 * POLICIES.length * READ_RATES.length);
+    assert.equal(pair.cells.length, POLICIES.length * READ_RATES.length);
+    for (const cell of pair.cells) {
+      assert.ok(POLICIES.includes(cell.policy), cell.policy);
+      assert.ok(READ_RATES.includes(cell.rate), cell.rate);
+      assert.deepEqual(cell.seed, { from: 1, to: 2, count: 2 });
+      assert.equal(cell.wins + cell.losses + cell.draws + cell.timeouts, cell.battles);
+      assert.equal(cell.switchRate, cell.rounds ? cell.switches / cell.rounds : 0);
+      assert.equal(cell.attacks, Object.values(cell.typeUse).reduce((sum, n) => sum + n, 0));
+      assert.equal(cell.speciesSamples, Object.values(cell.speciesUse).reduce((sum, n) => sum + n, 0));
+      assert.ok(cell.medianRounds <= cell.p95Rounds);
+    }
+  }
+  // Provenance is present and pinned in the artifact, not added later.
+  assert.ok(report.provenance && report.provenance.fixtures);
+  assert.equal(report.provenance.seedKeys.battles, 2);
+});
+
+test('--json grid artifact emits one persona/policy/rate cell per combination', () => {
+  const report = buildJsonReport(parseArgs(['--json', '--battles', '2', '--rounds', '30']));
+  assert.equal(report.mode, 'grid');
+  assert.equal(report.schemaVersion, DUEL_SPIKE_SCHEMA_VERSION);
+  assert.ok(Array.isArray(report.cells) && report.cells.length > 0);
+  const first = report.cells[0];
+  assert.ok(['reader', 'frequency', 'anti-repeat', 'exploiter'].includes(first.persona));
+  assert.ok(POLICIES.includes(first.policy));
+  assert.ok(READ_RATES.includes(first.rate));
+  assert.equal(first.wins + first.losses + first.draws + first.timeouts, first.battles);
+});
+
+test('--json output is deterministic run to run (byte-identical)', () => {
+  const a = JSON.stringify(buildJsonReport(parseArgs(['--json', '--pair-sweep', '--battles', '2', '--rounds', '30'])));
+  const b = JSON.stringify(buildJsonReport(parseArgs(['--json', '--pair-sweep', '--battles', '2', '--rounds', '30'])));
+  assert.equal(a, b);
+});
+
+test('--json CLI prints byte-identical JSON for a fixed seed/scenario', () => {
+  const run = () => execFileSync(process.execPath, [
+    TOOL, '--json', '--pair-sweep', '--battles', '2', '--rounds', '30',
+  ], { cwd: REPO, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+  const first = run();
+  const second = run();
+  assert.equal(first, second, 'fixed scenario must replay byte-identically');
+  const parsed = JSON.parse(first);
+  assert.equal(parsed.schemaVersion, DUEL_SPIKE_SCHEMA_VERSION);
+  assert.ok(parsed.provenance.files['mock/battle-mock.js'], 'provenance present on stdout');
+  // Text stays the default when --json is absent.
+  const text = execFileSync(process.execPath, [
+    TOOL, '--pair-sweep', '--battles', '2', '--rounds', '30',
+  ], { cwd: REPO, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+  assert.match(text, /^duel pair sweep/);
+  assert.doesNotMatch(text, /"schemaVersion"/);
+});
+

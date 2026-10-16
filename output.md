@@ -11850,3 +11850,216 @@ Worker loop ≈ 50 min wall (single session, single build lane): exploration ~15
 validator + tests + `cargo test` ~6 min; CLI release build + install ~1 min; `make gen` ~6 s;
 host/VM/generated-libs/pack-parity/manifest ~4 min; device suites ~3 min; negative proofs ~5 min;
 storage cleanup + report ~10 min. Gate/orchestrator final-gate not run here.
+
+## j2lg — re-scope ogh.6 reporting
+
+Design/doc-only re-scope of `CreatureGathererFX-ogh.6` from the retired
+`tools/battle-sim/BatchRunner.cpp` CSV seam onto the live 5-type duel toolchain.
+No engine/generation/AVR changes; off the AVR lane. Repo HEAD 441bf73.
+
+### New seam contract (now in ogh.6's design + acceptance)
+
+- **Tool:** `tools/battle-duel-spike.mjs` (Node) over the canonical mock
+  `mock/battle-mock.js`; default matrix `5`, team3, bonus scoring, cap 200. Same
+  mock `make sim-test` (duel-kernel parity 6/6) checks against.
+- **Commands:** `--pair-sweep --battles N --rounds CAP [--persona P] [--policy P]
+  [--read R]`, or a single cell `--persona P --policy P --read R --battles N
+  --rounds CAP`.
+- **Policies (player):** `random / repeat / counter / rotation / swap /
+  anti-repeat`. **Personas:** `reader / frequency / anti-repeat / exploiter /
+  random`. **Read rates:** 0/25/50/75/100.
+- **"Paired" now means:** same three-creature preset teams (`youPreset`/`foePreset`)
+  pinned on both seats across every policy and read-rate cell; seed keys 1..N
+  identical across cells; player-selection RNG derived from the seed alone
+  (`makePlayerRng(seed)`), so only the policy/read rate changes between cells.
+  Each cell and each pair report the W/L/D/T split. Same-seed cells are correlated
+  by construction — report controlled paired comparisons, not independent samples.
+- **Metrics:** per cell — battles, W/L/D/T, rounds/avg/median/p95, switches/
+  switchRate, kos, oneHitKOs, attacks, typeUse, species samples/use, config;
+  per pair — totals, `playerWinRate`, flags `{timeouts, sweep(>80%)}`.
+- **Timeouts** stay an explicit `T` column, never folded into W/L/D.
+- **Dropped:** `tactical`/`switch-tactical` policies, level10/species-count32/
+  seed20261004/max-turns100 options, PP, heal, per-original-slot damage/turn/heal
+  attribution (flat damage; no PP/heal in the duel).
+
+### Decisions still needed (recorded in ogh.6, not invented here)
+
+The tool emits human-readable text only. **Owner must pick the artifact format
+and provenance set before ogh.6 runs:**
+
+- **Option A (recommended, bounded):** capture the existing `--pair-sweep` text
+  plus a `provenance.txt` sidecar (git rev, sha256 of the tool/mock/kernel, full
+  options, node version). No tool change, byte-reproducible, not machine-parsable.
+- **Option B:** add a `--json` emitter (schemaVersion + provenance + per-cell
+  rows) and a permanent node schema test.
+- **Option C:** add a `--csv` emitter + provenance sidecar.
+- **Provenance sub-decision (all):** minimum git rev + tool/mock/kernel SHA +
+  options + node version; optionally the retired contract's generated duel fixture
+  hashes (none currently pinned).
+
+### Docs
+
+- `docs/battle-simulator.md` already describes the current duel toolchain (pk0g);
+  no retired seam to fix.
+- `docs/battle-balance-recommendations.md`: added a top banner marking it a
+  historical review of the retired ordered-turn engine and pointing current
+  balance measurement at `tools/battle-duel-spike.mjs`.
+- `docs/duel-system-brief.md:76` reports `battle-duel-spike_test.mjs (4)` tests;
+  the suite is now 13. Pre-existing staleness, outside the retired-seam scope —
+  left unchanged (noted only).
+
+### Exact `bd` commands run
+
+```
+bd show CreatureGathererFX-j2lg
+bd show CreatureGathererFX-ogh.6
+bd show CreatureGathererFX-jp8.11.18
+bd show CreatureGathererFX-pk0g
+bd dep list CreatureGathererFX-ogh.6      # and j2lg
+bd update CreatureGathererFX-ogh.6 \
+  --design-file <re-scoped design> \
+  --acceptance "<re-scoped acceptance>" \
+  --set-metadata contract_revision=2026-10-16 \
+  --append-notes '<re-scope summary + open decision>'
+bd comment CreatureGathererFX-ogh.6 --stdin   # ARCHIVED SEAM (retired 2026-10-12 contract)
+bd update CreatureGathererFX-j2lg -s in_progress --append-notes '<what was done>'
+```
+
+### Dependency check
+
+`bd dep list CreatureGathererFX-ogh.6`: blocks on `j2lg` (this bead, now
+in_progress), `jp8.11.18` (closed), `ogh.5` (closed). The two closed edges are
+satisfied; the only open blocker is `j2lg`, satisfied when it closes. No stale or
+non-applicable blocking edge existed, so none was removed. `ogh.6` left **open**
+(unclosed). `j2lg` left **in_progress** per dispatch.
+
+### Verification (off AVR lane, allowed host commands)
+
+```
+node tools/tests/battle-duel-spike_test.mjs   -> tests 13 pass 13 fail 0
+node tools/tests/duel-kernel-parity_test.mjs  -> tests  6 pass  6 fail 0
+node tools/battle-duel-spike.mjs --persona reader --policy random --read 45 --battles 1000 --rounds 200   -> OK, 0.13 s
+node -e ... (mock.TEAM_DATA teams -> balanced/anchors/support/retyped/trap, 64 creatures)
+```
+
+No git commit/push. No `make gen`, no AVR builds. `.beads/` touched only via `bd`.
+
+### Deviations
+
+- Did not modify `.beads` dolt internals beyond `bd`; `.beads/interactions.jsonl`
+  shows the usual passive-export churn.
+- Retitled nothing and did not drop the informational `impl-ready` label; the
+  design flags the pending owner decision instead (owner may clear it if desired).
+
+### Wall time
+
+≈20 min wall (single session): exploration ~8 min; design/acceptance drafting
+~5 min; bd updates + comment + doc banner + dependency check ~4 min; focused node
+verification + report ~3 min. No build lane used.
+
+## ogh.6 — paired 3v3 JSON baseline
+
+Re-scoped (j2lg) reporting seam on the duel toolchain. Owner decision 2026-10-16:
+emit `--json` with a versioned schema plus pinned provenance; keep text output the
+default. Off the AVR/generation lane (Node + small host commands only).
+
+### Changed
+
+- `tools/battle-duel-spike.mjs` — added `--json` output mode (text stays default):
+  - `DUEL_SPIKE_SCHEMA_VERSION = 1`; `canonicalJson`, `sha256Hex`,
+    `PROVENANCE_FILES`, `fixtureHashes`, `buildProvenance`, `buildPairSweepJson`,
+    `buildJsonReport`, `formatJsonReport`, `cellFromResult`.
+  - `runPairSweepReport` now nests a per-cell `cells[]` array under each pair
+    (`policy, rate, seed{from,to,count}, battles, W/L/D/T, rounds, avg/median/p95,
+    switches, switchRate, kos, oneHitKOs, attacks, typeUse, speciesSamples,
+    speciesUse`). Text formatter unchanged.
+  - `--json` (no `--pair-sweep`) emits a flat `grid` artifact over
+    persona x policy x read-rate.
+- `docs/battle-simulator.md` — documented the schema (schemaVersion, config,
+  provenance, pairs/cells, grid).
+- `tools/tests/battle-duel-spike_test.mjs` — 6 new permanent tests: canonical
+  JSON + SHA-256 known answers; provenance pins revision/seed keys/files/fixtures;
+  pair-sweep artifact self-consistency; grid cell coverage; function-level
+  byte-identical determinism; CLI byte-identical determinism + text default.
+
+### Schema (summary)
+
+`{ schemaVersion: 1, mode: "pair-sweep"|"grid", config{...}, provenance{...},
+pairs:[{ you, foe, W/L/D/T, total, playerWinRate, flags{timeouts,sweep},
+cells:[...] }], flagged:[...] }`; grid uses `cells:[...]` at top level. Cell seed
+keys are `1..battles`, identical across cells (same-seed cells correlated, not
+independent). No timestamps emitted → byte-identical replay.
+
+### Provenance example (from the baseline artifact)
+
+```json
+{
+  "gitRevision": "6550c0ce1a7dacacbeaddcb58c9ce0e9eb19967e",
+  "gitDirty": true,
+  "nodeVersion": "v26.0.0",
+  "seedKeys": { "scheme": "seed = 1..battles per cell (identical across cells)", "battles": 1000 },
+  "files": {
+    "tools/battle-duel-spike.mjs": "3909c3e27cd6120689e0c6b75f084fa4d284a3e84a4cf85378bd34f27a41f456",
+    "mock/battle-mock.js": "e40dfcda38b11c0ac9e4aeb19d40f07bfecbf4ffdcbeaab3921dffa94999141c",
+    "src/engine/battle/DuelKernel.hpp": "775398b44e2e9953cb19049c5b88663680e140a1f90f2ebb0377ba9ba2138ae4"
+  },
+  "fixtures": {
+    "creatures": "f98c47f9ee36423b47934155ac5fe5d69e66168257c2ab1b4426e4d9a539fb9b",
+    "matrix5": "72e3f2c6e7deda746fd1b42837230fe73e420ab9cf44047c21eea439b2787c45",
+    "teams": "9b4fabc9ef254675c3be2e7541097145464db0b22b947f3cecc728e8575b3c88"
+  }
+}
+```
+
+### Baseline (matrix5 team3 bonus, cap 200, persona reader, 25 sample pairs x 6 policies x 5 rates x 1000 duels)
+
+`build/reports/ogh.6/pair-sweep-1000.json` (708,088 B; sha256
+`87768b8e351e5659da5543bdd56bb51e09de21c97ec78f1cdabdc63ac9ce162e`).
+
+Headline over **750,000 paired duels**:
+
+- Outcomes: **W 221,466 (29.53%) / L 508,598 (67.81%) / D 19,936 (2.66%) / T 0 (0%)**.
+- Rounds: total 12,756,050; avg 17.008. Cell medianRounds min/med/max = **11 / 15 / 33**; cell p95Rounds = **11 / 18 / 36** (cell-level; pooled per-duel percentiles not retained).
+- Switches: 10,000; switchRate **0.0008** (0.013 switches/duel).
+- KO 2,838,297; **oneHitKOs 0** (max single hit < min HP, as expected).
+- Type skew (committed attacks, n=12,746,050): **water 40.6% / spirit 25.1% / earth 24.0% / fire 7.1% / plant 3.2%**.
+- Species skew (n=2,250,000 party samples, 13 species): SkitterCrab 13.3%, rock 13.3%, then squid/hedge/SquableSnail/bigsquid/ScatterCrab/bell 6.7% each (top 8).
+- Per-policy player win%: random 25.6, repeat **40.1**, counter 36.8, rotation 24.5, swap 25.7, anti-repeat 24.4.
+- Flags: 4 pairs sweep >80% in every cell, 0 pairs with timeouts — `balancedvstrap`, `anchorsvssupport`, `anchorsvsretyped`, `anchorsvstrap` (all 100% player win). Lowest: `balancedvsanchors`/`supportvsanchors`/`retypedvsbalanced` at 0%.
+- Controlled paired comparisons only; same-seed cells are correlated by construction.
+
+### Exact commands + tails
+
+```
+node tools/battle-duel-spike.mjs --json --pair-sweep --battles 1000 --rounds 200 > build/reports/ogh.6/pair-sweep-1000.json
+  -> exit 0, 19.7 s (19.32 user), 708,088 B
+# repeat + diff:
+node tools/battle-duel-spike.mjs --json --pair-sweep --battles 1000 --rounds 200 > build/reports/ogh.6/pair-sweep-1000-replay.json
+  -> exit 0, 18.2 s (18.75 user); cmp -> BYTE-IDENTICAL; sha256 87768b8e...
+
+node --test tools/tests/battle-duel-spike_test.mjs tools/tests/duel-kernel-parity_test.mjs
+  -> tests 25  pass 25  fail 0
+make sim-test BUILD_DIR=build CPPFLAGS='-I. -DCGFX_DUEL_BATTLE'
+  -> tests 6  pass 6  fail 0
+```
+
+### Deviations
+
+- None blocking. `--json` also added for the flat grid (beyond the pinned
+  pair-sweep scope) so `--json` is never silently ignored; documented.
+- Sample pairs = authored mock teams (5x5=25); beta encounter pairings reuse the
+  same seam. No numerical tuning; reporting only.
+- `gitDirty: true` reflects the pre-existing working tree (duel test/dev edits by
+  other workers); the artifact pins the exact revision + file/fixture hashes.
+
+### Storage
+
+- `du -sh build` before 1.8G after 1.8G; `df -h` free >= 62 GiB (>=10 GiB reserve).
+- New artifacts: `build/reports/ogh.6/` (pair-sweep-1000.json, -replay.json,
+  provenance.json, .err) ~1.4 MB total, gitignored.
+
+### Wall time
+
+≈35 min wall (single session): read bead/design/docs ~6 min; implement `--json` +
+provenance + docs + tests ~18 min; focused node + sim-test verification ~5 min;
+baseline x2 + metrics ~2 min; report ~4 min. No build lane, no AVR, no `make gen`.
