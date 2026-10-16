@@ -12610,3 +12610,94 @@ Worker ~65 min wall (host+VM ~3 min over rebuilds; focused device saves/world/
 journal/stack runs ~12 min total; extensive test_save fxtest flash bisection
 ~35 min; ram/verify/parity/cleanup/report remainder). Gate/orchestrator not run
 here.
+
+## jp8.4.9 — arena preview reconcile
+
+Reconcile/evidence bead. No source, test, generated or resource change made.
+HEAD `a8afbee`. Disposition: the retired "arena rental view" plan is fully
+superseded by the live arena team-selection preview; every requested outcome is
+either proved against current committed source/tests or explicitly superseded
+by the current feature. No residual follow-up bead filed.
+
+### Retired plan → current-source/test map
+
+Historical contract: `comments` on CreatureGathererFX-jp8.4.9 (superseded
+2026-10-12 by y50). Old title: "Move creatureRental into an arena rental view
+with an open-time snapshot". Old file set: `src/engine/arena/Arena.{hpp,cpp}`,
+`src/engine/menu/MenuV2.{hpp,cpp}`, `src/engine/draw.h`,
+`CreatureGathererFX.ino`.
+
+| # | Retired requested outcome | Current source / test | Disposition |
+|---|---|---|---|
+| 1 | Move `MenuV2::creatureRental` into an arena rental view + open-time snapshot | `ArenaView.cpp` `draw(const ArenaUiState&)` draws a cached `ArenaPreview`; `ArenaCatalog.cpp` `loadPreview()` fills the snapshot; `ArenaDemo.cpp` `boot`/`update(PreviewChanged)`/`finishBattle` call it at transitions | **Proved (replaced)**: live arena team-selection preview is the arena view; no rental view exists |
+| 2 | `MenuV2` declares no `creatureRental`, references no `CreatureData`/`CreatureNames` | `grep -n 'creatureRental\|rental\|CreatureData\|CreatureNames' src/engine/menu/MenuV2.{hpp,cpp}` → no matches (exit 1). Removal commit `c6add51` "Trim legacy arena runtime (jp8.3.12)" deleted `MenuV2Legacy.cpp` + the declaration | **Proved** |
+| 3 | Rental card renders identically (name 0,55; sprite 0,0; six stat label/number pairs; types 0,35 + 0,45) | `ArenaView.cpp` `drawSelection()` renders the live team preview: header y=0, label y=10, three species/name rows y=22/32/42, counter 96,10, controls y=56; `tst/arena_view_test.hpp` exercises both screens | **Superseded**: single-creature rental stat card is retired UI; team-selection preview is the current screen. No identical-render obligation survives |
+| 4 | Zero FX reads and no `CreatureData_t` on the stack during a draw frame; FX row read once per cursor change | `tst/arena_view_test.hpp` "cached selection rendering is read-free and immutable": `draw(ui)` → `FxReadCounter::count()==0` and UI byte-identical (player + opponent). `tst/fxdatatest/arenaview_test.hpp`: `loadPreview` == 8 reads (player, incl. 3 members) / 6 (opponent), `markUpdate()` approves them as a transition; three draw frames each `renderExact(0)`. `ArenaCatalog.cpp` performs reads only in `loadPreview`; `ArenaDemo.cpp` calls it only on `PreviewChanged`, boot, and terminal return | **Proved** |
+| 5 | Cursor range 0..30 inclusive, same wrap, wrap once per press | `ArenaNavigation.cpp` drives a `ListView` with `itemCount` = catalog counts (`ArenaDemoIds::playerCount`=3, `opponentCount`=5); `tst/arena_navigation_test.hpp` proves bounds, clamping, empty-catalog reset, Up/Down priority, left/right ignored; `tst/arena_flow_test.hpp` proves edge-qualified transitions | **Superseded**: 0..30 creature-rental range replaced by 0..count-1 team-selection range; wrap/clamp behaviour proved for the current model |
+| 6 | Arena owns the cursor and the rental snapshot; `MenuV2` no longer writes `menu2.cursorIndex` | `ArenaTypes.hpp`: `ArenaUiState{ screen, ListView list, ArenaPreview preview }` owned in `modeState.arena.ui`; `ArenaContext{ playerTeam, opponentTeam }`. `static_assert(sizeof(ArenaUiState)==24)`. `ArenaNavigation`/`ArenaDemo` are the only cursor writers; no `MenuV2` arena cursor writes exist | **Proved (replaced)** |
+| 7 | `make ram` shows `MenuV2` below 19 bytes; `make build` + `make check` green | Not reproducible as a per-symbol figure; obsolete per `AGENTS.md` ("diagnostic symbol sizes are leads; whole-image measurements decide"). Underlying outcome proved by map row 2 (MenuV2 holds no arena creature data). Current whole-image baseline recorded elsewhere (a19fcfc: 25,218 B flash / 1,760 B SRAM) | **Superseded (obsolete measurement)**; no resource-changing work |
+
+Old `# MACHINE` provides/consumes: "arena rental snapshot and draw-only rental
+view" / "`MenuV2::openMenu` snapshot pattern" → current analogs are `ArenaPreview`
+snapshot + `ArenaView::draw` (draw-only), consuming the `MenuV2::openMenu`
+snapshot pattern (`src/engine/menu/MenuV2.hpp:39`, `openMenu` copies at the
+transition boundary).
+
+### Commands + tails (host evidence; no AVR lane, no `make gen`, no gate)
+
+```text
+$ make test BUILD_DIR=build          # HEAD a8afbee
+Total Passed: 240173
+Total Failed: 0
+All tests passed!
+Total Passed: 258   # world suite
+Total Failed: 0
+All tests passed!
+  real 3.4s  (incremental; already-built host binaries)
+
+$ make testvm BUILD_DIR=build
+Total Passed: 278
+Total Failed: 0
+All tests passed!
+  real 1.2s
+
+$ bash tools/tests/arena-demo-data_test.sh
+arena-demo-data: provenance and production table placement PASS
+  exit 0
+
+$ grep -lin arena tools/tests/*.mjs tools/*.mjs
+  (no matches, exit 1)  # no arena demo .mjs node test exists
+```
+
+`node --test tools/tests/*.mjs`: no `.mjs` suite references arena demo data.
+The arena demo data test is `tools/tests/arena-demo-data_test.sh` (shell,
+provenance + production table placement), run above and green. Arena behaviour
+coverage is `tst/arena_view_test.hpp`, `tst/arena_flow_test.hpp`,
+`tst/arena_lifecycle_test.hpp`, `tst/arena_navigation_test.hpp`,
+`tst/arena_catalog_test.hpp` (host) and `tst/fxdatatest/{test_arenaview,test_arenacatalog}.ino`
+(device).
+
+### Device run
+
+Not run: this bead changes no source, so the recorded `test_arenaview` baseline
+stands unchanged; the bead's focused device command would consume the single
+AVR/generation lane owned by another worker. Host suites above fully cover the
+read-free-draw and transition-read claims (`tst/arena_view_test.hpp`
+`renderExact(0)` / `count()==0`, `tst/fxdatatest/arenaview_test.hpp` is the
+committed device proof of the same behaviour).
+
+### Residual
+
+None. Every retired outcome is proved or superseded by current source; no
+bounded current-source follow-up bead filed.
+
+### Storage
+
+`df -h .` 61 GiB free (>=10 GiB reserve). Host-test binaries reused in
+`build/tests/` (shared lane); no new build tree, no pack stage. `make gen` not
+run; no generated/gate artifacts written.
+
+### Wall time
+
+Worker ~13 min wall (source/tests/git inspection ~8 min; host+VM+arena-data
+runs ~5 s; report remainder). Gate/orchestrator not run here.
