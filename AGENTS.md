@@ -181,6 +181,34 @@ not duplicate build caches, metadata or old experiments.
   instead of retrying the same unprivileged invocation.
 - **Log wall time per bead** (worker / gate / orchestrator) in `output.md` so the next retro is data.
 
+## Session efficiency rules (measured slow spots)
+
+- **Keep `output.md` small.** It is per-session working memory, not an append-only
+  log. Before a dispatch wave, rotate completed sections into
+  `docs/reports-archive/<date>-<topic>.md` and leave only the active wave plus a
+  one-line pointer to the archive. Workers read `output.md` first; a
+  multi-thousand-line file costs ~8–20 min of context per worker (observed at
+  14k lines / ~1 MB).
+- **Reuse the native generator build.** Do not rebuild and reinstall `cgfx-tools`
+  per bead. Batch generator/data beads that share a tool revision, keep the
+  `build/native-tools` cache hot, and record the tool identity once per batch.
+- **Spike a change that cannot land green in one session.** Cross-cutting
+  representation changes must be spiked and split into <=2-layer beads before
+  dispatch. Never dispatch a bead you already know is atomic-multi-session; a
+  blocked worker costs its full recon (~50 min observed) before returning nothing.
+- **Keep device test sketches above a headroom floor.** A `tst/fxdatatest/*.ino`
+  suite must keep a comfortable free-flash margin (aim >=1 KB, hard floor a few
+  hundred bytes). Trim or relocate cases rather than oscillating at the limit
+  (`test_world_player`, `test_battlepresentation` both hit single/double-digit free
+  bytes and forced test moves). Note a new near-limit suite in its report.
+- **Re-dispatch, don't re-run.** When a worker is cancelled or fails mid-run,
+  inspect `git status`, then finish inline or `git checkout --` the partial work;
+  re-dispatch via `slugineer-worker-go`. Record the outcome.
+- **Prune disposable build trees each wave.** `build/battle-carve-spike`,
+  `build/box-adoption-gate` and similar retained experiment trees are not build
+  lanes; clean them with the helper and a size check rather than letting them
+  accumulate hundreds of MiB.
+
 ## Worker protocol (agents spawned for bd tasks)
 
 - One bead = one implement-verify loop. Read `bd show <id>`, implement, run the bead's exact
