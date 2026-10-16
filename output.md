@@ -13140,3 +13140,129 @@ remainder.
 Logs: `build/jp8.11.24-{test,testvm,test-beta-area,fxtest,ram,verify-generated}.log`; candidate ELF
 `build/CreatureGathererFX.ino.elf` (22506 B) retained. No `cgfx-pack.*` stage remained after
 `make gen`.
+
+## b2a.7 — legacy sprite sheet disposition
+
+Bead: `CreatureGathererFX-b2a.7` (P3, in_progress — left in_progress per dispatch). HEAD `e01978d`.
+Analysis/disposition only; no source edits, no `make gen`, no AVR. No git commit/push.
+
+### Method
+
+Whole-tree word searches (`grep -rIw <symbol>`, excluding `.git`, `build`, `archive`,
+`.battle-carve-spike`, `harness/workspaces`) for each carray symbol in `src/`, `tst/`, `tools/`,
+`docs/`, plus PNG decode via `tools/creature-sprite-export.mjs` for palette checks. Packed byte
+sizes parsed from `fxdata/Sprites.txt`; offsets cross-checked against `src/fxdata.h`.
+
+### Sheet -> reference map
+
+| Packed symbol | Bytes | Shipping `src/` use | Active device-suite use | Source PNG |
+|---|---:|---|---|---|
+| numbersblack | 1400 | `common.hpp:32` | — | numbersblack_7x8.png |
+| numberswhite | 1400 | `common.hpp:25` | — | numberswhite_7x8.png |
+| singlenumberswhite | 60 | `common.hpp:24`, `ArenaView.cpp:11,15` | — | singlenumberswhite_3x8.png |
+| singlenumbersblack | 60 | `common.hpp:31` | — | singlenumbersblack_3x8.png |
+| tiles | 24576 | `draw.h:429` | `blit_test`, `tiles_test` | tiles_16x16.png |
+| battleMenu | 384 | `DialogMenu.cpp:73` | `blit_test`, `dialogs_test` | battleMenu_128x24.png |
+| creatureSprites | 8192 | none (only comment `Creature.cpp:49`) | none | creatureSprites_32x32.png |
+| fieldBacground | 1024 | none | none | fieldBacground_128x32.png |
+| characterSheet | 384 | none | `blit_test.hpp:17` | characterSheet_16x16.png |
+| NewecreatureSprites | 32768 | none | `blit_test.hpp:18-19`, `battlepresentation_fixture.hpp:45` | NewecreatureSprites_32x32.png |
+| ecreatureSprites | 8192 | none | none | ecreatureSprites_32x32.png |
+| fightMenu | 1536 | none | none | fightMenu_128x24.png |
+| ArduFont | 615 | none | none | ArduFont_5x6.png |
+| moveInfo | 240 | none (`draw.h:196` param + `MenuV2::moveInfo()` are other symbols) | `blit_test.hpp:21` | moveInfo_60x30.png |
+| worldTiles | 512 | none | none | worldTiles_16x16.png |
+| maskedFont | 12288 | none | `blit_test.hpp:11`, `tiles_test.hpp:251` (end-of-`tiles` address marker) | maskedFont_16x24.png |
+| npc | 64 | none | none | npc_16x16.png |
+| arduboyFont | 1536 | none (only comment `draw.h:189`) | none | arduboyFont_6x8.png |
+| blankMenu | 768 | none | none | blankMenu_128x24.png |
+| ArduFontTrimmed | 375 | none | `battlepresentation_test.hpp:56,281`, `dialogs_test.hpp:25`, `battle_damage_color_test.hpp:25` | ArduFontTrimmed_5x6.png |
+| tilesheet | 1024 | none | none | tilesheet_16x16.png |
+| letters | 16384 | none (only comments in `Font4x6.h`/`BattlePresenter.cpp`) | none | letters_16x16.png |
+
+Kept-by-contract (outside the 16): `fontTrimmed` (`Text.cpp:13`, the live 5x6 font), the appended
+native sheets `battleSprites48`/`battleOptions48`/`worldPlayerSprites`/`lureWorldTiles`/`duelIcons`/
+`duelChartFixture` (shipping renderers), and `doubled` (test-only).
+
+### Dispositions
+
+**Retained — active device-suite reference (5).** Removal would break passing FX suites
+(`test_blit`, `test_tiles`, `test_battlepresentation`, `test_dialog`, `test_battle_damage_color`,
+all in the `tst/fxdatatest/*.ino` wildcard), so each needs coordinated test-fixture edits plus a
+generation-lane regen/rebaseline:
+- `characterSheet` (384) — `blit_test` draw case.
+- `NewecreatureSprites` (32768) — legacy 32x32 battle parity path; superseded in shipping by
+  `battleSprites48` (`BattleScene.cpp:248`, `draw.h:317,325`) but still the fixture's draw source.
+- `maskedFont` (12288) — used only as the end-of-`tiles` address marker
+  (`(maskedFont - tiles)/32 - 1`); content unused, address load-bearing for two suites.
+- `moveInfo` (240) — `blit_test` draw case; the shipping `moveInfo` names are `MenuV2::moveInfo()`
+  (RAM buffer) and the `draw.h` parameter, not this packed blob.
+- `ArduFontTrimmed` (375) — the live 5x6 glyph source for three FX suites; shipping text uses
+  `fontTrimmed` instead.
+
+**Superseded / removable — no shipping, test, or tooling reference (11).** Each appears only in the
+generated `src/fxdata.h`, the frozen migration fixture `tools/tests/fixtures/fxlayout-old-304.toml`
+and `docs/flash-inventory.md`. Removal is justified by the evidence chain but is a generation-lane
+change (see plan) and was NOT executed in this session:
+- `creatureSprites` (8192), `ecreatureSprites` (8192), `NewecreatureSprites`-predecessor art —
+  superseded by `battleSprites48` native 48px views.
+- `fightMenu` (1536) + `blankMenu` (768) — superseded by `battleMenu`/`battleOptions48` and the
+  runtime menu.
+- `ArduFont` (615) + `arduboyFont` (1536) — superseded by `fontTrimmed`.
+- `worldTiles` (512) + `tilesheet` (1024) — superseded by `tiles`/`lureWorldTiles`.
+- `letters` (16384) — superseded by the generated string glyphs; owner feedback moved off the
+  letter-arrow menu.
+- `fieldBacground` (1024) — the battle-field draw was removed by the owner; nothing renders it.
+- `npc` (64) — NPC actor renderer is not integrated (`docs/flash-inventory.md` line 127).
+
+**Archived, not deleted.** Every source PNG above is git-tracked authored art. Removal here means
+dropping the `fxsprites.toml` declarations and archiving the PNGs with provenance, never deleting
+unknown assets.
+
+### Source-palette issues (evidence)
+
+PNG decode (RGBA, 0/255 binary test) confirms the three bead findings:
+- `fieldBacground_128x32.png` 128x32: **2760 gray** pixels (every opaque pixel is gray 64).
+- `letters_16x16.png` 256x256: **4758 partial-alpha** pixels.
+- `blankMenu_128x24.png` source is **128x25**; the packer uses the 128x24 filename frame and drops
+  the 25th row (2816 coherent opaque of 3200).
+All three are in the removable group, so normalization is moot unless the source is retained.
+
+### Deferred removal plan (generation lane; needs single-lane ownership)
+
+1. Remove the 11 satisfied-break declarations from `fxsprites.toml` set #1 (owned by `86e`;
+   serialize), keeping `fxlayout.toml` declaration order ABI intact.
+2. `make gen BUILD_DIR=<shared>` → `fxdata/Sprites.txt`, `src/fxdata.h`, `dist/fxdata.bin`, manifest
+   all regenerate together; stage the generated set as one commit.
+3. `tools/tests/fixtures/fxlayout-old-304.toml` carray entries resolve against the same
+   `fxdata/Sprites.txt`; drop the removed symbols there too or the migration/parity fixture fails.
+4. Re-baseline `tools/tests/pack-parity_test.sh` `expected` SHA with old->new plus cause.
+5. Archive the removed PNGs under `archive/` with provenance; run `make verify-generated`,
+   `make test-pack-parity`, and the touched device suites.
+
+### Verification run (read-only, no source change)
+
+```
+$ make verify-generated BUILD_DIR=build
+(exit 0, no output)
+
+$ make test-pack-parity BUILD_DIR=build
+layout equivalence: PASS
+layout equivalence: perturbation diagnostic: PASS
+pack parity: PASS
+(exit 0)
+```
+
+`make pack` (invoked by pack-parity) rewrote `src/fxdata.h` + `dist/*`; `git status --short` shows
+`src/fxdata.h`/`dist/` byte-identical (deterministic), only `.beads/interactions.jsonl` modified by
+`bd`. No `build/cgfx-pack.*` stage remained. No tracked source changes were made by this bead.
+
+### Wall time
+
+~8 min single worker: read bead + repo recon ≈4 min; reference/palette evidence ≈2 min;
+verify-generated + pack-parity + report ≈2 min.
+
+### Storage
+
+`df -h .` 64 GiB free before/after (≥10 GiB reserve held). `du -sh build` 1.9 G unchanged; the
+pack stage self-cleaned.
