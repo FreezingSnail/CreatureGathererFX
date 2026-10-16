@@ -13339,3 +13339,146 @@ before/after. `make clean-build-artifacts BUILD_DIR=build` preview then `CLEAN_A
 ~40 min single worker: recon/read ~10 min; source+test edits ~10 min; host/VM/beta-area ~5 min;
 device suites (incl. one fix iteration for the lazy property window) ~12 min; ram + clean + report
 ~3 min.
+
+## jp8.4.11 — menu/dialog residual
+
+Audit/measurement bead. HEAD `58eb8e7`. **No source, test, generated or resource
+change.** Follow-up bead filed: `CreatureGathererFX-obbp`. Bead left `in_progress`.
+Work was static + host only (off the AVR/generation lane; the single lane was
+owned by another worker whose uncommitted `BattleFlow.cpp` / `duel_session_integration_test.hpp`
+edits were present mid-run — see Deviations).
+
+### Method / evidence base
+
+- Committed HEAD shipping ELF `build/CreatureGathererFX.ino.elf` (text 22522 +
+  data 42 = 22564 B; `build/build.log` "22564 bytes (75%)"), mtime `2026-10-16
+  13:04:01`, immediately before commit `58eb8e7` (13:04:53). Working tree at
+  audit time: only `.beads/interactions.jsonl`, `src/engine/battle/BattleFlow.cpp`
+  and `tst/duel_session_integration_test.hpp` were dirty (all the other worker's,
+  not mine); every `src/engine/menu/*` and menu/dialog source file is unmodified
+  at HEAD.
+- `avr-nm -C --size-sort --print-size` / `avr-size` on that ELF (tool at
+  `~/Library/Arduino15/packages/arduino/tools/avr-gcc/7.3.0-atmel3.6.1-arduino7/bin/`).
+- Build config: `AVR_SHIPPING_CPP_FLAGS` (Makefile L36) = `-DCGFX_SHIPPING_NO_USB
+  -fno-inline-small-functions -DCGFX_BATTLE_NO_FACTS -DCGFX_BATTLE_COMPACT_RESULT
+  -DCGFX_COMPACT_WARP_VM -DCGFX_DUEL_BATTLE`. None of
+  `CGFX_FULL_WORLD_VM / TEST / FX_READ_COUNTER / CGFX_TRAINER_DEMO / CGFX_ARENA_DEMO
+  / CGFX_WILD_DEMO` is defined, so `CGFX_DIALOG_QUEUE_ENABLED == 0` (globals.hpp:16-25).
+- Host: `make test` -> 240251 passed / 0 failed; world suite 258 / 0;
+  `make testvm` -> 286 / 0.
+
+### Headline result: zero whole-image win
+
+The default shipping image already excludes **all** superseded menu/dialog code.
+`avr-nm -C build/CreatureGathererFX.ino.elf` symbol counts (0 = absent):
+
+```
+MenuV2 0  DialogMenu 0  DialogQueue 0  MenuNav 0  menuNavMove 0  menuDescFor 0
+printMenu 0  drawPopMenu 0  prepareHead 0  pushMenu 0  pushEvent 0
+menuEdgeButtons 0  loadScriptText 0  drawScriptText 0  BattlePresenter 0
+```
+
+The ELF carries `_ZL*.lto_priv.*` symbols, i.e. whole-program LTO, plus link GC.
+The menu/dialog translation units are still **compiled** (their `.cpp.o` exist in
+the arduino cache and in `build/fxtest/*/…/engine/menu/`), then discarded before
+the image. Because the TUs are LTO objects, per-TU object size reads `0 text / 0
+data` (`avr-size`), so per-symbol/TU arithmetic is not a usable basis; whole-image
+symbol absence is. Conclusion: removing the superseded `src/engine/menu/*` sources
+would have an attributable shipping delta of **0 B flash / 0 B static SRAM**.
+Per the bead's step 3, that is a documented **no-op/reject**, not a retained
+cleanup.
+
+### Why the code is already excluded (load-bearing vs dead)
+
+| Residual | Where | Shipping | Status / size basis |
+|---|---|---|---|
+| `MenuV2Legacy.cpp` (`menuEdgeButtons`, `MenuV2::run(session)`, `MenuV2::printMenu`) | `src/engine/menu/MenuV2Legacy.cpp` 2051 B / 63 L | absent (0 syms) | **Dead in shipping + host** (not in `TEST_SOURCES`, Makefile L141-190). Live only for device fxtest sketches that call `menu.printMenu` (`battlepresentation_test.hpp:163,202,709`, `stack_test.hpp:127`). |
+| `MenuV2` navigator | `MenuV2.cpp` 9556 B / `MenuV2.hpp` 1784 B | absent; `MenuV2 menu` has **no shipping definition** (only `extern` in globals.hpp:29); `menu.clear()` guarded `#if TEST||FX_READ_COUNTER` (BattleFlow.cpp:47-49) | Superseded by `battle::BattleMenu` (`mode.ui.menu`, BattleFlow.cpp). Load-bearing for host tests (`menu_test`, `transition_test`, `battle_flow_test`, `duel_menu_test`, `duel_session_integration_test`). |
+| `DialogMenu` / popup queue | `DialogMenu.cpp` 3134 B, `DialogQueue.cpp` 1007 B, `DialogMenu.hpp` 478 B | absent; global `dialogMenu` defined only `#if CGFX_DIALOG_QUEUE_ENABLED` (CreatureGathererFX.ino:49-51); `drawPopMenu` call guarded `#if FULL_WORLD_VM||TEST||FX_READ_COUNTER` (.ino:227-231); `dialogMenu.clear()` calls all guarded (BattleFlow.cpp:50-52,87-89, .ino:135) | Producers: `pushMenu` from `ScriptVm` `queueScriptText` — but the only shipping caller is the **full** `ScriptVm::run()` (ScriptVM.cpp:117-151), unreachable under `CGFX_COMPACT_WARP_VM` (World.cpp:162-168 routes to `runWarpVM`, which has no Msg path). So the whole dialog queue is dead in shipping by build configuration. Live for host (`dialog_test`, `world_interact_test`, `step_test`, `transition_test`, `scripts`) and device `test_dialog`/`test_scripts`/`test_stack`. |
+| TEXT kind / `pushEvent` | `DialogQueue.cpp:31-34`, `DialogMenu.cpp:62-67,76-81` | absent | No shipping producer (`jp8.4.6` disposition). Retained host-verified kind; same 0-B shipping basis as the rest of `src/engine/menu`. |
+| `MenuNav.cpp` (`menuNavMove`, `menuDescFor`) | 1321 B | absent | Functions dead in shipping; only the `MenuNav.hpp` nav-bit **constants** ship (macro/enum, no code) via `.ino battleEdgeButtons`. Live for host `MenuNavSuite`. |
+| `PackedMoveInfo.hpp` | 1241 B | absent | Header used only by `MenuV2.cpp`. |
+| Redundant copy | `menuEdgeButtons()` MenuV2Legacy.cpp:9-18 == `battleEdgeButtons()` CreatureGathererFX.ino:193-202 | only the .ino copy ships | Byte-identical button-mask builder; the duplicate is dead, so removal saves 0 B but removes a drift hazard. |
+| Host stub | `tst/src/DialogMenu.cpp` 118 B | n/a | Host-only stub of the real draw path (`TEST_SOURCES` L146); duplicates the device draw contract by design. |
+
+### Live menu/dialog surface (do not touch)
+
+`battle::BattleMenu` (102 B `beginDuel` present in ELF, remainder inlined into
+`main`), `BattleFlow::duelSyncUi` (66 B), `battle::BattleScene`, `battle::cacheCreatureName`
+(102 B), `BattleFeedback`, and `ModeState` (193 B) are the shipping menu/dialog
+path. `BattleFeedback`/`BattlePresenter` are absent as standalone symbols only
+because they are inlined/excluded — the feedback arm feeds non-duel profiles and
+`FX_READ_COUNTER` tests, so it is not removable without measurement (below).
+
+### Residual with an AVR-only size (bounded follow-up filed)
+
+One residual cannot be sized off-lane: the shipping duel never uses the feedback
+footer, but its code survives in `main`:
+
+- `BattleSession::advance()` duel branch (BattleSession.cpp:847-882) `return false`
+  on **every** path; only the non-duel branch (L888-970) sets
+  `SessionPhase::Presenting`, and `isPresenting()` is false throughout a duel.
+- Therefore `BattleFlow::update` L93-104 (`feedback.update/done`, `finishPresentation`)
+  and L147-156 (`beginFeedback`) are unreachable in a duel, and `render()`
+  (CreatureGathererFX.ino:257-260) never draws feedback under `CGFX_DUEL_BATTLE`.
+- `avr-nm` still shows `battle::BattleSession::finishPresentation` in the ELF, so
+  LTO did **not** constant-fold the arm; `BattleFeedback::{begin,update,done,draw,reset}`
+  appear inlined into `main` rather than dropped.
+
+Size can only be proven by a whole-image AVR comparison. Filed as
+**`CreatureGathererFX-obbp`** (discovered-from jp8.4.11) with the exact control/
+candidate recipe, touched device suites and stack-headroom gate. No AVR lane was
+consumed here.
+
+### Commands + tails
+
+```
+$ make test BUILD_DIR=build          # committed HEAD source (clean snapshot, see Deviations)
+Total Passed: 240251
+Total Failed: 0
+All tests passed!
+Total Passed: 258                    # world suite
+Total Failed: 0
+
+$ make testvm BUILD_DIR=build
+Total Passed: 286
+Total Failed: 0
+All tests passed!
+
+$ avr-size build/CreatureGathererFX.ino.elf
+   text     data     bss     dec     hex filename
+  22522       42    1636   24200    5e88 build/CreatureGathererFX.ino.elf
+
+$ avr-nm -C build/CreatureGathererFX.ino.elf | grep -c -E 'MenuV2|DialogMenu|printMenu|drawPopMenu|menuEdgeButtons'
+0
+```
+
+### Deviations
+
+- **Host runs were on committed HEAD, not the dirty working tree.** The working
+  tree carries a concurrent worker's uncommitted `src/engine/battle/BattleFlow.cpp`
+  (+22 L) and `tst/duel_session_integration_test.hpp` (+184 L). To keep the audit
+  pinned to `58eb8e7` I ran `make test`/`make testvm` in a `git archive HEAD`
+  snapshot under the approved temp root, copying the (unmodified-at-HEAD)
+  `fxdata/generated/` set in so the host build links without `make gen`. Snapshot
+  removed afterward; shared `build/` untouched. The three menu/dialog source files
+  audited are unmodified at HEAD, so the static findings are HEAD findings.
+- The bead `design` VERIFY lists `tst/fxdatatest/test_menurun.ino`; that suite is
+  **retired** (not in `tst/fxdatatest/`). No device run was made regardless (lane
+  owned by another worker; this bead changes no source).
+- `build/CreatureGathererFX.ino.elf` is pre-existing evidence not produced by this
+  audit; it was used read-only and not rebuilt.
+
+### Storage
+
+`df -h .` 64 GiB free before/after (>=10 GiB reserve). Shared `build/` reused
+read-only for host objects; one small head-snapshot under the approved temp root
+created then removed. `du -sh build` unchanged (1.9 G). No new build trees, no
+`make gen`, no pack stage, no AVR artifacts written. `.beads/interactions.jsonl`
+was already modified by the tracker (not by me).
+
+### Wall time
+
+Worker ~45 min wall: source/config/eLF recon ~20 min; host+VM runs (dirty tree +
+HEAD snapshot) ~5 min; symbol/size audit and follow-up bead ~12 min; snapshot
+setup/cleanup + report remainder. Gate/orchestrator not run here.
