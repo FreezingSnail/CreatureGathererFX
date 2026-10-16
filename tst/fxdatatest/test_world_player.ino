@@ -2,6 +2,8 @@
 #include "src/engine/draw.h"
 #include "src/engine/world/StepEvent.hpp"
 #include "src/engine/world/LureZone.hpp"
+#include "src/engine/battle/BattleFlow.hpp"
+#include "src/engine/battle/DuelView.hpp"
 #include "src/item/Inventory.hpp"
 #include "src/item/ItemIds.hpp"
 #include "fxtest.hpp"
@@ -182,6 +184,60 @@ void setup() {
     test.expectEq(gameState.state, GameState_t::BATTLE,
                   F("pocket encounter tile fires a wild battle"));
     test.expectEq(battleSession().isActive(), true, F("encounter battle session active"));
+
+    // Gap 2 (CreatureGathererFX-o845): drive the live encounter through a full
+    // battle and a non-Lose exit, then prove the world resumes on the exact
+    // pre-battle tile with the battle HP persisted. The matchup is pinned so the
+    // round is a known spirit-over-fire trade (21 to the player, 4 to the foe)
+    // that cannot terminate the battle.
+    const uint16_t preBattleLocation = WorldEngine::location();
+    test.expectEq(preBattleLocation, static_cast<uint16_t>((7u << 8) | 12u),
+                  F("encounter pinned the pre-battle tile"));
+
+    battle::BattleState &duel =
+        const_cast<battle::BattleState &>(battleSession().state());
+    duel.active[0].types = DualType(Type::FIRE);
+    duel.active[0].hp = duel.active[0].maxHp = 100;
+    duel.active[0].attackMask =
+        static_cast<uint8_t>(1u << duel::foldType(static_cast<uint8_t>(Type::FIRE)));
+    duel.active[1].types = DualType(Type::FIRE);
+    duel.active[1].hp = duel.active[1].maxHp = 100;
+    duel.active[1].attackMask =
+        static_cast<uint8_t>(1u << duel::foldType(static_cast<uint8_t>(Type::SPIRIT)));
+
+    BattleFlow::update(0);           // choice entry -> pick row
+    BattleFlow::update(MENU_EDGE_A); // commit the single attack cell
+
+    uint16_t roundFrames = 0;
+    while (!battleSession().awaitingPlayer() &&
+           gameState.state == GameState_t::BATTLE && roundFrames < 400) {
+        BattleFlow::update(0);
+        ++roundFrames;
+    }
+    test.expectEq(gameState.state == GameState_t::BATTLE, true,
+                  F("the trade round stays in battle"));
+    test.expectEq(battleSession().awaitingPlayer(), true,
+                  F("the trade round returns to a fresh choice"));
+    test.expectEq(battleSession().state().active[0].hp, 79,
+                  F("the trade round damaged the player active"));
+    const uint8_t damagedHp = battleSession().state().active[0].hp;
+
+    BattleFlow::update(MENU_EDGE_B); // wild action page (ESCAPE only, not gatherable)
+    BattleFlow::update(MENU_EDGE_A); // ESCAPE -> immediate non-Lose result
+
+    uint16_t exitFrames = 0;
+    while (gameState.state != GameState_t::WORLD && exitFrames < 400) {
+        BattleFlow::update(0);
+        ++exitFrames;
+    }
+    test.expectEq(gameState.state, GameState_t::WORLD,
+                  F("a non-Lose exit returns to the world"));
+    test.expectEq(WorldEngine::location(), preBattleLocation,
+                  F("the world resumes on the exact pre-battle tile"));
+    test.expectEq(player.creatureHPs[0], damagedHp,
+                  F("the battle HP persists into the world party"));
+    test.expectEq(player.creatureHPs[0], 79,
+                  F("the persisted HP is the damaged value, not a reset"));
 
     test.report(F("test_world_player"));
 }
