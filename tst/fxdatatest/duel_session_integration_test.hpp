@@ -29,6 +29,7 @@
 #endif
 
 #include "fxtest.hpp"
+#include "generated/reward_data.hpp"
 #include "src/engine/battle/DuelView.hpp"
 #include "src/engine/battle/BattleFlow.hpp"
 #include "src/engine/battle/BattlePresets.hpp"
@@ -39,6 +40,7 @@
 #include "src/engine/menu/MenuV2.hpp"
 #include "src/lib/MoveIds.hpp"
 #include "src/lib/FxReadCounter.hpp"
+#include "src/item/Inventory.hpp"
 #include "src/player/Player.hpp"
 #include "src/save/Compaction.hpp"
 #include "src/creature/LevelCurve.hpp"
@@ -432,6 +434,79 @@ __attribute__((noinline)) void duelDeviceGatherCommit(FxTest &test) {
     test.expectEq(occupied, 1, F("later frames never re-commit"));
 }
 
+// --- jp8.11.4: ordinary wild KO material award ------------------------------
+
+// A live wild session ready for a one-hit Win: the foe is a 1-HP Fire creature
+// and the player uses its Fire kit to pick Spirit (spirit beats fire, 21 > 1) so
+// the foe is KO'd on the reveal. The one shared Player bag is installed/cleared.
+void beginWildKoSession(uint8_t foeSpecies, bool gatherable) {
+    preparePlayer();
+    item::inventoryClear(player.inventory);
+    item::setBattleInventory(&player.inventory);
+    menu.clear();
+    dialogMenu.clear();
+    enterBattle();
+    gameState.state = GameState_t::BATTLE;
+    rngDraws = 0;
+    battleSession().setRng({scriptedRng});
+    battleSession().beginWild(foeSpecies, 1, gatherable, gatherable ? 1 : 0);
+    configureMatchup(FireAuthored, SpiritAuthored, FireAuthored, FireAuthored, 100, 1);
+}
+
+// Drive the live flow through the Win dwell to the world terminal, then read the
+// bag. Returns the awarded count for the species' authored material.
+uint8_t wildKoAwardedCount(uint8_t species) {
+    BattleFlow::update(0);              // choice entry -> pick row
+    BattleFlow::update(MENU_EDGE_A);    // commit the single attack cell
+    for (uint16_t f = 0; f < 4096 && gameState.state != GameState_t::WORLD; ++f)
+        BattleFlow::update(0);
+    return item::inventoryCount(player.inventory, item::ItemKind::Lure,
+                                pgm_read_byte(RewardFixture::materialItem + species));
+}
+
+// jp8.11.4: an ordinary wild KO awards the species' authored material (from the
+// generated mapping the items_test already proved equals the packed Rewards
+// bytes) exactly once; sentinel species and gatherable KOs award nothing; a full
+// bag saturates. Every expectation uses authored values, never a literal index.
+__attribute__((noinline)) void duelDeviceWildKoMaterialAward(FxTest &test) {
+    const uint8_t item = pgm_read_byte(RewardFixture::materialItem + 0);
+    const uint8_t count = pgm_read_byte(RewardFixture::materialCount + 0);
+    test.expectEq(item < 24, true, F("authored material is a lure"));
+    test.expectEq(static_cast<uint8_t>(item % 3), static_cast<uint8_t>(2),
+                  F("authored material is tier 2"));
+
+    beginWildKoSession(0, false);
+    test.expectEq(wildKoAwardedCount(0), count,
+                  F("ordinary wild KO awards the authored material"));
+    test.expectEq(item::inventoryNonZeroCount(player.inventory), static_cast<uint8_t>(1),
+                  F("the award touches exactly one stack"));
+    for (uint8_t i = 0; i < 8; ++i) BattleFlow::update(0);
+    test.expectEq(item::inventoryCount(player.inventory, item::ItemKind::Lure, item),
+                  count, F("later frames never re-award"));
+
+    // 0xFF sentinel species: no authored material, no phantom item.
+    test.expectEq(pgm_read_byte(RewardFixture::materialItem + 4),
+                  static_cast<uint8_t>(0xFF), F("species 4 is a no-material sentinel"));
+    beginWildKoSession(4, false);
+    wildKoAwardedCount(4);
+    test.expectEq(item::inventoryNonZeroCount(player.inventory), static_cast<uint8_t>(0),
+                  F("a sentinel species awards no phantom item"));
+
+    // Gatherable-target KO: the lure-zone encounter shape awards no material.
+    beginWildKoSession(0, true);
+    wildKoAwardedCount(0);
+    test.expectEq(item::inventoryNonZeroCount(player.inventory), static_cast<uint8_t>(0),
+                  F("a gatherable-target KO awards no creature material"));
+
+    // At the count cap the terminal still completes and the stack saturates.
+    beginWildKoSession(0, false);
+    item::inventoryAdd(player.inventory, item::ItemKind::Lure, item, 99);
+    test.expectEq(wildKoAwardedCount(0), static_cast<uint8_t>(99),
+                  F("a full bag stays at the cap"));
+    test.expectEq(item::inventoryNonZeroCount(player.inventory), static_cast<uint8_t>(1),
+                  F("a full bag gains no phantom stack"));
+}
+
 } // namespace duel_session_test_detail
 
 // Asymmetric trade through the real session (CreatureGathererFX-d73i.8 parity):
@@ -471,4 +546,5 @@ inline void test_duel_session(FxTest &test) {
     duelDeviceGatherActiveKoPausesFlee(test);
     duelDeviceTradeScalesOutgoing(test);
     duelDeviceGatherCommit(test);
+    duelDeviceWildKoMaterialAward(test);
 }

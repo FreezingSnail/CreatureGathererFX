@@ -14041,3 +14041,82 @@ Worker ~25 min wall: read bead/output/docs/Ai.cpp/mock/kernel + reconcile ~10 mi
 (~4 min); control x2 + status + drop-fire (~1.5 min incl. 4x ~24 s sweeps); compare + KO-risk
 ~3 min; node+sim tests ~2 min; report/storage remainder. No gate/orchestrator run (dispatch leaves
 the bead `in_progress`).
+
+## jp8.11.4 — KO material award
+
+### What changed
+
+- `src/engine/battle/BattleFlow.cpp`: new `awardWildKoMaterial(state)` called from
+  `finishBattle` on `Outcome::Win` only. Reads the generated `Rewards::materialItem`/
+  `materialCount` mapping (one byte each) at the single terminal edge before `exitBattle`,
+  skips `0xFF` item sentinel / zero count / `state.trainer` / `state.gatherable`, and
+  `inventoryAdd`s the authored tier-2 lure into `item::battleInventory()` (the one Player
+  bag). No per-frame/per-step reads; no EventSink or reward queue.
+- `tst/duel_session_integration_test.hpp` (host): six focused tests pinning award-once,
+  0xFF sentinel, gatherable-KO exclusion, trainer-flag exclusion, non-Win (escape) exclusion
+  and full-bag saturation. The item/count fixture bytes are installed at the published
+  `Rewards` addresses with the count offset derived from the addresses (no hardcoded layout).
+- `tst/fxdatatest/duel_session_integration_test.hpp` (device): one `duelDeviceWildKoMaterialAward`
+  driving the real packed mapping for species 0 through the real flow to a wild Win terminal,
+  plus the sentinel-4 and gatherable negatives and a full-bag saturate case. Expected item/count
+  are read from `RewardFixture` (already proven equal to the packed bytes by `tst/fxdatatest/items_test.hpp`).
+
+### Commands, results, tails
+
+```
+make test BUILD_DIR=build
+  -> "Total Passed: 240363  Total Failed: 0" (host) + world "Total Passed: 258  Total Failed: 0"
+     (host delta +15 assertions from the six new cases)
+make testvm BUILD_DIR=build
+  -> "Total Passed: 286  Total Failed: 0"
+make test-beta-area BUILD_DIR=build
+  -> tests 13 / pass 13 / fail 0
+make fxtest-headless BUILD_DIR=build ARDENS="$ARDENS" FXTEST_MS=30000 \
+  FXTEST_INOS='tst/fxdatatest/test_battle_duel.ino tst/fxdatatest/test_world_player.ino tst/fxdatatest/test_items.ino tst/fxdatatest/test_stack.ino'
+  -> test_battle_duel PASSED=125 FAILED=0   (was 115; +10 new assertions)
+     test_world_player PASSED=76 FAILED=0
+     test_items PASSED=273 FAILED=0
+     test_stack PASSED=4 FAILED=0   (stack headroom=598, mode transition headroom=695)
+     AVR footprint: test_battle_duel sketch 29250/29696 B, statics 1794 B.
+make ram BUILD_DIR=build
+  -> RAM_FLASH_BYTES=22980 (limit 29696) ; RAM_STATIC_BYTES=1680 (limit 2560) ; RAM_FREE_BYTES=880
+```
+
+### Exactly-once / sentinel / exclusion proofs
+
+- **Once, no re-award:** host `duelWildKoAwardsMaterialOnce` and device
+  `duelDeviceWildKoMaterialAward` award the authored material on an ordinary wild KO and then
+  run 8 further world frames with the stack still at the awarded count (the award lives only in
+  the single `finishBattle` terminal edge; `exitBattle` makes later updates return early).
+- **0xFF sentinel:** host `duelWildKoSentinelAwardsNothing` and the device species-4 case assert
+  `inventoryNonZeroCount == 0` — no phantom item.
+- **Exclusions:** gatherable-target KO, trainer/boss flag, and a non-Win escape terminal all
+  leave the bag empty (host + device).
+- **Full bag:** pre-filled to the 99 cap, the terminal still completes and the stack stays 99 with
+  no extra stack (`inventoryAdd` saturates).
+
+### Flash / SRAM delta
+
+Control (jp8.11.3 HEAD, `RAM_FLASH_BYTES=22768 / RAM_STATIC_BYTES=1678`) -> candidate
+**22980 B flash (+212) / 1680 B static (+2)**. Target ≤29,184 B, hard ≤29,696 B, static ≤2,160 B:
+all met with 6,716 B flash and 880 B static free. Device `test_stack` headroom (598) is well above
+the reserve.
+
+### Deviations
+
+The bead's legacy VERIFY block named `BUILD_DIR=build/box-adoption-gate` and a non-existent
+`tst/fxdatatest/test_battlesession.ino`; the dispatch pinned `BUILD_DIR=build` and the four
+`test_*.ino` suites listed above, which were run. No commit/push; bead left `in_progress`.
+
+### Storage
+
+`df -h .` 62 GiB free before and after (>=10 GiB reserve held). `du -sh build` 1.9G -> 1.8G.
+`make clean-build-artifacts BUILD_DIR=build` previewed (108 candidates, 2.61 MB) then applied;
+additionally removed the positively identified disposable device staging `build/fxtest` (~118 MB).
+Retained: `build/CreatureGathererFX.ino.elf` + `make ram` report. No repository snapshot copied.
+
+### Wall time
+
+Worker ~50 min wall: recon/design ~12 min; implementation ~5 min; host gates ~4 min;
+device fxtest (4 suites, plus a `test_battle_duel` size-fit iteration) ~20 min; ram + report +
+cleanup remainder. No gate/orchestrator run (dispatch leaves the bead `in_progress`).

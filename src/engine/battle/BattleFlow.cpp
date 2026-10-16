@@ -9,6 +9,9 @@
 #include "../../globals.hpp"
 #include "../../creature/LevelCurve.hpp"
 #include "../../save/Compaction.hpp"
+#include "../../item/Inventory.hpp"
+#include "../../lib/FxRead.hpp"
+#include "../../fxdata.h"
 #include "../world/World.hpp"
 
 namespace BattleFlow {
@@ -63,9 +66,31 @@ void commitGathered(const battle::BattleSession &session) {
     storeAdd(record, slot);
 }
 
+// jp8.11.4: an ordinary non-gatherable, non-trainer wild KO yields the foe
+// species' authored material exactly once at the terminal edge. The item id and
+// count come from the generated Rewards mapping (0xFF item sentinel = no
+// material); Gathered/Fled/Escaped/Lose/Draw, gatherable-target KOs and
+// trainer/boss victories award nothing. A full bag saturates via inventoryAdd and
+// never corrupts state.
+void awardWildKoMaterial(const battle::BattleState &state) {
+    if (state.trainer || state.gatherable) return;
+    item::Inventory *bag = item::battleInventory();
+    if (bag == nullptr) return;
+    const uint8_t species =
+        state.active[static_cast<uint8_t>(battle::Side::Opponent)].id;
+    uint8_t itemId = 0xFF;
+    FxRead::bytes(Rewards::materialItem + species, &itemId, 1);
+    if (itemId == 0xFF) return; // 0xFF sentinel: no authored material
+    uint8_t count = 0;
+    FxRead::bytes(Rewards::materialCount + species, &count, 1);
+    if (count == 0) return;
+    item::inventoryAdd(*bag, item::ItemKind::Lure, itemId, count);
+}
+
 void finishBattle(battle::BattleSession &session, TerminalCallback callback) {
     const battle::Outcome outcome = session.result().outcome;
     if (outcome == battle::Outcome::Gathered) commitGathered(session);
+    else if (outcome == battle::Outcome::Win) awardWildKoMaterial(session.state());
 #if defined(TEST) || defined(FX_READ_COUNTER)
     menu.clear();
 #endif
