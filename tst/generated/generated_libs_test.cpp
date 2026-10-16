@@ -984,6 +984,121 @@ void checkAuthoredTiles(Report &report, const std::vector<uint8_t> &source,
     }
 }
 
+// First-beta clearing reachability (data/beta-area.toml). The ordinary new-game
+// start is (11,5); the authored pocket must let the player walk to the lure box
+// (9,2) and plant (14,2) approaches and back. Decode collision straight from the
+// packed image with the firmware's own TileProps predicate, then breadth-first
+// search the orthogonal graph, so a generator regression that drops a walkable
+// bit or seals the pocket fails here instead of only on hardware.
+void checkSpawnReachability(Report &report, const std::string &image, uint32_t address) {
+    constexpr int START_X = 11, START_Y = 5;
+    constexpr int BOX_X = 9, BOX_Y = 2;
+    constexpr int PLANT_X = 14, PLANT_Y = 2;
+    constexpr int WIDTH = 256, HEIGHT = 256;
+    constexpr std::size_t CLEARING_CELLS = 39; // authored sealed pocket, all walkable
+    const int neighbours[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+
+    auto wordAt = [&](int x, int y) -> uint16_t {
+        const std::size_t offset = (static_cast<std::size_t>(y) * WIDTH + x) * 2;
+        return static_cast<uint8_t>(image[address + offset]) |
+               (uint16_t(static_cast<uint8_t>(image[address + offset + 1])) << 8);
+    };
+    // Same predicate WorldCollision::canEnter derives: an empty GID is blocked
+    // even if a walkable property bit is present.
+    auto walkableAt = [&](int x, int y) -> bool {
+        const uint16_t word = wordAt(x, y);
+        return TileProps::tileId(word) != 0 &&
+               TileProps::hasTileProp(word, TileProps::PROP_WALKABLE);
+    };
+
+    const uint16_t spawn = wordAt(START_X, START_Y);
+    if (TileProps::tileId(spawn) == 275 &&
+        TileProps::hasTileProp(spawn, TileProps::PROP_WALKABLE) &&
+        TileProps::hasTileProp(spawn, TileProps::PROP_ENCOUNTER))
+        report.pass();
+    else
+        report.fail("beta spawn", "(11,5) must be the walkable encounter floor");
+
+    int openNeighbours = 0;
+    for (const auto &n : neighbours)
+        if (walkableAt(START_X + n[0], START_Y + n[1])) ++openNeighbours;
+    if (openNeighbours > 0)
+        report.pass();
+    else
+        report.fail("beta spawn neighbour", "(11,5) has no walkable neighbour");
+
+    const uint16_t box = wordAt(BOX_X, BOX_Y);
+    if (TileProps::tileId(box) == 545 &&
+        TileProps::hasTileProp(box, TileProps::PROP_SPARE) &&
+        !TileProps::hasTileProp(box, TileProps::PROP_WALKABLE) &&
+        walkableAt(BOX_X + 1, BOX_Y))
+        report.pass();
+    else
+        report.fail("beta lure box", "(9,2) spare prop or its (10,2) approach changed");
+
+    const uint16_t plant = wordAt(PLANT_X, PLANT_Y);
+    if (TileProps::tileId(plant) == 551 &&
+        TileProps::hasTileProp(plant, TileProps::PROP_PLANTABLE) &&
+        walkableAt(PLANT_X - 1, PLANT_Y))
+        report.pass();
+    else
+        report.fail("beta plant", "(14,2) plantable prop or its (13,2) approach changed");
+
+    auto search = [&](int sx, int sy) {
+        std::vector<char> visited(static_cast<std::size_t>(WIDTH) * HEIGHT, 0);
+        std::vector<uint16_t> queue;
+        queue.reserve(CLEARING_CELLS + 1);
+        auto key = [&](int x, int y) { return static_cast<std::size_t>(y) * WIDTH + x; };
+        auto push = [&](int x, int y) {
+            visited[key(x, y)] = 1;
+            queue.push_back(static_cast<uint16_t>((y << 8) | x));
+        };
+        push(sx, sy);
+        for (std::size_t head = 0; head < queue.size(); ++head) {
+            const int x = queue[head] & 0xFF;
+            const int y = queue[head] >> 8;
+            for (const auto &n : neighbours) {
+                const int nx = x + n[0], ny = y + n[1];
+                if (nx < 0 || ny < 0 || nx >= WIDTH || ny >= HEIGHT) continue;
+                if (visited[key(nx, ny)] || !walkableAt(nx, ny)) continue;
+                push(nx, ny);
+            }
+        }
+        return queue;
+    };
+    auto reached = [](const std::vector<uint16_t> &visited, int x, int y) {
+        return std::find(visited.begin(), visited.end(),
+                         static_cast<uint16_t>((y << 8) | x)) != visited.end();
+    };
+
+    const std::vector<uint16_t> fromStart = search(START_X, START_Y);
+    if (fromStart.size() == CLEARING_CELLS)
+        report.pass();
+    else
+        report.fail("beta clearing cell count",
+                    "reachable cells from (11,5) = " + std::to_string(fromStart.size()) +
+                    " expected " + std::to_string(CLEARING_CELLS));
+    if (reached(fromStart, 10, 2) && reached(fromStart, 13, 2))
+        report.pass();
+    else
+        report.fail("beta approaches reachable", "box (10,2) and plant (13,2) must be reachable from (11,5)");
+
+    const std::vector<uint16_t> fromBox = search(10, 2);
+    if (reached(fromBox, START_X, START_Y))
+        report.pass();
+    else
+        report.fail("beta return path", "(10,2) cannot reach the (11,5) spawn");
+
+    // Map word ABI: GID 0 stays the empty sentinel and GID 255 stays a real id.
+    const uint16_t emptyWord = TileProps::packTile(0, TileProps::PROP_WALKABLE);
+    const uint16_t id255Word = TileProps::packTile(255, TileProps::PROP_ENCOUNTER);
+    if (TileProps::tileId(emptyWord) == 0 && TileProps::tileId(id255Word) == 255 &&
+        TileProps::tileProps(id255Word) == TileProps::PROP_ENCOUNTER)
+        report.pass();
+    else
+        report.fail("map word abi", "GID 0/255 edge behavior or the packed word encoding changed");
+}
+
 } // namespace
 
 int main(int argc, char **argv) {
@@ -1067,6 +1182,7 @@ int main(int argc, char **argv) {
         }
         if (entry.kind == "raw" && entry.key() == "raw_map_data") {
             checkAuthoredTiles(report, expected, *image, address);
+            checkSpawnReachability(report, *image, address);
         }
         bool matches = true;
         for (std::size_t index = 0; index < expected.size(); ++index) {

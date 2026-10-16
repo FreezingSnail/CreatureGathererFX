@@ -31,6 +31,49 @@ uint16_t rawTileWordAtIndex(uint16_t index) {
     return ReadFXu16(address);
 }
 
+// Packed-word walkability exactly as WorldCollision::canEnter derives it: an
+// empty GID is blocked even when the walkable property bit is present.
+bool packedWalkableAt(int16_t x, int16_t y) {
+    if (x < 0 || y < 0 || x >= static_cast<int16_t>(Chunk::MAP_WIDTH_TILES) ||
+        y >= static_cast<int16_t>(Chunk::MAP_HEIGHT_TILES))
+        return false;
+    const uint16_t word = rawTileWordAt(static_cast<uint8_t>(x), static_cast<uint8_t>(y));
+    return TileProps::tileId(word) != 0 &&
+           TileProps::hasTileProp(word, TileProps::PROP_WALKABLE);
+}
+
+// Breadth-first search over the device's packed collision, collecting visited
+// locations (y<<8|x) into a caller buffer. The authored pocket is sealed, so
+// the frontier stays tiny; `cap` is a guard, not an expected size.
+uint8_t clearingBfs(uint16_t start, uint16_t *seen, uint8_t cap) {
+    uint8_t head = 0;
+    uint8_t tail = 0;
+    seen[tail++] = start;
+    while (head < tail) {
+        const int16_t x = static_cast<uint8_t>(seen[head] & 0xFF);
+        const int16_t y = static_cast<uint8_t>(seen[head] >> 8);
+        ++head;
+        const int16_t candidates[4][2] = {
+            {static_cast<int16_t>(x - 1), y}, {static_cast<int16_t>(x + 1), y},
+            {x, static_cast<int16_t>(y - 1)}, {x, static_cast<int16_t>(y + 1)},
+        };
+        for (uint8_t i = 0; i < 4; ++i) {
+            const int16_t nx = candidates[i][0];
+            const int16_t ny = candidates[i][1];
+            if (!packedWalkableAt(nx, ny)) continue;
+            const uint16_t nloc = static_cast<uint16_t>(nx) |
+                                  static_cast<uint16_t>(static_cast<uint16_t>(ny) << 8);
+            bool known = false;
+            for (uint8_t at = 0; at < tail; ++at)
+                if (seen[at] == nloc) { known = true; break; }
+            if (known) continue;
+            if (tail >= cap) return tail;
+            seen[tail++] = nloc;
+        }
+    }
+    return tail;
+}
+
 void expectAddressBytes(FxTest &test, uint24_t actual, uint24_t expected,
                         const __FlashStringHelper *label) {
     uint8_t actualBytes[3];
@@ -142,6 +185,63 @@ inline void test_read_budget(FxTest &test) {
                   F("step frame render has no FX reads"));
     test.expectEq(FxReadCounter::framePassed(), true,
                   F("step frame satisfies FX read contract"));
+}
+
+// The map includes high-ID property fixtures on the sealed south border; the
+// ordinary collision samples below remain on the reachable starting path.
+inline void test_spawn_reachability(FxTest &test) {
+    // First-beta clearing (data/beta-area.toml): the ordinary new-game start is
+    // (11,5) and the authored pocket must let the player walk to the lure box
+    // (9,2) and plant (14,2) approaches and back. Read the packed words from the
+    // FX image so this pins the device bytes, not just the host source file.
+    const uint16_t spawn = rawTileWordAt(11, 5);
+    test.expectEq(TileProps::tileId(spawn), 275, F("beta spawn raw tile id"));
+    test.expectEq(TileProps::hasTileProp(spawn, TileProps::PROP_WALKABLE), true,
+                  F("beta spawn walkable property"));
+    test.expectEq(TileProps::hasTileProp(spawn, TileProps::PROP_ENCOUNTER), true,
+                  F("beta spawn encounter property"));
+
+    // Every orthogonal neighbour of the start is enterable.
+    test.expectEq(packedWalkableAt(10, 5), true, F("spawn west neighbour walkable"));
+    test.expectEq(packedWalkableAt(12, 5), true, F("spawn east neighbour walkable"));
+    test.expectEq(packedWalkableAt(11, 4), true, F("spawn north neighbour walkable"));
+    test.expectEq(packedWalkableAt(11, 6), true, F("spawn south neighbour walkable"));
+
+    // The lure box and plant stay non-walkable props faced from a walkable cell.
+    const uint16_t box = rawTileWordAt(9, 2);
+    test.expectEq(TileProps::tileId(box), 545, F("lure box raw tile id"));
+    test.expectEq(TileProps::hasTileProp(box, TileProps::PROP_SPARE), true,
+                  F("lure box carries spare prop"));
+    test.expectEq(TileProps::hasTileProp(box, TileProps::PROP_WALKABLE), false,
+                  F("lure box is not walkable"));
+    test.expectEq(packedWalkableAt(10, 2), true, F("lure box approach walkable"));
+
+    const uint16_t plant = rawTileWordAt(14, 2);
+    test.expectEq(TileProps::tileId(plant), 551, F("plant raw tile id"));
+    test.expectEq(TileProps::hasTileProp(plant, TileProps::PROP_PLANTABLE), true,
+                  F("plant carries plantable prop"));
+    test.expectEq(packedWalkableAt(13, 2), true, F("plant approach walkable"));
+
+    // Sealed clearing: the start reaches exactly the 39 authored walkable cells,
+    // including both interaction approaches; the route is reversible.
+    uint16_t seen[64];
+    const uint8_t fromStart = clearingBfs(static_cast<uint16_t>((5u << 8) | 11u), seen, 64);
+    test.expectEq(fromStart, 39, F("beta clearing walkable cell count"));
+    bool boxReachable = false;
+    bool plantReachable = false;
+    for (uint8_t at = 0; at < fromStart; ++at) {
+        if (seen[at] == static_cast<uint16_t>((2u << 8) | 10u)) boxReachable = true;
+        if (seen[at] == static_cast<uint16_t>((2u << 8) | 13u)) plantReachable = true;
+    }
+    test.expectEq(boxReachable, true, F("lure box approach reachable from spawn"));
+    test.expectEq(plantReachable, true, F("plant approach reachable from spawn"));
+
+    const uint8_t fromBox = clearingBfs(static_cast<uint16_t>((2u << 8) | 10u), seen, 64);
+    bool startReachable = false;
+    for (uint8_t at = 0; at < fromBox; ++at)
+        if (seen[at] == static_cast<uint16_t>((5u << 8) | 11u)) startReachable = true;
+    test.expectEq(fromBox, 39, F("return traversal walkable cell count"));
+    test.expectEq(startReachable, true, F("return path reaches the spawn"));
 }
 
 // The map includes high-ID property fixtures on the sealed south border; the
@@ -286,4 +386,5 @@ inline void test_tiles(FxTest &test) {
     test_map_words(test);
     test_chunk_slots(test);
     test_read_budget(test);
+    test_spawn_reachability(test);
 }
