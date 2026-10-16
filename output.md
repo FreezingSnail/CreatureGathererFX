@@ -12701,3 +12701,88 @@ run; no generated/gate artifacts written.
 
 Worker ~13 min wall (source/tests/git inspection ~8 min; host+VM+arena-data
 runs ~5 s; report remainder). Gate/orchestrator not run here.
+
+## 606 — AI tier evaluation
+
+Verdict: **superseded / no bounded code correction**. No `AiTier` seam exists in current source; the AI
+difficulty surface is the duel Persona/read-rate model. Nothing is dead or mis-defaulted *within the
+current model*. The frozen prototype's Tactical/Basic/Standard tiers targeted the legacy PP battle,
+which the 5-type duel engine replaced. No source change made; delta vs current shipping = 0.
+
+### Measured current layout (AVR, byte-only structs)
+
+Evidence: `src/engine/battle/BattleState.hpp` `#ifdef __AVR__` static_asserts;
+`tst/fxdatatest/mode_state_test.hpp` device `expectEq` asserts; host cross-check
+(byte-only, `alignof==1`, so host == AVR).
+
+| type | bytes | source |
+|---|---|---|
+| `battle::Combatant` (duel) | 6 | assert BattleState.hpp:95, device mode_state_test.hpp:18 |
+| `battle::BenchSlot` (duel) | 3 | assert BattleState.hpp:96 |
+| `battle::BattleState` (duel) | **46** | assert BattleState.hpp:97, device mode_state_test.hpp:19 |
+| `battle::BattleState` (legacy non-duel) | 124 | assert BattleState.hpp:100 (unused profile) |
+| `battle::TurnCursor` | 9 | assert BattleSession.hpp:34 |
+| `battle::ActionResult` (compact) | 7 | assert ActionResult.hpp:81, device mode_state_test.hpp:21 |
+| `battle::BattleSession` (duel compact) | **142** | device mode_state_test.hpp:22 (assert BattleSession.hpp:124 is `<=164`) |
+| `battle::BattleSession` (legacy non-duel) | 163 | assert BattleSession.hpp:128 (unused profile) |
+| `battle::BattleAction` | 2 | host probe |
+| `duel::Member` / `duel::Side` / `duel::State` / `duel::Action` | 7 / 23 / 56 / 2 | host probe (no assert) |
+| `ModeState` = `WorldTransient` | 193 | device mode_state_test.hpp:15-16 |
+
+The dispatch's "BattleState is now 60 B under the duel" is not reproducible: the shipping duel
+`BattleState` is **46 B** (moveset = 5-bit `attackMask`; no stats/status/move/slot arrays). The 163 B
+Session figure is the legacy non-compact build; the shipping duel Session is 142 B.
+
+### Tier evaluation
+
+- `grep -rn "AiTier" src tst` → 0 hits; no Tactical/Basic/Standard enum anywhere.
+- The prototype's tier seam lived in `battle::Ai` (`chooseAction`/`chooseDamageAction`). Every configured
+  profile defines `-DCGFX_DUEL_BATTLE` (Makefile `CPPFLAGS` L89, `AVR_SHIPPING_CPP_FLAGS` L36,
+  `AVR_FXTEST_CPP_FLAGS` L18). `Ai.cpp`/`Ai.hpp` bodies are `#ifndef CGFX_DUEL_BATTLE`, and
+  `tst/battle_ai_test.hpp` is excluded in `tst/main.cpp` (L38-46). The legacy tier seam is therefore
+  unreachable **by build configuration**, not by defect.
+- Current AI difficulty = `duel::Persona {Random=0, Reader=1, Frequency=2, AntiRepeat=3}` selected in
+  `BattleSession.cpp` `duelFixturePersona`/`duelFixtureReadRate` (L71-85):
+  wild → Random/0%; `trainerId%3==0` → Reader/25%; `==1` → Frequency/50%; `==2` → AntiRepeat/50%.
+- These defaults match `docs/duel-system-spike-plan.md` step 4 (wild/random 0%, introductory/reader 25%,
+  ordinary/frequency 50%, boss/anti-repeat 50%). The duel engine replaced the legacy PP battle that the
+  frozen prototype targeted, so the tier premise has no host in shipping; the current model is correct
+  against the newer owner-authorized plan. `battle::Ai` is retained only so documented legacy builds stay
+  byte-identical (DuelKernel.hpp:6).
+- No dead/unreachable tier and no default disagreement exist to correct; adding tiers to the dead legacy
+  seam or to the duel (a redesign) is out of this bead's bounded scope.
+
+### Gate (no code change)
+
+```
+make test BUILD_DIR=build      -> host 240173 passed / 0 failed; world 258 / 0
+make testvm BUILD_DIR=build    -> 278 passed / 0 failed
+make sim-test                  -> 6 pass / 0 fail (duel kernel parity vs mock)
+make fxtest-headless ARDENS=... FXTEST_INOS='test_battle_duel.ino test_duel_ui.ino test_stack.ino'
+    test_battle_duel PASSED=106 FAILED=0
+    test_duel_ui     PASSED=65  FAILED=0
+    test_stack       PASSED=4   FAILED=0   headroom=600 B (base 1993, low 2593, top 2698)
+make ram BUILD_DIR=build       -> Program 22520 B (limit 29696), Data 1678 B (limit 2560), free 882 B
+```
+
+Flash/static delta vs 22520/1678: **0 / 0** (read-only evaluation). Stack headroom 600 B >= 219 B
+required. No `final-gate` run: per dispatch it is conditional on code changes, and none were made.
+
+### Deviations
+
+- Bead-ownership `tst/fxdatatest/test_battletrainer.ino` is retired; verification adapted to the surviving
+  device suites (test_battle_duel / test_duel_ui / test_stack) per dispatch.
+- Bead-`design` VERIFY cites `BUILD_DIR=build/box-adoption-gate`; used dispatch-assigned `BUILD_DIR=build`.
+- Dispatch "BattleState 60 B" is measured 46 B (see table).
+
+### Storage
+
+`df -h .` 61 GiB free before/after (>=10 GiB reserve). `du -sh build` 1.9G before and after; single reused
+`BUILD_DIR=build`; no new build trees. Compact logs `build/606-{test,testvm,simtest,ram,fxtest}.log`.
+`make clean-build-artifacts BUILD_DIR=build` previewed then applied (108 candidates, 2.59 MB); no unknown
+evidence touched. `.beads/interactions.jsonl` was pre-existing modified (not mine).
+
+### Wall time
+
+Worker ~20 min wall: inspection ~15 min; host 4 s; vm 1 s; sim 1 s; ram 14 s; fxtest 34 s; report
+remainder. Gate/orchestrator not run here.
