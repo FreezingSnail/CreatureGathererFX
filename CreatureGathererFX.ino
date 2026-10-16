@@ -22,10 +22,9 @@
 #include "src/engine/draw.h"
 #include "src/vm/ScriptVm.hpp"
 #include "src/lib/FxReadCounter.hpp"
-#if defined(CGFX_TRAINER_DEMO) || defined(CGFX_WILD_DEMO)
+// The generated authored presets are shared by the demo bootstraps and the
+// ordinary new-game start, so the header is always present.
 #include "src/engine/battle/BattlePresets.hpp"
-#include "tst/fxdatatest/generated/battle_preset_data.hpp"
-#endif
 
 #if defined(CGFX_ARENA_DEMO) && (defined(CGFX_TRAINER_DEMO) || defined(CGFX_WILD_DEMO))
 #error "CGFX_ARENA_DEMO cannot be combined with another demo bootstrap"
@@ -175,7 +174,13 @@ void setup() {
     LureZone::showIntro();
 #elif !defined(CGFX_WILD_DEMO)
     if (!restored) {
-        player.basic();
+        // Ordinary new game: the authored first-beta party (data/beta-area.toml,
+        // generated into data/battle-presets.toml's "beta" preset) replaces the
+        // legacy species-only default load. species 0/3/6 at level 3, full HP,
+        // authored moves; the one Player bag becomes the battle inventory. A
+        // valid restore skips this branch and keeps its own party.
+        battle::applyPlayerPreset(player, BattlePresets::beta);
+        item::setBattleInventory(&player.inventory);
         SaveController::seedParty();
     }
 #endif

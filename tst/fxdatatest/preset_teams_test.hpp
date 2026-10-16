@@ -94,4 +94,7 @@ void test_preset_teams(FxTest &test)
                   F("named matchups use distinct trainer rows"));
     preset_teams_test::verify(test, BattlePresets::opening);
     preset_teams_test::verify(test, BattlePresets::switch_drill);
+    // Ordinary new games boot this roster (jp8.11.24), so prove the generated
+    // preset resolves on the device through the same loading seam.
+    preset_teams_test::verify(test, BattlePresets::beta);
 }

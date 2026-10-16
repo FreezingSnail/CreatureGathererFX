@@ -333,6 +333,31 @@ test('shipping fresh-game setup literal matches the authored start', () => {
 });
 
 // ---------------------------------------------------------------------------
+// Shipping fresh-game party wiring (CreatureGathererFX-jp8.11.24).
+// ---------------------------------------------------------------------------
+// The ordinary !restored branch must apply the generated authored "beta" preset
+// and seed the collection; the legacy species-only default load is gone and the
+// start stays inside the fresh-game guard so a valid restore keeps its party.
+test('shipping fresh-game boot applies the authored beta preset only when fresh', () => {
+  const ino = readText('CreatureGathererFX.ino');
+  const marker = 'Ordinary new game';
+  const at = ino.indexOf(marker);
+  assert.ok(at >= 0, 'shipping setup keeps the ordinary new-game marker');
+  const seedAt = ino.indexOf('SaveController::seedParty()', at);
+  assert.ok(seedAt > at, 'ordinary new game seeds the collection');
+  const block = ino.slice(at, seedAt);
+  assert.ok(block.includes('battle::applyPlayerPreset(player, BattlePresets::beta)'),
+    'ordinary boot applies the generated beta preset');
+  assert.ok(block.includes('item::setBattleInventory(&player.inventory)'),
+    'ordinary boot keeps the one bag wired for battle use');
+  assert.ok(!block.includes('player.basic()'),
+    'ordinary boot no longer uses the legacy species-only default load');
+  const guard = ino.lastIndexOf('if (!restored)', at);
+  assert.ok(guard >= 0 && at - guard < 200,
+    'beta start stays inside the !restored branch');
+});
+
+// ---------------------------------------------------------------------------
 // Renewable acquisition math.
 // ---------------------------------------------------------------------------
 test('tier1 lure rate meets the encounter need within six turns', () => {
