@@ -11117,3 +11117,42 @@ Retired move-dependent suites are gone from the run (no legacy battle suites).
 Shipping: `AVR_FLASH_BYTES=22408` (free 7288), `AVR_STATIC_RAM_BYTES=1687` (free 473). vs the pre-epic
 control 25238/1745 → −2830 flash / −58 static. Logs: `build/final-gate/{check,ram}.log`.
 Storage: 53 GiB free; build 2.1 GiB.
+
+## 4w89.8 — restored device indexed24 high-byte evidence
+
+Recreated the surviving FX-read contract from the retired `tst/fxdatatest/tables_test.hpp`
+without the retired packed-Move parts (`move_table`/`moveNames`/`readMoveFX`, the
+`readIndexedUInt32` stride, text/chunk layout — those generic contracts live on in
+`tiles_test`/host `type_test`). New permanent device suite:
+`tst/fxdatatest/tables_test.hpp` + `tst/fxdatatest/test_tables.ino`.
+
+Pins: `FxRead::indexed24(CreatureNames::CreatureNames, i)` reconstructs the full 24-bit
+big-endian table entry so the top byte survives, comparing per byte against both the raw
+`FX::readDataBytes` big-endian bytes (reused `expect_indexed_uint24_bytes` shape) and the
+published `creature0..creature31` uint24 object bytes, for all 32 entries. Adds a direct
+raw-vs-published byte check for indices 0/15/31 plus a high-byte guard (`raw[0] != 0`).
+Also keeps the trivial `readIndexedUInt8` `type_table` byte contract.
+
+### Commands / results
+- `make test BUILD_DIR=build` → host 240069/0 + world 258/0, `All tests passed!`.
+- `make fxtest-headless BUILD_DIR=build ARDENS="$ARDENS" FXTEST_INOS='tst/fxdatatest/test_tables.ino tst/fxdatatest/test_stack.ino'`
+  → `test_tables PASSED=212 FAILED=0` / `P` / `test_tables: PASS`;
+    `test_stack PASSED=4 FAILED=0` / `P` / `test_stack: PASS` (headroom 0x271 = 625 B).
+  Default `AVR_FXTEST_BUILD_PROPERTIES` already carries `-DCGFX_DUEL_BATTLE`, so the duel
+  device profile applies to `test_tables` (and `test_stack` is duel-special-cased); no
+  Makefile change needed. Wildcard `FXTEST_INOS` picks the new `.ino` up in `check`/`final-gate`.
+- High-byte source confirmation: `CreatureNames::CreatureNames = 0x0210AC`; published entries
+  range `creature24 = 0x01CA48` .. `creature31 = 0x01EF5A` (all above `0x010000`). Packed image
+  `dist/fxdata.bin` at `0x0210AC` = `01 ce 94` (= `creature0 0x01CE94`) and at `0x0210AF` =
+  `01 ec a8` (= `creature1 0x01ECA8`); high byte `0x01` present, so the contract exercises the
+  top byte rather than reading it as zero.
+
+### Storage / cleanup
+`df -h . /private/tmp` before/after: 48 GiB free (unchanged). `du -sh build` 2.1G before/after.
+`make clean-build-artifacts BUILD_DIR=build` preview → 108 candidates / 2581823 bytes in
+`build/arduino-build`; `CLEAN_APPLY=1` applied — transit shipping-build intermediates removed,
+active reused arduino-cache retained.
+
+### Deviations
+- Wall time ~6 min (host ~1 min + AVR device compile/capture ~5 min).
+- No commit/push; bead left `in_progress` per instructions. No Makefile edits required.
