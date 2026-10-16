@@ -12387,3 +12387,124 @@ make ram BUILD_DIR=build
 Worker ~16 min wall: host+VM ~5 s; focused AVR device batches 34 s + 30 s + 34 s;
 negative-control rebuilds ~30 s each; remaining is bootstrap + reporting.
 Orchestrator gate not run here.
+
+## jp8.4.6 — dialog contract reconcile
+
+Reconcile/evidence bead. HEAD `abda026`. No source change committed. The
+requested eight-byte `PopUpDialog` is present and consumed; the requested
+outcomes below are mapped to committed source and tests, with the two
+dispositions the active design explicitly authorises (retain live `x/y`; do
+not reenact the superseded field-removal plan).
+
+### Outcome -> source/test map
+
+1. **AVR `sizeof(PopUpDialog) == 8`.** `src/lib/DataTypes.hpp` (`cf7557056829`)
+   lines 33-46: `x,y,width,height` (4 B) + `uint24_t textAddress` (3 B) +
+   `DialogType : uint8_t` (1 B) = 8; asserted by
+   `#ifdef __AVR__ static_assert(sizeof(PopUpDialog) == 8, ...)`. Proof is
+   compile-time: the focused device build below compiled the shipping headers
+   under `__AVR__` and passed. Companion
+   `static_assert(TEXT == 0 && SCRIPT_TEXT == 15, ...)` pins the numeric ABI;
+   `enum DialogType : uint8_t` in `src/lib/MenuData.hpp` (`2b83c558979f`)
+   keeps `type` at one byte.
+2. **Record is `textAddress,width,height,type` (+ `x,y`).** `detailAddress`,
+   `damage`, `animation` removed in commit `575911c` (world-only compaction).
+   `x/y` are **retained** because they are live draw-origin fields, not dead
+   padding: `DialogMenu::drawPopMenu` draws at `x + 8, y + 2`
+   (`src/engine/menu/DialogMenu.cpp` `e0c4f505adb1`), and production producers
+   set them (`pushEvent` x=0/y=34; `ScriptVM::scriptTextDialog` x=0/y=43).
+   Removing them would reenact the superseded plan with no resource win, which
+   the active design step 2 forbids. Record is still 8 B.
+3. **TEXT origin 0/34, body +8/+2 = 8/36.** Producer
+   `DialogQueue::pushEvent` sets `PopUpDialog{0, 34, 120, 30, textAddress, TEXT}`
+   (`src/engine/menu/DialogQueue.cpp` `ca59ecc3a177`); host
+   `tst/dialog_test.hpp` (`9b6ccb58629a`) asserts `head().x==0`, `head().y==34`,
+   `width==120`, `height==30`. `drawPopMenu` adds the +8/+2 body offset.
+   Note: TEXT currently has no shipping producer (world interaction routes
+   through `ScriptVM` `Msg` -> SCRIPT_TEXT); `pushEvent`/TEXT is a
+   host-verified retained kind, disposition below.
+4. **SCRIPT_TEXT origin 0/43, body 8/45.** Producer
+   `ScriptVM::scriptTextDialog` (`src/vm/ScriptVM.cpp` `3423de462fba`) sets
+   `x=0, y=43, width=128, height=24, type=SCRIPT_TEXT`; `drawPopMenu` adds
+   +8/+2. Glyph placement from the origin is proved on device:
+   `tst/fxdatatest/dialogs_test.hpp` (`107010d66447`) renders the production
+   `drawPopMenu` and compares against an independent raw-font reference at
+   `8 + (i%18)*6, 42 + (i/18)*8` from a y=40 fixture (origin+2).
+5. **TEXT width/height from the sprite header; SCRIPT_TEXT width = rendered
+   char count capped 36, 18 glyphs/line.** `DialogMenu::prepareHead`: TEXT
+   branch sets `head().width/height = FxRead::spriteHeader(...).width/height`;
+   SCRIPT_TEXT branch calls `loadScriptText(..., sizeof(scriptText)==36, ...)`
+   and stores `min(textLength, 36)`. `drawScriptText` wraps at `i/18`,`i%18`.
+   Device suite exercises short (19), full two-row (36), empty (0) and invalid
+   (index past table -> width 0) cases.
+6. **Address semantics: TEXT = direct event bitmap; SCRIPT_TEXT = raw_map_text
+   index.** Documented in the `DataTypes.hpp` field comment and the
+   `drawPopMenu` switch; TEXT arm does `Blit::draw(..., textAddress, ...)`,
+   SCRIPT_TEXT arm indexes `raw_map_text` in `loadScriptText`.
+7. **Six-entry bounded FIFO, count/order, full rejection, prepare-next-head.**
+   `popDialogStack[6]` + `dialogCount`; `push` rejects the 7th without
+   mutation; `popMenu` shifts and re-prepares. Host `DialogTest` asserts three
+   pushes, FIFO order, capacity-6 acceptance, 7th-push rejection with head
+   preserved, pop-to-empty, and clear-resets-payload.
+8. **36-byte `scriptText` cache; no per-frame FX reads in draw.**
+   `uint8_t scriptText[36]` in `DialogMenu.hpp`. `drawPopMenu` (lines 70-89)
+   contains **zero** `FxRead`/`ReadFX`/`FX::` calls; all reads live in
+   `prepareHead`/`loadScriptText` (push/transition) and are charged with
+   `FxReadCounter::transitionExact`. Device `scripts_test.hpp` asserts
+   `FxReadCounter::count()==0` for the full-popup update route.
+9. **Host queue + field tests.** `tst/main.cpp` runs `DialogSuite`
+   (`tst/dialog_test.hpp`); `tst/script_tests/action_test.cpp` asserts
+   Msg/TMsg/SMsg queue a SCRIPT_TEXT dialog with a big-endian index. Host
+   `drawPopMenu`/`prepareHead` are stubbed (`tst/src/DialogMenu.cpp`), so
+   drawing evidence is the device suite.
+
+### Commands and tails
+
+Working tree was mid-edit by the concurrent AVR worker (`src/item/Item.hpp`
+deleted, `Player`/`LureZone`/`SaveController` dirty), so host tests would not
+compile there. Ran against a clean `git archive HEAD` snapshot in the approved
+temp root (no `make gen`, no lane/dev-write into the shared `build/`):
+
+```text
+SNAP=/private/var/folders/.../T/opencode/cgfx-jp846   (git archive HEAD = abda026)
+make test BUILD_DIR=build    (in snapshot) -> DialogSuite finished;
+                               Total Passed: 258  Total Failed: 0
+make testvm BUILD_DIR=build  -> Total Passed: 278  Total Failed: 0
+make fxtest-headless BUILD_DIR=build \
+  ARDENS=.../Ardens FXTEST_INOS='tst/fxdatatest/test_dialog.ino'
+    -> test_dialog PASSED=9 FAILED=0 ; P
+       FXTEST_RAM_USED_BYTES=1659  FXTEST_RAM_LIMIT=2160  FREE=501
+       sketch 7504 B flash   (compiled under __AVR__ => static_assert holds)
+```
+
+The device run's AVR compile is the fresh proof that
+`static_assert(sizeof(PopUpDialog) == 8)` holds on the shipping ABI.
+
+### Disposition / residual
+
+Every requested outcome is proved above except two explicit dispositions:
+
+- `x/y` retained as live origin fields (8 B preserved). Superseded
+  removal plan not reenacted.
+- TEXT kind has no shipping producer today; its arm and `pushEvent` are
+  retained, host-verified. Any compiled-dead-code cleanup of that retained
+  path is measured work owned by **CreatureGathererFX-jp8.4.11** (residual
+  menu/dialog cleanup, already blocked by this bead) — no new bead filed.
+
+Minor coverage note (not a missing gameplay outcome): the SCRIPT_TEXT origin
+constant `y=43` is pinned by source, not asserted; placement is proved
+structurally via the `origin+2` device reference. Not filed as a bead, to
+avoid a style-pinning test.
+
+### Storage
+
+`df -h .` 61 GiB avail before/after (>=10 GiB reserve). Snapshot used the
+approved temp root and is removed after reporting; shared `build/` untouched
+(1.9 GiB). No retained AVR/apparatus evidence beyond this report.
+
+### Wall time
+
+Worker ~20 min wall (host+VM ~10 s over two builds; one focused AVR device
+compile+run ~90 s; remainder bootstrap, source/test reading, isolated snapshot
+setup, reporting). Orchestrator gate not run here. Bead left `in_progress`;
+no commit.
