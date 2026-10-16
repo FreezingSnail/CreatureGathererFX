@@ -367,17 +367,19 @@ void BattleMenu::draw() const {
     if (page == PAGE_DUEL_PICK) return;
 
     if (page == PAGE_DUEL_ACTION) {
-        Blit::fillRect(0, 48, 128, 16, WHITE);
+        // Black strip; the selected action row is a white cell with dark text,
+        // matching the pick row (drawDuelChoice) convention.
+        Blit::fillRect(0, 48, 128, 16, BLACK);
         const bool gatherAllowed = (flags_ & ALLOW_GATHER) != 0;
         const uint8_t escapeRow = gatherAllowed ? 1 : 0;
         if (gatherAllowed) {
-            if (cursor_ == 0) Blit::fillRect(0, 48, 128, 8, BLACK);
-            drawText(4, 48, gather, gatherWidth, cursor_ == 0 ? selectedFrame : normalFrame);
+            if (cursor_ == 0) Blit::fillRect(0, 48, 128, 8, WHITE);
+            drawText(4, 48, gather, gatherWidth, cursor_ == 0 ? normalFrame : selectedFrame);
         }
         if (flags_ & ALLOW_ESCAPE) {
-            if (cursor_ == escapeRow) Blit::fillRect(0, 56, 128, 8, BLACK);
+            if (cursor_ == escapeRow) Blit::fillRect(0, 56, 128, 8, WHITE);
             drawText(4, 56, escape, escapeWidth,
-                     cursor_ == escapeRow ? selectedFrame : normalFrame);
+                     cursor_ == escapeRow ? normalFrame : selectedFrame);
         }
         return;
     }
@@ -392,7 +394,13 @@ void BattleMenu::draw() const {
     }
 #endif
 
+#ifdef CGFX_DUEL_BATTLE
+    // The bench picker strip matches the pick row: a black band whose selected
+    // row is a white cell.
+    Blit::fillRect(0, 48, 128, 16, BLACK);
+#else
     Blit::fillRect(0, 48, 128, 16, WHITE);
+#endif
 
 #ifndef CGFX_DUEL_BATTLE
     if (page == PAGE_MOVES) {
@@ -437,10 +445,24 @@ void BattleMenu::draw() const {
         for (uint8_t row = 0; row < payload_.party.count; ++row) {
             if (payload_.party.widths[row] == 0) continue;
             const uint8_t y = row == 0 ? 48 : 56;
-            if (cursor_ == row) Blit::fillRect(0, y, 128, 8, BLACK);
+            if (cursor_ == row) {
+#ifdef CGFX_DUEL_BATTLE
+                // White selected cell, dark text; unselected rows are white text
+                // on the black strip, matching the pick row convention.
+                Blit::fillRect(0, y, 128, 8, WHITE);
+#else
+                Blit::fillRect(0, y, 128, 8, BLACK);
+#endif
+            }
+#ifdef CGFX_DUEL_BATTLE
+            drawText(4, y, payload_.party.names[row],
+                     payload_.party.widths[row],
+                     cursor_ == row ? normalFrame : selectedFrame);
+#else
             drawText(4, y, payload_.party.names[row],
                      payload_.party.widths[row],
                      cursor_ == row ? selectedFrame : normalFrame);
+#endif
         }
     }
 }
