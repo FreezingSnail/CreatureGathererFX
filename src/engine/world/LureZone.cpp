@@ -2,18 +2,18 @@
 
 #include "Chunk.hpp"
 #include "../../GameState.hpp"
+#include "../../player/Player.hpp"
 #include "../../item/ItemNames.hpp"
 #include "../../lib/FxRead.hpp"
 #include "../../fxdata.h"
 
 extern GameState gameState;
+extern Player player;
 
 namespace {
 uint8_t gLureId = LureZone::LURE_NONE;
 uint8_t gLureCharge = 0;
 uint16_t gLureZoneChunk = LureZone::NO_CHUNK;
-
-item::Inventory gInventory;
 
 // Material picker and message state. The cursor/window mirror the shared
 // ListView contract without pulling its module into the world-test binary.
@@ -67,7 +67,7 @@ void refreshPickerRows() {
         const uint8_t nth = static_cast<uint8_t>(gPickerWindow + row);
         if (nth >= gPickerCount) continue;
         uint8_t id;
-        if (!lureNth(gInventory, nth, id)) continue;
+        if (!lureNth(player.inventory, nth, id)) continue;
         const item::ItemName name = item::itemNameAddr(item::ItemKind::Lure, id);
         gPickerRowId[row] = id;
         gPickerRowParts[row] = name.parts;
@@ -128,7 +128,7 @@ uint8_t tableOffset() {
     return active() ? lureType(gLureId) : INERT_OFFSET;
 }
 
-item::Inventory &inventory() { return gInventory; }
+item::Inventory &inventory() { return player.inventory; }
 
 bool pickerOpen() { return gPickerOpen; }
 
@@ -137,7 +137,7 @@ void openPicker() {
     gPickerFeedback = false;
     gPickerCursor = 0;
     gPickerWindow = 0;
-    gPickerCount = lureCount(gInventory);
+    gPickerCount = lureCount(player.inventory);
     refreshPickerRows();
 }
 
@@ -149,12 +149,12 @@ void closePicker() {
 bool pickerDeposit() {
     if (!gPickerOpen || gPickerCount == 0 || gPickerCursor >= gPickerCount) return false;
     uint8_t itemId;
-    if (!lureNth(gInventory, gPickerCursor, itemId)) return false;
-    if (!item::inventoryTake(gInventory, item::ItemKind::Lure, itemId, 1)) return false;
+    if (!lureNth(player.inventory, gPickerCursor, itemId)) return false;
+    if (!item::inventoryTake(player.inventory, item::ItemKind::Lure, itemId, 1)) return false;
     // Convert the inventory lure id (type * 3 + tier) into the zone encoding.
     deposit(lureId(item::lureTypeOf(itemId), item::lureTierOf(itemId)));
     gPickerFeedback = true;
-    gPickerCount = lureCount(gInventory);
+    gPickerCount = lureCount(player.inventory);
     clampPicker();
     refreshPickerRows();
     return true;

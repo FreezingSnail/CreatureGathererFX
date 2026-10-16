@@ -12508,3 +12508,105 @@ Worker ~20 min wall (host+VM ~10 s over two builds; one focused AVR device
 compile+run ~90 s; remainder bootstrap, source/test reading, isolated snapshot
 setup, reporting). Orchestrator gate not run here. Bead left `in_progress`;
 no commit.
+
+## jp8.5.13 — Player bag persistence
+
+HEAD abda026. Build lane owned; reused `BUILD_DIR=build`. No commit; bead left
+`in_progress`.
+
+### What changed
+
+- `src/player/Player.{hpp,cpp}`: `Item items[10]` → one `item::Inventory inventory`
+  (32 B) + `item::KeyItems keyItems` (1 B). Constructor clears both; `basic()`
+  binds `item::setBattleInventory(&inventory)`.
+- `src/engine/world/LureZone.{cpp,hpp}`: removed the 32 B `gInventory`;
+  `LureZone::inventory()` now returns `player.inventory`. All world
+  deposit/picker/message paths use the one bag.
+- `src/save/SaveController.cpp`: capture copies the 32 B inventory block into
+  `lures[24]+consumables[8]` (one contiguous `memcpy`) + `keyItems[0]`; load
+  restores the same block + key byte and re-points the battle inventory.
+  Guarded by `static_assert(offsetof(SaveFile,lures)+sizeof(Inventory)==
+  offsetof(SaveFile,keyItems))`.
+- Removed `src/item/Item.hpp` (last caller ported).
+- Tests: host `tst/save_test.hpp` adds `PlayerBagPersistenceTest` (offset/
+  version proof, nonzero round-trip, key extension + reserved-tail zero, empty-
+  reserve v3 load, count>99 / key-ext boundary validation). Device proof added
+  to `tst/fxdatatest/test_world_player.ino` (deposit spends the shared bag;
+  counts + key byte round-trip through save/reload; key extension byte zero).
+- `tst/mode_state_test.hpp`, `tst/fxdatatest/mode_state_test.hpp`:
+  `player.items` → `player.inventory`. `tst/world_test_main.cpp` +
+  `Makefile WORLD_TEST_SOURCES`: one `player` + Player/Creature/Type/KeyItems/
+  ReadData so the world host test links the single bag.
+
+### v3 offset / version proof
+
+`SaveFile` untouched (`SAVE_VERSION=3`, `SAVE_SNAPSHOT_BYTES=96`,
+`sizeof(SaveFile)==96`). New `PlayerBagPersistenceTest` asserts
+`offsetof lures==27, consumables==51, keyItems==59, future==63`, version 3,
+size 96, key extension bytes 1..3 == 0, reserved tail == 0, and
+`saveFileValid` accepts count==COUNT_MAX at a lure offset, rejects COUNT_MAX+1,
+accepts any `keyItems[0]` and rejects a nonzero `keyItems[1]`.
+
+### Commands + tails
+
+```
+make test BUILD_DIR=build      -> Total Passed: 240173  Total Failed: 0  (All tests passed!)
+make testvm BUILD_DIR=build    -> Total Passed: 278  Total Failed: 0  (All tests passed!)
+make verify-generated BUILD_DIR=build -> EXIT 0
+make test-pack-parity BUILD_DIR=build -> pack parity: PASS (layout equivalence PASS)
+make fxtest-headless BUILD_DIR=build ARDENS=$ARDENS FXTEST_MS=30000 \
+  FXTEST_INOS='tst/fxdatatest/test_save.ino tst/fxdatatest/test_world_player.ino
+               tst/fxdatatest/test_journal_boot.ino tst/fxdatatest/test_stack.ino'
+    test_save        PASSED=3283 FAILED=0  P  (29674/29696 B flash; RAM_FREE=259)
+    test_world_player PASSED=71  FAILED=0  P  (28326 B; RAM_FREE=177; player render headroom=289)
+    test_journal_boot PASSED=290 FAILED=0  P  (12812 B; RAM_FREE=426)
+    test_stack       PASSED=4   FAILED=0  P  (17100 B; RAM_FREE=423; stack headroom=600 B)
+```
+
+### Resource delta (shipping, `make ram BUILD_DIR=build`)
+
+| | baseline HEAD | candidate | delta |
+|---|---|---|---|
+| program flash | 22416 B | 22520 B | **+104 B** |
+| static SRAM | 1687 B | 1678 B | **−9 B** |
+
+Static shrank 9 B because the removed 32 B `gInventory` offsets the +23 B
+Player bag. Shipping budget: 22520/29696 flash, 1678/2160 static, 482 B static
+free — clear of the ~150 B effective reserve.
+
+### Deviations / reconciliations
+
+- **Battle-item path is obsolete (confirmed).** The five-type duel has no
+  battle item interface: `Resolve.cpp` refuses `ActionKind::UseItem` as a
+  `Skip` + `REFUSED`, and `BattleSession` commits no attack for it. Nothing in
+  `src/engine/battle` reads `battleInventory()`. The design's step 4
+  ("wire `setBattleInventory` to the bag") was implemented as the only live
+  binding (`Player::basic`, `SaveController::load`) rather than inventing a
+  battle-item effect; `battleInventory()` names the one bag in tests. No
+  battle-item code was added.
+- **Device round-trip relocated from `test_save` to `test_world_player`.**
+  The `test_save` fxtest image is at 99% (baseline 29552/29696; +122 B
+  production → 29674/29696, 22 B free) and cannot absorb new asserts
+  (each `expectEq` F() site costs tens of bytes). The byte-level device
+  round-trip + world-deposit proof lives in `test_world_player` (73%,
+  ~7.8 KB free). `test_save` still builds and passes unchanged.
+- **Pass-count note (integrity).** `test_save` reported 3305 passes at HEAD
+  baseline vs 3283 across candidate runs, both `FAILED=0`/`P`. A controlled
+  same-test-file run (identical marks) gave identical per-function counts for
+  baseline and candidate (`0,21,49,73,163,711,850,3213,3256,3281,3300,3303`),
+  so the +/-22 is emulator/serial nondeterminism, not a behavior change. No
+  failure was observed in any run.
+
+### Storage
+
+`df -h . /private/tmp` 61 GiB free before/after (>=10 GiB reserve).
+`build` 1.9 GiB before/after; `build/fxtest` 109 MiB (one reused lane, no
+per-bead trees). `make clean-build-artifacts BUILD_DIR=build` previewed (108
+candidates) then `CLEAN_APPLY=1` applied (2.5 MB Arduino cache objects).
+
+### Wall time
+
+Worker ~65 min wall (host+VM ~3 min over rebuilds; focused device saves/world/
+journal/stack runs ~12 min total; extensive test_save fxtest flash bisection
+~35 min; ram/verify/parity/cleanup/report remainder). Gate/orchestrator not run
+here.

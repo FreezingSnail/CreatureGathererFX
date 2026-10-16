@@ -3,7 +3,8 @@
 
 #include "../creature/Creature.hpp"
 #include "../lib/DataTypes.hpp"
-#include "../item/Item.hpp"
+#include "../item/Inventory.hpp"
+#include "../item/KeyItems.hpp"
 
 class Player {
     struct caughtCreature {
@@ -14,7 +15,10 @@ class Player {
   public:
     Creature party[3];
     uint8_t creatureHPs[3];
-    Item items[10];
+    // Single Player-owned bag. World deposits, the material picker and the v3
+    // snapshot all read this one instance; there is no second inventory.
+    item::Inventory inventory;
+    item::KeyItems keyItems;
 
     // caughtCreature storedCreatures[6];
 

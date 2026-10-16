@@ -50,8 +50,8 @@ uint16_t zoneChunk();
 // Lure type (0..3) while active, INERT_OFFSET otherwise.
 uint8_t tableOffset();
 
-// Temporary world inventory owner for the M2/M3 gather/deposit slice. Player
-// item ownership replaces this in CreatureGathererFX-jp8.5.13.
+// The one Player-owned world inventory. World deposits, the material picker
+// and the v3 save snapshot all read this single bag.
 item::Inventory &inventory();
 
 // --- Material picker ------------------------------------------------------

@@ -4,6 +4,11 @@
 #include "../lib/ReadData.hpp"
 
 Player::Player() {
+    // A fresh Player owns an empty bag. Static-storage globals are already
+    // zero, but an explicit clear keeps Player() value-initialization
+    // deterministic for a save taken before any load or fresh-game init.
+    item::inventoryClear(this->inventory);
+    item::keyItemsClear(this->keyItems);
     // CreatureData_t cseed;
     // uint24_t rowAddress = FX::readIndexedUInt24(CreatureData::creatureData, 3);
     // FX::readDataObject(rowAddress, cseed);
@@ -20,6 +25,8 @@ Player::Player() {
 }
 
 void Player::basic() {
+    // One persistent bag serves the world and any future battle item use.
+    item::setBattleInventory(&this->inventory);
     loadCreature(0, 0);
     loadCreature(1, 1);
     loadCreature(2, 2);
