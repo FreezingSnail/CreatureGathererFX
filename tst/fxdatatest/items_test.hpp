@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include "fxtest.hpp"
+#include "generated/reward_data.hpp"
 #include "src/fxdata.h"
 #include "src/item/ItemNames.hpp"
 #include "src/lib/FxRead.hpp"
@@ -94,11 +95,74 @@ inline void expect_lure_name(FxTest &test, uint8_t id,
     expect_uint24_bytes(test, actual.part[1], expectedType, F("lure type name address"), id);
 }
 
+inline void test_reward_mapping(FxTest &test) {
+    // jp8.11.3: the packed Rewards mapping must match the model fixture. Names
+    // are symbolic so a field reorder moves both sides together; the sentinel
+    // and item layout prove the ordinary-wild material resolves to one tier-2
+    // lure inside the four supported lure-zone groups.
+    constexpr uint8_t speciesCount = RewardFixture::speciesCount;
+    static_assert(speciesCount > 0, "reward mapping must cover the roster");
+    constexpr uint8_t kChunk = 16;
+    uint8_t actual[kChunk];
+    uint8_t expected[kChunk];
+
+    for (uint8_t base = 0; base < speciesCount; base = static_cast<uint8_t>(base + kChunk)) {
+        const uint8_t remaining = static_cast<uint8_t>(speciesCount - base);
+        const uint8_t n = remaining < kChunk ? remaining : kChunk;
+        FX::readDataBytes(Rewards::materialItem + base, actual, n);
+        memcpy_P(expected, RewardFixture::materialItem + base, n);
+        for (uint8_t i = 0; i < n; ++i) {
+            test.expectEqIdx(actual[i], expected[i], F("reward.materialItem"), i);
+            if (actual[i] != 0xFF) {
+                test.expectEqIdx(actual[i] < 24, true, F("reward.materialRange"), i);
+                test.expectEqIdx(static_cast<uint8_t>(actual[i] / 3) < 4, true,
+                                 F("reward.materialType"), i);
+                test.expectEqIdx(static_cast<uint8_t>(actual[i] % 3), static_cast<uint8_t>(2),
+                                 F("reward.materialTier"), i);
+            }
+        }
+        FX::readDataBytes(Rewards::materialCount + base, actual, n);
+        memcpy_P(expected, RewardFixture::materialCount + base, n);
+        for (uint8_t i = 0; i < n; ++i) {
+            test.expectEqIdx(actual[i], expected[i], F("reward.materialCount"), i);
+        }
+    }
+
+    // The pocket plant yields the authored tier-1 lure item.
+    FX::readDataBytes(Rewards::plantItem, actual, 1);
+    memcpy_P(expected, RewardFixture::plantItem, 1);
+    test.expectEq(actual[0], expected[0], F("reward.plantItem"));
+    test.expectEq(actual[0], static_cast<uint8_t>(1), F("reward.plantItemId"));
+    test.expectEq(static_cast<uint8_t>(actual[0] % 3), static_cast<uint8_t>(1),
+                  F("reward.plantTier"));
+    FX::readDataBytes(Rewards::plantCount, actual, 1);
+    memcpy_P(expected, RewardFixture::plantCount, 1);
+    test.expectEq(actual[0], expected[0], F("reward.plantCount"));
+
+    // Selected heal rewards are valid consumable ids.
+    constexpr uint8_t healCount = RewardFixture::healRewardCount;
+    static_assert(healCount > 0, "selected heal rewards must not be empty");
+    uint8_t healActual[healCount];
+    uint8_t healExpected[healCount];
+    FX::readDataBytes(Rewards::healItem, healActual, healCount);
+    memcpy_P(healExpected, RewardFixture::healItem, healCount);
+    for (uint8_t i = 0; i < healCount; ++i) {
+        test.expectEqIdx(healActual[i], healExpected[i], F("reward.healItem"), i);
+        test.expectEqIdx(healActual[i] < 8, true, F("reward.healRange"), i);
+    }
+    FX::readDataBytes(Rewards::healCount, healActual, healCount);
+    memcpy_P(healExpected, RewardFixture::healCount, healCount);
+    for (uint8_t i = 0; i < healCount; ++i) {
+        test.expectEqIdx(healActual[i], healExpected[i], F("reward.healCount"), i);
+    }
+}
+
 } // namespace
 
 inline void test_items(FxTest &test) {
     test_consumable_records(test);
     test_item_name_tables(test);
+    test_reward_mapping(test);
 
     // Lure IDs are type * 3 + tier: 0 is tier/type 0/0, and 23 is 2/7.
     const uint24_t tier0 = FxRead::indexed24(LureTierNames::LureTierNames, 0);

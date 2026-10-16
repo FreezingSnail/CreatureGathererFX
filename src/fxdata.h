@@ -6,8 +6,8 @@ using uint24_t = __uint24;
 
 // Initialize FX hardware using  FX::begin(FX_DATA_PAGE); in the setup() function.
 
-constexpr uint16_t FX_DATA_PAGE  = 0xf413;
-constexpr uint24_t FX_DATA_BYTES = 748732;
+constexpr uint16_t FX_DATA_PAGE  = 0xf412;
+constexpr uint24_t FX_DATA_BYTES = 748866;
 
 constexpr uint16_t FX_SAVE_PAGE  = 0xFF80;
 constexpr uint24_t FX_SAVE_BYTES = 32768;
@@ -575,5 +575,15 @@ namespace Evolution
   constexpr uint24_t evolutionSource = 0x0B6CB3;
   constexpr uint24_t evolutionTarget = 0x0B6CB6;
   constexpr uint24_t evolutionLevel = 0x0B6CB9;
+}
+
+namespace Rewards
+{
+  constexpr uint24_t materialItem = 0x0B6CBC;
+  constexpr uint24_t materialCount = 0x0B6CFC;
+  constexpr uint24_t plantItem = 0x0B6D3C;
+  constexpr uint24_t plantCount = 0x0B6D3D;
+  constexpr uint24_t healItem = 0x0B6D3E;
+  constexpr uint24_t healCount = 0x0B6D40;
 }
 

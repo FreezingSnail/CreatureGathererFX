@@ -398,6 +398,74 @@ test('evolution edges match canonical evelevel and the named pairs', () => {
 });
 
 // ---------------------------------------------------------------------------
+// First-area reward mapping (CreatureGathererFX-jp8.11.3).
+// ---------------------------------------------------------------------------
+// The generator derives the packed Rewards mapping from the contract. Prove the
+// generated descriptor agrees with the authored source and that src/fxdata.h
+// publishes the same symbols, so the shipped cart and header cannot drift.
+test('generated reward mapping agrees with the authored contract and header', () => {
+  const descriptor = readText('fxdata/generated/rewards.txt');
+  const header = readText('src/fxdata.h');
+  const array = (name) => {
+    const match = descriptor.match(new RegExp(`uint8_t ${name}\\[\\] = \\{([^}]*)\\};`));
+    assert.ok(match, `rewards.txt declares ${name}`);
+    return match[1].trim() === '' ? [] : match[1].split(',').map((v) => Number(v.trim()));
+  };
+
+  // Primary type index matches the canonical 8-type order.
+  const TYPE_INDEX = { spirit: 0, water: 1, wind: 2, earth: 3, fire: 4, lightning: 5, plant: 6, elder: 7 };
+  const allowed = new Set(encounters.allowed_species);
+  const materialItem = array('materialItem');
+  const materialCount = array('materialCount');
+  assert.equal(materialItem.length, creatures.length, 'materialItem is species-indexed');
+  assert.equal(materialCount.length, creatures.length, 'materialCount is species-indexed');
+
+  for (let species = 0; species < creatures.length; species += 1) {
+    const creature = creaturesById.get(species);
+    assert.ok(creature, `roster species ${species} exists`);
+    if (allowed.has(species)) {
+      const lureType = TYPE_INDEX[creature.type1] & 3;
+      assert.equal(materialItem[species], lureType * 3 + 2,
+        `species ${species} material is the tier-2 lure of its folded type group`);
+      assert.equal(materialItem[species] % 3, 2, `species ${species} material tier is 2`);
+      assert.ok(materialItem[species] / 3 < 4, `species ${species} material type is 0..3`);
+      assert.equal(materialCount[species], 1, `species ${species} material count is exact`);
+    } else {
+      assert.equal(materialItem[species], 255, `species ${species} material sentinel`);
+      assert.equal(materialCount[species], 0, `species ${species} material count sentinel`);
+    }
+  }
+
+  const plant = contract.plant_source;
+  assert.deepEqual(array('plantItem'), [plant.item_id], 'plant item matches plant_source');
+  assert.deepEqual(array('plantCount'), [plant.count], 'plant count matches plant_source');
+  assert.equal(plant.item_id % 3, 1, 'plant reward is a tier-1 lure');
+
+  const consumableRows = readText('data/consumables.csv')
+    .split(/\r?\n/)
+    .filter((line) => line.trim() !== '' && !line.startsWith('#'));
+  const kindById = new Map();
+  for (const row of consumableRows.slice(1)) {
+    const [id, kind] = row.split(',').map((v) => v.trim());
+    kindById.set(Number(id), kind);
+  }
+  const heals = (contract.reward && contract.reward.heal) || [];
+  assert.deepEqual(array('healItem'), heals.map((h) => h.item_id), 'heal items match the contract');
+  assert.deepEqual(array('healCount'), heals.map((h) => h.count), 'heal counts match the contract');
+  for (const heal of heals) {
+    assert.ok(heal.item_id >= 0 && heal.item_id < 8, 'heal id is a consumable');
+    assert.equal(kindById.get(heal.item_id), 'Heal', `heal ${heal.item_id} is a Heal definition`);
+    assert.ok(heal.count >= 1 && heal.count <= 99, 'heal count within the item cap');
+  }
+
+  for (const symbol of ['materialItem', 'materialCount', 'plantItem', 'plantCount', 'healItem', 'healCount']) {
+    assert.ok(header.includes(`namespace Rewards`), 'header publishes the Rewards namespace');
+    assert.ok(new RegExp(`constexpr uint24_t ${symbol} = `).test(header),
+      `header publishes Rewards::${symbol}`);
+  }
+});
+
+// ---------------------------------------------------------------------------
 // Label widths versus strings.txt.
 // ---------------------------------------------------------------------------
 test('battle label widths match authored creature labels', () => {

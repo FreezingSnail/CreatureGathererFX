@@ -87,7 +87,18 @@ perturbed_layout=$fixtures/fxlayout-expand-20-perturbed.toml
 # prior identity string but the new entry produced d051c1242938...; the prior
 # baseline (no entry, prior identity) was fe067475. Previous cart sha256
 # fe067475..., now fcda6f8b.... Intentional rebaseline.
-expected=fcda6f8b59f1301d68724a0845d1123da6763e774667494b58eb1e21d63cf5bb
+# jp8.11.3: the native generator now derives the first-area material/plant/heal
+# reward mapping from data/beta-area.toml and appends the `Rewards` expand entry
+# (fxdata/generated/rewards.txt: materialItem/materialCount [64+64], plantItem/
+# plantCount [1+1], healItem/healCount [2+2] = 134 bytes) after the evolution
+# mapping. FX_DATA_BYTES grows 748732 -> 748866 and every prior field address is
+# byte-identical (append-only; only FX_DATA_PAGE/FX_DATA_BYTES and the appended
+# Rewards namespace change in src/fxdata.h). The rebuilt tool (sibling HEAD
+# e8afd0a7, binary sha256 c80df77b...) also stamps generator identity
+# 0.3.0+ge8afd0a7 (same 27-byte length), which rewrites only the 27-byte
+# generator_version payload. Previous cart sha256 fcda6f8b..., now
+# 418ac63b.... Intentional rebaseline.
+expected=418ac63b081f69db5c1702d572c70aaee72783a780c2fe68e82ed37d778df26a
 
 for layout in "$old_layout" "$new_layout" "$perturbed_layout"; do
     test -f "$layout" || {
