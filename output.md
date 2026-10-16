@@ -11281,3 +11281,56 @@ cargo test --manifest-path ../CreatureGathererTools/Cargo.toml -p cgfx-core --te
 Self-consistency (live data, no frozen row counts) — parser count vs independent source scan, all equal: generated Sprites 217/217, teams 67/67, opponents-text 25/25, legacy Sprites 22/22, menu 37/37, attackMask 1/1, event typed 9/9 (+1 legacy `m1Table`). Representative FAIL→ok: opponent 25 vs old 20; team 67 vs old 35; generated sprite 217 vs old 130; legacy `moveInfo` line 2998 vs old 1974.
 
 Deviations: scope expanded to 4 additional test binaries and the `attackMask.txt` repoint (documented above); no AVR/`make gen`/integrated gate run; no commit/push; bead left `in_progress`. Game repo untouched except this report (`.beads/interactions.jsonl` was already dirty). Wall time ~40 min (investigation + edits + host suites).
+
+## mjm — first-beta fresh spawn + reachable clearing
+
+Bead `CreatureGathererFX-mjm` (P2 bug, `impl-ready`); worker DeepSeek V4.1 Flash; tree HEAD 93b9676.
+Single AVR/build lane reused `BUILD_DIR=build`. No commit/push; bead left `in_progress`.
+
+### Pre-change failing state (recorded before edits)
+Ordinary new-game spawn was `(3,2)`: `gameState.playerLocation = 3 | (2<<8)` in the non-demo `if (!restored)` branch of `CreatureGathererFX.ino`. In generated packed collision `raw_map.bin`, `(3,2)` is word `0x0008` (id 8, props 0, not walkable) and all four orthogonal neighbours (`(2,2)=id8`, `(4,2)=id8`, `(3,1)=id63`, `(3,3)=id24`) are non-walkable — no enterable neighbour. Node inspection of the authored/generated map:
+```
+spawn(3,2) word=0x0008 id=8 props=0 walk=false; walkable neighbours=0
+```
+
+### Authored source + generator bake (step 2 evidence)
+- `data/beta-area.toml` (first-beta authoring source): start `(11,5)`, box `(9,2)`, plant `(14,2)`, rest `(10,4)`, boss `(21,9)`.
+- `maps/tiles.tsx`: word = tsx id + 1; id 274 = walkable+encounter (word 275), id 544 box = spare (word 545), id 550 plant = plantable (word 551). Empty/wall ids carry no walkable bit.
+- Generator bake confirmed in `fxdata/generated/raw_map.bin` (row-major `y*256+x`, LE word): spawn `(11,5)=0x4513` (id 275, WALKABLE|ENCOUNTER); box `(9,2)=0x8221` (id 545, SPARE, not walkable); plant `(14,2)=0x1227` (id 551, PLANTABLE); approaches `(10,2)`/`(13,2)=0x4513` walkable.
+- BFS over generated collision from `(11,5)` reaches exactly **39** walkable cells (sealed pocket, matches `04n`/`cf7` derivation), including `(10,2)`, `(13,2)`, `(10,4)`; BFS from `(10,2)` returns to `(11,5)`.
+
+### What changed
+- `CreatureGathererFX.ino` — ordinary new-game spawn literal `(3,2)` → `(11,5)` in the `if (!restored)` branch only; restored saves are untouched (guard unchanged) and byte order stays x-low/y-high. Same authored start already used by `WorldEngine` defeat recovery (`START_X/START_Y`).
+- `tst/generated/generated_libs_test.cpp` — new native `checkSpawnReachability` (`make test-generated-libs`, part of `make check`): decodes the packed image's `raw_map_data` with the firmware `TileProps` predicate and BFS's the orthogonal graph. Asserts spawn word/props, ≥1 walkable neighbour, box `(9,2)`+approach `(10,2)`, plant `(14,2)`+approach `(13,2)`, reachable cell count 39, both approaches reachable, reverse path `(10,2)→(11,5)`, and GID 0/255 word-ABI edge behavior.
+- `tst/fxdatatest/tiles_test.hpp` — new device `test_spawn_reachability` reading the packed words through `rawTileWordAt` (FX): spawn/neighbour/box/plant/approach assertions plus a bounded device BFS (cap 64) asserting 39 reachable cells, both approaches reachable, and a 39-cell reverse traversal returning to spawn. No runtime BFS/FX reads added to shipping; `TileProps`/map-word ABI unchanged.
+
+### Verification (exact commands + tails)
+```
+PATH=…/CreatureGathererTools/bin:$PATH make gen BUILD_DIR=build            # rc=0, no diff on tracked generated sets
+PATH=… make verify-generated BUILD_DIR=build                               # rc=0 (silent PASS)
+PATH=… make test-pack-parity BUILD_DIR=build                               # layout equivalence: PASS; pack parity: PASS
+PATH=… make test BUILD_DIR=build                                           # host Total Passed 240077 / Failed 0; world 258 / 0
+PATH=… make testvm BUILD_DIR=build                                         # VM Total Passed 278 / Failed 0
+PATH=… make test-generated-libs BUILD_DIR=build                            # generated-libs: 48 passed, 0 failed: PASS
+PATH=… ARDENS=…/Ardens make fxtest-headless BUILD_DIR=build \
+   FXTEST_INOS='tst/fxdatatest/test_tiles.ino tst/fxdatatest/test_scripts.ino tst/fxdatatest/test_stack.ino'
+      # test_tiles  PASSED=125 FAILED=0  RAM 1628/2160 free 532
+      # test_scripts PASSED=72 FAILED=0  RAM 1724/2160 free 436
+      # test_stack  PASSED=4  FAILED=0  stack headroom=0x271 (625 B)
+PATH=… make ram BUILD_DIR=build                                            # RAM_FLASH_BYTES=22416/29696; RAM_STATIC_BYTES=1687/2560; RAM_FREE_BYTES=873
+```
+`make gen` left only the three edited source files + the pre-existing dirty `.beads/interactions.jsonl`; `git status --short` shows no generated drift and no leftover `build/cgfx-pack.*` stage.
+
+### Resource delta
+Whole-image shipping (`make ram`): **22416 B flash / 1687 B static SRAM** — identical to the dispatch's pre-change 22416/1687 (delta **0 / 0**). Only an immediate operand swap in the `.ino`; the native/device changes do not enter the shipping sketch. Bucket is `test_tiles` 1628/2160 static; painted stack proven by `test_stack` (625 B headroom, plausibly above the ~219 B reserve).
+
+### Deviations
+- The bead's ownership list named `maps/world_map.json`, `maps/tiles.tsx`, `tst/world_test_main.cpp`, `tst/fxdatatest/scripts_test.hpp`; no authored map/tileset change was needed (map already authored) and the native reachability check landed in `tst/generated/generated_libs_test.cpp` instead — the existing native generated-collision test (`checkAuthoredTiles`) that already reads `raw_map_data` from both source and packed image. Device assertion landed in `tst/fxdatatest/tiles_test.hpp` as listed. No `scripts_test.hpp` change needed (script addressing unchanged; suite run as regression).
+- Build/verify used `BUILD_DIR=build` (current single lane) rather than the bead's dated `build/box-adoption-gate`.
+- The in-tree `tools/tests/beta-area_test.mjs` already BFS-checks the same connectivity but is not wired into any make target; the new native check brings the reachability contract into `make check`.
+
+### Storage
+`df -h . /private/tmp` before/after: 65 GiB free (unchanged) — well above the 10 GiB reserve. `du -sh build` 2.1 G before/after. Previewed `make clean-build-artifacts BUILD_DIR=build` then applied (`CLEAN_APPLY=1`): 108 candidates, 2,581,931 B removed. Also removed this session's regenerable device staging `build/fxtest/{test_tiles,test_scripts,test_stack}` (~21 MB). Prior beads' retained evidence (`build/box-adoption-gate`, `build/native-tools`, `build/battle-carve-spike`, …) untouched.
+
+### Wall time
+gen 6.1 s; verify-generated/pack-parity ~2 s; host `make test` 2.8 s; testvm ~2 s; test-generated-libs ~3 s; focused device (3 suites) 29.2 s; `make ram` 12.4 s. Total implementation+verification ~8 min (single lane, no separate gate/orchestrator phase in this worker).

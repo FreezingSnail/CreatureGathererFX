@@ -157,8 +157,11 @@ void setup() {
 #endif
     if (SaveController::bootRecoveryFailed()) { for (;;) {} }
     if (!restored) {
-        gameState.playerLocation = static_cast<uint16_t>(3) |
-                                   (static_cast<uint16_t>(2) << 8);
+        // First-beta authored start (data/beta-area.toml start_x/start_y). A
+        // restored save keeps its own playerLocation; only a fresh ordinary
+        // game enters at the pocket clearing. Byte order stays x low, y high.
+        gameState.playerLocation = static_cast<uint16_t>(11) |
+                                   (static_cast<uint16_t>(5) << 8);
     }
     enterBattle();
     exitBattle();
