@@ -149,6 +149,20 @@ for(const entry of entries){
 }
 const shippingMapping={reviewOnly:false,catalogueSource:baseSource,cell:[16,16],sheet:[original.width,original.height],columns,installed:entries};
 write(shippingMapPath,Buffer.from(JSON.stringify(shippingMapping,null,2)+'\n'));
+// Native1bpp source convention (CreatureGathererFX-b2a.8). The packed shipping
+// sheet is already authored monochrome; the Tiled source sheet still carries the
+// legacy four-gray palette in its untouched cells. Collapse every pixel to the
+// project convention, binary 0/255 RGB with 0/255 alpha (opaque => luminance
+// threshold at128; transparent stays transparent black). Installed cells are
+// already 0/255 opaque so they remain byte-exact. This writes no new pixel value
+// that the packer would decode differently; it only removes the unused grays.
+const BINARY_SHEETS=new Set(['images/tiles.png']);
+function normalizeBinary(image){
+  for(let i=0;i<image.pixels.length;i+=4){
+    const opaque=image.pixels[i+3]>=128,value=opaque&&image.pixels[i]>=128?255:0;
+    image.pixels[i]=value;image.pixels[i+1]=value;image.pixels[i+2]=value;image.pixels[i+3]=opaque?255:0;
+  }
+}
 for(const path of ['images/tiles_16x16.png','images/tiles.png']){
   const sheet=readPixels(path);
   assert.deepEqual([sheet.width,sheet.height],[original.width,original.height],`${path} must stay ${original.width}x${original.height}`);
@@ -159,7 +173,13 @@ for(const path of ['images/tiles_16x16.png','images/tiles.png']){
       sheet.pixels.set(original.pixels.subarray(si,si+4),((row*16+y)*original.width+col*16+x)*4);
     }
   }
+  if(BINARY_SHEETS.has(path))normalizeBinary(sheet);
   write(path,encodePng(sheet));
+}
+const tiledSheet=readPixels('images/tiles.png');
+for(let i=0;i<tiledSheet.pixels.length;i+=4){
+  const [r,g,b,a]=tiledSheet.pixels.subarray(i,i+4);
+  assert.ok((a===0||a===255)&&(r===0||r===255)&&((a===0&&r===0&&g===0&&b===0)||(a===255&&r===g&&g===b)),'images/tiles.png uses binary0/255 RGB and0/255 alpha');
 }
 console.log(`PASS: ${baseCount} original cells +${count*4} unscaled scenery cells =${atlas.width*atlas.height/256} native16px cells; hybrid town and3 device crops`);
 console.log(`PASS: installed${entries.length} simple cells (${betaGids.size} beta +${visibleGids.size-betaGids.size} visible margin +${borderExtras.length} adjacent border) into the shipping tile sheets; mapping${shippingMapPath}`);
