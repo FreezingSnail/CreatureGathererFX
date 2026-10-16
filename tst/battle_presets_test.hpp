@@ -64,6 +64,9 @@ void BattlePresetsSuite(TestRunner &runner)
     Test test(__func__);
     battle_presets_test::checkPreset(test, BattlePresets::opening);
     battle_presets_test::checkPreset(test, BattlePresets::switch_drill);
+    // The authored first-beta starter party (jp8.11.24) is the ordinary
+    // new-game roster, so pin it through the same loading seam.
+    battle_presets_test::checkPreset(test, BattlePresets::beta);
     const BattlePresets::Preset opening = BattlePresets::copyPreset(BattlePresets::opening);
     const BattlePresets::Preset drill = BattlePresets::copyPreset(BattlePresets::switch_drill);
     test.assert(opening.trainerId != drill.trainerId, true,

@@ -7,6 +7,7 @@
 #include "../src/save/FlashBackend.hpp"
 #include "../src/save/Journal.hpp"
 #include "../src/save/SaveController.hpp"
+#include "../src/engine/battle/BattlePresets.hpp"
 #include "../src/creature/Creature.hpp"
 #include "../src/creature/LevelCurve.hpp"
 #include "../src/flags/flag_bit_array.hpp"
@@ -623,10 +624,74 @@ inline void PlayerBagPersistenceTest(TestSuite &suite) {
     test.assert(saveFileValid(edge),false,"key extension byte must stay zero");
     suite.addTest(test);
 }
+// Ordinary new-game start (CreatureGathererFX-jp8.11.24). The shipping sketch's
+// !restored branch installs the one Player bag, applies the authored "beta"
+// preset (species 0/3/6, level 3, full HP, authored moves) and then seeds the v3
+// collection. This mirrors that boot order with the same generated preset and
+// load seams the firmware uses, and proves a valid restore keeps its own party
+// instead of being overwritten by a fresh beta start.
+inline void FreshBetaStartTest(TestSuite &suite) {
+    using namespace save_test_detail;Test test(__func__);
+    const uint8_t betaSpecies[3]={0,3,6};
+    const uint8_t betaMasks[3]={2,4,2};
+    const uint16_t betaLocation=static_cast<uint16_t>((5u<<8)|11u); // (11,5)
+
+    fresh();
+    player=Player();
+    battle::applyPlayerPreset(player,BattlePresets::beta);
+    item::setBattleInventory(&player.inventory);
+    SaveController::seedParty();
+    gameState.playerLocation=betaLocation;
+    for(uint8_t i=0;i<3;++i) {
+        const uint8_t maxHP=player.party[i].statlist.hp;
+        test.assert(player.party[i].id,betaSpecies[i],"fresh beta species");
+        test.assert(player.party[i].level,3,"fresh beta level");
+        test.assert(player.party[i].attackMask,betaMasks[i],"fresh beta authored moves");
+        test.assert(player.creatureHPs[i],maxHP,"fresh beta starts at full HP");
+        StoreRecord record={};
+        test.assert(storeRead(i,record),true,"fresh beta stable instance");
+        test.assert(record.id,betaSpecies[i],"fresh beta instance id");
+        test.assert(record.exp,levelExpThreshold(3),"fresh beta instance level3 experience");
+        test.assert(record.hpEncoded,static_cast<uint8_t>(maxHP+1),"fresh beta encoded full HP");
+        test.assert(record.attackMask,betaMasks[i],"fresh beta instance moves");
+        test.assert(storePartySlot(i),i,"fresh beta party names its stable instance");
+        test.assert(storePartyHP(i),maxHP,"fresh beta party HP assignment");
+    }
+    test.assert(item::battleInventory()==&player.inventory,true,"fresh beta bag is the battle inventory");
+    test.assert(item::inventoryNonZeroCount(player.inventory),0,"fresh beta bag starts empty");
+
+    // Explicit-save round trip of the fresh party and its authored location.
+    SaveController::begin(GameState_t::WORLD);
+    for(uint16_t i=0;i<256 && saveInProgress();++i) SaveController::advance();
+    player=Player();
+    test.assert(SaveController::load(),true,"fresh beta checkpoint restores");
+    test.assert(gameState.playerLocation,betaLocation,"fresh beta location round-trips");
+    for(uint8_t i=0;i<3;++i) {
+        test.assert(player.party[i].id,betaSpecies[i],"restored beta species");
+        test.assert(player.party[i].level,3,"restored beta level");
+    }
+
+    // A valid restore keeps its own party. The legacy species-only default
+    // (species 0/1/2 at the maximum level) stands in for any different saved
+    // party: booting it must not reapply the beta start.
+    fresh();player=Player();player.basic();SaveController::seedParty();
+    gameState.playerLocation=0x4321;
+    SaveController::begin(GameState_t::WORLD);
+    for(uint16_t i=0;i<256 && saveInProgress();++i) SaveController::advance();
+    player=Player();
+    const bool restored=SaveController::load();
+    test.assert(restored,true,"alternate party save restores");
+    test.assert(gameState.playerLocation,0x4321,"alternate location retained");
+    for(uint8_t i=0;i<3;++i)
+        test.assert(player.party[i].id,i,"restored party is not overwritten by the beta start");
+    test.assert(player.party[0].level,31,"restored level is not rewritten by the beta start");
+    suite.addTest(test);
+}
 inline void SaveSuite(TestRunner &runner) {
     TestSuite suite("Save Suite");CheckpointCollectionTest(suite);CollectionCapacityTest(suite);
     BoxedInstanceHPTest(suite);BoxedHPPublicationCutsTest(suite);SaveControllerCaptureHPCutsTest(suite);
     CheckpointCutTest(suite);JournalDecodeTest(suite);JournalPublicationTest(suite);ShippingSaveRestoreTest(suite);
     SaveFlagExtentTest(suite);GenerationWrapTest(suite);LegacyResetTest(suite);LiveReadBoundedTest(suite);
-    PlayerStoreIntegrationTest(suite);PlayerBagPersistenceTest(suite);runner.addTestSuite(suite);
+    PlayerStoreIntegrationTest(suite);PlayerBagPersistenceTest(suite);FreshBetaStartTest(suite);
+    runner.addTestSuite(suite);
 }

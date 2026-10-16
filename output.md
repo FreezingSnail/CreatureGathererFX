@@ -13054,3 +13054,89 @@ New artifacts confined to gitignored `build/reports/ogh.18/` (1.7 MB: after/repl
 Worker ~25 min wall: read bead/output/docs + tool/mock ~8 min; implement policy + tests + docs
 ~6 min; focused node test + sim-test ~1.5 min; baseline x2 + tier probes ~1.5 min; analysis +
 report remainder. No gate/orchestrator run (dispatch leaves the bead in_progress).
+
+## jp8.11.24 — beta party start
+
+### Change
+
+- `CreatureGathererFX.ino` — the ordinary `!restored` branch no longer calls `player.basic()`
+  (species-only default = species 0/1/2 at the maximum level). It now applies the generated
+  authored `BattlePresets::beta` preset (species 0/3/6, level 3, full HP, authored attack masks
+  2/4/2), installs the one Player bag as the battle inventory, then `SaveController::seedParty()`
+  seeds the stable v3 instances. The `BattlePresets.hpp` include moved out of the
+  trainer/wild-demo guard because the demo bootstraps and the ordinary start now share it. A valid
+  restore returns before the branch and keeps its own party + `playerLocation`.
+- `tst/save_test.hpp` — new `FreshBetaStartTest` (49 assertions): fresh-start identities, stable
+  instances + encoded full HP, empty bag, explicit-save round trip of the party and the (11,5)
+  location, and the restored-party negative.
+- `tst/battle_presets_test.hpp` — `BattlePresets::beta` checked through the shared
+  `applyPlayerPreset` load seam (host).
+- `tst/fxdatatest/preset_teams_test.hpp` — `BattlePresets::beta` through the same seam on device
+  (`test_battle_presets.ino`).
+- `tools/tests/beta-area_test.mjs` — pins that the shipping ordinary branch calls
+  `battle::applyPlayerPreset(player, BattlePresets::beta)`, keeps
+  `item::setBattleInventory(&player.inventory)`, no longer calls `player.basic()`, and stays inside
+  the `if (!restored)` guard.
+
+No data or generated change: `data/beta-area.toml` and the generated `BattlePresets::beta`
+(`data/battle-presets.toml`) already agreed, so `make gen` (run by `test-beta-area`) left no drift:
+`git status` lists only the five source/test files above plus the pre-existing
+`.beads/interactions.jsonl`. Spawn literal (o845) and v3 offsets untouched.
+
+### Commands and results
+
+```
+make test BUILD_DIR=build            # Total Passed 240245 / Failed 0; FreshBetaStartTest 49/0;
+                                     #   Battle Presets Suite 70/0
+make testvm BUILD_DIR=build          # Total Passed 286 / Failed 0
+make test-beta-area BUILD_DIR=build  # node: tests 12 / pass 12 / fail 0
+make verify-generated BUILD_DIR=build  # exit 0, no manifest delta
+make fxtest-headless BUILD_DIR=build ARDENS="$ARDENS" \
+  FXTEST_INOS='tst/fxdatatest/test_world_player.ino tst/fxdatatest/test_save.ino \
+               tst/fxdatatest/test_stack.ino tst/fxdatatest/test_battle_presets.ino'
+  # test_world_player   PASSED=71   FAILED=0  (render headroom 289)
+  # test_save           PASSED=3283 FAILED=0
+  # test_stack          PASSED=4    FAILED=0  (stack headroom 598)
+  # test_battle_presets PASSED=106  FAILED=0
+make ram BUILD_DIR=build             # AVR_FLASH_BYTES=22506 AVR_STATIC_RAM_BYTES=1678
+```
+
+### Fresh vs restored proof
+
+- Fresh (host `FreshBetaStartTest`, same seams as the sketch): `applyPlayerPreset(player,
+  BattlePresets::beta)` + `setBattleInventory` + `seedParty` yields ids 0/3/6, level 3, full HP,
+  masks 2/4/2; store slots 0/1/2 hold `exp=levelExpThreshold(3)=27`, `hpEncoded=maxHP+1`,
+  `attackMask` 2/4/2; `storePartySlot(HP)` match; the bag is empty and is `item::battleInventory()`.
+  An explicit save restores the party and the authored (11,5) location.
+- Restored (negative): a valid checkpoint holding a different party (legacy species-only default,
+  ids 0/1/2 at level 31, location 0x4321) is loaded with `restored==true`; the ordinary boot
+  decision then skips the beta start, and the party ids/level and location are unchanged. The
+  shipping guard itself is pinned by the `beta-area_test.mjs` source test, so the fresh-only
+  wiring cannot silently regress.
+
+### Resources
+
+- control (`make ram BUILD_DIR=build`, clean tree): Program **22520** B, Data **1678** B.
+- candidate: Program **22506** B, Data **1678** B → **-14 B flash, 0 B static RAM** (LTO folds the
+  now-shared `applyPlayerPreset` over the inlined `basic()`). Program free 7190 B (target ≤29184,
+  hard ≤29696); static free 482 B/2560. Device stack headroom 598 B, unchanged.
+
+### Deviations
+
+- Added `tst/fxdatatest/test_battle_presets.ino` to the focused device run (it now covers the beta
+  preset) beyond the three suites named in the dispatch.
+- Ran `make clean-build-artifacts BUILD_DIR=build` preview then `CLEAN_APPLY=1` as instructed; it
+  removed only 108 `.o`/`.d` candidates (2.60 MB) and preserved the ELF/HEX/log evidence.
+
+### Wall time
+
+Single worker ≈20 min: read bead/source + design ≈6 min; edits + tests ≈4 min; control AVR build
+≈1 min; host/VM/node ≈1 min; 4-suite device run ≈46 s; candidate `make ram` + cleanup + report
+remainder.
+
+### Storage
+
+`df -h .` 64 GiB free before/after (≥10 GiB reserve held). `du -sh build` 1.9 G before/after.
+Logs: `build/jp8.11.24-{test,testvm,test-beta-area,fxtest,ram,verify-generated}.log`; candidate ELF
+`build/CreatureGathererFX.ino.elf` (22506 B) retained. No `cgfx-pack.*` stage remained after
+`make gen`.
