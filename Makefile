@@ -1,4 +1,4 @@
-.PHONY: help setup doctor plant test test-debug testvm testvm-debug sim-test gen gen-if-needed gen-data gen-sprites gen-fixtures pack full build mini ram run dev arena-demo arena-test lure-demo check final-gate verify-generated test-manifest test-generated-libs test-doctor test-fxtest-ram test-avr-build-budget test-world-script-profile world-script-profile-check test-encounter-profile encounter-profile-check encounter-packed-profile-check fxtest fxtest-headless fxtest-spike fxtest-preflight fxtest-headless-preflight fxtest-build fxtest-run new-fxtest clean-build-artifacts test-clean-build-artifacts
+.PHONY: help setup doctor plant test test-debug testvm testvm-debug sim-test gen gen-if-needed gen-data gen-sprites gen-fixtures pack full build mini ram run dev arena-demo arena-test arena-package lure-demo check final-gate verify-generated test-manifest test-generated-libs test-doctor test-fxtest-ram test-avr-build-budget test-world-script-profile world-script-profile-check test-encounter-profile encounter-profile-check encounter-packed-profile-check fxtest fxtest-headless fxtest-spike fxtest-preflight fxtest-headless-preflight fxtest-build fxtest-run new-fxtest clean-build-artifacts test-clean-build-artifacts
 
 # Public command API. Override tool, board, and output variables per workspace/CI.
 CXX ?= g++
@@ -107,6 +107,7 @@ help:
 		'  ram      build and report FX flash/RAM plus largest static symbols; prerequisite: $(ARDUINO_CLI), avr-size, avr-nm' \
 		'  arena-demo generate FX data, build the opt-in arena+duel firmware, then launch Ardens' \
 		'  arena-test alias for arena-demo' \
+		'  arena-package build the arena demo and write dist/CreatureGathererFX-ArenaDemo.arduboy (no Ardens)' \
 		'  lure-demo  generate FX data, build the opt-in lure-wedge firmware, then launch Ardens' \
 		'  test-avr-build-budget exercise the fail-closed shipping flash/RAM parser' \
 		'  final-gate  run the full check then the shipping RAM report; requires ARDENS' \
@@ -124,7 +125,7 @@ help:
 		'  fxtest-headless  run every FX device sketch through Ardens serial capture; blocks unsupported Ardens' \
 		'  fxtest-spike  run one selected FX suite plus test_stack; set FXTEST_SPIKE_INO and ARDENS' \
 		'' \
-		'Overrides: CXX, ARDUINO_CLI, FQBN, BUILD_DIR, ARDUINO_BUILD_PATH, ARDUINO_BUILD_CACHE_PATH, DIST_DIR, FXDATA_BIN, ARDENS, FXTEST_MS, FXTEST_RAM_BUDGET, AVR_FLASH_BUDGET, AVR_STATIC_RAM_BUDGET, RAM_ELF, AVR_SIZE, AVR_NM, AVR_RELAX_FLAGS, AVR_FXTEST_BUILD_PROPERTIES, AVR_FXTEST_NO_FACTS_BUILD_PROPERTIES, AVR_FXTEST_COMPACT_RESULT_BUILD_PROPERTIES, AVR_FXTEST_CPP_FLAGS, AVR_SHIPPING_BUILD_PROPERTIES, AVR_SHIPPING_CPP_FLAGS, WORLD_SCRIPT_PROFILE_INPUT, WORLD_SCRIPT_PROFILE_TEXT, ARENA_DEMO_BUILD_DIR, ARENA_DEMO_CART_DIR, ARENA_DEMO_CPP_FLAGS, ARENA_DEMO_FLASH_BUDGET.'
+		'Overrides: CXX, ARDUINO_CLI, FQBN, BUILD_DIR, ARDUINO_BUILD_PATH, ARDUINO_BUILD_CACHE_PATH, DIST_DIR, FXDATA_BIN, ARDENS, FXTEST_MS, FXTEST_RAM_BUDGET, AVR_FLASH_BUDGET, AVR_STATIC_RAM_BUDGET, RAM_ELF, AVR_SIZE, AVR_NM, AVR_RELAX_FLAGS, AVR_FXTEST_BUILD_PROPERTIES, AVR_FXTEST_NO_FACTS_BUILD_PROPERTIES, AVR_FXTEST_COMPACT_RESULT_BUILD_PROPERTIES, AVR_FXTEST_CPP_FLAGS, AVR_SHIPPING_BUILD_PROPERTIES, AVR_SHIPPING_CPP_FLAGS, WORLD_SCRIPT_PROFILE_INPUT, WORLD_SCRIPT_PROFILE_TEXT, ARENA_DEMO_BUILD_DIR, ARENA_DEMO_CART_DIR, ARENA_DEMO_CPP_FLAGS, ARENA_DEMO_FLASH_BUDGET, ARENA_PACKAGE, ARENA_PACKAGE_INFO.'
 
 setup:
 	@printf '%s\n' \
@@ -336,6 +337,32 @@ arena-demo:
 
 # Convenience alias for the arena duel spike launch.
 arena-test: arena-demo
+
+# Reproducible distributable: build the opt-in arena+duel firmware and zip the
+# Arduboy package {info.json, CreatureGathererFX.ino.hex, fxdata.bin}. It is
+# non-interactive and never launches Ardens; use arena-demo/arena-test for that.
+# Fixed member order, normalised mtimes and `zip -X` keep the archive byte-stable
+# across runs on the same toolchain.
+ARENA_PACKAGE ?= $(DIST_DIR)/CreatureGathererFX-ArenaDemo.arduboy
+ARENA_PACKAGE_INFO ?= tools/arena-demo-info.json
+
+arena-package:
+	@$(MAKE) --no-print-directory -j1 gen-if-needed
+	@$(MAKE) --no-print-directory ram BUILD_DIR="$(ARENA_DEMO_BUILD_DIR)" AVR_SHIPPING_CPP_FLAGS="$(ARENA_DEMO_CPP_FLAGS)" AVR_FLASH_BUDGET="$(ARENA_DEMO_FLASH_BUDGET)"
+	@test -f "$(ARENA_DEMO_BUILD_DIR)/CreatureGathererFX.ino.hex" || { echo "arena-package: sketch hex missing from $(ARENA_DEMO_BUILD_DIR)" >&2; exit 1; }
+	@test -f "$(FXDATA_BIN)" || { echo "arena-package: FX cart image missing at $(FXDATA_BIN); run make gen" >&2; exit 1; }
+	@set -e; \
+	mkdir -p "$(DIST_DIR)"; \
+	stage="$$(cd "$$(mktemp -d "$(BUILD_DIR)/arena-package.XXXXXX")" && pwd -P)"; \
+	trap 'rm -rf "$$stage"' 0; \
+	trap 'exit 1' HUP INT TERM; \
+	cp -f "$(ARENA_DEMO_BUILD_DIR)/CreatureGathererFX.ino.hex" "$$stage/CreatureGathererFX.ino.hex"; \
+	cp -f "$(FXDATA_BIN)" "$$stage/fxdata.bin"; \
+	cp -f "$(ARENA_PACKAGE_INFO)" "$$stage/info.json"; \
+	touch -t 200101010000 "$$stage/info.json" "$$stage/CreatureGathererFX.ino.hex" "$$stage/fxdata.bin"; \
+	rm -f "$(ARENA_PACKAGE)"; \
+	( cd "$$stage" && zip -X -q -9 "$(abspath $(ARENA_PACKAGE))" info.json CreatureGathererFX.ino.hex fxdata.bin ); \
+	unzip -l "$(ARENA_PACKAGE)"
 
 # Opt-in lure playtest. Mirrors arena-demo: generate, build the wedge firmware
 # into an isolated directory, copy the split FX data/save inputs beside it, then

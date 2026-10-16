@@ -142,6 +142,16 @@ make ram BUILD_DIR=build \
   AVR_FLASH_BUDGET=29184
 ```
 
+To build the distributable Arduboy package (no Ardens required):
+
+```sh
+make arena-package
+```
+
+It builds the same arena firmware and writes `dist/CreatureGathererFX-ArenaDemo.arduboy`: a `zip`
+holding `info.json` (schemaVersion 3), `CreatureGathererFX.ino.hex`, and `fxdata.bin`. The archive
+is reproducible — fixed member order, normalised mtimes, and `zip -X`.
+
 The combat itself is the duel: hidden simultaneous picks, the 5-type relation, 14/4/6 damage with
 the x1.5/x0.5 creature-type matchup, switch/KO/draw, WAIT, and the fixture persona. The arena menus
 are the current (pre-compact) screens; only the battle engine changed.
@@ -166,17 +176,17 @@ cp -f dist/fxdata-save.bin build/arena-demo/isolated/fxdata-save.bin
 ```
 
 `dist/fxdata.bin` is the flashable FX cart image; Ardens takes its FX data and save regions as
-separate inputs as shown above. The demo offers the three level-31 premade teams (Blitz, Bulwark,
-Utility) and randomly selects one of five premade opponents (Starter, Speed, Fortress, Tricks,
-Champion) for each match. Choose a team and play through the ordinary battle flow. After terminal
-battle feedback, the demo returns directly to the cached team choice, where A starts the next match
-and Up/Down change the highlighted entry. Every match starts with fresh HP, status, modifiers, and move uses.
+separate inputs as shown above. The demo draws a random match every time: boot rolls one of the
+three level-31 premade teams (Blitz, Bulwark, Utility) and one of the five premade opponents
+(Starter, Speed, Fortress, Tricks, Champion) from the shared game RNG — seeded once in setup from
+the hardware entropy source — and starts the duel immediately, with no team picker. After terminal
+battle feedback, `arena::finishBattle` re-rolls both sides and starts the next match, so the demo
+plays a continuous random 3v3. Every match starts with fresh HP, status, modifiers, and move uses.
 The demo bypasses player save loading and writing and does not add arena records, rewards, or
 progression.
 
-Measured arena firmware: 28,898 B flash against the 29,184 B arena ceiling, 1,847 B static RAM
-against the 2,160 B limit, and 188 B minimum exercised effective stack headroom (the stack guard
-reports 335 B before its 69 B ISR allowance).
+Measured arena firmware: 23,382 B flash against the 29,184 B arena ceiling and 1,765 B static RAM
+against the 2,160 B limit.
 
 ## Overworld wild-battle demo (opt-in)
 

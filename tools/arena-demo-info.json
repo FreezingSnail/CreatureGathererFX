@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 3,
+  "title": "Creature Gatherer FX — Arena Demo",
+  "description": "Random-match 3v3 creature battle demo for Arduboy FX. Every match rolls both sides from the shared RNG.",
+  "author": "Creature Gatherer FX",
+  "version": "0.1.0",
+  "genre": "RPG",
+  "binaries": [
+    {
+      "title": "Arduboy FX Arena Demo",
+      "filename": "CreatureGathererFX.ino.hex",
+      "device": "ArduboyFX",
+      "flashdata": "fxdata.bin"
+    }
+  ],
+  "buttons": [
+    { "control": "Left/Right/Up/Down", "action": "Choose your hidden pick" },
+    { "control": "A", "action": "Confirm the pick and advance feedback" },
+    { "control": "B", "action": "Back out of optional submenus" }
+  ]
+}
