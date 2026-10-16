@@ -89,11 +89,6 @@ uint8_t duelFixtureReadRate(const BattleState &state)
 constexpr uint8_t DUEL_CONCEAL_TICKS = 29;
 constexpr uint8_t DUEL_RESULT_TICKS = 68;
 
-bool duelUsableAttack(uint8_t authoredType)
-{
-    return authoredType < 8;
-}
-
 uint8_t duelFoldAuthored(uint8_t authored)
 {
     return duel::foldType(authored);
@@ -117,35 +112,15 @@ uint8_t duelActiveTypes(const BattleState &state, uint8_t side, uint8_t *out)
     return 1;
 }
 
-// Options are the active member's usable authored attack slots in slot order.
-uint8_t duelUsableSlotCount(const BattleState &state, uint8_t side)
+// Options are the active member's set mask bits in ascending type order.
+uint8_t duelUsableOptionCount(const BattleState &state, uint8_t side)
 {
-    const Combatant &active = state.active[side];
-    uint8_t count = 0;
-    for (uint8_t slot = 0; slot < 4; ++slot)
-        if (active.moveIds[slot] != 255 && duelUsableAttack(active.moveTypes[slot]))
-            ++count;
-    return count;
-}
-
-uint8_t duelSlotForOption(const BattleState &state, uint8_t side, uint8_t option)
-{
-    const Combatant &active = state.active[side];
-    uint8_t index = 0;
-    for (uint8_t slot = 0; slot < 4; ++slot) {
-        if (active.moveIds[slot] == 255 || !duelUsableAttack(active.moveTypes[slot]))
-            continue;
-        if (index == option) return slot;
-        ++index;
-    }
-    return 255;
+    return duel::maskOptionCount(state.active[side].attackMask);
 }
 
 uint8_t duelOptionType(const BattleState &state, uint8_t side, uint8_t option)
 {
-    const uint8_t slot = duelSlotForOption(state, side, option);
-    return slot == 255 ? duel::NO_TYPE
-                       : duelFoldAuthored(state.active[side].moveTypes[slot]);
+    return duel::maskOptionType(state.active[side].attackMask, option);
 }
 
 // First living bench member (original slot) whose cached attack mask beats the
@@ -444,13 +419,11 @@ bool BattleSession::submitIntent(MenuIntent intent)
         switch (intent.kind) {
         case MenuIntentKind::SelectMove:
 #if defined(CGFX_DUEL_BATTLE)
-            // Duel has no PP: a slot is selectable when it holds a usable
-            // authored attack. Empty/status/utility slots are not selectable.
-            if (intent.index >= 4 ||
-                state_.active[static_cast<uint8_t>(Side::Player)]
-                        .moveIds[intent.index] == 255 ||
-                !duelUsableAttack(state_.active[static_cast<uint8_t>(Side::Player)]
-                                      .moveTypes[intent.index]))
+            // Duel has no PP: the pick-row index selects one of the active
+            // member's set mask bits (ascending type order); an index past the
+            // option count is not selectable.
+            if (intent.index >= duelUsableOptionCount(
+                                    state_, static_cast<uint8_t>(Side::Player)))
                 return false;
 #elif !defined(__AVR__)
             // Native callers can synthesize intents; the AVR menu snapshot is
@@ -523,7 +496,7 @@ void BattleSession::duelCommitOpponent()
     const uint8_t opponentSide = static_cast<uint8_t>(Side::Opponent);
     duelCommittedOpponent_ = {duel::ActionKind::Wait, duel::NO_SLOT};
 
-    const uint8_t options = duelUsableSlotCount(state_, opponentSide);
+    const uint8_t options = duelUsableOptionCount(state_, opponentSide);
     if (options == 0) return; // unusable kit -> WAIT
 
     const duel::Persona persona = duelFixturePersona(state_);
@@ -533,7 +506,7 @@ void BattleSession::duelCommitOpponent()
         const uint8_t guessed = duel::predictPlayerType(
             duelHistory_, duelHistoryCount_, persona, rng_);
         if (guessed != duel::NO_TYPE) {
-            uint8_t counters[4];
+            uint8_t counters[5];
             uint8_t count = 0;
             for (uint8_t o = 0; o < options; ++o)
                 if (duel::relation(duelOptionType(state_, opponentSide, o),
@@ -566,7 +539,7 @@ void BattleSession::duelCommitOpponent()
             duelOptionType(state_, opponentSide, o), playerTypes, playerTypeCount);
         if (tier > bestTier) bestTier = tier;
     }
-    uint8_t pool[4];
+    uint8_t pool[5];
     uint8_t count = 0;
     for (uint8_t o = 0; o < options; ++o)
         if (duel::creatureModifier(duelOptionType(state_, opponentSide, o),
@@ -618,18 +591,11 @@ bool BattleSession::duelResolveRound()
         // No battle item interface; the round commits no attack.
         break;
     case ActionKind::Attack: {
-        // playerAction.index is a move slot; map it to its usable option index.
-        uint8_t option = 255;
-        uint8_t index = 0;
-        for (uint8_t slot = 0; slot < 4; ++slot) {
-            if (state_.active[playerSide].moveIds[slot] == 255 ||
-                !duelUsableAttack(state_.active[playerSide].moveTypes[slot]))
-                continue;
-            if (slot == playerAction.index) { option = index; break; }
-            ++index;
-        }
-        if (option == 255) return false;
-        playerDuel = {duel::ActionKind::Attack, option};
+        // playerAction.index is the pick-row option index (a set mask bit in
+        // ascending type order); reject an index past the option count.
+        if (playerAction.index >= duelUsableOptionCount(state_, playerSide))
+            return false;
+        playerDuel = {duel::ActionKind::Attack, playerAction.index};
         break;
     }
     case ActionKind::Switch:
@@ -1120,14 +1086,10 @@ BattleView BattleSession::view() const
 
     for (uint8_t slot = 0; slot < 4; ++slot) {
 #ifdef CGFX_DUEL_BATTLE
-        // Only real attack slots are exposed (see moves()); no PP gating.
-        const uint8_t id =
-            state_.active[static_cast<uint8_t>(Side::Player)].moveIds[slot];
-        const bool usable = id != 255 &&
-            duelUsableAttack(state_.active[static_cast<uint8_t>(Side::Player)]
-                                 .moveTypes[slot]);
-        out.moveIds[slot] = usable ? id : 255;
-        out.remainingUses[slot] = usable ? 255 : 0;
+        // The duel has no legacy move slots; the pick row reads the resident
+        // attack mask directly. Every legacy cell reads empty.
+        out.moveIds[slot] = 255;
+        out.remainingUses[slot] = 0;
 #else
         out.moveIds[slot] = state_.active[static_cast<uint8_t>(Side::Player)]
             .moveIds[slot];
@@ -1145,27 +1107,20 @@ BattleView BattleSession::view() const
 MoveSnapshot BattleSession::moves() const
 {
     MoveSnapshot out = {};
-    for (uint8_t slot = 0; slot < 4; ++slot) {
 #ifdef CGFX_DUEL_BATTLE
-        // Duel snapshot offers only real attack slots; status/utility/empty
-        // slots read as EMPTY_MOVE_ID so the old menu never gates on PP and a
-        // zero-attack kit falls through to the normal Pass/WAIT cell.
-        const uint8_t id =
-            state_.active[static_cast<uint8_t>(Side::Player)].moveIds[slot];
-        const bool usable = id != 255 &&
-            duelUsableAttack(state_.active[static_cast<uint8_t>(Side::Player)]
-                                 .moveTypes[slot]);
-        out.moveIds[slot] = usable ? id : 255;
-        out.remainingUses[slot] = usable ? 255 : 0;
+    // The duel pick row reads the resident attack mask directly; the legacy
+    // 4-slot move snapshot carries no duel meaning, so every cell is empty.
+    for (uint8_t slot = 0; slot < 4; ++slot) out.moveIds[slot] = 255;
 #else
+    for (uint8_t slot = 0; slot < 4; ++slot) {
         out.moveIds[slot] = state_.active[static_cast<uint8_t>(Side::Player)]
             .moveIds[slot];
         out.remainingUses[slot] = remainingMoveUses(state_, Side::Player, slot);
         const uint8_t limit = moveUseLimit(state_.active[0].moves[slot]);
         if (limit != UNLIMITED_MOVE_USES)
             out.useLimitsPacked |= static_cast<uint8_t>(limit << (slot * 2));
-#endif
     }
+#endif
     return out;
 }
 

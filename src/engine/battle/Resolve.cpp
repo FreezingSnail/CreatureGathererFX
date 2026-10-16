@@ -126,12 +126,12 @@ uint8_t actionPriority(ActionKind kind)
     }
 }
 
+#ifndef CGFX_DUEL_BATTLE
 bool validMove(const Combatant &combatant, uint8_t slot)
 {
     return slot < MOVE_COUNT && combatant.moveIds[slot] != 255;
 }
 
-#ifndef CGFX_DUEL_BATTLE
 Modifier attackEffectiveness(const Combatant &attacker,
                              const Combatant &defender, uint8_t moveSlot)
 {

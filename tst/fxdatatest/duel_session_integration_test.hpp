@@ -84,13 +84,16 @@ __attribute__((noinline)) void configureMatchup(uint8_t playerType, uint8_t play
     battle::Combatant &hero = state.active[static_cast<uint8_t>(battle::Side::Player)];
     hero.types = DualType(static_cast<Type>(playerType));
     hero.hp = hero.maxHp = playerHp;
-    hero.moveTypes[0] = playerMove;
+    // One attack option: its folded type is option 0 (the lowest set bit).
+    hero.attackMask = static_cast<uint8_t>(1u << duel::foldType(playerMove));
 
     battle::Combatant &foe = state.active[static_cast<uint8_t>(battle::Side::Opponent)];
     foe.types = DualType(static_cast<Type>(opponentType));
     foe.hp = foe.maxHp = opponentHp;
-    for (uint8_t slot = 0; slot < 4; ++slot)
-        if (foe.moveIds[slot] != EMPTY_MOVE_ID) foe.moveTypes[slot] = opponentMove;
+    // Collapse the foe's authored kit to one type so whichever option the
+    // Choice-entry commit picked maps here; an unusable kit stays WAIT.
+    if (foe.attackMask != 0)
+        foe.attackMask = static_cast<uint8_t>(1u << duel::foldType(opponentMove));
 }
 
 // Advance through the Concealed phase to the reveal (Result phase begins).
@@ -193,18 +196,15 @@ __attribute__((noinline)) void duelFlowWaitRoute(FxTest &test) {
     beginWildDuel(false, 0);
     battle::BattleState &state =
         const_cast<battle::BattleState &>(battleSession().state());
-    for (uint8_t slot = 0; slot < 4; ++slot) {
-        state.active[0].moveTypes[slot] = EMPTY_MOVE_ID;
-        state.active[0].moveIds[slot] = EMPTY_MOVE_ID;
-    }
+    state.active[0].attackMask = 0;
     state.active[0].types = DualType(static_cast<Type>(FireAuthored));
     state.active[0].hp = state.active[0].maxHp = 100;
     state.active[1].types = DualType(static_cast<Type>(FireAuthored));
     state.active[1].hp = state.active[1].maxHp = 100;
-    for (uint8_t slot = 0; slot < 4; ++slot)
-        if (state.active[1].moveIds[slot] != EMPTY_MOVE_ID)
-            state.active[1].moveTypes[slot] = SpiritAuthored;
+    state.active[1].attackMask = static_cast<uint8_t>(1u << duel::foldType(SpiritAuthored));
 
+    test.expectEq(duel::usableOptionCount(state, 0), 0,
+                  F("an unusable kit has no attack options"));
     const battle::MoveSnapshot snapshot = battleSession().moves();
     bool allEmpty = true;
     for (uint8_t slot = 0; slot < 4; ++slot)
@@ -305,9 +305,7 @@ __attribute__((noinline)) void duelDeviceSwapKoRevert(FxTest &test) {
     state.activeSlot[1] = 0;
     state.active[1].types = DualType(static_cast<Type>(SpiritAuthored));
     state.active[1].hp = state.active[1].maxHp = 100;
-    for (uint8_t slot = 0; slot < 4; ++slot)
-        if (state.active[1].moveIds[slot] != EMPTY_MOVE_ID)
-            state.active[1].moveTypes[slot] = SpiritAuthored;
+    state.active[1].attackMask = static_cast<uint8_t>(1u << duel::foldType(SpiritAuthored));
 
     test.expectEq(battleSession().submitIntent({MenuIntentKind::SelectParty, 0}), 1,
                   F("the living incoming slot is selectable"));

@@ -37,8 +37,12 @@ duel::Member makeMember(uint8_t id, const uint8_t *types, uint8_t typeCount,
     m.types[1] = typeCount > 1 ? types[1] : static_cast<uint8_t>(0);
     m.hp = hp;
     m.maxHp = hp;
-    m.optionCount = optionCount;
-    for (uint8_t i = 0; i < optionCount; ++i) m.options[i] = options[i];
+    // Options are folded duel types; the mask dedupes them and the kernel
+    // enumerates the set bits in ascending type order.
+    uint8_t mask = 0;
+    for (uint8_t i = 0; i < optionCount; ++i)
+        mask |= static_cast<uint8_t>(1u << options[i]);
+    m.attackMask = mask;
     return m;
 }
 
@@ -437,8 +441,9 @@ void DuelPersonaSuite(TestSuite &suite)
     test.assert(alwaysAttack, true, "random persona never reads (attacks only)");
 
     // A reader that reads counters the guessed type with the beating option.
-    // Plant (index 0) loses to Fire, water (index 1) beats it: exactly one
-    // counter exists, so the pick is deterministic.
+    // The foe mask is {Plant, Water}: ascending order makes water (index 0) the
+    // beating option and plant (index 1) the losing one, so the pick is
+    // deterministic.
     duel::State counter = {};
     const uint8_t foeTypes[1] = {Spirit};
     const uint8_t foeOpts[2] = {Plant, Water};
@@ -455,14 +460,14 @@ void DuelPersonaSuite(TestSuite &suite)
     const duel::Action act = duel::chooseAction(counter, duel::Persona::Reader,
                                                 100, rng);
     test.assert(act.kind, duel::ActionKind::Attack, "countering action attacks");
-    test.assert(act.index, static_cast<uint8_t>(1),
+    test.assert(act.index, static_cast<uint8_t>(0),
                 "reader counters with the beating option");
 
     // A failed read falls back uniformly across ALL attack slots, whereas a
     // no-read pick prefers the best creature-matchup tier. Foe options are
-    // {Plant, Spirit} against a fire player creature: Spirit is the only
-    // best-tier slot, and neither beats the guessed Earth, so the branches
-    // must be distinguishable.
+    // {Plant, Spirit} against a fire player creature: Spirit (mask bit 0, the
+    // ascending option 0) is the only best-tier slot, and neither beats the
+    // guessed Earth, so the branches must be distinguishable.
     duel::State branch = {};
     const uint8_t branchFoeTypes[1] = {Spirit};
     const uint8_t branchOpts[2] = {Plant, Spirit};
@@ -482,7 +487,7 @@ void DuelPersonaSuite(TestSuite &suite)
         rng = makeRng();
         const duel::Action a = duel::chooseAction(branch, duel::Persona::Random,
                                                   0, rng);
-        if (a.kind != duel::ActionKind::Attack || a.index != 1) noReadOnlyBest = false;
+        if (a.kind != duel::ActionKind::Attack || a.index != 0) noReadOnlyBest = false;
     }
     test.assert(noReadOnlyBest, true, "no-read prefers the matchup-best slot");
 
@@ -495,7 +500,7 @@ void DuelPersonaSuite(TestSuite &suite)
         rng = makeRng();
         const duel::Action a = duel::chooseAction(readBranch, duel::Persona::Reader,
                                                   100, rng);
-        if (a.kind == duel::ActionKind::Attack && a.index == 0)
+        if (a.kind == duel::ActionKind::Attack && a.index == 1)
             failedReadSawNonBest = true;
     }
     test.assert(failedReadSawNonBest, true,

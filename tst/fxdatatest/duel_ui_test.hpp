@@ -148,10 +148,8 @@ void duelDevicePickRowGeometry(FxTest &test) {
     state.partyCount[0] = 3;
     state.bench[0][0].hp = 10;
     state.bench[0][1].hp = 10;
-    for (uint8_t slot = 0; slot < 4; ++slot) {
-        state.active[0].moveTypes[slot] = SpiritAuthored;
-        state.active[0].moveIds[slot] = slot;
-    }
+    // Four set mask bits -> four attack cells plus the SWAP cell.
+    state.active[0].attackMask = 0x0F;
     BattleFlow::update(0); // choice entry -> pick row
     duelClearBuffer();
     renderBattle();
@@ -248,10 +246,7 @@ void duelDeviceWaitRow(FxTest &test) {
     state.partyCount[0] = 3;
     state.bench[0][0].hp = 10;
     state.bench[0][1].hp = 10;
-    for (uint8_t slot = 0; slot < 4; ++slot) {
-        state.active[0].moveTypes[slot] = EMPTY_MOVE_ID;
-        state.active[0].moveIds[slot] = EMPTY_MOVE_ID;
-    }
+    state.active[0].attackMask = 0; // no usable attack -> SWAP + WAIT
     BattleFlow::update(0);
     duelClearBuffer();
     renderBattle();

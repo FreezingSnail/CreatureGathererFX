@@ -28,20 +28,18 @@ struct TurnPlan {
 // Active combatant. The legacy representation caches the packed move, its
 // stats/status/stage state and the semantic move IDs. The duel has none of
 // those mechanics, so the flag build keeps only the fields it actually reads:
-// one authored attack type per slot (folded at the view/resolver boundary) plus
-// the authored move ID that selects custom/saved kits. 255 marks an empty slot.
+// the creature's folded 5-type attack mask (bit i = duel type i; 0 = no usable
+// attack), built from the authored kit at the setup transition.
 struct Combatant {
     uint8_t id;
     DualType types;
     uint8_t level, hp, maxHp;
 #ifdef CGFX_DUEL_BATTLE
-    uint8_t moveTypes[4];
+    uint8_t attackMask;
 #else
     stats_t stats;
     Move moves[4];
-#endif
     uint8_t moveIds[4];
-#ifndef CGFX_DUEL_BATTLE
     StatusEffect status;
     StatModifer statMods;
     uint8_t effectTurns = 0; // Two bits per status slot; zero is untimed.
@@ -94,9 +92,9 @@ struct BattleState {
 
 #ifdef __AVR__
 #ifdef CGFX_DUEL_BATTLE
-static_assert(sizeof(Combatant) == 13, "duel active combatant AVR contract");
+static_assert(sizeof(Combatant) == 6, "duel active combatant AVR contract");
 static_assert(sizeof(BenchSlot) == 3, "duel bench slot AVR contract");
-static_assert(sizeof(BattleState) == 60, "duel battle state AVR contract");
+static_assert(sizeof(BattleState) == 46, "duel battle state AVR contract");
 #else
 static_assert(sizeof(Combatant) == 36, "active combatant AVR contract");
 static_assert(sizeof(BattleState) == 124, "battle state AVR contract");

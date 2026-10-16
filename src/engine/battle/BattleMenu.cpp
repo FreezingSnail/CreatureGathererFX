@@ -132,10 +132,9 @@ void BattleMenu::beginOptions(const MoveSnapshot &moves, bool allowGather,
 #else
 void BattleMenu::beginDuel(const BattleState &state, bool allowGather,
                            bool allowEscape) {
-    payload_.options = duel::usableOptionCount(state, 0) > 4
-        ? 4 : duel::usableOptionCount(state, 0);
+    payload_.options = duel::usableOptionCount(state, 0);
     for (uint8_t option = 0; option < payload_.options; ++option)
-        payload_.slots[option] = duel::slotForOption(state, 0, option);
+        payload_.slots[option] = option;
     payload_.swap = duel::livingBench(state, 0) ? 1 : 0;
     payload_.wait = payload_.options == 0 ? 1 : 0;
     cursor_ = 0;

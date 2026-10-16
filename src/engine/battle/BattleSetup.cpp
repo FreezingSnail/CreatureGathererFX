@@ -49,10 +49,7 @@ void clearCombatant(Combatant &combatant)
     combatant.hp = 0;
     combatant.maxHp = 0;
 #ifdef CGFX_DUEL_BATTLE
-    for (uint8_t slot = 0; slot < 4; ++slot) {
-        combatant.moveTypes[slot] = EMPTY_MOVE;
-        combatant.moveIds[slot] = EMPTY_MOVE;
-    }
+    combatant.attackMask = 0;
 #else
     combatant.stats.attack = 0;
     combatant.stats.defense = 0;
@@ -381,10 +378,7 @@ void copyCreature(Combatant &destination, const Creature &source, uint8_t hp)
     destination.hp = hp;
     destination.maxHp = source.statlist.hp;
 #ifdef CGFX_DUEL_BATTLE
-    for (uint8_t slot = 0; slot < 4; ++slot) {
-        destination.moveTypes[slot] = source.moveList[slot].getMoveType();
-        destination.moveIds[slot] = battleMoveId(source.moves[slot]);
-    }
+    destination.attackMask = duelAttackMask(source);
 #else
     destination.stats = source.statlist;
     for (uint8_t slot = 0; slot < 4; ++slot) {

@@ -71,8 +71,12 @@ duel::Member makeMember(uint8_t id, uint8_t type, const uint8_t *options,
     m.typeCount = 1;
     m.types[0] = type;
     m.hp = m.maxHp = hp;
-    m.optionCount = optionCount;
-    for (uint8_t i = 0; i < optionCount; ++i) m.options[i] = options[i];
+    // Options are folded duel types; the mask dedupes them and the kernel
+    // enumerates the set bits in ascending type order.
+    uint8_t mask = 0;
+    for (uint8_t i = 0; i < optionCount; ++i)
+        mask |= static_cast<uint8_t>(1u << options[i]);
+    m.attackMask = mask;
     return m;
 }
 

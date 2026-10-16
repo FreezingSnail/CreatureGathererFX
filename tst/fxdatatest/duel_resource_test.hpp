@@ -208,13 +208,14 @@ inline void duel_resource_test(FxTest &test)
         // round 1 attacks with plant.
         state.active[0].types = DualType(static_cast<Type>(PlantAuthored));
         state.active[0].hp = state.active[0].maxHp = 100;
-        state.active[0].moveTypes[0] = PlantAuthored;
+        state.active[0].attackMask =
+            static_cast<uint8_t>(1u << duel::foldType(PlantAuthored));
         // Foe active water, water-only kit (no plant counter).
         state.active[1].types = DualType(static_cast<Type>(WaterAuthored));
         state.active[1].hp = state.active[1].maxHp = 100;
-        for (uint8_t slot = 0; slot < 4; ++slot)
-            if (state.active[1].moveIds[slot] != EMPTY_MOVE_ID)
-                state.active[1].moveTypes[slot] = WaterAuthored;
+        if (state.active[1].attackMask != 0)
+            state.active[1].attackMask =
+                static_cast<uint8_t>(1u << duel::foldType(WaterAuthored));
         // Foe bench (original slot 1) provides the plant counter.
         state.moveUsesSpent[1][1] = EarthDuelBit;
 
@@ -260,7 +261,8 @@ inline void duel_resource_test(FxTest &test)
         battle::BattleState &state =
             const_cast<battle::BattleState &>(battleSession().state());
         state.active[0].types = DualType(static_cast<Type>(PlantAuthored));
-        state.active[0].moveTypes[0] = PlantAuthored; // beats fire -> KO on hp1
+        state.active[0].attackMask =
+            static_cast<uint8_t>(1u << duel::foldType(PlantAuthored)); // fire KO on hp1
         state.active[0].hp = state.active[0].maxHp = 100;
         state.active[1].types = DualType(static_cast<Type>(FireAuthored));
         state.active[1].hp = state.active[1].maxHp = 1;

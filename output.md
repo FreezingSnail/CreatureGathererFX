@@ -10627,3 +10627,97 @@ and duel suites the duel profile). Result: `gate: PASS` for both `check` and `ra
 - Shipping duel resource report: `AVR_FLASH_BYTES=23758` (80%, free 5938), `AVR_STATIC_RAM_BYTES=1760`
   (free 400). vs historical 29790 flash control → cumulative saving 6032 B (≥3500 target); static +0.
 - Logs: `build/final-gate/{check,ram}.log`.
+
+## 4w89.5 — editor type checkboxes
+
+- Changed (sibling `CreatureGathererTools/ui/src/**`, no commits):
+  `editorTypes.ts` (dropped `MoveEntry`; `Creature` drops `move1..4`+`moveList`, adds
+  `moves: string[]`; added `DUEL_TYPES = [spirit,water,earth,fire,plant]`),
+  `components/CreatureEditor.tsx` (removed move selects + move-list table +
+  `loadMoves`; added five duel-type checkboxes bound to `draft.moves`, fold-order kept),
+  `lib/validation.ts` (removed `moveEntryFromMove`/`MoveEntry`; `emptyCreature` → `moves: []`),
+  `App.test.tsx`, `components/CreatureEditor.test.tsx`, `lib/validation.test.ts`
+  (fixtures/tests to `moves`; new checkbox + round-trip tests).
+- Commands / results:
+  - `cd .../CreatureGathererTools/ui && npm test` → `Test Files 22 passed (22)`, `Tests 199 passed (199)` (4.35s).
+  - `npx tsc --noEmit` → exit 0 (no type errors).
+  - `grep moveList|move1..4|MoveEntry|moveEntryFromMove ui/src` → no matches.
+- Wall time: ~15 min. Deviations: dropped `CreatureApi.loadMoves` + `Move`/`MoveEntry` imports
+  since the creature editor no longer reads the move table; `diff --stat` 6 files, +68/−199.
+- No AVR build/gen/commit (off build lane). Bead left in_progress.
+
+## 4w89.3 — device battle attackMask (2026-10-16)
+
+Replaced the duel `battle::Combatant.moveTypes[4]`+`moveIds[4]` with one `uint8_t
+attackMask` (bit i = duel type i, fold order [spirit,water,earth,fire,plant]); the
+active mask is computed at setup from the existing `Creature` via the existing
+`duelAttackMask(Creature)` helper. Legacy (no-macro) build unchanged.
+
+### Interfaces / symbols
+
+- `battle::Combatant` (duel build): `uint8_t attackMask` (1 B). AVR `sizeof(Combatant)`
+  13→**6**; `sizeof(BattleState)` 60→**46** (`BattleState.hpp` asserts updated). Legacy
+  `Combatant`/`BattleState` unchanged (36/124).
+- `duel::Member`: `optionCount`+`options[OPTION_CAP]` → `uint8_t attackMask`;
+  `OPTION_CAP` 4→5.
+- New shared helpers `duel::maskOptionCount(uint8_t)` / `duel::maskOptionType(uint8_t, uint8_t)`
+  (ascending set-bit enumeration) in `DuelKernel.hpp`.
+- `duel::Cells.types/markers/slots` `[4]`→`[5]`; `options` now 0..5; `slots[option]=option`.
+- `DuelPickRow.hpp` `PICK_ROW_MAX_OPTIONS` 4→5; `BattleMenu` `DuelPayload.slots[5]`,
+  `reserved[7]`→`[6]` (keeps `sizeof(BattleMenu)==27`).
+- `BattleSession` pick-row index is now the ascending option index (was an authored
+  move slot); `moves()`/`view()` expose empty legacy cells in the duel build.
+
+### Files
+
+- src: `BattleState.hpp`, `BattleSetup.cpp`, `DuelView.hpp`, `BattleSession.cpp`,
+  `BattleMenu.{cpp,hpp}`, `DuelPickRow.hpp`, `DuelKernel.hpp`, `Resolve.cpp`
+  (guarded `validMove` with `#ifndef CGFX_DUEL_BATTLE`).
+- tests: `tst/duel_{kernel,session_integration,view_contract,menu,pick_row}_test.hpp`,
+  `tst/fxdatatest/{battle_duel,duel_ui,duel_resource}.hpp` and the shared
+  `tst/fxdatatest/duel_session_integration_test.hpp`; `stack_test.hpp` needed no change.
+- `tools/duel-parity/duel_kernel_driver.cpp` MEM line now ORs the option bits into
+  `attackMask` (compile-preserving; full parity/mock regeneration is 4w89.6).
+
+### Commands / results
+
+```sh
+make test BUILD_DIR=build CPPFLAGS='-I. -DCGFX_DUEL_BATTLE'   # PASS, 240135/0 host
+make test BUILD_DIR=build                                     # PASS, 319514/0 host (legacy)
+make testvm BUILD_DIR=build                                   # PASS, 278/0
+make fxtest-headless BUILD_DIR=build ARDENS=<Ardens> AVR_FXTEST_CPP_FLAGS='-mrelax -DFX_READ_COUNTER -DCGFX_COMPACT_WARP_VM -DCGFX_DUEL_BATTLE -DCGFX_BATTLE_NO_FACTS -DCGFX_BATTLE_COMPACT_RESULT' FXTEST_MS=30000 FXTEST_INOS='test_battle_duel.ino test_duel_ui.ino test_duel_resources.ino test_stack.ino'   # 74.8 s
+```
+
+Device: `test_battle_duel 106/0` (flash 25994, static 1730), `test_duel_ui 58/0`
+(22580, 1694), `test_duel_resources 16/0` (21480, 1799; paint headroom 459 B, frame 8872 µs),
+`test_stack 4/0` (17950, 1787; transition headroom 616 B, stack headroom 513 B). All PASS.
+AVR `Combatant`/`BattleState`/`BattleMenu` asserts held.
+
+### Whole-image shipping delta (same flags, before/after)
+
+```sh
+make ram BUILD_DIR=build AVR_SHIPPING_CPP_FLAGS='-mrelax -DCGFX_SHIPPING_NO_USB -fno-inline-small-functions -DCGFX_BATTLE_NO_FACTS -DCGFX_BATTLE_COMPACT_RESULT -DCGFX_COMPACT_WARP_VM -DCGFX_DUEL_BATTLE'
+```
+
+`flash 23758 → 23382` (**−376 B**), `static 1760 → 1760` (**0 B**; `modeState` battle overlay
+is sized by WorldTransient, so the Combatant/BattleState shrink does not move static RAM).
+`RAM_FREE_BYTES=800`. ELFs kept: `build/reports/4w89/{control-headEWIP,candidate-alphaMASK}.elf`.
+
+### Deviations
+
+- `src/engine/battle/Ai.cpp` is entirely `#ifndef CGFX_DUEL_BATTLE`, so it compiles to an
+  empty TU in the duel build and reads no `Combatant` field; left unchanged.
+- `make sim-test CPPFLAGS='-I. -DCGFX_DUEL_BATTLE'` now **RED**: the JS/C++ parity driver
+  compiles (mask-mapped MEM) but the mock still enumerates authored-order/duplicate
+  options, so seeded `PICK index`/round comparisons diverge. Full parity + mock
+  regeneration to the mask is `CreatureGathererFX-4w89.6` (blocked by this bead) per the
+  epic's ripple map. `make sim-test` is outside this bead's verify set.
+- `output.md` also carries the sibling `4w89.5` section (already modified).
+
+### Storage / wall time
+
+`df -h .` 49 GiB free before and after; `du -sh build` 2.0 GiB (start) → 1.9 GiB.
+`make clean-build-artifacts BUILD_DIR=build` preview 108 candidates / 2.6 MB → applied.
+No `build/cgfx-pack.*` stage remained. Shared `build/fxtest/` staging root (288 MB) and the
+pre-existing `build/{native-tools,box-adoption-gate,battle-carve-spike}` trees left untouched.
+Worker wall time ≈ 55 min. No git commit/push; bead left `in_progress`.

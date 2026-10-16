@@ -9,8 +9,19 @@ void DuelPickRowSuite(TestRunner &runner)
     TestSuite suite("Duel pick row");
     Test test(__func__);
 
-    // Four attacks + living bench: four option cells then SWAP.
+    // Five attacks + living bench: the mask cap is five attack cells then SWAP.
     duel::PickRow row;
+    duel::pickRowInit(row, 5, true);
+    test.assert(row.cells, static_cast<uint8_t>(6), "five attacks + swap");
+    test.assert(row.options, static_cast<uint8_t>(5), "all five attack cells kept");
+    for (uint8_t i = 0; i < 5; ++i) duel::pickRowMove(row, 1);
+    test.assert(duel::pickRowIsSwap(row), true, "cursor reaches swap past five attacks");
+
+    // Six requested options clamp to the five-cell mask cap.
+    duel::pickRowInit(row, 6, false);
+    test.assert(row.cells, static_cast<uint8_t>(5), "options clamp to five");
+
+    // Four attacks + living bench: four option cells then SWAP.
     duel::pickRowInit(row, 4, true);
     test.assert(row.cells, static_cast<uint8_t>(5), "four attacks + swap");
     test.assert(row.options, static_cast<uint8_t>(4), "all four attack cells kept");
