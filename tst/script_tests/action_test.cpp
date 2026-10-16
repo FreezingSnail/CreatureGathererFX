@@ -5,6 +5,9 @@
 #include "../../src/vm/opcodes.hpp"
 #include "../../src/GameState.hpp"
 #include "../../src/flags/flag_bit_array.hpp"
+#include "../../src/item/Inventory.hpp"
+#include "../../src/item/KeyItems.hpp"
+#include "../../src/item/ItemIds.hpp"
 #define TEST
 #include "../../src/globals.hpp"
 
@@ -325,6 +328,80 @@ void scriptBoundsTest(TestSuite &t) {
     t.addTest(test);
 }
 
+void giveItemTest(TestSuite &t) {
+    Test test = Test(__func__);
+    ScriptVm vm = {};
+    uint8_t slot[128];
+    gameState = GameState();
+    player = Player();
+
+    // Generated GiveItem9 stream: opcode, kind, id, count. A lure grant adds
+    // through the one shared Player bag and continues to the next command.
+    const uint8_t lure[] = {
+        static_cast<uint8_t>(VmOpcode::GiveItem), 0, item::lureId(2, 1), 5,
+        static_cast<uint8_t>(VmOpcode::Tp), 0, 2, 0, 3
+    };
+    loadSlot(slot, lure, sizeof(lure));
+    vm.initVM(slot, 0, 0);
+    gameState.playerLocation = 0;
+    vm.run();
+    test.assert(item::inventoryCount(player.inventory, item::ItemKind::Lure,
+                                     item::lureId(2, 1)), 5,
+                "GiveItem grants a lure stack");
+    test.assert(gameState.playerLocation, To1D(2, 3),
+                "GiveItem continues to the next command");
+
+    // A consumable counted stack saturates deterministically at COUNT_MAX.
+    const uint8_t consumable[] = {
+        static_cast<uint8_t>(VmOpcode::GiveItem), 1, 4, 10
+    };
+    loadSlot(slot, consumable, sizeof(consumable));
+    item::inventoryAdd(player.inventory, item::ItemKind::Consumable, 4, 95);
+    vm.initVM(slot, 0, 0);
+    vm.run();
+    test.assert(item::inventoryCount(player.inventory, item::ItemKind::Consumable, 4), 99,
+                "GiveItem partial stack saturates at 99");
+
+    // A key grant unlocks the key bit once and adds no inventory row.
+    const uint8_t key[] = {
+        static_cast<uint8_t>(VmOpcode::GiveItem), 2, 5, 1
+    };
+    loadSlot(slot, key, sizeof(key));
+    vm.initVM(slot, 0, 0);
+    vm.run();
+    test.assert(item::keyItemUnlocked(player.keyItems, 5), true,
+                "GiveItem unlocks a key bit");
+    test.assert(item::inventoryNonZeroCount(player.inventory), 2,
+                "key grant adds no inventory row");
+
+    // An out-of-range lure id is a no-op that still reaches End.
+    const uint8_t badLure[] = {
+        static_cast<uint8_t>(VmOpcode::GiveItem), 0, 200, 5,
+        static_cast<uint8_t>(VmOpcode::Tp), 0, 7, 0, 9
+    };
+    loadSlot(slot, badLure, sizeof(badLure));
+    vm.initVM(slot, 0, 0);
+    gameState.playerLocation = 0;
+    vm.run();
+    test.assert(item::inventoryNonZeroCount(player.inventory), 2,
+                "out-of-range lure id leaves the bag untouched");
+    test.assert(gameState.playerLocation, To1D(7, 9),
+                "out-of-range grant still reaches End");
+
+    // An out-of-range key id is a no-op.
+    const uint8_t badKey[] = {
+        static_cast<uint8_t>(VmOpcode::GiveItem), 2, item::KEY_ITEM_COUNT, 1
+    };
+    loadSlot(slot, badKey, sizeof(badKey));
+    vm.initVM(slot, 0, 0);
+    vm.run();
+    test.assert(item::keyItemUnlocked(player.keyItems, item::KEY_ITEM_COUNT), false,
+                "out-of-range key id does not unlock");
+
+    player = Player();
+    t.addTest(test);
+}
+
 void scriptCommandCapTest(TestSuite &t) {
     Test test = Test(__func__);
     ScriptVm vm = {};
@@ -361,6 +438,7 @@ void ScriptVmTest(TestRunner &r) {
     scriptBufferIsolationTest(t);
     scriptMessageTest(t);
     scriptBoundsTest(t);
+    giveItemTest(t);
     scriptCommandCapTest(t);
     r.addTestSuite(t);
 }

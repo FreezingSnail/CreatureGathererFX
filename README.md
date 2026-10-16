@@ -68,7 +68,11 @@ messages. Tactical battle AI, battle menus, and battle rendering use the same pa
 
 Replace `CGFX_COMPACT_WARP_VM` with `CGFX_FULL_WORLD_VM` in the shipping C++ flags to select the full world
 interpreter and popup behavior. `ScriptVm::initVM/run` remain available to callers;
-the full interpreter retains its runtime bounds checks. The generated-content guard
+the full interpreter retains its runtime bounds checks. The full profile also
+executes the generated `GiveItem` opcode (9) with three `kind,id,count` operands
+into the one shared Player bag: kind 0 lures and kind 1 consumables add through
+`item::inventoryAdd` (saturating at 99), kind 2 unlocks a Player key bit through
+`item::keyItemUnlock` without an inventory row. The generated-content guard
 rejects full-only commands or script text in a default build, including commands
 inside skipped branches. Choose the full profile when authoring that content.
 

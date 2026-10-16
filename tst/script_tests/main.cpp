@@ -8,6 +8,7 @@
 GameState gameState;
 uint8_t sBuffer[1024];
 DialogMenu dialogMenu;
+Player player;
 
 int main() {
     std::cout << "Starting Runner" << std::endl;
