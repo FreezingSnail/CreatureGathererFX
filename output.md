@@ -13911,3 +13911,133 @@ remained. Other lanes (`box-adoption-gate`, `battle-carve-spike`, `native-tools`
 
 ~55 min single worker: recon/design ~20 min; generator + wiring ~15 min; tests ~10 min; gen +
 gates + device suite ~7 min; report/storage ~3 min.
+
+## ogh.8 — Cloud Sweep reconciliation
+
+Measurement only: **no shipped gameplay constant or authored data file changed** (off the
+AVR/generation lane; no `make gen`/AVR/gates; no git commit/push). Bead left `in_progress`.
+The candidate is applied **in memory** on the loaded `mock/data.js` cloud record, never in
+`data/json/creatures.json`.
+
+### Retired-frame reconciliation (Cloud Sweep / survival-order gate / KO risk)
+
+The bead text was authored for the retired Pokemon/SMT engine (per-move power, ordered turns,
+SPDDWN status, an AI survival/order gate, projected KO risk). **None of those concepts exist in
+the five-type RPS duel.**
+
+- `src/engine/battle/Ai.cpp` (the only SPDDWN/survival/order code) is the **legacy** AI, guarded
+  by `#ifndef CGFX_DUEL_BATTLE` and not compiled in the duel build. Its retired Sweep predicate is:
+  status moves run only when a damage move deals >0 and `self.hp > maxHp/2` (survival), and the
+  SPDDWN branch fires only when `enemy staged speed >= self staged speed` (order). Tie handling,
+  status-stage limits and RNG are all stat/effect mechanics the duel does not have.
+- The duel (`mock/battle-mock.js` wheel path, `src/engine/battle/DuelKernel.hpp`) has **no moves,
+  no power, no PP, no status, no speed, no stat reads**. Damage is the flat type web scaled by the
+  creature-type matchup: `relation(moveType,moveType)` (WIN 14 / CHIP 4 / TRADE 6) times
+  `creatureModifier` (x1.5/x1.0/x0.5). The AI's *only* decision is `aiDuelPick`: no-read prefers
+  the best `duelCreatureBonus` tier; read counters the guessed type or switches to a bench counter.
+  **Neither branch reads HP, damage, or a move-use count** — there is no survival gate, no order
+  gate, and no per-move selection at all.
+- "Cloud Sweep" folds to **the cloud creature's kit**: authored `cloud` (id 13, wind) has moves
+  `["water","fire"]` -> duel `attackMask` 10, maxHp 62; the `support` sample team is the only team
+  containing it (retyped `cloud`->water). The retired `sweep` move is authored type **`status`**,
+  which is not in the 5-type matrix, so `foldedKit` **filters it out of the duel kit entirely**.
+  The move is not "gated"; it is absent.
+
+### Measured effect (matrix5 team3 bonus cap200 reader, 25 pairs x 7 policies x 5 rates x 1000)
+
+Control/candidate are the tool's own versioned `--json` pair-sweep artifact over the real
+`tools/battle-duel-spike.mjs` seam. `A` = tier-aware control (reproduces ogh.18: W32.6/L64.1/D3.2/T0.0).
+
+| candidate (in-memory only) | W% | L% | D% | pairs changed | cells changed |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| A control (tier-aware baseline) | 32.6 | 64.1 | 3.2 | — | — |
+| **B1 "Cloud Sweep" (`cloud.moves` += `status`)** | 32.6 | 64.1 | 3.2 | **0/25** | **0/875** |
+| B2 sensitivity: `cloud.moves` = `["water"]` (drop kit slot) | 36.5 | 59.8 | 3.7 | 6/25 | 220/875 |
+
+- **B1 is exactly inert.** Only `provenance.fixtures.creatures` changes
+  (`f98c47f9…` -> `3aec3c54…`); every outcome, pacing, skew and per-pair/per-cell metric is
+  byte-identical (`diff` of the two artifacts is identical modulo the 64-hex hashes). This is the
+  precise proof: the retired Sweep's `status` type folds out of the duel kit, so re-adding it
+  cannot move a duel. **Every** support-team pair is unchanged (`support vs balanced` 19.9%,
+  `balanced vs support` 73.6%, `support vs trap` 52.1%, `retyped vs support` 7.6%, etc.).
+- **B2 confirms the duel *does* read cloud's folded kit** (6/25 pairs move; e.g.
+  `support vs trap` 52.1% -> 100%), so the inertness is specific to the move/status/gate concept,
+  not to cloud wholesale. But B2 is a *kit* change, not "Cloud Sweep": it is not this bead's
+  candidate and is reported only to isolate the null.
+
+### Projected KO risk (support team, shipped flat constants)
+
+No AI branch gates on this; it is the only KO notion the duel has (`build/reports/ogh.8/ko-risk.txt`):
+
+| tier | WIN | CHIP | TRADE |
+| --- | ---: | ---: | ---: |
+| x1.5 | 21 | 6 | 9 |
+| x1.0 | 14 | 4 | 6 |
+| x0.5 | 7 | 2 | 3 |
+
+cloud (maxHp 62), kit water/fire: best hits-to-KO vs bell 4, vs CoalGrub 3, vs cloud 5. Slowest
+9 hits. `oneHitKOs 0` (max hit 21 << 52 min maxHp). The clock is flat and AI-agnostic; "projected
+KO risk" in the retired sense (survival/order gating on it) does not exist.
+
+### Sign-off recommendation
+
+- **Recommendation: REJECT this trial as a balance lever.** "Cloud Sweep" is undefined in the
+  five-type duel: the move is a status type that folds out, and the survival/order gate and
+  per-move KO-risk policy live only in the unbuilt legacy `Ai.cpp`. The lever is **inert** (0/25
+  pairs, 0/875 cells), so there is nothing to keep or tune and **no shipped-constant sign-off is
+  requested** (no authored value changed).
+- If the owner wants cloud/cloud-adjacent behavior to matter, it is a **different** bead: either a
+  kit/type change (a shipped data edit — needs owner sign-off and AVR measurement), or a new duel
+  AI mechanic (design + budget), expressed through fields the duel already reads
+  (`moves`/kits, `types`, `maxHp`). This bead leaves `data/json/creatures.json` untouched.
+
+### Incidental finding (out of scope, not fixed)
+
+`mock/battle-mock.js` `aiDuelPick` (bonus no-read branch) dereferences `pool[rng.int(pool.length)]`
+with no zero-option guard; a creature whose kit folds to **no** usable attack type crashes the
+mock (`options.length === 0` -> `pool=[]` -> `undefined.index`). `DuelKernel.hpp` handles the same
+state as WAIT. A parity gap worth a follow-up bead, but unrelated to this trial and not edited.
+
+### Verify (commands + tails)
+
+```sh
+node build/reports/ogh.8/trial.mjs --battles 1000 --rounds 200 > build/reports/ogh.8/control.json          # exit 0, 22.6 s
+node build/reports/ogh.8/trial.mjs --battles 1000 --rounds 200 > build/reports/ogh.8/control-replay.json   # exit 0, 24.4 s
+cmp build/reports/ogh.8/control.json build/reports/ogh.8/control-replay.json                               # BYTE-IDENTICAL
+sha256 control.json = control-replay.json = 0e7af696077da99069edf6b845c70021f630c2905ab5f0bd4683be7f8992d837
+node build/reports/ogh.8/trial.mjs --battles 1000 --rounds 200 --variant status > build/reports/ogh.8/status.json
+node build/reports/ogh.8/compare.mjs control.json status.json
+  # pairs changed 0/25 ; cells changed 0/875 ; only provenance.fixtures.creatures changed
+node build/reports/ogh.8/trial.mjs --battles 1000 --rounds 200 --variant drop-fire > build/reports/ogh.8/drop-fire.json
+node build/reports/ogh.8/compare.mjs control.json drop-fire.json                                           # pairs changed 6/25 ; cells 220/875
+node build/reports/ogh.8/ko-risk.mjs                                                                       # KO-risk tiers + support hits-to-KO
+
+node --test tools/tests/battle-duel-spike_test.mjs tools/tests/duel-kernel-parity_test.mjs   # tests 26  pass 26  fail 0
+make sim-test BUILD_DIR=build CPPFLAGS='-I. -DCGFX_DUEL_BATTLE'                              # tests 6  pass 6  fail 0
+git diff --stat -- data/json/creatures.json data/json/moves.json                             # empty: authored files untouched
+```
+
+### Deviations (bead verify list superseded by dispatch scope)
+
+The bead's own VERIFY block assumes a landed data change (`make gen` + `make test` +
+`make verify-generated` + `make test-pack-parity` + `make fxtest-headless` + `make ram`). The
+dispatch put this worker **off the AVR/generation lane** and forbade `make gen`/AVR/gates and any
+shipped-constant change, so those steps do not apply and were not run: the trial is measurement +
+proposal only. The mandated gate for this scope is the Node duel suites + `make sim-test` above.
+A `--variant no-attack` probe (`cloud.moves=[]`) was dropped because it triggers the incidental
+mock crash above; it is not the candidate.
+
+### Storage
+
+`df -h .` 62 GiB free before/after (>=10 GiB reserve held). `du -sh build` 1.9G before and after.
+New artifacts confined to gitignored `build/reports/ogh.8/` (5 JSON + 3 scratch `.mjs` + txt,
+~3.4 MB). No build tree created; `sim-test` reused `build/duel-sim`. Pre-existing tracked edits by
+the generation-lane worker (`.beads/interactions.jsonl`, `src/engine/battle/BattleFlow.cpp`,
+`tst/duel_session_integration_test.hpp`) were not touched.
+
+### Wall time
+
+Worker ~25 min wall: read bead/output/docs/Ai.cpp/mock/kernel + reconcile ~10 min; harness
+(~4 min); control x2 + status + drop-fire (~1.5 min incl. 4x ~24 s sweeps); compare + KO-risk
+~3 min; node+sim tests ~2 min; report/storage remainder. No gate/orchestrator run (dispatch leaves
+the bead `in_progress`).
