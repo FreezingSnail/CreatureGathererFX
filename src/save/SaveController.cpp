@@ -1,6 +1,7 @@
 #include "SaveController.hpp"
 
 #include <avr/pgmspace.h>
+#include <stddef.h>
 #include <string.h>
 
 #include "../common.hpp"
@@ -13,6 +14,12 @@
 
 namespace SaveController {
 namespace {
+
+// SaveFile.lures[24] + consumables[8] are contiguous and match item::Inventory
+// exactly, so one 32-byte copy is the whole snapshot inventory block.
+static_assert(offsetof(SaveFile, lures) + sizeof(item::Inventory) ==
+                  offsetof(SaveFile, keyItems),
+              "snapshot inventory block must be contiguous before keyItems");
 
 SaveFile saveState = {};
 static_assert(sizeof(FLAG_BIT_ARRAY) <= sizeof(saveState.flags),
@@ -66,6 +73,11 @@ void captureLiveSaveState()
         saveState.plantPairs[i] = plants.plantPairs[i].serialize();
     saveState.plantTicker = plants.ticker;
 
+    // The one Player bag is the snapshot authority. keyItems[1..3] stay the
+    // canonical zero extension bytes from the memset above; only runtime key
+    // byte 0 is written.
+    memcpy(saveState.lures, &player.inventory, sizeof(player.inventory));
+    saveState.keyItems[0] = player.keyItems.bits[0];
 }
 
 void drawSavingStatus(bool failed)
@@ -166,6 +178,11 @@ bool load()
     for (uint8_t i = 0; i < 2; ++i)
         plants.plantPairs[i].restore(saveState.plantPairs[i]);
     plants.ticker = saveState.plantTicker;
+    // Restore the single Player bag from the snapshot and re-point any future
+    // battle item use at that same live bag.
+    memcpy(&player.inventory, saveState.lures, sizeof(player.inventory));
+    player.keyItems.bits[0] = saveState.keyItems[0];
+    item::setBattleInventory(&player.inventory);
     return true;
 }
 } // namespace SaveController

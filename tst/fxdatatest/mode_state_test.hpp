@@ -27,7 +27,7 @@ inline void test_mode_state(FxTest &test)
     gameState.playerLocation = 0x0A0B;
     player.party[0].id = 13;
     player.creatureHPs[0] = 81;
-    memset(player.items, 0x5A, sizeof(player.items));
+    memset(&player.inventory, 0x5A, sizeof(player.inventory));
 
     for (uint8_t i = 0; i < sizeof(worldState().script); ++i) {
         worldState().script[i] = static_cast<uint8_t>(0xA5 ^ i);
@@ -47,8 +47,8 @@ inline void test_mode_state(FxTest &test)
                   Chunk::chunkOfLocation(0x0A0B), F("persistent chunk retained"));
     test.expectEq(player.party[0].id, 13, F("party retained"));
     test.expectEq(player.creatureHPs[0], 81, F("player HP retained"));
-    for (uint8_t i = 0; i < sizeof(player.items); ++i) {
-        test.expectEq(reinterpret_cast<const uint8_t *>(player.items)[i], 0x5A,
+    for (uint8_t i = 0; i < sizeof(player.inventory); ++i) {
+        test.expectEq(reinterpret_cast<const uint8_t *>(&player.inventory)[i], 0x5A,
                       F("inventory retained"));
     }
     test.expectEq(WorldEngine::location(), 0x0A0B, F("world resynced from location"));

@@ -4,11 +4,13 @@
 #include "../src/GameState.hpp"
 #include "../src/engine/ModeState.hpp"
 #include "../src/plants/PlantGamestate.hpp"
+#include "../src/player/Player.hpp"
 #include "Arduboy2.h"
 
 GameState gameState;
 ModeState modeState;
 PlantGameState plants;
+Player player = Player();
 
 bool worldInteractionJustPressedA() { return false; }
 bool worldInteractionDialogActive() { return false; }

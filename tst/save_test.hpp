@@ -1,5 +1,6 @@
 #pragma once
 #include <string.h>
+#include <stddef.h>
 #include "test.hpp"
 #include "../src/save/Compaction.hpp"
 #include "../src/fxdata.h"
@@ -10,6 +11,8 @@
 #include "../src/creature/LevelCurve.hpp"
 #include "../src/flags/flag_bit_array.hpp"
 #include "../src/globals.hpp"
+#include "../src/item/Inventory.hpp"
+#include "../src/item/KeyItems.hpp"
 #include "../src/plants/PlantGamestate.hpp"
 
 namespace save_test_detail {
@@ -550,10 +553,80 @@ inline void PlayerStoreIntegrationTest(TestSuite &suite) {
     test.assert(player.creatureHPs[2],0,"empty entry restores HP zero");
     suite.addTest(test);
 }
+// The one Player-owned bag is the v3 snapshot authority. Proves nonzero lure,
+// consumable and key byte 0 round-trip while the version, 96-byte size and every
+// wire offset stay unchanged, the key extension bytes stay zero, and an
+// empty-reserve v3 snapshot still loads through the controller.
+inline void PlayerBagPersistenceTest(TestSuite &suite) {
+    using namespace save_test_detail;Test test(__func__);
+    test.assert(static_cast<uint8_t>(SAVE_VERSION), static_cast<uint8_t>(3), "v3 version unchanged");
+    test.assert(static_cast<uint8_t>(SAVE_SNAPSHOT_BYTES), static_cast<uint8_t>(96), "snapshot size unchanged");
+    test.assert(sizeof(SaveFile), static_cast<size_t>(96), "SaveFile stays 96 bytes");
+    test.assert(offsetof(SaveFile,lures), static_cast<size_t>(27), "lures wire offset");
+    test.assert(offsetof(SaveFile,consumables), static_cast<size_t>(51), "consumables wire offset");
+    test.assert(offsetof(SaveFile,keyItems), static_cast<size_t>(59), "keyItems wire offset");
+    test.assert(offsetof(SaveFile,future), static_cast<size_t>(63), "future wire offset");
+
+    fresh();
+    player=Player();
+    item::inventoryClear(player.inventory);
+    item::keyItemsClear(player.keyItems);
+    item::inventoryAdd(player.inventory,item::ItemKind::Lure,item::lureId(2,1),7);
+    item::inventoryAdd(player.inventory,item::ItemKind::Lure,item::lureId(0,2),3);
+    item::inventoryAdd(player.inventory,item::ItemKind::Consumable,4,9);
+    item::keyItemUnlock(player.keyItems,5);
+    SaveController::begin(GameState_t::WORLD);
+    for(uint16_t i=0;i<256 && saveInProgress();++i) SaveController::advance();
+    test.assert(gameState.state==GameState_t::WORLD,true,"bag save completes");
+    SaveFile stored={};
+    test.assert(saveFileLoad(stored),true,"bag snapshot loads");
+    test.assert(stored.lures[item::lureId(2,1)],static_cast<uint8_t>(7),"lure count captured");
+    test.assert(stored.lures[item::lureId(0,2)],static_cast<uint8_t>(3),"second lure captured");
+    test.assert(stored.consumables[4],static_cast<uint8_t>(9),"consumable count captured");
+    test.assert(stored.keyItems[0],static_cast<uint8_t>(1u<<5),"runtime key byte captured");
+    for(uint8_t i=1;i<4;++i) test.assert(stored.keyItems[i],static_cast<uint8_t>(0),"key extension byte stays zero");
+    for(uint8_t i=0;i<sizeof(stored.future);++i) test.assert(stored.future[i],static_cast<uint8_t>(0),"reserved tail stays zero");
+    test.assert(saveFileValid(stored),true,"nonzero bag snapshot validates");
+
+    // Wipe the live bag, reload, and prove the same one bag is restored.
+    player=Player();
+    test.assert(SaveController::load(),true,"bag checkpoint reloads");
+    test.assert(item::inventoryCount(player.inventory,item::ItemKind::Lure,item::lureId(2,1)),static_cast<uint8_t>(7),"live lure restored");
+    test.assert(item::inventoryCount(player.inventory,item::ItemKind::Consumable,4),static_cast<uint8_t>(9),"live consumable restored");
+    test.assert(item::keyItemUnlocked(player.keyItems,5),true,"live key unlocked restored");
+    test.assert(item::battleInventory()==&player.inventory,true,"battle pointer names the one bag");
+
+    // Existing v3 saves with empty reserves still load.
+    fresh();
+    player=Player();
+    item::inventoryClear(player.inventory);
+    item::keyItemsClear(player.keyItems);
+    SaveController::begin(GameState_t::WORLD);
+    for(uint16_t i=0;i<256 && saveInProgress();++i) SaveController::advance();
+    SaveFile empty={};test.assert(saveFileLoad(empty),true,"empty-reserve snapshot loads");
+    for(uint8_t i=0;i<24;++i) test.assert(empty.lures[i],static_cast<uint8_t>(0),"empty lure reserve stays zero");
+    for(uint8_t i=0;i<8;++i) test.assert(empty.consumables[i],static_cast<uint8_t>(0),"empty consumable reserve stays zero");
+    test.assert(empty.keyItems[0],static_cast<uint8_t>(0),"empty key byte stays zero");
+    test.assert(saveFileValid(empty),true,"empty-reserve v3 validates");
+    item::inventoryAdd(player.inventory,item::ItemKind::Lure,item::lureId(1,0),4);
+    test.assert(SaveController::load(),true,"empty-reserve v3 loads through controller");
+    test.assert(item::inventoryCount(player.inventory,item::ItemKind::Lure,item::lureId(1,0)),static_cast<uint8_t>(0),"empty reserve restores zero");
+
+    // Boundary validation stays on the existing offsets.
+    SaveFile edge=snapshot();edge.lures[0]=item::COUNT_MAX;
+    test.assert(saveFileValid(edge),true,"max count at a lure offset validates");
+    edge.lures[0]=static_cast<uint8_t>(item::COUNT_MAX+1);
+    test.assert(saveFileValid(edge),false,"count above max is refused");
+    edge=snapshot();edge.keyItems[0]=0xff;
+    test.assert(saveFileValid(edge),true,"runtime key byte 0 accepts any value");
+    edge.keyItems[1]=0x01;
+    test.assert(saveFileValid(edge),false,"key extension byte must stay zero");
+    suite.addTest(test);
+}
 inline void SaveSuite(TestRunner &runner) {
     TestSuite suite("Save Suite");CheckpointCollectionTest(suite);CollectionCapacityTest(suite);
     BoxedInstanceHPTest(suite);BoxedHPPublicationCutsTest(suite);SaveControllerCaptureHPCutsTest(suite);
     CheckpointCutTest(suite);JournalDecodeTest(suite);JournalPublicationTest(suite);ShippingSaveRestoreTest(suite);
     SaveFlagExtentTest(suite);GenerationWrapTest(suite);LegacyResetTest(suite);LiveReadBoundedTest(suite);
-    PlayerStoreIntegrationTest(suite);runner.addTestSuite(suite);
+    PlayerStoreIntegrationTest(suite);PlayerBagPersistenceTest(suite);runner.addTestSuite(suite);
 }

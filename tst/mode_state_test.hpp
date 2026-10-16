@@ -41,9 +41,9 @@ void ModeTransitionPersistentStateTest(TestSuite &suite) {
     player.party[0].level = 27;
     player.party[0].moves[0] = 9;
     player.creatureHPs[0] = 81;
-    memset(player.items, 0x5A, sizeof(player.items));
-    uint8_t inventory[sizeof(player.items)];
-    memcpy(inventory, player.items, sizeof(inventory));
+    memset(&player.inventory, 0x5A, sizeof(player.inventory));
+    uint8_t inventory[sizeof(player.inventory)];
+    memcpy(inventory, &player.inventory, sizeof(inventory));
 
     state.enterBattle();
     state.exitBattle();
@@ -63,7 +63,7 @@ void ModeTransitionPersistentStateTest(TestSuite &suite) {
     test.assert(player.creatureHPs[0], static_cast<uint8_t>(81),
                 "mode transitions preserve the player HP owner");
     for (uint8_t i = 0; i < sizeof(inventory); ++i) {
-        test.assert(reinterpret_cast<const uint8_t *>(player.items)[i], inventory[i],
+        test.assert(reinterpret_cast<const uint8_t *>(&player.inventory)[i], inventory[i],
                     "mode transitions preserve inventory bytes");
     }
     suite.addTest(test);
