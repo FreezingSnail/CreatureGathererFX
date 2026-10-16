@@ -116,27 +116,13 @@ const labels = contract.labels.creature;
 const edges = contract.evolution.edge;
 
 const creatures = readJson('data/json/creatures.json');
-const moves = readJson('data/json/moves.json');
 const strings = readText('data/text/strings.txt');
 const worldMap = readJson('maps/world_map.json');
 
 const creaturesById = new Map(creatures.map((c) => [c.id, c]));
-const moveIds = new Set(moves.map((m) => m.id));
-
-// movelists.csv is transposed: each row is a move (0..31), each column a
-// species id, and a 1 means the species may learn that move.
-function movelistMask(speciesId) {
-  const lines = readText('data/movelists.csv').replace(/\r/g, '').trimEnd().split('\n').slice(1);
-  const allowed = [];
-  lines.forEach((line, move) => {
-    const row = line.split('\t').map(Number);
-    if (row[speciesId] === 1) allowed.push(move);
-  });
-  return allowed;
-}
-function movelistSet(speciesId) {
-  return new Set(movelistMask(speciesId));
-}
+// Authored attack types are the five folded duel types (wind folds to water,
+// lightning to fire and elder to spirit at generation time).
+const DUEL_TYPES = new Set(['spirit', 'water', 'earth', 'fire', 'plant']);
 
 function battlePresets() {
   return parseToml(readText('data/battle-presets.toml')).preset;
@@ -245,10 +231,15 @@ test('contract ids, levels and slots stay within canonical limits', () => {
     assert.ok(creaturesById.has(member.species), `party species ${member.species} exists`);
     assert.equal(member.level, 3, 'starter party is level 3');
     assert.equal(member.full_hp, true, 'starter party starts at full HP');
-    assert.equal(member.moves.length, 4, 'each starter has four authored moves');
-    for (const move of member.moves) {
-      assert.ok(moveIds.has(move), `party move ${move} is a canonical move id`);
+    assert.ok(member.moves.length >= 1 && member.moves.length <= 5,
+      'each starter knows 1..5 distinct attack types');
+    assert.equal(new Set(member.moves).size, member.moves.length,
+      'starter attack types are distinct');
+    for (const type of member.moves) {
+      assert.ok(DUEL_TYPES.has(type), `party type ${type} is a duel type`);
     }
+    assert.deepEqual(member.moves, creaturesById.get(member.species).moves,
+      `party member ${member.species} types match the species authored moves`);
   }
   assert.deepEqual(parties.map((m) => m.species), [0, 3, 6]);
 
@@ -408,20 +399,18 @@ test('battle-presets beta roster agrees with the contract party', () => {
     assert.equal(preset.level, member.level, `beta preset member ${i} level`);
     assert.equal(creaturesById.get(member.species).name, preset.species,
       `beta preset member ${i} species name`);
-    assert.equal(preset.moves.length, 4);
-    const resolved = preset.moves.map((name) =>
-      name === 'none' ? 32 : moves.filter((m) => m.name === name)[0].id);
-    assert.deepEqual(resolved, member.moves, `beta preset member ${i} move ids match the contract`);
+    assert.deepEqual(preset.moves, member.moves,
+      `beta preset member ${i} attack types match the contract`);
   }
 });
 
-test('starter moves come from their movelists masks and canonical move lists', () => {
+test('starter attack types are the species authored type list', () => {
   for (const member of parties) {
-    const mask = movelistSet(member.species);
-    const canonical = new Set(creaturesById.get(member.species).moveList.map((m) => m.id));
-    for (const move of member.moves) {
-      assert.ok(mask.has(move), `species ${member.species} movelists mask allows move ${move}`);
-      assert.ok(canonical.has(move), `species ${member.species} canonical moveList contains ${move}`);
+    const authored = creaturesById.get(member.species).moves;
+    assert.ok(member.moves.length >= 1, `species ${member.species} knows at least one type`);
+    for (const type of member.moves) {
+      assert.ok(authored.includes(type),
+        `species ${member.species} authored moves include ${type}`);
     }
   }
 });

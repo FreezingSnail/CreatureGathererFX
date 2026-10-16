@@ -10985,3 +10985,122 @@ removed 108 Arduino cache objects (~2.5 MiB). No `cgfx-pack.*` stage remains; re
 ### Wall time
 Worker: ~1 session (generator + data + device + host/VM/device/gate). Gate: one `make final-gate`
 run (check + ram). No commit/push; bead left in_progress per dispatch.
+
+## 4w89.6 — parity/simulator/mock on the attackMask
+
+Worker loop, single session. The balance/parity toolchain now treats a creature kit as the
+authored 8-type `moves` name list folded onto the active type-count table; for the shipping
+5-type table that is exactly the per-creature 5-bit `attackMask` the device kernel reads. The
+packed move-id/`duelMoveTypes` representation is gone from the mock, the duel spike and the
+C++/JS parity driver.
+
+### What changed
+- `tools/battle-design-spike-data.mjs` (mock/data.js generator): dropped `data/json/moves.json`
+  and the global move table; each creature carries `moves` (deduped authored type names) +
+  frozen `attackMask` (bits 0..4 = `[spirit,water,earth,fire,plant]`, `DUEL` fold + `duelMask()`).
+  `moveUseLimit`/STAT_EFFECTS removed. `mock/matrices.js` regenerates byte-identical.
+- `tools/battle-matchup-solver.mjs` / `tools/battle-wheel-solve.mjs` / `tools/battle-matrices-spike.mjs`:
+  `rosterSets(creatures, order)` / `foldSets(creatures, map, order)` read `creature.moves` names.
+- `mock/battle-mock.js`: duel-only, mask-based. Retired the `current`/`trim` engines, `DATA.moves`,
+  `moveOf`/`isSpikeMove`/`computeDamage`/`planTurn`/`useSlots`, the `power` scoring spelling and the
+  `mode`/`lockMode` UI. Kit options are one per mask bit in ascending table order
+  (`foldedKit`/`duelOptionsFor`); benches, AI counters and switch logic read the same options.
+  `stances` (4-type exploration variant), `flat`/`bonus` scoring, multi-matrix selection (8/6/5/4)
+  and the team presets are retained.
+- `tools/battle-duel-spike.mjs`: `swap` policy uses the bench kit options (no `DATA.moves`).
+- `tools/duel-parity/duel_kernel_driver.cpp` already folded the `MEM` option list into `attackMask`
+  (4w89.2); `tools/tests/duel-kernel-parity_test.mjs` now derives that option list from
+  `mock.duelOptionsFor` (matrix order) instead of move ids, and fixed ROUND_CASES to valid mask
+  option indexes. `tools/duel-parity/README.md` documents the mask contract.
+- Tests updated to the mask: `mock/battle-mock.test.js` (duel-only rewrite, 23 tests),
+  `tools/tests/battle-design-spike-data_test.mjs`, `battle-design-spike-frame_test.mjs`,
+  `battle-duel-spike_test.mjs`, `battle-teams_test.mjs`, `battle-matrices-spike_test.mjs`.
+
+No AVR/device/generated-data source changed: `make gen` regenerates no tracked files, `src/fxdata.h`
+and `dist/fxdata.bin` are untouched.
+
+### Verification (exact commands + results)
+```
+node --test mock/battle-mock.test.js tools/tests/battle-duel-spike_test.mjs \
+  tools/tests/battle-teams_test.mjs tools/tests/battle-matrices-spike_test.mjs \
+  tools/tests/duel-kernel-parity_test.mjs            -> tests 49, pass 49, fail 0
+node tools/battle-duel-spike.mjs --battles 1000 --rounds 200
+make sim-test BUILD_DIR=build CPPFLAGS='-I. -DCGFX_DUEL_BATTLE'  -> tests 6, pass 6, fail 0
+make test BUILD_DIR=build                            -> Total Passed 258, Failed 0
+make testvm BUILD_DIR=build                          -> Total Passed 278, Failed 0
+make verify-generated BUILD_DIR=build                -> PASS (no output)
+make test-manifest BUILD_DIR=build                   -> fxdata-manifest PASS; ensure-generated PASS
+make test-generated-libs BUILD_DIR=build             -> generated-libs-invariants PASS; arena-demo-data PASS; first-unqualified-alias 28/0 PASS
+make test-pack-parity BUILD_DIR=build                -> layout equivalence PASS; pack parity PASS (fxdata.bin unchanged)
+```
+Adjacent suites kept green (not in the dispatch command but permanent): `battle-design-spike-data`
+8/0, `battle-design-spike-frame` 8/0, `battle-design-spike-matrix` 7/0, `battle-matchup-solver` 4/0,
+`battle-team-permutations` 7/0.
+
+### Five-type balance run (`--battles 1000 --rounds 200`, 5-type, team3, bonus)
+```
+duel spike · matrix5 team3 bonus · 1000 duels/cell · round cap 200
+player win % by AI read rate:  ~26–33% at 0% read .. ~31–59% at 100% read
+reader/random@50%      W 297 L 696 D  7 T 0 | med 15 p95 20 sw 0.0% ko 4064 ohk 0 | types water:6490 earth:2938 plant:2774 spirit:1752 fire:1431 (n=15385)
+reader/counter@50%     W 413 L 575 D 12 T 0 | med 15 p95 20 sw 0.0% ko 4131 ohk 0 | types water:6885 earth:3126 plant:2628 spirit:1408 fire:1332 (n=15379)
+frequency/counter@50%  W 455 L 532 D 13 T 0 | med 15 p95 21 sw 0.0% ko 4228 ohk 0 | types water:6842 earth:3218 plant:2637 fire:1461 spirit:1379 (n=15537)
+reader/swap@50%        W 306 L 683 D 11 T 0 | med 15 p95 21 sw 4.1% ko 4026 ohk 0 | types water:6302 earth:2921 plant:2647 spirit:1662 fire:1414 (n=14946)
+```
+- **No timeouts** anywhere; **no OHK**; median 14–16, p95 20–22 rounds; switch frequency 0% except the
+  `swap` policy (~3.7–4.1%).
+- **Player-favours skew:** random-rolled 3v3 vs the reading AI skews toward the AI (player win ~26–33%
+  at 0% read). The `counter` policy recovers ~41–49% at 50% read, ~49–59% at 100%.
+- **Type skew:** committed player attacks are water-heavy (`water` ~6.3–8.4k vs `fire` ~0.3–1.6k of
+  ~15k): many roster kits fold wind/water and fewer own a fire attack. Expected from dedupe-existing
+  migration; **constants not retuned** per dispatch.
+- Pair sweep (`--pair-sweep --battles 20`): 0 pairs with timeouts, 4 sample-team pairs sweep >80%
+  in every cell (`balanced vs trap`, `anchors vs {support,retyped,trap}`) — authored sample team
+  composition, not a mask regression.
+
+### Migrated opponent kits / balance skew (report only, no retune)
+Rows 1-19 of `data/opponents.csv` fold to mono-spirit (`attack_mask=0b00001`); the spike's random
+team rolls and the roster kits above carry the loss skew. As instructed, constants are untouched.
+
+### Re-baselined evidence (old -> new)
+```
+mock/data.js     sha256 5945c06f6a142a51 -> 3abe251e395b726e   (kit = authored moves + attackMask)
+mock/matrices.js sha256 84039cd4c9d273f0 -> 84039cd4c9d273f0   (unchanged; regeneration is stable)
+dist/fxdata.bin  sha256 518f4d84ac9e1df0                        (unchanged; pack parity still passes)
+```
+No packed-image / manifest / generated-lib baseline changed.
+
+### Deviations (documented, not faked)
+- `tools/tests/beta-area_test.mjs` is red **both before and after** this change (it top-level reads
+  the deleted `data/json/moves.json` + `data/movelists.csv` contract). It is authoring validation
+  (starters/presets), not the balance/parity toolchain, and is outside this bead's scope + verify
+  command; left untouched and reported for a follow-up bead.
+- Retired mock modes leave inert UI: `mock/{current,trim,duel}.html` still carry `data-mode` /
+  trim controls (now ignored; the mock always boots the duel) and `tools/battle-design-spike-preview.mjs`
+  still emits trim frames. The JS balance/parity toolchain is fully migrated; the browser preview
+  pages are a docs follow-up (visual verification is not part of acceptance).
+- `tools/tests/pack-parity_test.sh` still vendors the retired `movelists.txt`/`moves.bin` fixtures
+  from 4w89.2; untouched here.
+
+### Storage / disk
+`df -h .` free 54 GiB (>=10 GiB reserve). `du -sh build` 2.1 GiB before and after.
+`make clean-build-artifacts BUILD_DIR=build` -> "no eligible generated artifacts" (nothing to clean).
+No `cgfx-pack.*` stage remains (0 found). Single build lane, `BUILD_DIR=build` reused.
+
+### Wall time
+Worker ~1 session (mock generator + mock rewrite + parity + spike + host/VM/generated gate).
+No commit/push; bead left in_progress per dispatch.
+
+## 4w89.6 addendum — beta-area authoring contract migrated (orchestrator)
+
+4w89.2 migrated `creatures.json`/`opponents.csv`/`arena-demo.toml`/`battle-presets.toml` but missed
+`data/beta-area.toml`, so `tools/tests/beta-area_test.mjs` (red before and after 4w89.6) still read
+the deleted `data/json/moves.json`. Fixed:
+- `data/beta-area.toml`: party `moves` move-id lists → authored type lists (dedupe-existing:
+  species 0 `["water"]`, species 3 `["earth"]`, species 6 `["water"]`), matching the beta preset.
+- `tools/tests/beta-area_test.mjs`: dropped the `moves.json`/`movelists.csv`/`moveList` cross-checks;
+  asserts 1..5 distinct duel types per starter, distinctness, and agreement with the species authored
+  `moves` and the beta preset.
+- Deleted `data/movelists.csv` (retired moveset data; unreferenced after this change).
+
+`node --test tools/tests/beta-area_test.mjs` → 10/10; full `node --test tools/tests/*.mjs mock/*.test.js`
+→ 198/0.

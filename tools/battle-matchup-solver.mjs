@@ -186,12 +186,12 @@ export function stats(order, chart, sets) {
     unsatisfied: unsatisfiedDemands(order, chart, sets).length,
   };
 }
-export function rosterSets(creatureList, moves, order) {
+// Kits are the authored 8-type `moves` name list (CreatureGathererFX-4w89.6);
+// the packed move table is gone.
+export function rosterSets(creatureList, order) {
   return creatureList.map((creature) => ({
     name: creature.name,
     types: [...new Set(creature.moves
-      .filter((id) => id != null)
-      .map((id) => moves[id].type)
       .filter((type) => !order || order.includes(type)))],
   }));
 }
@@ -200,7 +200,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const { WHEEL } = await import('./battle-wheel.mjs');
   const data = JSON.parse(fs.readFileSync(path.join(repo, 'mock/data.js'), 'utf8')
     .replace(/^[\s\S]*?const DATA = /, '').replace(/;\n[\s\S]*$/, ''));
-  const sets = rosterSets(data.creatures, data.moves, WHEEL.order);
+  const sets = rosterSets(data.creatures, WHEEL.order);
   const chart = chartFromEdges(WHEEL.order, WHEEL.edges);
   const report = stats(WHEEL.order, chart, sets);
   console.log(`edges ${report.edges}, decisive ${(report.decisiveFraction * 100).toFixed(0)}%, `

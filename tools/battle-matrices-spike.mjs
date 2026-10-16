@@ -78,12 +78,12 @@ function foldEdges(edges, map) {
   return folded;
 }
 
-function foldSets(creatureList, moves, map, order) {
+// Kits are the authored 8-type `moves` name list (CreatureGathererFX-4w89.6).
+function foldSets(creatureList, map, order) {
   return creatureList.map((creature) => ({
     name: creature.name,
     types: [...new Set(creature.moves
-      .filter((id) => id != null)
-      .map((id) => map[moves[id].type])
+      .map((type) => map[type])
       .filter((type) => type && order.includes(type)))],
   }));
 }
@@ -95,7 +95,7 @@ export function buildMatrices() {
   for (const count of [8, 6, 5, 4]) {
     const fold = FOLDS[count];
     const seedEdges = foldEdges(fold.seedEdges, fold.map);
-    const sets = foldSets(data.creatures, data.moves, fold.map, fold.order);
+    const sets = foldSets(data.creatures, fold.map, fold.order);
     let seed = 4242 + count;
     const rng = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
     const solution = solveWeb(fold.order, seedEdges, sets, { attempts: 400, rng });

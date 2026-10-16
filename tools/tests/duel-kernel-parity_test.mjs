@@ -70,14 +70,12 @@ function foldedTypes(state, side, slot) {
     .sort((a, b) => a - b);
 }
 
+// Kit option indexes (matrix order) for a party slot — the same list the device
+// kernel derives from the 5-bit `attackMask` on the shipping 5-type table.
 function foldedOptions(state, side, slot) {
   const matrix = mock.duelMatrix(state);
-  const creature = mock.creature(state.duelState.partyIndex[side][slot]);
-  return creature.moves
-    .filter((id) => id != null)
-    .map((id) => mock.DATA.moves[id])
-    .filter((move) => mock.isSpikeMove(move))
-    .map((move) => matrix.order.indexOf(mock.foldType(matrix, move.type)));
+  return mock.duelOptionsFor(state, side, slot)
+    .map((option) => matrix.order.indexOf(option.type));
 }
 
 function stateCommands(state) {
@@ -193,13 +191,14 @@ function assertRoundMatches(res, expected, label) {
 
 // --- round scenarios -------------------------------------------------------
 
-const SQ = 6;        // water [1], one water move
-const CRAB = 3;      // earth [2], earth moves
-const SCRAMBLE = 2;  // water/plant [1,4], four options
-const CACTUS = 26;   // earth/plant [2,4]
-const COAL = 48;     // earth/fire [2,3], fire option 0
-const SPORELING = 37;// spirit/plant [0,4], plant option 0
-const DRAGON = 29;   // spirit/plant [0,4], option 1 is water
+// Option lists are the per-creature 5-bit attack mask in ascending type order.
+const SQ = 6;        // water — options [water]
+const CRAB = 3;      // earth — options [earth]
+const SCRAMBLE = 2;  // options [water, plant]
+const CACTUS = 26;   // options [spirit, earth, plant]
+const COAL = 48;     // options [earth, fire]
+const SPORELING = 37;// options [spirit, plant]
+const DRAGON = 29;   // options [spirit, water]
 
 function attack(index) { return { kind: 0, index }; }
 function swap(slot) { return { kind: 1, index: slot }; }
@@ -212,9 +211,9 @@ const ROUND_CASES = [
   { name: 'ordinary-trade', youParty: [SQ], foeParty: [SQ], actions: [attack(0), attack(0)] },
   { name: 'trade-asymmetric', youParty: [DRAGON], foeParty: [SQ], actions: [attack(1), attack(0)] },
   { name: 'ordinary-lose', youParty: [CRAB], foeParty: [SQ], actions: [attack(0), attack(0)] },
-  { name: 'dual-bonus-win', youParty: [COAL], foeParty: [CACTUS], actions: [attack(0), attack(0)] },
-  { name: 'dual-half-win', youParty: [SPORELING], foeParty: [CACTUS], actions: [attack(0), attack(1)] },
-  { name: 'custom-option-index', youParty: [SCRAMBLE], foeParty: [SQ], actions: [attack(2), attack(0)] },
+  { name: 'fire-beats-plant-win', youParty: [COAL], foeParty: [CACTUS], actions: [attack(1), attack(2)] },
+  { name: 'spirit-loses-to-earth', youParty: [SPORELING], foeParty: [CACTUS], actions: [attack(0), attack(1)] },
+  { name: 'custom-option-index', youParty: [SCRAMBLE], foeParty: [SQ], actions: [attack(1), attack(0)] },
   { name: 'retype-override', youParty: [SCRAMBLE], foeParty: [SCRAMBLE],
     foeTypes: ['plant', 'plant', 'plant'], youTypes: null, actions: [attack(0), attack(0)] },
   { name: 'retype-bonus', youParty: [DRAGON], foeParty: [CRAB],

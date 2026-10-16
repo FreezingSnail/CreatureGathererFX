@@ -5,7 +5,8 @@ import fs from 'node:fs';
 import {
   buildSpikeData,
   serializeSpikeData,
-  moveUseLimit,
+  duelMask,
+  DUEL,
   OUTPUT,
   MERGED,
 } from '../battle-design-spike-data.mjs';
@@ -15,7 +16,7 @@ test('committed spike data matches a fresh generation', () => {
   assert.equal(committed, serializeSpikeData(buildSpikeData()));
 });
 
-test('creature records match authored creatures and equipped moves', () => {
+test('creature records match authored creatures and carry a folded attackMask', () => {
   const data = buildSpikeData();
   const authored = JSON.parse(fs.readFileSync('data/json/creatures.json', 'utf8'));
   assert.equal(data.creatures.length, authored.length);
@@ -24,12 +25,25 @@ test('creature records match authored creatures and equipped moves', () => {
     assert.equal(creature.name, source.name);
     assert.ok(creature.types.length >= 1 && creature.types.length <= 2);
     assert.ok(creature.maxHp > 30);
-    for (const id of creature.moves) {
-      if (id === null) continue;
-      assert.ok(data.moves[id], `move ${id} missing`);
-    }
+    assert.ok(creature.moves.length >= 1, `${creature.name} has at least one attack type`);
+    for (const type of creature.moves) assert.ok(type in DUEL.map, `${creature.name}: ${type}`);
+    assert.equal(creature.attackMask, duelMask(creature.moves), `${creature.name} attackMask`);
+    assert.ok(creature.attackMask > 0 && creature.attackMask < 32, `${creature.name} mask in range`);
     for (const type of creature.types) assert.ok(MERGED.map[type], type);
     for (const merged of creature.merged) assert.ok(MERGED.order.includes(merged));
+  }
+  // The packed move table is gone.
+  assert.ok(!('moves' in data), 'no global move table');
+});
+
+test('the frozen duel fold matches data/duel.toml and the kernel order', () => {
+  const toml = fs.readFileSync('data/duel.toml', 'utf8');
+  assert.deepEqual(DUEL.order, ['spirit', 'water', 'earth', 'fire', 'plant']);
+  const order = /order = \[([^\]]+)\]/.exec(toml)[1]
+    .split(',').map((token) => token.trim().replace(/"/g, ''));
+  assert.deepEqual(order, DUEL.order, 'fold order matches authored duel.toml');
+  for (const [from, to] of Object.entries(DUEL.map)) {
+    assert.match(toml, new RegExp(`^${from} = "${to}"$`, 'm'), `fold.map ${from} = ${to}`);
   }
 });
 
@@ -56,24 +70,21 @@ test('merged four-type chart is a clean beat cycle', () => {
   });
 });
 
-test('eight-type web satisfies every roster set pair with a solver proof', async () => {
+test('eight-type web satisfies every roster kit pair with a solver proof', async () => {
   const solver = await import('../battle-matchup-solver.mjs');
   const data = buildSpikeData();
   const { order, chart, edges, cycles } = data.wheel;
   assert.equal(order.length, 8);
-  assert.equal(edges.length, edges.length);
   assert.ok(cycles.length >= 4, 'overlapping triangles, not a single ring');
   const convention = solver.chartFromEdges(order, edges);
   assert.deepEqual(convention, chart, 'chart mirrors the edge list');
-  const sets = solver.rosterSets(data.creatures, data.moves, order);
+  const sets = solver.rosterSets(data.creatures, order);
   const unsatisfied = solver.unsatisfiedDemands(order, chart, sets);
   assert.equal(unsatisfied.length, 0, `${unsatisfied.length} set pairs without a positive matchup`);
-  // Not everything matches: keep a meaningful neutral fraction.
   const decisive = solver.edgeList(order, chart).length;
   const fraction = decisive / (order.length * (order.length - 1));
   assert.ok(fraction > 0.2 && fraction < 0.7, `decisive fraction ${fraction.toFixed(2)}`);
   assert.ok(chart.some((row) => row.includes(1)), 'neutral cells exist');
-  // No mutual edges and no immunity.
   for (let row = 0; row < 8; row++) {
     for (let col = 0; col < 8; col++) {
       assert.notEqual(chart[row][col], 0);
@@ -92,18 +103,6 @@ test('production chart keeps authored 8x8 values', () => {
   for (const row of data.chart) {
     assert.equal(row.length, 8);
     for (const value of row) assert.ok([0, 0.5, 1, 2].includes(value));
-  }
-});
-
-test('move use limits follow the production rule', () => {
-  assert.equal(moveUseLimit({ power: 0, effect: 'ATKUP' }), 3);
-  assert.equal(moveUseLimit({ power: 0, effect: 'NONE' }), 255);
-  assert.equal(moveUseLimit({ power: 10, effect: 'NONE' }), 2);
-  assert.equal(moveUseLimit({ power: 5, effect: 'PINNED' }), 2);
-  assert.equal(moveUseLimit({ power: 5, effect: 'NONE' }), 255);
-  const data = buildSpikeData();
-  for (const move of Object.values(data.moves)) {
-    assert.equal(move.limit, moveUseLimit(move));
   }
 });
 

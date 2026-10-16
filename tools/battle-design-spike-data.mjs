@@ -1,9 +1,14 @@
 #!/usr/bin/env node
 // Generate mock/data.js from authored sources.
-// Inputs: data/json/creatures.json, data/json/moves.json, data/typetable.csv,
+// Inputs: data/json/creatures.json, data/typetable.csv, data/duel.toml (fold),
 //         docs/assets/battle-sprites48/manifest.json, images/ArduFontTrimmed_5x6.png
 // Run: node tools/battle-design-spike-data.mjs
 // Test: node --test tools/tests/battle-design-spike-data_test.mjs
+//
+// Kits are the authored 8-type `moves` name list (CreatureGathererFX-4w89.6);
+// the packed move table is gone. Each creature also carries the frozen 5-bit
+// duel `attackMask` (bits 0..4 = [spirit, water, earth, fire, plant]) that the
+// device kernel reads.
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -42,7 +47,30 @@ export const MERGED = {
 // Edges live in tools/battle-wheel.mjs; the solver
 // (tools/battle-matchup-solver.mjs) proves every roster move-set pair has at
 // least one positive matchup and proposes fixes for violations.
-const STAT_EFFECTS = ['ATKUP', 'SPDUP', 'DEFUP', 'SPCAUP', 'ATKDWN', 'SPDDWN'];
+
+// Frozen 5-type duel fold (docs/moveset-type-mask-brief.md, data/duel.toml
+// [fold]). Duplicated here so the spike does not parse TOML; the parity test
+// pins it against the device kernel fold.
+export const DUEL = {
+  order: ['spirit', 'water', 'earth', 'fire', 'plant'],
+  map: {
+    spirit: 'spirit', elder: 'spirit',
+    water: 'water', wind: 'water',
+    earth: 'earth',
+    fire: 'fire', lightning: 'fire',
+    plant: 'plant',
+  },
+};
+
+export function duelMask(moveTypes) {
+  let mask = 0;
+  for (const type of moveTypes) {
+    const folded = DUEL.map[type];
+    if (!folded) throw Error(`no duel fold for authored type ${type}`);
+    mask |= 1 << DUEL.order.indexOf(folded);
+  }
+  return mask;
+}
 
 function readJson(relative) {
   return JSON.parse(fs.readFileSync(path.join(repo, relative), 'utf8'));
@@ -84,12 +112,6 @@ function stat(level, seed) {
   return 2 * level + seed * Math.floor(level / 3);
 }
 
-export function moveUseLimit(move) {
-  if (move.power === 0 && STAT_EFFECTS.includes(move.effect)) return 3;
-  if (move.power >= 10 || move.effect !== 'NONE') return 2;
-  return 255;
-}
-
 function glyphBit(image, x, y) {
   return image.pixels[(y * image.width + x) * 4] >= 128 ? '1' : '0';
 }
@@ -97,7 +119,6 @@ function glyphBit(image, x, y) {
 export function buildSpikeData() {
   const typeChart = parseTypeChart();
   const creaturesJson = readJson('data/json/creatures.json');
-  const movesJson = readJson('data/json/moves.json');
   const manifest = readJson('docs/assets/battle-sprites48/manifest.json');
   const font = decodePng(fs.readFileSync(path.join(repo, 'images/ArduFontTrimmed_5x6.png')));
 
@@ -111,16 +132,6 @@ export function buildSpikeData() {
       for (let x = 0; x < 5; x++)
         bits += glyphBit(font, index * 5 + x, y);
     glyphs.push(bits);
-  }
-
-  const moves = {};
-  for (const move of movesJson) {
-    if (moves[move.id]) throw Error(`duplicate move id ${move.id}`);
-    moves[move.id] = {
-      id: move.id, name: move.name, type: move.type,
-      power: move.power, physical: !!move.physical,
-      effect: move.effect, limit: moveUseLimit(move),
-    };
   }
 
   const spriteById = new Map();
@@ -145,12 +156,9 @@ export function buildSpikeData() {
     const sprite = spriteById.get(creature.id);
     if (!sprite || !sprite.front || !sprite.back)
       throw Error(`missing sprites for ${creature.name}`);
-    const equipped = [];
-    for (const id of [creature.move1, creature.move2, creature.move3, creature.move4]) {
-      if (id === 32) { equipped.push(null); continue; }
-      if (id === 255 || !moves[id]) throw Error(`bad equipped move ${id} on ${creature.name}`);
-      equipped.push(id);
-    }
+    const moves = [...new Set(creature.moves)];
+    for (const type of moves)
+      if (!(type in DUEL.map)) throw Error(`bad authored move type ${type} on ${creature.name}`);
     return {
       id: creature.id, name: creature.name, types: types(creature),
       merged: mergedTypes(creature),
@@ -162,7 +170,8 @@ export function buildSpikeData() {
         speed: stat(SPIKE_LEVEL, creature.spd),
       },
       maxHp: stat(SPIKE_LEVEL, creature.hp) + 30,
-      moves: equipped,
+      moves,
+      attackMask: duelMask(moves),
       front: sprite.front, back: sprite.back,
     };
   });
@@ -178,7 +187,7 @@ export function buildSpikeData() {
     },
     wheel: (() => {
       const chart = chartFromEdges(WHEEL.order, WHEEL.edges);
-      const sets = rosterSets(creatures, moves, WHEEL.order);
+      const sets = rosterSets(creatures, WHEEL.order);
       const unsatisfied = unsatisfiedDemands(WHEEL.order, chart, sets);
       if (unsatisfied.length) {
         const first = unsatisfied.slice(0, 6)
@@ -194,15 +203,14 @@ export function buildSpikeData() {
       };
     })(),
     font: { firstChar, width: 5, height: 6, glyphs },
-    moves,
     creatures,
   };
 }
 
 export function serializeSpikeData(data) {
   return '// Generated by tools/battle-design-spike-data.mjs. Do not hand-edit.\n'
-    + '// Sources: data/json/creatures.json, data/json/moves.json, data/typetable.csv,\n'
-    + '// docs/assets/battle-sprites48/manifest.json, images/ArduFontTrimmed_5x6.png.\n'
+    + '// Sources: data/json/creatures.json, data/typetable.csv, docs/assets/battle-sprites48/manifest.json,\n'
+    + '// images/ArduFontTrimmed_5x6.png. Kits are the authored 8-type moves list + 5-bit duel attackMask.\n'
     + '// Loads as a browser script (window.CGFX_SPIKE_DATA) or CommonJS (module.exports).\n'
     + '(function (root) {\n'
     + '  const DATA = ' + JSON.stringify(data) + ';\n'
@@ -217,6 +225,5 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   fs.writeFileSync(path.join(repo, OUTPUT), text);
   const data = buildSpikeData();
   console.log(`PASS: wrote ${OUTPUT} (${data.creatures.length} creatures, `
-    + `${Object.keys(data.moves).length} moves, ${data.font.glyphs.length} glyphs, `
-    + `${text.length} bytes)`);
+    + `${data.font.glyphs.length} glyphs, ${text.length} bytes)`);
 }

@@ -6,6 +6,13 @@
 canonical mock (`mock/battle-mock.js`, 5-type matrix, bonus scoring) without
 reimplementing any rule.
 
+The kernel now stores a creature's folded kit as a 5-bit `attackMask` (bit *i* =
+duel type *i* in the order `[spirit, water, earth, fire, plant]`), matching the
+generated per-creature `attackMask[]`. `MEM` still takes the folded option list on
+the wire and folds it into that mask; the parity test derives that list from the
+mock's own kit (`mock.duelOptionsFor`), which for the 5-type table is the same mask
+bit order.
+
 Build (one small reuse of the shared host lane, no AVR):
 
 ```sh
@@ -23,7 +30,7 @@ Commands (stdin, one per line) and their single output line:
 | Command | Output |
 | --- | --- |
 | `STATE <c0> <c1> <a0> <a1> <outcome>` | `OK` |
-| `MEM <side> <slot> <id> <tc> <t0> <t1> <hp> <maxHp> <oc> <o...>` | `OK` |
+| `MEM <side> <slot> <id> <tc> <t0> <t1> <hp> <maxHp> <oc> <o...>` | `OK` (the `o...` folded types become the member's `attackMask`) |
 | `CLEARHIST` / `HIST <n> <h...>` | `OK` |
 | `SEED <seed> <skip>` | `OK` |
 | `AICONT <persona> <readRate>` | `PICK <kind> <index>` |
