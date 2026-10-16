@@ -1,9 +1,6 @@
 #include "../../src/lib/ReadData.hpp"
 #include "../../src/lib/FxRead.hpp"
-#include "../../src/lib/MoveIds.hpp"
 #include <avr/pgmspace.h>
-#include "parseCSV.hpp"
-#include "../fxdatatest/generated/move_data.hpp"
 #include "../fxdatatest/generated/creature_data.hpp"
 #include "../fxdatatest/generated/opponent_data.hpp"
 
@@ -33,12 +30,6 @@ uint8_t readEffectStringWidth() {
     return 75;
 }
 
-Move readMoveFX(uint8_t index) {
-    FxReadCounter::record();
-    index = moveRecordIndex(index);
-    return index < moveFixtureCount ? Move(moveFixtures[index]) : Move();
-}
-
 uint8_t getEffectRateFX(uint8_t id) {
     return 100;
 }
@@ -64,11 +55,7 @@ OpponentSeed readOpponentSeed(uint8_t index) {
 }
 
 CreatureData_t getCreatureFromStore(uint8_t id) {
-    if (id >= 32 && id < creatureFixtureCount) return creatureFixtures[id];
-    CreatureData_t cseed;
-    std::string line = readLineFromCSV(CREATURECSV, id);
-    CSVCreature csvCreature = parseCSVLineToCreature(line);
-    // printCSVCreature(csvCreature);
-    cseed = CSVCreatureConvert(csvCreature);
+    if (id < creatureFixtureCount) return creatureFixtures[id];
+    CreatureData_t cseed{};
     return cseed;
 }

@@ -11,7 +11,7 @@ inline void fill(battle::ActionResult &result, bool knockout) {
     const CreatureData_t *opponent = creatureFixtures + 31;
     const uint8_t opponentSpecies = pgm_read_byte(&opponent->id);
     result.kind = battle::ResultKind::Attack;
-    result.index = pgm_read_byte(&creatureFixtures->move1);
+    result.index = pgm_read_byte(&creatureFixtures->attackMask);
     result.speciesBefore[0] = playerSpecies;
     result.speciesBefore[1] = opponentSpecies;
     result.maxHpBefore[0] = result.maxHpBefore[1] = 100;

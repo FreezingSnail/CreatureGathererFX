@@ -15,8 +15,8 @@ inline void test_mode_state(FxTest &test)
     test.expectEq(sizeof(WorldTransient), 193, F("world payload size"));
     test.expectEq(sizeof(ModeState), sizeof(WorldTransient), F("AVR mode union size"));
     test.expectEq(alignof(WorldTransient), 1, F("world payload alignment"));
-    test.expectEq(sizeof(battle::Combatant), 36, F("AVR combatant size"));
-    test.expectEq(sizeof(battle::BattleState), 124, F("AVR battle state size"));
+    test.expectEq(sizeof(battle::Combatant), 6, F("AVR duel combatant size"));
+    test.expectEq(sizeof(battle::BattleState), 46, F("AVR duel battle state size"));
 #ifdef CGFX_BATTLE_COMPACT_RESULT
     test.expectEq(sizeof(battle::ActionResult), 7, F("compact action result size"));
     test.expectEq(sizeof(battle::BattleSession), 142, F("compact battle session size"));

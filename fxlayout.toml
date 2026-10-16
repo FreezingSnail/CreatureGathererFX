@@ -10,16 +10,14 @@ source = { expand = { path = "fxdata/generated/opponents.txt" } }
 source = { expand = { path = "fxdata/data/creatureData.txt" } }
 
 [[entry]]
-source = { expand = { path = "fxdata/generated/moves.txt" } }
-
-[[entry]]
 source = { expand = { path = "fxdata/data/event.txt" } }
 
 [[entry]]
 source = { expand = { path = "fxdata/data/mapData.txt" } }
 
+# Per-creature folded 5-bit attack masks; replaces the retired packed moveList.
 [[entry]]
-source = { expand = { path = "fxdata/data/movelists.txt" } }
+source = { expand = { path = "fxdata/generated/attackMask.txt" } }
 
 [[entry]]
 source = { expand = { path = "fxdata/data/menu.txt" } }
@@ -46,10 +44,6 @@ source = { image = { path = "images/ArduFontTrimmed_5x6.png", width = 5, height 
 [[entry]]
 name = "type_table"
 source = { raw = "fxdata/generated/typetable.bin" }
-
-[[entry]]
-name = "move_table"
-source = { raw = "fxdata/generated/moves.bin" }
 
 [[entry]]
 name = "map_data"

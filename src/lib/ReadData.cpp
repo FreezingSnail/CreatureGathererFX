@@ -1,6 +1,5 @@
 #include "ReadData.hpp"
 #include "FxRead.hpp"
-#include "MoveIds.hpp"
 #include <avr/pgmspace.h>
 #include "../fxdata.h"
 
@@ -67,18 +66,6 @@ uint24_t readEffectStringAddress() {
 uint8_t getEffectRateFX(uint8_t id) {
     return 100;
 }
-Move readMoveFX(uint8_t index) {
-    index = moveRecordIndex(index);
-    if (index == EMPTY_MOVE_ID) return Move();
-    uint32_t buffer;
-    Move move;
-    auto offset = sizeof(uint32_t) * index;
-    uint24_t rowAddress = move_table + offset;
-    buffer = FxRead::indexed32(rowAddress, 0);
-    move = Move(buffer);
-    return move;
-}
-
 OpponentSeed readOpponentSeed(uint8_t index) {
     OpponentSeed seed = OpponentSeed{0, 0, 1};
     uint24_t rowAddress = FxRead::indexed24(opts, index);

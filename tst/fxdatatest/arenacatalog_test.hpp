@@ -25,24 +25,16 @@ inline void test_arenacatalog(FxTest &test)
                   true, F("last player member reads"));
     test.expectEq(member.species, static_cast<uint8_t>(13),
                   F("last player species"));
-    test.expectEq(member.moveIds[3], static_cast<uint8_t>(10),
-                  F("last player member fourth move"));
-    test.expectEq(member.moveIds[2], static_cast<uint8_t>(39),
-                  F("last player member third move"));
-    test.expectEq(member.moveIds[1], static_cast<uint8_t>(23),
-                  F("last player member second move"));
-    test.expectEq(member.moveIds[0], static_cast<uint8_t>(11),
-                  F("last player member first move"));
+    test.expectEq(member.attackMask, static_cast<uint8_t>(10),
+                  F("last player member attack mask (water|fire)"));
     test.expectEq(FxReadCounter::markUpdate(), true,
                   F("last player member transition allowance is exact"));
 
     FxReadCounter::resetFrame();
     test.expectEq(arena::readPlayerMember(ArenaDemoIds::player_utility, 0, member),
-                  true, F("member with empty move slots reads"));
-    test.expectEq(member.moveIds[2], static_cast<uint8_t>(32),
-                  F("empty move sentinel is preserved"));
-    test.expectEq(member.moveIds[3], static_cast<uint8_t>(32),
-                  F("second empty move sentinel is preserved"));
+                  true, F("single-type member reads"));
+    test.expectEq(member.attackMask, static_cast<uint8_t>(1),
+                  F("spirit-only attack mask is preserved"));
 
     arena::Member unchangedMember = member;
     const uint8_t readsBeforeInvalid = FxReadCounter::count();

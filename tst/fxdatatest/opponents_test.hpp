@@ -14,19 +14,19 @@ void DGF test_opponents(FxTest &t) {
                       F("readOpponentSeed.p0.id"), index);
         t.expectEqIdx(actual.firstCreature.lvl, fixture.firstCreature.lvl,
                       F("readOpponentSeed.p0.level"), index);
-        t.expectEqIdx(actual.firstCreature.moves, fixture.firstCreature.moves,
-                      F("readOpponentSeed.p0.moves"), index);
+        t.expectEqIdx(actual.firstCreature.attackMask, fixture.firstCreature.attackMask,
+                      F("readOpponentSeed.p0.mask"), index);
         t.expectEqIdx(actual.secondCreature.id, fixture.secondCreature.id,
                       F("readOpponentSeed.p1.id"), index);
         t.expectEqIdx(actual.secondCreature.lvl, fixture.secondCreature.lvl,
                       F("readOpponentSeed.p1.level"), index);
-        t.expectEqIdx(actual.secondCreature.moves, fixture.secondCreature.moves,
-                      F("readOpponentSeed.p1.moves"), index);
+        t.expectEqIdx(actual.secondCreature.attackMask, fixture.secondCreature.attackMask,
+                      F("readOpponentSeed.p1.mask"), index);
         t.expectEqIdx(actual.thirdCreature.id, fixture.thirdCreature.id,
                       F("readOpponentSeed.p2.id"), index);
         t.expectEqIdx(actual.thirdCreature.lvl, fixture.thirdCreature.lvl,
                       F("readOpponentSeed.p2.level"), index);
-        t.expectEqIdx(actual.thirdCreature.moves, fixture.thirdCreature.moves,
-                      F("readOpponentSeed.p2.moves"), index);
+        t.expectEqIdx(actual.thirdCreature.attackMask, fixture.thirdCreature.attackMask,
+                      F("readOpponentSeed.p2.mask"), index);
     }
 }

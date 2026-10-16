@@ -11,65 +11,8 @@
     "spcdef": 2,
     "hp": 3,
     "spd": 3,
-    "move1": 8,
-    "move2": 32,
-    "move3": 32,
-    "move4": 32,
-    "moveList": [
-      {
-        "id": 1,
-        "name": "thought",
-        "type": "spirit",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 4,
-        "name": "splash",
-        "type": "water",
-        "power": 5,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 8,
-        "name": "breeze",
-        "type": "wind",
-        "power": 5,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 9,
-        "name": "bellow",
-        "type": "wind",
-        "power": 10,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 10,
-        "name": "torrent",
-        "type": "wind",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 11,
-        "name": "blow",
-        "type": "wind",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      }
+    "moves": [
+      "water"
     ]
   },
   {
@@ -84,83 +27,8 @@
     "spcdef": 7,
     "hp": 8,
     "spd": 8,
-    "move1": 8,
-    "move2": 9,
-    "move3": 32,
-    "move4": 32,
-    "moveList": [
-      {
-        "id": 1,
-        "name": "thought",
-        "type": "spirit",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 4,
-        "name": "splash",
-        "type": "water",
-        "power": 5,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 5,
-        "name": "squirt",
-        "type": "water",
-        "power": 7,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 8,
-        "name": "breeze",
-        "type": "wind",
-        "power": 5,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 9,
-        "name": "bellow",
-        "type": "wind",
-        "power": 10,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 10,
-        "name": "torrent",
-        "type": "wind",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 11,
-        "name": "blow",
-        "type": "wind",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 26,
-        "name": "seedfall",
-        "type": "plant",
-        "power": 12,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      }
+    "moves": [
+      "water"
     ]
   },
   {
@@ -175,110 +43,9 @@
     "spcdef": 10,
     "hp": 12,
     "spd": 12,
-    "move1": 8,
-    "move2": 9,
-    "move3": 26,
-    "move4": 10,
-    "moveList": [
-      {
-        "id": 1,
-        "name": "thought",
-        "type": "spirit",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 3,
-        "name": "blast",
-        "type": "spirit",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 4,
-        "name": "splash",
-        "type": "water",
-        "power": 5,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 5,
-        "name": "squirt",
-        "type": "water",
-        "power": 7,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 8,
-        "name": "breeze",
-        "type": "wind",
-        "power": 5,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 9,
-        "name": "bellow",
-        "type": "wind",
-        "power": 10,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 10,
-        "name": "torrent",
-        "type": "wind",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 11,
-        "name": "blow",
-        "type": "wind",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 19,
-        "name": "stoke",
-        "type": "fire",
-        "power": 6,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "KINDLD"
-      },
-      {
-        "id": 26,
-        "name": "seedfall",
-        "type": "plant",
-        "power": 12,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 27,
-        "name": "root",
-        "type": "plant",
-        "power": 8,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      }
+    "moves": [
+      "water",
+      "plant"
     ]
   },
   {
@@ -293,65 +60,8 @@
     "spcdef": 3,
     "hp": 4,
     "spd": 2,
-    "move1": 13,
-    "move2": 12,
-    "move3": 32,
-    "move4": 32,
-    "moveList": [
-      {
-        "id": 1,
-        "name": "thought",
-        "type": "spirit",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 11,
-        "name": "blow",
-        "type": "wind",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 12,
-        "name": "dirtburst",
-        "type": "earth",
-        "power": 7,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 13,
-        "name": "slipfall",
-        "type": "earth",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 90,
-        "effect": "SPDDWN"
-      },
-      {
-        "id": 14,
-        "name": "dirtfall",
-        "type": "earth",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 15,
-        "name": "shatter",
-        "type": "earth",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 80,
-        "effect": "CONCUSED"
-      }
+    "moves": [
+      "earth"
     ]
   },
   {
@@ -366,83 +76,9 @@
     "spcdef": 9,
     "hp": 9,
     "spd": 6,
-    "move1": 13,
-    "move2": 20,
-    "move3": 32,
-    "move4": 32,
-    "moveList": [
-      {
-        "id": 1,
-        "name": "thought",
-        "type": "spirit",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 10,
-        "name": "torrent",
-        "type": "wind",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 11,
-        "name": "blow",
-        "type": "wind",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 12,
-        "name": "dirtburst",
-        "type": "earth",
-        "power": 7,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 13,
-        "name": "slipfall",
-        "type": "earth",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 90,
-        "effect": "SPDDWN"
-      },
-      {
-        "id": 14,
-        "name": "dirtfall",
-        "type": "earth",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 15,
-        "name": "shatter",
-        "type": "earth",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 80,
-        "effect": "CONCUSED"
-      },
-      {
-        "id": 20,
-        "name": "bolt",
-        "type": "lightning",
-        "power": 7,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      }
+    "moves": [
+      "earth",
+      "fire"
     ]
   },
   {
@@ -457,119 +93,9 @@
     "spcdef": 13,
     "hp": 13,
     "spd": 8,
-    "move1": 13,
-    "move2": 20,
-    "move3": 21,
-    "move4": 12,
-    "moveList": [
-      {
-        "id": 0,
-        "name": "smite",
-        "type": "spirit",
-        "power": 10,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 1,
-        "name": "thought",
-        "type": "spirit",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 10,
-        "name": "torrent",
-        "type": "wind",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 11,
-        "name": "blow",
-        "type": "wind",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 12,
-        "name": "dirtburst",
-        "type": "earth",
-        "power": 7,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 13,
-        "name": "slipfall",
-        "type": "earth",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 90,
-        "effect": "SPDDWN"
-      },
-      {
-        "id": 14,
-        "name": "dirtfall",
-        "type": "earth",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 15,
-        "name": "shatter",
-        "type": "earth",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 80,
-        "effect": "CONCUSED"
-      },
-      {
-        "id": 20,
-        "name": "bolt",
-        "type": "lightning",
-        "power": 7,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 21,
-        "name": "plasma",
-        "type": "lightning",
-        "power": 12,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 23,
-        "name": "zap",
-        "type": "lightning",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 24,
-        "name": "pollen",
-        "type": "plant",
-        "power": 6,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SAPPD"
-      }
+    "moves": [
+      "earth",
+      "fire"
     ]
   },
   {
@@ -584,65 +110,8 @@
     "spcdef": 3,
     "hp": 3,
     "spd": 3,
-    "move1": 4,
-    "move2": 32,
-    "move3": 32,
-    "move4": 32,
-    "moveList": [
-      {
-        "id": 1,
-        "name": "thought",
-        "type": "spirit",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 4,
-        "name": "splash",
-        "type": "water",
-        "power": 5,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 5,
-        "name": "squirt",
-        "type": "water",
-        "power": 7,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 6,
-        "name": "soak",
-        "type": "water",
-        "power": 10,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SOAKED"
-      },
-      {
-        "id": 7,
-        "name": "current",
-        "type": "water",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 13,
-        "name": "slipfall",
-        "type": "earth",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 90,
-        "effect": "SPDDWN"
-      }
+    "moves": [
+      "water"
     ]
   },
   {
@@ -657,83 +126,8 @@
     "spcdef": 8,
     "hp": 8,
     "spd": 8,
-    "move1": 4,
-    "move2": 7,
-    "move3": 32,
-    "move4": 32,
-    "moveList": [
-      {
-        "id": 1,
-        "name": "thought",
-        "type": "spirit",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 4,
-        "name": "splash",
-        "type": "water",
-        "power": 5,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 5,
-        "name": "squirt",
-        "type": "water",
-        "power": 7,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 6,
-        "name": "soak",
-        "type": "water",
-        "power": 10,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SOAKED"
-      },
-      {
-        "id": 7,
-        "name": "current",
-        "type": "water",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 13,
-        "name": "slipfall",
-        "type": "earth",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 90,
-        "effect": "SPDDWN"
-      },
-      {
-        "id": 14,
-        "name": "dirtfall",
-        "type": "earth",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 16,
-        "name": "burn",
-        "type": "fire",
-        "power": 8,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      }
+    "moves": [
+      "water"
     ]
   },
   {
@@ -748,128 +142,9 @@
     "spcdef": 12,
     "hp": 12,
     "spd": 12,
-    "move1": 4,
-    "move2": 7,
-    "move3": 17,
-    "move4": 6,
-    "moveList": [
-      {
-        "id": 1,
-        "name": "thought",
-        "type": "spirit",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 2,
-        "name": "wisper",
-        "type": "spirit",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 4,
-        "name": "splash",
-        "type": "water",
-        "power": 5,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 5,
-        "name": "squirt",
-        "type": "water",
-        "power": 7,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 6,
-        "name": "soak",
-        "type": "water",
-        "power": 10,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SOAKED"
-      },
-      {
-        "id": 7,
-        "name": "current",
-        "type": "water",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 13,
-        "name": "slipfall",
-        "type": "earth",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 90,
-        "effect": "SPDDWN"
-      },
-      {
-        "id": 14,
-        "name": "dirtfall",
-        "type": "earth",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 15,
-        "name": "shatter",
-        "type": "earth",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 80,
-        "effect": "CONCUSED"
-      },
-      {
-        "id": 16,
-        "name": "burn",
-        "type": "fire",
-        "power": 8,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 17,
-        "name": "melt",
-        "type": "fire",
-        "power": 12,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 20,
-        "name": "bolt",
-        "type": "lightning",
-        "power": 7,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 23,
-        "name": "zap",
-        "type": "lightning",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      }
+    "moves": [
+      "water",
+      "fire"
     ]
   },
   {
@@ -884,101 +159,8 @@
     "spcdef": 3,
     "hp": 9,
     "spd": 6,
-    "move1": 2,
-    "move2": 37,
-    "move3": 32,
-    "move4": 32,
-    "moveList": [
-      {
-        "id": 0,
-        "name": "smite",
-        "type": "spirit",
-        "power": 10,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 1,
-        "name": "thought",
-        "type": "spirit",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 2,
-        "name": "wisper",
-        "type": "spirit",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 3,
-        "name": "blast",
-        "type": "spirit",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 10,
-        "name": "torrent",
-        "type": "wind",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 11,
-        "name": "blow",
-        "type": "wind",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 13,
-        "name": "slipfall",
-        "type": "earth",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 90,
-        "effect": "SPDDWN"
-      },
-      {
-        "id": 14,
-        "name": "dirtfall",
-        "type": "earth",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 23,
-        "name": "zap",
-        "type": "lightning",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 37,
-        "name": "Sharpen",
-        "type": "status",
-        "power": 0,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "ATKUP"
-      }
+    "moves": [
+      "spirit"
     ]
   },
   {
@@ -993,110 +175,8 @@
     "spcdef": 8,
     "hp": 4,
     "spd": 9,
-    "move1": 19,
-    "move2": 16,
-    "move3": 32,
-    "move4": 32,
-    "moveList": [
-      {
-        "id": 1,
-        "name": "thought",
-        "type": "spirit",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 2,
-        "name": "wisper",
-        "type": "spirit",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 8,
-        "name": "breeze",
-        "type": "wind",
-        "power": 5,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 9,
-        "name": "bellow",
-        "type": "wind",
-        "power": 10,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 12,
-        "name": "dirtburst",
-        "type": "earth",
-        "power": 7,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 16,
-        "name": "burn",
-        "type": "fire",
-        "power": 8,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 17,
-        "name": "melt",
-        "type": "fire",
-        "power": 12,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 18,
-        "name": "torch",
-        "type": "fire",
-        "power": 12,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 19,
-        "name": "stoke",
-        "type": "fire",
-        "power": 6,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "KINDLD"
-      },
-      {
-        "id": 21,
-        "name": "plasma",
-        "type": "lightning",
-        "power": 12,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 24,
-        "name": "pollen",
-        "type": "plant",
-        "power": 6,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SAPPD"
-      }
+    "moves": [
+      "fire"
     ]
   },
   {
@@ -1111,92 +191,8 @@
     "spcdef": 8,
     "hp": 4,
     "spd": 7,
-    "move1": 20,
-    "move2": 32,
-    "move3": 32,
-    "move4": 32,
-    "moveList": [
-      {
-        "id": 1,
-        "name": "thought",
-        "type": "spirit",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 2,
-        "name": "wisper",
-        "type": "spirit",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 12,
-        "name": "dirtburst",
-        "type": "earth",
-        "power": 7,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 16,
-        "name": "burn",
-        "type": "fire",
-        "power": 8,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 17,
-        "name": "melt",
-        "type": "fire",
-        "power": 12,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 20,
-        "name": "bolt",
-        "type": "lightning",
-        "power": 7,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 21,
-        "name": "plasma",
-        "type": "lightning",
-        "power": 12,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 22,
-        "name": "coil",
-        "type": "lightning",
-        "power": 12,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "CHRGD"
-      },
-      {
-        "id": 23,
-        "name": "zap",
-        "type": "lightning",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      }
+    "moves": [
+      "fire"
     ]
   },
   {
@@ -1211,128 +207,8 @@
     "spcdef": 3,
     "hp": 6,
     "spd": 4,
-    "move1": 27,
-    "move2": 43,
-    "move3": 24,
-    "move4": 32,
-    "moveList": [
-      {
-        "id": 1,
-        "name": "thought",
-        "type": "spirit",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 6,
-        "name": "soak",
-        "type": "water",
-        "power": 10,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SOAKED"
-      },
-      {
-        "id": 8,
-        "name": "breeze",
-        "type": "wind",
-        "power": 5,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 10,
-        "name": "torrent",
-        "type": "wind",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 11,
-        "name": "blow",
-        "type": "wind",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 13,
-        "name": "slipfall",
-        "type": "earth",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 90,
-        "effect": "SPDDWN"
-      },
-      {
-        "id": 14,
-        "name": "dirtfall",
-        "type": "earth",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 18,
-        "name": "torch",
-        "type": "fire",
-        "power": 12,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 24,
-        "name": "pollen",
-        "type": "plant",
-        "power": 6,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SAPPD"
-      },
-      {
-        "id": 25,
-        "name": "pollenburst",
-        "type": "plant",
-        "power": 12,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SAPPD"
-      },
-      {
-        "id": 26,
-        "name": "seedfall",
-        "type": "plant",
-        "power": 12,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 27,
-        "name": "root",
-        "type": "plant",
-        "power": 8,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 43,
-        "name": "rejuvinate",
-        "type": "status",
-        "power": 0,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "INFSED"
-      }
+    "moves": [
+      "plant"
     ]
   },
   {
@@ -1347,128 +223,9 @@
     "spcdef": 3,
     "hp": 8,
     "spd": 8,
-    "move1": 11,
-    "move2": 23,
-    "move3": 39,
-    "move4": 10,
-    "moveList": [
-      {
-        "id": 1,
-        "name": "thought",
-        "type": "spirit",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 4,
-        "name": "splash",
-        "type": "water",
-        "power": 5,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 5,
-        "name": "squirt",
-        "type": "water",
-        "power": 7,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 6,
-        "name": "soak",
-        "type": "water",
-        "power": 10,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SOAKED"
-      },
-      {
-        "id": 7,
-        "name": "current",
-        "type": "water",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 8,
-        "name": "breeze",
-        "type": "wind",
-        "power": 5,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 9,
-        "name": "bellow",
-        "type": "wind",
-        "power": 10,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 10,
-        "name": "torrent",
-        "type": "wind",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 11,
-        "name": "blow",
-        "type": "wind",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 21,
-        "name": "plasma",
-        "type": "lightning",
-        "power": 12,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 23,
-        "name": "zap",
-        "type": "lightning",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 26,
-        "name": "seedfall",
-        "type": "plant",
-        "power": 12,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 39,
-        "name": "sweep",
-        "type": "status",
-        "power": 0,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "SPDDWN"
-      }
+    "moves": [
+      "water",
+      "fire"
     ]
   },
   {
@@ -1483,101 +240,9 @@
     "spcdef": 12,
     "hp": 11,
     "spd": 2,
-    "move1": 12,
-    "move2": 2,
-    "move3": 41,
-    "move4": 13,
-    "moveList": [
-      {
-        "id": 0,
-        "name": "smite",
-        "type": "spirit",
-        "power": 10,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 1,
-        "name": "thought",
-        "type": "spirit",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 2,
-        "name": "wisper",
-        "type": "spirit",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 12,
-        "name": "dirtburst",
-        "type": "earth",
-        "power": 7,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 13,
-        "name": "slipfall",
-        "type": "earth",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 90,
-        "effect": "SPDDWN"
-      },
-      {
-        "id": 14,
-        "name": "dirtfall",
-        "type": "earth",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 15,
-        "name": "shatter",
-        "type": "earth",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 80,
-        "effect": "CONCUSED"
-      },
-      {
-        "id": 16,
-        "name": "burn",
-        "type": "fire",
-        "power": 8,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 28,
-        "name": "burst",
-        "type": "elder",
-        "power": 8,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 41,
-        "name": "Ironbody",
-        "type": "status",
-        "power": 0,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "DEFUP"
-      }
+    "moves": [
+      "earth",
+      "spirit"
     ]
   },
   {
@@ -1592,92 +257,9 @@
     "spcdef": 4,
     "hp": 4,
     "spd": 8,
-    "move1": 13,
-    "move2": 17,
-    "move3": 12,
-    "move4": 32,
-    "moveList": [
-      {
-        "id": 1,
-        "name": "thought",
-        "type": "spirit",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 2,
-        "name": "wisper",
-        "type": "spirit",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 12,
-        "name": "dirtburst",
-        "type": "earth",
-        "power": 7,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 13,
-        "name": "slipfall",
-        "type": "earth",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 90,
-        "effect": "SPDDWN"
-      },
-      {
-        "id": 14,
-        "name": "dirtfall",
-        "type": "earth",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 15,
-        "name": "shatter",
-        "type": "earth",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 80,
-        "effect": "CONCUSED"
-      },
-      {
-        "id": 16,
-        "name": "burn",
-        "type": "fire",
-        "power": 8,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 17,
-        "name": "melt",
-        "type": "fire",
-        "power": 12,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 24,
-        "name": "pollen",
-        "type": "plant",
-        "power": 6,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SAPPD"
-      }
+    "moves": [
+      "earth",
+      "fire"
     ]
   },
   {
@@ -1692,137 +274,10 @@
     "spcdef": 6,
     "hp": 6,
     "spd": 12,
-    "move1": 12,
-    "move2": 17,
-    "move3": 9,
-    "move4": 32,
-    "moveList": [
-      {
-        "id": 0,
-        "name": "smite",
-        "type": "spirit",
-        "power": 10,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 1,
-        "name": "thought",
-        "type": "spirit",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 2,
-        "name": "wisper",
-        "type": "spirit",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 12,
-        "name": "dirtburst",
-        "type": "earth",
-        "power": 7,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 13,
-        "name": "slipfall",
-        "type": "earth",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 90,
-        "effect": "SPDDWN"
-      },
-      {
-        "id": 14,
-        "name": "dirtfall",
-        "type": "earth",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 15,
-        "name": "shatter",
-        "type": "earth",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 80,
-        "effect": "CONCUSED"
-      },
-      {
-        "id": 16,
-        "name": "burn",
-        "type": "fire",
-        "power": 8,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 17,
-        "name": "melt",
-        "type": "fire",
-        "power": 12,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 18,
-        "name": "torch",
-        "type": "fire",
-        "power": 12,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 19,
-        "name": "stoke",
-        "type": "fire",
-        "power": 6,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "KINDLD"
-      },
-      {
-        "id": 24,
-        "name": "pollen",
-        "type": "plant",
-        "power": 6,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SAPPD"
-      },
-      {
-        "id": 25,
-        "name": "pollenburst",
-        "type": "plant",
-        "power": 12,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SAPPD"
-      },
-      {
-        "id": 9,
-        "name": "bellow",
-        "type": "wind",
-        "power": 10,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      }
+    "moves": [
+      "earth",
+      "fire",
+      "water"
     ]
   },
   {
@@ -1837,74 +292,9 @@
     "spcdef": 8,
     "hp": 6,
     "spd": 11,
-    "move1": 4,
-    "move2": 24,
-    "move3": 32,
-    "move4": 32,
-    "moveList": [
-      {
-        "id": 3,
-        "name": "blast",
-        "type": "spirit",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 4,
-        "name": "splash",
-        "type": "water",
-        "power": 5,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 5,
-        "name": "squirt",
-        "type": "water",
-        "power": 7,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 6,
-        "name": "soak",
-        "type": "water",
-        "power": 10,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SOAKED"
-      },
-      {
-        "id": 7,
-        "name": "current",
-        "type": "water",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 11,
-        "name": "blow",
-        "type": "wind",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 24,
-        "name": "pollen",
-        "type": "plant",
-        "power": 6,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SAPPD"
-      }
+    "moves": [
+      "water",
+      "plant"
     ]
   },
   {
@@ -1919,128 +309,9 @@
     "spcdef": 12,
     "hp": 8,
     "spd": 13,
-    "move1": 4,
-    "move2": 24,
-    "move3": 6,
-    "move4": 27,
-    "moveList": [
-      {
-        "id": 0,
-        "name": "smite",
-        "type": "spirit",
-        "power": 10,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 3,
-        "name": "blast",
-        "type": "spirit",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 4,
-        "name": "splash",
-        "type": "water",
-        "power": 5,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 5,
-        "name": "squirt",
-        "type": "water",
-        "power": 7,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 6,
-        "name": "soak",
-        "type": "water",
-        "power": 10,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SOAKED"
-      },
-      {
-        "id": 7,
-        "name": "current",
-        "type": "water",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 10,
-        "name": "torrent",
-        "type": "wind",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 11,
-        "name": "blow",
-        "type": "wind",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 20,
-        "name": "bolt",
-        "type": "lightning",
-        "power": 7,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 24,
-        "name": "pollen",
-        "type": "plant",
-        "power": 6,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SAPPD"
-      },
-      {
-        "id": 25,
-        "name": "pollenburst",
-        "type": "plant",
-        "power": 12,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SAPPD"
-      },
-      {
-        "id": 26,
-        "name": "seedfall",
-        "type": "plant",
-        "power": 12,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 27,
-        "name": "root",
-        "type": "plant",
-        "power": 8,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      }
+    "moves": [
+      "water",
+      "plant"
     ]
   },
   {
@@ -2055,83 +326,9 @@
     "spcdef": 6,
     "hp": 8,
     "spd": 8,
-    "move1": 11,
-    "move2": 20,
-    "move3": 32,
-    "move4": 32,
-    "moveList": [
-      {
-        "id": 1,
-        "name": "thought",
-        "type": "spirit",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 2,
-        "name": "wisper",
-        "type": "spirit",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 8,
-        "name": "breeze",
-        "type": "wind",
-        "power": 5,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 9,
-        "name": "bellow",
-        "type": "wind",
-        "power": 10,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 10,
-        "name": "torrent",
-        "type": "wind",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 11,
-        "name": "blow",
-        "type": "wind",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 20,
-        "name": "bolt",
-        "type": "lightning",
-        "power": 7,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 24,
-        "name": "pollen",
-        "type": "plant",
-        "power": 6,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SAPPD"
-      }
+    "moves": [
+      "water",
+      "fire"
     ]
   },
   {
@@ -2146,137 +343,9 @@
     "spcdef": 8,
     "hp": 10,
     "spd": 12,
-    "move1": 11,
-    "move2": 20,
-    "move3": 23,
-    "move4": 10,
-    "moveList": [
-      {
-        "id": 1,
-        "name": "thought",
-        "type": "spirit",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 2,
-        "name": "wisper",
-        "type": "spirit",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 3,
-        "name": "blast",
-        "type": "spirit",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 8,
-        "name": "breeze",
-        "type": "wind",
-        "power": 5,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 9,
-        "name": "bellow",
-        "type": "wind",
-        "power": 10,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 10,
-        "name": "torrent",
-        "type": "wind",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 11,
-        "name": "blow",
-        "type": "wind",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 15,
-        "name": "shatter",
-        "type": "earth",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 80,
-        "effect": "CONCUSED"
-      },
-      {
-        "id": 19,
-        "name": "stoke",
-        "type": "fire",
-        "power": 6,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "KINDLD"
-      },
-      {
-        "id": 20,
-        "name": "bolt",
-        "type": "lightning",
-        "power": 7,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 21,
-        "name": "plasma",
-        "type": "lightning",
-        "power": 12,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 22,
-        "name": "coil",
-        "type": "lightning",
-        "power": 12,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "CHRGD"
-      },
-      {
-        "id": 23,
-        "name": "zap",
-        "type": "lightning",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 24,
-        "name": "pollen",
-        "type": "plant",
-        "power": 6,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SAPPD"
-      }
+    "moves": [
+      "water",
+      "fire"
     ]
   },
   {
@@ -2291,272 +360,8 @@
     "spcdef": 8,
     "hp": 8,
     "spd": 8,
-    "move1": 2,
-    "move2": 28,
-    "move3": 32,
-    "move4": 32,
-    "moveList": [
-      {
-        "id": 0,
-        "name": "smite",
-        "type": "spirit",
-        "power": 10,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 1,
-        "name": "thought",
-        "type": "spirit",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 2,
-        "name": "wisper",
-        "type": "spirit",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 3,
-        "name": "blast",
-        "type": "spirit",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 4,
-        "name": "splash",
-        "type": "water",
-        "power": 5,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 5,
-        "name": "squirt",
-        "type": "water",
-        "power": 7,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 6,
-        "name": "soak",
-        "type": "water",
-        "power": 10,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SOAKED"
-      },
-      {
-        "id": 7,
-        "name": "current",
-        "type": "water",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 8,
-        "name": "breeze",
-        "type": "wind",
-        "power": 5,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 9,
-        "name": "bellow",
-        "type": "wind",
-        "power": 10,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 10,
-        "name": "torrent",
-        "type": "wind",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 11,
-        "name": "blow",
-        "type": "wind",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 12,
-        "name": "dirtburst",
-        "type": "earth",
-        "power": 7,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 13,
-        "name": "slipfall",
-        "type": "earth",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 90,
-        "effect": "SPDDWN"
-      },
-      {
-        "id": 14,
-        "name": "dirtfall",
-        "type": "earth",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 15,
-        "name": "shatter",
-        "type": "earth",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 80,
-        "effect": "CONCUSED"
-      },
-      {
-        "id": 16,
-        "name": "burn",
-        "type": "fire",
-        "power": 8,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 17,
-        "name": "melt",
-        "type": "fire",
-        "power": 12,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 18,
-        "name": "torch",
-        "type": "fire",
-        "power": 12,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 19,
-        "name": "stoke",
-        "type": "fire",
-        "power": 6,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "KINDLD"
-      },
-      {
-        "id": 20,
-        "name": "bolt",
-        "type": "lightning",
-        "power": 7,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 21,
-        "name": "plasma",
-        "type": "lightning",
-        "power": 12,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 22,
-        "name": "coil",
-        "type": "lightning",
-        "power": 12,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "CHRGD"
-      },
-      {
-        "id": 23,
-        "name": "zap",
-        "type": "lightning",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 24,
-        "name": "pollen",
-        "type": "plant",
-        "power": 6,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SAPPD"
-      },
-      {
-        "id": 25,
-        "name": "pollenburst",
-        "type": "plant",
-        "power": 12,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SAPPD"
-      },
-      {
-        "id": 26,
-        "name": "seedfall",
-        "type": "plant",
-        "power": 12,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 27,
-        "name": "root",
-        "type": "plant",
-        "power": 8,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 28,
-        "name": "burst",
-        "type": "elder",
-        "power": 8,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      }
+    "moves": [
+      "spirit"
     ]
   },
   {
@@ -2571,290 +376,9 @@
     "spcdef": 12,
     "hp": 12,
     "spd": 10,
-    "move1": 2,
-    "move2": 28,
-    "move3": 4,
-    "move4": 30,
-    "moveList": [
-      {
-        "id": 0,
-        "name": "smite",
-        "type": "spirit",
-        "power": 10,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 1,
-        "name": "thought",
-        "type": "spirit",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 2,
-        "name": "wisper",
-        "type": "spirit",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 3,
-        "name": "blast",
-        "type": "spirit",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 4,
-        "name": "splash",
-        "type": "water",
-        "power": 5,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 5,
-        "name": "squirt",
-        "type": "water",
-        "power": 7,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 6,
-        "name": "soak",
-        "type": "water",
-        "power": 10,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SOAKED"
-      },
-      {
-        "id": 7,
-        "name": "current",
-        "type": "water",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 8,
-        "name": "breeze",
-        "type": "wind",
-        "power": 5,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 9,
-        "name": "bellow",
-        "type": "wind",
-        "power": 10,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 10,
-        "name": "torrent",
-        "type": "wind",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 11,
-        "name": "blow",
-        "type": "wind",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 12,
-        "name": "dirtburst",
-        "type": "earth",
-        "power": 7,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 13,
-        "name": "slipfall",
-        "type": "earth",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 90,
-        "effect": "SPDDWN"
-      },
-      {
-        "id": 14,
-        "name": "dirtfall",
-        "type": "earth",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 15,
-        "name": "shatter",
-        "type": "earth",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 80,
-        "effect": "CONCUSED"
-      },
-      {
-        "id": 16,
-        "name": "burn",
-        "type": "fire",
-        "power": 8,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 17,
-        "name": "melt",
-        "type": "fire",
-        "power": 12,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 18,
-        "name": "torch",
-        "type": "fire",
-        "power": 12,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 19,
-        "name": "stoke",
-        "type": "fire",
-        "power": 6,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "KINDLD"
-      },
-      {
-        "id": 20,
-        "name": "bolt",
-        "type": "lightning",
-        "power": 7,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 21,
-        "name": "plasma",
-        "type": "lightning",
-        "power": 12,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 22,
-        "name": "coil",
-        "type": "lightning",
-        "power": 12,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "CHRGD"
-      },
-      {
-        "id": 23,
-        "name": "zap",
-        "type": "lightning",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 24,
-        "name": "pollen",
-        "type": "plant",
-        "power": 6,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SAPPD"
-      },
-      {
-        "id": 25,
-        "name": "pollenburst",
-        "type": "plant",
-        "power": 12,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SAPPD"
-      },
-      {
-        "id": 26,
-        "name": "seedfall",
-        "type": "plant",
-        "power": 12,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 27,
-        "name": "root",
-        "type": "plant",
-        "power": 8,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 29,
-        "name": "elderBurst",
-        "type": "elder",
-        "power": 12,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 28,
-        "name": "burst",
-        "type": "elder",
-        "power": 8,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 30,
-        "name": "slam",
-        "type": "elder",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      }
+    "moves": [
+      "spirit",
+      "water"
     ]
   },
   {
@@ -2869,92 +393,9 @@
     "spcdef": 8,
     "hp": 8,
     "spd": 8,
-    "move1": 23,
-    "move2": 0,
-    "move3": 32,
-    "move4": 32,
-    "moveList": [
-      {
-        "id": 1,
-        "name": "thought",
-        "type": "spirit",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 4,
-        "name": "splash",
-        "type": "water",
-        "power": 5,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 7,
-        "name": "current",
-        "type": "water",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 11,
-        "name": "blow",
-        "type": "wind",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 20,
-        "name": "bolt",
-        "type": "lightning",
-        "power": 7,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 21,
-        "name": "plasma",
-        "type": "lightning",
-        "power": 12,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 22,
-        "name": "coil",
-        "type": "lightning",
-        "power": 12,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "CHRGD"
-      },
-      {
-        "id": 23,
-        "name": "zap",
-        "type": "lightning",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 0,
-        "name": "smite",
-        "type": "spirit",
-        "power": 10,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      }
+    "moves": [
+      "fire",
+      "spirit"
     ]
   },
   {
@@ -2969,146 +410,10 @@
     "spcdef": 12,
     "hp": 10,
     "spd": 12,
-    "move1": 23,
-    "move2": 0,
-    "move3": 22,
-    "move4": 6,
-    "moveList": [
-      {
-        "id": 1,
-        "name": "thought",
-        "type": "spirit",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 3,
-        "name": "blast",
-        "type": "spirit",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 4,
-        "name": "splash",
-        "type": "water",
-        "power": 5,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 5,
-        "name": "squirt",
-        "type": "water",
-        "power": 7,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 6,
-        "name": "soak",
-        "type": "water",
-        "power": 10,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SOAKED"
-      },
-      {
-        "id": 7,
-        "name": "current",
-        "type": "water",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 11,
-        "name": "blow",
-        "type": "wind",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 13,
-        "name": "slipfall",
-        "type": "earth",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 90,
-        "effect": "SPDDWN"
-      },
-      {
-        "id": 16,
-        "name": "burn",
-        "type": "fire",
-        "power": 8,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 20,
-        "name": "bolt",
-        "type": "lightning",
-        "power": 7,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 21,
-        "name": "plasma",
-        "type": "lightning",
-        "power": 12,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 22,
-        "name": "coil",
-        "type": "lightning",
-        "power": 12,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "CHRGD"
-      },
-      {
-        "id": 23,
-        "name": "zap",
-        "type": "lightning",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 25,
-        "name": "pollenburst",
-        "type": "plant",
-        "power": 12,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SAPPD"
-      },
-      {
-        "id": 0,
-        "name": "smite",
-        "type": "spirit",
-        "power": 10,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      }
+    "moves": [
+      "fire",
+      "spirit",
+      "water"
     ]
   },
   {
@@ -3123,83 +428,9 @@
     "spcdef": 8,
     "hp": 8,
     "spd": 8,
-    "move1": 24,
-    "move2": 28,
-    "move3": 32,
-    "move4": 32,
-    "moveList": [
-      {
-        "id": 1,
-        "name": "thought",
-        "type": "spirit",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 12,
-        "name": "dirtburst",
-        "type": "earth",
-        "power": 7,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 14,
-        "name": "dirtfall",
-        "type": "earth",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 24,
-        "name": "pollen",
-        "type": "plant",
-        "power": 6,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SAPPD"
-      },
-      {
-        "id": 25,
-        "name": "pollenburst",
-        "type": "plant",
-        "power": 12,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SAPPD"
-      },
-      {
-        "id": 26,
-        "name": "seedfall",
-        "type": "plant",
-        "power": 12,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 27,
-        "name": "root",
-        "type": "plant",
-        "power": 8,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 28,
-        "name": "burst",
-        "type": "elder",
-        "power": 8,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      }
+    "moves": [
+      "plant",
+      "spirit"
     ]
   },
   {
@@ -3214,146 +445,10 @@
     "spcdef": 13,
     "hp": 12,
     "spd": 10,
-    "move1": 24,
-    "move2": 28,
-    "move3": 25,
-    "move4": 12,
-    "moveList": [
-      {
-        "id": 0,
-        "name": "smite",
-        "type": "spirit",
-        "power": 10,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 1,
-        "name": "thought",
-        "type": "spirit",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 3,
-        "name": "blast",
-        "type": "spirit",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 5,
-        "name": "squirt",
-        "type": "water",
-        "power": 7,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 8,
-        "name": "breeze",
-        "type": "wind",
-        "power": 5,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 12,
-        "name": "dirtburst",
-        "type": "earth",
-        "power": 7,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 13,
-        "name": "slipfall",
-        "type": "earth",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 90,
-        "effect": "SPDDWN"
-      },
-      {
-        "id": 14,
-        "name": "dirtfall",
-        "type": "earth",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 15,
-        "name": "shatter",
-        "type": "earth",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 80,
-        "effect": "CONCUSED"
-      },
-      {
-        "id": 20,
-        "name": "bolt",
-        "type": "lightning",
-        "power": 7,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 24,
-        "name": "pollen",
-        "type": "plant",
-        "power": 6,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SAPPD"
-      },
-      {
-        "id": 25,
-        "name": "pollenburst",
-        "type": "plant",
-        "power": 12,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SAPPD"
-      },
-      {
-        "id": 26,
-        "name": "seedfall",
-        "type": "plant",
-        "power": 12,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 27,
-        "name": "root",
-        "type": "plant",
-        "power": 8,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 28,
-        "name": "burst",
-        "type": "elder",
-        "power": 8,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      }
+    "moves": [
+      "plant",
+      "spirit",
+      "earth"
     ]
   },
   {
@@ -3368,74 +463,9 @@
     "spcdef": 8,
     "hp": 8,
     "spd": 8,
-    "move1": 16,
-    "move2": 8,
-    "move3": 32,
-    "move4": 32,
-    "moveList": [
-      {
-        "id": 1,
-        "name": "thought",
-        "type": "spirit",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 8,
-        "name": "breeze",
-        "type": "wind",
-        "power": 5,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 11,
-        "name": "blow",
-        "type": "wind",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 16,
-        "name": "burn",
-        "type": "fire",
-        "power": 8,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 17,
-        "name": "melt",
-        "type": "fire",
-        "power": 12,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 18,
-        "name": "torch",
-        "type": "fire",
-        "power": 12,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 19,
-        "name": "stoke",
-        "type": "fire",
-        "power": 6,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "KINDLD"
-      }
+    "moves": [
+      "fire",
+      "water"
     ]
   },
   {
@@ -3450,146 +480,9 @@
     "spcdef": 11,
     "hp": 8,
     "spd": 13,
-    "move1": 16,
-    "move2": 9,
-    "move3": 17,
-    "move4": 42,
-    "moveList": [
-      {
-        "id": 0,
-        "name": "smite",
-        "type": "spirit",
-        "power": 10,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 1,
-        "name": "thought",
-        "type": "spirit",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 5,
-        "name": "squirt",
-        "type": "water",
-        "power": 7,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 8,
-        "name": "breeze",
-        "type": "wind",
-        "power": 5,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 9,
-        "name": "bellow",
-        "type": "wind",
-        "power": 10,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 10,
-        "name": "torrent",
-        "type": "wind",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 11,
-        "name": "blow",
-        "type": "wind",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 14,
-        "name": "dirtfall",
-        "type": "earth",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 16,
-        "name": "burn",
-        "type": "fire",
-        "power": 8,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 17,
-        "name": "melt",
-        "type": "fire",
-        "power": 12,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 18,
-        "name": "torch",
-        "type": "fire",
-        "power": 12,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 19,
-        "name": "stoke",
-        "type": "fire",
-        "power": 6,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "KINDLD"
-      },
-      {
-        "id": 23,
-        "name": "zap",
-        "type": "lightning",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 26,
-        "name": "seedfall",
-        "type": "plant",
-        "power": 12,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 42,
-        "name": "deepthought",
-        "type": "status",
-        "power": 0,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SPCAUP"
-      }
+    "moves": [
+      "fire",
+      "water"
     ]
   },
   {
@@ -3604,164 +497,9 @@
     "spcdef": 13,
     "hp": 13,
     "spd": 12,
-    "move1": 29,
-    "move2": 10,
-    "move3": 3,
-    "move4": 28,
-    "moveList": [
-      {
-        "id": 0,
-        "name": "smite",
-        "type": "spirit",
-        "power": 10,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 1,
-        "name": "thought",
-        "type": "spirit",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 2,
-        "name": "wisper",
-        "type": "spirit",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 3,
-        "name": "blast",
-        "type": "spirit",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 4,
-        "name": "splash",
-        "type": "water",
-        "power": 5,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 5,
-        "name": "squirt",
-        "type": "water",
-        "power": 7,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 6,
-        "name": "soak",
-        "type": "water",
-        "power": 10,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SOAKED"
-      },
-      {
-        "id": 7,
-        "name": "current",
-        "type": "water",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 24,
-        "name": "pollen",
-        "type": "plant",
-        "power": 6,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SAPPD"
-      },
-      {
-        "id": 25,
-        "name": "pollenburst",
-        "type": "plant",
-        "power": 12,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SAPPD"
-      },
-      {
-        "id": 26,
-        "name": "seedfall",
-        "type": "plant",
-        "power": 12,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 27,
-        "name": "root",
-        "type": "plant",
-        "power": 8,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 28,
-        "name": "burst",
-        "type": "elder",
-        "power": 8,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 29,
-        "name": "elderBurst",
-        "type": "elder",
-        "power": 12,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 30,
-        "name": "slam",
-        "type": "elder",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 31,
-        "name": "elderSlam",
-        "type": "elder",
-        "power": 14,
-        "physical": 1,
-        "accuracy": 80,
-        "effect": "CONCUSED"
-      },
-      {
-        "id": 10,
-        "name": "torrent",
-        "type": "wind",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      }
+    "moves": [
+      "spirit",
+      "water"
     ]
   },
   {
@@ -3776,155 +514,10 @@
     "spcdef": 14,
     "hp": 14,
     "spd": 14,
-    "move1": 29,
-    "move2": 17,
-    "move3": 12,
-    "move4": 0,
-    "moveList": [
-      {
-        "id": 0,
-        "name": "smite",
-        "type": "spirit",
-        "power": 10,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 1,
-        "name": "thought",
-        "type": "spirit",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 2,
-        "name": "wisper",
-        "type": "spirit",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 3,
-        "name": "blast",
-        "type": "spirit",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 12,
-        "name": "dirtburst",
-        "type": "earth",
-        "power": 7,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 13,
-        "name": "slipfall",
-        "type": "earth",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 90,
-        "effect": "SPDDWN"
-      },
-      {
-        "id": 14,
-        "name": "dirtfall",
-        "type": "earth",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 15,
-        "name": "shatter",
-        "type": "earth",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 80,
-        "effect": "CONCUSED"
-      },
-      {
-        "id": 16,
-        "name": "burn",
-        "type": "fire",
-        "power": 8,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 17,
-        "name": "melt",
-        "type": "fire",
-        "power": 12,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 18,
-        "name": "torch",
-        "type": "fire",
-        "power": 12,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 19,
-        "name": "stoke",
-        "type": "fire",
-        "power": 6,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "KINDLD"
-      },
-      {
-        "id": 28,
-        "name": "burst",
-        "type": "elder",
-        "power": 8,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 29,
-        "name": "elderBurst",
-        "type": "elder",
-        "power": 12,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 30,
-        "name": "slam",
-        "type": "elder",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 31,
-        "name": "elderSlam",
-        "type": "elder",
-        "power": 14,
-        "physical": 1,
-        "accuracy": 80,
-        "effect": "CONCUSED"
-      }
+    "moves": [
+      "spirit",
+      "fire",
+      "earth"
     ]
   },
   {
@@ -3939,178 +532,16 @@
     "spcdef": 10,
     "hp": 14,
     "spd": 14,
-    "move1": 31,
-    "move2": 23,
-    "move3": 15,
-    "move4": 27,
-    "moveList": [
-      {
-        "id": 0,
-        "name": "smite",
-        "type": "spirit",
-        "power": 10,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 1,
-        "name": "thought",
-        "type": "spirit",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 2,
-        "name": "wisper",
-        "type": "spirit",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 3,
-        "name": "blast",
-        "type": "spirit",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 8,
-        "name": "breeze",
-        "type": "wind",
-        "power": 5,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 9,
-        "name": "bellow",
-        "type": "wind",
-        "power": 10,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 10,
-        "name": "torrent",
-        "type": "wind",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 11,
-        "name": "blow",
-        "type": "wind",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 20,
-        "name": "bolt",
-        "type": "lightning",
-        "power": 7,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 21,
-        "name": "plasma",
-        "type": "lightning",
-        "power": 12,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 22,
-        "name": "coil",
-        "type": "lightning",
-        "power": 12,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "CHRGD"
-      },
-      {
-        "id": 23,
-        "name": "zap",
-        "type": "lightning",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 28,
-        "name": "burst",
-        "type": "elder",
-        "power": 8,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 29,
-        "name": "elderBurst",
-        "type": "elder",
-        "power": 12,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 30,
-        "name": "slam",
-        "type": "elder",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 31,
-        "name": "elderSlam",
-        "type": "elder",
-        "power": 14,
-        "physical": 1,
-        "accuracy": 80,
-        "effect": "CONCUSED"
-      },
-      {
-        "id": 15,
-        "name": "shatter",
-        "type": "earth",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 80,
-        "effect": "CONCUSED"
-      },
-      {
-        "id": 27,
-        "name": "root",
-        "type": "plant",
-        "power": 8,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      }
+    "moves": [
+      "spirit",
+      "fire",
+      "earth",
+      "plant"
     ]
   },
   {
-    "id": 32,
     "name": "NibWeevil",
+    "id": 32,
     "type1": "plant",
     "type2": "none",
     "evelevel": 16,
@@ -4120,70 +551,13 @@
     "spcdef": 11,
     "hp": 8,
     "spd": 8,
-    "move1": 26,
-    "move2": 27,
-    "move3": 24,
-    "move4": 43,
-    "moveList": [
-      {
-        "id": 26,
-        "name": "seedfall",
-        "type": "plant",
-        "power": 12,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 27,
-        "name": "root",
-        "type": "plant",
-        "power": 8,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 24,
-        "name": "pollen",
-        "type": "plant",
-        "power": 6,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SAPPD"
-      },
-      {
-        "id": 43,
-        "name": "rejuvinate",
-        "type": "status",
-        "power": 0,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "INFSED"
-      },
-      {
-        "id": 25,
-        "name": "pollenburst",
-        "type": "plant",
-        "power": 12,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SAPPD"
-      },
-      {
-        "id": 42,
-        "name": "deepthought",
-        "type": "status",
-        "power": 0,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SPCAUP"
-      }
+    "moves": [
+      "plant"
     ]
   },
   {
-    "id": 33,
     "name": "HuskWeevil",
+    "id": 33,
     "type1": "plant",
     "type2": "earth",
     "evelevel": 24,
@@ -4193,97 +567,14 @@
     "spcdef": 8,
     "hp": 9,
     "spd": 9,
-    "move1": 26,
-    "move2": 12,
-    "move3": 27,
-    "move4": 41,
-    "moveList": [
-      {
-        "id": 26,
-        "name": "seedfall",
-        "type": "plant",
-        "power": 12,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 12,
-        "name": "dirtburst",
-        "type": "earth",
-        "power": 7,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 27,
-        "name": "root",
-        "type": "plant",
-        "power": 8,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 41,
-        "name": "Ironbody",
-        "type": "status",
-        "power": 0,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "DEFUP"
-      },
-      {
-        "id": 13,
-        "name": "slipfall",
-        "type": "earth",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 90,
-        "effect": "SPDDWN"
-      },
-      {
-        "id": 14,
-        "name": "dirtfall",
-        "type": "earth",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 15,
-        "name": "shatter",
-        "type": "earth",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 80,
-        "effect": "CONCUSED"
-      },
-      {
-        "id": 24,
-        "name": "pollen",
-        "type": "plant",
-        "power": 6,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SAPPD"
-      },
-      {
-        "id": 25,
-        "name": "pollenburst",
-        "type": "plant",
-        "power": 12,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SAPPD"
-      }
+    "moves": [
+      "plant",
+      "earth"
     ]
   },
   {
-    "id": 34,
     "name": "GranaryWeevil",
+    "id": 34,
     "type1": "plant",
     "type2": "earth",
     "evelevel": 0,
@@ -4293,97 +584,14 @@
     "spcdef": 9,
     "hp": 10,
     "spd": 10,
-    "move1": 26,
-    "move2": 12,
-    "move3": 14,
-    "move4": 25,
-    "moveList": [
-      {
-        "id": 26,
-        "name": "seedfall",
-        "type": "plant",
-        "power": 12,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 12,
-        "name": "dirtburst",
-        "type": "earth",
-        "power": 7,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 14,
-        "name": "dirtfall",
-        "type": "earth",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 25,
-        "name": "pollenburst",
-        "type": "plant",
-        "power": 12,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SAPPD"
-      },
-      {
-        "id": 13,
-        "name": "slipfall",
-        "type": "earth",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 90,
-        "effect": "SPDDWN"
-      },
-      {
-        "id": 15,
-        "name": "shatter",
-        "type": "earth",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 80,
-        "effect": "CONCUSED"
-      },
-      {
-        "id": 24,
-        "name": "pollen",
-        "type": "plant",
-        "power": 6,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SAPPD"
-      },
-      {
-        "id": 27,
-        "name": "root",
-        "type": "plant",
-        "power": 8,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 37,
-        "name": "Sharpen",
-        "type": "status",
-        "power": 0,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "ATKUP"
-      }
+    "moves": [
+      "plant",
+      "earth"
     ]
   },
   {
-    "id": 35,
     "name": "DewBud",
+    "id": 35,
     "type1": "plant",
     "type2": "water",
     "evelevel": 16,
@@ -4393,115 +601,14 @@
     "spcdef": 10,
     "hp": 11,
     "spd": 7,
-    "move1": 26,
-    "move2": 4,
-    "move3": 7,
-    "move4": 43,
-    "moveList": [
-      {
-        "id": 26,
-        "name": "seedfall",
-        "type": "plant",
-        "power": 12,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 4,
-        "name": "splash",
-        "type": "water",
-        "power": 5,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 7,
-        "name": "current",
-        "type": "water",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 43,
-        "name": "rejuvinate",
-        "type": "status",
-        "power": 0,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "INFSED"
-      },
-      {
-        "id": 5,
-        "name": "squirt",
-        "type": "water",
-        "power": 7,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 6,
-        "name": "soak",
-        "type": "water",
-        "power": 10,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SOAKED"
-      },
-      {
-        "id": 24,
-        "name": "pollen",
-        "type": "plant",
-        "power": 6,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SAPPD"
-      },
-      {
-        "id": 25,
-        "name": "pollenburst",
-        "type": "plant",
-        "power": 12,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SAPPD"
-      },
-      {
-        "id": 27,
-        "name": "root",
-        "type": "plant",
-        "power": 8,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 33,
-        "name": "Torrent",
-        "type": "water",
-        "power": 10,
-        "physical": 0,
-        "accuracy": 90,
-        "effect": "DRNCHD"
-      },
-      {
-        "id": 44,
-        "name": "Deluge",
-        "type": "water",
-        "power": 11,
-        "physical": 0,
-        "accuracy": 80,
-        "effect": "SOAKED"
-      }
+    "moves": [
+      "plant",
+      "water"
     ]
   },
   {
-    "id": 36,
     "name": "NectarBloom",
+    "id": 36,
     "type1": "plant",
     "type2": "water",
     "evelevel": 0,
@@ -4511,115 +618,14 @@
     "spcdef": 11,
     "hp": 8,
     "spd": 8,
-    "move1": 26,
-    "move2": 4,
-    "move3": 25,
-    "move4": 6,
-    "moveList": [
-      {
-        "id": 26,
-        "name": "seedfall",
-        "type": "plant",
-        "power": 12,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 4,
-        "name": "splash",
-        "type": "water",
-        "power": 5,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 25,
-        "name": "pollenburst",
-        "type": "plant",
-        "power": 12,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SAPPD"
-      },
-      {
-        "id": 6,
-        "name": "soak",
-        "type": "water",
-        "power": 10,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SOAKED"
-      },
-      {
-        "id": 5,
-        "name": "squirt",
-        "type": "water",
-        "power": 7,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 7,
-        "name": "current",
-        "type": "water",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 24,
-        "name": "pollen",
-        "type": "plant",
-        "power": 6,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SAPPD"
-      },
-      {
-        "id": 27,
-        "name": "root",
-        "type": "plant",
-        "power": 8,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 33,
-        "name": "Torrent",
-        "type": "water",
-        "power": 10,
-        "physical": 0,
-        "accuracy": 90,
-        "effect": "DRNCHD"
-      },
-      {
-        "id": 42,
-        "name": "deepthought",
-        "type": "status",
-        "power": 0,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SPCAUP"
-      },
-      {
-        "id": 44,
-        "name": "Deluge",
-        "type": "water",
-        "power": 11,
-        "physical": 0,
-        "accuracy": 80,
-        "effect": "SOAKED"
-      }
+    "moves": [
+      "plant",
+      "water"
     ]
   },
   {
-    "id": 37,
     "name": "Sporeling",
+    "id": 37,
     "type1": "plant",
     "type2": "spirit",
     "evelevel": 16,
@@ -4629,97 +635,14 @@
     "spcdef": 8,
     "hp": 9,
     "spd": 9,
-    "move1": 26,
-    "move2": 1,
-    "move3": 24,
-    "move4": 3,
-    "moveList": [
-      {
-        "id": 26,
-        "name": "seedfall",
-        "type": "plant",
-        "power": 12,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 1,
-        "name": "thought",
-        "type": "spirit",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 24,
-        "name": "pollen",
-        "type": "plant",
-        "power": 6,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SAPPD"
-      },
-      {
-        "id": 3,
-        "name": "blast",
-        "type": "spirit",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 0,
-        "name": "smite",
-        "type": "spirit",
-        "power": 10,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 2,
-        "name": "wisper",
-        "type": "spirit",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 25,
-        "name": "pollenburst",
-        "type": "plant",
-        "power": 12,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SAPPD"
-      },
-      {
-        "id": 27,
-        "name": "root",
-        "type": "plant",
-        "power": 8,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 40,
-        "name": "terrorize",
-        "type": "status",
-        "power": 0,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "ATKDWN"
-      }
+    "moves": [
+      "plant",
+      "spirit"
     ]
   },
   {
-    "id": 38,
     "name": "SporeKeeper",
+    "id": 38,
     "type1": "plant",
     "type2": "spirit",
     "evelevel": 0,
@@ -4729,97 +652,14 @@
     "spcdef": 9,
     "hp": 10,
     "spd": 10,
-    "move1": 26,
-    "move2": 1,
-    "move3": 24,
-    "move4": 41,
-    "moveList": [
-      {
-        "id": 26,
-        "name": "seedfall",
-        "type": "plant",
-        "power": 12,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 1,
-        "name": "thought",
-        "type": "spirit",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 24,
-        "name": "pollen",
-        "type": "plant",
-        "power": 6,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SAPPD"
-      },
-      {
-        "id": 41,
-        "name": "Ironbody",
-        "type": "status",
-        "power": 0,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "DEFUP"
-      },
-      {
-        "id": 0,
-        "name": "smite",
-        "type": "spirit",
-        "power": 10,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 2,
-        "name": "wisper",
-        "type": "spirit",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 3,
-        "name": "blast",
-        "type": "spirit",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 25,
-        "name": "pollenburst",
-        "type": "plant",
-        "power": 12,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SAPPD"
-      },
-      {
-        "id": 27,
-        "name": "root",
-        "type": "plant",
-        "power": 8,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      }
+    "moves": [
+      "plant",
+      "spirit"
     ]
   },
   {
-    "id": 39,
     "name": "MossMole",
+    "id": 39,
     "type1": "earth",
     "type2": "plant",
     "evelevel": 0,
@@ -4829,97 +669,14 @@
     "spcdef": 10,
     "hp": 11,
     "spd": 7,
-    "move1": 12,
-    "move2": 26,
-    "move3": 14,
-    "move4": 27,
-    "moveList": [
-      {
-        "id": 12,
-        "name": "dirtburst",
-        "type": "earth",
-        "power": 7,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 26,
-        "name": "seedfall",
-        "type": "plant",
-        "power": 12,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 14,
-        "name": "dirtfall",
-        "type": "earth",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 27,
-        "name": "root",
-        "type": "plant",
-        "power": 8,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 13,
-        "name": "slipfall",
-        "type": "earth",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 90,
-        "effect": "SPDDWN"
-      },
-      {
-        "id": 15,
-        "name": "shatter",
-        "type": "earth",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 80,
-        "effect": "CONCUSED"
-      },
-      {
-        "id": 24,
-        "name": "pollen",
-        "type": "plant",
-        "power": 6,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SAPPD"
-      },
-      {
-        "id": 25,
-        "name": "pollenburst",
-        "type": "plant",
-        "power": 12,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SAPPD"
-      },
-      {
-        "id": 43,
-        "name": "rejuvinate",
-        "type": "status",
-        "power": 0,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "INFSED"
-      }
+    "moves": [
+      "earth",
+      "plant"
     ]
   },
   {
-    "id": 40,
     "name": "Conelet",
+    "id": 40,
     "type1": "water",
     "type2": "earth",
     "evelevel": 16,
@@ -4929,115 +686,14 @@
     "spcdef": 11,
     "hp": 8,
     "spd": 8,
-    "move1": 4,
-    "move2": 12,
-    "move3": 7,
-    "move4": 41,
-    "moveList": [
-      {
-        "id": 4,
-        "name": "splash",
-        "type": "water",
-        "power": 5,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 12,
-        "name": "dirtburst",
-        "type": "earth",
-        "power": 7,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 7,
-        "name": "current",
-        "type": "water",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 41,
-        "name": "Ironbody",
-        "type": "status",
-        "power": 0,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "DEFUP"
-      },
-      {
-        "id": 5,
-        "name": "squirt",
-        "type": "water",
-        "power": 7,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 6,
-        "name": "soak",
-        "type": "water",
-        "power": 10,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SOAKED"
-      },
-      {
-        "id": 13,
-        "name": "slipfall",
-        "type": "earth",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 90,
-        "effect": "SPDDWN"
-      },
-      {
-        "id": 14,
-        "name": "dirtfall",
-        "type": "earth",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 15,
-        "name": "shatter",
-        "type": "earth",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 80,
-        "effect": "CONCUSED"
-      },
-      {
-        "id": 33,
-        "name": "Torrent",
-        "type": "water",
-        "power": 10,
-        "physical": 0,
-        "accuracy": 90,
-        "effect": "DRNCHD"
-      },
-      {
-        "id": 44,
-        "name": "Deluge",
-        "type": "water",
-        "power": 11,
-        "physical": 0,
-        "accuracy": 80,
-        "effect": "SOAKED"
-      }
+    "moves": [
+      "water",
+      "earth"
     ]
   },
   {
-    "id": 41,
     "name": "SpireSquid",
+    "id": 41,
     "type1": "water",
     "type2": "elder",
     "evelevel": 0,
@@ -5047,115 +703,14 @@
     "spcdef": 8,
     "hp": 9,
     "spd": 9,
-    "move1": 4,
-    "move2": 29,
-    "move3": 44,
-    "move4": 42,
-    "moveList": [
-      {
-        "id": 4,
-        "name": "splash",
-        "type": "water",
-        "power": 5,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 29,
-        "name": "elderBurst",
-        "type": "elder",
-        "power": 12,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 44,
-        "name": "Deluge",
-        "type": "water",
-        "power": 11,
-        "physical": 0,
-        "accuracy": 80,
-        "effect": "SOAKED"
-      },
-      {
-        "id": 42,
-        "name": "deepthought",
-        "type": "status",
-        "power": 0,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SPCAUP"
-      },
-      {
-        "id": 5,
-        "name": "squirt",
-        "type": "water",
-        "power": 7,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 6,
-        "name": "soak",
-        "type": "water",
-        "power": 10,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SOAKED"
-      },
-      {
-        "id": 7,
-        "name": "current",
-        "type": "water",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 28,
-        "name": "burst",
-        "type": "elder",
-        "power": 8,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 30,
-        "name": "slam",
-        "type": "elder",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 31,
-        "name": "elderSlam",
-        "type": "elder",
-        "power": 14,
-        "physical": 1,
-        "accuracy": 80,
-        "effect": "CONCUSED"
-      },
-      {
-        "id": 33,
-        "name": "Torrent",
-        "type": "water",
-        "power": 10,
-        "physical": 0,
-        "accuracy": 90,
-        "effect": "DRNCHD"
-      }
+    "moves": [
+      "water",
+      "spirit"
     ]
   },
   {
-    "id": 42,
     "name": "Horseshoe",
+    "id": 42,
     "type1": "water",
     "type2": "earth",
     "evelevel": 16,
@@ -5165,115 +720,14 @@
     "spcdef": 9,
     "hp": 10,
     "spd": 10,
-    "move1": 4,
-    "move2": 12,
-    "move3": 14,
-    "move4": 15,
-    "moveList": [
-      {
-        "id": 4,
-        "name": "splash",
-        "type": "water",
-        "power": 5,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 12,
-        "name": "dirtburst",
-        "type": "earth",
-        "power": 7,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 14,
-        "name": "dirtfall",
-        "type": "earth",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 15,
-        "name": "shatter",
-        "type": "earth",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 80,
-        "effect": "CONCUSED"
-      },
-      {
-        "id": 5,
-        "name": "squirt",
-        "type": "water",
-        "power": 7,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 6,
-        "name": "soak",
-        "type": "water",
-        "power": 10,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SOAKED"
-      },
-      {
-        "id": 7,
-        "name": "current",
-        "type": "water",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 13,
-        "name": "slipfall",
-        "type": "earth",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 90,
-        "effect": "SPDDWN"
-      },
-      {
-        "id": 33,
-        "name": "Torrent",
-        "type": "water",
-        "power": 10,
-        "physical": 0,
-        "accuracy": 90,
-        "effect": "DRNCHD"
-      },
-      {
-        "id": 41,
-        "name": "Ironbody",
-        "type": "status",
-        "power": 0,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "DEFUP"
-      },
-      {
-        "id": 44,
-        "name": "Deluge",
-        "type": "water",
-        "power": 11,
-        "physical": 0,
-        "accuracy": 80,
-        "effect": "SOAKED"
-      }
+    "moves": [
+      "water",
+      "earth"
     ]
   },
   {
-    "id": 43,
     "name": "Shieldshoe",
+    "id": 43,
     "type1": "earth",
     "type2": "elder",
     "evelevel": 0,
@@ -5283,97 +737,14 @@
     "spcdef": 10,
     "hp": 11,
     "spd": 7,
-    "move1": 12,
-    "move2": 29,
-    "move3": 14,
-    "move4": 41,
-    "moveList": [
-      {
-        "id": 12,
-        "name": "dirtburst",
-        "type": "earth",
-        "power": 7,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 29,
-        "name": "elderBurst",
-        "type": "elder",
-        "power": 12,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 14,
-        "name": "dirtfall",
-        "type": "earth",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 41,
-        "name": "Ironbody",
-        "type": "status",
-        "power": 0,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "DEFUP"
-      },
-      {
-        "id": 13,
-        "name": "slipfall",
-        "type": "earth",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 90,
-        "effect": "SPDDWN"
-      },
-      {
-        "id": 15,
-        "name": "shatter",
-        "type": "earth",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 80,
-        "effect": "CONCUSED"
-      },
-      {
-        "id": 28,
-        "name": "burst",
-        "type": "elder",
-        "power": 8,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 30,
-        "name": "slam",
-        "type": "elder",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 31,
-        "name": "elderSlam",
-        "type": "elder",
-        "power": 14,
-        "physical": 1,
-        "accuracy": 80,
-        "effect": "CONCUSED"
-      }
+    "moves": [
+      "earth",
+      "spirit"
     ]
   },
   {
-    "id": 44,
     "name": "SiltSkorp",
+    "id": 44,
     "type1": "water",
     "type2": "earth",
     "evelevel": 16,
@@ -5383,115 +754,14 @@
     "spcdef": 11,
     "hp": 8,
     "spd": 8,
-    "move1": 4,
-    "move2": 12,
-    "move3": 13,
-    "move4": 6,
-    "moveList": [
-      {
-        "id": 4,
-        "name": "splash",
-        "type": "water",
-        "power": 5,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 12,
-        "name": "dirtburst",
-        "type": "earth",
-        "power": 7,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 13,
-        "name": "slipfall",
-        "type": "earth",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 90,
-        "effect": "SPDDWN"
-      },
-      {
-        "id": 6,
-        "name": "soak",
-        "type": "water",
-        "power": 10,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SOAKED"
-      },
-      {
-        "id": 5,
-        "name": "squirt",
-        "type": "water",
-        "power": 7,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 7,
-        "name": "current",
-        "type": "water",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 14,
-        "name": "dirtfall",
-        "type": "earth",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 15,
-        "name": "shatter",
-        "type": "earth",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 80,
-        "effect": "CONCUSED"
-      },
-      {
-        "id": 33,
-        "name": "Torrent",
-        "type": "water",
-        "power": 10,
-        "physical": 0,
-        "accuracy": 90,
-        "effect": "DRNCHD"
-      },
-      {
-        "id": 38,
-        "name": "swiften",
-        "type": "status",
-        "power": 0,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "SPDUP"
-      },
-      {
-        "id": 44,
-        "name": "Deluge",
-        "type": "water",
-        "power": 11,
-        "physical": 0,
-        "accuracy": 80,
-        "effect": "SOAKED"
-      }
+    "moves": [
+      "water",
+      "earth"
     ]
   },
   {
-    "id": 45,
     "name": "ReefReaper",
+    "id": 45,
     "type1": "water",
     "type2": "elder",
     "evelevel": 0,
@@ -5501,115 +771,14 @@
     "spcdef": 8,
     "hp": 9,
     "spd": 9,
-    "move1": 4,
-    "move2": 29,
-    "move3": 44,
-    "move4": 31,
-    "moveList": [
-      {
-        "id": 4,
-        "name": "splash",
-        "type": "water",
-        "power": 5,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 29,
-        "name": "elderBurst",
-        "type": "elder",
-        "power": 12,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 44,
-        "name": "Deluge",
-        "type": "water",
-        "power": 11,
-        "physical": 0,
-        "accuracy": 80,
-        "effect": "SOAKED"
-      },
-      {
-        "id": 31,
-        "name": "elderSlam",
-        "type": "elder",
-        "power": 14,
-        "physical": 1,
-        "accuracy": 80,
-        "effect": "CONCUSED"
-      },
-      {
-        "id": 5,
-        "name": "squirt",
-        "type": "water",
-        "power": 7,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 6,
-        "name": "soak",
-        "type": "water",
-        "power": 10,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SOAKED"
-      },
-      {
-        "id": 7,
-        "name": "current",
-        "type": "water",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 28,
-        "name": "burst",
-        "type": "elder",
-        "power": 8,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 30,
-        "name": "slam",
-        "type": "elder",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 33,
-        "name": "Torrent",
-        "type": "water",
-        "power": 10,
-        "physical": 0,
-        "accuracy": 90,
-        "effect": "DRNCHD"
-      },
-      {
-        "id": 42,
-        "name": "deepthought",
-        "type": "status",
-        "power": 0,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SPCAUP"
-      }
+    "moves": [
+      "water",
+      "spirit"
     ]
   },
   {
-    "id": 46,
     "name": "Platefin",
+    "id": 46,
     "type1": "water",
     "type2": "earth",
     "evelevel": 0,
@@ -5619,115 +788,14 @@
     "spcdef": 9,
     "hp": 10,
     "spd": 10,
-    "move1": 4,
-    "move2": 12,
-    "move3": 7,
-    "move4": 15,
-    "moveList": [
-      {
-        "id": 4,
-        "name": "splash",
-        "type": "water",
-        "power": 5,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 12,
-        "name": "dirtburst",
-        "type": "earth",
-        "power": 7,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 7,
-        "name": "current",
-        "type": "water",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 15,
-        "name": "shatter",
-        "type": "earth",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 80,
-        "effect": "CONCUSED"
-      },
-      {
-        "id": 5,
-        "name": "squirt",
-        "type": "water",
-        "power": 7,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 6,
-        "name": "soak",
-        "type": "water",
-        "power": 10,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SOAKED"
-      },
-      {
-        "id": 13,
-        "name": "slipfall",
-        "type": "earth",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 90,
-        "effect": "SPDDWN"
-      },
-      {
-        "id": 14,
-        "name": "dirtfall",
-        "type": "earth",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 33,
-        "name": "Torrent",
-        "type": "water",
-        "power": 10,
-        "physical": 0,
-        "accuracy": 90,
-        "effect": "DRNCHD"
-      },
-      {
-        "id": 41,
-        "name": "Ironbody",
-        "type": "status",
-        "power": 0,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "DEFUP"
-      },
-      {
-        "id": 44,
-        "name": "Deluge",
-        "type": "water",
-        "power": 11,
-        "physical": 0,
-        "accuracy": 80,
-        "effect": "SOAKED"
-      }
+    "moves": [
+      "water",
+      "earth"
     ]
   },
   {
-    "id": 47,
     "name": "AncientJaw",
+    "id": 47,
     "type1": "water",
     "type2": "elder",
     "evelevel": 0,
@@ -5737,115 +805,14 @@
     "spcdef": 10,
     "hp": 11,
     "spd": 7,
-    "move1": 4,
-    "move2": 29,
-    "move3": 31,
-    "move4": 6,
-    "moveList": [
-      {
-        "id": 4,
-        "name": "splash",
-        "type": "water",
-        "power": 5,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 29,
-        "name": "elderBurst",
-        "type": "elder",
-        "power": 12,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 31,
-        "name": "elderSlam",
-        "type": "elder",
-        "power": 14,
-        "physical": 1,
-        "accuracy": 80,
-        "effect": "CONCUSED"
-      },
-      {
-        "id": 6,
-        "name": "soak",
-        "type": "water",
-        "power": 10,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SOAKED"
-      },
-      {
-        "id": 5,
-        "name": "squirt",
-        "type": "water",
-        "power": 7,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 7,
-        "name": "current",
-        "type": "water",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 28,
-        "name": "burst",
-        "type": "elder",
-        "power": 8,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 30,
-        "name": "slam",
-        "type": "elder",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 33,
-        "name": "Torrent",
-        "type": "water",
-        "power": 10,
-        "physical": 0,
-        "accuracy": 90,
-        "effect": "DRNCHD"
-      },
-      {
-        "id": 37,
-        "name": "Sharpen",
-        "type": "status",
-        "power": 0,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "ATKUP"
-      },
-      {
-        "id": 44,
-        "name": "Deluge",
-        "type": "water",
-        "power": 11,
-        "physical": 0,
-        "accuracy": 80,
-        "effect": "SOAKED"
-      }
+    "moves": [
+      "water",
+      "spirit"
     ]
   },
   {
-    "id": 48,
     "name": "CoalGrub",
+    "id": 48,
     "type1": "fire",
     "type2": "earth",
     "evelevel": 16,
@@ -5855,97 +822,14 @@
     "spcdef": 11,
     "hp": 8,
     "spd": 8,
-    "move1": 16,
-    "move2": 12,
-    "move3": 17,
-    "move4": 19,
-    "moveList": [
-      {
-        "id": 16,
-        "name": "burn",
-        "type": "fire",
-        "power": 8,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 12,
-        "name": "dirtburst",
-        "type": "earth",
-        "power": 7,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 17,
-        "name": "melt",
-        "type": "fire",
-        "power": 12,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 19,
-        "name": "stoke",
-        "type": "fire",
-        "power": 6,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "KINDLD"
-      },
-      {
-        "id": 13,
-        "name": "slipfall",
-        "type": "earth",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 90,
-        "effect": "SPDDWN"
-      },
-      {
-        "id": 14,
-        "name": "dirtfall",
-        "type": "earth",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 15,
-        "name": "shatter",
-        "type": "earth",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 80,
-        "effect": "CONCUSED"
-      },
-      {
-        "id": 18,
-        "name": "torch",
-        "type": "fire",
-        "power": 12,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 34,
-        "name": "Sear",
-        "type": "fire",
-        "power": 3,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SAPPD"
-      }
+    "moves": [
+      "fire",
+      "earth"
     ]
   },
   {
-    "id": 49,
     "name": "CinderCocoon",
+    "id": 49,
     "type1": "fire",
     "type2": "earth",
     "evelevel": 24,
@@ -5955,106 +839,14 @@
     "spcdef": 8,
     "hp": 9,
     "spd": 9,
-    "move1": 16,
-    "move2": 12,
-    "move3": 18,
-    "move4": 14,
-    "moveList": [
-      {
-        "id": 16,
-        "name": "burn",
-        "type": "fire",
-        "power": 8,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 12,
-        "name": "dirtburst",
-        "type": "earth",
-        "power": 7,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 18,
-        "name": "torch",
-        "type": "fire",
-        "power": 12,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 14,
-        "name": "dirtfall",
-        "type": "earth",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 13,
-        "name": "slipfall",
-        "type": "earth",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 90,
-        "effect": "SPDDWN"
-      },
-      {
-        "id": 15,
-        "name": "shatter",
-        "type": "earth",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 80,
-        "effect": "CONCUSED"
-      },
-      {
-        "id": 17,
-        "name": "melt",
-        "type": "fire",
-        "power": 12,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 19,
-        "name": "stoke",
-        "type": "fire",
-        "power": 6,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "KINDLD"
-      },
-      {
-        "id": 34,
-        "name": "Sear",
-        "type": "fire",
-        "power": 3,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SAPPD"
-      },
-      {
-        "id": 42,
-        "name": "deepthought",
-        "type": "status",
-        "power": 0,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SPCAUP"
-      }
+    "moves": [
+      "fire",
+      "earth"
     ]
   },
   {
-    "id": 50,
     "name": "FurnaceBeetle",
+    "id": 50,
     "type1": "fire",
     "type2": "earth",
     "evelevel": 0,
@@ -6064,106 +856,14 @@
     "spcdef": 9,
     "hp": 10,
     "spd": 10,
-    "move1": 16,
-    "move2": 12,
-    "move3": 18,
-    "move4": 15,
-    "moveList": [
-      {
-        "id": 16,
-        "name": "burn",
-        "type": "fire",
-        "power": 8,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 12,
-        "name": "dirtburst",
-        "type": "earth",
-        "power": 7,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 18,
-        "name": "torch",
-        "type": "fire",
-        "power": 12,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 15,
-        "name": "shatter",
-        "type": "earth",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 80,
-        "effect": "CONCUSED"
-      },
-      {
-        "id": 13,
-        "name": "slipfall",
-        "type": "earth",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 90,
-        "effect": "SPDDWN"
-      },
-      {
-        "id": 14,
-        "name": "dirtfall",
-        "type": "earth",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 17,
-        "name": "melt",
-        "type": "fire",
-        "power": 12,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 19,
-        "name": "stoke",
-        "type": "fire",
-        "power": 6,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "KINDLD"
-      },
-      {
-        "id": 34,
-        "name": "Sear",
-        "type": "fire",
-        "power": 3,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SAPPD"
-      },
-      {
-        "id": 37,
-        "name": "Sharpen",
-        "type": "status",
-        "power": 0,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "ATKUP"
-      }
+    "moves": [
+      "fire",
+      "earth"
     ]
   },
   {
-    "id": 51,
     "name": "Flintling",
+    "id": 51,
     "type1": "earth",
     "type2": "lightning",
     "evelevel": 16,
@@ -6173,97 +873,14 @@
     "spcdef": 10,
     "hp": 11,
     "spd": 7,
-    "move1": 12,
-    "move2": 20,
-    "move3": 14,
-    "move4": 23,
-    "moveList": [
-      {
-        "id": 12,
-        "name": "dirtburst",
-        "type": "earth",
-        "power": 7,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 20,
-        "name": "bolt",
-        "type": "lightning",
-        "power": 7,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 14,
-        "name": "dirtfall",
-        "type": "earth",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 23,
-        "name": "zap",
-        "type": "lightning",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 13,
-        "name": "slipfall",
-        "type": "earth",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 90,
-        "effect": "SPDDWN"
-      },
-      {
-        "id": 15,
-        "name": "shatter",
-        "type": "earth",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 80,
-        "effect": "CONCUSED"
-      },
-      {
-        "id": 21,
-        "name": "plasma",
-        "type": "lightning",
-        "power": 12,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 22,
-        "name": "coil",
-        "type": "lightning",
-        "power": 12,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "CHRGD"
-      },
-      {
-        "id": 38,
-        "name": "swiften",
-        "type": "status",
-        "power": 0,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "SPDUP"
-      }
+    "moves": [
+      "earth",
+      "fire"
     ]
   },
   {
-    "id": 52,
     "name": "GeodeGuard",
+    "id": 52,
     "type1": "earth",
     "type2": "lightning",
     "evelevel": 0,
@@ -6273,106 +890,14 @@
     "spcdef": 11,
     "hp": 8,
     "spd": 8,
-    "move1": 12,
-    "move2": 20,
-    "move3": 41,
-    "move4": 21,
-    "moveList": [
-      {
-        "id": 12,
-        "name": "dirtburst",
-        "type": "earth",
-        "power": 7,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 20,
-        "name": "bolt",
-        "type": "lightning",
-        "power": 7,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 41,
-        "name": "Ironbody",
-        "type": "status",
-        "power": 0,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "DEFUP"
-      },
-      {
-        "id": 21,
-        "name": "plasma",
-        "type": "lightning",
-        "power": 12,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 13,
-        "name": "slipfall",
-        "type": "earth",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 90,
-        "effect": "SPDDWN"
-      },
-      {
-        "id": 14,
-        "name": "dirtfall",
-        "type": "earth",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 15,
-        "name": "shatter",
-        "type": "earth",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 80,
-        "effect": "CONCUSED"
-      },
-      {
-        "id": 22,
-        "name": "coil",
-        "type": "lightning",
-        "power": 12,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "CHRGD"
-      },
-      {
-        "id": 23,
-        "name": "zap",
-        "type": "lightning",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 42,
-        "name": "deepthought",
-        "type": "status",
-        "power": 0,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SPCAUP"
-      }
+    "moves": [
+      "earth",
+      "fire"
     ]
   },
   {
-    "id": 53,
     "name": "Tuftling",
+    "id": 53,
     "type1": "wind",
     "type2": "plant",
     "evelevel": 16,
@@ -6382,106 +907,14 @@
     "spcdef": 8,
     "hp": 9,
     "spd": 9,
-    "move1": 8,
-    "move2": 26,
-    "move3": 9,
-    "move4": 24,
-    "moveList": [
-      {
-        "id": 8,
-        "name": "breeze",
-        "type": "wind",
-        "power": 5,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 26,
-        "name": "seedfall",
-        "type": "plant",
-        "power": 12,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 9,
-        "name": "bellow",
-        "type": "wind",
-        "power": 10,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 24,
-        "name": "pollen",
-        "type": "plant",
-        "power": 6,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SAPPD"
-      },
-      {
-        "id": 10,
-        "name": "torrent",
-        "type": "wind",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 11,
-        "name": "blow",
-        "type": "wind",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 25,
-        "name": "pollenburst",
-        "type": "plant",
-        "power": 12,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SAPPD"
-      },
-      {
-        "id": 27,
-        "name": "root",
-        "type": "plant",
-        "power": 8,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 36,
-        "name": "Cyclone",
-        "type": "wind",
-        "power": 8,
-        "physical": 1,
-        "accuracy": 70,
-        "effect": "PINNED"
-      },
-      {
-        "id": 38,
-        "name": "swiften",
-        "type": "status",
-        "power": 0,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "SPDUP"
-      }
+    "moves": [
+      "water",
+      "plant"
     ]
   },
   {
-    "id": 54,
     "name": "GustTuft",
+    "id": 54,
     "type1": "wind",
     "type2": "plant",
     "evelevel": 0,
@@ -6491,115 +924,14 @@
     "spcdef": 9,
     "hp": 10,
     "spd": 10,
-    "move1": 8,
-    "move2": 26,
-    "move3": 10,
-    "move4": 36,
-    "moveList": [
-      {
-        "id": 8,
-        "name": "breeze",
-        "type": "wind",
-        "power": 5,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 26,
-        "name": "seedfall",
-        "type": "plant",
-        "power": 12,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 10,
-        "name": "torrent",
-        "type": "wind",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 36,
-        "name": "Cyclone",
-        "type": "wind",
-        "power": 8,
-        "physical": 1,
-        "accuracy": 70,
-        "effect": "PINNED"
-      },
-      {
-        "id": 9,
-        "name": "bellow",
-        "type": "wind",
-        "power": 10,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 11,
-        "name": "blow",
-        "type": "wind",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 24,
-        "name": "pollen",
-        "type": "plant",
-        "power": 6,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SAPPD"
-      },
-      {
-        "id": 25,
-        "name": "pollenburst",
-        "type": "plant",
-        "power": 12,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SAPPD"
-      },
-      {
-        "id": 27,
-        "name": "root",
-        "type": "plant",
-        "power": 8,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 37,
-        "name": "Sharpen",
-        "type": "status",
-        "power": 0,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "ATKUP"
-      },
-      {
-        "id": 38,
-        "name": "swiften",
-        "type": "status",
-        "power": 0,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "SPDUP"
-      }
+    "moves": [
+      "water",
+      "plant"
     ]
   },
   {
-    "id": 55,
     "name": "StaticMite",
+    "id": 55,
     "type1": "lightning",
     "type2": "plant",
     "evelevel": 0,
@@ -6609,97 +941,14 @@
     "spcdef": 10,
     "hp": 11,
     "spd": 7,
-    "move1": 20,
-    "move2": 26,
-    "move3": 22,
-    "move4": 27,
-    "moveList": [
-      {
-        "id": 20,
-        "name": "bolt",
-        "type": "lightning",
-        "power": 7,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 26,
-        "name": "seedfall",
-        "type": "plant",
-        "power": 12,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 22,
-        "name": "coil",
-        "type": "lightning",
-        "power": 12,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "CHRGD"
-      },
-      {
-        "id": 27,
-        "name": "root",
-        "type": "plant",
-        "power": 8,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 21,
-        "name": "plasma",
-        "type": "lightning",
-        "power": 12,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 23,
-        "name": "zap",
-        "type": "lightning",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 24,
-        "name": "pollen",
-        "type": "plant",
-        "power": 6,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SAPPD"
-      },
-      {
-        "id": 25,
-        "name": "pollenburst",
-        "type": "plant",
-        "power": 12,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SAPPD"
-      },
-      {
-        "id": 37,
-        "name": "Sharpen",
-        "type": "status",
-        "power": 0,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "ATKUP"
-      }
+    "moves": [
+      "fire",
+      "plant"
     ]
   },
   {
-    "id": 56,
     "name": "ChimeSeed",
+    "id": 56,
     "type1": "spirit",
     "type2": "plant",
     "evelevel": 16,
@@ -6709,97 +958,14 @@
     "spcdef": 11,
     "hp": 8,
     "spd": 8,
-    "move1": 1,
-    "move2": 26,
-    "move3": 24,
-    "move4": 2,
-    "moveList": [
-      {
-        "id": 1,
-        "name": "thought",
-        "type": "spirit",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 26,
-        "name": "seedfall",
-        "type": "plant",
-        "power": 12,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 24,
-        "name": "pollen",
-        "type": "plant",
-        "power": 6,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SAPPD"
-      },
-      {
-        "id": 2,
-        "name": "wisper",
-        "type": "spirit",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 0,
-        "name": "smite",
-        "type": "spirit",
-        "power": 10,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 3,
-        "name": "blast",
-        "type": "spirit",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 25,
-        "name": "pollenburst",
-        "type": "plant",
-        "power": 12,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SAPPD"
-      },
-      {
-        "id": 27,
-        "name": "root",
-        "type": "plant",
-        "power": 8,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 43,
-        "name": "rejuvinate",
-        "type": "status",
-        "power": 0,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "INFSED"
-      }
+    "moves": [
+      "spirit",
+      "plant"
     ]
   },
   {
-    "id": 57,
     "name": "BoughBell",
+    "id": 57,
     "type1": "spirit",
     "type2": "plant",
     "evelevel": 0,
@@ -6809,106 +975,14 @@
     "spcdef": 8,
     "hp": 9,
     "spd": 9,
-    "move1": 1,
-    "move2": 26,
-    "move3": 25,
-    "move4": 42,
-    "moveList": [
-      {
-        "id": 1,
-        "name": "thought",
-        "type": "spirit",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 26,
-        "name": "seedfall",
-        "type": "plant",
-        "power": 12,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 25,
-        "name": "pollenburst",
-        "type": "plant",
-        "power": 12,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SAPPD"
-      },
-      {
-        "id": 42,
-        "name": "deepthought",
-        "type": "status",
-        "power": 0,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SPCAUP"
-      },
-      {
-        "id": 0,
-        "name": "smite",
-        "type": "spirit",
-        "power": 10,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 2,
-        "name": "wisper",
-        "type": "spirit",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 3,
-        "name": "blast",
-        "type": "spirit",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 24,
-        "name": "pollen",
-        "type": "plant",
-        "power": 6,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SAPPD"
-      },
-      {
-        "id": 27,
-        "name": "root",
-        "type": "plant",
-        "power": 8,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 38,
-        "name": "swiften",
-        "type": "status",
-        "power": 0,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "SPDUP"
-      }
+    "moves": [
+      "spirit",
+      "plant"
     ]
   },
   {
-    "id": 58,
     "name": "ShardWisp",
+    "id": 58,
     "type1": "spirit",
     "type2": "earth",
     "evelevel": 16,
@@ -6918,97 +992,14 @@
     "spcdef": 9,
     "hp": 10,
     "spd": 10,
-    "move1": 1,
-    "move2": 12,
-    "move3": 0,
-    "move4": 15,
-    "moveList": [
-      {
-        "id": 1,
-        "name": "thought",
-        "type": "spirit",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 12,
-        "name": "dirtburst",
-        "type": "earth",
-        "power": 7,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 0,
-        "name": "smite",
-        "type": "spirit",
-        "power": 10,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 15,
-        "name": "shatter",
-        "type": "earth",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 80,
-        "effect": "CONCUSED"
-      },
-      {
-        "id": 2,
-        "name": "wisper",
-        "type": "spirit",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 3,
-        "name": "blast",
-        "type": "spirit",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 13,
-        "name": "slipfall",
-        "type": "earth",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 90,
-        "effect": "SPDDWN"
-      },
-      {
-        "id": 14,
-        "name": "dirtfall",
-        "type": "earth",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 41,
-        "name": "Ironbody",
-        "type": "status",
-        "power": 0,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "DEFUP"
-      }
+    "moves": [
+      "spirit",
+      "earth"
     ]
   },
   {
-    "id": 59,
     "name": "Reliquary",
+    "id": 59,
     "type1": "spirit",
     "type2": "elder",
     "evelevel": 0,
@@ -7018,97 +1009,13 @@
     "spcdef": 10,
     "hp": 11,
     "spd": 7,
-    "move1": 1,
-    "move2": 29,
-    "move3": 3,
-    "move4": 31,
-    "moveList": [
-      {
-        "id": 1,
-        "name": "thought",
-        "type": "spirit",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 29,
-        "name": "elderBurst",
-        "type": "elder",
-        "power": 12,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 3,
-        "name": "blast",
-        "type": "spirit",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 31,
-        "name": "elderSlam",
-        "type": "elder",
-        "power": 14,
-        "physical": 1,
-        "accuracy": 80,
-        "effect": "CONCUSED"
-      },
-      {
-        "id": 0,
-        "name": "smite",
-        "type": "spirit",
-        "power": 10,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 2,
-        "name": "wisper",
-        "type": "spirit",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 28,
-        "name": "burst",
-        "type": "elder",
-        "power": 8,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 30,
-        "name": "slam",
-        "type": "elder",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 42,
-        "name": "deepthought",
-        "type": "status",
-        "power": 0,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SPCAUP"
-      }
+    "moves": [
+      "spirit"
     ]
   },
   {
-    "id": 60,
     "name": "SaplingSage",
+    "id": 60,
     "type1": "plant",
     "type2": "elder",
     "evelevel": 16,
@@ -7118,106 +1025,14 @@
     "spcdef": 11,
     "hp": 8,
     "spd": 8,
-    "move1": 26,
-    "move2": 29,
-    "move3": 43,
-    "move4": 42,
-    "moveList": [
-      {
-        "id": 26,
-        "name": "seedfall",
-        "type": "plant",
-        "power": 12,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 29,
-        "name": "elderBurst",
-        "type": "elder",
-        "power": 12,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 43,
-        "name": "rejuvinate",
-        "type": "status",
-        "power": 0,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "INFSED"
-      },
-      {
-        "id": 42,
-        "name": "deepthought",
-        "type": "status",
-        "power": 0,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SPCAUP"
-      },
-      {
-        "id": 24,
-        "name": "pollen",
-        "type": "plant",
-        "power": 6,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SAPPD"
-      },
-      {
-        "id": 25,
-        "name": "pollenburst",
-        "type": "plant",
-        "power": 12,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SAPPD"
-      },
-      {
-        "id": 27,
-        "name": "root",
-        "type": "plant",
-        "power": 8,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 28,
-        "name": "burst",
-        "type": "elder",
-        "power": 8,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 30,
-        "name": "slam",
-        "type": "elder",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 31,
-        "name": "elderSlam",
-        "type": "elder",
-        "power": 14,
-        "physical": 1,
-        "accuracy": 80,
-        "effect": "CONCUSED"
-      }
+    "moves": [
+      "plant",
+      "spirit"
     ]
   },
   {
-    "id": 61,
     "name": "GroveKeeper",
+    "id": 61,
     "type1": "elder",
     "type2": "plant",
     "evelevel": 0,
@@ -7227,97 +1042,14 @@
     "spcdef": 8,
     "hp": 9,
     "spd": 9,
-    "move1": 29,
-    "move2": 26,
-    "move3": 27,
-    "move4": 25,
-    "moveList": [
-      {
-        "id": 29,
-        "name": "elderBurst",
-        "type": "elder",
-        "power": 12,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 26,
-        "name": "seedfall",
-        "type": "plant",
-        "power": 12,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 27,
-        "name": "root",
-        "type": "plant",
-        "power": 8,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 25,
-        "name": "pollenburst",
-        "type": "plant",
-        "power": 12,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SAPPD"
-      },
-      {
-        "id": 24,
-        "name": "pollen",
-        "type": "plant",
-        "power": 6,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SAPPD"
-      },
-      {
-        "id": 28,
-        "name": "burst",
-        "type": "elder",
-        "power": 8,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 30,
-        "name": "slam",
-        "type": "elder",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 31,
-        "name": "elderSlam",
-        "type": "elder",
-        "power": 14,
-        "physical": 1,
-        "accuracy": 80,
-        "effect": "CONCUSED"
-      },
-      {
-        "id": 41,
-        "name": "Ironbody",
-        "type": "status",
-        "power": 0,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "DEFUP"
-      }
+    "moves": [
+      "spirit",
+      "plant"
     ]
   },
   {
-    "id": 62,
     "name": "FossilBloom",
+    "id": 62,
     "type1": "elder",
     "type2": "plant",
     "evelevel": 16,
@@ -7327,97 +1059,14 @@
     "spcdef": 9,
     "hp": 10,
     "spd": 10,
-    "move1": 29,
-    "move2": 26,
-    "move3": 31,
-    "move4": 41,
-    "moveList": [
-      {
-        "id": 29,
-        "name": "elderBurst",
-        "type": "elder",
-        "power": 12,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 26,
-        "name": "seedfall",
-        "type": "plant",
-        "power": 12,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 31,
-        "name": "elderSlam",
-        "type": "elder",
-        "power": 14,
-        "physical": 1,
-        "accuracy": 80,
-        "effect": "CONCUSED"
-      },
-      {
-        "id": 41,
-        "name": "Ironbody",
-        "type": "status",
-        "power": 0,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "DEFUP"
-      },
-      {
-        "id": 24,
-        "name": "pollen",
-        "type": "plant",
-        "power": 6,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SAPPD"
-      },
-      {
-        "id": 25,
-        "name": "pollenburst",
-        "type": "plant",
-        "power": 12,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SAPPD"
-      },
-      {
-        "id": 27,
-        "name": "root",
-        "type": "plant",
-        "power": 8,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 28,
-        "name": "burst",
-        "type": "elder",
-        "power": 8,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 30,
-        "name": "slam",
-        "type": "elder",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      }
+    "moves": [
+      "spirit",
+      "plant"
     ]
   },
   {
-    "id": 63,
     "name": "OrbitRelic",
+    "id": 63,
     "type1": "elder",
     "type2": "spirit",
     "evelevel": 0,
@@ -7427,92 +1076,8 @@
     "spcdef": 10,
     "hp": 11,
     "spd": 7,
-    "move1": 29,
-    "move2": 1,
-    "move3": 31,
-    "move4": 0,
-    "moveList": [
-      {
-        "id": 29,
-        "name": "elderBurst",
-        "type": "elder",
-        "power": 12,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 1,
-        "name": "thought",
-        "type": "spirit",
-        "power": 5,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 31,
-        "name": "elderSlam",
-        "type": "elder",
-        "power": 14,
-        "physical": 1,
-        "accuracy": 80,
-        "effect": "CONCUSED"
-      },
-      {
-        "id": 0,
-        "name": "smite",
-        "type": "spirit",
-        "power": 10,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 2,
-        "name": "wisper",
-        "type": "spirit",
-        "power": 7,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 3,
-        "name": "blast",
-        "type": "spirit",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 28,
-        "name": "burst",
-        "type": "elder",
-        "power": 8,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 30,
-        "name": "slam",
-        "type": "elder",
-        "power": 10,
-        "physical": 1,
-        "accuracy": 100,
-        "effect": "NONE"
-      },
-      {
-        "id": 42,
-        "name": "deepthought",
-        "type": "status",
-        "power": 0,
-        "physical": 0,
-        "accuracy": 100,
-        "effect": "SPCAUP"
-      }
+    "moves": [
+      "spirit"
     ]
   }
 ]

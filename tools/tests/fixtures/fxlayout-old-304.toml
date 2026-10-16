@@ -98,227 +98,227 @@ source = { carray = { path = "../../../fxdata/data/creatureData.txt", symbol = "
 [[entry]]
 name = "move0"
 namespace = "MoveData"
-source = { carray = { path = "../../../fxdata/generated/moves.txt", symbol = "move0" } }
+source = { carray = { path = "moves.txt", symbol = "move0" } }
 
 [[entry]]
 name = "move1"
 namespace = "MoveData"
-source = { carray = { path = "../../../fxdata/generated/moves.txt", symbol = "move1" } }
+source = { carray = { path = "moves.txt", symbol = "move1" } }
 
 [[entry]]
 name = "move2"
 namespace = "MoveData"
-source = { carray = { path = "../../../fxdata/generated/moves.txt", symbol = "move2" } }
+source = { carray = { path = "moves.txt", symbol = "move2" } }
 
 [[entry]]
 name = "move3"
 namespace = "MoveData"
-source = { carray = { path = "../../../fxdata/generated/moves.txt", symbol = "move3" } }
+source = { carray = { path = "moves.txt", symbol = "move3" } }
 
 [[entry]]
 name = "move4"
 namespace = "MoveData"
-source = { carray = { path = "../../../fxdata/generated/moves.txt", symbol = "move4" } }
+source = { carray = { path = "moves.txt", symbol = "move4" } }
 
 [[entry]]
 name = "move5"
 namespace = "MoveData"
-source = { carray = { path = "../../../fxdata/generated/moves.txt", symbol = "move5" } }
+source = { carray = { path = "moves.txt", symbol = "move5" } }
 
 [[entry]]
 name = "move6"
 namespace = "MoveData"
-source = { carray = { path = "../../../fxdata/generated/moves.txt", symbol = "move6" } }
+source = { carray = { path = "moves.txt", symbol = "move6" } }
 
 [[entry]]
 name = "move7"
 namespace = "MoveData"
-source = { carray = { path = "../../../fxdata/generated/moves.txt", symbol = "move7" } }
+source = { carray = { path = "moves.txt", symbol = "move7" } }
 
 [[entry]]
 name = "move8"
 namespace = "MoveData"
-source = { carray = { path = "../../../fxdata/generated/moves.txt", symbol = "move8" } }
+source = { carray = { path = "moves.txt", symbol = "move8" } }
 
 [[entry]]
 name = "move9"
 namespace = "MoveData"
-source = { carray = { path = "../../../fxdata/generated/moves.txt", symbol = "move9" } }
+source = { carray = { path = "moves.txt", symbol = "move9" } }
 
 [[entry]]
 name = "move10"
 namespace = "MoveData"
-source = { carray = { path = "../../../fxdata/generated/moves.txt", symbol = "move10" } }
+source = { carray = { path = "moves.txt", symbol = "move10" } }
 
 [[entry]]
 name = "move11"
 namespace = "MoveData"
-source = { carray = { path = "../../../fxdata/generated/moves.txt", symbol = "move11" } }
+source = { carray = { path = "moves.txt", symbol = "move11" } }
 
 [[entry]]
 name = "move12"
 namespace = "MoveData"
-source = { carray = { path = "../../../fxdata/generated/moves.txt", symbol = "move12" } }
+source = { carray = { path = "moves.txt", symbol = "move12" } }
 
 [[entry]]
 name = "move13"
 namespace = "MoveData"
-source = { carray = { path = "../../../fxdata/generated/moves.txt", symbol = "move13" } }
+source = { carray = { path = "moves.txt", symbol = "move13" } }
 
 [[entry]]
 name = "move14"
 namespace = "MoveData"
-source = { carray = { path = "../../../fxdata/generated/moves.txt", symbol = "move14" } }
+source = { carray = { path = "moves.txt", symbol = "move14" } }
 
 [[entry]]
 name = "move15"
 namespace = "MoveData"
-source = { carray = { path = "../../../fxdata/generated/moves.txt", symbol = "move15" } }
+source = { carray = { path = "moves.txt", symbol = "move15" } }
 
 [[entry]]
 name = "move16"
 namespace = "MoveData"
-source = { carray = { path = "../../../fxdata/generated/moves.txt", symbol = "move16" } }
+source = { carray = { path = "moves.txt", symbol = "move16" } }
 
 [[entry]]
 name = "move17"
 namespace = "MoveData"
-source = { carray = { path = "../../../fxdata/generated/moves.txt", symbol = "move17" } }
+source = { carray = { path = "moves.txt", symbol = "move17" } }
 
 [[entry]]
 name = "move18"
 namespace = "MoveData"
-source = { carray = { path = "../../../fxdata/generated/moves.txt", symbol = "move18" } }
+source = { carray = { path = "moves.txt", symbol = "move18" } }
 
 [[entry]]
 name = "move19"
 namespace = "MoveData"
-source = { carray = { path = "../../../fxdata/generated/moves.txt", symbol = "move19" } }
+source = { carray = { path = "moves.txt", symbol = "move19" } }
 
 [[entry]]
 name = "move20"
 namespace = "MoveData"
-source = { carray = { path = "../../../fxdata/generated/moves.txt", symbol = "move20" } }
+source = { carray = { path = "moves.txt", symbol = "move20" } }
 
 [[entry]]
 name = "move21"
 namespace = "MoveData"
-source = { carray = { path = "../../../fxdata/generated/moves.txt", symbol = "move21" } }
+source = { carray = { path = "moves.txt", symbol = "move21" } }
 
 [[entry]]
 name = "move22"
 namespace = "MoveData"
-source = { carray = { path = "../../../fxdata/generated/moves.txt", symbol = "move22" } }
+source = { carray = { path = "moves.txt", symbol = "move22" } }
 
 [[entry]]
 name = "move23"
 namespace = "MoveData"
-source = { carray = { path = "../../../fxdata/generated/moves.txt", symbol = "move23" } }
+source = { carray = { path = "moves.txt", symbol = "move23" } }
 
 [[entry]]
 name = "move24"
 namespace = "MoveData"
-source = { carray = { path = "../../../fxdata/generated/moves.txt", symbol = "move24" } }
+source = { carray = { path = "moves.txt", symbol = "move24" } }
 
 [[entry]]
 name = "move25"
 namespace = "MoveData"
-source = { carray = { path = "../../../fxdata/generated/moves.txt", symbol = "move25" } }
+source = { carray = { path = "moves.txt", symbol = "move25" } }
 
 [[entry]]
 name = "move26"
 namespace = "MoveData"
-source = { carray = { path = "../../../fxdata/generated/moves.txt", symbol = "move26" } }
+source = { carray = { path = "moves.txt", symbol = "move26" } }
 
 [[entry]]
 name = "move27"
 namespace = "MoveData"
-source = { carray = { path = "../../../fxdata/generated/moves.txt", symbol = "move27" } }
+source = { carray = { path = "moves.txt", symbol = "move27" } }
 
 [[entry]]
 name = "move28"
 namespace = "MoveData"
-source = { carray = { path = "../../../fxdata/generated/moves.txt", symbol = "move28" } }
+source = { carray = { path = "moves.txt", symbol = "move28" } }
 
 [[entry]]
 name = "move29"
 namespace = "MoveData"
-source = { carray = { path = "../../../fxdata/generated/moves.txt", symbol = "move29" } }
+source = { carray = { path = "moves.txt", symbol = "move29" } }
 
 [[entry]]
 name = "move30"
 namespace = "MoveData"
-source = { carray = { path = "../../../fxdata/generated/moves.txt", symbol = "move30" } }
+source = { carray = { path = "moves.txt", symbol = "move30" } }
 
 [[entry]]
 name = "move31"
 namespace = "MoveData"
-source = { carray = { path = "../../../fxdata/generated/moves.txt", symbol = "move31" } }
+source = { carray = { path = "moves.txt", symbol = "move31" } }
 
 [[entry]]
 name = "move44"
 namespace = "MoveData"
-source = { carray = { path = "../../../fxdata/generated/moves.txt", symbol = "move44" } }
+source = { carray = { path = "moves.txt", symbol = "move44" } }
 
 [[entry]]
 name = "move33"
 namespace = "MoveData"
-source = { carray = { path = "../../../fxdata/generated/moves.txt", symbol = "move33" } }
+source = { carray = { path = "moves.txt", symbol = "move33" } }
 
 [[entry]]
 name = "move34"
 namespace = "MoveData"
-source = { carray = { path = "../../../fxdata/generated/moves.txt", symbol = "move34" } }
+source = { carray = { path = "moves.txt", symbol = "move34" } }
 
 [[entry]]
 name = "move36"
 namespace = "MoveData"
-source = { carray = { path = "../../../fxdata/generated/moves.txt", symbol = "move36" } }
+source = { carray = { path = "moves.txt", symbol = "move36" } }
 
 [[entry]]
 name = "move37"
 namespace = "MoveData"
-source = { carray = { path = "../../../fxdata/generated/moves.txt", symbol = "move37" } }
+source = { carray = { path = "moves.txt", symbol = "move37" } }
 
 [[entry]]
 name = "move38"
 namespace = "MoveData"
-source = { carray = { path = "../../../fxdata/generated/moves.txt", symbol = "move38" } }
+source = { carray = { path = "moves.txt", symbol = "move38" } }
 
 [[entry]]
 name = "move39"
 namespace = "MoveData"
-source = { carray = { path = "../../../fxdata/generated/moves.txt", symbol = "move39" } }
+source = { carray = { path = "moves.txt", symbol = "move39" } }
 
 [[entry]]
 name = "move40"
 namespace = "MoveData"
-source = { carray = { path = "../../../fxdata/generated/moves.txt", symbol = "move40" } }
+source = { carray = { path = "moves.txt", symbol = "move40" } }
 
 [[entry]]
 name = "move41"
 namespace = "MoveData"
-source = { carray = { path = "../../../fxdata/generated/moves.txt", symbol = "move41" } }
+source = { carray = { path = "moves.txt", symbol = "move41" } }
 
 [[entry]]
 name = "move42"
 namespace = "MoveData"
-source = { carray = { path = "../../../fxdata/generated/moves.txt", symbol = "move42" } }
+source = { carray = { path = "moves.txt", symbol = "move42" } }
 
 [[entry]]
 name = "move43"
 namespace = "MoveData"
-source = { carray = { path = "../../../fxdata/generated/moves.txt", symbol = "move43" } }
+source = { carray = { path = "moves.txt", symbol = "move43" } }
 
 [[entry]]
 name = "move255"
 namespace = "MoveData"
-source = { carray = { path = "../../../fxdata/generated/moves.txt", symbol = "move255" } }
+source = { carray = { path = "moves.txt", symbol = "move255" } }
 
 [[entry]]
 name = "moveNames"
 namespace = "MoveData"
-source = { symbol = { path = "../../../fxdata/generated/moves.txt", symbol = "moveNames" } }
+source = { symbol = { path = "moves.txt", symbol = "moveNames" } }
 
 [[entry]]
 name = "m1e1Text"
@@ -433,7 +433,7 @@ source = { symbol = { path = "../../../fxdata/data/mapData.txt", symbol = "maps"
 [[entry]]
 name = "moveList"
 namespace = "MoveLists"
-source = { symbol = { path = "../../../fxdata/data/movelists.txt", symbol = "moveList" } }
+source = { symbol = { path = "movelists.txt", symbol = "moveList" } }
 
 [[entry]]
 name = "attackText"
@@ -1683,7 +1683,7 @@ source = { raw = "../../../fxdata/generated/typetable.bin" }
 
 [[entry]]
 name = "move_table"
-source = { raw = "../../../fxdata/generated/moves.bin" }
+source = { raw = "moves.bin" }
 
 [[entry]]
 name = "map_data"

@@ -8,10 +8,10 @@
 void OpponentTest(TestSuite &t) {
     Test test = Test(__func__);
     OpponentSeed seed = readOpponentSeed(0);
-    test.addToLog("creature 1 id: " + std::to_string(seed.firstCreature.id) + " lvl " + std::to_string(seed.firstCreature.lvl) + " moves " +
-                  std::to_string(seed.firstCreature.moves));
+    test.addToLog("creature 1 id: " + std::to_string(seed.firstCreature.id) + " lvl " + std::to_string(seed.firstCreature.lvl) + " mask " +
+                  std::to_string(seed.firstCreature.attackMask));
     test.addToLog("creature 2 id: " + std::to_string(seed.secondCreature.id) + " lvl " + std::to_string(seed.secondCreature.lvl) +
-                  " moves " + std::to_string(seed.secondCreature.moves));
+                  " mask " + std::to_string(seed.secondCreature.attackMask));
     Creature first;
     Creature second;
     Creature third;
@@ -33,7 +33,7 @@ void OpponentTest(TestSuite &t) {
     encounter.level = encounterLevel;
     encounter.loadTypes(encounterSeed);
     encounter.setStats(encounterSeed);
-    encounter.loadMoves(encounterSeed);
+    encounter.attackMask = encounterSeed.attackMask;
     test.assert(encounter.id, encounterCreature, "Encounter Creature ID");
     test.assert(encounter.level, encounterLevel, "Encounter Creature Level");
     test.assert(encounter.statlist.attack,

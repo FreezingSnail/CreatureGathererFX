@@ -155,11 +155,23 @@ void checkArenaCatalog(Report &report, const std::string &root, const AddressTab
     }
     DecoderT decoder(*descriptor);
     const auto creatures = canonicalIds(root + "/data/json/creatures.json", false);
-    const auto moves = canonicalIds(root + "/data/json/moves.json", true);
-    if (creatures.empty() || moves.empty()) {
-        report.fail("arena catalog", "canonical creature or move source is missing/empty");
+    if (creatures.empty()) {
+        report.fail("arena catalog", "canonical creature source is missing/empty");
         return;
     }
+    // Fold authored duel type names to the 5-bit attack mask bit order
+    // [spirit, water, earth, fire, plant]; unknown/empty names are dropped.
+    auto foldMask = [](const std::vector<std::string> &types) -> uint8_t {
+        uint8_t mask = 0;
+        for (const auto &t : types) {
+            if (t == "spirit" || t == "elder") mask |= 1u;
+            else if (t == "water" || t == "wind") mask |= 2u;
+            else if (t == "earth") mask |= 4u;
+            else if (t == "fire" || t == "lightning") mask |= 8u;
+            else if (t == "plant") mask |= 16u;
+        }
+        return mask;
+    };
     auto idConstant = [&](const std::string &name) -> std::optional<uint8_t> {
         std::smatch match;
         const std::regex pattern("constexpr uint8_t " + name + " = ([0-9]+);");
@@ -185,32 +197,29 @@ void checkArenaCatalog(Report &report, const std::string &root, const AddressTab
         report.pass();
     };
     const std::array<std::string, 3> playerKeys{"blitz", "bulwark", "utility"};
-    const std::array<std::array<std::array<const char *, 5>, 3>, 3> players{{
-        {{{"ScrambleSnail","breeze","bellow","torrent","seedfall"}, {"ScatterCrab","dirtburst","slipfall","dirtfall","none"}, {"bigsquid","splash","squirt","soak","none"}}},
-        {{{"rock","dirtburst","wisper","Ironbody","slipfall"}, {"ShatterCrab","slipfall","bolt","plasma","dirtburst"}, {"item2","wisper","burst","splash","slam"}}},
-        {{{"bell","wisper","Sharpen","none","none"}, {"hedge","root","rejuvinate","pollen","none"}, {"cloud","blow","zap","sweep","torrent"}}}
+    struct AuthoredPlayer { const char *species; const char *types[2]; };
+    const std::array<std::array<AuthoredPlayer, 3>, 3> players{{
+        {{{"ScrambleSnail", {"water", "plant"}}, {"ScatterCrab", {"earth", ""}}, {"bigsquid", {"water", ""}}}},
+        {{{"rock", {"earth", "spirit"}}, {"ShatterCrab", {"earth", "fire"}}, {"item2", {"spirit", "water"}}}},
+        {{{"bell", {"spirit", ""}}, {"hedge", {"plant", ""}}, {"cloud", {"water", "fire"}}}}
     }};
     std::vector<uint8_t> playerBytes;
     for (std::size_t t = 0; t < playerKeys.size(); ++t) {
         const auto symbolic = idConstant("player_" + playerKeys[t]);
         if (!symbolic || *symbolic != t) report.fail("arena player IDs", "symbolic player IDs are not contiguous");
         for (const auto &member : players[t]) {
-            const auto species = canonicalLookup(creatures, member[0], true);
-            if (!species) { report.fail("arena roster", "unknown canonical species " + std::string(member[0])); continue; }
+            const auto species = canonicalLookup(creatures, member.species, true);
+            if (!species) { report.fail("arena roster", "unknown canonical species " + std::string(member.species)); continue; }
+            std::vector<std::string> types;
+            for (const char *ty : member.types) if (ty[0] != '\0') types.push_back(ty);
             playerBytes.push_back(*species);
             playerBytes.push_back(31);
-            for (std::size_t m = 1; m < member.size(); ++m) {
-                const auto move = std::string(member[m]) == "none"
-                                      ? std::optional<uint8_t>(32)
-                                      : canonicalLookup(moves, member[m], false);
-                if (!move) report.fail("arena roster", "unknown canonical move " + std::string(member[m]));
-                playerBytes.push_back(move.value_or(0));
-            }
+            playerBytes.push_back(foldMask(types));
         }
     }
-    if (playerBytes.size() != 3 * 18) report.fail("arena player shape", "expected exactly three 18-byte player records");
+    if (playerBytes.size() != 3 * 9) report.fail("arena player shape", "expected exactly three nine-byte player records");
     auto packedPlayers = getArray("playerMembers");
-    if (!packedPlayers || *packedPlayers != playerBytes) report.fail("arena player order", "authored species/moves/level order differs from six-byte records");
+    if (!packedPlayers || *packedPlayers != playerBytes) report.fail("arena player order", "authored species/mask/level order differs from three-byte records");
     else report.pass();
     checkImageRecord("playerMembers", playerBytes);
 
@@ -264,13 +273,9 @@ void checkArenaCatalog(Report &report, const std::string &root, const AddressTab
             expected.push_back(speciesIds[s]);
             if ((*sourceRow)[s + 3] != "31") report.fail("arena trainer level", "arena opponent is not level 31");
             expected.push_back(31);
-            for (std::size_t m = 0; m < 4; ++m) {
-                const std::string &moveName = (*sourceRow)[7 + s * 4 + m];
-                const auto move = moveName == "none" ? std::optional<uint8_t>(255)
-                                                       : canonicalLookup(moves, moveName, false);
-                if (!move) report.fail("arena trainer move", "unknown canonical move " + moveName);
-                expected.push_back(move.value_or(255));
-            }
+            std::vector<std::string> types;
+            for (std::size_t m = 0; m < 4; ++m) types.push_back((*sourceRow)[7 + s * 4 + m]);
+            expected.push_back(foldMask(types));
         }
         const auto seed = opponentDecoder ? opponentDecoder->carrayBytes(trainer == 0 ? "opponent_seeds" : "opponent_seed_" + std::to_string(trainer)) : std::nullopt;
         if (!seed || *seed != expected) report.fail("arena trainer record", "resolved opts row differs from canonical CSV records");

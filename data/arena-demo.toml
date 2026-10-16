@@ -7,17 +7,17 @@ label = "Blitz"
 [[player_team.members]]
 species = "ScrambleSnail"
 level = 31
-moves = ["breeze", "bellow", "torrent", "seedfall"]
+moves = ["water", "plant"]
 
 [[player_team.members]]
 species = "ScatterCrab"
 level = 31
-moves = ["dirtburst", "slipfall", "dirtfall", "none"]
+moves = ["earth"]
 
 [[player_team.members]]
 species = "bigsquid"
 level = 31
-moves = ["splash", "squirt", "soak", "none"]
+moves = ["water"]
 
 [[player_team]]
 key = "bulwark"
@@ -26,17 +26,17 @@ label = "Bulwark"
 [[player_team.members]]
 species = "rock"
 level = 31
-moves = ["dirtburst", "wisper", "Ironbody", "slipfall"]
+moves = ["earth", "spirit"]
 
 [[player_team.members]]
 species = "ShatterCrab"
 level = 31
-moves = ["slipfall", "bolt", "plasma", "dirtburst"]
+moves = ["earth", "fire"]
 
 [[player_team.members]]
 species = "item2"
 level = 31
-moves = ["wisper", "burst", "splash", "slam"]
+moves = ["spirit", "water"]
 
 [[player_team]]
 key = "utility"
@@ -45,17 +45,17 @@ label = "Utility"
 [[player_team.members]]
 species = "bell"
 level = 31
-moves = ["wisper", "Sharpen", "none", "none"]
+moves = ["spirit"]
 
 [[player_team.members]]
 species = "hedge"
 level = 31
-moves = ["root", "rejuvinate", "pollen", "none"]
+moves = ["plant"]
 
 [[player_team.members]]
 species = "cloud"
 level = 31
-moves = ["blow", "zap", "sweep", "torrent"]
+moves = ["water", "fire"]
 
 [[opponent_team]]
 key = "starter"

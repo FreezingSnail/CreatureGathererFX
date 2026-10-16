@@ -626,7 +626,7 @@ inline void test_battlepresentation(FxTest &test) {
         menu.clear();
         FxReadCounter::resetFrame();
         menu.openMenu(BATTLE_MOVE_SELECT, moveView);
-        test.expectEq(FxReadCounter::count(), static_cast<uint8_t>(4),
+        test.expectEq(FxReadCounter::count(), static_cast<uint8_t>(2),
                       F("menu caches only valid move metadata"));
         test.expectEq(menu.movesSnapshot().moveIds[0], static_cast<uint8_t>(0),
                       F("move PP display retains first move ID"));

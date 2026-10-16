@@ -8,24 +8,16 @@
 
 namespace battle_presets_test {
 
-uint8_t expectedReads(const BattlePresets::Preset &preset)
-{
-    uint8_t reads = 0;
-    for (uint8_t member = 0; member < 3; ++member)
-        for (uint8_t move = 0; move < 4; ++move)
-            if (preset.player[member].moveIds[move] != BattlePresets::emptyMoveId)
-                ++reads;
-    return reads;
-}
-
 void checkPreset(Test &test, const BattlePresets::Preset &stored)
 {
     const BattlePresets::Preset expected = BattlePresets::copyPreset(stored);
     Player party;
     FxReadCounter::resetFrame();
     battle::applyPlayerPreset(party, stored);
-    test.assert(FxReadCounter::count(), expectedReads(expected),
-                "host bootstrap reads only authored move descriptors");
+    // Each member's attack mask travels in its canonical species record; the
+    // host fixture reader records no metadata reads, so the count is zero.
+    test.assert(FxReadCounter::count(), static_cast<uint8_t>(0),
+                "host bootstrap records no move-descriptor reads");
     test.assert(FxReadCounter::markUpdate(), true,
                 "preset transition accounts for all host metadata reads");
 
@@ -39,23 +31,15 @@ void checkPreset(Test &test, const BattlePresets::Preset &stored)
             2 * member.level + seed.hpSeed * (member.level / 3) + 30);
         test.assert(creature.statlist.hp, hp, "preset level-derived max HP");
         test.assert(party.creatureHPs[slot], hp, "preset starts at full persistent HP");
-        for (uint8_t moveSlot = 0; moveSlot < 4; ++moveSlot) {
-            test.assert(creature.moves[moveSlot], member.moveIds[moveSlot],
-                        "preset authored move ID");
-            if (member.moveIds[moveSlot] == BattlePresets::emptyMoveId) {
-                test.assert(creature.moveList[moveSlot].move, static_cast<uint16_t>(0),
-                            "empty preset move has no descriptor");
-                test.assert(creature.moveList[moveSlot].effect1, Effect::NONE,
-                            "empty preset move has no effect");
-            }
-        }
+        test.assert(creature.attackMask, member.attackMask,
+                    "preset authored attack mask");
     }
 
     // Reapplication is a fresh bootstrap, independent of previous HP.
     party.creatureHPs[0] = 1;
     FxReadCounter::resetFrame();
     battle::applyPlayerPreset(party, stored);
-    test.assert(FxReadCounter::count(), expectedReads(expected),
+    test.assert(FxReadCounter::count(), static_cast<uint8_t>(0),
                 "repeated preset has the same read count");
     test.assert(FxReadCounter::markUpdate(), true,
                 "repeated preset remains a transition");

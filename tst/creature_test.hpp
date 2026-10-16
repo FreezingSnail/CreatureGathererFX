@@ -4,12 +4,6 @@
 #include "../src/creature/LevelCurve.hpp"
 #include "../src/lib/ReadData.hpp"
 #include "src/FXDataFake.hpp"
-static_assert(sizeof(Move) == 4, "Move must retain its packed four-byte runtime layout");
-#if defined(__AVR__)
-static_assert(sizeof(Creature) == 33, "Creature size is part of the RAM budget");
-#else
-static_assert(sizeof(Creature) == 34, "Host Creature size includes host alignment padding");
-#endif
 static_assert(sizeof(Effect) == sizeof(uint8_t), "Effect must use one byte");
 
 void CreatureLoadTest(TestSuite &t) {
@@ -20,10 +14,7 @@ void CreatureLoadTest(TestSuite &t) {
     test.assert(creature.level, 31, "Creature Level");
     test.assert(creature.types.getType1(), static_cast<int>(Type::WIND), "Creature Type 1");
     test.assert(creature.types.getType2(), static_cast<int>(Type::NONE), "Creature Type 2");
-    test.assert(creature.moves[0], 8, "Creature Move 1");
-    test.assert(creature.moves[1], 32, "Creature Move 2");
-    test.assert(creature.moves[2], 32, "Creature Move 3");
-    test.assert(creature.moves[3], 32, "Creature Move 4");
+    test.assert(creature.attackMask, 2, "Creature attack mask (water)");
     test.assert(creature.statlist.attack, creature.seedToStat(3), "Creature Attack");
     test.assert(creature.statlist.defense, creature.seedToStat(3), "Creature Defense");
     test.assert(creature.statlist.speed, creature.seedToStat(3), "Creature Speed");
@@ -37,18 +28,16 @@ void CreatureLoadTest(TestSuite &t) {
 void CreatureLoadFromOpponnetSeed(TestSuite &t) {
     Test test = Test(__func__);
     Creature creature = Creature();
-    creature.loadFromOpponentSeed({0, 31, 4294967040});
+    creature.loadFromOpponentSeed({0, 31, 2});
     test.assert(creature.id, 0, "Creature ID");
     test.assert(creature.level, 31, "Creature Level");
     test.assert(creature.types.getType1(), static_cast<int>(Type::WIND), "Creature Type 1");
     test.assert(creature.types.getType2(), static_cast<int>(Type::NONE), "Creature Type 2");
-    test.assert(creature.moves[0], 0, "Creature Move 1");
-    test.assert(creature.moves[1], 255, "Creature Move 2");
-    test.assert(creature.moves[2], 255, "Creature Move 3");
-    test.assert(creature.moves[3], 255, "Creature Move 4");
+    test.assert(creature.attackMask, 2, "Opponent seed attack mask");
 
-    creature.loadFromOpponentSeed({0, 17, 4294967040});
+    creature.loadFromOpponentSeed({0, 17, 4});
     test.assert(creature.level, 17, "Creature uses opponent seed level");
+    test.assert(creature.attackMask, 4, "Opponent seed attack mask follows the seed");
     test.assert(creature.statlist.attack,
                 static_cast<uint8_t>(2 * 17 + 3 * (17 / 3)),
                 "Opponent stats use the seed level");
@@ -58,12 +47,12 @@ void CreatureLoadFromOpponnetSeed(TestSuite &t) {
 
 void CreatureStoredRecordTest(TestSuite &t) {
     Test test = Test(__func__);
-    StoreRecord record = {0, 27, {9, 32, 32, 32}, 0};
+    StoreRecord record = {0, 27, 2, {0, 0, 0}, 0};
     Creature creature;
     creature.load(record);
     test.assert(creature.id, record.id, "Stored creature ID");
     test.assert(creature.level, 3, "Stored experience derives level");
-    test.assert(creature.moves[0], record.moves[0], "Stored move overrides species default");
+    test.assert(creature.attackMask, record.attackMask, "Stored mask overrides species default");
     test.assert(creature.statlist.attack, creature.seedToStat(3),
                 "Stored creature stats use derived level");
     t.addTest(test);

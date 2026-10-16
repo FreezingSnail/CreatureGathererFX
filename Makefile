@@ -15,7 +15,7 @@ COMPACT_WARP_VM_FLAGS = $(filter -DCGFX_COMPACT_WARP_VM -DCGFX_COMPACT_WARP_VM=%
 BATTLE_AUTO_REPLACE_FLAGS = $(filter -DCGFX_BATTLE_AUTO_REPLACE -DCGFX_BATTLE_AUTO_REPLACE=%,$(AVR_SHIPPING_CPP_FLAGS))
 # Instrument FX test firmware with the logical read counter while preserving
 # the stock USB main used by the serial P/F harness.
-AVR_FXTEST_CPP_FLAGS ?= $(AVR_RELAX_FLAGS) -DFX_READ_COUNTER $(WORLD_VM_PROFILE_FLAGS) $(COMPACT_WARP_VM_FLAGS) $(BATTLE_AUTO_REPLACE_FLAGS)
+AVR_FXTEST_CPP_FLAGS ?= $(AVR_RELAX_FLAGS) -DFX_READ_COUNTER -DCGFX_DUEL_BATTLE $(WORLD_VM_PROFILE_FLAGS) $(COMPACT_WARP_VM_FLAGS) $(BATTLE_AUTO_REPLACE_FLAGS)
 AVR_FXTEST_BUILD_PROPERTIES ?= --build-property "compiler.cpp.extra_flags=$(AVR_FXTEST_CPP_FLAGS)" \
 	--build-property "compiler.c.extra_flags=$(AVR_RELAX_FLAGS)" \
 	--build-property "compiler.c.elf.extra_flags=$(AVR_RELAX_FLAGS)"
@@ -33,7 +33,7 @@ AVR_FXTEST_DUEL_BUILD_PROPERTIES ?= --build-property "compiler.cpp.extra_flags=$
 	--build-property "compiler.c.elf.extra_flags=$(AVR_RELAX_FLAGS)"
 # Only shipping FX/Mini sketches compile their no-USB main. Device-test
 # sketches keep the stock core main so Serial P/F output remains available.
-AVR_SHIPPING_CPP_FLAGS ?= $(AVR_RELAX_FLAGS) -DCGFX_SHIPPING_NO_USB -fno-inline-small-functions -DCGFX_BATTLE_NO_FACTS -DCGFX_BATTLE_COMPACT_RESULT -DCGFX_COMPACT_WARP_VM
+AVR_SHIPPING_CPP_FLAGS ?= $(AVR_RELAX_FLAGS) -DCGFX_SHIPPING_NO_USB -fno-inline-small-functions -DCGFX_BATTLE_NO_FACTS -DCGFX_BATTLE_COMPACT_RESULT -DCGFX_COMPACT_WARP_VM -DCGFX_DUEL_BATTLE
 AVR_SHIPPING_BUILD_PROPERTIES ?= --build-property "compiler.cpp.extra_flags=$(AVR_SHIPPING_CPP_FLAGS)" \
 	--build-property "compiler.c.extra_flags=$(AVR_RELAX_FLAGS)" \
 	--build-property "compiler.c.elf.extra_flags=$(AVR_RELAX_FLAGS)"
@@ -88,7 +88,8 @@ RAM_ELF ?= $(BUILD_DIR)/CreatureGathererFX.ino.elf
 AVR_NM ?= $(shell command -v avr-nm 2>/dev/null || find "$(HOME)/Library/Arduino15/packages" "$(HOME)/.arduino15/packages" -type f -path '*/tools/avr-gcc/*/bin/avr-nm' -print -quit 2>/dev/null)
 AVR_SIZE ?= $(shell command -v avr-size 2>/dev/null || find "$(HOME)/Library/Arduino15/packages" "$(HOME)/.arduino15/packages" -type f -path '*/tools/avr-gcc/*/bin/avr-size' -print -quit 2>/dev/null)
 
-CPPFLAGS ?= -I.
+# The five-type duel is the sole battle engine; select it for every build.
+CPPFLAGS ?= -I. -DCGFX_DUEL_BATTLE
 CXXFLAGS ?= -std=c++17 -w -O0 -g3
 TEST_CPPFLAGS = -I tst/host $(WORLD_VM_PROFILE_FLAGS) $(COMPACT_WARP_VM_FLAGS) $(BATTLE_AUTO_REPLACE_FLAGS)
 TEST_FLAGS = -DTEST

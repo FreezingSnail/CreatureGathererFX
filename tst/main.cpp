@@ -1,4 +1,3 @@
-#include "moves_test.hpp"
 #include "plantPair_test.hpp"
 #include "plantStage_test.hpp"
 #include "statModifier_test.hpp"
@@ -191,8 +190,6 @@ int main() {
     std::cout << "Starting Tests" << std::endl;
 
     // Run test suites
-    MoveSuite(tests);
-    std::cout << "MoveSuite finished" << std::endl;
     TypeSuite(tests);
     std::cout << "TypeSuite finished" << std::endl;
     PlantPairSuite(tests);

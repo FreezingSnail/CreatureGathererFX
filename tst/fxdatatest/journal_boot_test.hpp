@@ -73,7 +73,7 @@ inline void run(FxTest &test)
     test.expectEq(storeBoot(state), true, F("checkpoint boot replays journal"));
     test.expectEq(journalLength(), 0, F("checkpoint replay initializes tail"));
 
-    const StoreRecord record = {0, 27, {8, 32, 32, 32}, 0};
+    const StoreRecord record = {0, 27, 2, {0, 0, 0}, 0};
     test.expectEq(storeWrite(0, record), true, F("append after boot"));
     test.expectEq(storeBoot(state), true, F("boot restores first journal entry"));
     StoreRecord restored = {};

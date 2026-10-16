@@ -5,17 +5,17 @@ trainer_species = ["SquibbleSnail", "SkitterCrab", "squid"]
 [[preset.player]]
 species = "SquibbleSnail"
 level = 31
-moves = ["breeze", "bellow", "none", "none"]
+moves = ["water"]
 
 [[preset.player]]
 species = "SkitterCrab"
 level = 31
-moves = ["dirtburst", "slipfall", "none", "none"]
+moves = ["earth"]
 
 [[preset.player]]
 species = "squid"
 level = 31
-moves = ["splash", "squirt", "none", "none"]
+moves = ["water"]
 
 [[preset]]
 name = "switch_drill"
@@ -24,17 +24,17 @@ trainer_species = ["SquableSnail", "ScatterCrab", "bigsquid"]
 [[preset.player]]
 species = "SquableSnail"
 level = 31
-moves = ["breeze", "bellow", "torrent", "none"]
+moves = ["water"]
 
 [[preset.player]]
 species = "ScatterCrab"
 level = 31
-moves = ["dirtburst", "slipfall", "dirtfall", "none"]
+moves = ["earth"]
 
 [[preset.player]]
 species = "bigsquid"
 level = 31
-moves = ["splash", "squirt", "soak", "none"]
+moves = ["water"]
 
 [[preset]]
 name = "utility"
@@ -43,17 +43,17 @@ trainer_species = ["SquableSnail", "ScatterCrab", "bigsquid"]
 [[preset.player]]
 species = "bell"
 level = 31
-moves = ["wisper", "Sharpen", "none", "none"]
+moves = ["spirit"]
 
 [[preset.player]]
 species = "rock"
 level = 31
-moves = ["dirtburst", "wisper", "Ironbody", "slipfall"]
+moves = ["earth", "spirit"]
 
 [[preset.player]]
 species = "hedge"
 level = 31
-moves = ["root", "rejuvinate", "pollen", "none"]
+moves = ["plant"]
 
 # First-beta starter roster (jp8.11.2): species 0/3/6 at level 3, canonical
 # four authored moves each drawn from their data/movelists.csv masks and
@@ -67,14 +67,14 @@ trainer_species = ["SquibbleSnail", "SkitterCrab", "squid"]
 [[preset.player]]
 species = "SquibbleSnail"
 level = 3
-moves = ["breeze", "bellow", "torrent", "blow"]
+moves = ["water"]
 
 [[preset.player]]
 species = "SkitterCrab"
 level = 3
-moves = ["dirtburst", "slipfall", "dirtfall", "shatter"]
+moves = ["earth"]
 
 [[preset.player]]
 species = "squid"
 level = 3
-moves = ["splash", "squirt", "soak", "current"]
+moves = ["water"]
