@@ -14120,3 +14120,62 @@ Retained: `build/CreatureGathererFX.ino.elf` + `make ram` report. No repository 
 Worker ~50 min wall: recon/design ~12 min; implementation ~5 min; host gates ~4 min;
 device fxtest (4 suites, plus a `test_battle_duel` size-fit iteration) ~20 min; ram + report +
 cleanup remainder. No gate/orchestrator run (dispatch leaves the bead `in_progress`).
+
+## v8u3 — mock zero-kit guard
+
+### Fix
+
+Mock duel AI/pick path had no zero-option guard: `aiDuelPick` fell through to
+`state.rng.int(options.length)`, and `duelResolve` dereferenced `foeMove.type`/
+`yourMove.type` on an empty kit, throwing where the device kernel returns WAIT.
+
+- `mock/battle-mock.js`
+  - Added pick encoding `WAIT_PICK = -2` and `isWaitPick(pick)` (matches the
+    kernel's `ActionKind::Wait`; distinct from the switch encodings `-1`/`>=100`).
+  - `aiDuelPick` returns `WAIT_PICK` for a zero-option kit *before* consuming RNG,
+    mirroring `duel::chooseAction`'s early `maskOptionCount()==0 -> Wait` return.
+  - `duelResolve` wheel path: a side with no usable attack waits. Both wait -> line
+    `WAIT`, zero damage; one waits -> the attacker lands the default win (bonus
+    matchup scaled via `duelCreatureBonus`), matching `resolveRound`'s wait /
+    unusable-kit branches. Empty option lists now yield `null` moves instead of
+    `undefined`, so no `.type` deref throws.
+  - `step` choice phase: `A` with no options and no living bench commits
+    `WAIT_PICK` (kernel Skip -> Wait); still `-1` (swap) when a bench exists.
+  - Exported `WAIT_PICK`, `isWaitPick`.
+- `tools/battle-duel-spike.mjs` (same missing guard, fixed consistently)
+  - `playerPick` returns `mock.WAIT_PICK` (was `0`, an out-of-range attack pick)
+    when the player kit has no options.
+  - `playDuel` switch metric now counts `-1`/`>=SWITCH_BASE` only, so a WAIT pick
+    is not miscounted as a switch.
+
+Interface: `mock/battle-mock.js` exports `WAIT_PICK = -2`, `isWaitPick(pick)`.
+
+### New test
+
+`mock/battle-mock.test.js` -> `a zero-option kit yields WAIT and never throws
+(kernel unusable-kit parity)`: empties one authored creature's `moves` (restored in
+`finally`), then asserts the AI pick is `WAIT_PICK`, `isSwitchPick` is false, an
+attacker default-wins the waiting side without throwing (attacker untouched), a
+mutual wait yields `WAIT` with zero damage, and a zero-kit benchless player commits
+`WAIT_PICK` through `step()`.
+
+### Commands
+
+- `node --test mock/battle-mock.test.js` -> tests 24 / pass 24 / fail 0 (0.16s).
+- `node --test mock/battle-mock.test.js tools/tests/battle-duel-spike_test.mjs
+  tools/tests/duel-kernel-parity_test.mjs` -> tests 50 / pass 50 / fail 0 (1.16s).
+  Parity driver (`tools/duel-parity/duel_kernel_driver.cpp`, host `c++` build) still
+  matches the mock on fixed/randomized/full-duel rounds; no parity regression.
+- Extra safety: `node --test tools/tests/battle-matrices-spike_test.mjs` -> 5/5 pass.
+
+### Deviations / notes
+
+No `make gen`/AVR/gate (node lane only). No commit/push; bead left `in_progress`.
+`mock/battle-mock.test.js` uses a scoped `DATA.creatures[i].moves` override to author
+the zero-kit state, restored in `finally` (authored folding never yields an empty
+kit, so this is the only reachable construction).
+
+### Wall time
+
+Worker ~12 min wall: recon (bead/kernel/mock/parity) ~8 min; implementation ~3 min;
+verification ~1 min.

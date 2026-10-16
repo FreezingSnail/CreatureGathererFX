@@ -360,6 +360,41 @@ test('the AI switches when only the bench holds a counter for its guess', () => 
   assert.ok(noCounter.duelState.picks[1] < M.SWITCH_BASE, 'no random switches');
 });
 
+test('a zero-option kit yields WAIT and never throws (kernel unusable-kit parity)', () => {
+  const ember = index('ember');
+  const savedMoves = M.DATA.creatures[ember].moves;
+  // An unusable kit: no authored move folds onto the active table.
+  M.DATA.creatures[ember].moves = [];
+  try {
+    // aiDuelPick returns the WAIT pick for a zero-option kit (no attack, no rng).
+    const ai = duelMock({ you: index('squid'), foe: ember, seed: 1 });
+    M.duelPick(ai, 0);
+    assert.equal(ai.duelState.picks[1], M.WAIT_PICK);
+    assert.equal(M.isWaitPick(ai.duelState.picks[1]), true);
+    assert.equal(M.isSwitchPick(ai.duelState.picks[1]), false);
+    // Attacker default-wins the waiting side; no throw, attacker untouched.
+    const beforeYou = hp(ai, 0), beforeFoe = hp(ai, 1);
+    M.duelResolve(ai);
+    assert.equal(ai.duelState.lines[0], 'DEFAULT WIN');
+    assert.ok(hp(ai, 1) < beforeFoe, 'waiting side takes the default win');
+    assert.equal(hp(ai, 0), beforeYou, 'attacker untouched');
+    // Both sides waiting: no attack, no damage.
+    const both = duelMock({ you: ember, foe: ember, seed: 1 });
+    both.duelState.picks = [M.WAIT_PICK, M.WAIT_PICK];
+    const preHp = [hp(both, 0), hp(both, 1)];
+    M.duelResolve(both);
+    assert.equal(both.duelState.lines[0], 'WAIT');
+    assert.deepEqual([hp(both, 0), hp(both, 1)], preHp, 'no damage on a mutual wait');
+    // A zero-kit player with no bench can still commit WAIT through step().
+    const solo = duelMock({ you: ember, foe: index('squid'), seed: 2, teamSize: 1 });
+    assert.equal(M.duelOptions(solo, 0).length, 0);
+    M.step(solo, { edges: ['a'], dtMs: 0 });
+    assert.equal(solo.duelState.picks[0], M.WAIT_PICK, 'player WAIT committed');
+  } finally {
+    M.DATA.creatures[ember].moves = savedMoves;
+  }
+});
+
 test('duel AI keeps its pick inside its own option list for both engines', () => {
   for (const [duelKind, scoring] of [['wheel', 'flat'], ['wheel', 'bonus'], ['stances', 'bonus']]) {
     const state = duelMock({ duelKind, scoring, you: index('ember'), foe: index('hedge'), seed: 7, aiRead: 100 });
