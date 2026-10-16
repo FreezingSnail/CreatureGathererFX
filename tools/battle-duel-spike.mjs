@@ -96,12 +96,9 @@ export function playerPick(mock, state, policy, rng) {
   const lastAi = state.duelState.last[1];
   if (policy === 'swap') {
     if (lastAi && !options.some((option) => beats(mock, state, option.type, lastAi))) {
-      const bench = mock.duelBench(state, 0);
-      const benchMoves = bench
-        ? bench.moves.filter((id) => id != null).map((id) => mock.DATA.moves[id])
-          .filter((move) => mock.isSpikeMove(move))
-        : [];
-      if (benchMoves.some((move) => beats(mock, state, move.type, lastAi))) return -1;
+      const benchSlot = mock.livingBenchSlots(state, 0)[0];
+      const benchOptions = benchSlot == null ? [] : mock.duelOptionsFor(state, 0, benchSlot);
+      if (benchOptions.some((option) => beats(mock, state, option.type, lastAi))) return -1;
     }
     return rng.int(options.length);
   }

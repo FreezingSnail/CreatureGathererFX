@@ -1,35 +1,34 @@
 'use strict';
 
 /*
- * Creature Gatherer battle mock — 128x64 playable spike over the real roster.
+ * Creature Gatherer duel mock — 128x64 playable reference over the real roster.
  *
- * Goal: test how battle designs communicate on the actual display, not art.
- *   A "current"  the shipping 8-type dual-type move menu.
- *   B "trim"     4-type single-type cycle + per-move effectiveness arrows +
- *                optional SMT-style press-turn (super hit acts again).
- *   C "stances"  simultaneous hidden picks from the 4-type merged cycle
- *                (flame > bloom > tide > stone), affinity when the stance is
- *                the creature's own, ties trade chip.
- *   D "wheel"    simultaneous hidden picks from each creature's own moves,
- *                resolved by the 8-type wheel (docs/battle-wheel-matrix.md):
- *                win = full hit, lose = blocked + chip, other pairs trade.
+ * The 5-type RPS duel is the sole battle design (CreatureGathererFX-4w89.6).
+ * A creature's kit is its authored 8-type `moves` name list, folded onto the
+ * active type-count table; the shipping table is the frozen five types
+ * [spirit, water, earth, fire, plant] (mock/matrices.js id "5"), which is the
+ * same 5-bit `attackMask` the device kernel reads.
+ *
+ *   wheel    simultaneous hidden picks from each creature's own attack types,
+ *            resolved by the active type-count table: win = full hit, lose =
+ *            blocked + chip, other pairs trade.
+ *   stances  simultaneous hidden picks from the 4-type merged cycle
+ *            (flame > bloom > tide > stone), affinity when the stance is the
+ *            creature's own, ties trade chip. (Exploration variant.)
  *
  * Keys (browser):
  *   Arrows/WASD  move cursor / pick creature in setup
  *   Z or Space   A: confirm, advance feedback, start fight
  *   X            B: back to setup
- *   1 / 2 / 3    switch design (current / trim / duel wheel)
- * Page controls tune: trim type mode, arrows, press-turn, foe HP readout,
- * stance count for the stance duel, and how often the AI reads your last pick.
+ * Page controls tune the type-count table, stance count for the stance duel,
+ * and how often the AI reads your last pick.
  *
- * Fidelity: damage, speed order, move-use limits and STAB follow the production
- * C++ (Damage.cpp, Type.hpp, MoveUses.hpp) ported to integer JS with stat stages
- * at zero. The AI is a simplified damage-scoring stand-in for the tactical AI.
- * Not simulated: statuses, stages, effects, accuracy, party/switching, escape,
- * gather, animations. Status/utility moves (type status/none) are excluded from
- * every pick list in this spike. Feedback text replaces the staged presenter; HP
- * updates immediately. Sprite layout matches BattleLayout.hpp (foe 0,0; you
- * 80,0; menu y=48..63; HP column x=48..79; 48x48 front/back frames).
+ * Fidelity: relation/damage/scoring follow the production C++ duel kernel
+ * (src/engine/battle/DuelKernel.hpp) ported to integer JS. Not simulated:
+ * statuses, stages, effects, accuracy, escape, gather, animations. Feedback
+ * text replaces the staged presenter; HP updates immediately. Sprite layout
+ * matches BattleLayout.hpp (foe 0,0; you 80,0; menu y=48..63; HP column
+ * x=48..79; 48x48 front/back frames).
  */
 
 const DATA = (typeof module !== 'undefined' && module.exports && typeof require === 'function')
@@ -93,76 +92,12 @@ const typeIcon = (name) => ICONS[name] || MERGED_ICONS[name];
 const textWidth = (str) => str.length * 5;
 const num = (value) => String(value);
 
-// This spike excludes status/utility moves: they are not battlefield picks
-// under any of the duel spellings (and would only be menu noise in A/B).
-const isSpikeMove = (move) => move != null && move.type !== 'status' && move.type !== 'none';
-
-/* ---------- production rules ported (src/engine/battle + src/lib/Type) ---------- */
-// Modifier enum: 0 None, 1 Quarter, 2 Half, 3 Same, 4 Double, 5 Quadruple.
-function modifierFor(multiplier) {
-  return multiplier === 0 ? 0 : multiplier === 0.5 ? 2 : multiplier === 1 ? 3 : 4;
-}
-function combineModifier(a, b) {
-  if (a === 0 || b === 0) return 0;
-  let exponent = a + b - 6;
-  if (exponent < -2) exponent = -2;
-  if (exponent > 2) exponent = 2;
-  return exponent + 3;
-}
-function applyDamageModifier(value, modifier) {
-  const shift = modifier - 3;
-  return shift < 0 ? value >> -shift : value << shift;
-}
-function arrowFor(modifier) {
-  return modifier === 0 ? 'no' : modifier >= 4 ? 'up' : modifier <= 2 ? 'down' : 'flat';
-}
-function chartFor(mode) { return mode === '4single' ? DATA.merged : { order: DATA.typeOrder, chart: DATA.chart }; }
-function typesOf(creature, mode) { return mode === '4single' ? creature.merged : creature.types; }
-function moveTypeFor(mode, moveType) {
-  if (mode !== '4single') return moveType;
-  return DATA.merged.map[moveType] || moveType;
-}
-function lookupModifier(chart, attackType, defendType) {
-  if (defendType === undefined) return 3;
-  if (attackType === undefined) return 0;
-  const row = chart.order.indexOf(attackType), col = chart.order.indexOf(defendType);
-  if (row < 0 || col < 0) return 3;
-  return modifierFor(chart.chart[row][col]);
-}
-function attackModifier(attacker, defender, moveType, mode) {
-  const chart = chartFor(mode);
-  const attackType = moveTypeFor(mode, moveType);
-  let modifier = 3;
-  for (const type of typesOf(defender, mode)) modifier = combineModifier(modifier, lookupModifier(chart, attackType, type));
-  if (typesOf(attacker, mode).includes(attackType)) modifier = combineModifier(modifier, 4);
-  return modifier;
-}
-function computeDamage(attacker, defender, move, mode) {
-  if (move.power === 0) return 0;
-  const attackValue = move.physical ? attacker.stats.attack : attacker.stats.spcAtk;
-  const defenseValue = move.physical ? defender.stats.defense : defender.stats.spcDef;
-  const divisor = Math.max(1, Math.floor(defenseValue / 2));
-  const base = Math.floor(Math.floor(move.power * attackValue / divisor) / 2);
-  const modifier = attackModifier(attacker, defender, move.type, mode);
-  if (modifier === 0) return 0;
-  const modified = applyDamageModifier(base, modifier);
-  return modified === 0 ? 1 : Math.min(255, modified);
-}
-
 /* ---------- state ---------- */
 function newMock(options = {}) {
   const state = {
-    mode: options.mode || 'current', // current | trim | duel
-    lockMode: options.lockMode === true, // variant windows pin their design
-    trim: {
-      typeMode: options.typeMode || '4single',
-      arrows: options.arrows !== false,
-      pressTurn: options.pressTurn !== false,
-      foeNumbers: options.foeNumbers !== false,
-    },
     duel: {
       kind: options.duelKind || 'wheel', // wheel | stances
-      scoring: options.scoring || 'power', // power | flat (pure) | bonus (recommended)
+      scoring: options.scoring || 'bonus', // flat (pure RPS) | bonus (creature matchup)
       matrixId: options.matrixId || '5', // type-count table: 8 | 6 | 5 (default) | 4
       presetYou: options.presetYou || null, // authored sample team id, or null = random
       presetFoe: options.presetFoe || null,
@@ -175,7 +110,6 @@ function newMock(options = {}) {
     scene: 'setup', // setup | battle | end
     youIndex: options.you ?? 10,
     foeIndex: options.foe ?? 0,
-    battle: null,
     duelState: null,
     endText: '',
     seed: options.seed ?? ((Date.now() & 0xffff) || 1),
@@ -188,8 +122,6 @@ function newMock(options = {}) {
 }
 
 const creature = (index) => DATA.creatures[index];
-const moveOf = (creature_, slot) => (creature_.moves[slot] == null ? null : DATA.moves[creature_.moves[slot]]);
-const activeMode = (state) => (state.mode === 'trim' ? state.trim.typeMode : '8dual');
 
 function newSeed(state) {
   state.seed = (state.seed * 48271 + 1) & 0xffff;
@@ -200,176 +132,34 @@ function newSeed(state) {
 /* ---------- battle construction ---------- */
 function startBattle(state) {
   state.rng = makeRng(state.seed);
-  const you = creature(state.youIndex), foe = creature(state.foeIndex);
-  if (state.mode === 'duel') {
-    // Teams are rolled from the battle seed (3v3 by default) unless an authored
-    // preset is selected; presets carry retyped member types for the matchup.
-    const youPreset = presetTeam(state, state.duel.presetYou);
-    const foePreset = presetTeam(state, state.duel.presetFoe);
-    const youParty = youPreset ? youPreset.indices : rollTeam(state, state.duel.teamSize);
-    const foeParty = foePreset ? foePreset.indices : rollTeam(state, state.duel.teamSize);
-    state.duelState = {
-      partyIndex: [youParty, foeParty],
-      partyTypes: [youPreset ? youPreset.types : null, foePreset ? foePreset.types : null],
-      activeSlot: [0, 0],
-      hp: [
-        youParty.map((index) => creature(index).maxHp),
-        foeParty.map((index) => creature(index).maxHp),
-      ],
-      picks: [null, null],
-      last: [null, null],
-      history: [],
-      postReadCounts: {},
-      thisReadFired: false,
-      readFiredPrev: false,
-      round: 1,
-      cursor: 0,
-      phase: 'choice', // choice | reveal | result
-      timer: 0,
-      lines: ['', ''],
-      aiRead: false,
-    };
-  } else {
-    state.battle = {
-      you, foe,
-      hp: [you.maxHp, foe.maxHp],
-      uses: [
-        you.moves.map((id) => (id == null ? 0 : DATA.moves[id].limit)),
-        foe.moves.map((id) => (id == null ? 0 : DATA.moves[id].limit)),
-      ],
-      turn: 1,
-      phase: 'choice', // choice | feedback
-      cursor: 0,
-      queue: [],
-      step: -1,
-      lines: ['', ''],
-      arrow: null,
-      flash: '',
-    };
-    state.battle.cursor = firstUsable(state.battle);
-  }
+  // Teams are rolled from the battle seed (3v3 by default) unless an authored
+  // preset is selected; presets carry retyped member types for the matchup.
+  const youPreset = presetTeam(state, state.duel.presetYou);
+  const foePreset = presetTeam(state, state.duel.presetFoe);
+  const youParty = youPreset ? youPreset.indices : rollTeam(state, state.duel.teamSize);
+  const foeParty = foePreset ? foePreset.indices : rollTeam(state, state.duel.teamSize);
+  state.duelState = {
+    partyIndex: [youParty, foeParty],
+    partyTypes: [youPreset ? youPreset.types : null, foePreset ? foePreset.types : null],
+    activeSlot: [0, 0],
+    hp: [
+      youParty.map((index) => creature(index).maxHp),
+      foeParty.map((index) => creature(index).maxHp),
+    ],
+    picks: [null, null],
+    last: [null, null],
+    history: [],
+    postReadCounts: {},
+    thisReadFired: false,
+    readFiredPrev: false,
+    round: 1,
+    cursor: 0,
+    phase: 'choice', // choice | reveal | result
+    timer: 0,
+    lines: ['', ''],
+    aiRead: false,
+  };
   state.scene = 'battle';
-}
-
-/* ---------- moves-mode turn resolution ---------- */
-function usableSlots(state, side) {
-  const creature_ = side === 0 ? state.battle.you : state.battle.foe;
-  const slots = [];
-  for (let slot = 0; slot < 4; slot++) {
-    if (!isSpikeMove(moveOf(creature_, slot))) continue;
-    if (state.battle.uses[side][slot] > 0) slots.push(slot);
-  }
-  return slots;
-}
-function firstUsable(battleState) {
-  const slots = [];
-  for (let slot = 0; slot < 4; slot++) {
-    const move = moveOf(battleState.you, slot);
-    if (!isSpikeMove(move)) continue;
-    if (battleState.uses[0][slot] > 0) slots.push(slot);
-  }
-  return slots.length ? slots[0] : 255;
-}
-function aiPick(state, side) {
-  const battleState = state.battle;
-  const attacker = side === 0 ? battleState.you : battleState.foe;
-  const defender = side === 0 ? battleState.foe : battleState.you;
-  const slots = usableSlots(state, side);
-  if (!slots.length) return null;
-  let best = null, bestScore = -1;
-  for (const slot of slots) {
-    const move = moveOf(attacker, slot);
-    const damage = computeDamage(attacker, defender, move, activeMode(state));
-    const utility = move.power === 0 && move.effect !== 'NONE' ? 1 : 0;
-    const score = damage * 4 + utility * 3 + state.rng.next();
-    if (score > bestScore) { bestScore = score; best = slot; }
-  }
-  return best;
-}
-
-function planTurn(state, passOnly) {
-  const battleState = state.battle;
-  const actions = [{ side: 0, slot: passOnly ? null : battleState.cursor }];
-  actions.push({ side: 1, slot: aiPick(state, 1) });
-  const speed = (side) => (side === 0 ? battleState.you.stats.speed : battleState.foe.stats.speed);
-  if (speed(1) > speed(0)) actions.reverse(); // player wins speed ties (firstMover contract)
-
-  const queue = [];
-  const extras = [false, false];
-  for (const action of actions) {
-    queue.push(action);
-    if (state.mode === 'trim' && state.trim.pressTurn && action.slot != null) {
-      const attacker = action.side === 0 ? battleState.you : battleState.foe;
-      const defender = action.side === 0 ? battleState.foe : battleState.you;
-      const move = moveOf(attacker, action.slot);
-      if (battleState.uses[action.side][action.slot] > 0
-          && attackModifier(attacker, defender, move.type, activeMode(state)) >= 4
-          && !extras[action.side]) {
-        extras[action.side] = true;
-        queue.push({ side: action.side, slot: action.slot, extra: true });
-      }
-    }
-  }
-  battleState.queue = queue;
-  battleState.step = -1;
-  battleState.phase = 'feedback';
-  advanceStep(state);
-}
-
-function advanceStep(state) {
-  const battleState = state.battle;
-  battleState.step += 1;
-  if (battleState.step >= battleState.queue.length) {
-    if (battleState.hp[0] <= 0 || battleState.hp[1] <= 0) {
-      state.endText = battleState.hp[0] <= 0 && battleState.hp[1] <= 0 ? 'DRAW'
-        : battleState.hp[1] <= 0 ? 'WIN' : 'LOSE';
-      state.scene = 'end';
-      return;
-    }
-    battleState.turn += 1;
-    battleState.phase = 'choice';
-    battleState.lines = ['', ''];
-    battleState.arrow = null;
-    battleState.flash = '';
-    battleState.cursor = firstUsable(battleState);
-    return;
-  }
-  const action = battleState.queue[battleState.step];
-  const attacker = action.side === 0 ? battleState.you : battleState.foe;
-  const defender = action.side === 0 ? battleState.foe : battleState.you;
-  const defenderIndex = action.side === 0 ? 1 : 0;
-
-  battleState.arrow = null;
-  // A knockout cancels that side's remaining scheduled actions (no replacements in 1v1).
-  if (battleState.hp[action.side] <= 0) {
-    battleState.lines = [attacker.name, 'down, no action'];
-    battleState.queue = battleState.queue.slice(0, battleState.step + 1);
-    return;
-  }
-  if (action.slot == null) {
-    battleState.lines = [attacker.name, 'cannot act'];
-    return;
-  }
-  const move = moveOf(attacker, action.slot);
-  if (battleState.uses[action.side][action.slot] === 0) {
-    battleState.lines = [attacker.name, 'out of power'];
-    return;
-  }
-  const damage = computeDamage(attacker, defender, move, activeMode(state));
-  const modifier = attackModifier(attacker, defender, move.type, activeMode(state));
-  battleState.uses[action.side][action.slot] -= 1;
-  battleState.hp[defenderIndex] = Math.max(0, battleState.hp[defenderIndex] - damage);
-  const suffix = damage > 0 ? `-${damage}` : 'no effect';
-  battleState.arrow = state.mode === 'trim' && state.trim.arrows ? arrowFor(modifier) : null;
-  battleState.lines = [attacker.name, `${move.name} ${suffix}`];
-  battleState.flash = action.extra ? 'EXTRA' : '';
-}
-
-function cycleCursor(state, direction) {
-  const slots = usableSlots(state, 0);
-  if (!slots.length) return;
-  const current = slots.indexOf(state.battle.cursor);
-  state.battle.cursor = slots[(current < 0 ? 0 : current + direction + slots.length) % slots.length];
 }
 
 /* ---------- duel: hidden simultaneous picks ----------
@@ -456,12 +246,23 @@ const duelBench = (state, side) => {
 };
 const sideAlive = (state, side) => state.duelState.hp[side].some((hp) => hp > 0);
 
+// The kit options a party slot can pick: one per distinct folded attack type,
+// in the active table's order. For the shipping 5-type table this is exactly the
+// device `attackMask` bit order (bits 0..4 = [spirit, water, earth, fire, plant]).
+function foldedKit(matrix, creature_) {
+  const folded = [...new Set(creature_.moves
+    .map((type) => foldType(matrix, type))
+    .filter((type) => matrix.order.includes(type)))];
+  return folded.sort((a, b) => matrix.order.indexOf(a) - matrix.order.indexOf(b));
+}
+function duelOptionsFor(state, side, slot) {
+  if (duelKind(state) === 'stances') return stanceSet(state).map((type) => ({ type }));
+  const matrix = duelMatrix(state);
+  return foldedKit(matrix, creature(state.duelState.partyIndex[side][slot]))
+    .map((type) => ({ type }));
+}
 function duelMoves(state, side) {
-  const creature_ = duelCreature(state, side);
-  return creature_.moves
-    .filter((id) => id != null)
-    .map((id) => DATA.moves[id])
-    .filter((move) => isSpikeMove(move));
+  return duelOptionsFor(state, side, state.duelState.activeSlot[side]);
 }
 function wheelValue(moveType, defendType) {
   // 2 = beats, 0.5 = loses to, 1 = neutral (8-type wheel from data.js).
@@ -494,20 +295,9 @@ function duelValue(state, moveType, defendType) {
   return matrix.chart[row][col];
 }
 const duelBeats = (state, a, b) => duelValue(state, a, b) === 2;
-function hasAffinity(state, side, move) {
-  const creature_ = duelCreature(state, side);
-  return creature_.types.includes(move.type);
-}
 // Options a side can pick this round, in display order.
 function duelOptions(state, side) {
-  if (duelKind(state) === 'stances') return stanceSet(state).map((type) => ({ type }));
-  return duelMoves(state, side);
-}
-function duelOptionAffinity(state, side, option) {
-  const creature_ = duelCreature(state, side);
-  return duelKind(state) === 'stances'
-    ? creature_.merged[0] === option.type
-    : duelTypeList(state, side).includes(option.type);
+  return duelOptionsFor(state, side, state.duelState.activeSlot[side]);
 }
 // AI personas: trainer groups reuse these. `memory` picks how the AI guesses
 // the player's hidden type; null readRate means the window's rate slider.
@@ -603,16 +393,11 @@ function aiDuelPick(state) {
   return state.rng.int(options.length); // fallback: uniform, no boost preference
 }
 
-// First living bench slot (AI side) whose moves beat the guessed type; -1 if none.
+// First living bench slot (AI side) whose kit beats the guessed type; -1 if none.
 function benchCounterSlot(state, targetType) {
   for (const slot of livingBenchSlots(state, 1)) {
-    const member = creature(state.duelState.partyIndex[1][slot]);
-    const hasCounter = member.moves
-      .filter((id) => id != null)
-      .map((id) => DATA.moves[id])
-      .filter((move) => isSpikeMove(move))
-      .some((move) => duelBeats(state, move.type, targetType));
-    if (hasCounter) return slot;
+    const options = duelOptionsFor(state, 1, slot);
+    if (options.some((option) => duelBeats(state, option.type, targetType))) return slot;
   }
   return -1;
 }
@@ -741,11 +526,11 @@ function duelResolve(state) {
     if (attackerSide === 0) yourDamage = hit; else foeDamage = hit;
     duelState.lines = ['DEFAULT WIN', `-${yourDamage} -${foeDamage}`];
     duelState.last = [yourMove ? yourMove.type : null, foeMove ? foeMove.type : null];
-  } else if (scoring === 'flat' || scoring === 'bonus') {
+  } else {
     // Flat numbers: relation decides. In the bonus spelling the creature-type
     // matchup scales the damage dealt: x1.5 beating their type, x0.5 losing to it.
     const relation = duelValue(state, yourMove.type, foeMove.type);
-    const mod = (side, move) => (scoring === 'bonus' ? duelCreatureBonus(state, side, move.type) : 1);
+    const mod = (side, option) => (scoring === 'bonus' ? duelCreatureBonus(state, side, option.type) : 1);
     const scaled = (base, multiplier) => Math.max(1, Math.round(base * multiplier));
     const yourMod = mod(0, yourMove), foeMod = mod(1, foeMove);
     if (relation === 2) {
@@ -761,25 +546,6 @@ function duelResolve(state) {
     } else {
       yourDamage = scaled(FLAT_TRADE, yourMod);
       foeDamage = scaled(FLAT_TRADE, foeMod);
-      duelState.lines = ['TRADE', `-${yourDamage} -${foeDamage}`];
-    }
-  } else {
-    const relation = duelValue(state, yourMove.type, foeMove.type);
-    const stab = (side, move) => (hasAffinity(state, side, move) ? 1.5 : 1);
-    const yourPower = (4 + yourMove.power * 1.2) * stab(0, yourMove);
-    const foePower = (4 + foeMove.power * 1.2) * stab(1, foeMove);
-    const chip = (power) => Math.max(1, Math.round((2 + power * 0.25) * roll()));
-    if (relation === 2) {
-      yourDamage = Math.max(1, Math.round(yourPower * roll()));
-      foeDamage = chip(foeMove.power);
-      duelState.lines = ['WHEEL WIN', `-${yourDamage} -${foeDamage}`];
-    } else if (relation === 0.5) {
-      foeDamage = Math.max(1, Math.round(foePower * roll()));
-      yourDamage = chip(yourMove.power);
-      duelState.lines = ['WHEEL LOSE', `-${yourDamage} -${foeDamage}`];
-    } else {
-      yourDamage = chip(foeMove.power);
-      foeDamage = chip(yourMove.power);
       duelState.lines = ['TRADE', `-${yourDamage} -${foeDamage}`];
     }
   }
@@ -830,20 +596,10 @@ function duelUpdate(state, dt) {
 }
 
 /* ---------- step: consume fresh input edges, advance timers ---------- */
-function setMode(state, mode) {
-  if (state.lockMode) return;
-  state.mode = mode;
-  state.scene = 'setup';
-}
 function step(state, input) {
   const edges = (input && input.edges) || [];
   const dt = (input && input.dtMs) || 0;
   for (const edge of edges) {
-    if (edge === '1' || edge === '2' || edge === '3') {
-      if (state.lockMode) continue;
-      setMode(state, edge === '1' ? 'current' : edge === '2' ? 'trim' : 'duel');
-      continue;
-    }
     if (state.scene === 'setup') {
       if (edge === 'left') state.youIndex = (state.youIndex + DATA.creatures.length - 1) % DATA.creatures.length;
       else if (edge === 'right') state.youIndex = (state.youIndex + 1) % DATA.creatures.length;
@@ -852,34 +608,22 @@ function step(state, input) {
       else if (edge === 'a') startBattle(state);
     } else if (state.scene === 'battle') {
       if (edge === 'b') { state.scene = 'setup'; continue; }
-      if (state.mode === 'duel') {
-        const duelState = state.duelState;
-        if (duelState.phase === 'choice') {
-          const options = duelOptions(state, 0);
-          const showSwap = livingBenchSlots(state, 0).length > 0;
-          const count = Math.max(1, options.length + (showSwap ? 1 : 0));
-          if (edge === 'left' || edge === 'up') duelState.cursor = (duelState.cursor + count - 1) % count;
-          else if (edge === 'right' || edge === 'down') duelState.cursor = (duelState.cursor + 1) % count;
-          else if (edge === 'a' && options.length) {
-            duelPick(state, duelState.cursor >= options.length ? -1 : duelState.cursor);
-          }
-        }
-      } else {
-        const battleState = state.battle;
-        if (battleState.phase === 'choice') {
-          if (edge === 'up' || edge === 'down') cycleCursor(state, edge === 'down' ? 2 : -2);
-          else if (edge === 'left') cycleCursor(state, -1);
-          else if (edge === 'right') cycleCursor(state, 1);
-          else if (edge === 'a') planTurn(state, !usableSlots(state, 0).length);
-        } else if (battleState.phase === 'feedback') {
-          if (edge === 'a') advanceStep(state);
+      const duelState = state.duelState;
+      if (duelState.phase === 'choice') {
+        const options = duelOptions(state, 0);
+        const showSwap = livingBenchSlots(state, 0).length > 0;
+        const count = Math.max(1, options.length + (showSwap ? 1 : 0));
+        if (edge === 'left' || edge === 'up') duelState.cursor = (duelState.cursor + count - 1) % count;
+        else if (edge === 'right' || edge === 'down') duelState.cursor = (duelState.cursor + 1) % count;
+        else if (edge === 'a' && options.length) {
+          duelPick(state, duelState.cursor >= options.length ? -1 : duelState.cursor);
         }
       }
     } else if (state.scene === 'end') {
       if (edge === 'a') state.scene = 'setup';
     }
   }
-  if (state.scene === 'battle' && state.mode === 'duel') duelUpdate(state, dt);
+  if (state.scene === 'battle') duelUpdate(state, dt);
 }
 
 /* ---------- rendering ---------- */
@@ -942,8 +686,8 @@ function drawTypeBadges(ctx, state, foeOverride, youOverride, foeTypes, youTypes
       drawIcon(ctx, typeIcon(type), x + 1, 38, true);
     });
   };
-  draw(foeTypes || typesOf(foe, activeMode(state)), 0);
-  draw(youTypes || typesOf(you, activeMode(state)), 1);
+  draw(foeTypes || foe.types, 0);
+  draw(youTypes || you.types, 1);
 }
 
 function drawHpPanel(ctx, side, creature_, hp, showNumbers) {
@@ -957,74 +701,12 @@ function drawHpPanel(ctx, side, creature_, hp, showNumbers) {
   if (width > 0) rect(ctx, 49, barY + 1, width, 1, true);
 }
 
-function drawBattleCenter(ctx, state) {
-  const battleState = state.battle;
-  const showFoe = state.mode === 'trim' && state.trim.foeNumbers;
-  drawHpPanel(ctx, 0, battleState.foe, battleState.hp[1], showFoe);
-  drawHpPanel(ctx, 1, battleState.you, battleState.hp[0], true);
-  if (battleState.phase === 'choice') {
-    const move = moveOf(battleState.you, battleState.cursor);
-    if (!move) { text(ctx, 'no moves', 48, 41, true); return; }
-    drawIcon(ctx, typeIcon(move.type), 48, 40);
-    text(ctx, num(move.power), 58, 41, true);
-    const uses = battleState.uses[0][battleState.cursor];
-    if (uses === 255) drawSymbol(ctx, '*', 72, 41, true);
-    else text(ctx, num(uses), 72, 41, true);
-  } else if (battleState.flash) {
-    text(ctx, battleState.flash, 48, 41, true);
-  }
-}
-
-function drawBattleMenu(ctx, state) {
-  const battleState = state.battle;
-  const usable = usableSlots(state, 0);
-  for (let slot = 0; slot < 4; slot++) {
-    const move = moveOf(battleState.you, slot);
-    if (!isSpikeMove(move)) continue;
-    const x = 4 + (slot % 2) * 64, y = 48 + Math.floor(slot / 2) * 8;
-    const selected = battleState.phase === 'choice' && slot === battleState.cursor && usable.includes(slot);
-    const depleted = battleState.uses[0][slot] === 0;
-    if (selected) rect(ctx, x, y, 60, 8, true);
-    const label = move.name.slice(0, 9);
-    text(ctx, label, x + 3, y + 1, !selected);
-    if (depleted) rect(ctx, x + 3, y + 7, textWidth(label), 1, !selected);
-    if (state.mode === 'trim' && state.trim.arrows) {
-      const modifier = attackModifier(battleState.you, battleState.foe, move.type, activeMode(state));
-      drawSymbol(ctx, arrowFor(modifier), x + 52, y + 1, !selected);
-    }
-  }
-  if (!usable.length) {
-    rect(ctx, 4, 56, 120, 8, true);
-    text(ctx, 'pass', 7, 57, false);
-    drawSymbol(ctx, '>', 24, 57, false);
-  }
-}
-
-function drawBattle(ctx, state) {
-  drawSprite(ctx, state, state.battle.foe.front, 0, 0);
-  drawSprite(ctx, state, state.battle.you.back, 80, 0);
-  drawTypeBadges(ctx, state);
-  drawBattleCenter(ctx, state);
-  if (state.battle.phase === 'choice') drawBattleMenu(ctx, state);
-  else {
-    rect(ctx, 0, 48, 128, 16, false);
-    if (state.battle.lines[0]) text(ctx, state.battle.lines[0], 2, 48, true);
-    if (state.battle.lines[1]) {
-      const x = state.battle.arrow ? 9 : 2;
-      if (state.battle.arrow) drawSymbol(ctx, state.battle.arrow, 2, 56, true);
-      text(ctx, state.battle.lines[1].slice(0, 24), x, 56, true);
-    }
-  }
-}
-
 function drawSetup(ctx, state) {
   const you = creature(state.youIndex), foe = creature(state.foeIndex);
   drawSprite(ctx, state, foe.front, 0, 0);
   drawSprite(ctx, state, you.back, 80, 0);
   drawTypeBadges(ctx, state);
-  if (state.mode === 'duel') {
-    text(ctx, '3v3 TEAMS ROLL ON START', 9, 30, true);
-  }
+  text(ctx, '3v3 TEAMS ROLL ON START', 9, 30, true);
   const youName = you.name.slice(0, 12), foeName = foe.name.slice(0, 12);
   text(ctx, youName, 2, 49, true);
   text(ctx, foeName, W - 2 - textWidth(foeName), 49, true);
@@ -1056,11 +738,9 @@ function drawDuelMoveRow(ctx, state) {
     if (index < options.length) {
       const option = options[index];
       drawIcon(ctx, typeIcon(option.type), x + Math.floor((cell - 2 - 8) / 2), y + 2, !selected);
-      // Pick markers per cell: ✱ affinity (power spelling); ↑ bonus / ↓ penalty
-      // from the creature-type matchup (bonus spelling).
+      // Pick marker per cell: ↑ bonus / ↓ penalty from the creature-type matchup.
       let marker = null;
-      if (state.duel.scoring === 'power' && duelOptionAffinity(state, 0, option)) marker = '*';
-      else if (state.duel.scoring === 'bonus') {
+      if (state.duel.scoring === 'bonus') {
         const modifier = duelCreatureBonus(state, 0, option.type);
         marker = modifier > 1 ? 'up' : modifier < 1 ? 'down' : null;
       }
@@ -1102,8 +782,7 @@ function drawDuel(ctx, state) {
   drawSprite(ctx, state, foe.front, 0, 0);
   drawSprite(ctx, state, you.back, 80, 0);
   drawTypeBadges(ctx, state, foe, you, duelTypeList(state, 1), duelTypeList(state, 0));
-  const showFoe = state.trim.foeNumbers;
-  drawHpPanel(ctx, 0, foe, duelState.hp[1][duelState.activeSlot[1]], showFoe);
+  drawHpPanel(ctx, 0, foe, duelState.hp[1][duelState.activeSlot[1]], false);
   drawHpPanel(ctx, 1, you, duelState.hp[0][duelState.activeSlot[0]], true);
   drawTeamPips(ctx, state, 0, 2);
   drawTeamPips(ctx, state, 1, 27);
@@ -1116,10 +795,6 @@ function drawDuel(ctx, state) {
       text(ctx, 'swap', 60, 41, true);
     } else if (option) {
       drawIcon(ctx, typeIcon(option.type), 60, 40);
-      if (state.duel.scoring === 'power' && option.power != null) {
-        const label = num(option.power);
-        text(ctx, label, 80 - textWidth(label), 41, true);
-      }
     }
     drawDuelMoveRow(ctx, state);
   } else {
@@ -1130,7 +805,7 @@ function drawDuel(ctx, state) {
 function render(ctx, state) {
   rect(ctx, 0, 0, W, H, false);
   if (state.scene === 'setup') drawSetup(ctx, state);
-  else if (state.scene === 'battle') { if (state.mode === 'duel') drawDuel(ctx, state); else drawBattle(ctx, state); }
+  else if (state.scene === 'battle') drawDuel(ctx, state);
   else drawEnd(ctx, state);
 }
 
@@ -1138,8 +813,6 @@ function render(ctx, state) {
 function boot() {
   const screen = document.getElementById('screen');
   const ctx = screen.getContext('2d');
-  const bodyMode = document.body && document.body.dataset && document.body.dataset.mode
-    ? document.body.dataset.mode : null;
   const bodyDuel = document.body && document.body.dataset && document.body.dataset.duel
     ? document.body.dataset.duel : null;
   const bodyScoring = document.body && document.body.dataset && document.body.dataset.scoring
@@ -1151,8 +824,6 @@ function boot() {
   const matrixId = matrixMatch && ['8', '6', '5', '4'].includes(matrixMatch[1]) ? matrixMatch[1] : undefined;
 
   const state = newMock({
-    mode: bodyMode || 'current',
-    lockMode: !!bodyMode,
     duelKind: bodyDuel || undefined,
     scoring: bodyScoring || undefined,
     matrixId,
@@ -1169,7 +840,6 @@ function boot() {
     ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down',
     a: 'left', d: 'right', w: 'up', s: 'down',
     z: 'a', ' ': 'a', Enter: 'a', x: 'b',
-    '1': '1', '2': '2', '3': '3',
   };
   const held = new Set();
   const pending = [];
@@ -1192,28 +862,20 @@ function boot() {
     button.addEventListener('pointerleave', release);
   }
 
-  const modeRadios = document.querySelectorAll('input[name="mode"]');
   const control = (id) => document.getElementById(id);
   const wire = (id, type, handler) => {
     const element = control(id);
     if (element) element.addEventListener(type, handler);
   };
-  for (const radio of modeRadios) radio.addEventListener('change', () => {
-    if (radio.checked) { setMode(state, radio.value); syncControls(); }
-  });
-  wire('trim-type', 'change', (event) => { state.trim.typeMode = event.target.value; syncControls(); });
-  wire('trim-arrows', 'change', (event) => { state.trim.arrows = event.target.checked; syncControls(); });
-  wire('trim-press', 'change', (event) => { state.trim.pressTurn = event.target.checked; syncControls(); });
-  wire('trim-foe', 'change', (event) => { state.trim.foeNumbers = event.target.checked; syncControls(); });
   wire('duel-stances', 'change', (event) => {
     state.duel.stances = Number(event.target.value);
-    if (state.mode === 'duel') state.scene = 'setup';
+    state.scene = 'setup';
     syncControls();
   });
   wire('duel-ai', 'change', (event) => { state.duel.aiPersona = event.target.value; syncControls(); });
   wire('duel-matrix', 'change', (event) => {
     state.duel.matrixId = event.target.value;
-    if (state.mode === 'duel') state.scene = 'setup';
+    state.scene = 'setup';
     syncControls();
   });
   // Sample-team selects are populated from the authored team data.
@@ -1230,12 +892,12 @@ function boot() {
   }
   wire('team-you', 'change', (event) => {
     state.duel.presetYou = event.target.value || null;
-    if (state.mode === 'duel') state.scene = 'setup';
+    state.scene = 'setup';
     syncControls();
   });
   wire('team-foe', 'change', (event) => {
     state.duel.presetFoe = event.target.value || null;
-    if (state.mode === 'duel') state.scene = 'setup';
+    state.scene = 'setup';
     syncControls();
   });
   wire('duel-read', 'input', (event) => { state.duel.aiRead = Number(event.target.value); syncControls(); });
@@ -1248,12 +910,7 @@ function boot() {
     screen.style.height = `${H * scale}px`;
   }
   function syncControls() {
-    for (const radio of modeRadios) radio.checked = radio.value === state.mode;
     const set = (id, apply) => { const element = control(id); if (element) apply(element); };
-    set('trim-type', (element) => { element.value = state.trim.typeMode; });
-    set('trim-arrows', (element) => { element.checked = state.trim.arrows; });
-    set('trim-press', (element) => { element.checked = state.trim.pressTurn; });
-    set('trim-foe', (element) => { element.checked = state.trim.foeNumbers; });
     set('duel-stances', (element) => { element.value = String(state.duel.stances); });
     set('duel-ai', (element) => { element.value = state.duel.aiPersona; });
     set('duel-matrix', (element) => { element.value = state.duel.matrixId; });
@@ -1264,18 +921,14 @@ function boot() {
     set('duel-read-value', (element) => { element.textContent = `${state.duel.aiRead}%`; });
     set('seed-value', (element) => { element.textContent = String(state.seed); });
     set('status', (element) => {
-      const you = creature(state.youIndex), foe = creature(state.foeIndex);
-      const count = (entry) => entry.moves.filter((id) => id != null).length;
       element.textContent = [
-        state.mode === 'duel' ? `duel ${state.duel.kind}` : state.mode,
-        state.mode === 'trim' ? `${state.trim.typeMode} arrows:${state.trim.arrows ? 'on' : 'off'} press:${state.trim.pressTurn ? 'on' : 'off'}` : '',
-        state.mode === 'duel' && state.duel.kind === 'stances' ? `${state.duel.stances} stances ai:${state.duel.aiPersona} ${state.duel.aiRead}%` : '',
-        state.mode === 'duel' && state.duel.kind === 'wheel' ? `duel wheel ${state.duel.scoring} ${state.duel.matrixId}t ai:${state.duel.aiPersona} ${state.duel.aiRead}%` : '',
-        state.mode === 'duel' && state.duelState
+        `duel ${state.duel.kind}`,
+        state.duel.kind === 'stances' ? `${state.duel.stances} stances ai:${state.duel.aiPersona} ${state.duel.aiRead}%` : '',
+        state.duel.kind === 'wheel' ? `duel wheel ${state.duel.scoring} ${state.duel.matrixId}t ai:${state.duel.aiPersona} ${state.duel.aiRead}%` : '',
+        state.duelState
           ? `you:${state.duel.presetYou || 'random'} foe:${state.duel.presetFoe || 'random'} `
             + `[${state.duelState.partyIndex[0].map((index) => creature(index).name).join(',')}]`
           : '',
-        state.mode !== 'duel' ? `you:${creature(state.youIndex).name}[${count(you)}m] foe:${creature(state.foeIndex).name}[${count(foe)}m]` : '',
       ].filter(Boolean).join(' · ');
     });
   }
@@ -1289,7 +942,7 @@ function boot() {
     const edges = pending.splice(0, pending.length);
     step(state, { edges, dtMs: dt });
     render(ctx, state);
-    if (edges.some((edge) => edge === 'a' || edge === '1' || edge === '2' || edge === '3')) syncControls();
+    if (edges.includes('a')) syncControls();
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
@@ -1297,19 +950,16 @@ function boot() {
 
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
-    newMock, step, render, setMode, startBattle, planTurn, advanceStep, aiPick,
-    usableSlots, firstUsable, cycleCursor, duelPick, duelResolve, duelUpdate,
-    newSeed, makeRng, computeDamage, attackModifier, combineModifier,
-    applyDamageModifier, modifierFor, arrowFor, moveTypeFor,
-    duelMoves, wheelValue, wheelBeats, hasAffinity, duelCreatureBonus,
-    duelKind, stanceSet, stanceBeats, duelOptions, duelOptionAffinity,
+    newMock, step, render, startBattle, duelPick, duelResolve, duelUpdate,
+    newSeed, makeRng, duelMoves, foldedKit, wheelValue, wheelBeats, duelCreatureBonus,
+    duelKind, stanceSet, stanceBeats, duelOptions, duelOptionsFor,
     DUEL_PERSONAS, duelPersona, predictPlayerType, counterOptions, recordPlayerPick,
     duelCreature, duelBench, benchCounterExists, benchCounterSlot, sideAlive, isSwitchPick,
     livingBenchSlots, switchTargetSlot, rollTeam, SWITCH_BASE,
     duelMatrix, duelValue, duelBeats, foldType, MATRIX_DATA, TEAM_DATA,
     duelTypeList, presetTeam,
-    creature, moveOf, activeMode, typesOf, drawIcon, text, glyphRows,
-    ICONS, MERGED_ICONS, SYMBOLS, DATA, W, H, SPRITE_BASE, isSpikeMove,
+    creature, drawIcon, text, glyphRows,
+    ICONS, MERGED_ICONS, SYMBOLS, DATA, W, H, SPRITE_BASE,
   };
 }
 if (typeof window !== 'undefined' && typeof document !== 'undefined') boot();

@@ -12,7 +12,7 @@ import {
 const repo = path.dirname(fileURLToPath(import.meta.url)) + '/..';
 const data = JSON.parse(fs.readFileSync(path.join(repo, 'mock/data.js'), 'utf8')
   .replace(/^[\s\S]*?const DATA = /, '').replace(/;\n[\s\S]*$/, ''));
-const sets = rosterSets(data.creatures, data.moves, WHEEL.order);
+const sets = rosterSets(data.creatures, WHEEL.order);
 
 // Preference: when several edges fix the same number of demands, prefer the
 // ones with a readable causal story.

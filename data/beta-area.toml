@@ -40,19 +40,19 @@ bag_empty = true
 species = 0
 level = 3
 full_hp = true
-moves = [8, 9, 10, 11]
+moves = ["water"]
 
 [[party.member]]
 species = 3
 level = 3
 full_hp = true
-moves = [12, 13, 14, 15]
+moves = ["earth"]
 
 [[party.member]]
 species = 6
 level = 3
 full_hp = true
-moves = [4, 5, 6, 7]
+moves = ["water"]
 
 # The pocket plant yields one type-0 / tier-1 lure (canonical item id
 # type*3+tier = 1) so a fresh player can gather before any encounter.

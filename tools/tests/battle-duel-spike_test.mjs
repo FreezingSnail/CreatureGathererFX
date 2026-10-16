@@ -107,14 +107,15 @@ test('repeat and rotation are deterministic over owned options + self history', 
 
 test('policies fold through duelValue, not the 8-type wheel', () => {
   const { state } = buildDuel({ seed: 1, policy: 'counter' });
-  // Sporeling [spirit/plant] options are {plant, spirit, plant, spirit}; a
-  // revealed wind (folded to water in matrix5) is beaten only by the plant
-  // options. Under the 5-type table the counter must pick index 0 or 2.
+  // Sporeling's kit is [spirit, plant] (mask bits ascending). A revealed wind
+  // (folded to water in matrix5) is beaten only by plant, so the folded counter
+  // must pick the plant option at index 1 - not an index-based 8-type wheel pick.
   state.duelState.partyIndex = [[37], [6]];
   state.duelState.hp = [[mock.creature(37).maxHp], [mock.creature(6).maxHp]];
   state.duelState.activeSlot = [0, 0];
   state.duelState.last = [null, 'wind'];
   state.duelState.history = [];
+  assert.deepEqual(mock.duelOptions(state, 0).map((option) => option.type), ['spirit', 'plant']);
 
   const originalWheelBeats = mock.wheelBeats;
   mock.wheelBeats = () => { throw new Error('wheelBeats must not be used by the folded policies'); };
@@ -127,7 +128,7 @@ test('policies fold through duelValue, not the 8-type wheel', () => {
     mock.wheelBeats = originalWheelBeats;
   }
   const counter = playerPick(mock, state, 'counter', { int: () => 0 });
-  assert.ok(counter === 0 || counter === 2, `counter folded pick was ${counter}`);
+  assert.equal(counter, 1, `counter folds wind->water and picks plant (${counter})`);
 });
 
 test('every policy ignores the opponent current hidden pick (revealed history only)', () => {
