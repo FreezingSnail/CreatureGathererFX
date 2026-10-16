@@ -63,6 +63,10 @@ FXTEST_MS ?= 12000
 # The duel resource suite renders many full frames, so its serial capture needs
 # a longer default than the wildcard gate's ordinary suites.
 FXTEST_MS_RESOURCES ?= 30000
+# The v3 save suite grew boxed-instance-HP publication cuts (jp8.11.14), each
+# doing full checkpoint verify/erase cycles, so it needs a longer window than the
+# 12000 default. Raise the window rather than drop device coverage.
+FXTEST_MS_SAVE ?= 30000
 FXTEST_RAM_BUDGET ?= 2160
 FXTEST_BUILD_DIR ?= $(BUILD_DIR)/fxtest
 FINAL_GATE_LOG_DIR ?= $(BUILD_DIR)/final-gate
@@ -628,6 +632,7 @@ fxtest-run:
 		cp -f "$(FXDATA_BIN)" "$$stage/fxdata.bin"; \
 		ms="$(FXTEST_MS)"; \
 		if [ "$$name" = "test_duel_resources" ]; then ms="$(FXTEST_MS_RESOURCES)"; fi; \
+		if [ "$$name" = "test_save" ]; then ms="$(FXTEST_MS_SAVE)"; fi; \
 		if out="$$($(ARDENS) captureserial=$$ms fxport=d1 display=ssd1306 file=$$stage/output/$$name.ino.hex file=$$stage/fxdata.bin 2>&1)"; then \
 			runner_status=0; \
 		else \

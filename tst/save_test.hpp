@@ -2,6 +2,7 @@
 #include <string.h>
 #include "test.hpp"
 #include "../src/save/Compaction.hpp"
+#include "../src/fxdata.h"
 #include "../src/save/FlashBackend.hpp"
 #include "../src/save/Journal.hpp"
 #include "../src/save/SaveController.hpp"
@@ -48,6 +49,20 @@ inline void seedGeneration(uint16_t base,uint16_t generation) {
     header[12]=static_cast<uint8_t>(sum);header[13]=static_cast<uint8_t>(sum>>8);
     flashFakeSetBytes(base,header,sizeof(header));
 }
+inline void rewriteBodyChecksum(uint16_t base) {
+    uint8_t a=0,b=0;
+    for(uint16_t at=16;at<624;++at) {
+        const uint16_t n1=static_cast<uint16_t>(a)+flashFakeData()[base+at];
+        a=n1>=255?n1-255:n1;
+        const uint16_t n2=static_cast<uint16_t>(b)+a;
+        b=n2>=255?n2-255:n2;
+    }
+    const uint8_t body[2]={a,b};flashFakeSetBytes(base+10,body,sizeof(body));
+    const uint8_t *header=flashFakeData()+base;
+    const uint16_t generation=static_cast<uint16_t>(header[4])|
+                              (static_cast<uint16_t>(header[5])<<8);
+    seedGeneration(base,generation);
+}
 }
 inline void CheckpointCollectionTest(TestSuite &suite) {
     using namespace save_test_detail;Test test(__func__);fresh();
@@ -76,6 +91,171 @@ inline void CheckpointCollectionTest(TestSuite &suite) {
     test.assert(storeRemove(1),false,"party slot cannot be removed");
     test.assert(storeRecordAddr(8192,63),8192+616,"slot63 starts at624 minus8");
     test.assert(flashFakeData()[8192+9],0,"cleanup bit clear after journal verification");
+    suite.addTest(test);
+}
+inline void BoxedInstanceHPTest(TestSuite &suite) {
+    using namespace save_test_detail;Test test(__func__);fresh();
+    SaveFile state=snapshot();StoreRecord first=creature(27),duplicate=creature(30);
+    uint8_t a=255,b=255;
+    first.hpEncoded=1;duplicate.hpEncoded=19; // KO and 18 HP, distinct instances.
+    test.assert(storeAdd(first,a),true,"add KO instance");
+    test.assert(storeAdd(duplicate,b),true,"add injured duplicate");
+    test.assert(a,0,"first stable instance slot");test.assert(b,1,"duplicate stable instance slot");
+    test.assert(storeInstanceHP(first),0,"encoded one represents KO");
+    test.assert(storeInstanceHP(duplicate),18,"encoded HP subtracts one");
+    StoreRecord legacy=creature(27);
+    Creature full;full.load(legacy);
+    test.assert(storeInstanceHP(legacy),full.statlist.hp,"legacy zero byte defaults to full HP");
+    test.assert(save(state),SaveStep::Done,"boxed HP checkpoint completes");
+    test.assert(flashFakeData()[8192+112+7],1,"checkpoint persists KO encoding");
+    test.assert(flashFakeData()[8192+120+7],19,"checkpoint persists duplicate encoding");
+    SaveFile loaded=snapshot();test.assert(storeBoot(loaded),true,"boxed HP checkpoint reboots");
+    StoreRecord restored={};test.assert(storeRead(a,restored),true,"KO instance reloads");
+    test.assert(storeInstanceHP(restored),0,"KO remains zero after reboot");
+    test.assert(storeRead(b,restored),true,"duplicate reloads");
+    test.assert(storeInstanceHP(restored),18,"duplicate retains its own HP");
+
+    // A nonzero journal record is newer than snapshot HP; byte zero remains
+    // compatible with legacy party snapshots and later PartyAssign wins.
+    test.assert(storeAssign(0,a,12),true,"assign KO instance with explicit current HP");
+    test.assert(save(loaded),SaveStep::Done,"assignment snapshot publishes");
+    restored=creature(27); // old caller format, byte 7 zero
+    test.assert(storeWrite(a,restored),true,"legacy record update appended");
+    test.assert(storeBoot(loaded),true,"legacy record replay succeeds");
+    test.assert(loaded.partyHP[0],12,"legacy zero preserves snapshot HP");
+    restored.hpEncoded=8; // actual 7 HP
+    test.assert(storeWrite(a,restored),true,"new encoded HP update appended");
+    test.assert(storeBoot(loaded),true,"encoded HP replay succeeds");
+    test.assert(loaded.partyHP[0],7,"record HP supersedes older snapshot HP");
+    test.assert(storeAssign(0,a,5),true,"later assignment carries newer HP");
+    test.assert(storeBoot(loaded),true,"assignment authority replays");
+    test.assert(loaded.partyHP[0],5,"later PartyAssign supersedes record HP");
+
+    // Reassign the party slot between duplicate instances after mirroring the
+    // outgoing member's KO HP, then checkpoint and recover both exact values.
+    fresh();state=snapshot();first=creature(27);duplicate=creature(30);
+    first.hpEncoded=1;duplicate.hpEncoded=19;a=b=255;
+    test.assert(storeAdd(first,a),true,"seed outgoing KO duplicate");
+    test.assert(storeAdd(duplicate,b),true,"seed incoming injured duplicate");
+    test.assert(storeAssign(0,a,0),true,"assign outgoing KO member");
+    test.assert(save(state),SaveStep::Done,"duplicate swap baseline");
+    test.assert(storeWrite(a,first),true,"mirror outgoing KO HP before reassignment");
+    test.assert(storeAssign(0,b,18),true,"assign incoming duplicate with its HP");
+    test.assert(save(state),SaveStep::Done,"duplicate swap checkpoint");
+    test.assert(storeBoot(loaded),true,"duplicate swap reboots");
+    test.assert(loaded.partySlots[0],b,"incoming duplicate remains assigned");
+    test.assert(loaded.partyHP[0],18,"incoming duplicate retains injured HP");
+    test.assert(storeRead(a,restored),true,"outgoing duplicate survives swap");
+    test.assert(storeInstanceHP(restored),0,"outgoing duplicate retains KO HP");
+    test.assert(storeRead(b,restored),true,"incoming duplicate record survives swap");
+    test.assert(storeInstanceHP(restored),18,"incoming duplicate retains independent HP");
+
+    // Build a valid old-format v3 checkpoint by clearing its party record's
+    // HP byte and re-deriving both integrity checks. Snapshot HP stays authority.
+    StoreRecord member;
+    for(uint8_t hpCase=0;hpCase<2;++hpCase) {
+        fresh();state=snapshot();member=creature(27);member.hpEncoded=hpCase?1:13;
+        a=255;test.assert(storeAdd(member,a),true,"seed legacy checkpoint party");
+        test.assert(storeAssign(0,a,hpCase?0:12),true,"seed legacy snapshot party HP");
+        test.assert(save(state),SaveStep::Done,"legacy checkpoint baseline");
+        const uint8_t zero=0;flashFakeSetBytes(8192+112+7,&zero,1);rewriteBodyChecksum(8192);
+        uint8_t check[12],header[16];memcpy(header,flashFakeData()+8192,16);
+        for(uint8_t i=0;i<12;++i) check[i]=header[i];check[9]=1;
+        test.assert(fletcher16(check),static_cast<uint16_t>(header[12]|(header[13]<<8)),"legacy header checksum recomputed");
+        loaded=snapshot();test.assert(storeBoot(loaded),true,"legacy zero-byte checkpoint validates");
+        test.assert(loaded.partyHP[0],hpCase?0:12,"legacy snapshot injury or KO persists");
+        player=Player();test.assert(SaveController::load(),true,"legacy party loads through controller");
+        test.assert(player.creatureHPs[0],hpCase?0:12,"legacy party HP remains authoritative");
+    }
+    suite.addTest(test);
+}
+inline void BoxedHPPublicationCutsTest(TestSuite &suite) {
+    using namespace save_test_detail;Test test(__func__);
+    const int32_t cuts[]={0,4096,4608,4718,4719,4720,4730,8816,8817};
+    for(int32_t cut:cuts) {
+        fresh();SaveFile state=snapshot();StoreRecord member=creature();
+        member.hpEncoded=13;uint8_t slot=255;
+        test.assert(storeAdd(member,slot),true,"seed party instance with HP");
+        test.assert(storeAssign(0,slot,12),true,"seed snapshot HP");
+        test.assert(save(state),SaveStep::Done,"baseline HP checkpoint");
+        member.hpEncoded=8;
+        test.assert(storeWrite(slot,member),true,"publish newer instance HP to journal");
+        flashFakeSetWriteLimit(cut);save(state);flashFakeSetWriteLimit(-1);
+        SaveFile loaded=snapshot();test.assert(storeBoot(loaded),true,"HP cut reboots");
+        test.assert(loaded.partyHP[0],7,"new record HP survives every publication cut");
+        StoreRecord restored={};test.assert(storeRead(slot,restored),true,"cut record readable");
+        test.assert(storeInstanceHP(restored),7,"record HP agrees with recovered party HP");
+        test.assert(storeBootFailed(),false,"HP cut does not fail closed");
+    }
+    // A dirty tail cannot publish an HP mutation; explicit save folds only the
+    // valid prefix, clears the journal, and preserves the prior HP authority.
+    fresh();SaveFile state=snapshot();StoreRecord member=creature();member.hpEncoded=13;
+    uint8_t slot=255;test.assert(storeAdd(member,slot),true,"seed dirty-tail instance");
+    test.assert(storeAssign(0,slot,12),true,"seed dirty-tail party HP");
+    test.assert(save(state),SaveStep::Done,"dirty-tail baseline checkpoint");
+    member.hpEncoded=8;flashFakeSetWriteLimit(15);
+    test.assert(storeWrite(slot,member),false,"torn HP record remains unpublished");
+    flashFakeSetWriteLimit(-1);
+    test.assert(save(state),SaveStep::Done,"explicit save clears dirty HP tail");
+    SaveFile loaded=snapshot();test.assert(storeBoot(loaded),true,"dirty-tail save reboots");
+    test.assert(loaded.partyHP[0],12,"unpublished HP update does not replace old snapshot");
+    StoreRecord restored={};test.assert(storeRead(slot,restored),true,"dirty-tail record readable");
+    test.assert(storeInstanceHP(restored),12,"dirty-tail preserves old encoded HP");
+    suite.addTest(test);
+}
+inline void SaveControllerCaptureHPCutsTest(TestSuite &suite) {
+    using namespace save_test_detail;Test test(__func__);
+    const int32_t cuts[]={4719,4720};
+    for(int32_t cut:cuts) {
+        fresh();SaveFile state=snapshot();StoreRecord member=creature();member.hpEncoded=13;
+        uint8_t slot=255;test.assert(storeAdd(member,slot),true,"seed full-log party instance");
+        test.assert(storeAssign(0,slot,12),true,"seed full-log snapshot HP");
+        test.assert(save(state),SaveStep::Done,"full-log baseline checkpoint");
+        member.hpEncoded=0;
+        for(uint16_t i=0;i<JOURNAL_CAPACITY;++i) {
+            JournalRecord log={};log.seq=static_cast<uint8_t>(i);
+            log.op=static_cast<uint8_t>(LogOp::StoreAdd);log.slot=slot;
+            storeRecordEncode(member,log.payload);
+            uint8_t bytes[JOURNAL_RECORD_BYTES];
+            test.assert(journalEncode(log,bytes),true,"encode full-journal legacy update");
+            flashFakeSetBytes(save_log+i*JOURNAL_RECORD_BYTES,bytes,sizeof(bytes));
+        }
+        test.assert(journalCount(),JOURNAL_CAPACITY,"journal reaches all 256 records");
+        player=Player();player.party[0].load(member);player.creatureHPs[0]=7;
+        flashFakeSetWriteLimit(cut);
+        SaveController::begin(GameState_t::WORLD);
+        test.assert(journalCount(),JOURNAL_CAPACITY,"HP-only capture adds no journal record at capacity");
+        for(uint16_t i=0;i<256 && saveInProgress();++i) SaveController::advance();
+        flashFakeSetWriteLimit(-1);
+        SaveFile loaded=snapshot();test.assert(storeBoot(loaded),true,"full-log capture cut reboots");
+        const uint8_t expected=cut>=4720?7:12;
+        test.assert(loaded.partyHP[0],expected,"capture HP publishes with checkpoint commit");
+        StoreRecord restored={};test.assert(storeRead(slot,restored),true,"full-log record readable");
+        if(cut>=4720) test.assert(restored.hpEncoded,8,"committed capture mirrors record HP");
+    }
+    // A valid prefix plus dirty tail blocks SaveController's HP append. The
+    // compacted snapshot/record pair still publishes atomically.
+    const int32_t dirtyCuts[]={4719,4720};
+    for(int32_t cut:dirtyCuts) {
+        fresh();SaveFile state=snapshot();StoreRecord member=creature();member.hpEncoded=13;
+        uint8_t slot=255;test.assert(storeAdd(member,slot),true,"seed dirty-tail party instance");
+        test.assert(storeAssign(0,slot,12),true,"seed dirty-tail snapshot HP");
+        test.assert(save(state),SaveStep::Done,"dirty-tail baseline checkpoint");
+        member.hpEncoded=0;test.assert(storeWrite(slot,member),true,"publish legacy prefix");
+        member.hpEncoded=8;flashFakeSetWriteLimit(15);
+        test.assert(storeWrite(slot,member),false,"leave dirty tail before save capture");
+        flashFakeSetWriteLimit(-1);
+        player=Player();player.party[0].load(member);player.creatureHPs[0]=7;
+        flashFakeSetWriteLimit(cut);SaveController::begin(GameState_t::WORLD);
+        test.assert(journalCount(),1,"HP-only capture adds no journal record behind dirty tail");
+        for(uint16_t i=0;i<256 && saveInProgress();++i) SaveController::advance();
+        flashFakeSetWriteLimit(-1);
+        SaveFile loaded=snapshot();test.assert(storeBoot(loaded),true,"dirty-tail capture cut reboots");
+        const uint8_t expected=cut>=4720?7:12;
+        test.assert(loaded.partyHP[0],expected,"dirty-tail capture obeys checkpoint authority");
+        StoreRecord restored={};test.assert(storeRead(slot,restored),true,"dirty-tail capture record readable");
+        if(cut>=4720) test.assert(restored.hpEncoded,8,"dirty-tail candidate mirrors live HP");
+    }
     suite.addTest(test);
 }
 inline void CollectionCapacityTest(TestSuite &suite) {
@@ -372,6 +552,7 @@ inline void PlayerStoreIntegrationTest(TestSuite &suite) {
 }
 inline void SaveSuite(TestRunner &runner) {
     TestSuite suite("Save Suite");CheckpointCollectionTest(suite);CollectionCapacityTest(suite);
+    BoxedInstanceHPTest(suite);BoxedHPPublicationCutsTest(suite);SaveControllerCaptureHPCutsTest(suite);
     CheckpointCutTest(suite);JournalDecodeTest(suite);JournalPublicationTest(suite);ShippingSaveRestoreTest(suite);
     SaveFlagExtentTest(suite);GenerationWrapTest(suite);LegacyResetTest(suite);LiveReadBoundedTest(suite);
     PlayerStoreIntegrationTest(suite);runner.addTestSuite(suite);

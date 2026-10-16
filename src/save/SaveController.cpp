@@ -42,11 +42,23 @@ void captureLiveSaveState()
         if (slot == 255) continue;
         StoreRecord record;
         if (!storeRead(slot, record)) continue;
+        bool changed = record.id != player.party[i].id;
         record.id = player.party[i].id;
-        if (levelFromExp(record.exp) != player.party[i].level)
+        if (levelFromExp(record.exp) != player.party[i].level) {
             record.exp = levelExpThreshold(player.party[i].level);
-        memcpy(record.moves, player.party[i].moves, 4);
-        storeWrite(slot, record);
+            changed = true;
+        }
+        for (uint8_t move = 0; move < 4; ++move) {
+            if (record.moves[move] != player.party[i].moves[move]) changed = true;
+            record.moves[move] = player.party[i].moves[move];
+        }
+        // HP-only changes belong to the checkpoint snapshot. Avoid consuming
+        // journal capacity before commit; the compaction pass mirrors HP into
+        // the matching StoreRecord in the same checkpoint publication.
+        if (changed) {
+            record.hpEncoded = hp + 1;
+            storeWrite(slot, record);
+        }
     }
     plants.plantStages.serialize(saveState.plantStages);
     for (uint8_t i = 0; i < 2; ++i)
@@ -125,6 +137,7 @@ void seedParty()
         StoreRecord record = {};
         record.id = player.party[i].id;
         record.exp = levelExpThreshold(player.party[i].level);
+        record.hpEncoded = player.creatureHPs[i] + 1;
         memcpy(record.moves, player.party[i].moves, 4);
         storeWrite(i, record);
         storeAssign(i, i, player.creatureHPs[i]);
