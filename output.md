@@ -11404,3 +11404,94 @@ Automated frame-timing instrumentation exists **only** in `test_duel_resources` 
 
 ### Wall time
 Control+variant `make ram` 11.0 s + 11.2 s + 11.0 s (restore); fxtest-spike 21.0 s; focused device runs 19.5 s + 10.9 s; counterfactual device runs ~30 s. Implementation+verification total ~12 min (single lane).
+
+## jp8.11.18 — simulator acceptance audit
+
+Audit of the engine-backed simulator acceptance on the current 5-bit `attackMask` representation
+(4w89.6, commit 2ee24cb). Repo HEAD 6096429, 2026-10-16. Read-only audit plus bounded follow-up
+beads; no source commit, no AVR/gen/gate-lane work. Bead left `in_progress` per dispatch.
+
+Key finding: after the 5-type duel migration the "simulator" is the duel toolchain
+(`tools/battle-duel-spike.mjs`, `tools/duel-parity/`, `mock/battle-mock.js`, `src/engine/battle/DuelKernel.hpp`).
+`make sim-test` under the default `-DCGFX_DUEL_BATTLE` routes to the Node duel parity test, and the
+legacy C++ ordered-turn runner under `tools/battle-sim/` no longer compiles in any configuration.
+
+### h9p criteria → current evidence map
+
+| h9p criterion | Current representation | Verdict |
+| --- | --- | --- |
+| .1 FX-free prepared-state path / engine integration | Duel kernel is FX-free host; `DuelKernelSuite` (tst/duel_kernel_test.hpp) + `DuelSessionIntegrationSuite` + mock/parity | PROVED |
+| .1 original-slot mapping / KO / switch semantics | mock tests (KO promotion, swap revert, targeted slot), parity RES `prev`/`aid` slots, kernel `state.sides[side].active/members[].hp` | PROVED |
+| .2 deterministic repeat (same options+seed) | `playDuel` deterministic test; two CLI runs byte-identical | PROVED |
+| .2 distinct policy labels | `POLICIES` (random/repeat/counter/rotation/swap/anti-repeat) + tests | PROVED |
+| .2 turn-cap → explicit timeout | monkey `runMatrix` splits `timeouts`; `--rounds 1` run; `--rounds cap honored` test | PROVED |
+| .2 pairwise both seat assignments / random-3v3 balance / appearance balancing | legacy ordered-turn only; no duel equivalent | GAP (G2) |
+| .2 `make sim` builds/runs host exe | `make sim` exit 2 (17 errors) | GAP (G1) |
+| .3 replay from recorded seed reproduces trace/outcome | durable-seed determinism + parity "seeded full duels match the mock"; no recorded-row replay CLI | PARTIAL (G2) |
+| .3 versioned CSV + fixture/engine SHA provenance | duel tool emits text metrics only | GAP (G2) |
+| .3 permanent tests cover schema/order/totals/replay | parity 6/6, node 198/198, host suite incl. duel suites | PROVED |
+| seat ordering | mock "losses and trades resolve on the correct sides"; parity both sides | PROVED |
+| per-original-slot attribution (semantics) | mock `partyIndex`/`activeSlot` assertions; parity RES slot fields; spike `species`/`kos` | PROVED (semantics), GAP (report artifact, G2) |
+
+### Exact commands + results
+
+1) `make sim-test BUILD_DIR=build CPPFLAGS='-I. -DCGFX_DUEL_BATTLE'` → `node --test tools/tests/duel-kernel-parity_test.mjs`
+```
+✔ seeded full duels match the mock (committed picks + resolution)
+ℹ tests 6  ℹ pass 6  ℹ fail 0
+```
+exit 0. Log: `build/sim-audit-jp8.11.18/make-sim-test.log`.
+
+2) `node --test tools/tests/*.mjs mock/*.test.js` → `ℹ tests 198  ℹ pass 198  ℹ fail 0` (exit 0). Log: `build/node-tests-jp8.11.18.log`.
+
+3) `make test BUILD_DIR=build` → host `Total Passed: 240077 / Failed: 0` (includes `DuelKernelSuite`, `DuelSessionIntegrationSuite`, `DuelPickRowSuite`, `DuelViewContractSuite`, `DuelMenuSuite`); world `258 / 0`. exit 0. Log: `build/sim-audit-jp8.11.18/make-test.log`.
+
+4) `make verify-generated BUILD_DIR=build` → exit 0 (non-mutating, no output). Log: `build/sim-audit-jp8.11.18/verify-generated.log`.
+
+5) Deterministic replay (same seed/scenario twice, diff):
+```
+node tools/battle-duel-spike.mjs --persona reader --policy random --read 45 --battles 25   # run A
+node tools/battle-duel-spike.mjs --persona reader --policy random --read 45 --battles 25   # run B
+diff run-a.txt run-b.txt   → empty (IDENTICAL)
+sha256 a8e4e141b533fb4a1e5b46560ed287674a7bdbdc6f13087f9bdbbe1c838fa182  (both)
+```
+Output: `reader/random@45%  W 11 L 14 D 0 T 0 | med 15 p95 18`.
+
+6) Explicit timeout reporting: `node tools/battle-duel-spike.mjs --persona reader --policy counter --read 100 --battles 10 --rounds 1`
+```
+reader/counter@100%  W 0 L 0 D 0 T 10 | med 1 p95 1
+```
+Timeouts are a separate outcome (`T 10`), never folded into W/L/D. Also `runPairSweepReport` flags `TIMEOUT` per pair.
+
+7) Paired teams across policy variants: `node tools/battle-duel-spike.mjs --pair-sweep --battles 2 --rounds 30` — 25 authored pairs × 6 policies × 5 read rates, pinned teams per pair, per-pair outcome split and timeout/sweep flags:
+```
+flags: 3 pair(s) with timeouts, 4 pair(s) sweeping >80% in every cell
+```
+Log: `build/sim-audit-jp8.11.18/pair-sweep.txt`.
+
+8) `make sim BUILD_DIR=build` → exit 2. 17 compile errors: `Combatant` no longer has `moveIds`/`moves`/`stats`/`statMods`/`status`/`effectTurns` and `BattleState` no longer has `partyModifiers`; `battle::remainingMoveUses` removed; `ScenarioBuilder.cpp`/`FixtureData.cpp` include the removed `tst/fxdatatest/generated/move_data.hpp`. The `#ifdef BATTLE_SIMULATOR` block in `src/engine/battle/BattleSession.cpp` (~148–299) is the legacy prepared-state path. Log: `build/sim-audit-jp8.11.18/make-sim.log`.
+
+### Gaps found (bounded follow-ups filed)
+
+- **G1 — `make sim` is broken / stale legacy runner.** Live `tools/battle-sim/` is byte-identical to `archive/battle-legacy/tools/battle-sim/` (`diff -rq` exit 0) and dead in every config; the `BATTLE_SIMULATOR` seam (`BattleSession.cpp/.hpp`, `BattleSetup.cpp`) and `tst/battle_sim_runner_test.hpp` are stale; `docs/battle-simulator.md` and Makefile `sim`/help text still advertise it.
+  → filed **CreatureGathererFX-pk0g** (discovered-from jp8.11.18).
+- **G2 — ogh.6 reporting seam absent on the duel toolchain.** ogh.6's design pins tactical/switch-tactical policies, versioned CSV, fixture SHA provenance, and per-original-slot damage/turn/KO/heal/PP attribution. The duel toolchain provides text metrics and correctly split outcomes but no CSV/provenance/per-slot artifact, and PP/heal do not exist in the duel rules.
+  → filed **CreatureGathererFX-j2lg**, which now **blocks CreatureGathererFX-ogh.6** (discovered-from jp8.11.18).
+
+### Disposition
+
+- h9p **not closed**: the duel-toolchain acceptance (parity, determinism, timeouts, paired teams, seat/slot semantics) is proved, but `.2` pairwise/random-3v3 and `.3` CSV/provenance/replay criteria are not proved on the current representation; they are tracked by pk0g/j2lg. Closing h9p is left to the orchestrator under its "proved or separately tracked" acceptance.
+- jp8.11.18 left `in_progress`; no source commit (dispatch constraint).
+- ogh.6 cannot rely on the pinned paired3v3 seam until j2lg (or its re-scope) lands.
+
+### Deviations
+
+- Ran with `BUILD_DIR=build` per dispatch, not the bead's dated `build/box-adoption-gate`.
+- Interpreted "simulator" as the current duel toolchain (the ordered-turn engine it superseded was retired by d73i.3/4w89). Audited against the current representation and filed the legacy residuals rather than reviving the old engine (PITFALL: "No removed-engine reconstruction").
+- No numerical tuning, no mechanics changes, no `/tmp` test code, no Python harness.
+
+### Storage
+`df -h .` 64 GiB free (≥10 GiB reserve held). `du -sh build` 1.8 G (within 5 GiB); audit evidence `build/sim-audit-jp8.11.18` 28 K; no AVR/build-lane trees created.
+
+### Wall time
+Audit + commands ≈ 15 min wall (single session); measured command CPU: sim-test 1.2 s, node tests 1.5 s, `make test` 3.1 s, verify-generated <1 s, replay/timeout/pair-sweep <0.5 s each; `make sim` failed at 1.8 s.
