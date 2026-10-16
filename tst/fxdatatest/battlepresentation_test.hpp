@@ -3,6 +3,7 @@
 #include "fxtest.hpp"
 #include "battlepresentation_fixture.hpp"
 #include "src/engine/draw.h"
+#include "src/engine/battle/BattleScene.hpp"
 #include "src/lib/FxReadCounter.hpp"
 
 namespace battle_presentation_test_detail {
@@ -65,6 +66,64 @@ inline uint16_t rowSignature(uint8_t x, uint8_t y) {
         for (uint8_t col = x; col < x + 60; ++col)
             hash = static_cast<uint16_t>(hash * 33u + pixel(col, row));
     return hash;
+}
+
+// Count the lit pixels of one 28px HP track inner line. The compact HUD draws
+// the player track at x50..77 y36 (panel y20) and the foe track at y11.
+inline uint8_t trackFill(uint8_t lineY) {
+    uint8_t count = 0;
+    for (uint8_t col = 0; col < 28; ++col)
+        if (pixel(static_cast<uint8_t>(50 + col), lineY)) ++count;
+    return count;
+}
+
+// Edge HP framebuffer contract for the compact duel HUD: a living creature with
+// a positive maximum must leave at least one visible track pixel, zero HP stays
+// empty and full HP fills all 28. Also proves the steady scene draw neither
+// looks up FX metadata nor varies between frames.
+inline void hpTrackEdges(FxTest &test) {
+    using namespace battle;
+    battle::BattleState state = {};
+    state.partyCount[0] = state.partyCount[1] = 1;
+    state.activeSlot[0] = state.activeSlot[1] = 0;
+    state.active[0].level = state.active[1].level = 1;
+    state.active[0].id = state.active[1].id = 0;
+
+    // Rounds to zero before the minimum-live clamp: 1/100, and the 3-digit
+    // boundary values 100/100 (full) and 100/255.
+    const uint8_t hps[] = {0, 1, 100, 100};
+    const uint8_t maxs[] = {100, 100, 100, 255};
+    const uint8_t expected[] = {0, 1, 28, 10};
+    for (uint8_t i = 0; i < 4; ++i) {
+        state.active[0].hp = hps[i]; state.active[0].maxHp = maxs[i];
+        state.active[1].hp = hps[i]; state.active[1].maxHp = maxs[i];
+        arduboy.clear();
+        BattleScene::draw(state);
+        test.expectEq(trackFill(36), expected[i],
+                      F("player HP track matches the live value"));
+        test.expectEq(trackFill(11), expected[i],
+                      F("foe HP track matches the live value"));
+    }
+
+    // Zero with a positive maximum stays empty, not one pixel.
+    state.active[0].hp = state.active[1].hp = 0;
+    state.active[0].maxHp = state.active[1].maxHp = 100;
+    arduboy.clear();
+    BattleScene::draw(state);
+    test.expectEq(trackFill(36), 0, F("zero player HP keeps an empty track"));
+    test.expectEq(hasInk(50, 36, 28, 1, true), false, F("zero player track has no ink"));
+
+    state.active[0].hp = state.active[0].maxHp = 100;
+    state.active[1].hp = state.active[1].maxHp = 100;
+    arduboy.clear();
+    FxReadCounter::resetFrame();
+    BattleScene::draw(state);
+    test.expectEq(FxReadCounter::count(), 0,
+                  F("steady scene draw performs no metadata reads"));
+    const uint16_t first = signature(0, 0, 128, 8);
+    BattleScene::draw(state);
+    test.expectEq(signature(0, 0, 128, 8), first,
+                  F("steady scene draw reproduces identical pixels"));
 }
 
 inline void moveLabels(FxTest &test) {
@@ -611,6 +670,7 @@ inline void test_battlepresentation(FxTest &test) {
     feedbackCategories(test);
     moveLabels(test);
     attackMoveRasters(test);
+    hpTrackEdges(test);
 
     // Only populated slots cache metadata; selected PP remains visible above.
     {
