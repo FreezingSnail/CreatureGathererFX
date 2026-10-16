@@ -340,6 +340,16 @@ test('evolution edges match canonical evelevel and the named pairs', () => {
     assert.equal(creaturesById.get(edge.from_id).evelevel, edge.level,
       `creature ${edge.from_id} authored evelevel must equal the edge level`);
   }
+  // Source/target symbol agreement (jp8.11.11): the canonical species target in
+  // creatures.json must name the same target as the beta-area contract, and no
+  // other species may author an evolution target at this revision.
+  const authored = creatures.filter((c) => c.evolves_to !== undefined);
+  assert.deepEqual(authored.map((c) => [c.id, c.evolves_to]),
+    pairs, 'creatures.json evolves_to targets must match the contract edges');
+  for (const edge of edges) {
+    assert.equal(creaturesById.get(edge.from_id).evolves_to, edge.to_id,
+      `creature ${edge.from_id} canonical evolves_to must match edge target`);
+  }
 });
 
 // ---------------------------------------------------------------------------

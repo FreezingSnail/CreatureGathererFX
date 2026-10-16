@@ -5,6 +5,8 @@
 
 #include "fxtest.hpp"
 #include "generated/creature_data.hpp"
+#include "generated/evolution_data.hpp"
+#include "src/fxdata.h"
 #include "src/lib/ReadData.hpp"
 #include "src/engine/battle/BattleSetup.hpp"
 
@@ -23,6 +25,37 @@ void test_creatureData(FxTest &test, const CreatureData_t &actual,
     test.expectEqIdx(actual.hpSeed, expected.hpSeed, F("creature.hpSeed"), index);
     test.expectEqIdx(actual.spdSeed, expected.spdSeed, F("creature.spdSeed"), index);
     test.expectEqIdx(actual.attackMask, expected.attackMask, F("creature.attackMask"), index);
+}
+
+// First-stage evolution edges (jp8.11.11). The packed Evolution mapping must
+// match the model fixture, name distinct endpoints, and carry the same
+// threshold as the packed source creature's evoLevel.
+void test_evolution_edges(FxTest &test) {
+    constexpr uint8_t kEdgeCount = EvolutionFixture::evolutionEdgeCount;
+    static_assert(kEdgeCount > 0, "first-beta evolution mapping must not be empty");
+
+    uint8_t source[kEdgeCount];
+    uint8_t target[kEdgeCount];
+    uint8_t level[kEdgeCount];
+    uint8_t expectedSource[kEdgeCount];
+    uint8_t expectedTarget[kEdgeCount];
+    uint8_t expectedLevel[kEdgeCount];
+    FX::readDataBytes(Evolution::evolutionSource, source, sizeof(source));
+    FX::readDataBytes(Evolution::evolutionTarget, target, sizeof(target));
+    FX::readDataBytes(Evolution::evolutionLevel, level, sizeof(level));
+    memcpy_P(expectedSource, EvolutionFixture::evolutionSource, sizeof(expectedSource));
+    memcpy_P(expectedTarget, EvolutionFixture::evolutionTarget, sizeof(expectedTarget));
+    memcpy_P(expectedLevel, EvolutionFixture::evolutionLevel, sizeof(expectedLevel));
+
+    for (uint8_t index = 0; index < kEdgeCount; ++index) {
+        test.expectEqIdx(source[index], expectedSource[index], F("evolution.source"), index);
+        test.expectEqIdx(target[index], expectedTarget[index], F("evolution.target"), index);
+        test.expectEqIdx(level[index], expectedLevel[index], F("evolution.level"), index);
+        test.expectEqIdx(source[index] != target[index], true, F("evolution.distinct"), index);
+        test.expectEqIdx(level[index] >= 1, true, F("evolution.threshold"), index);
+        const CreatureData_t seed = getCreatureFromStore(source[index]);
+        test.expectEqIdx(seed.evoLevel, level[index], F("evolution.evoLevel"), index);
+    }
 }
 
 void test_creatures(FxTest &test) {
@@ -68,4 +101,6 @@ void test_creatures(FxTest &test) {
         test.expectEqIdx(encounter.bench[side][1].level, 0, F("encounter.level2"), id);
         test.expectEqIdx(encounter.partyCount[side], 1, F("encounter.partyCount"), id);
     }
+
+    test_evolution_edges(test);
 }

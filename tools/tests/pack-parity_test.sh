@@ -77,7 +77,17 @@ perturbed_layout=$fixtures/fxlayout-expand-20-perturbed.toml
 # packed byte is identical. Verified by re-packing with the prior identity
 # string, which reproduces 518f4d84.... Previous cart sha256 518f4d84..., now
 # fe067475.... Intentional rebaseline.
-expected=fe0674756f9e5cf780ade6957e4cb4ad7d3dd84a010a1dec633d2f8d6023ca21
+# jp8.11.11: the native generator now derives the explicit first-stage evolution
+# mapping from data/json/creatures.json `evolves_to` targets and appends the
+# `Evolution` expand entry (fxdata/generated/evolution.txt: evolutionSource
+# {0,3,6}, evolutionTarget {1,4,7}, evolutionLevel {8,8,8}, 9 bytes) after the
+# duel content, so every earlier field address stays fixed. The rebuilt tool
+# (sibling HEAD a5ffdd1d, binary sha256 25d5c14a...) also stamps generator
+# identity 0.3.0+ga5ffdd1d (same 27-byte length). Isolation: re-packing with the
+# prior identity string but the new entry produced d051c1242938...; the prior
+# baseline (no entry, prior identity) was fe067475. Previous cart sha256
+# fe067475..., now fcda6f8b.... Intentional rebaseline.
+expected=fcda6f8b59f1301d68724a0845d1123da6763e774667494b58eb1e21d63cf5bb
 
 for layout in "$old_layout" "$new_layout" "$perturbed_layout"; do
     test -f "$layout" || {

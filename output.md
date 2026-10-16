@@ -11709,3 +11709,144 @@ builds; no build tree created. 3.4 M stale host artifact reclaimed.
 Worker loop ≈ 7 min wall (single session): exploration/grep ~3 min; edits ~2 min; host verification
 (sim-test 1.2 s, plain sim-test 0.6 s, `make test` 3.1 s, node tests 1.5 s) ~1 min; report ~1 min.
 Gate/orchestrator final-gate not run here.
+
+## jp8.11.11 — first-stage evolution edges
+
+Explicit per-species evolution target + append-only packed `Evolution` mapping. FX repo HEAD moved
+from the dispatch's 3925186 to 676445b mid-session (an unrelated concurrent commit, `pk0g` retires
+the legacy make `sim` battle runner); this worker's changes are uncommitted on top. Sibling
+`../CreatureGathererTools` HEAD a5ffdd1d plus this worker's uncommitted edits. No commit/push in
+either repo; bead left `in_progress`. `BUILD_DIR=build`.
+
+### Pinned contract (frozen STEPS)
+
+- Exactly three edges, no inferred id adjacency: **0→1, 3→4, 6→7 at level 8**.
+- Canonical target field is explicit: `data/json/creatures.json` gains `"evolves_to"` on species
+  0/3/6 (targets 1/4/7). Species without `evolves_to` do not evolve at this revision.
+- Owned packed bytes are append-only: a new `Evolution` expand entry is appended after the duel
+  content, so every earlier FX field address stays fixed.
+
+### Interfaces (new)
+
+- Rust model: `Creature.evolves_to: Option<i32>` (JSON `evolves_to`, omitted when absent).
+- Rust authoring validation: `evolution::EvolutionEdge`, `evolution::evolution_edges`,
+  `evolution::validate_evolutions`, `evolution::build_fx_evolution_descriptor`.
+- FX symbols appended to `src/fxdata.h`: `Evolution::evolutionSource`, `Evolution::evolutionTarget`,
+  `Evolution::evolutionLevel`.
+- Device fixture: `tst/fxdatatest/generated/evolution_data.hpp` (`EvolutionFixture::evolutionSource`,
+  `evolutionTarget`, `evolutionLevel`, `evolutionEdgeCount`).
+
+### Authored / generated / packed proof
+
+Generated `fxdata/generated/evolution.txt` (byte payload 9 B):
+
+```
+namespace Evolution {
+uint8_t evolutionSource[] = { 0, 3, 6 };
+uint8_t evolutionTarget[] = { 1, 4, 7 };
+uint8_t evolutionLevel[] = { 8, 8, 8 };
+} namespace_end
+```
+
+`src/fxdata.h` append-only diff: only `FX_DATA_BYTES` 748723 → 748732 and
+
+```
+namespace Evolution { constexpr uint24_t evolutionSource = 0x0B6CB3;
+  constexpr uint24_t evolutionTarget = 0x0B6CB6;
+  constexpr uint24_t evolutionLevel  = 0x0B6CB9; }
+```
+
+Node native-authoring test extended (`tools/tests/beta-area_test.mjs`) to pin source/target agreement:
+`creatures.json` `evolves_to` pairs must equal the beta-area `[[evolution.edge]]` `to_id` pairs, and
+no other species may author a target.
+
+### Commands and results
+
+```
+cargo test --offline --manifest-path ../CreatureGathererTools/Cargo.toml -p cgfx-core
+  -> all green; lib 224 passed / 0 failed (incl. 9 evolution::tests); 0 failures across suites
+cargo build --offline --locked --release -p cgfx-core --bin cgfx-tools   # identity ga5ffdd1d
+make gen BUILD_DIR=build                                                 -> Packed FX image ok
+make verify-generated BUILD_DIR=build                                    -> PASS (silent)
+make test-generated-libs BUILD_DIR=build
+  -> generated-libs: 48 passed, 0 failed PASS; invariants 5/0 PASS;
+     arena-demo-data PASS; first-unqualified-alias 28/0 PASS
+make test-pack-parity BUILD_DIR=build                                    -> pack parity: PASS
+make test BUILD_DIR=build        -> Total Passed: 258, Total Failed: 0
+make testvm BUILD_DIR=build      -> Total Passed: 278, Total Failed: 0
+make fxtest-headless BUILD_DIR=build ARDENS="$ARDENS" \
+     FXTEST_INOS='tst/fxdatatest/test_creatures.ino tst/fxdatatest/test_stack.ino'
+  -> test_creatures PASSED=738 FAILED=0 PASS
+  -> test_stack PASSED=4 FAILED=0 headroom=0x271 (625) / mode-transition 0x2CE (718) PASS
+node --test tools/tests/beta-area_test.mjs -> tests 10 / pass 10 / fail 0
+make ram BUILD_DIR=build         -> RAM_FLASH_BYTES=22416 RAM_STATIC_BYTES=1687 RAM_FREE_BYTES=873
+```
+
+### Authoring-failure negatives (host validation, exit=1)
+
+```
+missing target : Writing FX text descriptors: species 0 evolution target 200 does not exist
+cyclic (0->3,3->0) : Writing FX text descriptors: cyclic evolution edges involve species 0
+duplicate source   : Writing FX text descriptors: duplicate evolution edge: species 0 is authored twice
+```
+
+Each mutation was applied to `data/json/creatures.json`, the tool run with
+`cgfx-tools --project cgfx-project.json`, then the file restored; `fxdata/data/creatureData.txt`
+was regenerated and is byte-identical to HEAD. Self-loop / bad-threshold / unknown-or-empty target
+move cases are covered by the `evolution::tests` unit tests.
+
+### Hashes
+
+```
+dist/fxdata.bin                                      fcda6f8b59f1301d68724a0845d1123da6763e774667494b58eb1e21d63cf5bb
+dist/fxdata-data.bin                                 15d428ce481ef5087b66d2b2335afe92b03d374d842ad651e4e1499aac580273
+src/fxdata.h                                         79fec8e4e9fbe745d07160ac35207cfa083249aeac826f68cfe90ef8aba26f91
+tst/fxdatatest/generated/evolution_data.hpp          64377bc7b3ef39e7cd0aa671ac9e3814f02a070638bea08179981f521bdbc0bb
+build/CreatureGathererFX.ino.elf                     486ff460058ce2861d1bf6f7ecce002b23ce6c2c8d54fb802e7471ba54b1f45e  (unchanged)
+build/CreatureGathererFX.ino.hex                     974897bd1fe3ba34d6a966c7e84f059f0a9b098be1f3baecc96f1a55d22db14a  (unchanged)
+installed cgfx-tools binary sha256                   25d5c14a1a0d0564bcc2c5cd189f23fb9d927006ed08f3048b94aa902b73bd18
+```
+
+### Pack-parity rebaseline (intentional)
+
+`fe0674756f9e5cf780ade6957e4cb4ad7d3dd84a010a1dec633d2f8d6023ca21` →
+`fcda6f8b59f1301d68724a0845d1123da6763e774667494b58eb1e21d63cf5bb` in
+`tools/tests/pack-parity_test.sh`, with provenance comment. Two contributors, isolated by re-packing:
+
+- new `Evolution` entry (9 payload bytes): prior baseline `fe067475…` → `d051c124…` when packed
+  with the prior identity string.
+- generator identity `0.3.0+g94c24bef` → `0.3.0+ga5ffdd1d`: `d051c124…` → `fcda6f8b…`. The
+  identity string length is unchanged (27 bytes incl. NUL), so no field address moves.
+
+### Resource delta (whole image)
+
+`make ram BUILD_DIR=build`: **22416 B flash / 1687 B static SRAM** — delta vs the 22416/1687 control
+is **0 B / 0 B**; shipping ELF/HEX are byte-identical. Expected: no firmware code consumes the
+mapping yet (application is jp8.11.12); the change is authored data + generator + appended FX
+bytes. Static-RAM free 873 B; device stack headroom 625 B (unchanged).
+
+### Deviations
+
+- Ran with `BUILD_DIR=build` per dispatch, not the bead's dated `build/box-adoption-gate`.
+- The unrelated concurrent commit `676445b` (`pk0g`) landed mid-session; verification ran against
+  the combined worktree.
+- Did **not** edit `tst/creature_test.hpp`: the host suite exposes no evolution surface. The
+  authoring validator is native Rust (cargo) and the packed path is covered by the device suite;
+  the file was only listed in the bead's ownership set.
+- CLI-only tool install (skipped the Tauri app-bundle rebuild) since `make gen` uses only
+  `cgfx-tools`; identity churn is a consequence of rebuilding from current sibling HEAD.
+- `cargo fmt --check` is not clean on the sibling baseline; no repo-wide reformat applied.
+
+### Storage
+
+`df -h .` 64 GiB free before and after. `du -sh build` 1.8 G → 1.8 G. Previewed
+`make clean-build-artifacts BUILD_DIR=build` (108 candidates, 2,581,999 B) then applied
+`CLEAN_APPLY=1`; no `cgfx-pack.*` leftovers. Sibling `target/` reused, not duplicated. Sibling
+patch retained at `build/jp8.11.11-sibling.patch` (7,149 B).
+
+### Wall time
+
+Worker loop ≈ 50 min wall (single session, single build lane): exploration ~15 min; Rust model +
+validator + tests + `cargo test` ~6 min; CLI release build + install ~1 min; `make gen` ~6 s;
+host/VM/generated-libs/pack-parity/manifest ~4 min; device suites ~3 min; negative proofs ~5 min;
+storage cleanup + report ~10 min. Gate/orchestrator final-gate not run here.

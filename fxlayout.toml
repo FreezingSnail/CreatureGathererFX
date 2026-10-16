@@ -107,6 +107,11 @@ source = { image = { path = "images/DuelIcons_8x8.png", width = 8, height = 8, s
 # duel icons so every earlier field address stays fixed.
 [[entry]]
 source = { expand = { path = "fxdata/generated/duel.txt" } }
+
+# jp8.11.11 explicit first-stage evolution edges (source/target/level) for the
+# first-beta starters. Append-only: every earlier field address stays fixed.
+[[entry]]
+source = { expand = { path = "fxdata/generated/evolution.txt" } }
 [save]
 sectors = 8
 

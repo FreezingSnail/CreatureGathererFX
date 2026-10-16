@@ -7,7 +7,7 @@ using uint24_t = __uint24;
 // Initialize FX hardware using  FX::begin(FX_DATA_PAGE); in the setup() function.
 
 constexpr uint16_t FX_DATA_PAGE  = 0xf413;
-constexpr uint24_t FX_DATA_BYTES = 748723;
+constexpr uint24_t FX_DATA_BYTES = 748732;
 
 constexpr uint16_t FX_SAVE_PAGE  = 0xFF80;
 constexpr uint24_t FX_SAVE_BYTES = 32768;
@@ -568,5 +568,12 @@ namespace DuelData
   constexpr uint24_t duelTrainerOverrides = 0x0B6C5E;
   constexpr uint24_t duelTeamMemberCounts = 0x0B6C63;
   constexpr uint24_t duelTeamMembers = 0x0B6C68;
+}
+
+namespace Evolution
+{
+  constexpr uint24_t evolutionSource = 0x0B6CB3;
+  constexpr uint24_t evolutionTarget = 0x0B6CB6;
+  constexpr uint24_t evolutionLevel = 0x0B6CB9;
 }
 
