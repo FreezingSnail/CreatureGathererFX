@@ -11629,3 +11629,83 @@ Worker loop ≈ 25 min wall (single session, single build lane): exploration ~6 
 isolation + rebaseline ~4 min; VM/world-profile 2.5 s; `make test` 2.6 s; `make ram` 12.6 s;
 device spikes 21.0 s + 21.7 s; cleanup + report ~4 min. Gate/orchestrator final-gate not run here.
 
+
+## pk0g — retire the legacy make sim runner
+
+Tooling/docs only. Game repo HEAD 3925186. OFF the AVR/generation lane: no AVR build, no `make gen`,
+no integrated gate. Bead left `in_progress` per dispatch; no commit/push. `BUILD_DIR=build`.
+
+### What changed
+
+Removed the byte-identical stale copy and its dead harness:
+- `git rm -r tools/battle-sim/` (10 files, identical to `archive/battle-legacy/tools/battle-sim/`,
+  `diff -rq` exit 0; archive copy untouched).
+- `git rm tst/battle_sim_runner_test.hpp` and `tst/battle_sim_state_test.hpp` (both `BATTLE_SIMULATOR`-
+  only; archive retains both). The state suite also included the retired `tools/battle-sim/
+  ScenarioBuilder.hpp` and the removed `tst/fxdatatest/generated/move_data.hpp`, so it was retired too.
+
+`Makefile`:
+- dropped `.PHONY sim`; removed the `sim` target, `SIMULATOR_SOURCES`, `SIM_ARGS`, `BATTLE_SIM_BIN`,
+  `SIM_TEST_BIN`; removed the `sim` help line and reworded `sim-test` help.
+- `sim-test` is now unconditional: `node --test tools/tests/duel-kernel-parity_test.mjs`. The old
+  `ifneq -DCGFX_DUEL_BATTLE ... else <legacy run_test>` branch is gone.
+
+`tst/main.cpp`: removed the `#ifdef BATTLE_SIMULATOR` include block and the `BattleSimulatorStateSuite`/
+`BattleSimulatorRunnerSuite` calls.
+
+`docs/battle-simulator.md`: rewritten to document the current duel toolchain — `make sim-test`
+(duel-kernel-parity, 6/6, strict, no skips), `tools/battle-duel-spike.mjs` (personas/policies/read
+rates, split timeouts, pair-sweep), `tools/duel-parity/README.md` for the wire contract, and the
+reporting seam. Stale `make sim`/ordered-turn instructions dropped; retired runner points at archive.
+
+`docs/battle-balance-recommendations.md`: annotated line ~214 as a historical/retired command and
+pointed at `docs/battle-simulator.md`.
+
+Left untouched (out of scope): `src/engine/battle/{BattleSession.cpp,BattleSession.hpp,BattleSetup.cpp}`
+`BATTLE_SIMULATOR` blocks — engine lane; with the runner gone `BATTLE_SIMULATOR` is defined nowhere,
+so they stay dead but unchanged.
+
+### Verification (exact commands + tails)
+
+```
+$ make sim-test BUILD_DIR=build CPPFLAGS='-I. -DCGFX_DUEL_BATTLE'
+  ℹ tests 6 · pass 6 · fail 0 · skipped 0 · cancelled 0 · todo 0            (1.18 s)
+$ make sim-test BUILD_DIR=build            # plain, no override
+  ℹ pass 6 · fail 0                                                        (0.63 s)
+$ make test BUILD_DIR=build
+  host: Total Passed: 240077 · Total Failed: 0 · All tests passed!
+  world: Total Passed: 258 · Total Failed: 0
+  (no "Battle simulator" suite; 3.09 s)
+$ make sim BUILD_DIR=build
+  make: *** No rule to make target `sim'.  Stop.        # target absent
+$ node --test tools/tests/*.mjs mock/*.test.js
+  ℹ tests 198 · pass 198 · fail 0                                          (1.45 s)
+```
+
+Reference grep `grep -rn "battle-simulator\|BATTLE_SIMULATOR\|make sim\b" Makefile docs tst tools`:
+no stale live reference. Every remaining hit is either the new retirement note, a `make sim-test`
+line, or a link to the still-existing `docs/battle-simulator.md`: `docs/battle-simulator.md` (retired/
+current text), `docs/battle-balance-recommendations.md` (annotated historical command),
+`docs/duel-system-spike-plan.md` (`make sim-test`), and `battle-*.html`/`generate-battle-reference.mjs`
+(nav link to the filename). No `BATTLE_SIMULATOR` remains in Makefile/tst/tools.
+
+Build artifacts: removed stale retired-runner host outputs `build/tools/battle-sim/` (empty) and
+`build/tests/battle-sim-state{,.dSYM}` (3.4 M). Not touched: AVR build caches (`build/arduino-build/...`)
+and `.battle-carve-spike/` — other lanes' active trees.
+
+### Deviations
+- Design step 1 offered "remove vs redirect"; parent dispatch fixed the choice to **retire/remove**, so
+  no owner round-trip. Also retired `tst/battle_sim_state_test.hpp` beyond the named runner header
+  because acceptance ("no remaining non-archive reference to the removed TUs") required it.
+- Annotated (not deleted) the legacy command in `docs/battle-balance-recommendations.md` to preserve
+  historical review evidence.
+- Engine `BATTLE_SIMULATOR` blocks left as-is (scope says tooling/docs only).
+
+### Storage
+`df -h .` 64 GiB free (≥10 GiB reserve held). `du -sh build` 1.8 G (within 5 GiB). Only small host
+builds; no build tree created. 3.4 M stale host artifact reclaimed.
+
+### Wall time
+Worker loop ≈ 7 min wall (single session): exploration/grep ~3 min; edits ~2 min; host verification
+(sim-test 1.2 s, plain sim-test 0.6 s, `make test` 3.1 s, node tests 1.5 s) ~1 min; report ~1 min.
+Gate/orchestrator final-gate not run here.

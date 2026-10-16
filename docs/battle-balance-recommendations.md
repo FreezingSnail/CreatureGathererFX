@@ -208,9 +208,15 @@ Reference shipping figures from the last completed gate: 27,480 B firmware,
 1,787 B static RAM, 773 B free; device stack headroom 423 B; packed cart 700,160 B.
 No firmware/data changes were made in this review. No new resource delta is claimed.
 
-New review commands (repeat with L=1,10,31 and a distinct directory per level):
+New review commands (repeat with L=1,10,31 and a distinct directory per level).
+The ordered-turn `battle-sim` runner below was retired with the 5-type duel
+migration and its source now lives in `archive/battle-legacy/tools/battle-sim/`;
+the current duel toolchain is documented in `docs/battle-simulator.md`. The
+historical command is kept only as a record of the review that produced this
+document:
 
 ```sh
+# retired: build/tools/battle-sim/battle-sim --mode pairwise ... (see docs/battle-simulator.md)
 build/tools/battle-sim/battle-sim --mode pairwise --species-count 64 --level 31 --trials 1 --seed 20261007 --policy tactical --max-turns 100 --output-dir build/balance/review-level31
 ```
 

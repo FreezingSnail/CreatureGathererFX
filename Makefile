@@ -1,4 +1,4 @@
-.PHONY: help setup doctor plant test test-debug testvm testvm-debug sim sim-test gen gen-if-needed gen-data gen-sprites gen-fixtures pack full build mini ram run dev arena-demo arena-test lure-demo check final-gate verify-generated test-manifest test-generated-libs test-doctor test-fxtest-ram test-avr-build-budget test-world-script-profile world-script-profile-check test-encounter-profile encounter-profile-check encounter-packed-profile-check fxtest fxtest-headless fxtest-spike fxtest-preflight fxtest-headless-preflight fxtest-build fxtest-run new-fxtest clean-build-artifacts test-clean-build-artifacts
+.PHONY: help setup doctor plant test test-debug testvm testvm-debug sim-test gen gen-if-needed gen-data gen-sprites gen-fixtures pack full build mini ram run dev arena-demo arena-test lure-demo check final-gate verify-generated test-manifest test-generated-libs test-doctor test-fxtest-ram test-avr-build-budget test-world-script-profile world-script-profile-check test-encounter-profile encounter-profile-check encounter-packed-profile-check fxtest fxtest-headless fxtest-spike fxtest-preflight fxtest-headless-preflight fxtest-build fxtest-run new-fxtest clean-build-artifacts test-clean-build-artifacts
 
 # Public command API. Override tool, board, and output variables per workspace/CI.
 CXX ?= g++
@@ -71,9 +71,6 @@ FXTEST_RAM_BUDGET ?= 2160
 FXTEST_BUILD_DIR ?= $(BUILD_DIR)/fxtest
 FINAL_GATE_LOG_DIR ?= $(BUILD_DIR)/final-gate
 HOST_TEST_BIN ?= $(BUILD_DIR)/tests/host
-SIM_TEST_BIN ?= $(BUILD_DIR)/tests/battle-sim-state
-BATTLE_SIM_BIN ?= $(BUILD_DIR)/tools/battle-sim/battle-sim
-SIM_ARGS ?= --mode anchors --seed 1 --trials 1 --policy both --max-turns 100
 WORLD_TEST_BIN ?= $(BUILD_DIR)/tests/world
 VM_TEST_BIN ?= $(BUILD_DIR)/tests/vm
 GENERATED_TEST_BIN ?= $(BUILD_DIR)/tests/generated
@@ -103,8 +100,7 @@ help:
 		'  gen      package committed/generated FX inputs; prerequisite: cgfx-tools; output: $(DIST_DIR)/fxdata.bin' \
 		'  gen-if-needed reuse current generated FX outputs for opt-in demos; stale content regenerates' \
 		'  test     run fast host C++ tests; prerequisite: $(CXX); output: $(HOST_TEST_BIN)' \
-		'  sim      compile and run the host BattleSession batch simulator; output: $(BATTLE_SIM_BIN)' \
-		'  sim-test run host C++ tests with the fixture-backed BATTLE_SIMULATOR seam; output: $(SIM_TEST_BIN)' \
+		'  sim-test run the duel kernel parity check; output: node --test tools/tests/duel-kernel-parity_test.mjs' \
 		'  testvm   run fast ScriptVM C++ tests; prerequisite: $(CXX); output: $(VM_TEST_BIN)' \
 		'  test-world-script-profile validate the compact world VM script profile' \
 		'  build    compile Arduboy FX sketch; prerequisite: $(ARDUINO_CLI); output: $(BUILD_DIR)' \
@@ -500,41 +496,13 @@ test-fxtest-ram:
 test-avr-build-budget:
 	./tools/tests/avr-build-budget_test.sh
 
-SIMULATOR_SOURCES = \
-	src/lib/Type.cpp \
-	src/creature/Creature.cpp \
-	src/player/Player.cpp \
-	src/item/Inventory.cpp \
-	src/engine/battle/Ai.cpp \
-	src/engine/battle/Damage.cpp \
-	src/engine/battle/Effects.cpp \
-	src/engine/battle/Resolve.cpp \
-	src/engine/battle/BattleSession.cpp \
-	src/engine/battle/BattleSetup.cpp \
-	tools/battle-sim/SwitchPolicy.cpp \
-	tools/battle-sim/ScenarioBuilder.cpp \
-	tools/battle-sim/FixtureData.cpp \
-	tools/battle-sim/BatchRunner.cpp \
-	tools/battle-sim/SimulatorReports.cpp \
-	tools/battle-sim/main.cpp
-
-sim:
-	@mkdir -p "$(dir $(BATTLE_SIM_BIN))"
-	$(CXX) $(CPPFLAGS) -I tst/host $(CXXFLAGS) -DBATTLE_SIMULATOR $(SIMULATOR_SOURCES) -o "$(BATTLE_SIM_BIN)"
-	"$(BATTLE_SIM_BIN)" $(SIM_ARGS)
-
-# Reuse the permanent native suite with the simulator-only prepared-state API
-# enabled. The shipping build never receives BATTLE_SIMULATOR. A duel build
-# (CGFX_DUEL_BATTLE) retires the legacy ordered-turn simulator, so sim-test
-# routes to the seeded C++/JS parity check that compiles and runs the actual
-# duel kernel (src/engine/battle/DuelKernel.hpp) against the canonical mock.
-ifneq ($(findstring -DCGFX_DUEL_BATTLE,$(CPPFLAGS)),)
+# The legacy ordered-turn batch simulator (tools/battle-sim/) was retired after
+# the 5-type duel migration; its source and provenance live under
+# archive/battle-legacy/. sim-test now always routes to the seeded C++/JS parity
+# check that compiles and runs the actual duel kernel
+# (src/engine/battle/DuelKernel.hpp) against the canonical mock.
 sim-test:
 	node --test tools/tests/duel-kernel-parity_test.mjs
-else
-sim-test:
-	$(call run_test,-DBATTLE_SIMULATOR,$(TEST_FLAGS),$(TEST_SOURCES) tools/battle-sim/SwitchPolicy.cpp tools/battle-sim/ScenarioBuilder.cpp tools/battle-sim/BatchRunner.cpp tools/battle-sim/SimulatorReports.cpp,$(SIM_TEST_BIN))
-endif
 
 test-pack-parity:
 	./tools/tests/pack-parity_test.sh
