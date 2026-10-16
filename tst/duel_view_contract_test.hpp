@@ -1,13 +1,14 @@
 #pragma once
-// Permanent host proof for the compact duel view helpers (CreatureGathererFX-d73i.6).
+// Permanent host proof for the compact duel view helpers (CreatureGathererFX-d73i.6,
+// reworked to the 5-bit attack mask by CreatureGathererFX-4w89.3).
 // Compiled only in duel host runs: `make test CPPFLAGS='-I. -DCGFX_DUEL_BATTLE'`.
 // Include this header under the same `#ifdef CGFX_DUEL_BATTLE` guard as the other
 // duel suites, since DuelView.hpp is empty without the flag.
 //
-// Owned by CreatureGathererFX-d73i.6; no production/main changes. It asserts the
-// current pure DuelView surface: attack-cell selection, original-slot mapping,
-// folded active types + advantage-first markers, living-bench SWAP availability,
-// the WAIT model and the caption classification.
+// It asserts the current pure DuelView surface: option enumeration from the
+// active attack mask (ascending folded-type order), folded active types +
+// advantage-first markers, living-bench SWAP availability, the WAIT model and
+// the caption classification.
 
 #include "test.hpp"
 #include "../src/engine/battle/DuelView.hpp"
@@ -16,28 +17,18 @@ namespace duel_view_contract_detail {
 
 using duel::Cells;
 using duel::Feedback;
-// EMPTY_MOVE_ID (255) comes from src/lib/MoveIds.hpp, reached through the
-// BattleState/DuelView include chain; a local alias would be ambiguous.
 
-// A packed move carrying only an authored type (0..7 attack, 8 STATUS, 15 NONE).
-inline void emptySlots(battle::Combatant &combatant)
+// A single folded mask bit, as built by BattleSetup's duelAttackMask fold.
+inline uint8_t bitFor(Type authored)
 {
-    for (uint8_t slot = 0; slot < 4; ++slot) {
-        combatant.moveTypes[slot] = EMPTY_MOVE_ID;
-        combatant.moveIds[slot] = EMPTY_MOVE_ID;
-    }
+    return static_cast<uint8_t>(1u << duel::foldType(static_cast<uint8_t>(authored)));
 }
 
-inline void setSlot(battle::Combatant &combatant, uint8_t slot,
-                    uint8_t authoredType, uint8_t moveId)
-{
-    combatant.moveTypes[slot] = authoredType;
-    combatant.moveIds[slot] = moveId;
-}
-
-constexpr uint8_t authoredA = 1;
-constexpr uint8_t authoredB = 2;
-constexpr uint8_t authoredC = 3;
+constexpr uint8_t spiritBit = 1u << 0;
+constexpr uint8_t waterBit = 1u << 1;
+constexpr uint8_t earthBit = 1u << 2;
+constexpr uint8_t fireBit = 1u << 3;
+constexpr uint8_t plantBit = 1u << 4;
 
 } // namespace duel_view_contract_detail
 
@@ -50,69 +41,50 @@ inline void DuelViewContractSuite(TestSuite &suite)
 
     Test test(__func__);
 
-    // --- usableAttackType filter: authored attack types only -----------------
-    test.assert(duel::usableAttackType(static_cast<uint8_t>(Type::SPIRIT)), true,
-                "spirit move is usable");
-    test.assert(duel::usableAttackType(static_cast<uint8_t>(Type::ELDER)), true,
-                "elder move is usable");
-    test.assert(duel::usableAttackType(static_cast<uint8_t>(Type::STATUS)), false,
-                "STATUS move is not usable");
-    test.assert(duel::usableAttackType(static_cast<uint8_t>(Type::NONE)), false,
-                "NONE move is not usable");
+    // --- fold map sanity: authored 8-type -> 5 duel bit ----------------------
+    test.assert(bitFor(Type::SPIRIT), spiritBit, "spirit folds to bit 0");
+    test.assert(bitFor(Type::WIND), waterBit, "wind folds to water bit");
+    test.assert(bitFor(Type::LIGHTNING), fireBit, "lightning folds to fire bit");
+    test.assert(bitFor(Type::ELDER), spiritBit, "elder folds to spirit bit");
 
-    // --- four attacks: count, folded types, original-slot conversion ---------
+    // --- four attacks: count, ascending folded types, option slots -----------
     BattleState s = {};
-    emptySlots(s.active[0]);
-    setSlot(s.active[0], 0, static_cast<uint8_t>(Type::SPIRIT), authoredA);
-    setSlot(s.active[0], 1, static_cast<uint8_t>(Type::WATER), authoredB);
-    setSlot(s.active[0], 2, static_cast<uint8_t>(Type::WIND), authoredC);
-    setSlot(s.active[0], 3, static_cast<uint8_t>(Type::FIRE), 4);
-    test.assert(duel::usableOptionCount(s, 0), 4, "four attacks counted");
-    test.assert(duel::slotForOption(s, 0, 0), 0, "option 0 -> original slot 0");
-    test.assert(duel::slotForOption(s, 0, 3), 3, "option 3 -> original slot 3");
-    test.assert(duel::optionType(s, 0, 0), 0, "spirit folds to spirit");
-    test.assert(duel::optionType(s, 0, 2), 1, "wind folds to water");
-    test.assert(duel::optionType(s, 0, 3), 3, "fire stays fire");
+    s.active[0].attackMask = static_cast<uint8_t>(spiritBit | waterBit | earthBit | fireBit);
+    test.assert(duel::usableOptionCount(s, 0), 4, "four mask bits counted");
+    test.assert(duel::optionType(s, 0, 0), 0, "option 0 is spirit");
+    test.assert(duel::optionType(s, 0, 1), 1, "option 1 is water");
+    test.assert(duel::optionType(s, 0, 2), 2, "option 2 is earth");
+    test.assert(duel::optionType(s, 0, 3), 3, "option 3 is fire");
+    test.assert(duel::optionType(s, 0, 4), duel::NO_TYPE, "option 4 is out of range");
 
-    // --- duplicate folded types are both kept, in slot order -----------------
-    emptySlots(s.active[0]);
-    setSlot(s.active[0], 0, static_cast<uint8_t>(Type::FIRE), authoredA);
-    setSlot(s.active[0], 3, static_cast<uint8_t>(Type::FIRE), authoredB);
-    test.assert(duel::usableOptionCount(s, 0), 2, "two duplicate-type attacks kept");
-    test.assert(duel::optionType(s, 0, 0), 3, "first duplicate folds to fire");
-    test.assert(duel::optionType(s, 0, 1), 3, "second duplicate folds to fire");
-    test.assert(duel::slotForOption(s, 0, 1), 3, "second duplicate maps to slot 3");
+    // --- sparse mask enumerates set bits in ascending type order -------------
+    s.active[0].attackMask = static_cast<uint8_t>(plantBit | waterBit);
+    test.assert(duel::usableOptionCount(s, 0), 2, "two set bits counted");
+    test.assert(duel::optionType(s, 0, 0), 1, "lowest bit (water) is option 0");
+    test.assert(duel::optionType(s, 0, 1), 4, "highest bit (plant) is option 1");
+    test.assert(duel::optionType(s, 0, 2), duel::NO_TYPE, "past the last bit is NO_TYPE");
 
-    // --- STATUS / NONE / EMPTY exclusion -------------------------------------
-    emptySlots(s.active[0]);
-    setSlot(s.active[0], 0, static_cast<uint8_t>(Type::STATUS), authoredA); // status
-    setSlot(s.active[0], 1, static_cast<uint8_t>(Type::FIRE), EMPTY_MOVE_ID); // empty id
-    setSlot(s.active[0], 2, static_cast<uint8_t>(Type::NONE), authoredC);   // none
-    setSlot(s.active[0], 3, static_cast<uint8_t>(Type::WIND), authoredB);   // usable
-    test.assert(duel::usableOptionCount(s, 0), 1, "status/empty/none excluded");
-    test.assert(duel::slotForOption(s, 0, 0), 3, "only slot 3 is usable");
-    test.assert(duel::optionType(s, 0, 0), 1, "usable wind folds to water");
+    // --- a duplicate authored type folds to one bit (mask dedupes) -----------
+    s.active[0].attackMask = static_cast<uint8_t>(fireBit);
+    test.assert(duel::usableOptionCount(s, 0), 1, "fire+fire folds to one bit");
+    test.assert(duel::optionType(s, 0, 0), 3, "the single bit is fire");
 
-    // --- one attack ----------------------------------------------------------
-    emptySlots(s.active[0]);
-    setSlot(s.active[0], 2, static_cast<uint8_t>(Type::EARTH), authoredA);
-    test.assert(duel::usableOptionCount(s, 0), 1, "single attack counted");
-    test.assert(duel::slotForOption(s, 0, 0), 2, "single attack keeps original slot 2");
-    test.assert(duel::optionType(s, 0, 0), 2, "earth stays earth");
+    // --- full five-type mask ------------------------------------------------
+    s.active[0].attackMask = 0x1F;
+    test.assert(duel::usableOptionCount(s, 0), 5, "all five duel types are options");
+    test.assert(duel::optionType(s, 0, 4), 4, "the fifth option is plant");
 
-    // --- zero attacks --------------------------------------------------------
-    emptySlots(s.active[0]);
+    // --- zero mask ----------------------------------------------------------
+    s.active[0].attackMask = 0;
     test.assert(duel::usableOptionCount(s, 0), 0, "no usable attacks");
-    test.assert(duel::slotForOption(s, 0, 0), 255, "no option has a slot");
     test.assert(duel::optionType(s, 0, 0), duel::NO_TYPE, "no option has a type");
 
     // --- species 0 is a real member, not an empty sentinel -------------------
-    emptySlots(s.active[0]);
     s.active[0].id = 0;
-    setSlot(s.active[0], 0, static_cast<uint8_t>(Type::WATER), 0); // move id 0 is real
+    s.active[0].attackMask = waterBit;
     test.assert(s.active[0].id, 0, "species 0 active id valid");
-    test.assert(duel::usableOptionCount(s, 0), 1, "move id 0 counts as a real attack");
-    test.assert(duel::slotForOption(s, 0, 0), 0, "move id 0 maps to slot 0");
+    test.assert(duel::usableOptionCount(s, 0), 1, "species 0 mask is a real attack");
+    test.assert(duel::optionType(s, 0, 0), 1, "species 0 water bit");
 
     // --- folded active types: dedup and distinct duals -----------------------
     uint8_t out[2] = {255, 255};
@@ -173,13 +145,9 @@ inline void DuelViewContractSuite(TestSuite &suite)
     b.bench[0][0].hp = 0;
     test.assert(duel::livingBench(b, 0), false, "two members empty bench suppresses swap");
 
-    // --- buildCells: four attacks, no bench, defender water ------------------
+    // --- buildCells: two set bits (water+fire), no bench ---------------------
     BattleState cells = {};
-    emptySlots(cells.active[0]);
-    setSlot(cells.active[0], 0, static_cast<uint8_t>(Type::FIRE), authoredA);
-    setSlot(cells.active[0], 1, static_cast<uint8_t>(Type::FIRE), authoredB);
-    setSlot(cells.active[0], 2, static_cast<uint8_t>(Type::WIND), EMPTY_MOVE_ID);
-    setSlot(cells.active[0], 3, static_cast<uint8_t>(Type::STATUS), authoredC);
+    cells.active[0].attackMask = static_cast<uint8_t>(fireBit | waterBit);
     cells.partyCount[0] = 1;
     cells.activeSlot[0] = 0;
     cells.active[0].types = DualType(Type::FIRE);
@@ -187,17 +155,17 @@ inline void DuelViewContractSuite(TestSuite &suite)
     cells.active[1].types = DualType(Type::WATER);
     Cells view = {};
     duel::buildCells(cells, 0, view);
-    test.assert(view.options, 2, "buildCells counts the two usable attacks");
+    test.assert(view.options, 2, "buildCells counts the two set bits");
     test.assert(view.swap, 0, "no living bench suppresses SWAP");
-    test.assert(view.wait, 0, "usable kit has no WAIT cell");
+    test.assert(view.wait, 0, "usable mask has no WAIT cell");
     test.assert(view.count, 2, "two attack cells only");
     test.assert(view.round, 3, "round number passes through");
-    test.assert(view.types[0], 3, "cell 0 fire");
-    test.assert(view.types[1], 3, "cell 1 duplicate fire");
-    test.assert(view.slots[0], 0, "cell 0 original slot 0");
-    test.assert(view.slots[1], 1, "cell 1 original slot 1");
-    test.assert(view.markers[0], 2, "fire Vs water is a weak marker");
-    test.assert(view.markers[1], 2, "duplicate fire keeps the weak marker");
+    test.assert(view.types[0], 1, "cell 0 water (lowest bit)");
+    test.assert(view.types[1], 3, "cell 1 fire");
+    test.assert(view.slots[0], 0, "cell 0 option index 0");
+    test.assert(view.slots[1], 1, "cell 1 option index 1");
+    test.assert(view.markers[0], 0, "water Vs water is neutral");
+    test.assert(view.markers[1], 2, "fire Vs water is a weak marker");
     test.assert(view.types[2], duel::NO_TYPE, "unused cell has no type");
     test.assert(view.markers[2], 0, "unused cell has no marker");
     test.assert(view.slots[2], 255, "unused cell has no slot");
@@ -210,23 +178,23 @@ inline void DuelViewContractSuite(TestSuite &suite)
     test.assert(view.swap, 1, "living bench appends SWAP");
     test.assert(view.count, 3, "two attacks plus SWAP");
 
-    // --- buildCells: unusable kit -> WAIT (SWAP only when a bench lives) -----
+    // --- buildCells: empty mask -> WAIT (SWAP only when a bench lives) ------
     BattleState waitState = {};
-    emptySlots(waitState.active[0]);
+    waitState.active[0].attackMask = 0;
     waitState.partyCount[0] = 1;
     waitState.activeSlot[0] = 0;
     duel::buildCells(waitState, 0, view);
-    test.assert(view.options, 0, "unusable kit has no attack cells");
-    test.assert(view.wait, 1, "unusable kit shows WAIT");
-    test.assert(view.swap, 0, "unusable kit without bench has no SWAP");
+    test.assert(view.options, 0, "empty mask has no attack cells");
+    test.assert(view.wait, 1, "empty mask shows WAIT");
+    test.assert(view.swap, 0, "empty mask without bench has no SWAP");
     test.assert(view.count, 1, "WAIT is the only cell");
 
     waitState.partyCount[0] = 2;
     waitState.bench[0][0] = {};
     waitState.bench[0][0].hp = 4;
     duel::buildCells(waitState, 0, view);
-    test.assert(view.wait, 1, "unusable kit with bench still shows WAIT");
-    test.assert(view.swap, 1, "unusable kit with living bench shows SWAP");
+    test.assert(view.wait, 1, "empty mask with bench still shows WAIT");
+    test.assert(view.swap, 1, "empty mask with living bench shows SWAP");
     test.assert(view.count, 2, "WAIT plus SWAP cells");
 
     // --- caption classification ----------------------------------------------

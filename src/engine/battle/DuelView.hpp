@@ -36,26 +36,19 @@ enum class Feedback : uint8_t {
     Escape,    // Outcome::Escaped (wild escape)
 };
 
-// Per-cell pick-row view. Cell order mirrors the mock: option attack cells in
-// authored slot order, then SWAP (living bench), then WaIT (unusable kit).
+// Per-cell pick-row view. Cell order mirrors the mock: attack cells in ascending
+// folded-type order (one per set mask bit), then SWAP (living bench), then WAIT
+// (empty mask).
 struct Cells {
-    uint8_t count;      // total selectable cells (1..5)
-    uint8_t options;    // usable authored attack cells (0..4)
+    uint8_t count;      // total selectable cells (1..6)
+    uint8_t options;    // usable attack cells (0..5)
     uint8_t swap;       // 1 when a living bench offers the SWAP cell
-    uint8_t wait;       // 1 when the kit has no usable attack (WAIT cell)
+    uint8_t wait;       // 1 when the mask has no usable attack (WAIT cell)
     uint8_t round;      // 1-based round number
-    uint8_t types[4];   // folded type per attack cell
-    uint8_t markers[4]; // 0 none, 1 bonus (up), 2 weak (down)
-    uint8_t slots[4];   // original authored move slot per attack cell
+    uint8_t types[5];   // folded type per attack cell
+    uint8_t markers[5]; // 0 none, 1 bonus (up), 2 weak (down)
+    uint8_t slots[5];   // ascending option index per attack cell
 };
-
-// A usable authored attack slot has a real attack type (not STATUS/NONE). This
-// mirrors the mock's isSpikeMove filter and the session's eligibility rule. The
-// compact duel representation stores the authored type directly per slot.
-inline bool usableAttackType(uint8_t authoredType)
-{
-    return authoredType < 8;
-}
 
 // Folded active creature types for one side (1 or 2 distinct after folding).
 inline uint8_t activeTypes(const battle::BattleState &state, uint8_t side,
@@ -76,34 +69,14 @@ inline uint8_t activeTypes(const battle::BattleState &state, uint8_t side,
 
 inline uint8_t usableOptionCount(const battle::BattleState &state, uint8_t side)
 {
-    const battle::Combatant &active = state.active[side];
-    uint8_t count = 0;
-    for (uint8_t slot = 0; slot < 4; ++slot)
-        if (active.moveIds[slot] != 255 && usableAttackType(active.moveTypes[slot]))
-            ++count;
-    return count;
+    return maskOptionCount(state.active[side].attackMask);
 }
 
-inline uint8_t slotForOption(const battle::BattleState &state, uint8_t side,
-                             uint8_t option)
-{
-    const battle::Combatant &active = state.active[side];
-    uint8_t index = 0;
-    for (uint8_t slot = 0; slot < 4; ++slot) {
-        if (active.moveIds[slot] == 255 || !usableAttackType(active.moveTypes[slot]))
-            continue;
-        if (index == option) return slot;
-        ++index;
-    }
-    return 255;
-}
-
+// Folded type of the option'th set mask bit (ascending type order).
 inline uint8_t optionType(const battle::BattleState &state, uint8_t side,
                           uint8_t option)
 {
-    const uint8_t slot = slotForOption(state, side, option);
-    return slot == 255 ? NO_TYPE
-                       : foldType(state.active[side].moveTypes[slot]);
+    return maskOptionType(state.active[side].attackMask, option);
 }
 
 // True when any living member other than the active one exists (SWAP offered).
@@ -134,7 +107,6 @@ inline uint8_t markerFor(uint8_t moveType, const uint8_t *defenderTypes,
 inline void buildCells(const battle::BattleState &state, uint8_t side, Cells &out)
 {
     out.options = usableOptionCount(state, side);
-    if (out.options > 4) out.options = 4;
     out.swap = livingBench(state, side) ? 1 : 0;
     out.wait = out.options == 0 ? 1 : 0;
     out.round = state.round;
@@ -147,9 +119,9 @@ inline void buildCells(const battle::BattleState &state, uint8_t side, Cells &ou
         const uint8_t type = optionType(state, side, option);
         out.types[option] = type;
         out.markers[option] = markerFor(type, defenderTypes, defenderCount);
-        out.slots[option] = slotForOption(state, side, option);
+        out.slots[option] = option;
     }
-    for (uint8_t option = out.options; option < 4; ++option) {
+    for (uint8_t option = out.options; option < 5; ++option) {
         out.types[option] = NO_TYPE;
         out.markers[option] = 0;
         out.slots[option] = 255;

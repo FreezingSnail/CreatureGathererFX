@@ -71,14 +71,14 @@ class BattleMenu {
     // The duel pick row and bench picker share one payload so the cell model
     // survives a trip through the party page (options/slots stay intact).
     struct DuelPayload {
-        uint8_t options;    // usable authored attack cells (0..4)
-        uint8_t slots[4];   // original authored move slot per attack cell
+        uint8_t options;    // usable attack cells (0..5)
+        uint8_t slots[5];   // ascending option index per attack cell
         uint8_t swap;       // 1 when the SWAP cell is offered
         uint8_t wait;       // 1 when the WAIT cell is offered
         PartyPayload party;
         // Pad to the fixed legacy menu payload so BattleUi stays 27 bytes (the
         // ModeState union ABI assert); ModeState is sized by WorldTransient.
-        uint8_t reserved[7];
+        uint8_t reserved[6];
     };
     DuelPayload payload_;
 #else

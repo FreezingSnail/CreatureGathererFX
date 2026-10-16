@@ -15,7 +15,7 @@ namespace duel {
 constexpr uint8_t TYPE_COUNT = 5;
 constexpr uint8_t PARTY_MAX = 3;
 constexpr uint8_t HISTORY_CAP = 8;
-constexpr uint8_t OPTION_CAP = 4;
+constexpr uint8_t OPTION_CAP = 5;
 
 // Duel types in mock/matrices.js id "5" order.
 enum class DType : uint8_t {
@@ -107,8 +107,8 @@ struct Member {
     uint8_t types[2];
     uint8_t hp;
     uint8_t maxHp;
-    uint8_t optionCount;    // one entry per usable authored attack slot
-    uint8_t options[OPTION_CAP]; // folded move types, slot order, may duplicate
+    // Folded 5-type attack mask (bit i = duel type i). 0 = no usable attack.
+    uint8_t attackMask;
 };
 
 struct Side {
@@ -138,6 +138,31 @@ struct State {
 };
 
 enum : uint8_t { NO_TYPE = 255, NO_SLOT = 255 };
+
+// One option per set bit of a folded attack mask, in ascending type order
+// (bits 0..4 = [spirit, water, earth, fire, plant]). A member with a cleared
+// mask has no usable attack (WAIT).
+inline uint8_t maskOptionCount(uint8_t attackMask)
+{
+    attackMask &= 0x1Fu;
+    uint8_t count = 0;
+    while (attackMask != 0) {
+        count = static_cast<uint8_t>(count + (attackMask & 1u));
+        attackMask >>= 1;
+    }
+    return count;
+}
+
+inline uint8_t maskOptionType(uint8_t attackMask, uint8_t option)
+{
+    attackMask &= 0x1Fu;
+    for (uint8_t bit = 0; bit < TYPE_COUNT; ++bit) {
+        if (!(attackMask & (1u << bit))) continue;
+        if (option == 0) return bit;
+        --option;
+    }
+    return NO_TYPE;
+}
 
 struct RoundResult {
     uint8_t kind[2];            // ActionKind value per side
@@ -229,8 +254,8 @@ inline Outcome resolveRound(State &state, const Action actions[2],
     for (uint8_t side = 0; side < 2; ++side) {
         const Member &active = state.sides[side].members[state.sides[side].active];
         if (actions[side].kind == ActionKind::Attack &&
-            actions[side].index < active.optionCount) {
-            moveType[side] = active.options[actions[side].index];
+            actions[side].index < maskOptionCount(active.attackMask)) {
+            moveType[side] = maskOptionType(active.attackMask, actions[side].index);
         }
     }
 
@@ -366,8 +391,10 @@ inline uint8_t benchCounterSlot(const State &state, uint8_t guessed)
     for (uint8_t slot = 0; slot < s.count; ++slot) {
         if (slot == s.active || s.members[slot].hp == 0) continue;
         const Member &m = s.members[slot];
-        for (uint8_t o = 0; o < m.optionCount; ++o)
-            if (relation(m.options[o], guessed) == REL_WIN) return slot;
+        const uint8_t options = maskOptionCount(m.attackMask);
+        for (uint8_t o = 0; o < options; ++o)
+            if (relation(maskOptionType(m.attackMask, o), guessed) == REL_WIN)
+                return slot;
     }
     return NO_SLOT;
 }
@@ -378,7 +405,8 @@ inline Action chooseAction(const State &state, Persona persona, uint8_t readRate
                            battle::Rng &rng)
 {
     const Member &active = state.sides[1].members[state.sides[1].active];
-    if (active.optionCount == 0) return {ActionKind::Wait, NO_SLOT};
+    const uint8_t options = maskOptionCount(active.attackMask);
+    if (options == 0) return {ActionKind::Wait, NO_SLOT};
 
     const bool reads = persona != Persona::Random &&
                        rng.roll(100) < readRate;
@@ -388,8 +416,8 @@ inline Action chooseAction(const State &state, Persona persona, uint8_t readRate
         if (guessed != NO_TYPE) {
             uint8_t counters[OPTION_CAP];
             uint8_t count = 0;
-            for (uint8_t o = 0; o < active.optionCount; ++o)
-                if (relation(active.options[o], guessed) == REL_WIN)
+            for (uint8_t o = 0; o < options; ++o)
+                if (relation(maskOptionType(active.attackMask, o), guessed) == REL_WIN)
                     counters[count++] = o;
             if (count != 0)
                 return {ActionKind::Attack, counters[rng.roll(count)]};
@@ -398,7 +426,7 @@ inline Action chooseAction(const State &state, Persona persona, uint8_t readRate
         }
         // A fired read with no counter falls back uniformly across every
         // attack slot; the matchup preference applies only when no read fires.
-        return {ActionKind::Attack, rng.roll(active.optionCount)};
+        return {ActionKind::Attack, rng.roll(options)};
     }
 
     // No read: prefer the best creature-matchup tier so the AI never feeds a
@@ -406,16 +434,16 @@ inline Action chooseAction(const State &state, Persona persona, uint8_t readRate
     const Side &player = state.sides[0];
     const Member &target = player.members[player.active];
     uint8_t bestTier = 0;
-    for (uint8_t o = 0; o < active.optionCount; ++o) {
-        const uint8_t tier =
-            creatureModifier(active.options[o], target.types, target.typeCount);
+    for (uint8_t o = 0; o < options; ++o) {
+        const uint8_t tier = creatureModifier(
+            maskOptionType(active.attackMask, o), target.types, target.typeCount);
         if (tier > bestTier) bestTier = tier;
     }
     uint8_t pool[OPTION_CAP];
     uint8_t count = 0;
-    for (uint8_t o = 0; o < active.optionCount; ++o)
-        if (creatureModifier(active.options[o], target.types, target.typeCount) ==
-            bestTier)
+    for (uint8_t o = 0; o < options; ++o)
+        if (creatureModifier(maskOptionType(active.attackMask, o), target.types,
+                             target.typeCount) == bestTier)
             pool[count++] = o;
     return {ActionKind::Attack, pool[rng.roll(count)]};
 }

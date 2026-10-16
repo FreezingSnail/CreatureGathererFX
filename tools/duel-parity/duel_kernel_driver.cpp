@@ -104,12 +104,17 @@ int main()
             m.types[1] = static_cast<uint8_t>(t1);
             m.hp = static_cast<uint8_t>(hp);
             m.maxHp = static_cast<uint8_t>(maxHp);
-            m.optionCount = static_cast<uint8_t>(oc);
+            // The wire line still lists per-option folded types; the kernel now
+            // stores the equivalent 5-bit attack mask. Full mask parity
+            // regeneration is CreatureGathererFX-4w89.6.
+            uint8_t mask = 0;
             for (int i = 0; i < oc; ++i) {
                 int o = 0;
                 in >> o;
-                m.options[i] = static_cast<uint8_t>(o);
+                if (o >= 0 && o < duel::TYPE_COUNT)
+                    mask |= static_cast<uint8_t>(1u << o);
             }
+            m.attackMask = mask;
             std::cout << "OK\n";
         } else if (cmd == "CLEARHIST") {
             state.historyCount = 0;

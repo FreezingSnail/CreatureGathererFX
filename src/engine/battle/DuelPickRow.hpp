@@ -1,21 +1,21 @@
 #pragma once
 // Duel compact pick row (CreatureGathererFX-d73i.2). Selector/model for the
-// footer pick row of mock/duel-bonus.html: one cell per usable authored attack
-// (0..4), then SWAP when a living bench exists, then a WAIT cell when the kit has
-// no usable attack. No PP/power cells. Layout + draw live in the duel renderer;
-// this header owns the cursor model and its frame assertions.
+// footer pick row of mock/duel-bonus.html: one cell per set attack-mask bit
+// (0..5), then SWAP when a living bench exists, then a WAIT cell when the mask
+// has no usable attack. No PP/power cells. Layout + draw live in the duel
+// renderer; this header owns the cursor model and its frame assertions.
 #ifdef CGFX_DUEL_BATTLE
 
 #include <stdint.h>
 
 namespace duel {
 
-constexpr uint8_t PICK_ROW_MAX_OPTIONS = 4;
+constexpr uint8_t PICK_ROW_MAX_OPTIONS = 5;
 
 struct PickRow {
-    uint8_t options; // usable authored attack cells (0..4)
+    uint8_t options; // usable attack cells (0..5)
     uint8_t swap;    // 1 when a living-bench picker cell is offered
-    uint8_t wait;    // 1 when the kit has no usable attack (WAIT cell)
+    uint8_t wait;    // 1 when the mask has no usable attack (WAIT cell)
     uint8_t cells;   // total selectable cells (>=1)
     uint8_t cursor;  // 0..cells-1
 };
