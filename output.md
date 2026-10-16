@@ -12786,3 +12786,185 @@ evidence touched. `.beads/interactions.jsonl` was pre-existing modified (not min
 
 Worker ~20 min wall: inspection ~15 min; host 4 s; vm 1 s; sim 1 s; ram 14 s; fxtest 34 s; report
 remainder. Gate/orchestrator not run here.
+
+## ogh.17 — balance investigation
+
+Scope: investigate the ogh.6 paired 3v3 baseline (matrix5/team3/bonus/reader, 750k
+duels: W29.5/L67.8/D2.7) and propose candidate tunings measured in the tool.
+**No shipped constant or data file was changed** (no `make gen`/AVR/gates; off the
+generation lane; no git commit/push). All candidate runs mutate the mock
+**in memory** only. Bead left `in_progress`.
+
+### Root cause (what actually drives the baseline)
+
+The `.6` headline flagged only the 4 player-win sweeps (>80%). The sweep also
+contains **8 ordered pairs that win 0 of 30,000 duels** — a harder result than the
+4 flagged sweeps. Full baseline per-pair (`build/reports/ogh.17/baseline-analysis.txt`):
+
+| you vs foe | playerWin% | | you vs foe | playerWin% |
+| --- | ---: | --- | --- | ---: |
+| balanced vs anchors | **0.0** | | anchors vs balanced | 21.4 |
+| support vs anchors | **0.0** | | support vs retyped | 29.0 |
+| retyped vs balanced | **0.0** | | support vs trap | 44.1 |
+| retyped vs anchors | **0.0** | | balanced vs support | 73.6 |
+| trap vs balanced | **0.0** | | balanced vs retyped | 76.4 |
+| trap vs anchors | **0.0** | | balanced vs trap | **100** |
+| trap vs support | **0.0** | | anchors vs support | **100** |
+| trap vs retyped | **0.0** | | anchors vs retyped | **100** |
+| balanced vs balanced | 0.7 | | anchors vs trap | **100** |
+
+Four independent causes, in order of measured size:
+
+1. **Decision-rule asymmetry (largest single lever).** The AI's non-read branch
+   (`aiDuelPick`, `scoring==='bonus'`) always picks its best creature-type tier and
+   switches when a bench member holds a counter. **None of the six player policies
+   optimise the creature-type multiplier**; they only follow the 5-type RPS
+   relation. A custom player rule that mirrors the AI's tier choice (harness
+   `mirror.mjs`) raises the player from the baseline's 23.6% (rate 0) to **36.0%**
+   (rate 0) and 30.0% (rate 50) to **54.8%** (rate 50). The game already shows the
+   ↑/↓ marker (creature-type modifier), so a human can make this decision — the
+   spike's policy set just never models it.
+2. **Single-move kit locks.** 6 of the 13 sample creatures fold to exactly one
+   attack type (`squid`[water], `SkitterCrab`[earth], `hedge`[plant],
+   `SquableSnail`[water], `bigsquid`[water], `bell`[spirit]); `balanced` is a
+   wholly single-type team. Against a reading AI a single-type active cannot
+   answer a switched counter (e.g. mirror trace `build/reports/ogh.17/`: read
+   100% turns a guaranteed draw into a guaranteed loss). Many 0% pairs are this
+   hard lock, independent of policy and read rate.
+3. **Creature-type ×1.5/×0.5 layer.** Removing it (`pure` scoring) lifts the player
+   by **+12.3 pts** (29.5→41.8) and dissolves 3 locks — it both amplifies sweeps
+   and is the thing the AI exploits for free.
+4. **Type-web skew is minor.** The 5-type chart is an irregular tournament
+   (water/earth out-degree 3; spirit/fire 1). Replacing it with a regular cyclic
+   web moves the total by ~0 pts (29.6) and only relocates which teams dominate.
+   Persona read rate is also secondary: 0%→23.6, 100%→34.0 (reading is exploitable,
+   it does not drive the losses).
+
+### Candidate tunings — measured deltas (battles=500, 25 pairs × 6 policies × rates unless noted)
+
+All values from `build/reports/ogh.17/cand-*.txt`; `combo` = pure + varied kits.
+The `mirror` rows are a single-rule probe, not the 6-policy sweep, so compare them
+only against each other and the rate-0 grid.
+
+| candidate (in-memory only) | W% | L% | D% | 0% pairs | 100% pairs |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| baseline (reproduces `.6`) | 29.5 | 67.8 | 2.7 | 8 | 4 |
+| `pure` — drop creature-type multiplier/tier-bias | 41.8 | 55.4 | 2.7 | 5 | 4 |
+| `variedkits` — ≥2 folded types per creature | 35.1 | 63.8 | 1.1 | 6 | 1 |
+| `combo` — pure + varied kits | **44.9** | 52.4 | 2.6 | **1** | **0** |
+| `webbalanced` — regular cyclic type web | 29.6 | 68.0 | 2.5 | 8 | 1 |
+| `retyped_fix` — retype := natural type | 29.7 | 67.5 | 2.8 | 7 | 4 |
+| `rates_low` — AI read band 0–40% | 27.3 | 68.8 | 3.9 | 8 | 4 |
+| `mirror tier` player rule @0% | 36.0 | 36.0 | 28.0 | — | — |
+| `mirror tier` player rule @50% | 54.8 | 44.3 | 0.9 | — | — |
+
+Interpretation: the composition-driven locks (cause 2) and the bonus layer (cause
+3) are the two structural defects a data/constant change can address; the
+per-pair domination collapses from 12 decided pairs to 1 under `combo`. Cause 1 is
+a **modelling gap in the player policy set**, not a shipping constant, and is the
+single biggest player-win lever.
+
+### Decision needed (owner sign-off; no constant changed)
+
+1. **Is the sample-team pair sweep the right player-facing baseline?** It compares
+   the AI persona rule against six deliberately simple policies, so 29.5% is an
+   AI-rule gap, not an observed human win rate. Recommend adding a
+   creature-type-marker policy (`tier`) to the balance contract so the baseline
+   reflects the shipped ↑/↓ affordance.
+2. **Which structural candidate, if any, to adopt?** `pure` (+12.3), `variedkits`
+   (+5.6), or `combo` (44.9) each require changing authored scoring/kits — owner
+   sign-off required before any shipped constant changes.
+3. **Are the 8 zero-win authored trainer compositions acceptable** (esp. mono `trap`
+   and the single-type `balanced`/`support` kits), or should authoring enforce kit
+   coverage?
+
+### Verify (commands + result)
+
+```sh
+node tools/battle-duel-spike.mjs --json --pair-sweep --battles 1000 --rounds 200 > build/reports/ogh.17/baseline-pair-sweep.json
+# replay: same command | shasum -a 256  -> 214ecbfa8aab5c2cf7c759a1b62213a8ac6a48d5915fad381e283aa2bd195eac (byte-identical)
+node --test tools/tests/battle-duel-spike_test.mjs tools/tests/duel-kernel-parity_test.mjs   # tests 25 pass 25 fail 0
+make sim-test BUILD_DIR=build CPPFLAGS='-I. -DCGFX_DUEL_BATTLE'                                # tests 6 pass 6 fail 0
+```
+Candidate harnesses (scratch, gitignored): `build/reports/ogh.17/{analyze,diag,trace,candidate,mirror}.mjs`.
+
+### Storage
+
+`df -h .` 61 GiB free before/after. `du -sh build` 1.9G → 2.0G. Artifacts confined
+to gitignored `build/reports/ogh.17/`; no build tree created; `sim-test` reused
+`build/duel-sim`. Pre-existing tracked edits by the generation-lane worker
+(Makefile, README.md, src/vm/*, tst/*, .beads/interactions.jsonl) were not touched.
+
+### Wall time
+
+Worker ~35 min wall: read/inspect ~14 min; baseline 18 s; 8 candidate sweeps ~80 s;
+trace/diag ~3 min; node+sim tests ~3 s; report remainder. No gate/orchestrator run.
+
+## jp8.5.17 — GiveItem in the world VM
+
+Bead left **in_progress** (per dispatch: single build lane, no commit/push, no close).
+
+### Changed
+
+- `src/vm/ScriptVM.cpp` — `initVM` boundary decode adds `GiveItem` = 3 operand bytes;
+  `run()` adds `case VmOpcode::GiveItem` decoding `kind,id,count` as three u8 and writing the
+  one shared Player bag: kind 0 → `item::inventoryAdd(player.inventory, Lure, id, count)`,
+  kind 1 → `inventoryAdd(..., Consumable, ...)`, kind 2 → `item::keyItemUnlock(player.keyItems, id)`.
+  No-op + continue for an out-of-range id/kind (inventoryAdd/keyItemUnlock already bound ids).
+  Compact `initWarpVM/runWarpVM` untouched.
+- `Makefile` — `TESTVM_SOURCES` adds the Player/Inventory/KeyItems/creature/type/read-data chain the
+  shared bag now pulls into the VM test link.
+- `tst/script_tests/main.cpp` — defines `Player player;`.
+- `tst/script_tests/action_test.cpp` — new `giveItemTest` (lure grant + continue, consumable stack
+  saturating at 99, key unlock with no inventory row, out-of-range lure id no-op that still reaches
+  End, out-of-range key id no-op).
+- `tst/fxdatatest/scripts_test.hpp` — new `testGiveItemGrants` device check on AVR.
+- `tools/tests/world-script-profile_test.cpp` — GiveItem added to the rejected-opcode set and a new
+  skipped-branch case proving the compact guard scans every command boundary.
+- `README.md` — documents the full-profile GiveItem behavior and compact rejection.
+
+### Verify
+
+- `make test BUILD_DIR=build` → host 240173/0, world 258/0.
+- `make testvm BUILD_DIR=build` → 286/0.
+- `make test-world-script-profile BUILD_DIR=build` → PASS (`profile, opcode, size, and text framing cases passed`).
+- `make test-generated-libs BUILD_DIR=build` → 48/0 + invariants 5/0 + arena provenance PASS + alias 28/0.
+- `make verify-generated BUILD_DIR=build` → PASS (no output).
+- `make world-script-profile-check BUILD_DIR=build` → `2048 slots, compact If/TpIf/End profile valid`.
+- `make fxtest-headless BUILD_DIR=build ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens FXTEST_INOS='tst/fxdatatest/test_scripts.ino tst/fxdatatest/test_world_player.ino tst/fxdatatest/test_stack.ino'`
+  → test_scripts 75/0 PASS; test_world_player 71/0 PASS; test_stack 4/0 PASS (stack headroom 598 B).
+
+### Bounds / negative proofs
+
+- Bounds enforced by the write primitives: lure id < 24, consumable id < 8 (inventoryAdd returns 0
+  otherwise), key id < 8 (keyItemUnlock ignores otherwise); count saturates at 99. Host tests cover
+  the saturation and an id=200 lure no-op that still reaches End.
+- Compact negative: `tools/tests/world-script-profile_test.cpp` rejects GiveItem both as a standalone
+  opcode (`slot 7 offset 0`) and inside an If branch a compact runtime would skip (`slot 12 offset 6`),
+  each with the `-DCGFX_FULL_WORLD_VM` remedy. The compact guard is unchanged.
+
+### Resources (whole-image AVR)
+
+- Default compact shipping `make ram BUILD_DIR=build` → **22520 flash / 1678 static** = **delta +0/+0**
+  vs the stated 22520/1678 baseline (compact `run()`/`initVM` are unreferenced and GC'd).
+- Full-world same-source control vs candidate (flags `... -DCGFX_FULL_WORLD_VM` replacing
+  `-DCGFX_COMPACT_WARP_VM`): control 26232/1764 → candidate **26408/1764** = **+176 B flash, +0 static**
+  for the GiveItem executor.
+
+### Deviations / notes
+
+- Runtime trusts host-validated authored operands (no extra bounds branch beyond the primitives'),
+  matching the design; the generator owns operand validation.
+- Device test count for test_scripts is 75/0 under the default compact device profile.
+
+### Storage
+
+`df -h .` 61 GiB free before/after (>=10 GiB reserve held). `du -sh build` 1.9G before and after.
+`make clean-build-artifacts BUILD_DIR=build` previewed 108 candidates / 2.6 MB then applied;
+`build/fxtest` preview was empty. No per-bead build tree created; reused `BUILD_DIR=build`.
+
+### Wall time
+
+Worker ~35 min wall (inspect/design ~10 min; implementation ~6 min; host/VM/profile/gen-libs ~4 min;
+focused device suites ~5 min; ram compact+full-world control ~6 min; storage/report remainder).
+No final-gate/orchestrator run performed (dispatch leaves the bead in_progress).
