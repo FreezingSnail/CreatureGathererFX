@@ -4,6 +4,12 @@
 #include "generated/creature_data.hpp"
 
 namespace battle_presentation_fixture {
+#ifdef CGFX_FRAME_BUDGET_SPIKE
+// Worst shipping presenter frame (update + scene render) in microseconds,
+// recorded by shippingSpike for the frame-budget assertion (dqxm). Frames are a
+// few ms, so a 16-bit microsecond value is sufficient.
+uint16_t frameBudgetWorstUs = 0;
+#endif
 // Read generated authored fields rather than relying on numeric table indices.
 inline void fill(battle::ActionResult &result, bool knockout) {
     battle::resetActionResult(result);
@@ -50,21 +56,35 @@ inline void drawView(const battle::BattleView &view) {
 }
 
 // Optional shipping-build spike exercises the actual FX renderer under LTO.
-// It adds no globals. It is deliberately fixture-driven, not combat/session proof.
+// It adds no globals unless CGFX_FRAME_BUDGET_SPIKE is set; the device suites
+// define that to record the worst frame (update + render) for the budget
+// assertion (CreatureGathererFX-dqxm). It is deliberately fixture-driven, not
+// combat/session proof.
 __attribute__((noinline)) inline void shippingSpike() {
     battle::ActionResult result{};
     battle::BattlePresenter presenter;
+#ifdef CGFX_FRAME_BUDGET_SPIKE
+    frameBudgetWorstUs = 0;
+#endif
     for (uint8_t knockout = 0; knockout < 2; ++knockout) {
         fill(result, knockout != 0);
         const battle::BattleView baseView = afterView(result);
         presenter.begin(result);
         while (!presenter.done()) {
+#ifdef CGFX_FRAME_BUDGET_SPIKE
+            const uint32_t frameStart = micros();
+#endif
             battle::BattleView view = baseView;
             presenter.overlay(view);
             arduboy.clear();
             drawView(view);
             presenter.draw();
             presenter.update(false);
+#ifdef CGFX_FRAME_BUDGET_SPIKE
+            const uint16_t frameDt =
+                static_cast<uint16_t>(micros() - frameStart);
+            if (frameDt > frameBudgetWorstUs) frameBudgetWorstUs = frameDt;
+#endif
         }
     }
 }

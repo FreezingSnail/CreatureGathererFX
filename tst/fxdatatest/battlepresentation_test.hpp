@@ -1,6 +1,13 @@
 #pragma once
 
+// Record the worst shipping presenter frame inside
+// battle_presentation_fixture::shippingSpike so suite test_battlepresentation can
+// assert the 52 fps frame budget (CreatureGathererFX-dqxm). Only this device suite
+// enables it; the shipping sketch compiles the fixture without it.
+#define CGFX_FRAME_BUDGET_SPIKE 1
+
 #include "fxtest.hpp"
+#include "frame_budget_test.hpp"
 #include "battlepresentation_fixture.hpp"
 #include "src/engine/draw.h"
 #include "src/engine/battle/BattleScene.hpp"
@@ -749,6 +756,13 @@ inline void test_battlepresentation(FxTest &test) {
     Serial.print(F("ActionResult bytes=")); Serial.println(sizeof(battle::ActionResult));
     Serial.print(F("BattlePresenter bytes=")); Serial.println(sizeof(battle::BattlePresenter));
     test.expectEq(headroom >= 219, true, F("presenter chain preserves 150 B after 69 B USB ISR"));
+
+    // Worst shipping presenter frame (update + scene render) recorded inside the
+    // same measuredChain()/shippingSpike run, using the shared micros() budget
+    // instrumentation. Constant SPI display cost is covered by test_duel_resources.
+    test.expectEq(battle_presentation_fixture::frameBudgetWorstUs <=
+                      frame_budget_test_detail::FRAME_BUDGET_US, true,
+                  F("worst presentation frame <= 19230 us"));
 
     FxReadCounter::resetFrame();
     const uint16_t captionTop = paint();

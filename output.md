@@ -12063,3 +12063,90 @@ make sim-test BUILD_DIR=build CPPFLAGS='-I. -DCGFX_DUEL_BATTLE'
 ≈35 min wall (single session): read bead/design/docs ~6 min; implement `--json` +
 provenance + docs + tests ~18 min; focused node + sim-test verification ~5 min;
 baseline x2 + metrics ~2 min; report ~4 min. No build lane, no AVR, no `make gen`.
+
+## dqxm — frame-budget assertions
+
+Extended the 19230 us (52 fps) worst-frame assertion beyond `test_duel_resources`
+using the same `micros()` instrumentation (factored into
+`tst/fxdatatest/frame_budget_test.hpp`, which `test_duel_resources` now also uses
+for the budget constant). No gameplay/rendering change; assertions only.
+
+### Changes
+
+- added `tst/fxdatatest/frame_budget_test.hpp` — `FRAME_BUDGET_US = 19230`,
+  `FrameBudget` (micros begin/end, worst, `expectWithinBudget`,
+  `expectDetectsSlowFrame`) and `deliberateSlowFrame()` (micros spin, >25000 us).
+- `tst/fxdatatest/duel_resource_test.hpp` — use `FRAME_BUDGET_US` (same value).
+- `tst/fxdatatest/save_test.hpp` — new `test_saveFrameBudget`: times the shipping
+  save frame (`SaveController::advance + drawStatus + FX::display`) per step;
+  permanent negative control + `worst <= 19230`.
+- `tst/fxdatatest/test_world_player.ino` — times the shipping world frame
+  (`WorldEngine::runMap + drawMapFast + drawPlayer + drawZone overlay + FX::display`);
+  permanent negative control + `worst <= 19230`.
+- `tst/fxdatatest/battlepresentation_fixture.hpp` — under `CGFX_FRAME_BUDGET_SPIKE`
+  the existing `shippingSpike()` frame loop records its worst
+  `update + scene render` frame (no new loop).
+- `tst/fxdatatest/battlepresentation_test.hpp` — defines `CGFX_FRAME_BUDGET_SPIKE`
+  and asserts `frameBudgetWorstUs <= 19230`.
+
+### Commands and results
+
+```
+make fxtest-headless BUILD_DIR=build ARDENS="$ARDENS" FXTEST_MS=30000 \
+  FXTEST_INOS='tst/fxdatatest/test_battlepresentation.ino tst/fxdatatest/test_world_player.ino tst/fxdatatest/test_save.ino tst/fxdatatest/test_stack.ino'
+  test_battlepresentation PASSED=324 FAILED=0 -> P
+  test_world_player       PASSED=52  FAILED=0 -> P   (worst frame us=5616)
+  test_save               PASSED=3305 FAILED=0 -> P  (worst frame us=5440)
+  test_stack              PASSED=4   FAILED=0 -> P
+
+make test BUILD_DIR=build     -> Total Failed: 0 ; All tests passed
+make ram  BUILD_DIR=build     -> RAM_FLASH_BYTES=22416 RAM_STATIC_BYTES=1687 RAM_FREE_BYTES=873
+make fxtest-build ... test_duel_resources.ino -> Sketch uses 20520 bytes (69%)
+```
+
+Device-suite sizes / static-RAM free (FXTEST_RAM_LIMIT=2160):
+battlepresentation 29694 B / 509 B; world_player 16142 B / 386 B;
+save 29552 B / 282 B; stack 17050 B / 446 B.
+
+Shipping is unchanged: `make ram` figures match the prior control and only `tst/`
+files changed (no shipping source touched).
+
+### Slow-frame negative control (prove-fail, then restore)
+
+Transiently slowed one natural measured frame per suite (micros spin) and re-ran
+the suite; each failed, then the transient edits were reverted and the green run
+above re-confirmed.
+
+```
+test_battlepresentation: FAIL worst presentation frame <= 19230 us got=0 want=1  (PASSED=323 FAILED=1)
+test_world_player:       FAIL worst world frame <= 19230 us got=0 want=1         (worst frame us=30620, PASSED=51 FAILED=1)
+test_save:               FAIL worst save frame <= 19230 us got=0 want=1          (worst frame us=30452, PASSED=3304 FAILED=1)
+```
+
+`test_world_player` and `test_save` also carry a permanent in-suite negative
+control (`expectDetectsSlowFrame`) that fails if the slowed frame is not detected.
+
+### Deviations
+
+- `test_battlepresentation` is at 99% flash (baseline 29546/29696 = 150 B free);
+  a new per-suite frame loop needs ~350-600 B and does not fit. It therefore
+  measures the **existing** `shippingSpike()` presenter frame loop via
+  `CGFX_FRAME_BUDGET_SPIKE` (fits at 29694 B, 2 B free) and omits `FX::display`
+  (constant SPI cost, already asserted with display in `test_duel_resources`).
+  The 2 B headroom is tight and worth watching on the next flash-touching bead.
+- HEAD advanced mid-session (concurrent `j2lg`/`ogh.6` commits); verification ran
+  against the combined worktree. No git commit/push; bead left `in_progress`.
+
+### Storage
+
+`df -h .` 63 -> 61 GiB free before/after. `du -sh build` 1.8 G -> 1.9 G. Previewed
+`make clean-build-artifacts BUILD_DIR=build` (108 candidates, 2,582,003 B) then
+applied `CLEAN_APPLY=1`; no `cgfx-pack.*` stage remained. `build/fxtest/*` suite
+stages retained as evidence (within the 5 GiB repo-build budget).
+
+### Wall time
+
+Worker loop ~30 min wall (single lane): recon + instrumentation design ~8 min;
+device build/measure iteration (incl. flash-fit bisection on battlepresentation)
+~15 min; focused suites + host + ram ~4 min; negative-control proof + revert ~2 min;
+report + cleanup ~1 min. Gate/orchestrator not run here.
