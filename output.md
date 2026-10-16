@@ -12237,3 +12237,153 @@ stage remained. Retained evidence: `build/jp8.11.17/{test,testvm,fxtest,fxtest_e
 Worker loop ~14 min wall (single lane): recon + source/test mapping ~7 min; host+VM+generated-libs ~1 min;
 two focused device batches (7 AVR suites) ~5 min; report + residual bead + storage ~1 min.
 Gate/orchestrator not run here.
+
+## jp8.2.14 — working-table prototype audit
+
+Read-only outcome audit of the superseded working-sector explicit-save prototype
+(`docs/m1-storage-candidate.md`; ledger jp8.2.12/jp8.2.13) against the adopted coherent
+alternating v3 checkpoint (`src/save/Compaction.cpp`). HEAD 982a650. No firmware/test/generation
+change. Isolated prototype source trees (`build/m1-explicit-save`, `build/m1-overlay-save`,
+`build/m1-batched-working`, `build/world-warp-profile`) are already gone from disk; the tracked
+design doc and the `output.md` measurement ledger are the retained evidence — preserved, not
+deleted.
+
+### Outcome → current-source/test map
+
+| Prototype outcome | Current committed source | Permanent test evidence | Status |
+| --- | --- | --- | --- |
+| Duplicate-erase avoidance (batch 3 party seed/save updates to one erase; unchanged writes 0 erases) | No mutation erases. `storeWrite`/`storeAdd`/`storeRemove`/`storeAssign` (`Compaction.cpp:184-209`) → `append` (:121-130) → `journalAppend` (`Journal.cpp:103-134`), which only `flash.writeBytes` a 16-byte record (marker last). `SaveController::seedParty` (`SaveController.cpp:135-146`) = 6 appends, 0 erases. Sole erases: one inactive-sector erase per save (`Compaction.cpp:225`) + one journal-sector erase per save (:266) + boot/fresh journal erase (`storeBoot`:156 / `storeFresh`:136) — independent of record/party count. Unchanged capture is gated by `changed` (`SaveController.cpp:59`), so it appends nothing. | Structural (inspection): erase count per save is fixed regardless of party/record count, so the prototype's "3 erases" cannot occur. `CollectionCapacityTest` (host `save_test.hpp:261`) 64 adds + periodic saves; `JournalPublicationTest` (host :343) 16 distinct writes then 17th refused w/o publication. Device `test_save` PASSED=3305/0. | SATISFIED structurally |
+| Exact-XP preservation (do not reconstruct stored fractional XP from level) | `captureLiveSaveState` (`SaveController.cpp:44-55`) rewrites `record.exp` to the threshold ONLY when `levelFromExp(record.exp) != player.party[i].level`; otherwise stored exp is byte-exact. `Creature::load(StoreRecord)` derives level from exp and never overwrites it (`Creature.cpp:24-30`); `storeRecordEncode` writes exp verbatim LE (`StoreRecord.hpp:23-26`). | `PlayerStoreIntegrationTest` (host `save_test.hpp:486-552`): exp 126 (non-threshold; L6=216) byte-exact when level unchanged (:501); a real level change rewrites only that record to `levelExpThreshold(6)` (:525); a duplicate keeps its own exact 130 (:527). Device same assertions `save_test.hpp:560/571/573`; `test_save` PASSED=3305/0. | COVERED (jp8.2.6 CLOSED) |
+| No silent loss of accepted store mutations | Accepted mutations append a 16-byte record with marker 0xA5 written LAST after exact readback (`Journal.cpp:116-134`); decode requires marker+checksum (:63-77). Refusals are explicit, never claimed: 17th distinct pending slot refused before append (`Compaction.cpp:186`), `storeAdd`/`storeRemove`/`storeAssign` propagate the result (:195,:201-208), `journalAppend` refuses full log / torn tail (:112-121), boot index overflow sets `failedBoot` and refuses gameplay instead of discarding (:109-110). At save all 64 slots fold (`CopyStore`:235-250); journal erased only after the new checkpoint validates (:260-265). | `JournalPublicationTest` (host `save_test.hpp:343-361`): dirty tail not overwritten (:348), 17th refused before publication (:351), boot overflow fails closed (:359-360); `world_interact_test.hpp:295-337` refused record write not claimed + checkpoint mirrors recovered party HP. Device `test_saveJournalPublication` (`save_test.hpp:497-527`) + `test_journal_boot` PASSED=290/0. | COVERED |
+
+### Latent observation (not a present gameplay defect; no bead filed)
+
+`captureLiveSaveState` ignores the `storeWrite` return (`SaveController.cpp:61`). If the pending
+index is saturated (16 distinct) or the journal is full (256) at save time AND a party record's
+id/level/mask differs from the stored record, that capture is dropped and the checkpoint persists
+the stale record. Current code has NO exp/level progression (no `.level` increment or exp
+accumulation anywhere in `src/`; `exp` exists only in `LevelCurve`/`StoreRecord`/save), and party
+captures are consistent right after `load`, so the `changed` branch is exercised only by a forced
+level change (`PlayerStoreIntegrationTest`). Not reachable in current gameplay → not a present
+defect, so no duplicate residual child filed; the path and exact call site are recorded here for
+the eventual progression work / the OPEN `jp8.2.7` full-journal explicit-save proof.
+
+### Commands and tails (run this session, host evidence first)
+
+```text
+make test BUILD_DIR=build        -> host 240077/0 ; world 258/0 (Save Suite: PlayerStoreIntegrationTest 36/0,
+                                    CheckpointCutTest 2363/0, BoxedInstanceHPTest 56/0, GenerationWrapTest 9/0,
+                                    LegacyResetTest 12/0, LiveReadBoundedTest 14/0)
+make testvm BUILD_DIR=build      -> vm 278/0
+make fxtest-headless BUILD_DIR=build ARDENS=.../Ardens FXTEST_INOS='tst/fxdatatest/test_save.ino
+  tst/fxdatatest/test_journal_boot.ino tst/fxdatatest/test_save_flags.ino'
+                                 -> test_save PASSED=3305 FAILED=0 (worst frame 5440us; RAM 1878/2160)
+                                    test_journal_boot PASSED=290 FAILED=0
+                                    test_save_flags PASSED=27 FAILED=0
+```
+The device batch was delayed until the other AVR-lane worker's `fxtest-headless` run finished
+(38s wall once quiet); no `make gen`/gate run. Storage: 61 GiB free, `build` 1.9 GiB, `build/fxtest`
+103 MiB.
+
+### Disposition
+
+Working-table / disposable-overlay architecture: **not adopted**, superseded as a design DIRECTION
+by the committed alternating v3 checkpoint. All three requested outcomes map to current committed
+source + passing permanent tests (host, VM and the three named device suites run green this
+session). No bounded residual bead filed (no present defect; latent capture-return noted above).
+Prototype evidence retained historical; `docs/m1-storage-candidate.md` not deleted.
+
+### Wall time
+
+Worker ~18 min wall: host+VM ~2 min; AVR-lane wait ~2 min; device batch 38 s; source/test mapping,
+report and storage checks the remainder. Gate/orchestrator not run here.
+
+## o845 — M0 proof gaps
+
+Two explicit-acceptance proof gaps closed; no shipping source changed (shipping
+image is byte-identical: `make ram` still reports 22416/1687).
+
+### Gap 1 — shipping fresh-game spawn literal
+
+`setup()` publishes a fresh ordinary game's start from a hand-written literal in
+`CreatureGathererFX.ino` (11,5). Added one test to the existing authored-contract
+suite `tools/tests/beta-area_test.mjs` that reads the `.ino`, anchors on the
+`First-beta authored start` marker (so the guard-only `CGFX_WILD_DEMO` /
+`CGFX_LURE_WEDGE` literals cannot satisfy it), parses the `playerLocation`
+literal and asserts it equals `data/beta-area.toml` `start_x`/`start_y`. Wired the
+suite into the standard gate: new `test-beta-area` target (`node --test
+tools/tests/beta-area_test.mjs`) added to the `check` prerequisite list after
+`testvm` (`check` runs `gen` first, which supplies the generated collision the
+suite validates).
+
+New assertion: `shipping fresh-game setup literal matches the authored start`.
+
+### Gap 2 — same-tile return with persistent HP
+
+Extended `tst/fxdatatest/test_world_player.ino` (co-located, permanent). After the
+existing pocket encounter has entered BATTLE, the new block records the pre-battle
+tile, pins the matchup inline to a deterministic spirit-over-fire trade, commits
+the single attack cell through `BattleFlow`, runs the round to a fresh Choice
+(player active damaged 100 -> 79), opens the wild action page and submits ESCAPE
+(a non-Lose terminal), then pumps `BattleFlow` back to `GameState_t::WORLD`. It
+asserts:
+
+- the encounter pinned the pre-battle tile `(7<<8)|12 = (x12,y7)`;
+- the round damaged the player active (79) and returned to a fresh choice;
+- the non-Lose exit returns to `WORLD`;
+- `WorldEngine::location()` equals the exact pre-battle tile;
+- `player.creatureHPs[0]` equals the damaged battle HP (79), not a reset.
+
+Added includes: `src/engine/battle/BattleFlow.hpp`, `src/engine/battle/DuelView.hpp`.
+
+`test_world_player` now PASSED=60 FAILED=0 (was 47).
+
+### Negative controls (both new assertions proven non-vacuous)
+
+```text
+Gap 1: edited the fresh-game literal 11 -> 12 in CreatureGathererFX.ino:
+  ✖ shipping fresh-game setup literal matches the authored start
+    AssertionError: shipping fresh-game literal x must equal the authored start_x
+    pass 10 / fail 1        -> restored to 11 (git diff empty)
+
+Gap 2: edited the persisted-HP expectation 79 -> 78 in test_world_player.ino:
+  FAIL the persisted HP is the damaged value, not a reset got=79 want=78
+  test_world_player PASSED=59 FAILED=1 ; F
+                          -> restored to 79
+```
+
+### Commands and tails
+
+```text
+make test BUILD_DIR=build        -> Total Passed: 258  Total Failed: 0 (host+world)
+make testvm BUILD_DIR=build      -> Total Passed: 278  Total Failed: 0
+make test-beta-area              -> pass 11 / fail 0
+make fxtest-headless BUILD_DIR=build ARDENS=.../Ardens \
+  FXTEST_INOS='tst/fxdatatest/test_world_player.ino tst/fxdatatest/test_encounter.ino
+               tst/fxdatatest/test_stack.ino'
+   -> test_world_player PASSED=60 FAILED=0 (flash 21770, RAM 1774/2160)
+      test_encounter    PASSED=47 FAILED=0
+      test_stack        PASSED=4  FAILED=0 (stack headroom 625)
+make ram BUILD_DIR=build
+   -> RAM_FLASH_BYTES=22416  RAM_STATIC_BYTES=1687  RAM_FREE_BYTES=873   (unchanged)
+```
+
+### Deviations
+
+- Preferred the bead's option 3 (wire the node test) plus one literal assertion
+  inside it, rather than a new device assertion for Gap 1.
+- Gap 2 lived in `test_world_player.ino` (default FX test profile, which already
+  defines `CGFX_DUEL_BATTLE`); the duel-compact-profile `duel_session_*` headers
+  are not includable under this suite's profile, so the matchup fixture is inline
+  and mirrors those fixtures' field writes.
+
+### Storage
+
+`df -h .` 61 GiB avail (>=10 GiB reserve) before and after; `du -sh build` 1.9 GiB
+(repository build-output budget 5 GiB) before and after.
+
+### Wall time
+
+Worker ~16 min wall: host+VM ~5 s; focused AVR device batches 34 s + 30 s + 34 s;
+negative-control rebuilds ~30 s each; remaining is bootstrap + reporting.
+Orchestrator gate not run here.
