@@ -12968,3 +12968,89 @@ Bead left **in_progress** (per dispatch: single build lane, no commit/push, no c
 Worker ~35 min wall (inspect/design ~10 min; implementation ~6 min; host/VM/profile/gen-libs ~4 min;
 focused device suites ~5 min; ram compact+full-world control ~6 min; storage/report remainder).
 No final-gate/orchestrator run performed (dispatch leaves the bead in_progress).
+
+## ogh.18 — mirror-tier player policy
+
+Measurement/tooling only: **no shipped gameplay constant or data file changed** (off the
+AVR/generation lane; no `make gen`/AVR/gates; no git commit/push). Bead left `in_progress`.
+Adds the player policy ogh.17 recommended so the paired 3v3 baseline reflects the shipped
+up/down creature-type marker instead of understating player skill.
+
+### Policy rule (new `tier` policy)
+
+`tier` mirrors the AI's no-read branch (`aiDuelPick`): score every owned option by
+`duelCreatureBonus(state, 0, option.type)` (creature-type x1.5 beats / x0.5 loses against the
+foe's active types) and pick uniformly among the best tier via the same player RNG. It reads
+only the foe's already-active creature types, never the hidden current pick, and folds through
+`duelValue` like the other policies. Deterministic per seed.
+
+### Changed
+
+- `tools/battle-duel-spike.mjs` — `POLICIES` gains `tier` (default 7: random/repeat/counter/
+  rotation/swap/tier/anti-repeat); `playerPick` `tier` branch; header/policy comments.
+- `tools/tests/battle-duel-spike_test.mjs` — +1 test (`tier` picks a best-tier option for every
+  tie-break, replay byte-identical) and JSON coverage assertions (`tier` in artifact
+  `config.policies` and in every pair's `cells[]`).
+- `docs/battle-simulator.md` — policy list + JSON `config.policies` example updated.
+
+### Baseline before/after (matrix5 team3 bonus cap200 reader, 25 pairs x policies x 5 rates x 1000)
+
+Before = `build/reports/ogh.6/pair-sweep-1000.json` (6 policies, 750k duels).
+After = `build/reports/ogh.18/pair-sweep-1000.json` (7 policies incl. tier, 875k duels).
+
+| metric | before (6 pol) | after (7 pol) |
+| --- | --- | --- |
+| W / L / D / T | 29.5% / 67.8% / 2.7% / 0% | 32.6% / 64.1% / 3.2% / 0% |
+| rounds total / avg | 12,756,050 / 17.008 | 14,965,941 / 17.104 |
+| cell medianRounds min/med/max | 11 / 15 / 33 | 11 / 15 / 43 |
+| cell p95Rounds min/med/max | 11 / 18 / 36 | 11 / 18 / 43 |
+| switchRate (switches/duel) | 0.0008 (0.0133) | 0.0007 (0.0114) |
+| type skew (n) | water 40.6 / spirit 25.1 / earth 24.0 / fire 7.1 / plant 3.2 (12.7M) | water 42.1 / earth 24.6 / spirit 23.8 / fire 6.4 / plant 3.2 (15.0M) |
+| decided pairs (0% or 100%) | 12/25 (8 zero-win, 4 100%-win) | 11/25 (7 zero-win, 4 100%-win) |
+
+The 6-policy mean win rate (the dispatch's "before") is 29.5% overall, **23.6% @rate0**,
+**30.0% @rate50**. The `tier` policy alone (the dispatch's "after") is **36.0% @rate0** and
+**54.8% @rate50**, matching ogh.17's `mirror tier` probe exactly. The 7-policy mean is 25.4%
+@rate0 / 33.6% @rate50. Adding `tier` dissolves one zero-win pair — `retyped vs balanced`
+(0.0% → nonzero) — leaving **7/25 zero-win** and 11/25 fully decided, the remaining hard locks
+being the mono/single-kit compositions ogh.17 cause 2 (`balanced v anchors`, `support v anchors`,
+`retyped v anchors`, `trap v balanced/anchors/support/retyped`).
+
+Per-policy Win% after: random 25.6, repeat 40.1, counter 36.8, rotation 24.5, swap 25.7,
+**tier 51.3**, anti-repeat 24.4. The 4 flagged >80%-in-every-cell sweeps are unchanged
+(`balancedvtrap`, `anchorsvsupport`, `anchorsvretyped`, `anchorsvtrap`).
+
+### Verify (commands + tails)
+
+```sh
+node --test tools/tests/battle-duel-spike_test.mjs tools/tests/duel-kernel-parity_test.mjs
+# tests 26 pass 26 fail 0   (+1 vs ogh.17's 25)
+make sim-test BUILD_DIR=build CPPFLAGS='-I. -DCGFX_DUEL_BATTLE'
+# tests 6 pass 6 fail 0
+
+node tools/battle-duel-spike.mjs --json --pair-sweep --battles 1000 --rounds 200 > build/reports/ogh.18/pair-sweep-1000.json   # exit 0, 23.6 s, 823,759 B
+node tools/battle-duel-spike.mjs --json --pair-sweep --battles 1000 --rounds 200 > build/reports/ogh.18/pair-sweep-1000-replay.json
+cmp ...pair-sweep-1000.json ...pair-sweep-1000-replay.json   # BYTE-IDENTICAL
+shasum -a 256 build/reports/ogh.18/pair-sweep-1000.json      # 3a92b0a2ff4157ded6ca6d0f3904626b760e5ac072a66661050c17f08055f136
+
+# ogh.17 mirror probe now reproducible through the tool at 500 duels/cell:
+node tools/battle-duel-spike.mjs --json --pair-sweep --policy tier --read 0  --battles 500   # W 36.0 / L 36.0 / D 28.0
+node tools/battle-duel-spike.mjs --json --pair-sweep --policy tier --read 50 --battles 500   # W 54.8 / L 44.3 / D 0.9
+```
+
+JSON coverage: the artifact carries `tier` in `config.policies` and a `tier` cell under every
+pair's `cells[]`; the replay artifact is byte-identical, so the policy is determinism-safe.
+
+### Storage
+
+`df -h .` 64 GiB free before/after (>=10 GiB reserve held). `du -sh build` 1.9G before and after.
+New artifacts confined to gitignored `build/reports/ogh.18/` (1.7 MB: after/replay JSON, tier
+500-duel JSONs, before/after analysis, `analyze.mjs`). No build tree created; `sim-test` reused
+`build/duel-sim`. Untouched by this bead: pre-existing `CreatureGathererFX.ino` and
+`.beads/interactions.jsonl` edits by the generation-lane worker.
+
+### Wall time
+
+Worker ~25 min wall: read bead/output/docs + tool/mock ~8 min; implement policy + tests + docs
+~6 min; focused node test + sim-test ~1.5 min; baseline x2 + tier probes ~1.5 min; analysis +
+report remainder. No gate/orchestrator run (dispatch leaves the bead in_progress).

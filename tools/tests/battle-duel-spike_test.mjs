@@ -17,10 +17,34 @@ const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '.
 const TOOL = path.join(REPO, 'tools/battle-duel-spike.mjs');
 const HEX64 = /^[0-9a-f]{64}$/;
 const REQUIRED_POLICIES = ['random', 'repeat', 'counter', 'rotation', 'swap'];
+const TIER_POLICY = 'tier';
 
 test('the balance-contract policies are present', () => {
   for (const policy of REQUIRED_POLICIES) assert.ok(POLICIES.includes(policy), policy);
+  assert.ok(POLICIES.includes(TIER_POLICY), 'mirror-tier policy present');
   assert.ok(POLICIES.includes('anti-repeat'), 'anti-repeat retained');
+});
+
+test('tier mirrors the AI creature-type tier and is deterministic', () => {
+  const { state } = buildDuel({ seed: 4, policy: TIER_POLICY });
+  state.duelState.partyIndex = [[37], [6]];
+  state.duelState.hp = [[mock.creature(37).maxHp], [mock.creature(6).maxHp]];
+  state.duelState.activeSlot = [0, 0];
+  const options = mock.duelOptions(state, 0);
+  const bonuses = options.map((option) => mock.duelCreatureBonus(state, 0, option.type));
+  const bestTier = Math.max(...bonuses);
+  assert.ok(options.length > 0);
+  // Every tie-break lands on a best-tier option; the tier is the AI's non-read
+  // branch (creature-type x1.5/x0.5 against the foe's active types).
+  for (const tie of [0, 1, 2, 5]) {
+    const pick = playerPick(mock, state, TIER_POLICY, { int: (n) => (n ? tie % n : 0) });
+    assert.ok(Number.isInteger(pick) && pick >= 0 && pick < options.length, `pick ${pick}`);
+    assert.equal(bonuses[pick], bestTier, `tier pick ${options[pick].type} not best`);
+  }
+  // Same seed/scenario replays byte-identically through the full duel.
+  const a = playDuel({ persona: 'reader', readRate: 0, policy: TIER_POLICY, seed: 42 });
+  const b = playDuel({ persona: 'reader', readRate: 0, policy: TIER_POLICY, seed: 42 });
+  assert.deepEqual(a, b);
 });
 
 test('CLI argument parsing reads the plan command and coerces values', () => {
@@ -251,12 +275,15 @@ test('--json pair-sweep artifact is versioned, complete and self-consistent', ()
   assert.equal(report.config.battles, 2);
   assert.equal(report.pairs.length, TEAM_PAIRS.length);
   assert.ok(report.flagged.length <= report.pairs.length);
+  assert.ok(report.config.policies.includes(TIER_POLICY), 'tier in artifact config');
+  let sawTier = false;
   for (const pair of report.pairs) {
     assert.equal(pair.wins + pair.losses + pair.draws + pair.timeouts, pair.total);
     assert.equal(pair.total, 2 * POLICIES.length * READ_RATES.length);
     assert.equal(pair.cells.length, POLICIES.length * READ_RATES.length);
     for (const cell of pair.cells) {
       assert.ok(POLICIES.includes(cell.policy), cell.policy);
+      if (cell.policy === TIER_POLICY) sawTier = true;
       assert.ok(READ_RATES.includes(cell.rate), cell.rate);
       assert.deepEqual(cell.seed, { from: 1, to: 2, count: 2 });
       assert.equal(cell.wins + cell.losses + cell.draws + cell.timeouts, cell.battles);
@@ -266,6 +293,7 @@ test('--json pair-sweep artifact is versioned, complete and self-consistent', ()
       assert.ok(cell.medianRounds <= cell.p95Rounds);
     }
   }
+  assert.ok(sawTier, 'tier cells present in the JSON artifact');
   // Provenance is present and pinned in the artifact, not added later.
   assert.ok(report.provenance && report.provenance.fixtures);
   assert.equal(report.provenance.seedKeys.battles, 2);

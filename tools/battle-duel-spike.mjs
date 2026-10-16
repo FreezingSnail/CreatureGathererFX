@@ -116,9 +116,11 @@ export const DEFAULT_MAX_ROUNDS = 200;
 export const DUEL_SPIKE_SCHEMA_VERSION = 1;
 
 export const PERSONAS = ['reader', 'frequency', 'anti-repeat', 'exploiter', 'random'];
-// Balance contract policies: random / repeat / counter / rotation / swap, plus
-// the retained anti-repeat face.
-export const POLICIES = ['random', 'repeat', 'counter', 'rotation', 'swap', 'anti-repeat'];
+// Balance contract policies: random / repeat / counter / rotation / swap / tier,
+// plus the retained anti-repeat face. `tier` mirrors the AI's non-read branch
+// (best creature-type x1.5/x0.5 matchup tier), so the paired baseline reflects
+// the shipped up/down creature-type marker a player can read. Added by ogh.18.
+export const POLICIES = ['random', 'repeat', 'counter', 'rotation', 'swap', 'tier', 'anti-repeat'];
 export const READ_RATES = [0, 25, 50, 75, 100];
 
 // Folded-matrix relation (2 beats, 0.5 loses, 1 trades) for the active table.
@@ -159,6 +161,8 @@ function makePlayerRng(seed) {
 //   rotation   - deterministic: next owned option after the last revealed own
 //                type, else option 0
 //   swap       - switch to a bench creature that owns a counter, else attack
+//   tier       - mirror the AI's non-read branch: pick an owned option at the
+//                best creature-type x1.5/x0.5 matchup tier (random tie-break)
 //   anti-repeat- avoid repeating the last revealed own type (retained)
 export function playerPick(mock, state, policy, rng) {
   const options = mock.duelOptions(state, 0);
@@ -174,6 +178,19 @@ export function playerPick(mock, state, policy, rng) {
   if (policy === 'rotation') {
     const index = lastMine != null ? indexOfType(lastMine) : -1;
     return index >= 0 ? (index + 1) % options.length : 0;
+  }
+
+  // tier: the same rule aiDuelPick uses on a no-read round - score every owned
+  // option by the creature-type matchup modifier against the foe's active types
+  // and pick uniformly among the best tier. It reads only the opponent's
+  // already-active creature types (never the hidden current pick). Added ogh.18.
+  if (policy === 'tier') {
+    const scored = options.map((option, index) => ({
+      index, modifier: mock.duelCreatureBonus(state, 0, option.type),
+    }));
+    const bestTier = Math.max(...scored.map((entry) => entry.modifier));
+    const pool = scored.filter((entry) => entry.modifier === bestTier);
+    return pool[rng.int(pool.length)].index;
   }
 
   if (options.length <= 1 || policy === 'random') return rng.int(options.length);
