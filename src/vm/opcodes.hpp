@@ -12,5 +12,6 @@ enum class VmOpcode : uint8_t {
     SetFlag = 6,
     UnsetFlag = 7,
     ReadFlag = 8,
+    GiveItem = 9,
     End = 255,
 };
