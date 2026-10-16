@@ -1214,3 +1214,149 @@ kit, so this is the only reachable construction).
 
 Worker ~12 min wall: recon (bead/kernel/mock/parity) ~8 min; implementation ~3 min;
 verification ~1 min.
+
+## jp8.11.10 — XP award
+
+### What changed
+
+- `src/engine/battle/BattleFlow.cpp`: new `awardOrdinaryWildExp(state)` called from `finishBattle`
+  on `Outcome::Win` (with `awardWildKoMaterial`, now sharing one `!trainer && !gatherable` guard).
+  Per living occupied party instance (HP != 0, stable slot present): read the stable `StoreRecord`
+  once, add exactly `8 * opponentLevel`, saturate at `levelExpThreshold(31)`, derive the level via
+  `Creature::load(record)`, and `storeWrite` before installing the live creature. A level increase
+  preserves missing HP: `liveHP += (newMax - oldMax)` capped at `newMax`; KO stays 0 with no reward.
+  A refused `storeWrite` leaves accepted state untouched (no invented XP). No v3 layout change.
+- `tst/duel_session_integration_test.hpp` (host): seven focused tests — exact amount+level-stable,
+  below/at/over-threshold with full + damaged HP growth, level-31 cap, once-only, non-win
+  (escape/gatherable/trainer) exclusion, KO-member exclusion, and exact-exp survival across a v3
+  checkpoint+reboot.
+- `tst/fxdatatest/test_win_exp.ino` + `tst/fxdatatest/win_exp_test.hpp` (new device suite): the
+  same exact-amount/once/boundary/HP-growth/cap/KO proof against the real FX save flash. Added
+  `test_win_exp` to the Makefile's duel-flag list. Device XP proof moved out of the near-limit
+  `test_battle_duel` sketch (which keeps 14 B free); the dedicated suite uses 16660/29696 B.
+- `tst/fxdatatest/duel_session_integration_test.hpp`: +1 line (`ReadData.hpp` include).
+
+### Commands, results, tails
+
+```
+make test BUILD_DIR=build            -> host 240407/0 (+44) + world 258/0
+make testvm BUILD_DIR=build          -> 286/0
+make test-beta-area BUILD_DIR=build  -> tests 13 / pass 13 / fail 0
+make fxtest-headless BUILD_DIR=build ARDENS="$ARDENS" FXTEST_MS=30000 FXTEST_INOS='...test_battle_duel.ino ...test_save.ino ...test_world_player.ino ...test_stack.ino ...test_win_exp.ino'
+  test_battle_duel PASSED=125 FAILED=0    (sketch 29682/29696, 14 B free)
+  test_save        PASSED=3283 FAILED=0   (sketch 29674/29696; unchanged baseline)
+  test_world_player PASSED=76 FAILED=0    (sketch 29684/29696, 12 B free)
+  test_stack       PASSED=4 FAILED=0      (stack headroom 598, transition headroom 695)
+  test_win_exp     PASSED=12 FAILED=0     (sketch 16660/29696)
+make ram BUILD_DIR=build             -> RAM_FLASH_BYTES=23198 ; RAM_STATIC_BYTES=1680 ; RAM_FREE_BYTES=880
+```
+
+### Exact-XP / bounded-level proofs (host, mirrored on device)
+
+- Exact once: exp 27 (`threshold(3)`) +32 -> 59 stored exactly, level unchanged (no rounding).
+- Boundaries (gain 32): 31 -> 63 (no level up); 32 -> 64 = `threshold(4)` -> level 4; 100 -> 132 ->
+  level 5 (remainder kept).
+- HP: a full member that levels reaches its new derived maximum; a member 5 below max grows by
+  `newMax-oldMax` and stays 5 below. KO (HP 0) -> exp unchanged, HP stays 0.
+- Cap: `threshold(31)-1` +248 -> exactly 29791 at level 31.
+- Once-only: 16 further world frames never re-award. Non-win (escape / gatherable KO / trainer)
+  awards nothing. Save+reboot preserves the exact accepted exp.
+
+### Flash / SRAM delta
+
+Control HEAD `d4173e3` 22980 flash / 1680 static -> candidate **23198 flash (+218) / 1680 static (+0)**.
+Shipping targets (<=29184 plan / <=29696 hard, static <=2160): met with 5,986 B flash and 880 B
+static free; `test_stack` headroom 598 B (>=150 B reserve).
+
+### Deviations
+
+- Device XP proof lives in a new dedicated suite (`test_win_exp`) plus a Makefile duel-flag entry,
+  not in `test_battle_duel`: that sketch was at 446 B free at baseline and the production change
+  costs +432 there, so a case relocation would have been required. This follows the new
+  session-efficiency rule ("trim or relocate ... rather than oscillating at the limit"). The extra
+  suite was added to the dispatch's FXTEST_INOS and run.
+- **Near-limit warning (per new rule)**: `test_battle_duel` (14 B free) and `test_world_player`
+  (12 B free) now sit at the hard floor; `test_save` was already at 22 B free. Pre-existing
+  `test_battlepresentation` overflowed at 29744 B **before** this change (identical size with it)
+  and is out of scope — the wildcard final gate needs a suite trimming/relocation bead.
+- Bead's legacy VERIFY named `build/box-adoption-gate`; the dispatch pinned `BUILD_DIR=build`, used.
+- No commit/push; bead left `in_progress` per dispatch.
+
+### Storage
+
+`df -h .` 63 GiB free before/after (>=10 GiB reserve held). `du -sh build` 1.4G -> 1.2G.
+`make clean-build-artifacts BUILD_DIR=build` previewed (108 candidates, 2.6 MB); retained the
+active `build/native-tools` (963M) and `build/arduino-build` compiler cache. Removed the disposable
+`build/fxtest` staging (180M). No `cgfx-pack.*` stage remains. Retained `build/CreatureGathererFX.ino.elf`.
+
+### Wall time
+
+Worker ~95 min wall: recon/design ~25 min; host implementation+tests ~10 min; device size
+investigation (LTO is non-linear — four production variants measured across three sketches) ~40 min;
+device runs + host gates + storage ~20 min. No orchestrator gate run (bead left `in_progress`).
+
+## 5j1n — device sketch headroom
+
+Restored the wildcard device-gate flash margin. Test CASES only were relocated to co-located
+sketches; **no `src/` change and no reduction of jp8.11.10 behavior**. Every `tst/fxdatatest/*.ino`
+now builds with >=1 KB free (min 3,012 B).
+
+### Before / after free flash (29696 hard limit)
+
+| suite | before B (free) | after B (free) | where the cases moved |
+|---|---|---|---|
+| test_battlepresentation | 29744 (OVERFLOW, -48) | 16530 (+13166) | kind/effectiveness/HP-track/move cases -> new `test_battlepresentation_moves` |
+| test_battlepresentation_moves | — | 25100 (+4596) | (new) |
+| test_battle_duel | 29682 (+14) | 8540 (+21156) | session flow -> new `test_duel_session` |
+| test_duel_session | — | 26684 (+3012) | (new) |
+| test_world_player | 29684 (+12) | 24292 (+5404) | bag v3 snapshot/deposit -> new `test_world_bag` |
+| test_world_bag | — | 12214 (+17482) | (new) |
+| test_save | 29674 (+22) | 23978 (+5718) | interrupted-write cut cases -> new `test_save_cuts` |
+| test_save_cuts | — | 17708 (+11988) | (new) |
+
+All other suites unchanged; full run shows the smallest margin at `test_duel_session` 3012 B.
+
+### What moved where
+
+- `test_battle_duel.ino`: kernel only (`battle_duel_device_test`). New `test_duel_session.ino` runs
+  `test_duel_session` (the header already documented this wiring). Expanded the Makefile duel-profile
+  `elif` so `test_duel_session` compiles with `-DCGFX_BATTLE_NO_FACTS -DCGFX_BATTLE_COMPACT_RESULT
+  -DCGFX_DUEL_BATTLE` (the header's `#error` guard proves the flags reached every TU).
+- `battlepresentation_test.hpp`: split `test_battlepresentation` into a core entry (playback x2 +
+  painted-stack/frame-budget/caption-chain proofs, dqxm) and `test_battlepresentation_moves`
+  (switchedSprites, damageLines, effectivenessFeedback x5, feedbackCategories, moveLabels,
+  attackMoveRasters, hpTrackEdges, both menu blocks). No assertions changed.
+- `test_world_player.ino`: the v3 bag snapshot/deposit block moved verbatim to new
+  `test_world_bag.ino`; world/encounter/battle-resume cases stay.
+- `save_test.hpp`: `test_save_cuts` holds the three interrupted-write cases
+  (`BoxedHPPublicationCuts`, `ControllerCaptureHPCuts`, `CheckpointCuts`); durable-state cases stay.
+  The Makefile `fxtest-run` gives `test_save_cuts` the same extended `FXTEST_MS_SAVE` window as
+  `test_save`.
+
+### Coverage preserved (device assertion counts)
+
+duel 47+78=125; presentation 102+222=324; world 65+11=76; save 304+3001=3305 — each split sum equals
+the pre-split total (same functions, only regrouped). All PASS, 0 FAILED.
+
+### Commands
+
+- `make fxtest-build BUILD_DIR=build` — all 33 wildcard suites; every ELF <=29696 with >=1 KB free
+  (log: `build/fxtest-build-all.log`).
+- `make fxtest-headless BUILD_DIR=build ARDENS=.../Ardens FXTEST_MS=30000 FXTEST_INOS='<mandated 5>'`
+  — test_battlepresentation/duel/world_player/win_exp/stack all PASS.
+- Same target with the new suites (`test_duel_session test_world_bag test_battlepresentation_moves
+  test_save_cuts test_save`) — all PASS.
+- `make test BUILD_DIR=build` — host suites pass. `make ram BUILD_DIR=build` — shipping 23198/29696
+  flash, 1680/2560 static (fresh rebuild).
+
+### Storage
+
+`df -h .` 63 GiB free (>=10 GiB). `du -sh build` 1.4G (<=5 GiB). `make clean-build-artifacts
+BUILD_DIR=build` previewed (108 candidates, 2.6 MB, shipping arduino-build cache) then applied.
+Retained `build/native-tools` (963M) and the `build/fxtest` device stages (212M, within budget).
+Log kept at `build/fxtest-build-all.log`.
+
+### Wall time
+
+Worker ~70 min wall: recon ~25; implementation ~10; wildcard build 5:10 + targeted builds ~6; two
+device runs ~1:45; host+ram+storage ~3; report ~5. No commit/push; bead left `in_progress`.

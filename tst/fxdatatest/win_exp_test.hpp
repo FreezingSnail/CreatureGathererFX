@@ -1,0 +1,124 @@
+#pragma once
+// jp8.11.10 device proof: an ordinary wild Win grows every living occupied
+// party instance's persistent store experience by exactly 8 * opponentLevel,
+// once, and bounded level growth follows the existing level model. Wired by the
+// dedicated sketch tst/fxdatatest/test_win_exp.ino so the near-limit
+// test_battle_duel suite keeps its headroom. Reuses the duel session fixtures.
+
+#include "duel_session_integration_test.hpp"
+
+namespace win_exp_test_detail {
+using namespace duel_session_test_detail;
+
+// Install a real three-member beta party as stable store instances (slots 0..2)
+// and mirror them into the live Player. `exps` pins each member's stored
+// cumulative experience; `missing` pins the HP missing from its derived maximum
+// (>= maximum = KO). Level/stats follow the stored exp through the existing model.
+__attribute__((noinline)) void seedPartyInstances(const uint16_t (&exps)[PARTY_SIZE],
+                        const uint8_t (&missing)[PARTY_SIZE]) {
+    storeFresh(); // empty collection, cold journal
+    battle::applyPlayerPreset(player, BattlePresets::beta);
+    for (uint8_t i = 0; i < PARTY_SIZE; ++i) {
+        player.party[i].level = levelFromExp(exps[i]);
+        player.party[i].setStats(getCreatureFromStore(player.party[i].id));
+        const uint8_t maxHp = player.party[i].statlist.hp;
+        const uint8_t curHp = missing[i] >= maxHp ? 0 : static_cast<uint8_t>(maxHp - missing[i]);
+        player.creatureHPs[i] = curHp;
+        StoreRecord record = {};
+        record.id = player.party[i].id;
+        record.exp = exps[i];
+        record.attackMask = static_cast<uint8_t>(player.party[i].attackMask & 0x1F);
+        record.hpEncoded = curHp >= maxHp ? 0 : static_cast<uint8_t>(curHp + 1);
+        storeWrite(i, record);
+        storeAssign(i, i, curHp);
+    }
+}
+
+// A wild session at a known foe level, ready for a one-hit Win (1-HP Fire foe;
+// the Fire kit picks Spirit so the foe is KO'd on the reveal). The living hero
+// starts at its derived maximum so the later checkpoint stays inside the model.
+__attribute__((noinline)) void beginWildWinSession(uint8_t foeLevel, bool gatherable) {
+    menu.clear();
+    dialogMenu.clear();
+    enterBattle();
+    gameState.state = GameState_t::BATTLE;
+    rngDraws = 0;
+    battleSession().setRng({scriptedRng});
+    battleSession().beginWild(0, foeLevel, gatherable, gatherable ? 1 : 0);
+    configureMatchup(FireAuthored, SpiritAuthored, FireAuthored, FireAuthored,
+                     player.party[0].statlist.hp, 1);
+}
+
+__attribute__((noinline)) void wildWinToWorld() {
+    BattleFlow::update(0);              // choice entry -> pick row
+    BattleFlow::update(MENU_EDGE_A);    // commit the single attack cell
+    for (uint16_t f = 0; f < 4096 && gameState.state != GameState_t::WORLD; ++f)
+        BattleFlow::update(0);
+}
+
+__attribute__((noinline)) uint16_t storedExp(uint8_t slot) {
+    StoreRecord record;
+    storeRead(slot, record);
+    return record.exp;
+}
+
+const uint8_t kFull[PARTY_SIZE] = {0, 0, 0};
+
+// jp8.11.10: an ordinary wild Win grows every living occupied member's stored
+// exp by exactly 8 * opponentLevel once; levels follow the exact thresholds, a
+// full level-up reaches its new derived maximum, a damaged one keeps its missing
+// HP, a KO member gets nothing, and exp saturates at the level-31 cap.
+__attribute__((noinline)) void duelDeviceWildWinExp(FxTest &test) {
+    const uint16_t start = levelExpThreshold(3);
+
+    // Exact amount once, no threshold crossed.
+    const uint16_t exps[PARTY_SIZE] = {start, start, start};
+    seedPartyInstances(exps, kFull);
+    beginWildWinSession(4, false); // gain = 32
+    wildWinToWorld();
+    test.expectEq(storedExp(0), static_cast<uint16_t>(start + 32),
+                  F("exp grows by exactly 8 * opponentLevel"));
+    test.expectEq(player.party[1].level, static_cast<uint8_t>(3),
+                  F("below the next threshold the level is unchanged"));
+    for (uint8_t i = 0; i < 8; ++i) wildWinToWorld();
+    test.expectEq(storedExp(1), static_cast<uint16_t>(start + 32),
+                  F("later frames never re-award"));
+
+    // Below / at / over the next threshold, with full and damaged HP growth.
+    const uint16_t bounds[PARTY_SIZE] = {31, 32, 100};
+    const uint8_t missing[PARTY_SIZE] = {0, 0, 5};
+    seedPartyInstances(bounds, missing);
+    beginWildWinSession(4, false);
+    wildWinToWorld();
+    test.expectEq(storedExp(0), static_cast<uint16_t>(63),
+                  F("one below the threshold stores the exact total"));
+    test.expectEq(player.party[1].level, static_cast<uint8_t>(4),
+                  F("at the threshold the level increases"));
+    test.expectEq(player.creatureHPs[1], player.party[1].statlist.hp,
+                  F("a full level-up reaches its new derived maximum"));
+    test.expectEq(storedExp(2), static_cast<uint16_t>(132),
+                  F("over the threshold keeps the exact remainder"));
+    test.expectEq(player.creatureHPs[2],
+                  static_cast<uint8_t>(player.party[2].statlist.hp - 5),
+                  F("a damaged level-up preserves its missing HP"));
+
+    // Bounded growth at the level-31 cap; a KO member is untouched.
+    const uint16_t cap = levelExpThreshold(LEVEL_COUNT - 1);
+    const uint16_t nearCap[PARTY_SIZE] = {static_cast<uint16_t>(cap - 1), cap, start};
+    const uint8_t ko[PARTY_SIZE] = {0, 0, 255};
+    seedPartyInstances(nearCap, ko);
+    beginWildWinSession(31, false); // gain = 248
+    wildWinToWorld();
+    test.expectEq(storedExp(0), cap, F("exp saturates at the level-31 threshold"));
+    test.expectEq(player.party[0].level, static_cast<uint8_t>(LEVEL_COUNT - 1),
+                  F("the derived level caps at 31"));
+    test.expectEq(storedExp(2), start, F("a KO member receives no exp"));
+    test.expectEq(player.creatureHPs[2], static_cast<uint8_t>(0),
+                  F("a KO member is never revived"));
+}
+
+} // namespace win_exp_test_detail
+
+inline void test_win_exp(FxTest &test) {
+    win_exp_test_detail::duelDeviceWildWinExp(test);
+}

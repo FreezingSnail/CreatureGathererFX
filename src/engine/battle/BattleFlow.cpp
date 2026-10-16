@@ -73,7 +73,6 @@ void commitGathered(const battle::BattleSession &session) {
 // trainer/boss victories award nothing. A full bag saturates via inventoryAdd and
 // never corrupts state.
 void awardWildKoMaterial(const battle::BattleState &state) {
-    if (state.trainer || state.gatherable) return;
     item::Inventory *bag = item::battleInventory();
     if (bag == nullptr) return;
     const uint8_t species =
@@ -87,10 +86,58 @@ void awardWildKoMaterial(const battle::BattleState &state) {
     item::inventoryAdd(*bag, item::ItemKind::Lure, itemId, count);
 }
 
+// jp8.11.10: an ordinary (non-trainer, non-gatherable) wild Win grants exactly
+// 8 * opponentLevel to every living occupied party instance, once, at the single
+// terminal edge. Gathered/Escape/Fled/Lose/Draw, trainer/boss and gatherable
+// victories grant nothing and a KO'd member never receives the reward. Each
+// member's stable store slot is read once: the stored cumulative exp is the
+// growth authority, saturates at the level-31 threshold and derives the capped
+// level. A level increase preserves the member's missing HP (the live HP grows
+// by the maximum-HP delta, capped at the new maximum). Every mutation is
+// journaled before the live creature is installed, so a refused write leaves the
+// accepted per-instance state exactly as it was and never invents awarded exp.
+void awardOrdinaryWildExp(const battle::BattleState &state) {
+    const uint16_t gain = static_cast<uint16_t>(
+        state.active[static_cast<uint8_t>(battle::Side::Opponent)].level) * 8u;
+    const uint16_t cap = levelExpThreshold(LEVEL_COUNT - 1);
+    for (uint8_t i = 0; i < PARTY_SIZE; ++i) {
+        if (player.creatureHPs[i] == 0) continue; // empty slot or KO: no reward
+        const uint8_t slot = storePartySlot(i);
+        StoreRecord record;
+        // A 255/absent stable slot refuses here: storeRead's bound check.
+        if (!storeRead(slot, record)) continue;
+        const uint8_t oldMax = player.party[i].statlist.hp;
+        uint8_t newMax = oldMax;
+        uint8_t newHP = player.creatureHPs[i];
+        const uint16_t room = static_cast<uint16_t>(cap - record.exp);
+        record.exp = room <= gain ? cap : static_cast<uint16_t>(record.exp + gain);
+        Creature grown;
+        grown.load(record); // derived level and stats (one species read)
+        if (grown.level > player.party[i].level) {
+            newMax = grown.statlist.hp;
+            const uint16_t grownHp = static_cast<uint16_t>(newHP) +
+                                     static_cast<uint16_t>(newMax - oldMax);
+            newHP = grownHp > newMax ? newMax : static_cast<uint8_t>(grownHp);
+        }
+        record.hpEncoded = newHP >= newMax ? 0 : static_cast<uint8_t>(newHP + 1);
+        if (!storeWrite(slot, record)) continue; // refused: keep accepted state
+        if (grown.level > player.party[i].level) {
+            player.party[i] = grown;
+            player.creatureHPs[i] = newHP;
+        }
+    }
+}
+
 void finishBattle(battle::BattleSession &session, TerminalCallback callback) {
     const battle::Outcome outcome = session.result().outcome;
     if (outcome == battle::Outcome::Gathered) commitGathered(session);
-    else if (outcome == battle::Outcome::Win) awardWildKoMaterial(session.state());
+    else if (outcome == battle::Outcome::Win) {
+        const battle::BattleState &state = session.state();
+        if (!state.trainer && !state.gatherable) {
+            awardWildKoMaterial(state);
+            awardOrdinaryWildExp(state);
+        }
+    }
 #if defined(TEST) || defined(FX_READ_COUNTER)
     menu.clear();
 #endif

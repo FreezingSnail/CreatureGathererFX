@@ -597,7 +597,7 @@ fxtest-build:
 		    ARDUINO_BUILD_CACHE_PATH="$(ARDUINO_BUILD_CACHE_PATH)" $(ARDUINO_CLI) compile --fqbn "$(FQBN)" \
 		        $(AVR_FXTEST_NO_FACTS_BUILD_PROPERTIES) \
 		        --build-path "$$stage/build" --output-dir "$$stage/output" "$$stage/$$ino.ino"; \
-		elif [ "$$ino" = "test_battle_duel" ] || [ "$$ino" = "test_duel_resources" ] || [ "$$ino" = "test_duel_ui" ] || [ "$$ino" = "test_stack" ]; then \
+		elif [ "$$ino" = "test_battle_duel" ] || [ "$$ino" = "test_duel_session" ] || [ "$$ino" = "test_duel_resources" ] || [ "$$ino" = "test_duel_ui" ] || [ "$$ino" = "test_stack" ] || [ "$$ino" = "test_win_exp" ]; then \
 		    ARDUINO_BUILD_CACHE_PATH="$(ARDUINO_BUILD_CACHE_PATH)" $(ARDUINO_CLI) compile --fqbn "$(FQBN)" \
 		        $(AVR_FXTEST_DUEL_BUILD_PROPERTIES) \
 		        --build-path "$$stage/build" --output-dir "$$stage/output" "$$stage/$$ino.ino"; \
@@ -618,6 +618,7 @@ fxtest-run:
 		ms="$(FXTEST_MS)"; \
 		if [ "$$name" = "test_duel_resources" ]; then ms="$(FXTEST_MS_RESOURCES)"; fi; \
 		if [ "$$name" = "test_save" ]; then ms="$(FXTEST_MS_SAVE)"; fi; \
+		if [ "$$name" = "test_save_cuts" ]; then ms="$(FXTEST_MS_SAVE)"; fi; \
 		if out="$$($(ARDENS) captureserial=$$ms fxport=d1 display=ssd1306 file=$$stage/output/$$name.ino.hex file=$$stage/fxdata.bin 2>&1)"; then \
 			runner_status=0; \
 		else \

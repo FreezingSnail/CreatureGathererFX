@@ -658,10 +658,8 @@ inline void attackMoveRasters(FxTest &test) {
     }
 }
 
-inline void test_battlepresentation(FxTest &test) {
+inline void test_battlepresentation_moves(FxTest &test) {
     using namespace battle_presentation_test_detail;
-    playback(test, false);
-    playback(test, true);
     switchedSprites(test);
     damageLines(test);
     effectivenessFeedback(test, Modifier::Quarter, 90,
@@ -745,6 +743,16 @@ inline void test_battlepresentation(FxTest &test) {
         render(presenter, baseView);
         test.expectEq(hasInk(80, 0, 48, 32, true), false, F("absent species does not draw sprite"));
     }
+}
+
+// Core presenter suite: end-to-end playback plus the painted-stack and
+// frame-budget proofs (CreatureGathererFX-dqxm). The independent result-kind and
+// move/menu cases live in the co-located test_battlepresentation_moves sketch
+// (CreatureGathererFX-5j1n) so neither suite sits at the flash limit.
+inline void test_battlepresentation(FxTest &test) {
+    using namespace battle_presentation_test_detail;
+    playback(test, false);
+    playback(test, true);
 
     // Paint before entering the local result+presenter chain, so both borrowed
     // result storage and the real FX renderer call depth count in this proof.
