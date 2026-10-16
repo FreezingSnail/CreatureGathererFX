@@ -6,7 +6,6 @@
 #include "fxtest.hpp"
 #include "generated/battle_preset_data.hpp"
 #include "generated/creature_data.hpp"
-#include "generated/move_data.hpp"
 #include "generated/opponent_data.hpp"
 #include "src/engine/battle/BattlePresets.hpp"
 #include "src/lib/FxReadCounter.hpp"
@@ -20,14 +19,10 @@ const CreatureSeed &trainerMember(const OpponentSeed &trainer, uint8_t slot)
            slot == 1 ? trainer.secondCreature : trainer.thirdCreature;
 }
 
-uint8_t logicalBootstrapReads(const BattlePresets::Preset &preset)
+uint8_t logicalBootstrapReads(const BattlePresets::Preset &)
 {
-    uint8_t reads = 3; // One canonical species record per member.
-    for (uint8_t member = 0; member < 3; ++member)
-        for (uint8_t move = 0; move < 4; ++move)
-            if (preset.player[member].moveIds[move] != BattlePresets::emptyMoveId)
-                ++reads;
-    return reads;
+    // One canonical species record per member; the attack mask travels with it.
+    return 3;
 }
 
 void verify(FxTest &test, const BattlePresets::Preset &stored)
@@ -52,25 +47,8 @@ void verify(FxTest &test, const BattlePresets::Preset &stored)
         test.expectEqIdx(actual.statlist.hp, maxHP, F("preset player max HP"), slot);
         test.expectEqIdx(player.creatureHPs[slot], maxHP,
                          F("preset player current HP"), slot);
-        for (uint8_t position = 0; position < 4; ++position) {
-            const uint8_t id = member.moveIds[position];
-            test.expectEqIdx(actual.moves[position], id, F("preset player move ID"),
-                             static_cast<uint8_t>(slot * 4 + position));
-            if (id == BattlePresets::emptyMoveId) {
-                test.expectEqIdx(actual.moveList[position].move, 0,
-                                 F("preset empty descriptor"),
-                                 static_cast<uint8_t>(slot * 4 + position));
-                test.expectEqIdx(static_cast<uint8_t>(actual.moveList[position].effect1),
-                                 static_cast<uint8_t>(Effect::NONE),
-                                 F("preset empty effect"),
-                                 static_cast<uint8_t>(slot * 4 + position));
-            } else {
-                const Move expected(pgm_read_dword(moveFixtures + id));
-                test.expectEqIdx(actual.moveList[position].move, expected.move,
-                                 F("preset authored descriptor"),
-                                 static_cast<uint8_t>(slot * 4 + position));
-            }
-        }
+        test.expectEqIdx(actual.attackMask, member.attackMask,
+                         F("preset player attack mask"), slot);
     }
 
     player.creatureHPs[0] = 1;
@@ -96,7 +74,8 @@ void verify(FxTest &test, const BattlePresets::Preset &stored)
         const CreatureSeed &actual = trainerMember(actualTrainer, slot);
         test.expectEqIdx(actual.id, expected.id, F("trainer authored species"), slot);
         test.expectEqIdx(actual.lvl, expected.lvl, F("trainer authored level"), slot);
-        test.expectEqIdx(actual.moves, expected.moves, F("trainer authored moves"), slot);
+        test.expectEqIdx(actual.attackMask, expected.attackMask,
+                         F("trainer authored attack mask"), slot);
         test.expectEqIdx(actual.id, preset.player[slot].species,
                          F("trainer matches named matchup"), slot);
     }

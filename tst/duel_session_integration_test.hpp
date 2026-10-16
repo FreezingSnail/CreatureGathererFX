@@ -660,10 +660,9 @@ void duelExhaustedEntryIsLose(Test &test) {
                 "all-KO trainer entry resolves as a loss");
 }
 
-// The bench attack-type mask must derive from the real kit IDs. An empty slot
-// leaves moveList defaulted to a Move() that reads as authored SPIRIT, so a mask
-// that ignores the empty sentinel would invent a phantom spirit counter (and
-// spirit beats fire, a phantom counter to a fire pick).
+// The bench attack-type mask is the member's authored field verbatim; an empty
+// kit carries mask zero. A phantom spirit bit would invent a spirit counter
+// (spirit beats fire) that the authored set never grants.
 void duelBenchMaskSkipsEmptySlots(Test &test) {
     preparePlayer();
     // Two-member party: original slot 0 active, slot 1 the sole bench member.
@@ -673,42 +672,30 @@ void duelBenchMaskSkipsEmptySlots(Test &test) {
     player.creatureHPs[0] = 40;
     player.creatureHPs[1] = 40;
 
-    // Bench member: one real plant attack, every other slot an empty sentinel.
-    player.party[1].moves[0] = 1; // a valid authored move id
-    player.party[1].moveList[0] =
-        Move(MoveBitSet{static_cast<uint8_t>(Type::PLANT), 10, 0, 0, 0});
-    for (uint8_t slot = 1; slot < 4; ++slot) {
-        player.party[1].moves[slot] = EMPTY_MOVE_ID;
-        player.party[1].moveList[slot] = Move();
-    }
+    const uint8_t plantBit =
+        static_cast<uint8_t>(1u << duel::foldType(static_cast<uint8_t>(Type::PLANT)));
+    player.party[1].attackMask = plantBit;
 
     battle::BattleSession session;
     session.setRng({scriptedRng});
     rngDraws = 0;
     session.beginWild(4, 1, false, 0);
 
-    const uint8_t plantBit =
-        static_cast<uint8_t>(1u << duel::foldType(static_cast<uint8_t>(Type::PLANT)));
     const uint8_t mask =
         session.state().moveUsesSpent[static_cast<uint8_t>(battle::Side::Player)][1];
     test.assert(mask, plantBit, "bench mask is exactly the real plant attack");
     test.assert(static_cast<uint8_t>(mask & 1u), static_cast<uint8_t>(0),
-                "no phantom spirit bench bit from the empty slots");
+                "no phantom spirit bench bit");
     test.assert(static_cast<uint8_t>(mask & static_cast<uint8_t>(1u << 3)),
                 static_cast<uint8_t>(0), "no phantom fire-counter bench bit");
 
-    // All-empty kit: the mask must be zero, and WAIT stays the only option.
-    for (uint8_t slot = 0; slot < 4; ++slot) {
-        player.party[1].moves[slot] = EMPTY_MOVE_ID;
-        player.party[1].moveList[slot] = Move();
-    }
-    player.creatureHPs[0] = 40;
-    player.creatureHPs[1] = 40;
+    // Empty kit: the mask must be zero, and WAIT stays the only option.
+    player.party[1].attackMask = 0;
     battle::BattleSession emptyKit;
     emptyKit.setRng({scriptedRng});
     emptyKit.beginWild(4, 1, false, 0);
     test.assert(emptyKit.state().moveUsesSpent[static_cast<uint8_t>(battle::Side::Player)][1],
-                static_cast<uint8_t>(0), "all-empty bench mask is zero");
+                static_cast<uint8_t>(0), "empty bench mask is zero");
 }
 
 // A trade scales each side's OUTGOING hit by its own matchup: damage is what the

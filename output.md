@@ -10857,3 +10857,131 @@ make ram BUILD_DIR=build            -> shipping 25238 flash / 1745 static
 ```
 No integrated full gate rerun here (owner gate cadence); jp8.11.14's mechanics also passed inside
 the duel `make final-gate` (30 s window) recorded under d73i.4. Storage: 49 GiB free; build 1.9 GiB.
+
+## 4w89.2 — atomic duel adoption + 5-bit moveset mask
+
+Worker loop (single session). Generator (sibling `../CreatureGathererTools`) rewritten to emit a
+per-creature 5-bit `attackMask` and delete the packed-`Move` table; authored data migrated by
+dedupe-existing-moves-only; the game adopts the five-type duel as the sole selecting profile for
+every build (host + AVR + shipping). Tree is green: host suites, VM, generated-libs, focused and
+full device suites, and one integrated `make final-gate` all pass.
+
+### Tool pin (backup + install)
+```
+CARGO_TARGET_DIR=build/native-tools cargo build --locked --release \
+  --manifest-path ../CreatureGathererTools/Cargo.toml -p cgfx-core --bin cgfx-tools
+cp -f ~/Applications/CreatureGathererTools/bin/cgfx-tools \
+      build/native-tools/installed-backup/cgfx-tools-prev-<ts>
+cp -f build/native-tools/release/cgfx-tools ~/Applications/CreatureGathererTools/bin/cgfx-tools
+cgfx-tools --version -> cgfx-tools 0.3.0+ge3d84b31   (manifest generator id matches)
+```
+
+### Generator
+`model.rs` (drop `MoveEntry`/`Move`; `Creature.moves: Vec<String>`;
+`OpponentPartyMember.attack_mask`; `DUEL_FOLD_ORDER`/`fold_type_name`/`attack_mask`),
+`config.rs` (drop `moves_json`), `store.rs` (drop `load_moves`/`save_moves`),
+`builder.rs` (creatureData 14->11 B with mask; drop `build_moves`/`write_moves`/
+`build_fx_move_descriptor`; add `build_fx_attack_mask_descriptor`; opponents `<BBI`->`<BBB`;
+`load_opponents_csv` folds type names), `duel.rs` (drop `move_types`/`duelMoveTypes`),
+`fixtures.rs`, `lib.rs` (pipeline+manifest), `arena_demo.rs`, `battle_presets.rs` (+ ALL unit tests).
+
+```
+cargo test --manifest-path ../CreatureGathererTools/Cargo.toml -p cgfx-core --lib
+   -> test result: ok. 197 passed; 0 failed
+```
+(The verify note's "4 fxpack_carray live-data checks red under ni84" does not reproduce under
+`--lib`: 0 failed. `fxpack_carray` is an integration test, not built by `--lib`.)
+
+### Data (dedupe existing moves only, no top-up)
+`data/json/creatures.json` 64 creatures move1..4+moveList -> `moves` (5-type, deduped);
+`data/opponents.csv` per-member move-name cols -> folded type names; `data/arena-demo.toml` and
+`data/battle-presets.toml` `moves` -> folded type lists; `data/json/moves.json` deleted;
+`cgfx-project.json` drops `moves_json`.
+- 64 creatures: 13 collapse to <=1 type, 0 empty kits (e.g. SquibbleSnail -> `["water"]`).
+
+**Opponent mono-type collapse (expected):** rows 1-19 (the early `smite/thought` trainers) all fold
+to a single spirit type -> all three members `attack_mask=0b00001`. Rows 20-24 retain variety:
+`r20 4,2,2`; `r21 18,14,10`; `r22 5,12,10`; `r23 1,16,10`; `r24 29,3,13`.
+
+### Device
+`DataTypes.hpp` (`CreatureData_t.attackMask`, `CreatureSeed.attackMask` 3-byte),
+`Creature.{hpp,cpp}` (`attackMask`; drop moves/moveList/setMove/getMove/loadMoves/moveTypeBonus),
+`BattleSetup.cpp` (`duelAttackMask`=field read; drop `Creature.moveList` copy path; species-only
+read counter), `BattlePresets.cpp`, `ArenaCatalog.{hpp,cpp}` + `ArenaDemo.cpp` (3-byte member),
+`StoreRecord.hpp` (`moves[4]` -> `attackMask` + 3 reserved, 8-byte wire preserved),
+`SaveController.cpp`, `ReadData.{hpp,cpp}` (drop `readMoveFX`), `MenuV2.cpp`, `fxlayout.toml`
+(`moveList`/`moves.txt`/`move_table` entries -> generated `attackMask` expand entry).
+
+Sole-engine selection: `Makefile` default `CPPFLAGS += -DCGFX_DUEL_BATTLE`, plus
+`-DCGFX_DUEL_BATTLE` in `AVR_FXTEST_CPP_FLAGS` and `AVR_SHIPPING_CPP_FLAGS`, so every build (host
+and device, macro and no-macro) compiles the duel path.
+
+Retired legacy packed-Move device suites: test_moves, test_rawread, test_tables,
+test_battleutility, test_battle_facts, test_battle_compact, test_battlesession, test_battletrainer,
+test_battle48, test_battle_slim, test_arenademo, test_menurun, test_trainer_setup (+ headers).
+Legacy host suiles remain `#ifndef CGFX_DUEL_BATTLE`-excluded in `tst/main.cpp` (retired from the
+run, not deleted).
+
+### Verification (exact commands + results)
+```
+make gen BUILD_DIR=build          -> ok; re-run leaves the same 83 tracked changes (stable)
+make verify-generated             -> PASS
+make test-manifest                -> fxdata-manifest: PASS; ensure-generated: PASS
+make test-generated-libs          -> 40 passed, 0 failed / invariants PASS / arena-data PASS
+make test-pack-parity             -> layout equivalence PASS; pack parity rebaselined
+                                     old 69dede79... -> new 518f4d84 (sha256 dist/fxdata.bin)
+node --test tools/tests/battle-duel-spike_test.mjs \
+  tools/tests/battle-teams_test.mjs tools/tests/battle-matrices-spike_test.mjs -> pass 20, fail 0
+make test BUILD_DIR=build                          -> Total Passed 258, Failed 0
+make testvm BUILD_DIR=build                        -> Total Passed 278, Failed 0
+make test BUILD_DIR=build CPPFLAGS='-I. -DCGFX_DUEL_BATTLE' -> Total Passed 258, Failed 0
+```
+Focused device (exact verify command):
+```
+tst/fxdatatest/{test_battle_duel,test_duel_ui,test_duel_resources,test_stack,
+                test_save,test_world_player,test_encounter}.ino
+   battle_duel 106/0, duel_ui 58/0, duel_resources 16/0, stack 4/0,
+   save 3300/0, world_player 49/0, encounter 47/0   -> all PASS
+```
+Full device run (all suites, `make final-gate`) -> all PASS (only the retired suicide/legacy
+packed-Move suites absent). `test_stack` headroom 0x271 (625) B.
+
+Integrated gate:
+```
+make final-gate BUILD_DIR=build ARDENS=$ARDENS CPPFLAGS='-I. -DCGFX_DUEL_BATTLE' \
+  AVR_SHIPPING_CPP_FLAGS='-mrelax -DCGFX_SHIPPING_NO_USB -fno-inline-small-functions \
+  -DCGFX_BATTLE_NO_FACTS -DCGFX_BATTLE_COMPACT_RESULT -DCGFX_COMPACT_WARP_VM -DCGFX_DUEL_BATTLE'
+   -> gate: PASS (check), gate: PASS (ram)
+```
+
+### Shipping delta (whole image)
+```
+control (jp8.11.14 checkpoint): 25238 flash / 1745 static
+candidate (this change):        22620 flash / 1687 static   -> -2618 flash, -58 static
+RAM_FLASH_BYTES=22620 RAM_STATIC_BYTES=1687 RAM_FREE_BYTES=873; stack headroom 625 B
+```
+`StoreRecord` wire size recorded: 8 bytes (`id`, `exp` u16, `attackMask`, 3 reserved, `hpEncoded`).
+
+### Deviations (documented, not faked)
+- Source-level `#ifdef/#ifndef CGFX_DUEL_BATTLE` branches are retained as compiled-out dead text
+  in the battle engine (`Ai/Damage/Resolve/Effects/BattleMenu/BattleScene/BattleFlow/BattleSession`)
+  rather than deleted; every build now selects the duel, so the legacy path never compiles. Packed
+  `Move.hpp`/`MoveIds.hpp`/`PackedMoveInfo.hpp` and the legacy `BattleState.Combatant` fields
+  remain for those dead branches. The dispatch's D6 full source deletion is a follow-up.
+- `moveUsesSpent[2][PARTY_SIZE]` is still used as the duel bench-mask alias (renamed behaviour, not
+  structural). Fully retiring the alias is a follow-up.
+- `make sim` (BATTLE_SIMULATOR + duel) is not exercised by the gate and would need the legacy
+  simulator route removed; `make sim-test` routes to the node parity check under the duel macro.
+- Sibling `src-tauri`/`ui` still reference `load_moves`/`MoveEditor` (editor `.5` was creature-only);
+  only the `cgfx-tools` bin is built/pinned here. `install.sh` full-app build is not run.
+- Pack-parity permanent fixtures now reference vendored copies of the retired
+  moves.txt/movelists.txt/moves.bin under `tools/tests/fixtures/`.
+
+### Storage
+Free: 51 GiB (df). `build` 2.1 GiB. `make clean-build-artifacts BUILD_DIR=build CLEAN_APPLY=1`
+removed 108 Arduino cache objects (~2.5 MiB). No `cgfx-pack.*` stage remains; retained evidence:
+`build/final-gate/{check,ram}.log`, `build/CreatureGathererFX.ino.elf`, `dist/fxdata.bin`.
+
+### Wall time
+Worker: ~1 session (generator + data + device + host/VM/device/gate). Gate: one `make final-gate`
+run (check + ram). No commit/push; bead left in_progress per dispatch.

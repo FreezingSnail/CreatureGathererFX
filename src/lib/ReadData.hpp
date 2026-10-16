@@ -1,10 +1,8 @@
 #pragma once
-#include "Move.hpp"
+#include "Effect.hpp"
 #include "DataTypes.hpp"
 #include "../creature/Creature.hpp"
 #include "uint24.h"
-
-Move readMoveFX(uint8_t index);
 
 uint24_t readCreatureNameAddress(uint8_t id);
 uint24_t readMoveNameAddress(uint16_t id);

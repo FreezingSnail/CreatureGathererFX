@@ -1,10 +1,8 @@
 #include "Creature.hpp"
 
-#include "../lib/Move.hpp"
 #include "../lib/DataTypes.hpp"
 #include "../lib/ReadData.hpp"
 #include "LevelCurve.hpp"
-#include "../lib/MoveIds.hpp"
 
 // This will need to load the creature seed from the progmemstore
 Creature::Creature() {
@@ -14,6 +12,7 @@ Creature::Creature() {
     this->statlist.hp = 0;
     this->statlist.spcAtk = 0;
     this->statlist.spcDef = 0;
+    this->attackMask = 0;
 }
 
 void Creature::load(CreatureData_t seed) {
@@ -23,8 +22,7 @@ void Creature::load(CreatureData_t seed) {
     level = levelFromExp(levelExpThreshold(LEVEL_COUNT - 1));
     loadTypes(seed);
     setStats(seed);
-    // Need some kind of default setting for moves ?
-    loadMoves(seed);
+    attackMask = seed.attackMask;
     // loadSprite(seed);
 }
 
@@ -34,30 +32,17 @@ void Creature::load(const StoreRecord &record) {
     CreatureData_t seed = getCreatureFromStore(id);
     loadTypes(seed);
     setStats(seed);
-    for (uint8_t slot = 0; slot < 4; ++slot) {
-        setMove(record.moves[slot], slot);
-    }
+    attackMask = record.attackMask;
 }
 
-// 00,id1,lvl1,move11,move12,move13,move14,
 void Creature::loadFromOpponentSeed(CreatureSeed seed) {
     id = seed.id;
     CreatureData_t cSeed = getCreatureFromStore(id);
     loadTypes(cSeed);
     level = seed.lvl;
     setStats(cSeed);
-    setMove(parseOpponentCreatureSeedMove(seed.moves, 0), 0);
-    setMove(parseOpponentCreatureSeedMove(seed.moves, 1), 1);
-    setMove(parseOpponentCreatureSeedMove(seed.moves, 2), 2);
-    setMove(parseOpponentCreatureSeedMove(seed.moves, 3), 3);
+    attackMask = seed.attackMask;
     // loadSprite(cSeed);
-}
-
-void Creature::loadMoves(CreatureData_t seed) {
-    this->setMove(static_cast<uint8_t>((seed.move1)), 0);
-    this->setMove(static_cast<uint8_t>((seed.move2)), 1);
-    this->setMove(static_cast<uint8_t>((seed.move3)), 2);
-    this->setMove(static_cast<uint8_t>((seed.move4)), 3);
 }
 
 // void Creature::loadSprite(CreatureData_t seed) {
@@ -66,13 +51,6 @@ void Creature::loadMoves(CreatureData_t seed) {
 
 void Creature::loadTypes(CreatureData_t seed) {
     this->types = DualType((Type) static_cast<uint8_t>((seed.type1)), (Type) static_cast<uint8_t>((seed.type2)));
-}
-
-// should prob have error checking but w/e
-void Creature::setMove(uint8_t move, uint8_t slot) {
-    this->moves[slot] = move;
-    // Trainer rows use 255 for an absent move. Never look beyond move_table.
-    this->moveList[slot] = validMoveId(move) ? readMoveFX(move) : Move();
 }
 
 void Creature::setStats(CreatureData_t seed) {
@@ -89,14 +67,6 @@ void Creature::setStats(CreatureData_t seed) {
 // going to need this for the opponent ai
 uint8_t Creature::getAdvantage(DualType opponent) {
     return 0;
-}
-
-uint8_t Creature::getMove(uint8_t slot) {
-    return this->moves[slot];
-}
-
-bool Creature::moveTypeBonus(uint8_t index) {
-    return this->types.getType1() == (Type)this->moveList[index].getMoveType() || this->types.getType2() == (Type)this->moveList[index].getMoveType();
 }
 
 uint8_t Creature::seedToStat(uint8_t seed) {

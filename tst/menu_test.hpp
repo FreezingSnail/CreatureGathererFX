@@ -305,8 +305,8 @@ void MenuSnapshotIntegrationTest(TestSuite &suite) {
                 "ordinary move name resolved once");
     test.assert(menu.moveNameAddresses[3], static_cast<uint24_t>(0),
                 "absent move has no name lookup");
-    test.assert(FxReadCounter::count(), static_cast<uint8_t>(4),
-                "open resolves each valid move name and record once");
+    test.assert(FxReadCounter::count(), static_cast<uint8_t>(2),
+                "open resolves each valid move name once");
 
     view.moveIds[0] = 9;
     view.party[player][0] = {11, 1, 1};

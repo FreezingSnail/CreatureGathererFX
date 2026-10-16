@@ -63,7 +63,14 @@ perturbed_layout=$fixtures/fxlayout-expand-20-perturbed.toml
 # packed payload and later symbol addresses shift. Previous cart sha256
 # ff695246..., now 69dede79.... Intentional rebaseline; `make gen` leaves
 # src/fxdata.h, fxdata/ and tst/fxdatatest/generated/ byte-identical to HEAD.
-expected=69dede79a8a0e0347f55531dfd2813787a36c03d77c5e5b2d9ce1596fe08f65c
+# 4w89.2: the packed moveList/moveNames/move_table fields and duelMoveTypes are
+# retired; creatureData drops 3 bytes/row (14->11) for the folded attackMask, the
+# per-creature AttackMasks table replaces movelists, and the opponents payload
+# shrinks to three-byte <BBB rows. The generator identity is 0.3.0+ge3d84b31.
+# Previous cart sha256 69dede79..., now 518f4d84.... Intentional rebaseline.
+# The permanent layout-equivalence fixtures now reference vendored copies of the
+# retired moves.txt/movelists.txt/moves.bin beside this script.
+expected=518f4d84ac9e1df0d161a6de70904e8847de0cbeccec7b427ef8c0c840aa0299
 
 for layout in "$old_layout" "$new_layout" "$perturbed_layout"; do
     test -f "$layout" || {

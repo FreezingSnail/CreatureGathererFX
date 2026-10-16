@@ -114,16 +114,8 @@ inline void ArenaLifecycleSuite(TestRunner &runner)
                     "party attack stat is rebuilt from canonical species data");
         test.assert(player.creatureHPs[slot], expected.statlist.hp,
                     "new party HP starts at the canonical maximum");
-        for (uint8_t moveSlot = 0; moveSlot < 4; ++moveSlot) {
-            const uint8_t moveId = member[2 + moveSlot];
-            test.assert(player.party[slot].moves[moveSlot], moveId,
-                        "party move ID matches the selected FX member");
-            if (moveId == LEGACY_EMPTY_MOVE_ID) {
-                test.assert(player.party[slot].moveList[moveSlot].move,
-                            static_cast<uint16_t>(0),
-                            "legacy empty move slot uses a blank descriptor");
-            }
-        }
+        test.assert(player.party[slot].attackMask, member[2],
+                    "party attack mask matches the selected FX member");
         test.assert(player.party[slot].status.effects[0], Effect::NONE,
                     "party status clears during fresh reconstruction");
         test.assert(player.party[slot].statMods.modifiers, static_cast<uint16_t>(0),

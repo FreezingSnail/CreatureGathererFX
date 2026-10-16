@@ -18,19 +18,19 @@ void ArenaCatalogSuite(TestRunner &runner)
     arena::Member member{};
     test.assert(arena::readPlayerMember(2, 2, member), true,
                 "last player member is readable");
-    test.assert(member.species, static_cast<uint8_t>((2 * 18 + 2 * 6) & 0xff),
-                "player records use an 18-byte team and six-byte member stride");
-    test.assert(member.level, static_cast<uint8_t>((2 * 18 + 2 * 6 + 1) & 0xff),
+    test.assert(member.species, static_cast<uint8_t>((2 * 9 + 2 * 3) & 0xff),
+                "player records use a nine-byte team and three-byte member stride");
+    test.assert(member.level, static_cast<uint8_t>((2 * 9 + 2 * 3 + 1) & 0xff),
                 "member level follows species");
-    test.assert(member.moveIds[3], static_cast<uint8_t>((2 * 18 + 2 * 6 + 5) & 0xff),
-                "fourth move ends the six-byte member");
+    test.assert(member.attackMask, static_cast<uint8_t>((2 * 9 + 2 * 3 + 2) & 0xff),
+                "attack mask ends the three-byte member");
     test.assert(FxReadCounter::count(), static_cast<uint8_t>(1),
                 "member reader uses one FX read");
     test.assert(fxDataFake::lastDataAddress,
-                ArenaDemoData::playerMembers + 2 * 18 + 2 * 6,
+                ArenaDemoData::playerMembers + 2 * 9 + 2 * 3,
                 "member address uses team and slot strides");
-    test.assert(fxDataFake::lastDataLength, static_cast<size_t>(6),
-                "member reads exactly six bytes");
+    test.assert(fxDataFake::lastDataLength, static_cast<size_t>(3),
+                "member reads exactly three bytes");
 
     const arena::Member savedMember = member;
     const uint32_t readsBeforeInvalidMember = fxDataFake::readCount;

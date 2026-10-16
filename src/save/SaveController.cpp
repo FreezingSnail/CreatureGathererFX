@@ -48,9 +48,10 @@ void captureLiveSaveState()
             record.exp = levelExpThreshold(player.party[i].level);
             changed = true;
         }
-        for (uint8_t move = 0; move < 4; ++move) {
-            if (record.moves[move] != player.party[i].moves[move]) changed = true;
-            record.moves[move] = player.party[i].moves[move];
+        {
+            const uint8_t mask = static_cast<uint8_t>(player.party[i].attackMask & 0x1F);
+            if (record.attackMask != mask) changed = true;
+            record.attackMask = mask;
         }
         // HP-only changes belong to the checkpoint snapshot. Avoid consuming
         // journal capacity before commit; the compaction pass mirrors HP into
@@ -138,7 +139,7 @@ void seedParty()
         record.id = player.party[i].id;
         record.exp = levelExpThreshold(player.party[i].level);
         record.hpEncoded = player.creatureHPs[i] + 1;
-        memcpy(record.moves, player.party[i].moves, 4);
+        record.attackMask = static_cast<uint8_t>(player.party[i].attackMask & 0x1F);
         storeWrite(i, record);
         storeAssign(i, i, player.creatureHPs[i]);
     }

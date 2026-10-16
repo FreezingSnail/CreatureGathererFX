@@ -10,7 +10,7 @@ source = { expand = { path = "opponents-legacy-19.txt" } }
 source = { expand = { path = "../../../fxdata/data/creatureData.txt" } }
 
 [[entry]]
-source = { expand = { path = "../../../fxdata/generated/moves.txt" } }
+source = { expand = { path = "moves.txt" } }
 
 [[entry]]
 source = { expand = { path = "../../../fxdata/data/event.txt" } }
@@ -19,7 +19,7 @@ source = { expand = { path = "../../../fxdata/data/event.txt" } }
 source = { expand = { path = "../../../fxdata/data/mapData.txt" } }
 
 [[entry]]
-source = { expand = { path = "../../../fxdata/data/movelists.txt" } }
+source = { expand = { path = "movelists.txt" } }
 
 [[entry]]
 source = { expand = { path = "../../../fxdata/data/menu.txt" } }
@@ -50,7 +50,7 @@ source = { raw = "../../../fxdata/generated/typetable.bin" }
 
 [[entry]]
 name = "move_table"
-source = { raw = "../../../fxdata/generated/moves.bin" }
+source = { raw = "moves.bin" }
 
 [[entry]]
 name = "map_data"

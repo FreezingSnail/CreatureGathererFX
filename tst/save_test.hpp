@@ -21,7 +21,7 @@ inline SaveStep save(SaveFile &state) {
     for(uint16_t i=0;i<256 && saveInProgress();++i) result=saveStepAdvance(state);
     return result;
 }
-inline StoreRecord creature(uint16_t exp=27) { return {0,exp,{8,32,32,32},0}; }
+inline StoreRecord creature(uint16_t exp=27) { return {0,exp,2,{0,0,0},0}; }
 inline void fresh() { flashFakeReset();storeFresh(); }
 
 // Independent Fletcher-16 oracle for the 12-byte normalized header. Reimplements
@@ -286,7 +286,7 @@ inline void CheckpointCutTest(TestSuite &suite) {
     //   8816 journal erased, cleanup bit still pending
     //   8817 cleanup bit cleared
     const int32_t cuts[]={0,4096,4608,4718,4719,4720,4730,8816,8817};
-    const uint8_t emptyMoves[4]={0,0,0,0};
+    const uint8_t emptyMask=0;
     uint8_t expectedSnapshot[96];
     saveFileEncode(snapshot(0),0,expectedSnapshot,96);
     for(int32_t cut:cuts) {
@@ -305,7 +305,7 @@ inline void CheckpointCutTest(TestSuite &suite) {
             const bool added=i==slot;
             test.assert(got.id,added?record.id:static_cast<uint8_t>(255),"cut record id");
             test.assert(got.exp,added?record.exp:static_cast<uint16_t>(0),"cut record exp");
-            test.assert(memcmp(got.moves,added?record.moves:emptyMoves,4),0,"cut record moves");
+            test.assert(got.attackMask,added?record.attackMask:emptyMask,"cut record mask");
         }
         test.assert(storeBootFailed(),false,"cut cleanup completed");
     }
@@ -500,7 +500,7 @@ inline void PlayerStoreIntegrationTest(TestSuite &suite) {
     test.assert(storeRead(slotA,stored),true,"stored instance readable");
     test.assert(stored.exp,126,"non-threshold XP preserved when level unchanged");
     test.assert(stored.id,first.id,"party instance id preserved");
-    test.assert(memcmp(stored.moves,first.moves,4),0,"party instance moves preserved");
+    test.assert(stored.attackMask,first.attackMask,"party instance mask preserved");
     // A real level change rewrites only that record to the new threshold; a
     // second duplicate instance keeps its exact fractional XP.
     fresh();

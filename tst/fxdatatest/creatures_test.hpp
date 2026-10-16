@@ -6,12 +6,9 @@
 #include "fxtest.hpp"
 #include "generated/creature_data.hpp"
 #include "src/lib/ReadData.hpp"
-#include "src/lib/MoveIds.hpp"
 #include "src/engine/battle/BattleSetup.hpp"
 
 static_assert(sizeof(Effect) == sizeof(uint8_t), "Effect must be one byte on AVR");
-static_assert(sizeof(Move) == 4, "Move must be four bytes on AVR");
-static_assert(sizeof(Creature) == 33, "Creature must be 33 bytes on AVR");
 
 void test_creatureData(FxTest &test, const CreatureData_t &actual,
                        const CreatureData_t &expected, uint8_t index) {
@@ -25,10 +22,7 @@ void test_creatureData(FxTest &test, const CreatureData_t &actual,
     test.expectEqIdx(actual.spcDefSeed, expected.spcDefSeed, F("creature.spcDefSeed"), index);
     test.expectEqIdx(actual.hpSeed, expected.hpSeed, F("creature.hpSeed"), index);
     test.expectEqIdx(actual.spdSeed, expected.spdSeed, F("creature.spdSeed"), index);
-    test.expectEqIdx(actual.move1, expected.move1, F("creature.move1"), index);
-    test.expectEqIdx(actual.move2, expected.move2, F("creature.move2"), index);
-    test.expectEqIdx(actual.move3, expected.move3, F("creature.move3"), index);
-    test.expectEqIdx(actual.move4, expected.move4, F("creature.move4"), index);
+    test.expectEqIdx(actual.attackMask, expected.attackMask, F("creature.attackMask"), index);
 }
 
 void test_creatures(FxTest &test) {
@@ -65,10 +59,8 @@ void test_creatures(FxTest &test) {
                          F("encounter.type1"), id);
         test.expectEqIdx(static_cast<uint8_t>(active.types.getType2()), expected.type2,
                          F("encounter.type2"), id);
-        test.expectEqIdx(active.moveIds[0], battleMoveId(expected.move1), F("encounter.move1"), id);
-        test.expectEqIdx(active.moveIds[1], battleMoveId(expected.move2), F("encounter.move2"), id);
-        test.expectEqIdx(active.moveIds[2], battleMoveId(expected.move3), F("encounter.move3"), id);
-        test.expectEqIdx(active.moveIds[3], battleMoveId(expected.move4), F("encounter.move4"), id);
+        test.expectEqIdx(active.attackMask, expected.attackMask,
+                         F("encounter.attackMask"), id);
 
         // The requested level initializes both encounter metadata and creature stats.
         test.expectEqIdx(active.level, encounterLevel, F("encounter.level0"), id);

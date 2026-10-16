@@ -9,39 +9,38 @@
 #define BATTLE_PRESET_STORAGE
 #endif
 namespace BattlePresets {
-constexpr uint8_t emptyMoveId = 32;
-struct Member { uint8_t species, level, moveIds[4]; };
+struct Member { uint8_t species, level, attackMask; };
 struct Preset { Member player[3]; uint8_t trainerId; };
-static_assert(sizeof(Preset) == 19, "preset layout changed");
+static_assert(sizeof(Preset) == 10, "preset layout changed");
 const Preset opening BATTLE_PRESET_STORAGE = {
     {
-        { 0, 31, { 8, 9, 32, 32 } },
-        { 3, 31, { 12, 13, 32, 32 } },
-        { 6, 31, { 4, 5, 32, 32 } },
+        { 0, 31, 2 },
+        { 3, 31, 4 },
+        { 6, 31, 2 },
     },
     0
 };
 const Preset switch_drill BATTLE_PRESET_STORAGE = {
     {
-        { 1, 31, { 8, 9, 10, 32 } },
-        { 4, 31, { 12, 13, 14, 32 } },
-        { 7, 31, { 4, 5, 6, 32 } },
+        { 1, 31, 2 },
+        { 4, 31, 4 },
+        { 7, 31, 2 },
     },
     1
 };
 const Preset utility BATTLE_PRESET_STORAGE = {
     {
-        { 9, 31, { 2, 37, 32, 32 } },
-        { 14, 31, { 12, 2, 41, 13 } },
-        { 12, 31, { 27, 43, 24, 32 } },
+        { 9, 31, 1 },
+        { 14, 31, 5 },
+        { 12, 31, 16 },
     },
     1
 };
 const Preset beta BATTLE_PRESET_STORAGE = {
     {
-        { 0, 3, { 8, 9, 10, 11 } },
-        { 3, 3, { 12, 13, 14, 15 } },
-        { 6, 3, { 4, 5, 6, 7 } },
+        { 0, 3, 2 },
+        { 3, 3, 4 },
+        { 6, 3, 2 },
     },
     0
 };

@@ -87,10 +87,7 @@ StoreRecord creature(uint16_t exp = 27)
     StoreRecord record = {};
     record.id = 0;
     record.exp = exp;
-    record.moves[0] = 8;
-    record.moves[1] = 32;
-    record.moves[2] = 32;
-    record.moves[3] = 32;
+    record.attackMask = 2;
     return record;
 }
 
@@ -438,7 +435,7 @@ inline void test_saveCheckpointCuts(FxTest &test)
     // (The 4608 below is the separate FIRST-save case, not prior-checkpoint 4608.)
     const int32_t cuts[] = {0, 4096, 4608, 4718, 4719, 4720, 4730, 8816, 8817};
     const StoreRecord expected = creature();
-    const uint8_t emptyMoves[4] = {0, 0, 0, 0};
+    const uint8_t emptyMask = 0;
     uint8_t expectedSnapshot[96];
     saveFileEncode(snapshot(0), 0, expectedSnapshot, 96);
     for (uint8_t c = 0; c < sizeof(cuts) / sizeof(cuts[0]); ++c) {
@@ -472,8 +469,8 @@ inline void test_saveCheckpointCuts(FxTest &test)
                           F("cut record id"));
             test.expectEq(got.exp, added ? expected.exp : static_cast<uint16_t>(0),
                           F("cut record exp"));
-            test.expectEq(memcmp(got.moves, added ? expected.moves : emptyMoves, 4), 0,
-                          F("cut record moves"));
+            test.expectEq(got.attackMask, added ? expected.attackMask : emptyMask,
+                          F("cut record mask"));
         }
         test.expectEq(storeBootFailed(), false, F("cut cleanup completed"));
     }
@@ -618,9 +615,7 @@ inline void test_saveStatusRender(FxTest &test)
     expectPixel(test, 76, 27, 1, F("N second pixel paper"));
     expectPixel(test, 84, 27, 1, F("G first pixel paper"));
     expectPixel(test, 86, 27, 0, F("G second pixel ink"));
-    FX::waitWhileBusy();
-    test.expectEq(ReadFXu16(move_table), rawReadMoveTableFirst,
-                  F("FX data read after save wait"));
+    // The packed move table is retired; the save path issues no move-table read.
 }
 
 inline void test_save(FxTest &test)

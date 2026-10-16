@@ -1,7 +1,6 @@
 // CreatureGathererFX-ffm: this TU is the sole battle setup FX-reader boundary.
 #include "BattleSetup.hpp"
 #include "MoveUses.hpp"
-#include "../../lib/MoveIds.hpp"
 #include "../../lib/ReadData.hpp"
 #include "../../lib/FxReadCounter.hpp"
 #include "../../player/Player.hpp"
@@ -22,22 +21,12 @@ constexpr uint8_t SPECIES_COUNT = 32;
 #endif
 
 #ifdef CGFX_DUEL_BATTLE
-// Folded 5-type attack mask of a creature's usable authored attack slots. Stored
-// at setup transition (the only place a bench member's moves are resident) and
-// aliased into the otherwise-unused moveUsesSpent storage in flag-ON builds, so
-// the AI can pick a bench counter with no FX read during Choice.
+// Resident folded 5-type attack mask of a creature. The mask is authored data
+// (CreatureData_t.attackMask), so a bench member's set travels with its record
+// and the AI can pick a counter with no FX read during Choice.
 uint8_t duelAttackMask(const Creature &creature)
 {
-    uint8_t mask = 0;
-    for (uint8_t slot = 0; slot < 4; ++slot) {
-        // The authored kit IDs are authoritative: an empty/legacy slot leaves
-        // moveList defaulted to a Move() whose type reads as authored SPIRIT, so
-        // skipping validMoveId would invent a phantom spirit bench counter.
-        if (!validMoveId(creature.moves[slot])) continue;
-        const uint8_t type = creature.moveList[slot].getMoveType();
-        if (type < 8) mask |= static_cast<uint8_t>(1u << duel::foldType(type));
-    }
-    return mask;
+    return static_cast<uint8_t>(creature.attackMask & 0x1F);
 }
 #endif
 
@@ -101,7 +90,7 @@ void loadSpecies(Creature &creature, uint8_t id, uint8_t level)
     creature.level = level;
     creature.loadTypes(seed);
     creature.setStats(seed);
-    creature.loadMoves(seed);
+    creature.attackMask = seed.attackMask;
     creature.status.clearEffects();
     creature.statMods.clearModifiers();
 }
@@ -128,7 +117,7 @@ void loadTrainerCreature(Creature &creature, const CreatureSeed &seed,
         creature.level = seed.lvl;
         creature.loadTypes(data);
         creature.setStats(data);
-        creature.loadMoves(data);
+        creature.attackMask = data.attackMask;
     } else {
         creature.loadFromOpponentSeed(seed);
     }
@@ -227,21 +216,15 @@ void setWildState(BattleState &state, bool gatherable, uint8_t tierRate,
 
 uint8_t speciesCreatureReads(const Creature &creature)
 {
-    uint8_t reads = 1;
-    for (uint8_t slot = 0; slot < 4; ++slot)
-        if (validMoveId(creature.moves[slot])) ++reads;
-    return reads;
+    static_cast<void>(creature);
+    // One species record carries the authored attack mask; no move-table read.
+    return 1;
 }
 
 uint8_t trainerCreatureReads(const CreatureSeed &seed)
 {
-    uint8_t reads = 1; // Species record.
-    for (uint8_t move = 0; move < 4; ++move) {
-        if (validMoveId(parseOpponentCreatureSeedMove(seed.moves, move))) {
-            ++reads;
-        }
-    }
-    return reads;
+    static_cast<void>(seed);
+    return 1; // Species record only; the attack mask travels with it.
 }
 
 uint8_t fillTrainer(BattleState &state, const OpponentSeed &seed, uint8_t count)
@@ -381,10 +364,6 @@ void copyCreature(Combatant &destination, const Creature &source, uint8_t hp)
     destination.attackMask = duelAttackMask(source);
 #else
     destination.stats = source.statlist;
-    for (uint8_t slot = 0; slot < 4; ++slot) {
-        destination.moves[slot] = source.moveList[slot];
-        destination.moveIds[slot] = battleMoveId(source.moves[slot]);
-    }
 #endif
 }
 

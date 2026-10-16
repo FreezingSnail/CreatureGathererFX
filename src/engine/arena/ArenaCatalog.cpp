@@ -44,7 +44,7 @@ bool readPlayerMember(uint8_t team, uint8_t slot, Member &out)
         static_cast<uint24_t>(team) * kPlayerMemberBytes +
         static_cast<uint24_t>(slot) * kMemberBytes;
     FxRead::bytes(address, bytes, sizeof(bytes));
-    Member member{bytes[0], bytes[1], {bytes[2], bytes[3], bytes[4], bytes[5]}};
+    Member member{bytes[0], bytes[1], bytes[2]};
     out = member;
     FxReadCounter::transitionExact(1);
     return true;

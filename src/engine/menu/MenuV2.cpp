@@ -2,6 +2,7 @@
 
 #include "MenuNav.hpp"
 #include "PackedMoveInfo.hpp"
+#include "../../lib/Move.hpp"
 #include "../../lib/MoveIds.hpp"
 #include "DialogMenu.hpp"
 #include "../battle/BattleSession.hpp"
@@ -98,7 +99,9 @@ void MenuV2::openMenu(MenuEnum menu, const battle::BattleView &view) {
                 continue;
             }
             moveNameAddresses[slot] = readMoveNameAddress(id);
-            storeMoveInfo(moveInfoPacked, slot, compactMoveInfo(readMoveFX(id)));
+            // Packed move descriptors are retired with the packed move table;
+            // the duel pick row reads the attack mask directly.
+            storeMoveInfo(moveInfoPacked, slot, compactMoveInfo(Move(0u)));
             reads = static_cast<uint8_t>(reads + 2);
         }
         FxReadCounter::transitionExact(reads);

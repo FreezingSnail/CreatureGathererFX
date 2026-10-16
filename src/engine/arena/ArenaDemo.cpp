@@ -10,7 +10,6 @@
 #include "../menu/MenuNav.hpp"
 #include "../battle/BattleSetup.hpp"
 #include "../../lib/FxReadCounter.hpp"
-#include "../../lib/MoveIds.hpp"
 #include "../../lib/ReadData.hpp"
 #include "../../../fxdata/generated/arena_demo_ids.hpp"
 #include "ArenaCatalog.hpp"
@@ -59,22 +58,13 @@ bool applyPlayerTeam(uint8_t team, Player &target)
         creature.level = member.level;
         creature.loadTypes(seed);
         creature.setStats(seed);
-        for (uint8_t moveSlot = 0; moveSlot < 4; ++moveSlot) {
-            const uint8_t moveId = member.moveIds[moveSlot];
-            if (moveId == LEGACY_EMPTY_MOVE_ID) {
-                creature.moves[moveSlot] = LEGACY_EMPTY_MOVE_ID;
-                creature.moveList[moveSlot] = Move();
-            } else {
-                creature.setMove(moveId, moveSlot);
-                ++reads;
-            }
-        }
+        creature.attackMask = member.attackMask;
         creature.status.clearEffects();
         creature.statMods.clearModifiers();
         target.creatureHPs[slot] = creature.statlist.hp;
 
-        // The member reader owns its six-byte FX read. Approve the canonical
-        // creature and authored move records at this per-member boundary.
+        // The member reader owns its three-byte FX read. Approve the canonical
+        // creature record at this per-member boundary.
         FxReadCounter::transitionExact(reads);
     }
     return true;

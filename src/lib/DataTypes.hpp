@@ -2,13 +2,11 @@
 #include <stdint.h>
 #include "MenuData.hpp"
 
-// id,lvl,move4,move3,move2,move1
-// 00000 00000 00000 00000 00000 00000
-
+// id,lvl,attackMask  (bit i = duel type i; 0 = WAIT)
 struct CreatureSeed {
     uint8_t id;
     uint8_t lvl;
-    uint32_t moves;
+    uint8_t attackMask;
 };
 
 struct OpponentSeed {
@@ -17,11 +15,6 @@ struct OpponentSeed {
     CreatureSeed thirdCreature;
 };
 
-inline uint8_t parseOpponentCreatureSeedMove(uint32_t seed, uint8_t move) {
-    return static_cast<uint8_t>(seed >> (8u * move));
-}
-
-// todo research huffman encoding to squash these in mem
 typedef struct CreatureD {
     uint8_t id;
     uint8_t type1;
@@ -33,10 +26,8 @@ typedef struct CreatureD {
     uint8_t spcDefSeed;
     uint8_t hpSeed;
     uint8_t spdSeed;
-    uint8_t move1;
-    uint8_t move2;
-    uint8_t move3;
-    uint8_t move4;
+    // Folded 5-bit duel attack set; 0 = no usable attack (WAIT).
+    uint8_t attackMask;
 } CreatureData_t;
 
 struct PopUpDialog {
