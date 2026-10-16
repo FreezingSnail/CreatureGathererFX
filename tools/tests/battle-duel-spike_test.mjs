@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {
   loadMock, SPIKE_MATCHUP, DEFAULT_MATRIX_ID, DEFAULT_TEAM_SIZE, DEFAULT_MAX_ROUNDS,
   buildDuel, playerPick, playDuel, runMatrix, runReport, parseArgs, POLICIES,
-  TEAM_PAIRS, runPairSweep,
+  TEAM_PAIRS, runPairSweep, runPairSweepReport, formatPairSweepReport,
 } from '../battle-duel-spike.mjs';
 
 const mock = loadMock();
@@ -190,4 +190,21 @@ test('the pinned singleton isolate stays available for the read-rate spike', () 
   });
   assert.equal(result.wins + result.losses + result.draws + result.timeouts, result.battles);
   assert.ok(result.avgRounds > 0 && result.avgRounds <= 40);
+});
+
+test('pair-sweep report runs every sample pair across policies and flags cells', () => {
+  const sweep = runPairSweepReport({ battles: 3, maxRounds: 30, persona: 'reader' });
+  assert.equal(sweep.rows.length, 25, 'all authored sample-team ordered pairs');
+  assert.equal(sweep.policies.length, POLICIES.length);
+  for (const row of sweep.rows) {
+    assert.equal(row.wins + row.losses + row.draws + row.timeouts, row.total,
+      `${row.you}vs${row.foe} outcome split`);
+    assert.equal(row.total, 3 * sweep.policies.length * sweep.rates.length);
+    assert.ok(row.playerWinRate >= 0 && row.playerWinRate <= 1);
+    assert.equal(typeof row.flags.timeouts, 'boolean');
+    assert.equal(typeof row.flags.sweep, 'boolean');
+  }
+  const text = formatPairSweepReport(sweep);
+  assert.match(text, /25 pairs/);
+  assert.match(text, /flags:/);
 });

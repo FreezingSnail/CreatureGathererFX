@@ -278,6 +278,64 @@ export function runPairSweep(opts = {}) {
   }));
 }
 
+// Full balanced-pair sweep (CreatureGathererFX-d73i.4): every authored sample
+// team pair across the required player policies and read rates, aggregated to a
+// compact per-pair summary plus review flags. Flags mark any timeout anywhere in
+// the pair and any pair whose player win rate exceeds 80% in EVERY cell (a
+// trivial sweep). Beta authored encounter pairings reuse the same seam by
+// passing `pairs` built from the beta team presets.
+export const PAIR_SWEEP_WIN_FLAG = 0.8;
+
+export function runPairSweepReport(opts = {}) {
+  const battles = opts.battles ?? 200;
+  const maxRounds = opts.maxRounds ?? DEFAULT_MAX_ROUNDS;
+  const persona = opts.persona ?? 'reader';
+  const policies = opts.policies ?? POLICIES;
+  const rates = opts.rates ?? READ_RATES;
+  const pairs = opts.pairs ?? TEAM_PAIRS;
+  const rows = [];
+  for (const { you, foe } of pairs) {
+    let wins = 0, losses = 0, draws = 0, timeouts = 0, total = 0;
+    let allCellsSweep = true;
+    let anyTimeout = false;
+    for (const policy of policies) {
+      for (const readRate of rates) {
+        const r = runMatrix({ battles, maxRounds, persona, policy, readRate,
+          youPreset: you, foePreset: foe });
+        wins += r.wins; losses += r.losses; draws += r.draws; timeouts += r.timeouts;
+        total += r.battles;
+        if (r.timeouts > 0) anyTimeout = true;
+        if (r.wins / battles <= PAIR_SWEEP_WIN_FLAG) allCellsSweep = false;
+      }
+    }
+    rows.push({
+      you, foe, wins, losses, draws, timeouts, total,
+      playerWinRate: total ? wins / total : 0,
+      flags: { timeouts: anyTimeout, sweep: allCellsSweep },
+    });
+  }
+  const flagged = rows.filter((r) => r.flags.timeouts || r.flags.sweep);
+  return { battles, maxRounds, persona, policies, rates, rows, flagged };
+}
+
+export function formatPairSweepReport(sweep) {
+  const lines = [];
+  lines.push(`duel pair sweep · matrix5 team3 bonus · ${sweep.rows.length} pairs · ` +
+    `${sweep.battles} duels/cell · policies ${sweep.policies.join('/')} · ` +
+    `rates ${sweep.rates.join('/')} · cap ${sweep.maxRounds}`);
+  for (const row of sweep.rows) {
+    const flags = `${row.flags.timeouts ? ' TIMEOUT' : ''}${row.flags.sweep ? ' SWEEP>80%' : ''}`;
+    lines.push(`  ${row.you} vs ${row.foe}`.padEnd(34) +
+      ` W ${String(row.wins).padStart(5)} L ${String(row.losses).padStart(5)} ` +
+      `D ${String(row.draws).padStart(4)} T ${String(row.timeouts).padStart(4)} ` +
+      `P ${(100 * row.playerWinRate).toFixed(0).padStart(3)}%${flags}`);
+  }
+  const t = sweep.flagged.filter((r) => r.flags.timeouts).length;
+  const s = sweep.flagged.filter((r) => r.flags.sweep).length;
+  lines.push(`  flags: ${t} pair(s) with timeouts, ${s} pair(s) sweeping >80% in every cell`);
+  return lines.join('\n');
+}
+
 export function parseArgs(argv) {
   const args = { _: [] };
   for (let i = 0; i < argv.length; i += 1) {
@@ -371,5 +429,16 @@ function footer() {
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  process.stdout.write(`${runReport(parseArgs(process.argv.slice(2)))}\n`);
+  const args = parseArgs(process.argv.slice(2));
+  if (args['pair-sweep']) {
+    process.stdout.write(`${formatPairSweepReport(runPairSweepReport({
+      battles: args.battles ?? 200,
+      maxRounds: args.rounds ?? DEFAULT_MAX_ROUNDS,
+      persona: args.persona ?? 'reader',
+      policies: args.policy !== undefined ? [args.policy] : undefined,
+      rates: args.read !== undefined ? [args.read] : undefined,
+    }))}\n`);
+  } else {
+    process.stdout.write(`${runReport(args)}\n`);
+  }
 }
