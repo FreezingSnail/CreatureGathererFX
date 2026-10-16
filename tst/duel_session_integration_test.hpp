@@ -19,6 +19,7 @@
 
 #ifdef CGFX_DUEL_BATTLE
 
+#include <string.h>
 #include "test.hpp"
 #include "../src/engine/battle/DuelView.hpp"
 #include "../src/engine/battle/BattleSession.hpp"
@@ -31,6 +32,9 @@
 #include "../src/lib/FxReadCounter.hpp"
 #include "../src/player/Player.hpp"
 #include "../src/globals.hpp"
+#include "../src/save/Compaction.hpp"
+#include "../src/save/FlashBackend.hpp"
+#include "../src/creature/LevelCurve.hpp"
 
 namespace duel_session_test_detail {
 
@@ -726,6 +730,208 @@ void duelTradeScalesOutgoing(Test &test) {
                 "trade caption");
 }
 
+// --- jp8.11.7: gathered instance commit to the 64-slot collection ------------
+
+// Empty store with a cold journal, then a real gatherable wild session ready for
+// a one-round acquisition (need 1, tierRate 1).
+void beginCommitSession() {
+    flashFakeReset();
+    preparePlayer();
+    menu.clear();
+    dialogMenu.clear();
+    enterBattle();
+    gameState.state = GameState_t::BATTLE;
+    rngDraws = 0;
+    battleSession().setRng({scriptedRng});
+    battleSession().beginWild(4, 1, true, 1);
+    battle::BattleState &state = battleSession().stateForTest();
+    state.gather.need = 1;
+    state.gather.progress = 0;
+}
+
+// Drive the live flow through a wild gather to the Gathered terminal.
+void gatherToTerminal(uint16_t &frames) {
+    BattleFlow::update(0);              // choice entry -> pick row
+    BattleFlow::update(MENU_EDGE_B);    // open the wild action page (GATHER first)
+    BattleFlow::update(MENU_EDGE_A);    // submit GATHER
+    for (frames = 0; frames < 4096 && gameState.state != GameState_t::WORLD; ++frames)
+        BattleFlow::update(0);
+}
+
+uint8_t occupiedSlots() {
+    uint8_t count = 0;
+    for (uint8_t i = 0; i < 64; ++i) {
+        StoreRecord record;
+        storeRead(i, record);
+        if (record.id != 255) ++count;
+    }
+    return count;
+}
+
+// A successful gather commits exactly one duplicate-capable instance with the
+// foe's real species/level/mask and its actual HP under the pinned byte7
+// encoding; later world frames never re-commit.
+void duelGatherCommitOnce(Test &test) {
+    beginCommitSession();
+    configureMatchup(battleSession(), SpiritAuthored, SpiritAuthored, FireAuthored,
+                     SpiritAuthored, 100, 100);
+    battle::BattleState &state = battleSession().stateForTest();
+    battle::Combatant &foe = state.active[static_cast<uint8_t>(battle::Side::Opponent)];
+    foe.maxHp = 100;
+    foe.hp = 55; // a damaged foe must not be healed by the commit
+    const uint8_t foeId = foe.id;
+    const uint8_t foeLevel = foe.level;
+    const uint8_t foeMask = foe.attackMask;
+
+    uint16_t frames = 0;
+    gatherToTerminal(frames);
+    test.assert(gameState.state, GameState_t::WORLD,
+                "the gather terminal returns to the world");
+
+    StoreRecord committed = {};
+    test.assert(storeRead(0, committed), true, "the committed instance is readable");
+    test.assert(committed.id, foeId, "the gathered species is committed");
+    test.assert(committed.exp, levelExpThreshold(foeLevel),
+                "a fresh instance carries its level-threshold exp");
+    test.assert(committed.attackMask, foeMask, "the folded attack mask is committed");
+    test.assert(committed.hpEncoded, static_cast<uint8_t>(56),
+                "a damaged foe uses the value-1 HP encoding");
+    test.assert(storeInstanceHP(committed), static_cast<uint8_t>(55),
+                "the gathered instance's actual HP is preserved");
+    test.assert(occupiedSlots(), static_cast<uint8_t>(1),
+                "exactly one instance is committed");
+
+    for (uint8_t i = 0; i < 8; ++i) BattleFlow::update(0);
+    test.assert(occupiedSlots(), static_cast<uint8_t>(1),
+                "later world frames never re-commit");
+}
+
+// A full-HP foe commits the legacy/full zero byte, which reads back as the
+// species' derived maximum for that level.
+void duelGatherCommitFullHP(Test &test) {
+    beginCommitSession();
+    battle::BattleState &state = battleSession().stateForTest();
+    const uint8_t realMax =
+        state.active[static_cast<uint8_t>(battle::Side::Opponent)].maxHp;
+    configureMatchup(battleSession(), SpiritAuthored, SpiritAuthored, FireAuthored,
+                     SpiritAuthored, 100, realMax);
+    battle::Combatant &foe = state.active[static_cast<uint8_t>(battle::Side::Opponent)];
+    foe.hp = foe.maxHp = realMax;
+
+    uint16_t frames = 0;
+    gatherToTerminal(frames);
+    StoreRecord committed = {};
+    test.assert(storeRead(0, committed), true, "the full-HP instance is readable");
+    test.assert(committed.hpEncoded, static_cast<uint8_t>(0),
+                "a full foe encodes the legacy zero byte");
+    test.assert(storeInstanceHP(committed), realMax,
+                "a full instance reads back as its derived maximum");
+}
+
+// A committed instance survives an explicit v3 checkpoint and reboot: a fresh
+// checkpoint folds the journal record into the store sector, and a boot re-reads
+// the same species/exp/mask/HP.
+void duelGatherCommitPersistence(Test &test) {
+    beginCommitSession();
+    configureMatchup(battleSession(), SpiritAuthored, SpiritAuthored, FireAuthored,
+                     SpiritAuthored, 100, 100);
+    battle::BattleState &state = battleSession().stateForTest();
+    battle::Combatant &foe = state.active[static_cast<uint8_t>(battle::Side::Opponent)];
+    foe.maxHp = 100;
+    foe.hp = 42;
+    const uint8_t foeId = foe.id;
+    const uint8_t foeLevel = foe.level;
+    const uint8_t foeMask = foe.attackMask;
+
+    uint16_t frames = 0;
+    gatherToTerminal(frames);
+
+    SaveFile save = {};
+    memset(save.partySlots, 255, 3);
+    saveBegin();
+    SaveStep step = SaveStep::Idle;
+    for (uint16_t s = 0; s < 256 && saveInProgress(); ++s) step = saveStepAdvance(save);
+    test.assert(step, SaveStep::Done, "the gather-commit checkpoint completes");
+
+    SaveFile reboot = {};
+    memset(reboot.partySlots, 255, 3);
+    test.assert(storeBoot(reboot), true, "the gather-commit checkpoint reboots");
+    StoreRecord restored = {};
+    test.assert(storeRead(0, restored), true, "the committed instance reloads");
+    test.assert(restored.id, foeId, "species survives reboot");
+    test.assert(restored.exp, levelExpThreshold(foeLevel), "exp survives reboot");
+    test.assert(restored.attackMask, foeMask, "mask survives reboot");
+    test.assert(storeInstanceHP(restored), static_cast<uint8_t>(42), "HP survives reboot");
+}
+
+// A full 64-slot store refuses the gather commit cleanly: the collection is
+// untouched and no aliasing or wrapping slot appears.
+void duelGatherCommitFullStore(Test &test) {
+    beginCommitSession();
+    SaveFile save = {};
+    memset(save.partySlots, 255, 3);
+    StoreRecord filler = {};
+    filler.id = 0;
+    filler.exp = levelExpThreshold(3);
+    filler.attackMask = 2;
+    for (uint8_t i = 0; i < 64; ++i) {
+        uint8_t slot = 255;
+        test.assert(storeAdd(filler, slot), true, "fill the 64-slot collection");
+        if (i % 16 == 15) {
+            saveBegin();
+            SaveStep step = SaveStep::Idle;
+            for (uint16_t s = 0; s < 256 && saveInProgress(); ++s)
+                step = saveStepAdvance(save);
+            test.assert(step, SaveStep::Done, "the full collection checkpoint completes");
+        }
+    }
+    test.assert(occupiedSlots(), static_cast<uint8_t>(64), "the collection is full");
+
+    configureMatchup(battleSession(), SpiritAuthored, SpiritAuthored, FireAuthored,
+                     SpiritAuthored, 100, 100);
+    uint16_t frames = 0;
+    gatherToTerminal(frames);
+
+    test.assert(gameState.state, GameState_t::WORLD,
+                "a full-store gather still ends cleanly");
+    test.assert(occupiedSlots(), static_cast<uint8_t>(64),
+                "a full store refuses without adding a slot");
+    StoreRecord first = {};
+    StoreRecord last = {};
+    test.assert(storeRead(0, first), true, "the first record is readable");
+    test.assert(storeRead(63, last), true, "the last record is readable");
+    test.assert(first.id, static_cast<uint8_t>(0), "the first record is untouched");
+    test.assert(last.id, static_cast<uint8_t>(0), "the last record is untouched");
+}
+
+// A gather that never reaches the need acquires nothing; escaping afterwards
+// leaves the collection empty.
+void duelGatherIncompleteNoCommit(Test &test) {
+    beginCommitSession();
+    battle::BattleState &state = battleSession().stateForTest();
+    state.gather.need = 8;
+    state.gather.progress = 0;
+    configureMatchup(battleSession(), SpiritAuthored, SpiritAuthored, FireAuthored,
+                     SpiritAuthored, 100, 100);
+
+    BattleFlow::update(0);              // choice entry -> pick row
+    BattleFlow::update(MENU_EDGE_B);    // wild action page
+    BattleFlow::update(MENU_EDGE_A);    // submit GATHER
+    for (uint16_t f = 0; f < 4096 && !battleSession().awaitingPlayer(); ++f)
+        BattleFlow::update(0);
+    test.assert(battleSession().state().gather.progress, static_cast<uint8_t>(1),
+                "one gather banks partial progress without acquiring");
+
+    BattleFlow::update(MENU_EDGE_B);    // wild action page
+    BattleFlow::update(MENU_NAV_DOWN);  // cursor -> ESCAPE
+    BattleFlow::update(MENU_EDGE_A);    // submit Escape
+    for (uint16_t f = 0; f < 4096 && gameState.state != GameState_t::WORLD; ++f)
+        BattleFlow::update(0);
+    test.assert(gameState.state, GameState_t::WORLD, "the escape terminal returns to the world");
+    test.assert(occupiedSlots(), static_cast<uint8_t>(0),
+                "a gather that never acquires commits nothing");
+}
+
 } // namespace duel_session_test_detail
 
 inline void DuelSessionIntegrationSuite(TestRunner &runner) {    using namespace duel_session_test_detail;
@@ -802,6 +1008,25 @@ inline void DuelSessionIntegrationSuite(TestRunner &runner) {    using namespace
     Test trade(__func__);
     duelTradeScalesOutgoing(trade);
     suite.addTest(trade);
+
+    Test gatherCommit(__func__);
+    duelGatherCommitOnce(gatherCommit);
+    suite.addTest(gatherCommit);
+    Test commitFull(__func__);
+    duelGatherCommitFullHP(commitFull);
+    suite.addTest(commitFull);
+
+    Test persistence(__func__);
+    duelGatherCommitPersistence(persistence);
+    suite.addTest(persistence);
+
+    Test commitFullStore(__func__);
+    duelGatherCommitFullStore(commitFullStore);
+    suite.addTest(commitFullStore);
+
+    Test incomplete(__func__);
+    duelGatherIncompleteNoCommit(incomplete);
+    suite.addTest(incomplete);
 
     runner.addTestSuite(suite);
 }

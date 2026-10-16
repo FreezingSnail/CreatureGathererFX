@@ -13482,3 +13482,119 @@ was already modified by the tracker (not by me).
 Worker ~45 min wall: source/config/eLF recon ~20 min; host+VM runs (dirty tree +
 HEAD snapshot) ~5 min; symbol/size audit and follow-up bead ~12 min; snapshot
 setup/cleanup + report remainder. Gate/orchestrator not run here.
+
+## jp8.11.7 — gather commit
+
+Worker: DeepSeek V4.1 Flash. HEAD 58eb8e7. ARDENS=.../Ardens.app/Contents/MacOS/Ardens.
+Bead left `in_progress`; no commit/push.
+
+### Change
+
+`src/engine/battle/BattleFlow.cpp`: at the Gathered terminal, before `exitBattle()`
+destroys the battle union, a new file-local `commitGathered(session)` builds one
+8-byte `StoreRecord` from the resident opponent (`active[Opponent]`) and calls the
+existing `storeAdd` once:
+
+- `id` = opponent species id
+- `exp` = `levelExpThreshold(level)` (fresh instance at its current level)
+- `attackMask` = opponent's folded 5-bit duel mask (matches the current StoreRecord
+  wire contract; the retired `moves[4]` is not resurrected)
+- `reserved[3]` = 0
+- `hpEncoded` = `hp >= maxHp ? 0 : hp + 1` (pinned byte7: 0 = legacy/full, else value-1)
+
+No offsets/version change; no new collection path. A refused add (full 64, dirty
+journal/index/log) leaves the collection untouched. `finishBattle` runs once per
+battle (the terminal deactivates the session), so the commit is exactly once.
+
+Tests:
+- Host `tst/duel_session_integration_test.hpp` (duel suite, runs under `make test`):
+  `duelGatherCommitOnce` (fields + damaged HP + exactly-once + no re-commit on later
+  frames), `duelGatherCommitFullHP` (legacy zero byte round-trips to derived max),
+  `duelGatherCommitPersistence` (explicit checkpoint + reboot re-reads the instance),
+  `duelGatherCommitFullStore` (full 64 refuses, first/last records untouched),
+  `duelGatherIncompleteNoCommit` (a gather that never reaches the need, then Escape,
+  commits nothing).
+- Device `tst/fxdatatest/duel_session_integration_test.hpp` (runs in `test_battle_duel`):
+  `duelDeviceGatherCommit` drives the real flow to the Gathered terminal on AVR and
+  asserts the committed species/exp/mask, the damaged-HP byte7 encoding (55 -> 56),
+  exactly one occupied slot, and no re-commit.
+
+### Commands and results
+
+```
+$ make test BUILD_DIR=build
+  host Total Passed: 240348  Failed: 0 ; world Total Passed: 258  Failed: 0
+$ make testvm BUILD_DIR=build
+  Total Passed: 286  Failed: 0
+$ make test-beta-area BUILD_DIR=build
+  tests 12  pass 12  fail 0
+$ make fxtest-headless BUILD_DIR=build ARDENS="$ARDENS" FXTEST_MS=30000 \
+    FXTEST_INOS='tst/fxdatatest/test_save.ino tst/fxdatatest/test_world_player.ino \
+                 tst/fxdatatest/test_battle_duel.ino tst/fxdatatest/test_stack.ino'
+  test_save PASSED=3283 FAILED=0
+  test_world_player PASSED=76 FAILED=0
+  test_battle_duel PASSED=115 FAILED=0   (was 106; +9 device gather-commit asserts)
+  test_stack PASSED=4 FAILED=0  (mode-transition headroom 0x2B7 (695); stack headroom 0x256 (598))
+# extra safety for the shared device duel header:
+$ make fxtest-headless ... FXTEST_INOS='tst/fxdatatest/test_duel_ui.ino tst/fxdatatest/test_duel_resources.ino'
+  test_duel_ui PASSED=65 FAILED=0 ; test_duel_resources PASSED=16 FAILED=0
+$ make ram BUILD_DIR=build
+  RAM_FLASH_BYTES=22768  RAM_STATIC_BYTES=1678  RAM_FREE_BYTES=882
+```
+
+### Proofs
+
+- Exactly once: host `duelGatherCommitOnce` shows one occupied slot after the terminal
+  and still one after 8 further world frames; device `duelDeviceGatherCommit` shows one
+  occupied slot and one after 8 further frames. `finishBattle` is a single terminal edge.
+- Full-store refusal (lossless): host `duelGatherCommitFullStore` fills all 64 slots
+  (with the checkpoint cadence), gathers, and proves `occupied == 64`, first/last record
+  ids unchanged, no wrapping slot. This is on top of the existing
+  `CollectionCapacityTest`/`test_saveCollectionCapacity` full-64 refusal coverage.
+- Failed gather no-commit: host `duelGatherIncompleteNoCommit` (progress 1 of need 8,
+  then Escape) leaves the collection empty.
+- HP encoding: damaged foe 55 -> byte7 56 -> `storeInstanceHP` 55 (host + device); full
+  foe -> byte7 0 -> derived max (host).
+- Save/reboot: host `duelGatherCommitPersistence` builds a checkpoint from the journal
+  record and boots it back with species/exp/mask/HP intact.
+
+### Resource delta
+
+`make ram` (shipping FX, default flags): flash 22768 B vs reference 22564 B = **+204 B**;
+static SRAM 1678 B = **+0 B**. Well inside the 29696 B hard cap and the <=29184 B planning
+target; 882 B static free, painted stack headroom unchanged at 598 B.
+
+### Deviations
+
+- Device proof lives in `tst/fxdatatest/duel_session_integration_test.hpp`
+  (`test_battle_duel.ino`), not `test_world_player.ino`. The current
+  `test_world_player` sketch is already at 29328/29696 B (368 B free); the added
+  end-to-end gather block pushed it to 30306 B (102%). The device `test_battle_duel`
+  sketch had ~3400 B headroom, so the AVR end-to-end gather-commit proof was moved
+  there. `test_world_player.ino` is unmodified.
+- Design STEPS step 1's "actual four semantic move IDs" predates the retired
+  `StoreRecord.moves[4]`; the current wire contract carries the folded 5-bit
+  `attackMask` (jp8.11.22 / 4w89.2), which is what is stored.
+- Design STEPS step 3's "explicit save/retry feedback" is not wired: the duel result
+  dwell draws the Gathered caption before the terminal commit, there is no authored
+  refusal caption in the generated text set, and no world-side post-battle message
+  exists. Refusal is truthful and lossless (collection untouched, no false slot), which
+  the orchestrator's stated negative verifies; a refusal caption would need generated
+  text and is a follow-up if required.
+- Run the focused VERIFY suites (host/VM/beta-area + the four named device suites);
+  the orchestrator runs the settled full gate.
+
+### Storage
+
+`df -h . /private/tmp`: 64 GiB free before/after (>=10 GiB reserve). `du -sh build` 1.9 G
+before/after. `make clean-build-artifacts BUILD_DIR=build` preview then `CLEAN_APPLY=1`
+removed 108 disposable arduino-build objects (2,604,375 B). No `cgfx-pack.*` stage; no
+generated/tracked drift. Modified: `src/engine/battle/BattleFlow.cpp`,
+`tst/duel_session_integration_test.hpp`, `tst/fxdatatest/duel_session_integration_test.hpp`,
+`.beads/interactions.jsonl`.
+
+### Wall time
+
+~70 min single worker: recon/read ~20 min; source + host/device tests ~20 min; host/VM/
+beta-area iterations ~10 min; flattening the too-large `test_world_player` proof into the
+device duel suite + focused device runs ~15 min; ram + clean + report ~5 min.

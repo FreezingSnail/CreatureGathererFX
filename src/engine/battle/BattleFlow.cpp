@@ -7,6 +7,8 @@
 #include "../ModeState.hpp"
 #include "../../GameState.hpp"
 #include "../../globals.hpp"
+#include "../../creature/LevelCurve.hpp"
+#include "../../save/Compaction.hpp"
 #include "../world/World.hpp"
 
 namespace BattleFlow {
@@ -42,8 +44,28 @@ bool duelSyncUi(battle::BattleMode &mode, battle::BattleSession &session) {
 }
 #endif
 
+// Commit a gathered wild instance to the existing 64-slot collection. The foe is
+// read from the still-resident session before exitBattle destroys the battle
+// union; a refused add (full 64 or a journal/index/log refusal) leaves the
+// collection untouched. HP uses the pinned byte7 encoding: 0 is the legacy/full
+// interpretation, otherwise the stored value is HP - 1.
+void commitGathered(const battle::BattleSession &session) {
+    const battle::BattleState &state = session.state();
+    const battle::Combatant &foe =
+        state.active[static_cast<uint8_t>(battle::Side::Opponent)];
+    StoreRecord record = {};
+    record.id = foe.id;
+    record.exp = levelExpThreshold(foe.level);
+    record.attackMask = foe.attackMask;
+    record.hpEncoded =
+        foe.hp >= foe.maxHp ? 0 : static_cast<uint8_t>(foe.hp + 1);
+    uint8_t slot = 255;
+    storeAdd(record, slot);
+}
+
 void finishBattle(battle::BattleSession &session, TerminalCallback callback) {
     const battle::Outcome outcome = session.result().outcome;
+    if (outcome == battle::Outcome::Gathered) commitGathered(session);
 #if defined(TEST) || defined(FX_READ_COUNTER)
     menu.clear();
 #endif

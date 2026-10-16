@@ -40,6 +40,8 @@
 #include "src/lib/MoveIds.hpp"
 #include "src/lib/FxReadCounter.hpp"
 #include "src/player/Player.hpp"
+#include "src/save/Compaction.hpp"
+#include "src/creature/LevelCurve.hpp"
 
 namespace duel_session_test_detail {
 
@@ -374,6 +376,62 @@ __attribute__((noinline)) void duelDeviceGatherActiveKoPausesFlee(FxTest &test) 
                   F("a progress-only gather keeps the gather caption"));
 }
 
+// jp8.11.7: a successful wild gather commits exactly one duplicate-capable
+// instance to the existing 64-slot v3 collection through the real flow terminal,
+// carrying the foe's species/level/mask and its actual HP under the pinned byte7
+// encoding; the terminal never re-commits.
+__attribute__((noinline)) void duelDeviceGatherCommit(FxTest &test) {
+    storeFresh(); // empty collection, cold journal
+    preparePlayer();
+    beginWildDuel(true, 1);
+    battle::BattleState &state =
+        const_cast<battle::BattleState &>(battleSession().state());
+    state.gather.need = 1; // one surviving gather acquires
+    state.gather.progress = 0;
+    configureMatchup(SpiritAuthored, SpiritAuthored, FireAuthored, SpiritAuthored, 100, 100);
+    battle::Combatant &foe = state.active[static_cast<uint8_t>(battle::Side::Opponent)];
+    foe.maxHp = 100;
+    foe.hp = 55; // damaged: byte7 must encode 56, not a full-heal zero
+    const uint8_t foeId = foe.id;
+    const uint8_t foeLevel = foe.level;
+    const uint8_t foeMask = foe.attackMask;
+
+    BattleFlow::update(0);              // choice entry -> pick row
+    BattleFlow::update(MENU_EDGE_B);    // wild action page (GATHER first)
+    BattleFlow::update(MENU_EDGE_A);    // submit GATHER
+    uint16_t frames = 0;
+    while (gameState.state == GameState_t::BATTLE && frames < 4000) {
+        BattleFlow::update(0);
+        ++frames;
+    }
+    test.expectEq(gameState.state, static_cast<uint32_t>(GameState_t::WORLD),
+                  F("gather terminal returns to the world"));
+
+    StoreRecord committed = {};
+    test.expectEq(storeRead(0, committed), true, F("gathered instance readable"));
+    test.expectEq(committed.id, foeId, F("gathered species committed"));
+    test.expectEq(committed.exp, levelExpThreshold(foeLevel),
+                  F("fresh level-threshold exp committed"));
+    test.expectEq(committed.attackMask, foeMask, F("folded mask committed"));
+    test.expectEq(committed.hpEncoded, 56, F("damaged HP uses value-1 encoding"));
+    test.expectEq(storeInstanceHP(committed), 55, F("damaged gathered HP preserved"));
+    uint8_t occupied = 0;
+    for (uint8_t i = 0; i < 64; ++i) {
+        StoreRecord slot;
+        storeRead(i, slot);
+        if (slot.id != 255) ++occupied;
+    }
+    test.expectEq(occupied, 1, F("exactly one gathered instance committed"));
+    for (uint8_t i = 0; i < 8; ++i) BattleFlow::update(0);
+    occupied = 0;
+    for (uint8_t i = 0; i < 64; ++i) {
+        StoreRecord slot;
+        storeRead(i, slot);
+        if (slot.id != 255) ++occupied;
+    }
+    test.expectEq(occupied, 1, F("later frames never re-commit"));
+}
+
 } // namespace duel_session_test_detail
 
 // Asymmetric trade through the real session (CreatureGathererFX-d73i.8 parity):
@@ -412,4 +470,5 @@ inline void test_duel_session(FxTest &test) {
     duelDeviceGatherKoKeepsProgress(test);
     duelDeviceGatherActiveKoPausesFlee(test);
     duelDeviceTradeScalesOutgoing(test);
+    duelDeviceGatherCommit(test);
 }
