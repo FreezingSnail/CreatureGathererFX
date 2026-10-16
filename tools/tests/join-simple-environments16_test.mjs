@@ -12,6 +12,12 @@ const showHead=rel=>execFileSync('git',['show',`HEAD:${rel}`],{cwd:ROOT,maxBuffe
 // The shipping install is the only writer of these sheets; these constants
 // mirror tools/join-simple-environments16.mjs exactly.
 const SHIPPING_SHEETS=['images/tiles_16x16.png','images/tiles.png'];
+// b2a.8: the Tiled source sheet is normalized to the native binary authoring
+// convention (0/255 RGB with 0/255 alpha); the packed sheet is already binary.
+// The refreshed expectation for an untouched Tiled-source cell is HEAD collapsed
+// the same way the joiner collapses its legacy grays.
+const BINARY_SHEETS=new Set(['images/tiles.png']);
+const binaryPixel=(r,g,b,a)=>{const opaque=a>=128,value=opaque&&r>=128?255:0;return new Uint8Array([value,value,value,opaque?255:0]);};
 const WINDOW_DX=[-4,5],WINDOW_DY=[-3,2];       // render window reach around one player cell
 const BORDER_EXTRAS=[38];                       // authored border cell west of the area
 const TILE_ID_LIMIT=1023;                       // 10-bit packed tile id
@@ -138,7 +144,7 @@ test('shipping map covers every beta and visible-margin GID with distinct10-bit 
  assert.deepEqual(extras.sort((a,b)=>a-b),[...BORDER_EXTRAS].sort((a,b)=>a-b),'the only non-visible installed cells are the documented border extras');
 });
 
-test('shipping sheets install byte-exact monochrome copies and leave every other cell at HEAD',()=>{
+test('shipping sheets install byte-exact monochrome copies, normalize the Tiled source, and leave every other cell at HEAD',()=>{
  const catalogue=read(shippingMap.catalogueSource);
  assert.deepEqual([catalogue.width,catalogue.height],[256,768]);
  const headSheets=new Map(SHIPPING_SHEETS.map(rel=>[rel,decodePng(showHead(rel))]));
@@ -154,6 +160,9 @@ test('shipping sheets install byte-exact monochrome copies and leave every other
      assert.deepEqual(sheet.pixels.subarray(i,i+4),catalogue.pixels.subarray(i,i+4),`${rel} GID ${gid} is a byte-exact catalogue copy`);
      const [r,g,b,a]=sheet.pixels.subarray(i,i+4);
      assert.ok((r===0||r===255)&&r===g&&g===b&&a===255,`${rel} GID ${gid} is monochrome opaque`);
+    }else if(BINARY_SHEETS.has(rel)){
+     const [r,g,b,a]=head.pixels.subarray(i,i+4);
+     assert.deepEqual(sheet.pixels.subarray(i,i+4),binaryPixel(r,g,b,a),`${rel} normalized GID ${gid} matches the binary refresh of HEAD`);
     }else{
      assert.deepEqual(sheet.pixels.subarray(i,i+4),head.pixels.subarray(i,i+4),`${rel} untouched GID ${gid} equals HEAD`);
     }

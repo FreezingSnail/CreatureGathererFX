@@ -13598,3 +13598,91 @@ generated/tracked drift. Modified: `src/engine/battle/BattleFlow.cpp`,
 ~70 min single worker: recon/read ~20 min; source + host/device tests ~20 min; host/VM/
 beta-area iterations ~10 min; flattening the too-large `test_world_player` proof into the
 device duel suite + focused device runs ~15 min; ram + clean + report ~5 min.
+
+## b2a.8 — tiles palette normalization
+
+Bead: `CreatureGathererFX-b2a.8` (P3). HEAD `f9438eb`, left `in_progress` per dispatch; no git
+commit/push. Scope: normalize the legacy palette of the Tiled source sheet `images/tiles.png`
+to the native 1bpp authoring convention without changing any authored pixel the generator
+consumes. Another worker owns the AVR lane; the only generation run here was a short host
+`make gen` (no AVR build/gate).
+
+### Starting state (measured, HEAD f9438eb)
+
+`images/tiles.png` is RGBA8 256x768 (the cf7 joiner rewrote the former indexed 2bpp source).
+Its RGBA histogram carried the legacy four grays: `0,0,0,255` (121027), `170,170,170,255`
+(31114), `255,255,255,255` (26185), `85,85,85,255` (18282). `images/tiles_16x16.png` (the packed
+`tiles` symbol) was already binary: only `0,0,0,255` (139309) and `255,255,255,255` (57299).
+The two sheets differ by 49396 pixels across 334 cells; a per-pixel confusion table showed the
+packed sheet is exactly the legacy grays thresholded at 128 (`0/85 -> 0`, `170/255 -> 255`,
+alpha 255). `images/tiles.png` is a `cgfx-project.json` (`tileset_png`/`map_tileset_png`) and
+`fxdata/generated/manifest.json` input, but the cart `tiles` symbol is packed from
+`images/tiles_16x16.png` (per `fxsprites.toml`).
+
+### What was normalized
+
+`tools/join-simple-environments16.mjs` — the only writer of both shipping sheets — now collapses
+the Tiled source sheet to the project convention after installing the catalogue cells:
+`normalizeBinary()` maps each pixel to binary `0/255` RGB with `0/255` alpha (opaque => luminance
+threshold at 128, transparent => transparent black). Scope is the `BINARY_SHEETS` set
+(`images/tiles.png`); the packed sheet `images/tiles_16x16.png` is left untouched. Installed GID
+cells are already `0/255` opaque so they stay byte-exact. A post-write invariant asserts
+`images/tiles.png` is binary. The joiner stays idempotent for every catalogue/review output.
+
+`tools/tests/join-simple-environments16_test.mjs` — refreshed expectation: the
+"install byte-exact ... leave every other cell at HEAD" test now expects an untouched
+Tiled-source cell to equal HEAD collapsed the same way (`BINARY_SHEETS` + `binaryPixel`), while
+`images/tiles_16x16.png` still equals HEAD; test name updated. The expectation is idempotent, so
+it holds before and after this change is committed.
+
+### Result (measured)
+
+- `images/tiles.png` RGBA histogram after: `0,0,0,255` (139309) and `255,255,255,255` (57299)
+  only. Pixel-identical to `images/tiles_16x16.png` (0 diffs of 196608).
+- Installed-cell pixel diffs vs HEAD: **0**. Non-installed cells changed: 334; unchanged: 410
+  (cells already binary/empty).
+- Pixel-equivalence proof (generator output unchanged): every tracked packed/generated artifact
+  is byte-identical to HEAD. `dist/fxdata.bin` = `fcda6f8b59f1301d68724a0845d1123da6763e7746674
+  94b58eb1e21d63cf5bb` = the `pack-parity_test.sh` `expected=` and the HEAD baseline;
+  `dist/fxdata-data.bin` = `15d428ce48...`; `dist/fxdata-save.bin`, `src/fxdata.h`,
+  `src/vm/opcodes.hpp`, `src/flags/*`, `fxdata/generated/*`, `tst/fxdatatest/generated/*` all
+  unchanged. Only `fxdata/generated/manifest.json` (gitignored) changed, as it must: it records
+  the `images/tiles.png` provenance hash.
+- `maps/tiles.tsx` properties unchanged (covered by the join test) and `ardurpg.toml`
+  `tileset_path` unchanged.
+
+### Exact commands, rc, results
+
+```
+node tools/join-simple-environments16.mjs                 rc=0  0.30 s (idempotent catalogue/docs)
+make gen BUILD_DIR=build                                  rc=0  6.5 s (host gen+pack; AVR lane untouched)
+make verify-generated BUILD_DIR=build                     rc=0
+make test-pack-parity BUILD_DIR=build                     rc=0
+    layout equivalence: PASS ; perturbation diagnostic: PASS ; pack parity: PASS
+node --test tools/tests/join-simple-environments16_test.mjs
+    7 pass / 0 fail
+node --test tools/tests/join-simple-environments16_test.mjs tools/tests/simple-urban_test.mjs \
+  tools/tests/simple-environments_test.mjs tools/tests/environment32-viewer_test.mjs \
+  tools/tests/environment32-scene_test.mjs tools/tests/habitat-terrain_test.mjs \
+  tools/tests/lure-world-spike_test.mjs tools/tests/world-arranged-comparison_test.mjs
+    68 pass / 0 fail
+```
+
+`git status --porcelain`: `images/tiles.png`, `tools/join-simple-environments16.mjs`,
+`tools/tests/join-simple-environments16_test.mjs` (plus `.beads/interactions.jsonl`). No stray
+`build/cgfx-pack.*` stage remained; `build` = 1.9 GiB shared, 63 GiB free.
+
+### Deviations
+
+- Design step 1 offered "re-author binary **or** record an explicit no-change decision"; the
+  binary re-author path was taken.
+- Design step 2's "regenerate the viewer and Tiled outputs through the existing joiner" was
+  satisfied by the joiner run; the combined16 catalogue, lure-world crops, `docs/*.html`,
+  `town.tmj` and `tileset.tsx` were all byte-identical (joiner `write` is compare-before-write).
+- Normalization is scoped to the Tiled source (`images/tiles.png`) per the bead; the packed
+  sheet is already binary and was intentionally left untouched.
+
+### Wall time
+
+~30 min single worker: recon/PNG analysis ~15 min; joiner + test edits ~5 min; `make gen` +
+verification runs ~5 min; report ~5 min.
