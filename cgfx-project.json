@@ -8,5 +8,6 @@
   "fixture_dir": "tst/fxdatatest/generated",
   "battle_presets": "data/battle-presets.toml",
   "arena_demo": "data/arena-demo.toml",
-  "duel": "data/duel.toml"
+  "duel": "data/duel.toml",
+  "beta_area": "data/beta-area.toml"
 }

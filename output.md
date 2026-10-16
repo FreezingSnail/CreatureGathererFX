@@ -13810,3 +13810,104 @@ Worker ~30 min wall: read bead/output/docs/tool/generator ~12 min; harness (~4 m
 after + CLI x2 (~4 min incl. ~26 s/sweep x 5); structural compare + metrics ~4 min; node+sim tests
 ~1.5 min; report remainder. Off the build/generation lane; no gate/orchestrator run (dispatch leaves
 the bead `in_progress`).
+
+## jp8.11.3 — reward mappings
+
+Implemented the first-area material/plant/heal reward mapping end to end: authored
+`[[reward.heal]]` in `data/beta-area.toml`, native generator validation + packed append-only
+`Rewards` FX descriptor, a device fixture, and host/packed-device/source-to-header agreement
+tests. Single build lane (`BUILD_DIR=build`); no git commit/push; bead left `in_progress`.
+
+### Design decision (recorded deviation)
+
+`data/beta-area.toml` did not previously name the reward sources explicitly, so the mapping is
+derived from the frozen contract the only way that yields the design's pinned `supported types
+0..3` for every first-area species:
+
+- ordinary-wild material: for every `encounters.allowed_species`, one **tier-2 lure** whose type
+  is the species' authored `type1` folded into the four lure-zone groups (`type_index & 3`, the
+  same low-two-bit reduction `LureZone::lureType` applies to a deposited lure). Item id =
+  `lure_type*3 + 2` (the shared `item::lureId` layout). Non-first-area species pack `materialItem
+  = 0xFF` / `materialCount = 0` sentinels.
+- plant: `plant_source` (`lure_type 0`, `lure_tier 1`, `item_id 1`, `count 1`) is the tier-1
+  field source.
+- heals: two authored `[[reward.heal]]` entries (`item_id 0`,`1`, `count 1`) validated against
+  `data/consumables.csv` (must be `Heal` kind).
+
+Host validation rejects: duplicate source identities, missing species, unknown primary type, a
+species with no usable attack type or an unknown move type, out-of-range lure type/tier/count,
+a plant item id inconsistent with its type+tier, non-`Heal`/out-of-range/duplicate heal ids.
+
+### Generated mapping (data/beta-area.toml → fxdata/generated/rewards.txt)
+
+```
+namespace Rewards {
+materialItem  = { 8,255,255,11,255,255,5,255,255,2,2,255,8,8,11,255,... }  (64, species-indexed)
+materialCount = { 1,0,0,1,0,0,1,0,0,1,1,0,1,1,1,0,... }                    (64)
+plantItem = { 1 }; plantCount = { 1 };
+healItem  = { 0, 1 }; healCount = { 1, 1 };
+}
+```
+Species→tier-2 material id: 0→8(wind), 3→11(earth), 6→5(water), 9→2(spirit), 10→2, 12→8,
+13→8, 14→11. Source-agnostic proof: `node --test tools/tests/beta-area_test.mjs` recomputes each
+entry from `creatures.json` `type1` + `allowed_species` and matches the generated file + the
+published `src/fxdata.h` `Rewards::*` symbols.
+
+### Commands and results
+
+```
+cargo test --offline -p cgfx-core        230 passed / 0 failed  (+6 rewards tests; was 224)
+built+installed cgfx-tools identity 0.3.0+ge8afd0a7, binary sha256 c80df77b68e4f47f...
+make gen BUILD_DIR=build                rc=0 (~7 s; no build/cgfx-pack.* stage left)
+make verify-generated BUILD_DIR=build   rc=0
+make test-generated-libs BUILD_DIR=build  generated-libs 48/0 PASS; invariants 5/0 PASS; alias 28/0
+make test-pack-parity BUILD_DIR=build   PASS (rebaselined, see below)
+make test BUILD_DIR=build               258 passed / 0 failed
+make testvm BUILD_DIR=build             286 passed / 0 failed
+make test-beta-area BUILD_DIR=build     13 pass / 0 fail
+make test-manifest BUILD_DIR=build      ensure-generated PASS
+make fxtest-headless BUILD_DIR=build ARDENS=$ARDENS FXTEST_INOS='test_world_player test_items test_stack'
+    test_world_player: PASS 76/0
+    test_items: PASS 273/0  (static RAM 1266/2160)
+    test_stack: PASS 4/0    (stack headroom 598)
+make ram BUILD_DIR=build                22768 B flash / 1678 B static  (DELTA 0/0 vs 22768/1678)
+```
+
+### Pack parity rebaseline (old → new)
+
+`fcda6f8b59f1301d68724a0845d1123da6763e774667494b58eb1e21d63cf5bb` →
+`418ac63b081f69db5c1702d572c70aaee72783a780c2fe68e82ed37d778df26a`.
+
+Two intentional causes, both isolation-checked by `git diff src/fxdata.h`:
+1. append-only `Rewards` expand entry: `FX_DATA_BYTES` 748732 → 748866 (+134 = 64+64+1+1+2+2);
+   every prior field address is byte-identical (only `FX_DATA_PAGE`/`FX_DATA_BYTES` and the
+   appended `Rewards` namespace lines change). Last prior field `Evolution::evolutionLevel =
+   0x0B6CB9` unchanged; `Rewards::materialItem = 0x0B6CBC`.
+2. tool identity `0.3.0+ga5ffdd1d` → `0.3.0+ge8afd0a7` (sibling HEAD is now `e8afd0a7`): same
+   27-byte string length, so only the `generator_version` payload bytes change (no address shift).
+   The committed generated set had been stamped with the parent `a5ffdd1d`; the rebuilt tool
+   records its true HEAD.
+
+Provenance comment block added to `tools/tests/pack-parity_test.sh`.
+
+### Storage handoff
+
+`df -h . /private/tmp`: 62 GiB free (≥10 GiB). `du -sh build` before/after: 1.9 GiB (≤5 GiB).
+`make clean-build-artifacts BUILD_DIR=build` previewed (108 candidates, 2,604,439 B) then applied
+`CLEAN_APPLY=1` — only generated `build/arduino-build/fx/**` objects. No `build/cgfx-pack.*` stage
+remained. Other lanes (`box-adoption-gate`, `battle-carve-spike`, `native-tools`) untouched.
+
+### Deviations
+
+- Reward source shape: the contract did not pin per-species material types, so the tier-2 type is
+  derived (`type1 & 3`) rather than authored, matching the design's `supported types 0..3`; the
+  heal reward list is the only new authored reward data. Recorded above.
+- `tst/item_test.hpp` was not modified: host-side boundary coverage is the sibling
+  `crates/core/src/rewards.rs` unit suite plus the node source↔header agreement test, since the
+  host item suite has no path to the packed FX image (no runtime reader exists until jp8.11.4).
+- `data/json/creatures.json` needed no change (materials derive from authored `type1`).
+
+### Wall time
+
+~55 min single worker: recon/design ~20 min; generator + wiring ~15 min; tests ~10 min; gen +
+gates + device suite ~7 min; report/storage ~3 min.

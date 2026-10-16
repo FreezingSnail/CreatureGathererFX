@@ -112,6 +112,11 @@ source = { expand = { path = "fxdata/generated/duel.txt" } }
 # first-beta starters. Append-only: every earlier field address stays fixed.
 [[entry]]
 source = { expand = { path = "fxdata/generated/evolution.txt" } }
+
+# jp8.11.3 first-area material, plant and heal reward mappings. Append-only:
+# every earlier field address stays fixed.
+[[entry]]
+source = { expand = { path = "fxdata/generated/rewards.txt" } }
 [save]
 sectors = 8
 
