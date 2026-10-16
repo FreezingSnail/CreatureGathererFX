@@ -48,7 +48,10 @@ node tools/battle-duel-spike.mjs --pair-sweep --battles 2 --rounds 30
 - **Personas** (AI): `reader`, `frequency`, `anti-repeat`, `exploiter`,
   `random`.
 - **Player policies**: `random`, `repeat`, `counter`, `rotation`, `swap`,
-  `anti-repeat`.
+  `tier`, `anti-repeat`. `tier` mirrors the AI's non-read branch: it picks an
+  owned option at the best creature-type x1.5/x0.5 matchup tier (the shipped
+  up/down marker a player can read), so the paired baseline reflects that
+  decision the tier web rewards.
 - **Read rates**: 0/25/50/75/100 %.
 
 Policies and the AI see only *revealed* history; a policy never reads the
@@ -86,7 +89,7 @@ bump it on any breaking field change. Additive fields keep the version. Shape:
   "config": {
     "matrixId": "5", "teamSize": 3, "scoring": "bonus", "maxRounds": 200,
     "battles": 1000, "persona": "reader",
-    "policies": ["random", "repeat", "counter", "rotation", "swap", "anti-repeat"],
+    "policies": ["random", "repeat", "counter", "rotation", "swap", "tier", "anti-repeat"],
     "rates": [0, 25, 50, 75, 100]
   },
   "provenance": {
