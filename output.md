@@ -11156,3 +11156,48 @@ active reused arduino-cache retained.
 ### Deviations
 - Wall time ~6 min (host ~1 min + AVR device compile/capture ~5 min).
 - No commit/push; bead left `in_progress` per instructions. No Makefile edits required.
+
+## d73i.10 — duel picker strip colors
+
+### Change
+`src/engine/battle/BattleMenu.cpp` `BattleMenu::draw()` (CGFX_DUEL_BATTLE paths only):
+- PAGE_DUEL_ACTION: strip fillRect WHITE->BLACK; selected row BLACK->WHITE with text frame swapped (normalFrame=1 dark on white, selectedFrame=0 white on black).
+- Shared strip before PAGE_MOVES/PAGE_PARTY: BLACK under `#ifdef CGFX_DUEL_BATTLE`, WHITE in `#else` (non-duel byte-identical).
+- PAGE_PARTY row loop: duel selected row WHITE fill + frame 1; unselected frame 0; `#else` legacy BLACK/frame0 untouched.
+Selected picker/action cell now matches the pick row (drawDuelChoice: WHITE selected cell, dark content on BLACK strip).
+
+`tst/fxdatatest/duel_ui_test.hpp`: +2 permanent device fixtures (+6 assertions).
+- `duelDevicePartyStripColors`: drives real flow pick row -> NAV_RIGHT to SWAP -> EDGE_A into the bench picker; asserts row0 selected cell WHITE at x=100 and x=2 (full width), row1 strip BLACK at x=100 and x=2.
+- `duelDeviceActionStripColors`: gatherable wild -> EDGE_B opens PAGE_DUEL_ACTION; asserts selected GATHER row WHITE, row1 strip BLACK.
+
+### Verify
+```
+make test BUILD_DIR=build
+make test BUILD_DIR=build CPPFLAGS='-I. -DCGFX_DUEL_BATTLE'
+```
+Both host runs: Total Passed counts green, 0 failed (last suite batched: world 258/0; battle/duel host suites included, all 0 failed).
+
+```
+make fxtest-headless BUILD_DIR=build ARDENS=... FXTEST_INOS='test_duel_ui.ino test_battle_duel.ino test_stack.ino'
+```
+- test_duel_ui PASSED=65 FAILED=0
+- test_battle_duel PASSED=106 FAILED=0
+- test_stack PASSED=4 FAILED=0; stack headroom=0x271 (625), mode transition headroom=0x2CE (718)
+
+Negative control (proof the assertions bite): temporarily flipped the duel bench strip fill back to WHITE -> `FAIL unselected picker row stays on the black strip got=1 want=0`, `test_duel_ui PASSED=63 FAILED=2 ... FAIL`; restored to BLACK and re-ran -> 65/0 PASS.
+
+```
+make ram BUILD_DIR=build
+```
+Baseline (HEAD BattleMenu.cpp, `git checkout --`): RAM_FLASH_BYTES=22408, RAM_STATIC_BYTES=1687.
+Fixed: RAM_FLASH_BYTES=22404, RAM_STATIC_BYTES=1687. Delta: **-4 B flash, 0 B static** (saves 4 bytes).
+
+### Storage
+- `df -h . /private/tmp`: 48 GiB free before and after.
+- `du -sh build`: 2.1G before/after.
+- `make clean-build-artifacts BUILD_DIR=build` preview 108 candidates / 2,581,803 B; applied `CLEAN_APPLY=1`. Active arduino cache retained.
+
+### Deviations
+- Shipping baseline measured from git HEAD directly; task's "was 22408" matches exactly.
+- No commit/push; bead left `in_progress` per instructions. No generated artifacts touched.
+- Wall time ~12 min (host ~2 min, device build/capture x2 runs + negative control + 3 ram builds).

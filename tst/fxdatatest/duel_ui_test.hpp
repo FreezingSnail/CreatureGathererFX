@@ -307,6 +307,55 @@ __attribute__((noinline)) void duelDeviceEmptyEntryRender(FxTest &test) {
                   F("empty player slot leaves its sprite area black"));
 }
 
+// The duel SWAP bench picker shares the pick row's convention: a BLACK strip
+// whose selected row is a WHITE cell (dark text) with white text on the other
+// row. Fails on the pre-fix inverted strip (white band, black selected row).
+__attribute__((noinline)) void duelDevicePartyStripColors(FxTest &test) {
+    preparePlayer();
+    beginWildDuel(false, 0);
+    configureMatchup(SpiritAuthored, SpiritAuthored, FireAuthored, SpiritAuthored, 52, 52);
+    battle::BattleState &state =
+        const_cast<battle::BattleState &>(battleSession().state());
+    // Two living bench members -> the SWAP cell is offered and both picker rows
+    // cache a real creature name.
+    state.partyCount[0] = 3;
+    state.bench[0][0].id = player.party[1].id;
+    state.bench[0][0].level = player.party[1].level;
+    state.bench[0][0].hp = 10;
+    state.bench[0][1].id = player.party[2].id;
+    state.bench[0][1].level = player.party[2].level;
+    state.bench[0][1].hp = 10;
+
+    BattleFlow::update(0);              // choice entry -> pick row
+    BattleFlow::update(MENU_NAV_RIGHT); // cursor -> SWAP cell (one attack + SWAP)
+    BattleFlow::update(MENU_EDGE_A);    // SWAP -> the two-row bench picker
+    duelClearBuffer();
+    renderBattle();
+
+    // x=100 is clear of the names (they start at x=4); x=2 proves the full width.
+    test.expectEq(duelPixel(100, 50), 1, F("picker selected row is a white cell"));
+    test.expectEq(duelPixel(2, 50), 1, F("picker selected cell spans the row width"));
+    test.expectEq(duelPixel(100, 58), 0, F("picker strip stays black below the selection"));
+    test.expectEq(duelPixel(2, 58), 0, F("unselected picker row stays on the black strip"));
+}
+
+// The wild action page (GATHER/ESCAPE) matches the same convention as the pick
+// row: a BLACK strip with a WHITE selected cell.
+__attribute__((noinline)) void duelDeviceActionStripColors(FxTest &test) {
+    preparePlayer();
+    beginWildDuel(true, 1); // gatherable wild -> GATHER + ESCAPE rows
+    configureMatchup(SpiritAuthored, SpiritAuthored, FireAuthored, SpiritAuthored, 52, 52);
+
+    BattleFlow::update(0);           // choice entry -> pick row
+    BattleFlow::update(MENU_EDGE_B); // open the action page (cursor on GATHER)
+    duelClearBuffer();
+    renderBattle();
+
+    test.expectEq(duelPixel(100, 50), 1, F("action selected row is a white cell"));
+    test.expectEq(duelPixel(2, 50), 1, F("action selected cell spans the row width"));
+    test.expectEq(duelPixel(100, 58), 0, F("action strip stays black below the selection"));
+}
+
 } // namespace duel_ui_test_detail
 
 inline void test_duel_ui(FxTest &test) {
@@ -319,6 +368,8 @@ inline void test_duel_ui(FxTest &test) {
     duelDeviceWaitRow(test);
     duelDeviceThreeDigitHp(test);
     duelDevicePickRowGeometry(test);
+    duelDevicePartyStripColors(test);
+    duelDeviceActionStripColors(test);
     duelDeviceFeedback(test);
     duelDeviceExhaustedEntryLoses(test);
     duelDeviceEmptyEntryRender(test);
