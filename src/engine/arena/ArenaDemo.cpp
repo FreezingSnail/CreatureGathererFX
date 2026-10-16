@@ -23,18 +23,16 @@ ArenaContext arenaContext = {};
 
 namespace {
 
-uint8_t edgeDirection(uint8_t buttons)
+// The demo boots straight into a random 3v3. Both draws come from the shared
+// game RNG (seeded once in setup from the hardware entropy source), so
+// successive boots and successive rounds vary. Tests inject the sequence with
+// rngSeed()/randomRoll().
+void rollRandomPair()
 {
-    if (buttons & MENU_NAV_UP) return 0;
-    if (buttons & MENU_NAV_DOWN) return 1;
-    return 0xff;
-}
-
-void moveCursor(uint8_t direction, uint8_t count)
-{
-    if (direction == 0xff || count == 0) return;
-    ListView &list = modeState.arena.ui.list;
-    listViewMove(list, direction == 0 ? -1 : 1);
+    arenaContext.playerTeam = randomRoll(
+        0, static_cast<uint8_t>(ArenaDemoIds::playerCount - 1));
+    arenaContext.opponentTeam = randomRoll(
+        0, static_cast<uint8_t>(ArenaDemoIds::opponentCount - 1));
 }
 
 } // namespace
@@ -74,12 +72,12 @@ void boot()
 {
     arenaContext = {0, 0};
     enterArena();
-    ArenaUiState &ui = modeState.arena.ui;
-    ui = {};
-    ui.screen = ArenaScreen::PlayerTeam;
-    ui.list = {ArenaDemoIds::playerCount, 1, 0, 0};
-    loadPreview(ArenaScreen::PlayerTeam, 0, ui.preview);
-    gameState.state = GameState_t::ARENA;
+    modeState.arena.ui = {};
+    // Roll a random team and opponent, then start immediately: the demo has no
+    // interactive picker on its normal path. The picker screens remain only as
+    // the startMatch() fallback for an empty/invalid authored catalog.
+    rollRandomPair();
+    startMatch();
 }
 
 bool startMatch()
@@ -109,28 +107,14 @@ bool startMatch()
 
 void finishBattle(battle::Outcome)
 {
-    enterArena();
-    ArenaUiState &ui = modeState.arena.ui;
-    ui.screen = ArenaScreen::PlayerTeam;
-    ui.list = {ArenaDemoIds::playerCount, 1, arenaContext.playerTeam,
-               arenaContext.playerTeam};
-    loadPreview(ArenaScreen::PlayerTeam, arenaContext.playerTeam, ui.preview);
-    gameState.state = GameState_t::ARENA;
+    // Continuous random 3v3: every round re-rolls both sides and restarts.
+    rollRandomPair();
+    startMatch();
 }
 
 void update(uint8_t edgeButtons)
 {
     ArenaUiState &ui = modeState.arena.ui;
-    // Confirming a player team starts immediately against a random trainer.
-    // This keeps the demo focused on team choice and samples the shared game RNG.
-    if (ui.screen == ArenaScreen::PlayerTeam && (edgeButtons & MENU_EDGE_A)) {
-        arenaContext.playerTeam = ui.list.cursor < ArenaDemoIds::playerCount
-                                      ? ui.list.cursor : 0;
-        arenaContext.opponentTeam = randomRoll(
-            0, static_cast<uint8_t>(ArenaDemoIds::opponentCount - 1));
-        startMatch();
-        return;
-    }
     const ArenaIntent intent = navigate(ui, arenaContext, edgeButtons,
                                         ArenaDemoIds::playerCount,
                                         ArenaDemoIds::opponentCount);

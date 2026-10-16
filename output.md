@@ -1457,3 +1457,61 @@ stage remains; no generated/tracked files changed.
 Worker ~95 min wall: recon/design ~25; implementation ~15; host iteration ~6; device focused build +
 run ~15 (one earlier 13-min cold LTO build), full wildcard 7:41; ram + storage ~5; report ~10. No
 orchestrator gate run (bead left `in_progress`).
+
+## lyd8 — random demo + .arduboy
+
+Worker spent ~55 min wall (recon ~20, impl ~8, host ~4, focused device build+run ~12, arena-package/ram ~8, storage/report ~3). Single build lane, `BUILD_DIR=build`. No commit/push; bead left `in_progress`.
+
+### Changed
+
+- `src/engine/arena/ArenaDemo.cpp`: `boot()` now rolls a random player team + opponent via the shared RNG (`rollRandomPair`) and calls `startMatch()` immediately; `finishBattle()` re-rolls both and restarts (continuous random 3v3). `update()` reduced to the shared `navigate` path (removed the demo-only A-confirm/random-opponent branch and the pre-existing dead `edgeDirection`/`moveCursor` helpers). `applyPlayerTeam`/`readOpponentId`/`startMatch` and the duel/shipping builds are unchanged. RNG already seeded in `setup()` from `Arduboy2Core::generateRandomSeed()`, so successive boots vary; tests pin it with `rngSeed`.
+- `Makefile`: new `arena-package` target (+ `ARENA_PACKAGE`/`ARENA_PACKAGE_INFO` overrides, `.PHONY`, help). Builds the `ARENA_DEMO_CPP_FLAGS`/`ARENA_DEMO_BUILD_DIR` firmware then writes a fixed-order `zip -X` with normalised mtimes. `arena-demo`/`arena-test` untouched (dry-run confirmed they still build+launch Ardens).
+- `tools/arena-demo-info.json`: schemaVersion 3, `binaries[0].filename`=`CreatureGathererFX.ino.hex`, `flashdata`=`fxdata.bin`, description/buttons updated for the random-match duel.
+- `tst/arena_lifecycle_test.hpp`: rewritten for the new boot contract (host RNG stub returns 1 → rolls team 1 / opponent 1; asserts BATTLE + valid in-range pair, party rebuilt from the rolled FX members, invalid-selection no-op, terminal re-roll).
+- `tst/fxdatatest/arenademo_test.hpp` + `test_arenademo.ino`: new device suite (random valid pair + variation + determinism).
+- `README.md`: arena demo section updated (random boot, continuous 3v3, `arena-package`, current sizes).
+
+### DEVICE RANDOM-PAIR PROOF
+
+`rngSeed(0xABCD)` then computing the first two `randomRoll` draws vs `arena::boot()`:
+
+```
+rngSeed(0xABCD); draw0(0..2)=0 draw1(0..4)=4   # expected
+rngSeed(0xABCD); arena::boot() -> playerTeam=0 opponentTeam=4, state=BATTLE, partyCount[0]=3 partyCount[1]=3
+arena::finishBattle(Win) -> state=BATTLE, pair (1,4) != (0,4)   # consecutive rolls advance the RNG
+rngSeed(0xABCD); arena::boot() -> (0,4) again                    # deterministic seam
+```
+
+`test_arenademo` output: `PASSED=15 FAILED=0` / `P`.
+
+### VERIFY (exact commands + tails)
+
+- `make test BUILD_DIR=build` → `Total Passed: 240501  Total Failed: 0` / `All tests passed!`; arena suite `Arena mode lifecycle … Passed: 54 Failed: 0`. World suite `Passed: 258 Failed: 0`.
+- `make testvm BUILD_DIR=build` → `Total Passed: 286  Total Failed: 0` / `All tests passed!`.
+- Focused device (`ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens`):
+  `make fxtest-headless BUILD_DIR=build ARDENS="$ARDENS" FXTEST_INOS='tst/fxdatatest/test_arenademo.ino tst/fxdatatest/test_arenacatalog.ino tst/fxdatatest/test_arenaview.ino tst/fxdatatest/test_battle_duel.ino tst/fxdatatest/test_stack.ino'`
+  → `test_arenademo PASS(15)` `test_arenacatalog PASS(46)` `test_arenaview PASS(70)` `test_battle_duel PASS(47)` `test_stack PASS(4)`; free flash: arenademo 9870B used (19.8 KB free), arenacatalog 9104, arenaview 7286, battle_duel 8540, stack 17268 — all far above the ~1 KB floor.
+- `make arena-package BUILD_DIR=build` → arena firmware `Program: 23382 bytes` vs `ARENA_DEMO_FLASH_BUDGET=29184`; `unzip -l dist/CreatureGathererFX-ArenaDemo.arduboy`:
+  ```
+  696    01-01-2001 00:00   info.json
+  65783  01-01-2001 00:00   CreatureGathererFX.ino.hex
+  781824 01-01-2001 00:00   fxdata.bin
+  ```
+  Re-ran `make arena-package` → identical `shasum -a 256` = `887590b3f640415afd0993285b1a8a5c93b527c99fd32cbb982147e33e7f7f7f` (reproducible).
+- `make ram BUILD_DIR=build` → `RAM_FLASH_BYTES=23380 RAM_STATIC_BYTES=1680` (shipping unchanged, matches 23380/1680).
+- `make test-manifest` / `make test-generated-libs BUILD_DIR=build` → PASS (incl. arena-demo-data + first-unqualified-alias). `git status`: no generated/tracked artifact drift (`src/fxdata.h`, `fxdata/generated/*` clean).
+
+### Arena firmware budget
+
+`RAM_FLASH_BYTES=23382` vs `ARENA_DEMO_FLASH_BUDGET=29184` (5.8 KB headroom); static 1765/2560. Whole-image, not per-symbol.
+
+### Deviations / notes
+
+- Picker: boot/finishBattle never open the team picker; the picker screens remain compiled only as the `startMatch()` failure fallback (empty/invalid authored catalog — a real state per AGENTS). Added device+host assertions that boot lands in `BATTLE` (no picker). Chose this over `#ifdef`-stripping the shared screens to avoid touching the frozen seams and host navigation fixtures.
+- Device proof shape: `startMatch` → `beginTrainer` → `resetCursor(Choice)` commits the opponent's hidden pick from the shared RNG (2 extra draws) and loads the duel chart with one FX read not accounted by `beginTrainer`'s `transitionExact`. Both are pre-existing and only observable in `FX_READ_COUNTER` test builds (the shipping arena demo does not define it), so the device suite pins the exact *first-two-draw* boot pair plus re-roll variation and same-seed determinism rather than a mid-stream pair or `markUpdate`. Not fixed here (out of scope; no shipped impact).
+- Removed pre-existing dead helpers in `ArenaDemo.cpp` (unreferenced before this change) — part of the same file's rewrite.
+
+### Storage
+
+`df -h .` 60 GiB free before → 59 GiB after (>=10 GiB reserve held). `du -sh build` 1.5G → 1.3G.
+`make clean-build-artifacts BUILD_DIR=build` preview (108 candidates, 2.6 MB) then `CLEAN_APPLY=1`; also applied for `build/arena-demo` (2.7 MB). Removed the disposable `build/fxtest` staged device builds (238M). Retained `build/native-tools` (963M active generator cache), `build/arduino-build` (49M), `dist/CreatureGathererFX-ArenaDemo.arduboy` (deliverable). No `cgfx-pack.*` / `arena-package.*` stage remains.
