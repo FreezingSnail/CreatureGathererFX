@@ -1,5 +1,13 @@
 # Battle balance review — 2026-10-07
 
+> **Historical review, retired engine.** This document predates the 5-type duel
+> migration and reviews the ordered-turn engine (`tools/battle-sim`, now removed;
+> source under `archive/battle-legacy/tools/battle-sim/`). Its move pools, PP,
+> healing and per-slot metrics do not exist in the current duel rules. Current
+> balance measurement is `tools/battle-duel-spike.mjs`; see
+> `docs/battle-simulator.md`. Read the rest of this file as a record of that
+> review, not as current duel guidance.
+
 Recommendation: expand useful choices before raising caps. Keep level 31, byte-sized
 stats and ±2 applied stages. Test smoother growth, repair exhausted/immunity kits,
 then introduce six moves using existing effects. These are proposals, not gameplay
