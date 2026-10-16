@@ -13686,3 +13686,127 @@ node --test tools/tests/join-simple-environments16_test.mjs tools/tests/simple-u
 
 ~30 min single worker: recon/PNG analysis ~15 min; joiner + test edits ~5 min; `make gen` +
 verification runs ~5 min; report ~5 min.
+
+## ogh.7 — Hedge spcdef trial
+
+Measurement only: **no shipped gameplay constant or authored data file changed** (off the
+AVR/generation lane; no `make gen`/AVR/gates; no git commit/push). Bead left `in_progress`.
+The candidate seed change was applied **in memory** on the loaded `mock/data.js` record, never in
+`data/json/creatures.json`.
+
+### Retired-frame reconciliation (PP / Rejuvenate)
+
+The bead text was authored for the retired Pokemon/SMT engine. **"Keep PP and Rejuvenate
+unchanged" is vacuous in the current five-type RPS duel:** neither **PP** (move-uses) nor
+**Rejuvenate** (heal) exists in the duel. The shipping duel (`mock/battle-mock.js` duel path,
+`src/engine/battle/DuelKernel.hpp`) resolves each round with flat constants
+(`FLAT_WIN/FLAT_CHIP/FLAT_TRADE`) plus the type-relation lookup — there is no move-use counter and
+no healing. The only authored lever that reaches the duel is the creature record itself, so the
+live interpretation of "Hedge spcdef seed 3->5" is the authored `spcdef` stat seed that derives the
+mock's `stats.spcDef`. That is the quantity measured below.
+
+### What actually consumes `spcdef`, and what does not
+
+- Authored `data/json/creatures.json` → `spcdef` → generator
+  `tools/battle-design-spike-data.mjs` `stat(SPIKE_LEVEL, creature.spcdef)` → `mock/data.js`
+  `creatures[].stats.spcDef`. Hedge authored `spcdef=3` → `spcDef = 2*8 + 3*2 = 22`.
+- **The five-type duel never reads `spcDef`** (nor `attack`/`defense`/`spcAtk`/`speed`). The only
+  creature fields the duel path touches are `maxHp` (derived from authored `hp`, not `spcdef`),
+  `types`/`merged`, `moves`, and the frozen 5-bit `attackMask`. `mock/battle-mock.js` reads
+  `.stats.attack` **only inside the `stances` variant** (`duelKind === 'stances'`, lines 451-497),
+  which the pair sweep does not use. `DuelKernel.hpp` has no stat references at all.
+- Therefore changing Hedge `spcdef` **cannot** move a duel outcome; it only changes the
+  `fixtures.creatures` provenance hash. This was verified empirically, not assumed.
+
+### Measured seed 3 -> 5 delta (matrix5 team3 bonus cap200 reader, 25 pairs x 7 policies x 5 rates x 1000)
+
+In-memory `hedge.stats.spcDef` 3→5, everything else identical. `A` = control, `B` = seed 5:
+
+| metric | A (spcdef 3) | B (spcdef 5) |
+| --- | ---: | ---: |
+| W / L / D / T | 285,614 / 561,241 / 28,145 / 0 | 285,614 / 561,241 / 28,145 / 0 |
+| W% / L% / D% / T% | 32.6 / 64.1 / 3.2 / 0.0 | 32.6 / 64.1 / 3.2 / 0.0 |
+| rounds total / avg | 14,965,941 / 17.104 | 14,965,941 / 17.104 |
+| cell medianRounds min/med/max | 11 / 15 / 43 | 11 / 15 / 43 |
+| cell p95Rounds min/med/max | 11 / 18 / 43 | 11 / 18 / 43 |
+| switches (switchRate) | 10,000 (0.0007) | 10,000 (0.0007) |
+| KOs / oneHitKOs | 3,343,204 / 0 | 3,343,204 / 0 |
+| type skew (n) | water 42.1 / earth 24.6 / spirit 23.8 / fire 6.4 / plant 3.2 (14,955,941) | identical |
+| species skew | hedge 7.8% (13 species) | identical |
+| decided pairs (0%/100%) | 11/25 (7 zero-win, 4 100%-win) | 11/25 |
+| **pairs changed** | — | **0/25** |
+| **cells changed** | — | **0** |
+
+The only byte-level difference between the two artifacts is
+`provenance.fixtures.creatures` (f98c47f9… → 65e600d1…). **Every** outcome, pacing, skew and
+per-pair/per-cell metric is identical: the seed 3→5 change produces a **+0.0 pt** swing on the
+paired 3v3 baseline. `balanced` is the only authored team containing hedge
+(`squid,SkitterCrab,hedge`); all pairs using `balanced` as either side are unchanged too, as are all
+other pairs.
+
+### Sign-off needed (no constant changed)
+
+- **Recommendation: REJECT this trial as a balance lever.** Hedge `spcdef` does not enter the duel
+  decision at all; seed 3→5 changes nothing measurable. Making the seed matter would require the
+  duel to consult `spcDef` (a scoring/damage rule change), which is out of this bead's stated
+  one-number scope.
+- If the owner still wants Hedge to be "more special-defensive," that is a **different** bead:
+  either wire `spcDef` into duel damage (new mechanic — needs design + AVR budget), or express the
+  intent through a field the duel already reads (types/kits/maxHp via authored `hp`). Any such
+  change to `data/json/creatures.json` requires **owner sign-off** before shipping; this bead leaves
+  the authored file untouched.
+
+### Verify (commands + tails)
+
+```sh
+# Determinism: the shipped CLI, two runs, byte-identical.
+node tools/battle-duel-spike.mjs --json --pair-sweep --battles 1000 --rounds 200 > build/reports/ogh.7/cli-baseline.json
+node tools/battle-duel-spike.mjs --json --pair-sweep --battles 1000 --rounds 200 > build/reports/ogh.7/cli-baseline-replay.json
+cmp build/reports/ogh.7/cli-baseline.json build/reports/ogh.7/cli-baseline-replay.json   # BYTE-IDENTICAL
+
+# In-memory trial harness (mutates mock/data.js only) reproduces the CLI baseline byte-for-byte.
+node build/reports/ogh.7/trial.mjs                                  --battles 1000 --rounds 200 > build/reports/ogh.7/baseline.json
+node build/reports/ogh.7/trial.mjs                                  --battles 1000 --rounds 200 > build/reports/ogh.7/baseline-replay.json
+node build/reports/ogh.7/trial.mjs --hedge-spcdef 5 --battles 1000 --rounds 200 > build/reports/ogh.7/hedge-spcdef5.json
+cmp build/reports/ogh.7/baseline.json build/reports/ogh.7/baseline-replay.json  # BYTE-IDENTICAL
+cmp build/reports/ogh.7/cli-baseline.json build/reports/ogh.7/baseline.json     # BYTE-IDENTICAL
+node build/reports/ogh.7/compare.mjs build/reports/ogh.7/baseline.json build/reports/ogh.7/hedge-spcdef5.json
+  # provenance fixtures.creatures f98c47f9… -> 65e600d1…; pairs changed 0/25; cells changed 0
+  # A W 32.6% L 64.1% D 3.2% T 0.0% ; B W 32.6% L 64.1% D 3.2% T 0.0%
+  # decided pairs (0%/100%): A 11/25  B 11/25
+
+node --test tools/tests/battle-duel-spike_test.mjs tools/tests/duel-kernel-parity_test.mjs
+# tests 26  pass 26  fail 0
+make sim-test BUILD_DIR=build CPPFLAGS='-I. -DCGFX_DUEL_BATTLE'
+# tests 6  pass 6  fail 0
+
+git diff --stat -- data/json/creatures.json   # empty: authored file untouched
+```
+
+sha256: `baseline.json` = `baseline-replay.json` = `cli-baseline.json` = `cli-baseline-replay.json`
+= `3414a37a0b5b4a7514689bca90673fef66956eb45fb626e85d0c5ec07ab90b3c`;
+`hedge-spcdef5.json` = `2c028ebdfad3948ad4f2dbbb39d418e523ad22a5666228e2a5e3bbd4e3485489`.
+
+### Deviations (bead verify list superseded by the dispatch scope)
+
+The bead's own VERIFY block assumes a landed data change (`make gen` + `make test` +
+`make verify-generated` + `make test-pack-parity` + `make fxtest-headless` + `make ram`). The
+dispatch put this worker **off the AVR/generation lane** and forbade `make gen`/AVR/gates and any
+shipped-constant change, so those steps do not apply and were not run: the trial is measurement +
+proposal only, and no generated artifact, packed image or shipping constant changed. The mandated
+gate for this scope is the Node duel suites + `make sim-test` above. No `output.md` gate run.
+
+### Storage
+
+`df -h .` 62 GiB free before/after (>=10 GiB reserve held). `du -sh build` 1.9G before and after.
+Artifacts confined to gitignored `build/reports/ogh.7/` (4.0 MB: 4 baseline/after JSON, compare +
+trial scratch `.mjs`, `delta.txt`). No build tree created; `sim-test` reused `build/duel-sim`.
+Pre-existing tracked edits (`.beads/interactions.jsonl`, plus the generation-lane worker's files)
+were not touched.
+
+### Wall time
+
+Worker ~30 min wall: read bead/output/docs/tool/generator ~12 min; harness (~4 min) + baseline x2 +
+after + CLI x2 (~4 min incl. ~26 s/sweep x 5); structural compare + metrics ~4 min; node+sim tests
+~1.5 min; report remainder. Off the build/generation lane; no gate/orchestrator run (dispatch leaves
+the bead `in_progress`).
