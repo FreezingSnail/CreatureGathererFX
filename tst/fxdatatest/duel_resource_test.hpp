@@ -17,6 +17,7 @@
 #endif
 
 #include "fxtest.hpp"
+#include "frame_budget_test.hpp"
 #include "duel_session_integration_test.hpp"
 #include "stack_test.hpp"
 #include "generated/opponent_data.hpp"
@@ -305,5 +306,6 @@ inline void duel_resource_test(FxTest &test)
     test.expectEq(headroom >= 219, true, F("duel session headroom >= 219 B"));
     test.expectEq(static_cast<uint8_t>(step), static_cast<uint8_t>(SaveStep::Done),
                   F("save chain completes"));
-    test.expectEq(worstOverall <= 19230, true, F("worst frame <= 19230 us"));
+    test.expectEq(worstOverall <= frame_budget_test_detail::FRAME_BUDGET_US, true,
+                  F("worst frame <= 19230 us"));
 }

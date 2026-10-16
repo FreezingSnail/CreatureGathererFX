@@ -5,6 +5,7 @@
 #include "src/item/Inventory.hpp"
 #include "src/item/ItemIds.hpp"
 #include "fxtest.hpp"
+#include "frame_budget_test.hpp"
 #include "stack_test.hpp"
 
 // WorldEngine::runMap reaches the world VM; the shipping sketch defines this
@@ -137,6 +138,39 @@ void setup() {
     WorldEngine::init(worldState());
     WorldEngine::loadMap(worldState(), 0, 0);
     drawMapFast(worldState());
+
+    // Frame-budget proof on the real world step: runMap + map/player/overlay
+    // render + the real FX display, using the shared micros() instrumentation.
+    // The deliberately slowed frame proves the assertion is non-vacuous.
+    {
+        frame_budget_test_detail::FrameBudget budget;
+        budget.reset();
+        budget.armSlowFrame();
+        budget.begin();
+        WorldEngine::runMap(worldState());
+        drawMapFast(worldState());
+        drawPlayer(worldState());
+        LureZone::drawOverlay();
+        FX::display(CLEAR_BUFFER);
+        budget.end();
+        budget.expectDetectsSlowFrame(
+            test, F("negative control: slowed world frame exceeds budget"));
+
+        budget.reset();
+        for (uint8_t frame = 0; frame < 8 && gameState.state == GameState_t::WORLD; ++frame) {
+            budget.begin();
+            WorldEngine::runMap(worldState());
+            drawMapFast(worldState());
+            drawPlayer(worldState());
+            LureZone::drawOverlay();
+            FX::display(CLEAR_BUFFER);
+            budget.end();
+        }
+        test.expectEq(gameState.state == GameState_t::WORLD, true,
+                      F("world frames stay in the world state"));
+        budget.expectWithinBudget(test, F("worst world frame <= 19230 us"));
+    }
+
     LureZone::deposit(LureZone::lureId(0, 0));
     test.expectEq(LureZone::active(), true, F("pocket lure is active"));
     player.basic();

@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "fxtest.hpp"
+#include "frame_budget_test.hpp"
 #include "generated/rawread_data.hpp"
 #include "src/fxdata.h"
 #include "src/lib/ReadData.hpp"
@@ -618,6 +619,47 @@ inline void test_saveStatusRender(FxTest &test)
     // The packed move table is retired; the save path issues no move-table read.
 }
 
+// Worst-case frame-time proof on the shipping save chain. Shipping drives the
+// save one SaveController::advance() step per frame: the sector erase stays in
+// flight and saveStepAdvance() returns while flash is busy, so this times that
+// exact frame (advance + status render + the real FX display). The deliberately
+// slowed frame is the permanent negative control for the budget assertion.
+inline void test_saveFrameBudget(FxTest &test)
+{
+    using namespace save_fx_test_detail;
+    fresh();
+    gameState.playerLocation = 0x1234;
+    StoreRecord record = creature();
+    uint8_t slot = 255;
+    test.expectEq(storeAdd(record, slot), true, F("frame-budget seed instance"));
+    test.expectEq(storeAssign(0, slot, 15), true, F("frame-budget seed assignment"));
+
+    SaveController::begin(GameState_t::WORLD);
+    frame_budget_test_detail::FrameBudget budget;
+
+    // Negative control: arm one real frame, verify detection, then restore.
+    budget.reset();
+    budget.armSlowFrame();
+    budget.begin();
+    SaveController::advance();
+    SaveController::drawStatus();
+    FX::display(CLEAR_BUFFER);
+    budget.end();
+    budget.expectDetectsSlowFrame(
+        test, F("negative control: slowed save frame exceeds budget"));
+
+    budget.reset();
+    for (uint16_t frame = 0; frame < 256 && saveInProgress(); ++frame) {
+        budget.begin();
+        SaveController::advance();
+        SaveController::drawStatus();
+        FX::display(CLEAR_BUFFER);
+        budget.end();
+    }
+    test.expectEq(saveInProgress(), false, F("save frame loop completes"));
+    budget.expectWithinBudget(test, F("worst save frame <= 19230 us"));
+}
+
 inline void test_save(FxTest &test)
 {
     test_saveJournalLayout(test);
@@ -630,4 +672,5 @@ inline void test_save(FxTest &test)
     test_saveJournalPublication(test);
     test_savePlayerStore(test);
     test_saveStatusRender(test);
+    test_saveFrameBudget(test);
 }
