@@ -410,7 +410,15 @@ pack: encounter-profile-check
 	./tools/assert-fxdata-manifest.sh "$(FX_LAYOUT)" "$(FXDATA_MANIFEST)"; \
 	"$(ENCOUNTER_PROFILE_BIN)" "$(ENCOUNTER_PROFILE_INPUT)" src/fxdata.h "$(FXDATA_DATA_BIN)"
 
-check: gen test testvm test-world-script-profile test-encounter-profile test-manifest test-generated-libs test-fxtest-ram test-avr-build-budget verify-generated build fxtest
+check: gen test testvm test-beta-area test-world-script-profile test-encounter-profile test-manifest test-generated-libs test-fxtest-ram test-avr-build-budget verify-generated build fxtest
+
+# Authored first-beta contract (CreatureGathererFX-o845). The node suite pins the
+# authored start/rest/landmarks, the generated collision and the shipping
+# fresh-game start literal to each other, so a one-sided edit of either side
+# fails the standard gate. It validates the generated collision, so it depends on
+# gen (also ordered by check before the other gate prerequisites).
+test-beta-area: gen
+	node --test tools/tests/beta-area_test.mjs
 
 # Final pre-commit gate. Keep the integrated check and shipping RAM build
 # sequential even when the caller invokes make with -j.

@@ -313,6 +313,26 @@ test('lure-zone map pins are preserved byte-for-byte', () => {
 });
 
 // ---------------------------------------------------------------------------
+// Shipping fresh-game start literal (CreatureGathererFX-o845).
+// ---------------------------------------------------------------------------
+// setup() publishes a fresh ordinary game's start from a hand-written
+// playerLocation literal (not a generated symbol), so nothing but this test ties
+// it to the authored contract. Anchored on the fresh-game block so the
+// guard-only CGFX_WILD_DEMO / CGFX_LURE_WEDGE literals cannot satisfy it.
+test('shipping fresh-game setup literal matches the authored start', () => {
+  const ino = readText('CreatureGathererFX.ino');
+  const anchor = ino.indexOf('First-beta authored start');
+  assert.ok(anchor >= 0, 'shipping setup keeps the authored-start literal marker');
+  const literal = ino.slice(anchor).match(
+    /gameState\.playerLocation\s*=\s*static_cast<uint16_t>\((\d+)\)\s*\|\s*\(\s*static_cast<uint16_t>\((\d+)\)\s*<<\s*8\s*\)/);
+  assert.ok(literal, 'fresh-game setup publishes a playerLocation start literal');
+  assert.equal(Number(literal[1]), area.start_x,
+    'shipping fresh-game literal x must equal the authored start_x');
+  assert.equal(Number(literal[2]), area.start_y,
+    'shipping fresh-game literal y must equal the authored start_y');
+});
+
+// ---------------------------------------------------------------------------
 // Renewable acquisition math.
 // ---------------------------------------------------------------------------
 test('tier1 lure rate meets the encounter need within six turns', () => {
