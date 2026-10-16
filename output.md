@@ -12150,3 +12150,90 @@ Worker loop ~30 min wall (single lane): recon + instrumentation design ~8 min;
 device build/measure iteration (incl. flash-fit bisection on battlepresentation)
 ~15 min; focused suites + host + ram ~4 min; negative-control proof + revert ~2 min;
 report + cleanup ~1 min. Gate/orchestrator not run here.
+
+## jp8.11.17 — M0 acceptance map
+
+Bead `CreatureGathererFX-jp8.11.17` (P1 task, `beta`/`design-ready`/`roadmap`); worker DeepSeek V4.1
+Flash; tree HEAD `2d0ae8a`. Audit-first: no shipping source changed, so no `make ram` and no whole-image
+delta. Single AVR/build lane reused `BUILD_DIR=build`. No commit/push; bead left `in_progress`.
+
+### Context deltas from the dated a19fcfc baseline
+- Current shipping is **22416 B flash / 1687 B static SRAM** (dqxm checkpoint), not the bead's dated
+  25218/1760, and HEAD is `2d0ae8a`.
+- The **duel is now the sole battle engine**; the Makefile default host compile is
+  `CPPFLAGS ?= -I. -DCGFX_DUEL_BATTLE`. Under that macro `tst/battle_session_test.hpp`,
+  `tst/battle_flow_test.hpp`, `tst/battle_playback_test.hpp` and the legacy battle suites are
+  `#ifndef CGFX_DUEL_BATTLE`-excluded from the default `make test` (see `tst/main.cpp`); their
+  coverage is replaced by `tst/duel_session_integration_test.hpp` and the duel device suites.
+- New ordinary games spawn at **(11,5)** (`CreatureGathererFX.ino:155-165`), accepted by the completed
+  `mjm` bead (output.md `## mjm`); `WorldEngine` defeat recovery uses the same `START_X/START_Y`.
+
+### M0 criterion → current-source evidence
+
+| M0 criterion | Current proof | View |
+| --- | --- | --- |
+| Ordinary first-beta start reachable | `CreatureGathererFX.ino:155-165` fresh (`!restored`) start `(11,5)`; `data/beta-area.toml` `start_x/start_y=11/5`; `World.cpp:42-47` `REST_/START_` landmarks; `tst/generated/generated_libs_test.cpp` `checkSpawnReachability`; `tst/fxdatatest/tiles_test.hpp` `test_spawn_reachability`; `tools/tests/beta-area_test.mjs` pins `[11,5]`/`[10,4]` + BFS | PASS |
+| Collision on the real map | host `World Suite` (`WorldTest`, `WorldCollisionTest`, `WorldPlayerFrameTest`) 258/0; device `test_world_player` 52/0; generated-libs spawn/box/plant collision | PASS |
+| Completed-step dispatch (one tile per 16 stats) | `WorldTest` "completed move publishes one tile"; host `StepSuite` "completed movement publishes the destination tile" / "partial movement does not publish"; device `test_world_player` | PASS |
+| Fresh button edges | `StepSuite` release-stops / blocked-retains-state / dialog-gated-input; host `WorldInteractionSuite` "A release does not read a script slot", "A-pop does not read another script slot" | PASS |
+| Wild encounter from a tagged tile → battle entry | host `EncounterSuite` (decision/lure/world-integration); `StepSuite` 10 % boundary; device `test_encounter` 47/0; `test_world_player` "pocket encounter tile fires a wild battle" + session active | PASS |
+| Battle entry / resolution / terminal | device `test_battle_duel` 106/0 (25 relations, 29/68-frame phases); host `DuelSessionIntegrationSuite` (win/lose/draw/fled/gather/switch/wait) inside `make test` 240077/0 | PASS |
+| Tactical AI (duel persona) | host `DuelPersonaSuite`; device `test_battle_duel` | PASS |
+| Voluntary / forced switching | host `DuelSwitchSuite` + `duel_session_integration_test.hpp` switch/replacement; NOTE legacy `battle_flow`/`battle_session` switch tests are duel-excluded | PASS |
+| noPP / empty / KO / party exhaustion | duel has no PP (README "`*` means unlimited"); host `duelExhaustedEntryIsLose` (empty + all-KO wild/trainer, terminal Lose); `duelSimultaneousDraw`; device `test_duel_ui` 65/0 exhausted-entry→world | PASS |
+| Terminal outcome + world return + persistent HP | host `duelOriginalSlotHpSync` (active + bench → `player.creatureHPs`); device `test_world_player` + `test_duel_ui` defeat recovery; structural: `gameState.playerLocation` is written only in `World.cpp`/`ScriptVM.cpp`/`SaveController.cpp`/`LureZone.cpp`, never by battle code | PASS (see residual) |
+| Defeat recovery → authored start | `BattleFlow::finishBattle` queues recovery on `Lose`/`Draw`; device `test_world_player` heals every occupied member and returns to `(11,5)`, no re-trigger; host `battle_flow_test.hpp driveDefeatRecovery` (legacy-run) | PASS |
+| First-beta scripts (compact warp VM) + slot addressing | host `WorldInteractionSuite` + `ChunkSuite` (slot addr > `0x010000`); device `test_scripts` 72/0 | PASS |
+| Save / reload | host `SaveSuite` (`ShippingSaveRestoreTest`, checkpoint/HP cuts) in `make test`; device `test_save` 3305/0 | PASS |
+| `make test` / `make testvm` / `make fxtest-headless` green | test 240077+258 / 0; testvm 278 / 0; focused device suites all `P` | PASS |
+
+### Commands and results (exact)
+```
+PATH=$HOME/Applications/CreatureGathererTools/bin:$PATH make doctor             # READY
+make test   BUILD_DIR=build   # host Total Passed 240077 / Failed 0 ; world Total Passed 258 / Failed 0
+make testvm BUILD_DIR=build   # VM Total Passed 278 / Failed 0
+ARDENS=…/Ardens make fxtest-headless BUILD_DIR=build FXTEST_MS=30000 \
+  FXTEST_INOS='tst/fxdatatest/test_world_player.ino tst/fxdatatest/test_battle_duel.ino \
+               tst/fxdatatest/test_encounter.ino tst/fxdatatest/test_stack.ino'
+  # test_world_player PASSED=52 FAILED=0 -> P  (worst frame us=5616; render headroom=688)
+  # test_battle_duel   PASSED=106 FAILED=0 -> P  (25000 B flash, RAM 1657/2160 free 503)
+  # test_encounter     PASSED=47 FAILED=0 -> P   (8232 B flash, RAM 1272/2160 free 888)
+  # test_stack         PASSED=4 FAILED=0 -> P    (stack headroom=0x271=625 B)
+ARDENS=…/Ardens make fxtest-headless BUILD_DIR=build FXTEST_MS=30000 \
+  FXTEST_INOS='tst/fxdatatest/test_duel_ui.ino tst/fxdatatest/test_save.ino tst/fxdatatest/test_scripts.ino'
+  # test_duel_ui   PASSED=65 FAILED=0 -> P ; test_save PASSED=3305 FAILED=0 -> P ; test_scripts PASSED=72 FAILED=0 -> P
+PATH=$HOME/Applications/CreatureGathererTools/bin:$PATH make test-generated-libs BUILD_DIR=build  # PASS
+node --test tools/tests/beta-area_test.mjs   # 10 pass / 0 fail (pins start (11,5), rest (10,4), connectivity)
+```
+No `make ram` run: nothing under `src/` or `.ino` changed; shipping stays 22416 B / 1687 B.
+
+### Residuals
+- File **`CreatureGathererFX-o845`** (P1, `m0,test,beta`, `discovered-from:CreatureGathererFX-jp8.11.17`):
+  one bounded, test-only bead. Gap A: the shipping `setup()` fresh-spawn literal `(11,5)` is not tied
+  by a test to `data/beta-area.toml` (mjm already added native/device reachability). Gap B: no single
+  test drives a full encounter → duel → non-Lose exit → world and asserts the exact pre-battle tile and
+  persistent HP. No engine reopen; no new architecture.
+- `tools/tests/beta-area_test.mjs` is a passing but unwired node test (not in `make check`/CI); recorded
+  here, not fixed (out of audit scope).
+
+### Deviations
+- The bead's `VERIFY` names `build/box-adoption-gate` and the dated 25218/1760 baseline; the audit reused
+  the current single lane `BUILD_DIR=build` and the current 22416/1687 checkpoint, as `mjm`/`dqxm` did.
+- Bead ownership lists `tst/battle_flow_test.hpp` and `tst/battle_session_test.hpp`; both are
+  `CGFX_DUEL_BATTLE`-excluded from the default host run, so duel-equivalent suites
+  (`duel_session_integration_test.hpp`, `test_battle_duel`, `test_duel_ui`) carry the proof. No
+  unsupported implementation-complete claim: every criterion above has a passing current-source proof
+  or the linked bounded residual.
+- `make test` output is assembled from two binaries (host 240077, world 258); the duel build excludes
+  the legacy battle suites, so the host total is smaller than the legacy contract run.
+
+### Storage
+`df -h . /private/tmp` before/after: **61 GiB free** (unchanged, ≥10 GiB reserve). `du -sh build`
+1.9 G before/after; `build/jp8.11.17` 32 K logs. Focused device staging under `build/fxtest/`
+reused the shared lane. Previewed `make clean-build-artifacts BUILD_DIR=build`; no `cgfx-pack.*`
+stage remained. Retained evidence: `build/jp8.11.17/{test,testvm,fxtest,fxtest_extra,gen-libs,beta-area}.log`.
+
+### Wall time
+Worker loop ~14 min wall (single lane): recon + source/test mapping ~7 min; host+VM+generated-libs ~1 min;
+two focused device batches (7 AVR suites) ~5 min; report + residual bead + storage ~1 min.
+Gate/orchestrator not run here.
