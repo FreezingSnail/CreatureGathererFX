@@ -36,6 +36,7 @@
 #include "../src/save/Compaction.hpp"
 #include "../src/save/FlashBackend.hpp"
 #include "../src/creature/LevelCurve.hpp"
+#include "../src/lib/ReadData.hpp"
 #include "../src/fxdata.h"
 
 namespace duel_session_test_detail {
@@ -1064,6 +1065,227 @@ void duelFullBagSaturatesOnAward(Test &test) {
                 "a full bag gains no phantom stack");
 }
 
+// --- jp8.11.10: ordinary wild-win experience and bounded level growth --------
+
+// Install a real three-member beta party as stable store instances (slots 0..2)
+// and mirror the same instances into the live Player, so an ordinary win has
+// living occupied slots to grow. `exps` pins each member's stored cumulative
+// experience; `missing` pins the HP missing from its derived maximum (0 = full,
+// >= maximum = KO). Level/stats follow the stored exp through the existing model.
+void seedPartyInstances(const uint16_t (&exps)[PARTY_SIZE],
+                        const uint8_t (&missing)[PARTY_SIZE]) {
+    flashFakeReset();
+    battle::applyPlayerPreset(player, BattlePresets::beta);
+    for (uint8_t i = 0; i < PARTY_SIZE; ++i) {
+        player.party[i].level = levelFromExp(exps[i]);
+        player.party[i].setStats(getCreatureFromStore(player.party[i].id));
+        const uint8_t maxHp = player.party[i].statlist.hp;
+        const uint8_t curHp = missing[i] >= maxHp ? 0 : static_cast<uint8_t>(maxHp - missing[i]);
+        player.creatureHPs[i] = curHp;
+        StoreRecord record = {};
+        record.id = player.party[i].id;
+        record.exp = exps[i];
+        record.attackMask = static_cast<uint8_t>(player.party[i].attackMask & 0x1F);
+        record.hpEncoded = curHp >= maxHp ? 0 : static_cast<uint8_t>(curHp + 1);
+        storeWrite(i, record);
+        storeAssign(i, i, curHp);
+    }
+}
+
+// A wild session at a known foe level, ready for a one-hit Win: the foe is a
+// 1-HP Fire creature and the player's Fire kit picks Spirit (spirit beats fire,
+// 21 > 1) so the foe is KO'd on the reveal. `gatherable` selects the ordinary vs
+// lure-zone encounter shape; the living hero starts at its derived maximum so a
+// later checkpoint stays inside the model.
+void beginWildWinSession(uint8_t foeLevel, bool gatherable) {
+    menu.clear();
+    dialogMenu.clear();
+    enterBattle();
+    gameState.state = GameState_t::BATTLE;
+    rngDraws = 0;
+    battleSession().setRng({scriptedRng});
+    battleSession().beginWild(0, foeLevel, gatherable, gatherable ? 1 : 0);
+    configureMatchup(battleSession(), FireAuthored, SpiritAuthored, FireAuthored,
+                     FireAuthored, player.party[0].statlist.hp, 1);
+}
+
+uint16_t storedExp(uint8_t slot) {
+    StoreRecord record;
+    storeRead(slot, record);
+    return record.exp;
+}
+
+const uint8_t kFull[PARTY_SIZE] = {0, 0, 0};
+
+// An ordinary wild Win grants exactly 8 * opponentLevel to every living occupied
+// member with no rounding drift; a member that stays below the next threshold
+// keeps its level, its stored exp grows exactly, and its HP is untouched.
+void duelWildWinAwardsExactExp(Test &test) {
+    const uint16_t start = levelExpThreshold(3); // level 3
+    const uint16_t exps[PARTY_SIZE] = {start, start, start};
+    seedPartyInstances(exps, kFull);
+    beginWildWinSession(4, false); // gain = 8 * 4 = 32
+    wildKoToWorld();
+
+    test.assert(gameState.state, GameState_t::WORLD, "the ordinary win returns to the world");
+    const uint16_t expected = static_cast<uint16_t>(start + 32);
+    test.assert(levelExpThreshold(4), static_cast<uint16_t>(64),
+                "the next threshold is 64: the pinned total stays unrounded");
+    for (uint8_t i = 0; i < PARTY_SIZE; ++i) {
+        test.assert(storedExp(i), expected, "stored exp grows by exactly 8 * opponentLevel");
+        test.assert(player.party[i].level, static_cast<uint8_t>(3),
+                    "a member below the next threshold keeps its level");
+    }
+    test.assert(player.creatureHPs[1], player.party[1].statlist.hp,
+                "a full member below the threshold keeps its current HP");
+}
+
+// The three threshold boundaries: one below, exactly at, and over the next
+// threshold. A level increase installs the new derived level, and a member that
+// levels up from full HP reaches its new derived maximum; a damaged member
+// preserves its missing HP across the increase.
+void duelWildWinLevelUpBoundaries(Test &test) {
+    const uint16_t exps[PARTY_SIZE] = {
+        31,   // +32 = 63 = threshold(4) - 1: no level up
+        32,   // +32 = 64 = threshold(4): level 3 -> 4
+        100,  // +32 = 132 > threshold(5): level 4 -> 5, remainder 7
+    };
+    const uint8_t missing[PARTY_SIZE] = {0, 0, 5};
+    seedPartyInstances(exps, missing);
+    beginWildWinSession(4, false); // gain = 32
+    wildKoToWorld();
+
+    test.assert(storedExp(0), static_cast<uint16_t>(63),
+                "one below the threshold: the exact total is stored");
+    test.assert(player.party[0].level, static_cast<uint8_t>(3),
+                "one below the threshold: no level change");
+
+    test.assert(storedExp(1), static_cast<uint16_t>(64),
+                "exactly at the threshold: the exact total is stored");
+    test.assert(player.party[1].level, static_cast<uint8_t>(4),
+                "exactly at the threshold: the derived level increases");
+    test.assert(player.creatureHPs[1], player.party[1].statlist.hp,
+                "a full member that levels up reaches its new derived maximum");
+
+    test.assert(storedExp(2), static_cast<uint16_t>(132),
+                "over the threshold: the exact total keeps the remainder");
+    test.assert(player.party[2].level, static_cast<uint8_t>(5),
+                "over the threshold: the derived level increases");
+    test.assert(player.creatureHPs[2],
+                static_cast<uint8_t>(player.party[2].statlist.hp - 5),
+                "a damaged member that levels up preserves its missing HP");
+}
+
+// Bounded growth: the stored exp saturates at the level-31 threshold and the
+// derived level never exceeds 31.
+void duelWildWinLevelCapAt31(Test &test) {
+    const uint16_t cap = levelExpThreshold(LEVEL_COUNT - 1);
+    const uint16_t exps[PARTY_SIZE] = {
+        static_cast<uint16_t>(cap - 1), // level 30, +248 crosses the cap
+        cap,                            // already at the cap
+        levelExpThreshold(3),
+    };
+    seedPartyInstances(exps, kFull);
+    beginWildWinSession(31, false); // gain = 8 * 31 = 248
+    wildKoToWorld();
+
+    test.assert(storedExp(0), cap, "exp saturates exactly at the level-31 threshold");
+    test.assert(player.party[0].level, static_cast<uint8_t>(LEVEL_COUNT - 1),
+                "the derived level caps at 31");
+    test.assert(storedExp(1), cap, "an already-capped member stays at the threshold");
+    test.assert(player.party[1].level, static_cast<uint8_t>(LEVEL_COUNT - 1),
+                "an already-capped member stays at level 31");
+    test.assert(storedExp(2), static_cast<uint16_t>(levelExpThreshold(3) + 248),
+                "an uncapped member still grows by the exact amount");
+}
+
+// The award is a single terminal edge: later world frames never grow exp again.
+void duelWildWinAwardsOnce(Test &test) {
+    const uint16_t start = levelExpThreshold(3);
+    const uint16_t exps[PARTY_SIZE] = {start, start, start};
+    seedPartyInstances(exps, kFull);
+    beginWildWinSession(4, false); // gain = 32
+    wildKoToWorld();
+
+    const uint16_t once = static_cast<uint16_t>(start + 32);
+    test.assert(storedExp(0), once, "the first terminal awards once");
+    for (uint8_t f = 0; f < 16; ++f) BattleFlow::update(0);
+    for (uint8_t i = 0; i < PARTY_SIZE; ++i)
+        test.assert(storedExp(i), once, "later world frames never re-award");
+}
+
+// Only an ordinary win grows exp: escape, gatherable-target and trainer/boss
+// terminals all leave the stored experience exactly where it was.
+void duelNonWinAwardsNoExp(Test &test) {
+    const uint16_t start = levelExpThreshold(3);
+    const uint16_t exps[PARTY_SIZE] = {start, start, start};
+
+    // Wild Escape: a gatherable wild offers Escape on the action page.
+    seedPartyInstances(exps, kFull);
+    beginWildWinSession(4, true);
+    BattleFlow::update(0);              // choice entry -> pick row
+    BattleFlow::update(MENU_EDGE_B);    // wild action page
+    BattleFlow::update(MENU_NAV_DOWN);  // cursor -> ESCAPE
+    BattleFlow::update(MENU_EDGE_A);    // submit Escape -> terminal
+    for (uint16_t f = 0; f < 4096 && gameState.state != GameState_t::WORLD; ++f)
+        BattleFlow::update(0);
+    test.assert(gameState.state, GameState_t::WORLD, "the escape terminal returns to the world");
+    for (uint8_t i = 0; i < PARTY_SIZE; ++i)
+        test.assert(storedExp(i), start, "an escape terminal awards no exp");
+
+    // Gatherable-target KO still grants no creature exp.
+    seedPartyInstances(exps, kFull);
+    beginWildWinSession(4, true);
+    wildKoToWorld();
+    for (uint8_t i = 0; i < PARTY_SIZE; ++i)
+        test.assert(storedExp(i), start, "a gatherable-target KO awards no exp");
+
+    // Trainer/boss victory is not an ordinary wild win.
+    seedPartyInstances(exps, kFull);
+    beginWildWinSession(4, false);
+    battleSession().stateForTest().trainer = true;
+    wildKoToWorld();
+    for (uint8_t i = 0; i < PARTY_SIZE; ++i)
+        test.assert(storedExp(i), start, "a trainer/boss victory awards no exp");
+}
+
+// A KO'd party instance receives no reward and is never revived.
+void duelWildWinKoMemberAwardsNothing(Test &test) {
+    const uint16_t start = levelExpThreshold(3);
+    const uint16_t exps[PARTY_SIZE] = {start, start, start};
+    const uint8_t missing[PARTY_SIZE] = {0, 0, 255}; // member 2 is KO
+    seedPartyInstances(exps, missing);
+    beginWildWinSession(4, false);
+    wildKoToWorld();
+
+    test.assert(storedExp(0), static_cast<uint16_t>(start + 32), "a living member grows");
+    test.assert(storedExp(2), start, "a KO member receives no exp");
+    test.assert(player.creatureHPs[2], static_cast<uint8_t>(0), "a KO member is never revived");
+}
+
+// Accepted growth survives a v3 checkpoint and reboot exactly.
+void duelWildWinExpSurvivesSave(Test &test) {
+    const uint16_t exps[PARTY_SIZE] = {32, 32, 32}; // each levels 3 -> 4
+    seedPartyInstances(exps, kFull);
+    beginWildWinSession(4, false); // gain = 32 -> 64 = threshold(4)
+    wildKoToWorld();
+
+    SaveFile save = {};
+    memset(save.partySlots, 255, 3);
+    saveBegin();
+    SaveStep step = SaveStep::Idle;
+    for (uint16_t s = 0; s < 256 && saveInProgress(); ++s) step = saveStepAdvance(save);
+    test.assert(step, SaveStep::Done, "the win checkpoint completes");
+
+    SaveFile reboot = {};
+    memset(reboot.partySlots, 255, 3);
+    test.assert(storeBoot(reboot), true, "the win checkpoint reboots");
+    for (uint8_t i = 0; i < PARTY_SIZE; ++i) {
+        test.assert(storedExp(i), static_cast<uint16_t>(64),
+                    "the accepted exact exp survives reboot");
+    }
+}
+
 } // namespace duel_session_test_detail
 
 inline void DuelSessionIntegrationSuite(TestRunner &runner) {    using namespace duel_session_test_detail;
@@ -1183,6 +1405,34 @@ inline void DuelSessionIntegrationSuite(TestRunner &runner) {    using namespace
     Test koFullBag(__func__);
     duelFullBagSaturatesOnAward(koFullBag);
     suite.addTest(koFullBag);
+
+    Test xpExact(__func__);
+    duelWildWinAwardsExactExp(xpExact);
+    suite.addTest(xpExact);
+
+    Test xpBoundary(__func__);
+    duelWildWinLevelUpBoundaries(xpBoundary);
+    suite.addTest(xpBoundary);
+
+    Test xpCap(__func__);
+    duelWildWinLevelCapAt31(xpCap);
+    suite.addTest(xpCap);
+
+    Test xpOnce(__func__);
+    duelWildWinAwardsOnce(xpOnce);
+    suite.addTest(xpOnce);
+
+    Test xpNonWin(__func__);
+    duelNonWinAwardsNoExp(xpNonWin);
+    suite.addTest(xpNonWin);
+
+    Test xpKo(__func__);
+    duelWildWinKoMemberAwardsNothing(xpKo);
+    suite.addTest(xpKo);
+
+    Test xpSave(__func__);
+    duelWildWinExpSurvivesSave(xpSave);
+    suite.addTest(xpSave);
 
     runner.addTestSuite(suite);
 }

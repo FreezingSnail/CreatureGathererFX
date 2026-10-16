@@ -40,6 +40,7 @@
 #include "src/engine/menu/MenuV2.hpp"
 #include "src/lib/MoveIds.hpp"
 #include "src/lib/FxReadCounter.hpp"
+#include "src/lib/ReadData.hpp"
 #include "src/item/Inventory.hpp"
 #include "src/player/Player.hpp"
 #include "src/save/Compaction.hpp"

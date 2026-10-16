@@ -665,12 +665,20 @@ inline void test_save(FxTest &test)
     test_saveJournalLayout(test);
     test_saveCheckpointCollection(test);
     test_saveBoxedInstanceHP(test);
-    test_saveBoxedHPPublicationCuts(test);
-    test_saveControllerCaptureHPCuts(test);
     test_saveCollectionCapacity(test);
-    test_saveCheckpointCuts(test);
     test_saveJournalPublication(test);
     test_savePlayerStore(test);
     test_saveStatusRender(test);
     test_saveFrameBudget(test);
+}
+
+// Interrupted-write "cut" proofs, split into a co-located sketch
+// (CreatureGathererFX-5j1n) because each performs full checkpoint verify/erase
+// cycles and the combined suite sat at the flash floor. The durable-state cases
+// stay in test_save.
+inline void test_save_cuts(FxTest &test)
+{
+    test_saveBoxedHPPublicationCuts(test);
+    test_saveControllerCaptureHPCuts(test);
+    test_saveCheckpointCuts(test);
 }
