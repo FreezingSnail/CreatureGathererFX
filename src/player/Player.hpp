@@ -22,6 +22,10 @@ class Player {
     void basic();
     void loadCreature(uint8_t index, uint8_t creatureIndex);
     void setCreature(uint8_t index, CreatureData_t seed);
+    // Restore every occupied party member to its derived maximum HP and clear
+    // transient status. Empty slots stay empty and boxed instances are never
+    // touched. Returns whether any live HP changed.
+    bool healParty();
     void restore(const Creature *savedParty, const uint8_t *savedHP);
     void storeCreature(uint8_t slot, uint8_t id, uint8_t level);
 };

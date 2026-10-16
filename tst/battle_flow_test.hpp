@@ -5,6 +5,8 @@
 #include "../src/engine/battle/MoveUses.hpp"
 #include "../src/engine/ModeState.hpp"
 #include "../src/engine/menu/MenuNav.hpp"
+#include "../src/engine/world/World.hpp"
+#include "../src/WorldInteractionFake.hpp"
 #include "../src/globals.hpp"
 
 namespace battle_flow_test_detail {
@@ -230,8 +232,96 @@ inline void BattleFlowControllerTest(TestSuite &suite) {
     suite.addTest(test);
 }
 
+// Drive one real terminal Lose through BattleFlow with a forced single-member
+// party wipe, then prove the deferred world recovery. `trainer` selects the
+// fixed-trainer path so wild and boss defeat share the same proof.
+inline void driveDefeatRecovery(TestSuite &suite, bool trainer, const char *label) {
+    using namespace battle;
+    using namespace battle_flow_test_detail;
+    Test test(label);
+
+    player = Player();
+    player.loadCreature(0, 1);
+    player.loadCreature(1, 2);
+    player.loadCreature(2, 3);
+    // Pre-battle tile faces the authored rest point (10,4) so a reused edge
+    // would be observable if recovery did not relocate first.
+    gameState.playerLocation = static_cast<uint16_t>((5U << 8) | 10U);
+    menu.clear();
+    dialogMenu.clear();
+    enterBattle();
+    gameState.state = GameState_t::BATTLE;
+    battleSession().setRng({flowRng});
+    if (trainer) battleSession().beginTrainer(0);
+    else battleSession().beginWild(4, 1, false, 0);
+
+    battle::BattleState &state = battleSession().stateForTest();
+    Combatant &p = state.active[static_cast<uint8_t>(Side::Player)];
+    Combatant &o = state.active[static_cast<uint8_t>(Side::Opponent)];
+    p.hp = 1;
+    p.stats.speed = 1;
+    p.moveIds[0] = 0;
+    p.moves[0] = Move(MoveBitSet{static_cast<uint8_t>(Type::SPIRIT), 1, 1, 0, 0});
+    o.stats.speed = 255;
+    o.moveIds[0] = 0;
+    o.moves[0] = Move(MoveBitSet{static_cast<uint8_t>(Type::SPIRIT), 255, 1, 0, 0});
+    state.bench[static_cast<uint8_t>(Side::Player)][0].hp = 0;
+    state.bench[static_cast<uint8_t>(Side::Player)][1].hp = 0;
+
+    BattleFlow::update(0);            // Prepare the options page.
+    BattleFlow::update(MENU_EDGE_A);  // Open the move page.
+    BattleFlow::update(MENU_EDGE_A);  // Submit the default usable move.
+
+    // The shipping loop polls justPressed each frame and hands the battle its
+    // fresh A edge, so a terminal dismiss completes on an A-edge frame. Model
+    // the same physical press here: A is held for every battle frame, and the
+    // world fake is left asserting until the completion frame is inspected.
+    worldInteractionFake::pressedA = true;
+    bool returned = false;
+    for (uint16_t frame = 0; frame < 8192 && !returned; ++frame)
+        returned = BattleFlow::update(MENU_EDGE_A);
+    test.assert(returned, true, "terminal defeat returns to the world");
+    test.assert(gameState.state, GameState_t::WORLD, "defeat restores the world mode");
+    // run() returns immediately after the completion return, so the same A edge
+    // never reaches the world that frame: recovery stays pending, no script slot
+    // is read, and the party is still knocked out.
+    test.assert(worldInteractionFake::readCount, static_cast<uint16_t>(0),
+                "completion-frame A edge never reaches the world");
+    test.assert(gameState.playerLocation, static_cast<uint16_t>((5U << 8) | 10U),
+                "defeat defers relocation past the terminal frame");
+    for (uint8_t i = 0; i < 3; ++i)
+        test.assert(player.creatureHPs[i], static_cast<uint8_t>(0),
+                    "defeat leaves the party knocked out until recovery");
+
+    // Next polled frame: the physical A is still held, so the world's fresh
+    // justPressed is false. Reset models that fresh poll before world dispatch.
+    worldInteractionFake::reset();
+    WorldEngine::runMap(worldState());
+    test.assert(WorldEngine::location(), static_cast<uint16_t>((5U << 8) | 11U),
+                "recovery returns to the authored first-beta start");
+    for (uint8_t i = 0; i < 3; ++i)
+        test.assert(player.creatureHPs[i], player.party[i].statlist.hp,
+                    "recovery fully restores every occupied member");
+    test.assert(worldInteractionFake::readCount, static_cast<uint16_t>(0),
+                "recovery frame runs no interaction or script read");
+
+    // A second frame is a no-op: recovery is not re-armed and does not step.
+    WorldEngine::runMap(worldState());
+    test.assert(WorldEngine::location(), static_cast<uint16_t>((5U << 8) | 11U),
+                "recovery does not retrigger movement");
+    test.assert(worldInteractionFake::readCount, static_cast<uint16_t>(0),
+                "recovery does not retrigger interaction");
+    suite.addTest(test);
+}
+
+inline void BattleDefeatRecoveryTest(TestSuite &suite) {
+    driveDefeatRecovery(suite, false, "Wild defeat recovery");
+    driveDefeatRecovery(suite, true, "Trainer defeat recovery");
+}
+
 inline void BattleFlowSuite(TestRunner &runner) {
     TestSuite suite("Slim battle frame controller");
     BattleFlowControllerTest(suite);
+    BattleDefeatRecoveryTest(suite);
     runner.addTestSuite(suite);
 }

@@ -7,6 +7,7 @@
 #include "../../item/Inventory.hpp"
 #include "../../item/ItemIds.hpp"
 #include "../../lib/FxRead.hpp"
+#include "../../player/Player.hpp"
 #include "../../fxdata.h"
 
 #ifndef TEST
@@ -16,6 +17,7 @@
 #include <Arduboy2.h>
 #include "../../GameState.hpp"
 extern GameState gameState;
+extern Player player;
 extern bool worldInteractionJustPressedA();
 extern bool worldInteractionDialogActive();
 extern void worldInteractionPopDialog();
@@ -32,6 +34,23 @@ constexpr uint8_t DIRECTION_MASK = 0x03;
 constexpr uint8_t MOVING_MASK = 0x04;
 constexpr uint8_t WALK_MASK_BITS = 0x38;
 constexpr uint8_t WALK_SHIFT = 3;
+
+// First-beta authored landmarks from data/beta-area.toml (rest_x/rest_y and
+// start_x/start_y). The native authoring test pins these values; firmware
+// compares the faced tile directly instead of spending flash on a generated
+// marker, a new TileProps bit or a runtime TOML parse.
+constexpr uint8_t REST_X = 10;
+constexpr uint8_t REST_Y = 4;
+constexpr uint16_t REST_TILE =
+    static_cast<uint16_t>((static_cast<uint16_t>(REST_Y) << 8) | REST_X);
+constexpr uint8_t START_X = 11;
+constexpr uint8_t START_Y = 5;
+
+#ifndef WORLD_TEST
+// Set on terminal Lose, consumed at the top of the next world frame so the
+// battle return edge cannot also be read as a world interaction or step.
+bool defeatRecoveryPending = false;
+#endif
 
 enum WalkMaskIndex : uint8_t {
     WALK_NONE = 0,
@@ -300,6 +319,17 @@ void WorldEngine::inputFromButtons(WorldTransient &world, uint8_t buttons) {
 }
 
 void WorldEngine::runMap(WorldTransient &world) {
+#ifndef WORLD_TEST
+    if (defeatRecoveryPending) {
+        defeatRecoveryPending = false;
+        // Defeat recovery: full occupied-party restore and the authored
+        // first-beta start. Applied here, before any input, so the world
+        // motion/property cache is rebuilt at the new location and the single
+        // terminal return edge cannot rest/interact/step.
+        player.healParty();
+        setPos(world, START_X, START_Y);
+    }
+#endif
     syncFromLocation(world);
     // The boot intro card freezes the world; any fresh button edge dismisses it.
     if (LureZone::introActive()) {
@@ -388,6 +418,10 @@ void WorldEngine::encounter() {
     // Keep this legacy symbol inert so callers cannot create a second roll path.
 }
 
+#ifndef WORLD_TEST
+void WorldEngine::queueDefeatRecovery() { defeatRecoveryPending = true; }
+#endif
+
 bool WorldEngine::moveable(const WorldTransient &world) {
     const uint16_t loc = gameState.playerLocation;
     int16_t x = static_cast<uint8_t>(loc & 0xFF);
@@ -433,6 +467,19 @@ void WorldEngine::interact() {
             return;
         }
     }
+
+#ifndef WORLD_TEST
+    // The first-beta free rest point is a faced-tile coordinate trigger, not a
+    // tile prop or map marker (data/beta-area.toml rest_x/rest_y). A fresh A on
+    // the authored tile restores only the occupied party; boxed instances keep
+    // their own HP. Persistence is left to the next explicit checkpoint, which
+    // mirrors player.creatureHPs into each matching instance record, so rest
+    // consumes no journal capacity and cannot half-publish a record.
+    if (targetTile == REST_TILE) {
+        player.healParty();
+        return;
+    }
+#endif
 
     // The 128-byte script slot overlays WorldMotion. Preserve the movement
     // cursor and facing across execution; message dialogs can pause the world

@@ -36,6 +36,19 @@ void Player::setCreature(uint8_t index, CreatureData_t seed) {
     this->creatureHPs[index] = this->party[index].statlist.hp;
 }
 
+bool Player::healParty() {
+    bool changed = false;
+    for (uint8_t index = 0; index < 3; ++index) {
+        // 255 is the empty/tombstone slot id; every authored species is 0..63.
+        if (this->party[index].id == 255) continue;
+        const uint8_t maxHP = this->party[index].statlist.hp;
+        if (this->creatureHPs[index] != maxHP) changed = true;
+        this->creatureHPs[index] = maxHP;
+        this->party[index].status.clearEffects();
+    }
+    return changed;
+}
+
 void Player::restore(const Creature *savedParty, const uint8_t *savedHP) {
     for (uint8_t index = 0; index < 3; ++index) {
         this->party[index] = savedParty[index];

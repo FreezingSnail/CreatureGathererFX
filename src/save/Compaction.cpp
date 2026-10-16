@@ -35,7 +35,6 @@ __attribute__((noinline)) bool blank(uint16_t base, uint16_t at) {
 }
 void empty(StoreRecord &out) { memset(&out,0,sizeof(out)); out.id=255; }
 bool recordValid(const uint8_t *bytes) {
-    if (bytes[7]) return false;
     if (bytes[0] == 255) for (uint8_t i=1;i<8;++i) if (bytes[i]) return false;
     return true;
 }
@@ -112,6 +111,9 @@ void replay(const JournalRecord &record) {
         } else if(valid) {
             if(entry==pendingCount) ++pendingCount;
             pending[entry]={static_cast<uint8_t>(record.slot),static_cast<uint8_t>(replayIndex)};
+            if(record.op==2 && record.payload[7])
+                for(uint8_t i=0;i<3;++i)
+                    if(partySlots[i]==record.slot) partyHP[i]=record.payload[7]-1;
         }
     }
     ++replayIndex;
@@ -176,6 +178,9 @@ bool storeRead(uint8_t slot, StoreRecord &out) {
     } else empty(out);
     return true;
 }
+uint8_t storeInstanceHP(const StoreRecord &record) {
+    return record.hpEncoded ? record.hpEncoded - 1 : maxHP(record);
+}
 bool storeWrite(uint8_t slot,const StoreRecord &in) {
     uint8_t entry;
     if(slot>=64 || in.id==255 || (!pendingEntry(slot,entry) && pendingCount==16)) return false;
@@ -230,7 +235,13 @@ SaveStep saveStepAdvance(SaveFile &state) {
     case SaveStep::CopyStore: {
         StoreRecord record;
         for(uint8_t i=0;i<8;++i) {
-            storeRead(offset+i,record);if(record.id!=255) ++liveCount;
+            const uint8_t slot=offset+i;
+            storeRead(slot,record);
+            if(record.id!=255) {
+                ++liveCount;
+                for(uint8_t party=0;party<3;++party)
+                    if(partySlots[party]==slot) record.hpEncoded=partyHP[party]+1;
+            }
             storeRecordEncode(record,scratch+i*8);
         }
         checksum(sum1,sum2,scratch,64);

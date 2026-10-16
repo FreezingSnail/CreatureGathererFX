@@ -225,6 +225,178 @@ inline void test_saveCheckpointCollection(FxTest &test)
                   F("slot63 starts at624 minus8"));
 }
 
+inline void test_saveBoxedInstanceHP(FxTest &test)
+{
+    using namespace save_fx_test_detail;
+    fresh();
+    SaveFile state = snapshot();
+    StoreRecord ko = creature(27), duplicate = creature(30);
+    ko.hpEncoded = 1; duplicate.hpEncoded = 19;
+    uint8_t slot0 = 255, slot1 = 255;
+    test.expectEq(storeAdd(ko, slot0), true, F("add KO instance"));
+    test.expectEq(storeAdd(duplicate, slot1), true, F("add injured duplicate"));
+    test.expectEq(storeInstanceHP(ko), 0, F("encoded one means KO"));
+    test.expectEq(storeInstanceHP(duplicate), 18, F("duplicate HP decodes independently"));
+    StoreRecord legacy = creature();
+    Creature full;
+    full.load(legacy);
+    test.expectEq(storeInstanceHP(legacy), full.statlist.hp, F("legacy zero defaults to full"));
+    test.expectEq(static_cast<uint8_t>(save(state)), static_cast<uint8_t>(SaveStep::Done),
+                  F("boxed HP checkpoint completes"));
+    test.expectEq(saveByte(save_store_a + 112 + 7), 1, F("KO encoding checkpointed"));
+    test.expectEq(saveByte(save_store_a + 120 + 7), 19, F("duplicate encoding checkpointed"));
+    SaveFile loaded = snapshot();
+    test.expectEq(storeBoot(loaded), true, F("boxed HP checkpoint reboots"));
+    StoreRecord restored = {};
+    test.expectEq(storeRead(slot0, restored), true, F("KO instance reloads"));
+    test.expectEq(storeInstanceHP(restored), 0, F("KO survives checkpoint"));
+    test.expectEq(storeRead(slot1, restored), true, F("duplicate reloads"));
+    test.expectEq(storeInstanceHP(restored), 18, F("duplicate HP survives checkpoint"));
+
+    test.expectEq(storeAssign(0, slot0, 12), true, F("assign instance with current HP"));
+    test.expectEq(static_cast<uint8_t>(save(loaded)), static_cast<uint8_t>(SaveStep::Done),
+                  F("assignment snapshot publishes"));
+    restored = creature(); // Legacy byte 7 is zero.
+    test.expectEq(storeWrite(slot0, restored), true, F("append legacy record update"));
+    test.expectEq(storeBoot(loaded), true, F("legacy update replays"));
+    test.expectEq(loaded.partyHP[0], 12, F("legacy record preserves snapshot HP"));
+    restored.hpEncoded = 8;
+    test.expectEq(storeWrite(slot0, restored), true, F("append encoded record update"));
+    test.expectEq(storeBoot(loaded), true, F("encoded update replays"));
+    test.expectEq(loaded.partyHP[0], 7, F("record HP supersedes older snapshot"));
+    test.expectEq(storeAssign(0, slot0, 5), true, F("append later party assignment"));
+    test.expectEq(storeBoot(loaded), true, F("assignment authority replays"));
+    test.expectEq(loaded.partyHP[0], 5, F("later assignment supersedes record HP"));
+}
+
+inline void test_saveBoxedHPPublicationCuts(FxTest &test)
+{
+    using namespace save_fx_test_detail;
+    const int32_t cuts[] = {0, 4096, 4608, 4718, 4719, 4720, 4730, 8816, 8817};
+    for (uint8_t c = 0; c < sizeof(cuts) / sizeof(cuts[0]); ++c) {
+        fresh();
+        SaveFile state = snapshot();
+        StoreRecord member = creature(); member.hpEncoded = 13;
+        uint8_t slot = 255;
+        test.expectEq(storeAdd(member, slot), true, F("seed HP instance"));
+        test.expectEq(storeAssign(0, slot, 12), true, F("seed snapshot HP"));
+        test.expectEq(static_cast<uint8_t>(save(state)), static_cast<uint8_t>(SaveStep::Done),
+                      F("baseline HP checkpoint"));
+        member.hpEncoded = 8;
+        test.expectEq(storeWrite(slot, member), true, F("publish newer HP to journal"));
+        cutBegin(cuts[c]); save(state); cutEnd();
+        SaveFile loaded = snapshot();
+        test.expectEq(storeBoot(loaded), true, F("HP cut reboots"));
+        test.expectEq(loaded.partyHP[0], 7, F("new HP survives publication cut"));
+        StoreRecord restored = {};
+        test.expectEq(storeRead(slot, restored), true, F("cut record readable"));
+        test.expectEq(storeInstanceHP(restored), 7, F("record and party HP agree"));
+        test.expectEq(storeBootFailed(), false, F("HP cut remains recoverable"));
+    }
+
+    fresh();
+    SaveFile state = snapshot();
+    StoreRecord member = creature(); member.hpEncoded = 13;
+    uint8_t slot = 255;
+    test.expectEq(storeAdd(member, slot), true, F("seed dirty-tail instance"));
+    test.expectEq(storeAssign(0, slot, 12), true, F("seed dirty-tail HP"));
+    test.expectEq(static_cast<uint8_t>(save(state)), static_cast<uint8_t>(SaveStep::Done),
+                  F("dirty-tail baseline checkpoint"));
+    member.hpEncoded = 8;
+    cutBegin(15);
+    test.expectEq(storeWrite(slot, member), false, F("torn HP record is unpublished"));
+    cutEnd();
+    test.expectEq(static_cast<uint8_t>(save(state)), static_cast<uint8_t>(SaveStep::Done),
+                  F("explicit save clears dirty HP tail"));
+    SaveFile loaded = snapshot();
+    test.expectEq(storeBoot(loaded), true, F("dirty-tail save reboots"));
+    test.expectEq(loaded.partyHP[0], 12, F("unpublished update preserves snapshot HP"));
+    StoreRecord restored = {};
+    test.expectEq(storeRead(slot, restored), true, F("dirty-tail record readable"));
+    test.expectEq(storeInstanceHP(restored), 12, F("old encoded HP remains authoritative"));
+}
+
+inline void test_saveControllerCaptureHPCuts(FxTest &test)
+{
+    using namespace save_fx_test_detail;
+    const int32_t cuts[] = {4719, 4720};
+    for (uint8_t c = 0; c < sizeof(cuts) / sizeof(cuts[0]); ++c) {
+        fresh();
+        SaveFile state = snapshot();
+        StoreRecord member = creature(); member.hpEncoded = 13;
+        uint8_t slot = 255;
+        test.expectEq(storeAdd(member, slot), true, F("seed full-log party instance"));
+        test.expectEq(storeAssign(0, slot, 12), true, F("seed full-log snapshot HP"));
+        test.expectEq(static_cast<uint8_t>(save(state)), static_cast<uint8_t>(SaveStep::Done),
+                      F("full-log baseline checkpoint"));
+        member.hpEncoded = 0;
+        for (uint16_t i = 0; i < JOURNAL_CAPACITY; ++i) {
+            JournalRecord log = {};
+            log.seq = static_cast<uint8_t>(i);
+            log.op = static_cast<uint8_t>(LogOp::StoreAdd);
+            log.slot = slot;
+            storeRecordEncode(member, log.payload);
+            uint8_t bytes[JOURNAL_RECORD_BYTES];
+            test.expectEq(journalEncode(log, bytes), true, F("encode full-journal record"));
+            flash.writeBytes(save_log + i * JOURNAL_RECORD_BYTES, bytes, sizeof(bytes));
+            FX::waitWhileBusy();
+        }
+        test.expectEq(journalCount(), JOURNAL_CAPACITY, F("journal contains all 256 records"));
+        player = Player(); player.party[0].load(member); player.creatureHPs[0] = 7;
+        cutBegin(cuts[c]);
+        SaveController::begin(GameState_t::WORLD);
+        test.expectEq(journalCount(), JOURNAL_CAPACITY,
+                      F("HP-only capture does not consume full journal capacity"));
+        for (uint16_t i = 0; i < 256 && saveInProgress(); ++i) {
+            SaveController::advance();
+            FX::waitWhileBusy();
+        }
+        cutEnd();
+        SaveFile loaded = snapshot();
+        test.expectEq(storeBoot(loaded), true, F("full-log capture cut reboots"));
+        const uint8_t expected = cuts[c] >= 4720 ? 7 : 12;
+        test.expectEq(loaded.partyHP[0], expected, F("capture HP follows checkpoint commit"));
+        StoreRecord restored = {};
+        test.expectEq(storeRead(slot, restored), true, F("full-log record readable"));
+        if (cuts[c] >= 4720)
+            test.expectEq(restored.hpEncoded, 8, F("committed capture mirrors record HP"));
+    }
+
+    const int32_t dirtyCuts[] = {4719, 4720};
+    for (uint8_t c = 0; c < sizeof(dirtyCuts) / sizeof(dirtyCuts[0]); ++c) {
+        fresh();
+        SaveFile state = snapshot();
+        StoreRecord member = creature(); member.hpEncoded = 13;
+        uint8_t slot = 255;
+        test.expectEq(storeAdd(member, slot), true, F("seed dirty-tail party instance"));
+        test.expectEq(storeAssign(0, slot, 12), true, F("seed dirty-tail HP"));
+        test.expectEq(static_cast<uint8_t>(save(state)), static_cast<uint8_t>(SaveStep::Done),
+                      F("dirty-tail baseline checkpoint"));
+        member.hpEncoded = 0;
+        test.expectEq(storeWrite(slot, member), true, F("publish legacy prefix"));
+        member.hpEncoded = 8; cutBegin(15);
+        test.expectEq(storeWrite(slot, member), false, F("leave unpublished dirty tail"));
+        cutEnd();
+        player = Player(); player.party[0].load(member); player.creatureHPs[0] = 7;
+        cutBegin(dirtyCuts[c]);
+        SaveController::begin(GameState_t::WORLD);
+        test.expectEq(journalCount(), 1, F("HP-only capture leaves dirty-tail prefix unchanged"));
+        for (uint16_t i = 0; i < 256 && saveInProgress(); ++i) {
+            SaveController::advance();
+            FX::waitWhileBusy();
+        }
+        cutEnd();
+        SaveFile loaded = snapshot();
+        test.expectEq(storeBoot(loaded), true, F("dirty-tail capture cut reboots"));
+        const uint8_t expected = dirtyCuts[c] >= 4720 ? 7 : 12;
+        test.expectEq(loaded.partyHP[0], expected, F("dirty-tail capture follows commit"));
+        StoreRecord restored = {};
+        test.expectEq(storeRead(slot, restored), true, F("dirty-tail record readable"));
+        if (dirtyCuts[c] >= 4720)
+            test.expectEq(restored.hpEncoded, 8, F("dirty-tail commit mirrors captured HP"));
+    }
+}
+
 inline void test_saveCollectionCapacity(FxTest &test)
 {
     using namespace save_fx_test_detail;
@@ -455,6 +627,9 @@ inline void test_save(FxTest &test)
 {
     test_saveJournalLayout(test);
     test_saveCheckpointCollection(test);
+    test_saveBoxedInstanceHP(test);
+    test_saveBoxedHPPublicationCuts(test);
+    test_saveControllerCaptureHPCuts(test);
     test_saveCollectionCapacity(test);
     test_saveCheckpointCuts(test);
     test_saveJournalPublication(test);

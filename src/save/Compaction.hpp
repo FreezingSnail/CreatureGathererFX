@@ -9,6 +9,7 @@ bool storeBoot(SaveFile &state);
 bool storeBootFailed();
 void storeFresh();
 bool storeRead(uint8_t slot, StoreRecord &out);
+uint8_t storeInstanceHP(const StoreRecord &record);
 bool storeWrite(uint8_t slot, const StoreRecord &in);
 bool storeAdd(const StoreRecord &in, uint8_t &slot);
 bool storeRemove(uint8_t slot);

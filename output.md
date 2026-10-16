@@ -10721,3 +10721,139 @@ is sized by WorldTransient, so the Combatant/BattleState shrink does not move st
 No `build/cgfx-pack.*` stage remained. Shared `build/fxtest/` staging root (288 MB) and the
 pre-existing `build/{native-tools,box-adoption-gate,battle-carve-spike}` trees left untouched.
 Worker wall time ≈ 55 min. No git commit/push; bead left `in_progress`.
+
+## 4w89.2 — generator+data+creature attackMask — BLOCKED (recon only, no code changes)
+
+Status: **BLOCKED — plan defect: the bead's two hard requirements are mutually
+exclusive.** No source was edited; tree unchanged (only the pre-existing
+off-limits WIP shows in `git status`). Bead left `in_progress`.
+
+### Recon commands (all read-only)
+```sh
+bd show CreatureGathererFX-4w89.2; bd show CreatureGathererFX-4w89 / .4 / .3 / .6
+sed -n ... docs/moveset-type-mask-brief.md docs/dev-flow.md
+grep -rn 'moveList|move1|moves\[|readMoveFX|CreatureData_t|CreatureSeed' src tst tools
+grep -rn 'MoveLists|duelMoveTypes' src tst            # both dead on device (fxdata.h decls only)
+grep -rn 'moves_json|load_moves|build_moves' ../CreatureGathererTools/crates
+cat Makefile (TEST_SOURCES / test / gen), tst/main.cpp, src/creature/Creature.{hpp,cpp}
+cat src/lib/{DataTypes,Move,MoveIds,ReadData}.* src/save/{StoreRecord.hpp,SaveController.cpp}
+```
+
+### The defect
+
+`CreatureData_t.move1..4 (4B) -> attackMask` severs the only source of the
+legacy packed-`Move` battle, independent of `moves.json`:
+
+- Legacy `copyCreature` (`src/engine/battle/BattleSetup.cpp:385-386`) fills
+  `Combatant.moves[slot]` from `Creature.moveList[slot]`.
+- `Creature::loadMoves(CreatureData_t)` (`src/creature/Creature.cpp:56-61`) fills
+  `moveList[]` from `seed.move1..4` via `readMoveFX` (packed `move_table`).
+- The legacy battle engine reads `Combatant.moves[slot].getMovePower()/getMoveType()`
+  in `Ai.cpp`, `Damage.cpp`, `Resolve.cpp`, `BattleSession.cpp`, `MoveUses.hpp`.
+
+Once `CreatureData_t` carries only `attackMask`, there is no move id and no move
+type/power, so the legacy no-macro battle cannot resolve a single attack.
+
+Second, independent conflict: **delete `data/json/moves.json` + drop `moves_json`**
+removes the generator's only move source, so `build_moves`/`write_moves` (packed
+`moves.bin` = `move_table`, `MoveData` names) and `fixtures` `move_data.hpp` stop
+being produced. The legacy no-macro host build (`make test BUILD_DIR=build`) runs
+~14 legacy battle suites (`tst/main.cpp:212-291`, 319514 asserts at 4w89.3) that
+depend on that table; the device `readMoveFX` / `MenuV2` move page / `draw.h`
+depend on it too. So "delete moves.json" and "keep the legacy no-macro build
+green" are the same contradiction.
+
+### Full required cascade (if the bead is meant literally)
+- Sibling: `model.rs` (Creature `moves` list; drop `MoveEntry`/`Move`), `config.rs`
+  (drop `moves_json`), `store.rs` (`load_moves`), `builder.rs`
+  (`build_moves`/`write_moves`/`build_fx_move_descriptor`; `build_creatures` +
+  `build_fx_creature_descriptor` 14→11 B rows), `duel.rs` (drop
+  `move_types`/`duelMoveTypes`; `validate_opponent_member`), `fixtures.rs`
+  (creature/arena/rawread/move headers), `lib.rs` (pipeline + manifest inputs),
+  `arena_demo.rs` + `battle_presets.rs` (move-name resolution → types).
+- Data authoring migration: `data/json/creatures.json` (60 creatures: move ids →
+  authored type lists), `data/opponents.csv` (per-member move cols),
+  `data/arena-demo.toml`, `data/battle-presets.toml` (move-name lists → types/mask).
+- Device: `DataTypes.hpp`, `Creature.{hpp,cpp}`, `BattleSetup.cpp`, `BattlePresets.cpp`,
+  `ArenaDemo.cpp`, `SaveController.cpp` (bridge; see below), `ReadData.{hpp,cpp}`,
+  `MenuV2.cpp`/`PackedMoveInfo`, `draw.h`, `fxlayout.toml`/`cgfx-project.json`,
+  retire the ~14 legacy host battle suites + `tst/fxdatatest/creatures_test.hpp`
+  asserts, regenerate fixtures/parity.
+
+### Save-path note (the earlier ownership question)
+`src/save/SaveController.cpp:52-53,141` reads `player.party[i].moves[move]` and
+`memcpy(record.moves, player.party[i].moves, 4)`. Removing `Creature.moves[4]`
+forces editing that file; but the bead says the 8-byte `StoreRecord` layout and
+its 4-byte `moves` field are 4w89.4's lane and must not change here — leaving the
+field with no producer. Owner clarified there are no human-only blockers, so the
+file may be edited, but the *format* conflict (record.moves vs attackMask) is
+still 4w89.4's.
+
+### Options for re-scope
+- **A (recommended).** Keep the packed move table for the legacy build: `4w89.2`
+  = generator `creatures.moves` schema + per-creature `attackMask[]` +
+  `duelMoveTypes`/`movelists` replacement + device `Creature.attackMask`/
+  `CreatureData_t.attackMask`/`CreatureSeed.attackMask`/`duelAttackMask` field
+  read, *while `moves.json`/the move table stay*. Then land "delete moves.json +
+  retire the legacy packed-Move battle + migrate opponents/arena/preset data" as
+  its own bead (the brief's D6 already flags it for veto). Keeps every gate green.
+- **B.** Confirm the full D6 in this bead: retire the legacy no-macro battle
+  (host suites + device legacy paths + `readMoveFX`/`MenuV2` move page) and
+  migrate the authored data now. Epic-scale; needs the data migration authored,
+  not inferred.
+
+### Blocked reason (one line)
+`CreatureData_t.move1..4 -> attackMask` (required) + `delete moves.json` (required)
+make the legacy no-macro build un-buildable unless the packed-`Move` battle and
+~14 host suites are retired (epic-scale, D6) — so the bead cannot both "keep the
+build green" and satisfy its own scope.
+
+### Owner decision received
+Owner replied "move data can be archived" → direction = Option B (full D6, archive
+the packed-move data). That unblocks the *design*, but the same session cannot
+land it atomically: the generator removal, the authored-data migration
+(`creatures.json` move ids → type lists; `opponents.csv` per-member move-name cols;
+`arena-demo.toml`/`battle-presets.toml` move lists), the device binding, the
+`move_table`/`readMoveFX`/`MenuV2` removal, and the ~14-suite legacy-battle
+retirement must all change together or `make gen`/`make test` are red mid-edit.
+Recommend a dedicated bead (the brief's D6) with its own design/acceptance, then
+`4w89.2` = the generator schema + attackerMask generation + device binding on top
+of it.
+
+### Ready-to-execute migration recipe (verified, derivable)
+- `creatures.json` (64 rows): for `move1..4` look up each id in `moves.json`, keep
+  distinct non-`none`/`status` authored types in order → `"moves": [...]`
+  (e.g. SquibbleSnail `{8,32,32,32}` → `["wind"]`; SkitterCrab → `["earth"]`).
+- `opponents.csv` (24 rows): the 12 per-member move-name cols → per-member distinct
+  authored types, `none`-padded. NOTE this collapses most early rows to mono-spirit
+  (`smite`/`thought` are spirit) — a real balance change 4w89.6 must rebaseline.
+- `arena-demo.toml` / `battle-presets.toml`: member `moves = [names]` → type list.
+- Blocked by authored intent: no owner-confirmed kit semantics for the migrated
+  opponent/arena/preset rows.
+
+### Storage / wall time (updated)
+`df -h . /private/tmp`: 49 GiB free (unchanged). `du -sh build`: 1.9 GiB (unchanged).
+No new build trees, no `cgfx-pack.*` stages, no `cgfx-tools` build run.
+Worker wall time ≈ 50 min (recon only). No commit/push. Bead left `in_progress`.
+
+## jp8.11.14 — free first-area rest and party-exhaustion recovery (orchestrator finish + commit)
+
+Finished and verified the owner's WIP for jp8.11.14 on the current source (HEAD 8acf2df):
+free rest restores the occupied party to derived maxHP; a terminal battle Lose defers party recovery
+and the return to the first-beta start to the next world frame (`World::queueDefeatRecovery`);
+instance HP is persisted through the 8-byte `StoreRecord` (`reserved`→`hpEncoded`, 0 = legacy/full).
+
+Change: added `FXTEST_MS_SAVE ?= 30000` and a `test_save` branch in `fxtest-run`. The WIP adds
+boxed-instance-HP publication-cut cases (tst/fxdatatest/save_test.hpp +175) whose full checkpoint
+verify/erase cycles push the suite past the 12000 ms default; the enlarged suite completes at 30 s.
+
+Verification (all exit 0):
+```text
+make test BUILD_DIR=build           -> 319514/0 + world 258/0
+make testvm BUILD_DIR=build         -> 278/0
+make fxtest-headless ... FXTEST_INOS='test_save test_world_player test_encounter'
+  test_save 3013/0 (FXTEST_MS_SAVE=30000), test_world_player 49/0, test_encounter 47/0
+make ram BUILD_DIR=build            -> shipping 25238 flash / 1745 static
+```
+No integrated full gate rerun here (owner gate cadence); jp8.11.14's mechanics also passed inside
+the duel `make final-gate` (30 s window) recorded under d73i.4. Storage: 49 GiB free; build 1.9 GiB.

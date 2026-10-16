@@ -33,6 +33,10 @@ class WorldEngine {
     static void encounter();
     static bool moveable(const WorldTransient &world);
     static void interact();
+    // Battle terminal Lose defers party recovery and the return to the
+    // first-beta start until the next world frame; consuming it in the battle
+    // frame would let the terminal return edge reach a fresh interaction.
+    static void queueDefeatRecovery();
 
     static void loadMap(WorldTransient &world, uint8_t mapIndex, uint8_t submapIndex);
     static void setPos(WorldTransient &world, uint8_t x, uint8_t y);

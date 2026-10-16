@@ -7,6 +7,10 @@
 #include "fxtest.hpp"
 #include "stack_test.hpp"
 
+// WorldEngine::runMap reaches the world VM; the shipping sketch defines this
+// global, so this suite must too once it drives a world frame.
+ScriptVm vm;
+
 namespace lureWedgeTest {
 uint8_t forcedRoll = 0;
 uint8_t forcedRng(uint8_t, uint8_t) { return forcedRoll; }
@@ -48,6 +52,34 @@ void setup() {
     }
     test.expectEq(minimumHeadroom >= stack_fx_test_detail::MIN_HEADROOM, true, F("player render preserves stack reserve"));
     Serial.print(F("player render headroom=")); Serial.println(minimumHeadroom);
+
+    // First-beta free rest and defeat recovery share Player::healParty on the
+    // actual device. Prove the occupied-party restore, the authored start
+    // return and that an empty slot is never touched.
+    player.basic();
+    const uint8_t maxHp0 = player.party[0].statlist.hp;
+    const uint8_t maxHp1 = player.party[1].statlist.hp;
+    const uint8_t maxHp2 = player.party[2].statlist.hp;
+    player.creatureHPs[0] = 0;
+    player.creatureHPs[1] = 1;
+    player.creatureHPs[2] = static_cast<uint8_t>(maxHp2 - 1);
+    gameState.state = GameState_t::WORLD;
+    gameState.playerLocation = static_cast<uint16_t>((9u << 8) | 11u);
+    WorldEngine::queueDefeatRecovery();
+    WorldEngine::runMap(worldState());
+    test.expectEq(player.creatureHPs[0], maxHp0, F("defeat recovery heals ko member"));
+    test.expectEq(player.creatureHPs[1], maxHp1, F("defeat recovery heals injured member"));
+    test.expectEq(player.creatureHPs[2], maxHp2, F("defeat recovery heals partial member"));
+    test.expectEq(WorldEngine::location(), static_cast<uint16_t>((5u << 8) | 11u),
+                  F("defeat recovery returns to beta start"));
+    WorldEngine::runMap(worldState());
+    test.expectEq(WorldEngine::location(), static_cast<uint16_t>((5u << 8) | 11u),
+                  F("defeat recovery does not retrigger movement"));
+
+    player.party[2].id = 255;
+    player.creatureHPs[2] = 7;
+    player.healParty();
+    test.expectEq(player.creatureHPs[2], 7, F("rest skips an empty party slot"));
 
 
 #ifdef CGFX_LURE_WEDGE
