@@ -21,6 +21,7 @@
 
 #include <string.h>
 #include "test.hpp"
+#include "src/FXDataFake.hpp"
 #include "../src/engine/battle/DuelView.hpp"
 #include "../src/engine/battle/BattleSession.hpp"
 #include "../src/engine/battle/BattleFlow.hpp"
@@ -35,6 +36,7 @@
 #include "../src/save/Compaction.hpp"
 #include "../src/save/FlashBackend.hpp"
 #include "../src/creature/LevelCurve.hpp"
+#include "../src/fxdata.h"
 
 namespace duel_session_test_detail {
 
@@ -932,6 +934,136 @@ void duelGatherIncompleteNoCommit(Test &test) {
                 "a gather that never acquires commits nothing");
 }
 
+// --- jp8.11.4: ordinary wild KO material award ------------------------------
+
+// Install a two-array material fixture into the host FX fake: materialItem at
+// `Rewards::materialItem` (0xFF = no authored material) and materialCount
+// immediately after it, exactly as the packed Rewards mapping is laid out. The
+// count offset is derived from the published addresses, never hardcoded.
+void installMaterialFixture(uint8_t species, uint8_t itemId, uint8_t count) {
+    const uint32_t countOffset =
+        static_cast<uint32_t>(Rewards::materialCount - Rewards::materialItem);
+    fxDataFake::dataBase = Rewards::materialItem;
+    memset(fxDataFake::dataBytes, 0, sizeof(fxDataFake::dataBytes));
+    fxDataFake::dataBytes[species] = itemId;
+    fxDataFake::dataBytes[countOffset + species] = count;
+}
+
+// A live wild session ready for a one-hit Win: the player keeps its authored kit,
+// the foe is a 1-HP Fire creature, and the player's Fire kit picks Spirit
+// (spirit beats fire, 21 > 1) so the foe is KO'd on the reveal with no flee or
+// gather path. `gatherable` selects the ordinary vs lure-zone encounter shape.
+void beginWildKoSession(uint8_t foeSpecies, bool gatherable) {
+    flashFakeReset();
+    preparePlayer();
+    player = Player();                       // fresh empty bag
+    item::setBattleInventory(&player.inventory);
+    menu.clear();
+    dialogMenu.clear();
+    enterBattle();
+    gameState.state = GameState_t::BATTLE;
+    rngDraws = 0;
+    battleSession().setRng({scriptedRng});
+    battleSession().beginWild(foeSpecies, 1, gatherable, gatherable ? 1 : 0);
+    configureMatchup(battleSession(), FireAuthored, SpiritAuthored, FireAuthored,
+                     FireAuthored, 100, 1);
+}
+
+// Drive the live flow through the Win dwell to the world terminal.
+void wildKoToWorld() {
+    BattleFlow::update(0);              // choice entry -> pick row
+    BattleFlow::update(MENU_EDGE_A);    // commit the single attack cell
+    for (uint16_t f = 0; f < 4096 && gameState.state != GameState_t::WORLD; ++f)
+        BattleFlow::update(0);
+}
+
+// An ordinary wild KO awards exactly the authored material once; later world
+// frames never re-award.
+void duelWildKoAwardsMaterialOnce(Test &test) {
+    installMaterialFixture(0, 8, 1); // species 0 -> one tier-2 material lure (id 8)
+    beginWildKoSession(0, false);
+    wildKoToWorld();
+
+    test.assert(gameState.state, GameState_t::WORLD,
+                "the wild KO terminal returns to the world");
+    test.assert(item::inventoryCount(player.inventory, item::ItemKind::Lure, 8),
+                static_cast<uint8_t>(1), "the authored material is awarded once");
+    test.assert(item::inventoryNonZeroCount(player.inventory), static_cast<uint8_t>(1),
+                "the award touches exactly one stack");
+
+    for (uint8_t i = 0; i < 8; ++i) BattleFlow::update(0);
+    test.assert(item::inventoryCount(player.inventory, item::ItemKind::Lure, 8),
+                static_cast<uint8_t>(1), "later world frames never re-award");
+}
+
+// A 0xFF item sentinel (no authored material) awards nothing and leaves the bag
+// empty: no phantom item.
+void duelWildKoSentinelAwardsNothing(Test &test) {
+    installMaterialFixture(4, 0xFF, 0); // no authored material for this species
+    beginWildKoSession(4, false);
+    wildKoToWorld();
+
+    test.assert(gameState.state, GameState_t::WORLD, "the sentinel KO still exits");
+    test.assert(item::inventoryNonZeroCount(player.inventory), static_cast<uint8_t>(0),
+                "a sentinel species awards no phantom item");
+}
+
+// A gatherable-target KO is an explicit exclusion: the lure-zone encounter shape
+// must award no creature material.
+void duelGatherableKoAwardsNothing(Test &test) {
+    installMaterialFixture(0, 8, 1);
+    beginWildKoSession(0, true); // gatherable: a lure is deposited
+    wildKoToWorld();
+
+    test.assert(gameState.state, GameState_t::WORLD, "the gatherable KO still exits");
+    test.assert(item::inventoryNonZeroCount(player.inventory), static_cast<uint8_t>(0),
+                "a gatherable-target KO awards no creature material");
+}
+
+// A trainer/boss victory is an explicit exclusion even for the same authored
+// species mapping.
+void duelTrainerWinAwardsNothing(Test &test) {
+    installMaterialFixture(0, 8, 1);
+    beginWildKoSession(0, false);
+    battleSession().stateForTest().trainer = true; // boss/trainer exclusion flag
+    wildKoToWorld();
+
+    test.assert(gameState.state, GameState_t::WORLD, "the trainer KO still exits");
+    test.assert(item::inventoryNonZeroCount(player.inventory), static_cast<uint8_t>(0),
+                "a trainer/boss victory awards nothing");
+}
+
+// A non-Win terminal awards nothing: a wild escape leaves the bag untouched.
+void duelNonWinTerminalAwardsNothing(Test &test) {
+    installMaterialFixture(0, 8, 1);
+    beginWildKoSession(0, true); // gatherable wild offers Escape
+    BattleFlow::update(0);              // choice entry -> pick row
+    BattleFlow::update(MENU_EDGE_B);    // wild action page
+    BattleFlow::update(MENU_NAV_DOWN);  // cursor -> ESCAPE
+    BattleFlow::update(MENU_EDGE_A);    // submit Escape -> terminal
+    for (uint16_t f = 0; f < 4096 && gameState.state != GameState_t::WORLD; ++f)
+        BattleFlow::update(0);
+
+    test.assert(gameState.state, GameState_t::WORLD, "the escape terminal returns to the world");
+    test.assert(item::inventoryNonZeroCount(player.inventory), static_cast<uint8_t>(0),
+                "a non-Win terminal awards nothing");
+}
+
+// At the 99-count cap the terminal still completes and the stack saturates: no
+// wrap, no corruption and no extra stack.
+void duelFullBagSaturatesOnAward(Test &test) {
+    installMaterialFixture(0, 8, 1);
+    beginWildKoSession(0, false);
+    item::inventoryAdd(player.inventory, item::ItemKind::Lure, 8, 99); // fill to cap
+    wildKoToWorld();
+
+    test.assert(gameState.state, GameState_t::WORLD, "the full-bag KO still exits");
+    test.assert(item::inventoryCount(player.inventory, item::ItemKind::Lure, 8),
+                static_cast<uint8_t>(99), "a full bag stays at the cap");
+    test.assert(item::inventoryNonZeroCount(player.inventory), static_cast<uint8_t>(1),
+                "a full bag gains no phantom stack");
+}
+
 } // namespace duel_session_test_detail
 
 inline void DuelSessionIntegrationSuite(TestRunner &runner) {    using namespace duel_session_test_detail;
@@ -1027,6 +1159,30 @@ inline void DuelSessionIntegrationSuite(TestRunner &runner) {    using namespace
     Test incomplete(__func__);
     duelGatherIncompleteNoCommit(incomplete);
     suite.addTest(incomplete);
+
+    Test koAward(__func__);
+    duelWildKoAwardsMaterialOnce(koAward);
+    suite.addTest(koAward);
+
+    Test koSentinel(__func__);
+    duelWildKoSentinelAwardsNothing(koSentinel);
+    suite.addTest(koSentinel);
+
+    Test koGatherable(__func__);
+    duelGatherableKoAwardsNothing(koGatherable);
+    suite.addTest(koGatherable);
+
+    Test koTrainer(__func__);
+    duelTrainerWinAwardsNothing(koTrainer);
+    suite.addTest(koTrainer);
+
+    Test koNonWin(__func__);
+    duelNonWinTerminalAwardsNothing(koNonWin);
+    suite.addTest(koNonWin);
+
+    Test koFullBag(__func__);
+    duelFullBagSaturatesOnAward(koFullBag);
+    suite.addTest(koFullBag);
 
     runner.addTestSuite(suite);
 }
