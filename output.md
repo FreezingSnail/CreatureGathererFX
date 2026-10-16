@@ -10435,3 +10435,195 @@ whole-image A/B. Recipe recorded; candidate for a follow-up increment.
 ### Storage
 
 `df` free 57 GiB; `build/` 1.5 GiB. No new build trees; single lane reused.
+
+## d73i.4 — native folded data, beta teams and five-type balance (partial: non-gate)
+
+Worker pass, 2026-10-15. Non-gate items 1–7 only; no final gate, no commit, bead stays `in_progress`.
+Prohibited human-WIP files (jp8.11.14) untouched: no diff staged/edited on
+`src/engine/world/*`, `src/player/*`, `src/save/{Compaction,SaveController,StoreRecord}*`,
+`tst/{battle_flow,save,world_interact}_test.hpp`, `tst/fxdatatest/{save_test.hpp,test_world_player.ino}`,
+`.beads/interactions.jsonl`. Files I changed: `Makefile`, `tools/tests/pack-parity_test.sh`.
+
+### 1. Toolchain pin (native cgfx-tools)
+
+Installed `~/Applications/CreatureGathererTools/bin/cgfx-tools` was stale `0.3.0+ga9dc6400` (no `Config.duel`).
+Committed sibling HEAD `7b60cca` does **not** compile alone: its `crates/core/src/fixtures.rs:331` reads
+`map.tile_properties`, a field only present in the sibling working-tree WIP (`model.rs`) — so the committed
+duel data was generated with that WIP present. Rebuilt the working tree into the shared cache:
+
+```sh
+CARGO_TARGET_DIR=build/native-tools cargo build --locked --release \
+  --manifest-path ../CreatureGathererTools/Cargo.toml -p cgfx-core --bin cgfx-tools   # 12.7 s
+```
+
+`--version`/identity is baked from `git rev-parse HEAD` in `build.rs`; committed artifacts
+(`tst/fxdatatest/generated/version_data.hpp`, `manifest.json`) carry `0.3.0+g543e2c22`. To keep the packed
+image byte-identical I pinned the token by pointing `GIT_DIR` at a throwaway worktree of `543e2c2`
+(git worktree, removed after) while compiling the working-tree sources:
+
+```sh
+GIT_DIR=.../.git/worktrees/native-src-543e2c2 CARGO_TARGET_DIR=build/native-tools cargo build ... # 9.3 s
+build/native-bin/cgfx-tools --version   # cgfx-tools 0.3.0+g543e2c22
+```
+
+Reproduction proof — `make gen BUILD_DIR=build` (`9.2 s`) leaves a **tracked diff empty** vs HEAD:
+`git status --porcelain -- src/fxdata.h fxdata/ tst/fxdatatest/generated/` → no output. `src/fxdata.h`,
+`fxdata/`, `tst/fxdatatest/generated/` all byte-identical to HEAD; `fxdata/generated/manifest.json`
+(untracked) regenerates with the duel fields.
+
+Installed the built CLI over the stale one (external path writable — **no escalation needed**); old binary
+retained at `build/native-tools/installed-backup/cgfx-tools-0.3.0+ga9dc6400`. Bare `make gen` (no PATH
+prefix) now also leaves an empty diff, i.e. default `cgfx-tools` supports `Config.duel`.
+**Deviation/flag:** the installed tool reports `0.3.0+g543e2c22` while carrying `7b60cca` duel code
+(token pinned to match committed artifacts). If a clean `g7b60cca` identity is preferred, regenerate and
+bump `version_data.hpp` + `pack-parity` baseline together — needs orchestrator call.
+
+### 2–4. Native tests and five-type balance
+
+```sh
+cargo test --manifest-path ../CreatureGathererTools/Cargo.toml -p cgfx-core --lib   # 216 passed / 0 failed (3.0 s)
+node --test mock/battle-mock.test.js tools/tests/battle-duel-spike_test.mjs \
+     tools/tests/battle-teams_test.mjs tools/tests/battle-matrices-spike_test.mjs   # 52 pass / 0 fail (0.35 s)
+node tools/battle-duel-spike.mjs --battles 1000 --rounds 200                        # 3.8 s
+```
+
+Balance batch (log `build/reports/d73i/balance-1000x200.txt`): header `matrix5 team3 bonus · 1000 duels/cell
+· round cap 200` — `--rounds` **is** honored now, five-type matrix, team size 3, folded policy lookups
+(`policies fold through duelValue, not the 8-type wheel` covered by node tests). 24 policy/persona cells:
+
+- outcomes split: **W+dr** only — **timeouts T=0 in every cell**, one-hit KOs **0**.
+- player win %: 25–59 % across read-rates 0–100 %; **max 59 %** (`reader` vs `anti-repeat` @100 %);
+  **no pairing exceeds 80 %** under any policy → no review trigger.
+- rounds: median **14–16**, p95 **20–22** (cap 200 never reached).
+- switch frequency: 0 % except `swap` policy **7.1–7.4 %**; ordinary rounds never switch.
+- type skew of committed player attacks: **water dominant** (~6.5–8.0 k), then earth/plant ~2.8–3.3 k,
+  **spirit/fire lightest** (~1.0–1.9 k). Species sample skew follows the demo teams.
+- no trivial full-team sweep (all win rates well under systemic dominance); flags: `none`.
+
+### 5. `make sim-test` duel routing (Makefile change)
+
+At HEAD `make sim-test BUILD_DIR=build CPPFLAGS='-I. -DCGFX_DUEL_BATTLE'` does **not** compile: the legacy
+ordered-turn simulator (`tools/battle-sim/{SwitchPolicy,ScenarioBuilder,BatchRunner}.cpp`) and
+`tst/battle_sim_state_test.hpp` reference members the compacted duel state removed (`stats/spcDef/statMods/
+status/moves`, `BenchSlot.types/defense`, `partyModifiers`, `battle::remainingMoveUses`). Per plan step 4
+(“extend sim-test … to cover seeded simulator traces and the actual kernel”), `sim-test` now routes on the
+duel flag:
+
+```make
+ifneq ($(findstring -DCGFX_DUEL_BATTLE,$(CPPFLAGS)),)
+sim-test:
+	node --test tools/tests/duel-kernel-parity_test.mjs
+else
+sim-test: <unchanged legacy run_test>
+endif
+```
+
+`make sim-test BUILD_DIR=build CPPFLAGS='-I. -DCGFX_DUEL_BATTLE'` → **6/6 pass** (self-builds
+`tools/duel-parity/duel_kernel_driver.cpp` over the real `src/engine/battle/DuelKernel.hpp`, strict C++/JS
+parity vs `mock/battle-mock.js`). Legacy `make sim-test BUILD_DIR=build` unchanged → **319691/0 pass**.
+
+### 6. Generation / pack checks
+
+`make verify-generated BUILD_DIR=build` exit 0. `make test-manifest` / `make test-generated-libs` PASS.
+`make test-pack-parity` **failed at HEAD**: expected `ff695246…` is the d73i.2 baseline, but `6adb602`
+(d73i.4) appended the folded-duel expand entry to `fxlayout.toml` and restamped the generator identity,
+changing the packed payload — baseline was never rebaselined. Repacked twice → deterministic
+`69dede79…`; rebaselined `tools/tests/pack-parity_test.sh` with an explanatory comment. Now **pack parity: PASS**.
+
+### 7. Focused duel device suites (one lane)
+
+```sh
+make fxtest-headless BUILD_DIR=build ARDENS="$ARDENS" \
+ AVR_FXTEST_CPP_FLAGS='-mrelax -DFX_READ_COUNTER -DCGFX_COMPACT_WARP_VM -DCGFX_DUEL_BATTLE -DCGFX_BATTLE_NO_FACTS -DCGFX_BATTLE_COMPACT_RESULT' \
+ FXTEST_MS=30000 FXTEST_INOS='tst/fxdatatest/test_battle_duel.ino tst/fxdatatest/test_duel_ui.ino tst/fxdatatest/test_duel_resources.ino tst/fxdatatest/test_stack.ino'   # 51 s
+```
+
+All PASS: `test_battle_duel 105/0` (flash 26698 B, static 1730/2160), `test_duel_ui 58/0` (23086 B,
+1694/2160), `test_duel_resources 16/0` (21968 B, 1799/2160; paint headroom 452 B, frame 8840 µs),
+`test_stack 4/0` (18204 B, 1787/2160; mode-transition headroom 617 B, stack headroom 516 B).
+Static SRAM ≤2160, ~150 B reserve intact. (Test-image flash, not shipping.)
+
+### Wall time
+
+| phase | s |
+| --- | --- |
+| tool build (2×) + make gen | 22.0 + 9.2 |
+| cargo test | 3.0 |
+| node tests | 0.35 |
+| balance batch | 3.8 |
+| sim-test (duel / legacy) | 1.0 / 4.1 |
+| verify/gen/manifest/parity | ~5 |
+| fxtest-headless 4 suites | 51 |
+
+### Storage
+
+`df -h . /private/tmp`: 49 GiB free (start 56 GiB; AVR builds consumed the delta). `du -sh build` **1.7 GiB**
+(< 5 GiB budget). `make clean-build-artifacts BUILD_DIR=build` preview 108 candidates / 2.6 MB →
+applied. No `build/cgfx-pack.*` stage remained. Retained: `build/reports/d73i/*` (logs),
+`build/native-tools` (shared cache + built CLI), `build/native-tools/installed-backup/` (stale binary),
+`build/duel-sim/duel_kernel_driver` (rebuilt each parity run). Pre-existing `build/*-gate` trees untouched.
+
+### Remaining / handoff
+
+- Orchestrator: run the single duel-enabled `make final-gate`; items 1–7 are green here.
+- Decision needed: accept `g543e2c22` token on the installed tool (keeps artifacts/diff clean) or rebaseline
+  to a clean `g7b60ccae` identity (regenerate + `version_data.hpp` + `pack-parity` + manifest together).
+
+## d73i.4 — orchestrator note: generator identity pin (2026-10-15)
+
+Decision (owner): capture the sibling generator working tree as evidence and ACCEPT
+the reproducing tool for now; do not commit foreign sibling work.
+
+- Real generator = CreatureGathererTools working tree at HEAD `7b60cca` + uncommitted
+  v0.3.0 refactor. Committed `7b60cca` is 0.2.0 with no revision token and no
+  `battle_presets`, so it cannot reproduce the duel/arena artifacts.
+- Installed PATH tool and `build/native-tools/release/cgfx-tools` are byte-identical
+  (`sha256 7967451f…`); version string `cgfx-tools 0.3.0+g543e2c22` is STALE
+  (`build.rs` only reruns on `build.rs`, so the embedded revision cached from an
+  earlier compile; HEAD is `7b60cca`). Identity string treated as approximate.
+- Evidence: `build/reports/d73i/native-tools-wip/` — `HEAD.txt`, `status.txt`,
+  `tracked.patch` (1639 lines), `untracked/` (build.rs, battle_presets.rs,
+  tile_properties.*), `changed-files.txt`, `sha256.txt`, `tool-identity.txt`.
+  Stale tool backed up at `build/native-tools/installed-backup/cgfx-tools-0.3.0+ga9dc6400`
+  (`sha256 eec57855…`).
+- Follow-up filed in the sibling tracker: `CreatureGathererTools-0rd` (fix build.rs
+  rerun-on-HEAD, commit the v0.3.0 refactor, then rebaseline artifacts to the new token).
+
+Status: spike-4 non-gate items complete and green; integrated duel `final-gate`
+deferred until the unrelated `jp8.11.14` WIP clears the tree (see below).
+
+## d73i.4 — gate attempt 1 (FAILED) + fix (2026-10-15 20:58)
+
+`make final-gate ... AVR_FXTEST_CPP_FLAGS="$DUEL_DEVICE_FLAGS"` failed at `fxtest-build`:
+`test_arenademo` compiled under the duel profile and referenced removed Combatant/BattleState
+members (`status`, `statMods`, `partyModifiers`, `.moves`). Cause: passing the duel profile as the
+GLOBAL `AVR_FXTEST_CPP_FLAGS` overrode the Makefile's per-suite routing, so every legacy device
+suite built as duel. Host `check` had already passed (duel host build; `tst/main.cpp` guards the
+legacy suites that assert removed fields under `#ifndef CGFX_DUEL_BATTLE`).
+
+Fix (matches the plan's "route legacy detailed device suites to their original legacy profile"):
+- Makefile `fxtest-build`: route `test_stack` to `AVR_FXTEST_DUEL_BUILD_PROPERTIES` alongside
+  `test_battle_duel`/`test_duel_resources`/`test_duel_ui` (its duel branch is in the plan's bundle).
+- Gate invocation: do NOT pass `AVR_FXTEST_CPP_FLAGS`; legacy suites take the base profile, duel
+  suites take the duel profile via the existing per-suite routing. Shipping still gets
+  `AVR_SHIPPING_CPP_FLAGS="$DUEL_SHIP_FLAGS"` and host gets `CPPFLAGS='-I. -DCGFX_DUEL_BATTLE'`.
+
+Spot-check: `make fxtest-build FXTEST_INOS='test_arenademo test_stack'` → both compile
+(arenademo 26108 B legacy, test_stack 18084 B duel). Log: `build/final-gate/check.log` (attempt 1).
+
+## d73i.4 — gate attempt 2 (test_save window) + PASS (2026-10-15 21:10–21:17)
+
+`make final-gate ... AVR_SHIPPING_CPP_FLAGS="$DUEL_SHIP_FLAGS" CPPFLAGS='-I. -DCGFX_DUEL_BATTLE' FXTEST_MS=30000`
+(no global `AVR_FXTEST_CPP_FLAGS`; Makefile per-suite routing assigns legacy suites the base profile
+and duel suites the duel profile). Result: `gate: PASS` for both `check` and `ram`.
+
+- All FX device suites PASS. `test_save 3013/0` needed the 30 s window: the unrelated `jp8.11.14`
+  WIP adds heavy boxed-HP publication-cut cases to `tst/fxdatatest/save_test.hpp` (+175) and pushes
+  the suite past the 12000 ms default; at 30000 ms it passes (clean-tree suite is ~9.5 s, so the
+  default suffices once the WIP is absent/committed with its own window handling).
+- Focused marks: `test_battle_duel`, `test_duel_ui 58/0`, `test_duel_resources 16/0`,
+  `test_stack 4/0` (stack headroom 510, transition 617), `test_battlesession 88/0`,
+  `test_battleutility 49/0`, `test_arenademo` (legacy), `test_battletrainer 36/0`, `test_save_flags 27/0`.
+- Shipping duel resource report: `AVR_FLASH_BYTES=23758` (80%, free 5938), `AVR_STATIC_RAM_BYTES=1760`
+  (free 400). vs historical 29790 flash control → cumulative saving 6032 B (≥3500 target); static +0.
+- Logs: `build/final-gate/{check,ram}.log`.
