@@ -56,7 +56,14 @@ perturbed_layout=$fixtures/fxlayout-expand-20-perturbed.toml
 # addresses stay fixed except those after the text block, and the fixtures
 # exclude the new DuelText symbols to keep the 304-declaration migration proof.
 # Previous cart sha256 5c0d4e7d..., now ff695246.... Intentional rebaseline.
-expected=ff695246995db9dd62775118b3d94c66299a959d0b08c23d47fa5feb7eede074
+# d73i.4 spike: `make gen` with the pinned duel-capable native generator appends
+# the folded duel content expand entry (fxdata/generated/duel.txt: per-move/
+# species/retype folded type tables, beta trainer persona/rate/overrides and the
+# demo sample teams) and stamps the generator identity as 0.3.0+g543e2c22, so the
+# packed payload and later symbol addresses shift. Previous cart sha256
+# ff695246..., now 69dede79.... Intentional rebaseline; `make gen` leaves
+# src/fxdata.h, fxdata/ and tst/fxdatatest/generated/ byte-identical to HEAD.
+expected=69dede79a8a0e0347f55531dfd2813787a36c03d77c5e5b2d9ce1596fe08f65c
 
 for layout in "$old_layout" "$new_layout" "$perturbed_layout"; do
     test -f "$layout" || {

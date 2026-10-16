@@ -519,9 +519,17 @@ sim:
 	"$(BATTLE_SIM_BIN)" $(SIM_ARGS)
 
 # Reuse the permanent native suite with the simulator-only prepared-state API
-# enabled. The shipping build never receives BATTLE_SIMULATOR.
+# enabled. The shipping build never receives BATTLE_SIMULATOR. A duel build
+# (CGFX_DUEL_BATTLE) retires the legacy ordered-turn simulator, so sim-test
+# routes to the seeded C++/JS parity check that compiles and runs the actual
+# duel kernel (src/engine/battle/DuelKernel.hpp) against the canonical mock.
+ifneq ($(findstring -DCGFX_DUEL_BATTLE,$(CPPFLAGS)),)
+sim-test:
+	node --test tools/tests/duel-kernel-parity_test.mjs
+else
 sim-test:
 	$(call run_test,-DBATTLE_SIMULATOR,$(TEST_FLAGS),$(TEST_SOURCES) tools/battle-sim/SwitchPolicy.cpp tools/battle-sim/ScenarioBuilder.cpp tools/battle-sim/BatchRunner.cpp tools/battle-sim/SimulatorReports.cpp,$(SIM_TEST_BIN))
+endif
 
 test-pack-parity:
 	./tools/tests/pack-parity_test.sh
@@ -600,7 +608,7 @@ fxtest-build:
 		    ARDUINO_BUILD_CACHE_PATH="$(ARDUINO_BUILD_CACHE_PATH)" $(ARDUINO_CLI) compile --fqbn "$(FQBN)" \
 		        $(AVR_FXTEST_NO_FACTS_BUILD_PROPERTIES) \
 		        --build-path "$$stage/build" --output-dir "$$stage/output" "$$stage/$$ino.ino"; \
-		elif [ "$$ino" = "test_battle_duel" ] || [ "$$ino" = "test_duel_resources" ] || [ "$$ino" = "test_duel_ui" ]; then \
+		elif [ "$$ino" = "test_battle_duel" ] || [ "$$ino" = "test_duel_resources" ] || [ "$$ino" = "test_duel_ui" ] || [ "$$ino" = "test_stack" ]; then \
 		    ARDUINO_BUILD_CACHE_PATH="$(ARDUINO_BUILD_CACHE_PATH)" $(ARDUINO_CLI) compile --fqbn "$(FQBN)" \
 		        $(AVR_FXTEST_DUEL_BUILD_PROPERTIES) \
 		        --build-path "$$stage/build" --output-dir "$$stage/output" "$$stage/$$ino.ino"; \
