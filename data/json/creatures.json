@@ -11,6 +11,7 @@
     "spcdef": 2,
     "hp": 3,
     "spd": 3,
+    "evolves_to": 1,
     "moves": [
       "water"
     ]
@@ -60,6 +61,7 @@
     "spcdef": 3,
     "hp": 4,
     "spd": 2,
+    "evolves_to": 4,
     "moves": [
       "earth"
     ]
@@ -110,6 +112,7 @@
     "spcdef": 3,
     "hp": 3,
     "spd": 3,
+    "evolves_to": 7,
     "moves": [
       "water"
     ]
