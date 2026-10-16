@@ -10,6 +10,7 @@
 #include "../src/engine/battle/BattlePresets.hpp"
 #include "../src/creature/Creature.hpp"
 #include "../src/creature/LevelCurve.hpp"
+#include "../src/creature/Evolution.hpp"
 #include "../src/flags/flag_bit_array.hpp"
 #include "../src/globals.hpp"
 #include "../src/item/Inventory.hpp"
@@ -687,11 +688,118 @@ inline void FreshBetaStartTest(TestSuite &suite) {
     test.assert(player.party[0].level,31,"restored level is not rewritten by the beta start");
     suite.addTest(test);
 }
+// jp8.11.12: a boxed (non-party) stable instance whose accepted stored
+// experience has already reached its authored edge evolves in place on the
+// collection transition. exp, slot and attack mask (moves) are preserved; the
+// species id becomes the explicit target and HP is re-encoded for the target at
+// the same derived level, keeping a living instance's missing HP and leaving a KO
+// instance KO. A refused write leaves the old species, so the pending evolution
+// stays derivable from exp and retryable after the journal drains.
+inline void BoxedEvolutionTest(TestSuite &suite) {
+    using namespace save_test_detail;Test test(__func__);
+    // Host fixture for the packed evolution mapping: the three parallel columns
+    // (source, target, level) are contiguous, so offsets come from published
+    // addresses. Anchor the fake at the mapping base; the zeroed reward region
+    // resolves to the no-material sentinel pair (item 0, count 0).
+    const uint32_t targetOffset = static_cast<uint32_t>(Evolution::evolutionTarget - Evolution::evolutionSource);
+    const uint32_t levelOffset = static_cast<uint32_t>(Evolution::evolutionLevel - Evolution::evolutionSource);
+    fxDataFake::dataBase = Evolution::evolutionSource;
+    memset(fxDataFake::dataBytes, 0, sizeof(fxDataFake::dataBytes));
+    fxDataFake::dataBytes[0]=0;fxDataFake::dataBytes[1]=3;fxDataFake::dataBytes[2]=6;
+    fxDataFake::dataBytes[targetOffset+0]=1;fxDataFake::dataBytes[targetOffset+1]=4;fxDataFake::dataBytes[targetOffset+2]=7;
+    fxDataFake::dataBytes[levelOffset+0]=8;fxDataFake::dataBytes[levelOffset+1]=8;fxDataFake::dataBytes[levelOffset+2]=8;
+
+    // A full edge instance evolves to its explicit target; non-edge species and
+    // out-of-range slots are refused; the evolved instance never re-evolves.
+    fresh();
+    StoreRecord edge=creature(levelExpThreshold(8));edge.id=0;edge.attackMask=2;edge.hpEncoded=0;
+    StoreRecord plain=creature(levelExpThreshold(8));plain.id=2;plain.attackMask=2;plain.hpEncoded=0;
+    uint8_t edgeSlot=255,plainSlot=255;
+    test.assert(storeAdd(edge,edgeSlot),true,"add the edge instance");
+    test.assert(storeAdd(plain,plainSlot),true,"add the non-edge instance");
+    test.assert(storeEvolve(edgeSlot),true,"the qualifying boxed instance evolves");
+    StoreRecord evolved={};test.assert(storeRead(edgeSlot,evolved),true,"the evolved instance is readable");
+    test.assert(evolved.id,1,"species 0 becomes its explicit target 1");
+    test.assert(evolved.exp,levelExpThreshold(8),"exp is preserved");
+    test.assert(evolved.attackMask,2,"the attack mask (moves) is preserved");
+    test.assert(evolved.hpEncoded,0,"a full instance stays full after evolution");
+    test.assert(storeEvolve(edgeSlot),false,"an evolved instance never re-evolves");
+    test.assert(storeEvolve(plainSlot),false,"a species without an authored edge never evolves");
+    StoreRecord held={};test.assert(storeRead(plainSlot,held),true,"the non-edge instance is readable");
+    test.assert(held.id,2,"the non-edge species is unchanged");
+    test.assert(storeEvolve(200),false,"an out-of-range slot is refused");
+
+    // Duplicate identities stay separate: two copies of the same species evolve
+    // independently to the same target without aliasing each other's slot.
+    StoreRecord dupA=creature(levelExpThreshold(8));dupA.id=3;dupA.attackMask=2;dupA.hpEncoded=0;
+    StoreRecord dupB=dupA;
+    uint8_t dupSlotA=255,dupSlotB=255;
+    test.assert(storeAdd(dupA,dupSlotA),true,"add the first duplicate edge instance");
+    test.assert(storeAdd(dupB,dupSlotB),true,"add the second duplicate edge instance");
+    test.assert(dupSlotA!=dupSlotB,true,"duplicates occupy distinct slots");
+    test.assert(storeEvolve(dupSlotA),true,"the first duplicate evolves");
+    test.assert(storeEvolve(dupSlotB),true,"the second duplicate evolves");
+    StoreRecord dupRead={};test.assert(storeRead(dupSlotA,dupRead),true,"the first duplicate is readable");
+    test.assert(dupRead.id,4,"the first duplicate became its target");
+    test.assert(storeRead(dupSlotB,dupRead),true,"the second duplicate is readable");
+    test.assert(dupRead.id,4,"the second duplicate became its target");
+
+    // Below the edge: no evolution.
+    fresh();
+    StoreRecord low=creature(static_cast<uint16_t>(levelExpThreshold(8)-1));low.id=0;low.attackMask=2;low.hpEncoded=0;
+    uint8_t lowSlot=255;
+    test.assert(storeAdd(low,lowSlot),true,"add a below-edge instance");
+    test.assert(storeEvolve(lowSlot),false,"a below-edge instance does not evolve");
+    held={};test.assert(storeRead(lowSlot,held),true,"the below-edge instance is readable");
+    test.assert(held.id,0,"the below-edge species is unchanged");
+
+    // Missing HP is preserved for a living instance; a KO instance stays KO.
+    fresh();
+    StoreRecord injured=creature(levelExpThreshold(8));injured.id=6;injured.attackMask=2;
+    Creature c6;c6.load(injured);const uint8_t max6=c6.statlist.hp;
+    injured.hpEncoded=static_cast<uint8_t>(max6-5+1); // five HP missing
+    uint8_t injuredSlot=255;
+    test.assert(storeAdd(injured,injuredSlot),true,"add an injured edge instance");
+    test.assert(storeEvolve(injuredSlot),true,"the injured instance evolves");
+    StoreRecord evInj={};test.assert(storeRead(injuredSlot,evInj),true,"the injured evolved instance is readable");
+    test.assert(evInj.id,7,"species 6 becomes 7");
+    Creature c7;c7.load(evInj);const uint8_t max7=c7.statlist.hp;
+    test.assert(storeInstanceHP(evInj),static_cast<uint8_t>(max7-5),"missing HP is preserved across evolution");
+
+    StoreRecord ko=creature(levelExpThreshold(8));ko.id=0;ko.attackMask=2;ko.hpEncoded=1; // KO
+    uint8_t koSlot=255;
+    test.assert(storeAdd(ko,koSlot),true,"add a KO edge instance");
+    test.assert(storeEvolve(koSlot),true,"a KO edge instance still evolves");
+    StoreRecord evKo={};test.assert(storeRead(koSlot,evKo),true,"the KO evolved instance is readable");
+    test.assert(evKo.id,1,"the KO instance changes species");
+    test.assert(storeInstanceHP(evKo),0,"a KO instance stays KO after evolution");
+
+    // Refusal/retry: a saturated pending index refuses a fresh evolution write
+    // (the record is committed, not pending); the old species is retained and the
+    // pending evolution retries once the journal drains into a checkpoint.
+    fresh();
+    StoreRecord retry=creature(levelExpThreshold(8));retry.id=0;retry.attackMask=2;retry.hpEncoded=0;
+    uint8_t retrySlot=255;
+    test.assert(storeAdd(retry,retrySlot),true,"seed the retry instance");
+    SaveFile base=snapshot();test.assert(save(base),SaveStep::Done,"commit the retry instance");
+    StoreRecord filler=creature(27);
+    for(uint8_t n=0;n<16;++n){uint8_t s=255;test.assert(storeAdd(filler,s),true,"fill the pending index");}
+    test.assert(storeEvolve(retrySlot),false,"a saturated journal refuses the evolution");
+    held={};test.assert(storeRead(retrySlot,held),true,"the refused instance is readable");
+    test.assert(held.id,0,"a refused evolution keeps the old species");
+    SaveFile drain=snapshot();test.assert(save(drain),SaveStep::Done,"the journal drains into a checkpoint");
+    test.assert(storeEvolve(retrySlot),true,"the pending evolution retries after the drain");
+    StoreRecord applied={};test.assert(storeRead(retrySlot,applied),true,"the retried instance is readable");
+    test.assert(applied.id,1,"the retried evolution applies the target");
+    suite.addTest(test);
+}
+
 inline void SaveSuite(TestRunner &runner) {
     TestSuite suite("Save Suite");CheckpointCollectionTest(suite);CollectionCapacityTest(suite);
     BoxedInstanceHPTest(suite);BoxedHPPublicationCutsTest(suite);SaveControllerCaptureHPCutsTest(suite);
     CheckpointCutTest(suite);JournalDecodeTest(suite);JournalPublicationTest(suite);ShippingSaveRestoreTest(suite);
     SaveFlagExtentTest(suite);GenerationWrapTest(suite);LegacyResetTest(suite);LiveReadBoundedTest(suite);
     PlayerStoreIntegrationTest(suite);PlayerBagPersistenceTest(suite);FreshBetaStartTest(suite);
+    BoxedEvolutionTest(suite);
     runner.addTestSuite(suite);
 }

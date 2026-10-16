@@ -5,6 +5,8 @@
 // dedicated sketch tst/fxdatatest/test_win_exp.ino so the near-limit
 // test_battle_duel suite keeps its headroom. Reuses the duel session fixtures.
 
+#include <string.h>
+
 #include "duel_session_integration_test.hpp"
 
 namespace win_exp_test_detail {
@@ -117,8 +119,107 @@ __attribute__((noinline)) void duelDeviceWildWinExp(FxTest &test) {
                   F("a KO member is never revived"));
 }
 
+// jp8.11.12: crossing the authored level-8 edge on the real growth terminal
+// rewrites each stable instance to its explicit target exactly once, preserving
+// exp and moves; the evolved target (no further edge) never evolves again, a KO
+// member is skipped, and the evolved species survives a real checkpoint/reboot.
+__attribute__((noinline)) void duelDeviceWildWinEvolution(FxTest &test) {
+    const uint16_t before = static_cast<uint16_t>(levelExpThreshold(8) - 1); // level 7
+    const uint16_t exps[PARTY_SIZE] = {before, before, before};
+    const uint8_t missing[PARTY_SIZE] = {0, 5, 255}; // member 2 KO
+    seedPartyInstances(exps, missing);
+    beginWildWinSession(1, false); // gain 8 crosses the level-8 edge
+    wildWinToWorld();
+
+    test.expectEq(player.party[0].id, static_cast<uint8_t>(1), F("species 0 evolves to 1"));
+    test.expectEq(player.party[1].id, static_cast<uint8_t>(4), F("species 3 evolves to 4"));
+    StoreRecord evolved = {};
+    storeRead(0, evolved);
+    test.expectEq(evolved.id, static_cast<uint8_t>(1), F("the stable slot holds the target"));
+    test.expectEq(storedExp(0), static_cast<uint16_t>(before + 8),
+                  F("exp preserved across evolution"));
+    test.expectEq(player.party[0].level, static_cast<uint8_t>(8),
+                  F("the derived level reaches the edge"));
+    test.expectEq(player.party[0].attackMask, static_cast<uint8_t>(2),
+                  F("the existing moves are preserved"));
+    test.expectEq(player.creatureHPs[1],
+                  static_cast<uint8_t>(player.party[1].statlist.hp - 5),
+                  F("missing HP preserved across evolution"));
+    test.expectEq(player.party[2].id, static_cast<uint8_t>(6),
+                  F("a KO member does not evolve"));
+    test.expectEq(player.creatureHPs[2], static_cast<uint8_t>(0),
+                  F("a KO member is never revived"));
+
+    // Once: a later win grows exp but never re-evolves a target species.
+    const uint16_t afterFirst = storedExp(0);
+    beginWildWinSession(1, false);
+    wildWinToWorld();
+    test.expectEq(player.party[0].id, static_cast<uint8_t>(1),
+                  F("the evolved target never re-evolves"));
+    test.expectEq(storedExp(0), static_cast<uint16_t>(afterFirst + 8),
+                  F("exp still grows after evolution"));
+
+    // Persistence: an explicit v3 checkpoint then reboot keeps the evolved species.
+    SaveFile save = {};
+    memset(save.partySlots, 255, 3);
+    saveBegin();
+    SaveStep step = SaveStep::Idle;
+    for (uint16_t s = 0; s < 256 && saveInProgress(); ++s) {
+        step = saveStepAdvance(save);
+        FX::waitWhileBusy();
+    }
+    test.expectEq(static_cast<uint32_t>(step), static_cast<uint32_t>(SaveStep::Done),
+                  F("the evolution checkpoint completes"));
+    SaveFile reboot = {};
+    memset(reboot.partySlots, 255, 3);
+    test.expectEq(storeBoot(reboot), true, F("the evolution checkpoint reboots"));
+    StoreRecord restored = {};
+    storeRead(0, restored);
+    test.expectEq(restored.id, static_cast<uint8_t>(1),
+                  F("the evolved species survives reboot"));
+    test.expectEq(restored.exp, static_cast<uint16_t>(afterFirst + 8),
+                  F("the exact exp survives reboot"));
+}
+
+// jp8.11.12: a boxed stable instance whose accepted stored experience already
+// qualifies evolves in place through the real packed mapping, preserving exp and
+// moves and re-encoding HP; below the edge it is unchanged and an evolved
+// instance never re-evolves.
+__attribute__((noinline)) void duelDeviceBoxedEvolution(FxTest &test) {
+    storeFresh();
+    StoreRecord boxed = {};
+    boxed.id = 0;
+    boxed.exp = levelExpThreshold(8);
+    boxed.attackMask = 2;
+    boxed.hpEncoded = 0; // full
+    uint8_t slot = 255;
+    test.expectEq(storeAdd(boxed, slot), true, F("a boxed instance is added"));
+    test.expectEq(storeEvolve(slot), true, F("a qualifying boxed instance evolves"));
+    StoreRecord evolved = {};
+    storeRead(slot, evolved);
+    test.expectEq(evolved.id, static_cast<uint8_t>(1), F("the boxed species becomes its target"));
+    test.expectEq(evolved.exp, levelExpThreshold(8), F("the boxed exp is preserved"));
+    test.expectEq(evolved.attackMask, static_cast<uint8_t>(2), F("the boxed moves are preserved"));
+    test.expectEq(storeEvolve(slot), false, F("an evolved boxed instance never re-evolves"));
+
+    storeFresh();
+    StoreRecord low = {};
+    low.id = 0;
+    low.exp = static_cast<uint16_t>(levelExpThreshold(8) - 1);
+    low.attackMask = 2;
+    low.hpEncoded = 0;
+    uint8_t lowSlot = 255;
+    test.expectEq(storeAdd(low, lowSlot), true, F("a below-edge instance is added"));
+    test.expectEq(storeEvolve(lowSlot), false, F("a below-edge instance does not evolve"));
+    StoreRecord held = {};
+    storeRead(lowSlot, held);
+    test.expectEq(held.id, static_cast<uint8_t>(0), F("the below-edge species is unchanged"));
+}
+
 } // namespace win_exp_test_detail
 
 inline void test_win_exp(FxTest &test) {
     win_exp_test_detail::duelDeviceWildWinExp(test);
+    win_exp_test_detail::duelDeviceWildWinEvolution(test);
+    win_exp_test_detail::duelDeviceBoxedEvolution(test);
 }

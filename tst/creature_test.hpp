@@ -2,8 +2,10 @@
 #include "test.hpp"
 #include "../src/creature/Creature.hpp"
 #include "../src/creature/LevelCurve.hpp"
+#include "../src/creature/Evolution.hpp"
 #include "../src/lib/ReadData.hpp"
 #include "src/FXDataFake.hpp"
+#include <string.h>
 static_assert(sizeof(Effect) == sizeof(uint8_t), "Effect must use one byte");
 
 void CreatureLoadTest(TestSuite &t) {
@@ -80,11 +82,62 @@ void CreatureLevelCurveTest(TestSuite &t) {
     t.addTest(test);
 }
 
+// jp8.11.12: the packed first-beta evolution mapping resolves only the three
+// authored edges at their authored threshold; species id adjacency is never
+// inferred and no threshold-less or unrelated species ever matches. The packed
+// arrays are declared contiguously (source, target, level), so the host fixture
+// derives each column's offset from the published addresses rather than a
+// literal.
+void installEvolutionEdges() {
+    const uint32_t targetOffset = static_cast<uint32_t>(
+        Evolution::evolutionTarget - Evolution::evolutionSource);
+    const uint32_t levelOffset = static_cast<uint32_t>(
+        Evolution::evolutionLevel - Evolution::evolutionSource);
+    fxDataFake::dataBase = Evolution::evolutionSource;
+    memset(fxDataFake::dataBytes, 0, sizeof(fxDataFake::dataBytes));
+    // Authored edges 0->1, 3->4, 6->7 at level 8.
+    fxDataFake::dataBytes[0] = 0;
+    fxDataFake::dataBytes[1] = 3;
+    fxDataFake::dataBytes[2] = 6;
+    fxDataFake::dataBytes[targetOffset + 0] = 1;
+    fxDataFake::dataBytes[targetOffset + 1] = 4;
+    fxDataFake::dataBytes[targetOffset + 2] = 7;
+    fxDataFake::dataBytes[levelOffset + 0] = 8;
+    fxDataFake::dataBytes[levelOffset + 1] = 8;
+    fxDataFake::dataBytes[levelOffset + 2] = 8;
+}
+
+void CreatureEvolutionEdgeTest(TestSuite &t) {
+    Test test = Test(__func__);
+    installEvolutionEdges();
+    test.assert(CreatureEvolution::kEdgeCount, static_cast<uint8_t>(3),
+                "three authored first-beta edges");
+    test.assert(CreatureEvolution::targetFor(0, 8), static_cast<uint8_t>(1),
+                "species 0 -> 1 at its threshold");
+    test.assert(CreatureEvolution::targetFor(3, 8), static_cast<uint8_t>(4),
+                "species 3 -> 4 at its threshold");
+    test.assert(CreatureEvolution::targetFor(6, 31), static_cast<uint8_t>(7),
+                "species 6 -> 7 above its threshold");
+    test.assert(CreatureEvolution::targetFor(0, 7), static_cast<uint8_t>(0xFF),
+                "below the threshold no edge fires");
+    // No inferred id adjacency: neighbours of the sources never evolve.
+    test.assert(CreatureEvolution::targetFor(1, 31), static_cast<uint8_t>(0xFF),
+                "species 1 has no authored edge");
+    test.assert(CreatureEvolution::targetFor(2, 31), static_cast<uint8_t>(0xFF),
+                "species 2 has no authored edge");
+    test.assert(CreatureEvolution::targetFor(4, 31), static_cast<uint8_t>(0xFF),
+                "species 4 has no authored edge");
+    test.assert(CreatureEvolution::targetFor(63, 31), static_cast<uint8_t>(0xFF),
+                "an unrelated species has no authored edge");
+    t.addTest(test);
+}
+
 void CreatureSuite(TestRunner &r) {
     TestSuite t = TestSuite("Creature Suite");
     CreatureLoadTest(t);
     CreatureLoadFromOpponnetSeed(t);
     CreatureStoredRecordTest(t);
     CreatureLevelCurveTest(t);
+    CreatureEvolutionEdgeTest(t);
     r.addTestSuite(t);
 }

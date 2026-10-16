@@ -8,6 +8,7 @@
 #include "../../GameState.hpp"
 #include "../../globals.hpp"
 #include "../../creature/LevelCurve.hpp"
+#include "../../creature/Evolution.hpp"
 #include "../../save/Compaction.hpp"
 #include "../../item/Inventory.hpp"
 #include "../../lib/FxRead.hpp"
@@ -96,6 +97,13 @@ void awardWildKoMaterial(const battle::BattleState &state) {
 // by the maximum-HP delta, capped at the new maximum). Every mutation is
 // journaled before the live creature is installed, so a refused write leaves the
 // accepted per-instance state exactly as it was and never invents awarded exp.
+// jp8.11.12: on the same terminal edge, a member whose derived level has reached
+// its authored evolution threshold replaces its species with the explicit target
+// in the same stable record, keeping exp, stable slot and attack mask (moves);
+// the target's stats/types are recomputed at the unchanged derived level and a
+// living member keeps its missing HP (a KO member never reaches this path). A
+// refused write leaves the old species in place, so the pending evolution stays
+// derivable from exp and retryable on the next eligible transition.
 void awardOrdinaryWildExp(const battle::BattleState &state) {
     const uint16_t gain = static_cast<uint16_t>(
         state.active[static_cast<uint8_t>(battle::Side::Opponent)].level) * 8u;
@@ -119,9 +127,19 @@ void awardOrdinaryWildExp(const battle::BattleState &state) {
                                      static_cast<uint16_t>(newMax - oldMax);
             newHP = grownHp > newMax ? newMax : static_cast<uint8_t>(grownHp);
         }
+        const uint8_t target = CreatureEvolution::targetFor(record.id, grown.level);
+        const bool evolved = target != CreatureEvolution::NO_TARGET &&
+                             target != record.id;
+        if (evolved) {
+            const uint8_t missing = static_cast<uint8_t>(newMax - newHP);
+            record.id = target;
+            grown.load(record); // target species at the same derived level
+            newMax = grown.statlist.hp;
+            newHP = missing >= newMax ? 0 : static_cast<uint8_t>(newMax - missing);
+        }
         record.hpEncoded = newHP >= newMax ? 0 : static_cast<uint8_t>(newHP + 1);
         if (!storeWrite(slot, record)) continue; // refused: keep accepted state
-        if (grown.level > player.party[i].level) {
+        if (evolved || grown.level > player.party[i].level) {
             player.party[i] = grown;
             player.creatureHPs[i] = newHP;
         }
