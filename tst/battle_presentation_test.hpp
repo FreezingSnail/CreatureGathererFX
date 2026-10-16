@@ -1,7 +1,10 @@
 #pragma once
 
 #include "../src/engine/battle/BattlePresenter.hpp"
+#include "../src/engine/battle/BattleScene.hpp"
 #include "test.hpp"
+#include <Arduboy2.h>
+#include <cstring>
 
 inline battle::ActionResult presentationHostResult(bool knockout = false) {
     battle::ActionResult result{};
@@ -46,6 +49,38 @@ inline battle::BattleView presentationAfterView(const battle::ActionResult &resu
     }
     view.gatherProgress = result.progressAfter;
     return view;
+}
+
+// One 28px HP track inner-line pixel count. The compact duel HUD draws the
+// player track at x50..77 y36 (panel y20) and the foe track at y11.
+inline uint8_t presentationTrackFill(uint8_t lineY) {
+    uint8_t count = 0;
+    for (uint8_t col = 0; col < 28; ++col)
+        if (Arduboy2Base::getPixel(static_cast<uint8_t>(50 + col), lineY)) ++count;
+    return count;
+}
+
+// Exact HP-track framebuffer edges: a living creature with a positive maximum
+// keeps at least one visible pixel (1/100 rounds down), zero HP stays empty and
+// full HP fills all 28. The 100/255 row is the 3-digit case.
+inline void presentationHpTrackEdges(Test &test) {
+    using namespace battle;
+    battle::BattleState state = {};
+    state.partyCount[0] = state.partyCount[1] = 1;
+    state.activeSlot[0] = state.activeSlot[1] = 0;
+    const uint8_t hps[] = {0, 1, 100, 100};
+    const uint8_t maxs[] = {100, 100, 100, 255};
+    const uint8_t expected[] = {0, 1, 28, 10};
+    for (uint8_t i = 0; i < 4; ++i) {
+        state.active[0].hp = hps[i]; state.active[0].maxHp = maxs[i];
+        state.active[1].hp = hps[i]; state.active[1].maxHp = maxs[i];
+        std::memset(Arduboy2Base::sBuffer, 0, Arduboy2Base::BUFFER_BYTES);
+        BattleScene::draw(state);
+        test.assert(presentationTrackFill(36), expected[i],
+                    "player HP track matches the live value");
+        test.assert(presentationTrackFill(11), expected[i],
+                    "foe HP track matches the live value");
+    }
 }
 
 inline void BattlePresentationSuite(TestRunner &runner) {
@@ -357,6 +392,8 @@ inline void BattlePresentationSuite(TestRunner &runner) {
     result.speciesBefore[0] = 255;
     presenter.begin(result); presenter.draw();
     test.assert(presenter.stage(), PresenterStage::Announce, "absent species name is skipped safely");
+
+    presentationHpTrackEdges(test);
 
     resetActionResult(result);
     presenter.begin(result);

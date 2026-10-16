@@ -21,7 +21,11 @@ constexpr uint8_t SPECIES_COUNT = 64;
 uint8_t hpWidth(uint8_t hp, uint8_t maximum) {
     if (maximum == 0) return 0;
     if (hp > maximum) hp = maximum;
-    return static_cast<uint8_t>(static_cast<uint16_t>(hp) * 28u / maximum);
+    uint8_t width = static_cast<uint8_t>(static_cast<uint16_t>(hp) * 28u / maximum);
+    // A living creature with a positive maximum always shows at least one track
+    // pixel, so a low HP that still rounds down stays visible. Zero HP is empty.
+    if (width == 0 && hp != 0) width = 1;
+    return width;
 }
 
 void drawHp(const Combatant &creature, uint8_t y, bool showValues) {

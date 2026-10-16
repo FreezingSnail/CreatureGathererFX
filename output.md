@@ -11201,3 +11201,57 @@ Fixed: RAM_FLASH_BYTES=22404, RAM_STATIC_BYTES=1687. Delta: **-4 B flash, 0 B st
 - Shipping baseline measured from git HEAD directly; task's "was 22408" matches exactly.
 - No commit/push; bead left `in_progress` per instructions. No generated artifacts touched.
 - Wall time ~12 min (host ~2 min, device build/capture x2 runs + negative control + 3 ram builds).
+
+## 1ou — minimum live HP readability
+
+Scope: `src/engine/battle/BattleScene.cpp` `hpWidth` now clamps a positive HP with a positive
+maximum to at least one track pixel after the integer ratio. Zero HP stays empty; full fills 28.
+Added exact framebuffer cases for 0/1/full/3-digit to the co-located device suite and the surviving
+host presentation suite. No layout, name-cache, RAM or timing change.
+
+Files:
+- `src/engine/battle/BattleScene.cpp` — clamp `width==0 && hp!=0 -> 1`.
+- `tst/fxdatatest/battlepresentation_test.hpp` — `hpTrackEdges`: player (y36) and foe (y11) track
+  pixel counts for hp/max {0/100, 1/100, 100/100, 100/255} == {0, 1, 28, 10}; zero-track no-ink;
+  steady draw `FxReadCounter::count()==0` and redraw byte-identical.
+- `tst/battle_presentation_test.hpp` — `presentationHpTrackEdges` mirrors the four framebuffer edges
+  via `Arduboy2Base::getPixel` in `BattlePresentationSuite`.
+
+Commands + results:
+```
+make test BUILD_DIR=build
+```
+Total Passed: 240077, Failed: 0 (All tests passed); world 258/0. `Battle presentation` suite green.
+
+```
+make fxtest-headless BUILD_DIR=build ARDENS=$ARDENS \
+  FXTEST_INOS='tst/fxdatatest/test_battlepresentation.ino tst/fxdatatest/test_stack.ino'
+```
+- test_battlepresentation PASSED=323 FAILED=0; presenter chain painted headroom=537 (effective 468);
+  caption chain painted headroom=578 (effective 509).
+- test_stack PASSED=4 FAILED=0; stack headroom=0x271 (625), mode transition headroom=0x2CE (718).
+
+```
+make ram BUILD_DIR=build
+```
+- Control (HEAD 221e665, unchanged source): `RAM_FLASH_BYTES=22404`, `RAM_STATIC_BYTES=1687`.
+- Candidate: `RAM_FLASH_BYTES=22416`, `RAM_STATIC_BYTES=1687`.
+- Delta: **+12 B program flash, 0 B static SRAM** (target <=256 B, hard <=400 B: pass).
+
+Negative control (proof the assertions bite): clamp comment-out -> host `make test` reports
+`Failed: 2` on exactly `player HP track matches the live value` / `foe HP track matches the live
+value` (the 1/100 row); restored -> 0 failed.
+
+Timing: the clamp is a pure render branch (`hpWidth` only), mutates nothing and adds no tick,
+metadata lookup or layout change; all playback-timing assertions in the host and device suites stay
+green.
+
+Storage: `df -h . /private/tmp` 65 GiB free before and after; `du -sh build` 2.1G before/after.
+`make clean-build-artifacts BUILD_DIR=build` preview 108 candidates / 2,581,959 B, applied
+`CLEAN_APPLY=1`. Active arduino cache retained.
+
+Deviations: bead-listed files `tst/battle_slim_feedback_test.hpp` (legacy-only, `#ifndef
+CGFX_DUEL_BATTLE`) and `tst/battle_presentation_test.hpp` were adapted; the current duel scene
+framebuffer contract is asserted in the still-active `battlepresentation_test.hpp` device suite per
+the frozen scope. No commit/push; bead left `in_progress`. No generated artifacts touched.
+Wall time ~15 min (host runs + device build/capture x2 + negative control + 3 ram builds + storage).
