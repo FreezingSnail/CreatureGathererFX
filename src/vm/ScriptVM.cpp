@@ -4,6 +4,9 @@
 #include "../lib/FxReadCounter.hpp"
 #include "../globals.hpp"
 #include "../flags/flag_bit_array.hpp"
+#include "../item/Inventory.hpp"
+#include "../item/ItemIds.hpp"
+#include "../item/KeyItems.hpp"
 #include <stdint.h>
 
 #ifdef TEST
@@ -58,6 +61,9 @@ void ScriptVm::initVM(uint8_t *script, uint16_t current, uint16_t target) {
         case VmOpcode::UnsetFlag:
         case VmOpcode::ReadFlag:
             operandBytes = 2;
+            break;
+        case VmOpcode::GiveItem:
+            operandBytes = 3;
             break;
         default:
             return;
@@ -232,6 +238,35 @@ void ScriptVm::run() {
             if (this->ptr == nullptr) {
                 this->end();
                 return;
+            }
+            break;
+        }
+
+        case VmOpcode::GiveItem: {
+            // Three single-byte operands (kind, id, count). The full profile is
+            // only reachable under CGFX_FULL_WORLD_VM; the compact build guard
+            // rejects GiveItem before firmware, so authored kind/id/count are
+            // trusted here. Lure/consumable saturate through inventoryAdd; an
+            // out-of-range id is a no-op that still continues the script.
+            const uint8_t kind = readUInt8();
+            const uint8_t id = readUInt8();
+            const uint8_t count = readUInt8();
+            if (this->ptr == nullptr) {
+                this->end();
+                return;
+            }
+            switch (kind) {
+            case static_cast<uint8_t>(item::ItemKind::Lure):
+                (void)item::inventoryAdd(player.inventory, item::ItemKind::Lure, id, count);
+                break;
+            case static_cast<uint8_t>(item::ItemKind::Consumable):
+                (void)item::inventoryAdd(player.inventory, item::ItemKind::Consumable, id, count);
+                break;
+            case static_cast<uint8_t>(item::ItemKind::Key):
+                item::keyItemUnlock(player.keyItems, id);
+                break;
+            default:
+                break;
             }
             break;
         }

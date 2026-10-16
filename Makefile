@@ -189,9 +189,17 @@ TEST_SOURCES = src/lib/Blit.cpp \
 	src/flags/flag_bit_array.cpp \
 	tst/main.cpp
 
-# Common source files for VM tests
+# Common source files for VM tests. GiveItem executes against the one shared
+# Player bag, so the VM test links the Player/Inventory/key sources plus the
+# creature/read-data chain the Player constructor pulls in.
 TESTVM_SOURCES = src/vm/ScriptVM.cpp \
 	src/engine/menu/DialogQueue.cpp \
+	src/item/Inventory.cpp \
+	src/item/KeyItems.cpp \
+	src/creature/Creature.cpp \
+	src/player/Player.cpp \
+	src/lib/Type.cpp \
+	tst/src/ReadData.cpp \
 	tst/src/DialogMenu.cpp \
 	src/GameState.cpp \
 	src/flags/flag_bit_array.cpp \

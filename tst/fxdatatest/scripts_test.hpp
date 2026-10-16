@@ -6,6 +6,9 @@
 #include "src/fxdata.h"
 #include "src/engine/world/Chunk.hpp"
 #include "src/engine/world/World.hpp"
+#include "src/item/Inventory.hpp"
+#include "src/item/ItemIds.hpp"
+#include "src/item/KeyItems.hpp"
 #include "src/lib/FxReadCounter.hpp"
 #include "src/engine/menu/DialogMenu.hpp"
 #include "src/flags/flag_bit_array.hpp"
@@ -119,6 +122,33 @@ inline void testScriptTextDispatch(FxTest &test, ScriptVm &vm, uint8_t *slot) {
                   F("Msg rejects an index past the generated text table"));
     dialogMenu.drawPopMenu();
     dialogMenu.clear();
+}
+
+inline void testGiveItemGrants(FxTest &test, ScriptVm &vm, uint8_t *slot) {
+    // Full profile executes generated GiveItem9 against the one shared Player
+    // bag: kind 0 lure, kind 1 consumable, kind 2 key. The device run proves the
+    // three-operand decode and the bag write on AVR.
+    item::inventoryClear(player.inventory);
+    item::keyItemsClear(player.keyItems);
+    const uint8_t script[] = {
+        static_cast<uint8_t>(VmOpcode::GiveItem), 0, item::lureId(2, 1), 3,
+        static_cast<uint8_t>(VmOpcode::GiveItem), 1, 2, 4,
+        static_cast<uint8_t>(VmOpcode::GiveItem), 2, 5, 1,
+    };
+    memset(slot, 0, 128);
+    memcpy(slot, script, sizeof(script));
+    slot[sizeof(script)] = static_cast<uint8_t>(VmOpcode::End);
+    vm.initVM(slot, 0, 0);
+    vm.run();
+    test.expectEq(item::inventoryCount(player.inventory, item::ItemKind::Lure,
+                                       item::lureId(2, 1)), 3,
+                  F("GiveItem stores a lure grant"));
+    test.expectEq(item::inventoryCount(player.inventory, item::ItemKind::Consumable, 2), 4,
+                  F("GiveItem stores a consumable grant"));
+    test.expectEq(item::keyItemUnlocked(player.keyItems, 5), true,
+                  F("GiveItem unlocks a key bit"));
+    item::inventoryClear(player.inventory);
+    item::keyItemsClear(player.keyItems);
 }
 
 inline void testCompactWarps(FxTest &test, ScriptVm &vm, uint8_t *slot) {
@@ -298,6 +328,7 @@ inline void test_scripts(FxTest &test, ScriptVm &vm, uint8_t *slot) {
 #endif
     scripts_test_detail::testRealScriptExecution(test, vm, slot);
     scripts_test_detail::testScriptTextDispatch(test, vm, slot);
+    scripts_test_detail::testGiveItemGrants(test, vm, slot);
     scripts_test_detail::testCompactWarps(test, vm, slot);
     scripts_test_detail::testCompactBounds(test, vm, slot);
 }

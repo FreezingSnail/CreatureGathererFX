@@ -62,7 +62,8 @@ int main() {
         static_cast<uint8_t>(VmOpcode::Msg), static_cast<uint8_t>(VmOpcode::TMsg),
         static_cast<uint8_t>(VmOpcode::SMsg), static_cast<uint8_t>(VmOpcode::Tp),
         static_cast<uint8_t>(VmOpcode::SetFlag), static_cast<uint8_t>(VmOpcode::UnsetFlag),
-        static_cast<uint8_t>(VmOpcode::ReadFlag), 42
+        static_cast<uint8_t>(VmOpcode::ReadFlag),
+        static_cast<uint8_t>(VmOpcode::GiveItem), 42
     };
     for (uint8_t opcode : unsupported) {
         image.assign(kImageSize, 0);
@@ -74,6 +75,19 @@ int main() {
         require(diagnostic.find("-DCGFX_FULL_WORLD_VM") != std::string::npos,
                 "unsupported opcode diagnostic lacks full-VM remedy");
     }
+
+    // A GiveItem inside an If branch that a compact runtime would skip must
+    // still fail the compact profile: the guard scans every command boundary,
+    // not just the taken path.
+    image.assign(kImageSize, 0);
+    put(image, 12, {static_cast<uint8_t>(VmOpcode::If), 0, 0, 0, 0, 4,
+                    static_cast<uint8_t>(VmOpcode::GiveItem), 0, 0, 1,
+                    static_cast<uint8_t>(VmOpcode::End)});
+    std::string skippedDiagnostic;
+    require(!accepts(image, {0, 0}, &skippedDiagnostic),
+            "GiveItem inside a skipped branch accepted");
+    require(skippedDiagnostic.find("slot 12 offset 6") != std::string::npos,
+            "skipped-branch GiveItem diagnostic lacks slot/offset");
 
     image.assign(kImageSize, 0);
     std::vector<uint8_t> noEnd(21 * 6, static_cast<uint8_t>(VmOpcode::If));
