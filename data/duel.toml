@@ -1,0 +1,144 @@
+# Five-type duel authoring (CreatureGathererFX-d73i.4).
+#
+# Single machine source for the duel fold, the demo sample/retyped teams and the
+# beta trainer persona/rate/overrides. `make gen` folds the authored 8-type
+# roster to the five duel types and emits compact duel records; saved/custom
+# kits stay authoritative and are never replaced by species defaults.
+#
+# The fold order and mapping are the device-pinned five-type contract
+# (mock/matrices.js id "5"); the authored source may only restate them.
+
+[fold]
+order = ["spirit", "water", "earth", "fire", "plant"]
+[fold.map]
+spirit = "spirit"
+water = "water"
+wind = "water"
+earth = "earth"
+fire = "fire"
+lightning = "fire"
+plant = "plant"
+elder = "spirit"
+
+# Default persona read rates. All stay below the 75% cap; beta trainers may
+# override per row and the demo uses [demo] below.
+[personas]
+random = 0
+reader = 25
+frequency = 50
+anti_repeat = 50
+
+# Canonical mock demo window: reader @ 45% (mock/duel-bonus.html defaults).
+[demo]
+persona = "reader"
+rate = 45
+
+# --- Demo sample/retyped teams (mirror mock/teams.js). Both arena sides offer
+# all five plus a seeded random full-roster 3v3. Members keep their own native
+# default kits and stats; `types` drive only the matchup layer. Authored at
+# level 8 to match the mock SPIKE_LEVEL and the canonical HP formula.
+
+[[team]]
+key = "balanced"
+label = "Balanced trio"
+[[team.member]]
+species = "squid"
+level = 8
+types = ["water"]
+[[team.member]]
+species = "SkitterCrab"
+level = 8
+types = ["earth"]
+[[team.member]]
+species = "hedge"
+level = 8
+types = ["plant"]
+
+[[team]]
+key = "anchors"
+label = "Double anchor"
+[[team.member]]
+species = "SquableSnail"
+level = 8
+types = ["water"]
+[[team.member]]
+species = "bigsquid"
+level = 8
+types = ["water"]
+[[team.member]]
+species = "ScatterCrab"
+level = 8
+types = ["earth"]
+
+[[team]]
+key = "support"
+label = "Support stack"
+[[team.member]]
+species = "bell"
+level = 8
+types = ["spirit"]
+[[team.member]]
+species = "CoalGrub"
+level = 8
+types = ["fire"]
+[[team.member]]
+species = "cloud"
+level = 8
+types = ["water"]
+
+[[team]]
+key = "retyped"
+label = "Retyped showcase"
+[[team.member]]
+species = "dragon"
+level = 8
+types = ["spirit"]
+[[team.member]]
+species = "OrbitRelic"
+level = 8
+types = ["water"]
+[[team.member]]
+species = "rock"
+level = 8
+types = ["earth"]
+
+[[team]]
+key = "trap"
+label = "Mono trap"
+[[team.member]]
+species = "SkitterCrab"
+level = 8
+types = ["earth"]
+[[team.member]]
+species = "rock"
+level = 8
+types = ["earth"]
+[[team.member]]
+species = "Shieldshoe"
+level = 8
+types = ["earth"]
+
+# --- Beta world trainers. Each entry binds persona/rate and original-slot
+# retypes to one canonical authored opponent row (matched by species triple).
+# Gameplay levels/kits stay in data/opponents.csv; this layer only overrides the
+# duel AI persona and matchup retypes.
+
+[[trainer]]
+trainer_species = ["squibblesnail", "skittercrab", "squid"]
+persona = "reader"
+
+[[trainer]]
+trainer_species = ["bell", "hedge", "cloud"]
+persona = "frequency"
+
+[[trainer]]
+trainer_species = ["rock", "shattercrab", "biggestsquid"]
+persona = "reader"
+rate = 50
+
+[[trainer]]
+trainer_species = ["ardu", "dragon", "skull"]
+persona = "anti_repeat"
+[[trainer.member]]
+slot = 0
+types = ["fire"]
