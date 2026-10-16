@@ -13266,3 +13266,76 @@ verify-generated + pack-parity + report ≈2 min.
 
 `df -h .` 64 GiB free before/after (≥10 GiB reserve held). `du -sh build` 1.9 G unchanged; the
 pack stage self-cleaned.
+
+## jp8.11.6 — gatherable tier rate
+
+Worker: DeepSeek V4.1 Flash. HEAD e01978d. ARDENS=.../Ardens.app/Contents/MacOS/Ardens.
+Bead left `in_progress`; no commit/push.
+
+### Change
+
+`src/engine/world/StepEvent.cpp`: the wild roll now snapshots `LureZone::active()` and the
+authored per-tier rate (`item::lureRateOf(LureZone::lureTier(LureZone::id()))`, i.e. `1<<tier`)
+before `enterBattle()` and passes them to `battleSession().beginWild(...)`. Previously it always
+passed `false, 0`. Inert zones keep the ordinary wild battle (gatherable false, rate 0). Read
+once at entry; no per-step/per-frame metadata read added.
+
+Tests: host `tst/encounter_test.hpp` `EncounterWorldIntegrationTest` (inert -> not gatherable /
+tierRate 0; two tier proofs), device `tst/fxdatatest/test_world_player.ino` (tier-0 -> rate 1,
+tier-1 -> rate 2, plus the gatherable escape now navigates the two-row action page).
+
+### Commands and results
+
+```
+$ make test BUILD_DIR=build            # host: Passed 240251 Failed 0 (world suite Passed 258 Failed 0)
+$ make testvm BUILD_DIR=build          # Passed 286 Failed 0
+$ make test-beta-area BUILD_DIR=build  # tests 12 pass 12 fail 0
+$ make fxtest-headless BUILD_DIR=build ARDENS="$ARDENS" \
+    FXTEST_INOS='tst/fxdatatest/test_encounter.ino tst/fxdatatest/test_battle_duel.ino tst/fxdatatest/test_stack.ino'
+  test_encounter PASSED=47 FAILED=0
+  test_battle_duel PASSED=106 FAILED=0
+  test_stack PASSED=4 FAILED=0  (mode transition headroom=0x2B7(695), stack headroom=0x256(598))
+$ make fxtest-headless BUILD_DIR=build ARDENS="$ARDENS" FXTEST_INOS='tst/fxdatatest/test_world_player.ino'
+  test_world_player PASSED=76 FAILED=0
+$ make ram BUILD_DIR=build
+  RAM_FLASH_BYTES=22564  RAM_STATIC_BYTES=1678  RAM_FREE_BYTES=882
+```
+
+### Two-tier proof
+
+Authored mapping `item::lureRateOf(tier)==1<<tier` (pinned in `tst/item_test.hpp` and
+`tools/tests/beta-area_test.mjs`: `rate == 1<<lure_tier`). Same encounter tile, two deposits:
+
+- tier 0 -> `gather.tierRate == 1` (host and `test_world_player` both assert).
+- tier 1 -> `gather.tierRate == 2`, i.e. the distinct table rate, not a constant.
+- inert zone -> `gatherable == false`, `tierRate == 0` (host).
+
+### Resource delta
+
+`make ram` (shipping FX, default flags): flash 22564 B vs reference 22506 B = **+58 B**; static
+SRAM 1678 B = **+0 B**. Well inside the 29696 B hard cap; the test sketch
+`test_world_player` uses 29030/29696 B (device proof only).
+
+### Deviations
+
+- The bead's historical VERIFY named `build/box-adoption-gate` and older suites; used the
+  dispatcher-supplied `BUILD_DIR=build` and suite list, plus `test_world_player.ino` for the
+  end-to-end AVR tier proof (only device suite that drives `onStep`).
+- No deposit/refusal (`types 4..7`) change was made: the dispatcher SCOPE is the entry tier rate,
+  and no reachable first-area lure has type >= 4. No test demands it.
+- Had to navigate `MENU_NAV_DOWN` to ESCAPE in `test_world_player` because the lure battle is now
+  correctly gatherable (action page gains the GATHER row).
+
+### Storage
+
+`df -h . /private/tmp`: 64 GiB free before/after (>=10 GiB reserve). `du -sh build` 1.9 G
+before/after. `make clean-build-artifacts BUILD_DIR=build` preview then `CLEAN_APPLY=1` removed
+108 disposable arduino-build objects (2,599,901 B). No generated/tracked drift; only
+`StepEvent.cpp`, `tst/encounter_test.hpp`, `tst/fxdatatest/test_world_player.ino` and
+`.beads/interactions.jsonl` modified.
+
+### Wall time
+
+~40 min single worker: recon/read ~10 min; source+test edits ~10 min; host/VM/beta-area ~5 min;
+device suites (incl. one fix iteration for the lazy property window) ~12 min; ram + clean + report
+~3 min.

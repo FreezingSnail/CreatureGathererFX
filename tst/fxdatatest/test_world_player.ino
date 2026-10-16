@@ -188,6 +188,13 @@ void setup() {
     test.expectEq(gameState.state, GameState_t::BATTLE,
                   F("pocket encounter tile fires a wild battle"));
     test.expectEq(battleSession().isActive(), true, F("encounter battle session active"));
+    // jp8.11.6: a deposited lure makes the encounter gatherable at the authored
+    // per-tier rate (tier 0 -> 1<<0 = 1), not a constant.
+    test.expectEq(battleSession().state().gatherable, true,
+                  F("deposited lure enters a gatherable battle"));
+    test.expectEq(battleSession().state().gather.tierRate,
+                  static_cast<uint8_t>(item::lureRateOf(0)),
+                  F("tier-zero lure enters at the authored rate"));
 
     // Gap 2 (CreatureGathererFX-o845): drive the live encounter through a full
     // battle and a non-Lose exit, then prove the world resumes on the exact
@@ -226,8 +233,9 @@ void setup() {
                   F("the trade round damaged the player active"));
     const uint8_t damagedHp = battleSession().state().active[0].hp;
 
-    BattleFlow::update(MENU_EDGE_B); // wild action page (ESCAPE only, not gatherable)
-    BattleFlow::update(MENU_EDGE_A); // ESCAPE -> immediate non-Lose result
+    BattleFlow::update(MENU_EDGE_B);    // wild action page (GATHER then ESCAPE)
+    BattleFlow::update(MENU_NAV_DOWN);  // cursor -> ESCAPE (gatherable page)
+    BattleFlow::update(MENU_EDGE_A);    // ESCAPE -> immediate non-Lose result
 
     uint16_t exitFrames = 0;
     while (gameState.state != GameState_t::WORLD && exitFrames < 400) {
@@ -242,6 +250,32 @@ void setup() {
                   F("the battle HP persists into the world party"));
     test.expectEq(player.creatureHPs[0], 79,
                   F("the persisted HP is the damaged value, not a reset"));
+
+    // jp8.11.6 negative: a lure of a different tier must enter the same
+    // encounter tile at its own authored rate (tier 1 -> 1<<1 = 2), proving the
+    // entry rate is read from the lure rather than a constant.
+    LureZone::clear();
+    LureZone::deposit(LureZone::lureId(0, 1));
+    gameState.state = GameState_t::WORLD;
+    gameState.playerLocation = static_cast<uint16_t>((7u << 8) | 12u);
+    WorldEngine::init(worldState());
+    WorldEngine::loadMap(worldState(), 0, 0);
+    drawMapFast(worldState());
+    player.basic();
+    for (uint8_t slot = 1; slot < PARTY_SIZE; ++slot) player.party[slot].level = 0;
+    player.party[0].level = 5;
+    lureWedgeTest::forcedRoll = 0;
+    StepEventTest::setEncounterRng(lureWedgeTest::forcedRng);
+    onStep(static_cast<uint16_t>((7u << 8) | 12u));
+    test.expectEq(gameState.state, GameState_t::BATTLE,
+                  F("tier-one lure fires a wild battle"));
+    test.expectEq(battleSession().state().gatherable, true,
+                  F("tier-one lure enters a gatherable battle"));
+    test.expectEq(battleSession().state().gather.tierRate,
+                  static_cast<uint8_t>(item::lureRateOf(1)),
+                  F("tier-one lure enters at the distinct authored rate"));
+    exitBattle();
+    gameState.state = GameState_t::WORLD;
 
     // The single Player-owned bag is the v3 snapshot authority and the world
     // deposit source. A picker deposit spends that bag; the remaining counts and

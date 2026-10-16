@@ -7,6 +7,7 @@
 #include "../../engine/game/Gamestate.hpp"
 #include "../../player/Player.hpp"
 #include "../../plants/PlantGamestate.hpp"
+#include "../../item/ItemIds.hpp"
 #include "../../lib/random.hpp"
 
 extern GameState gameState;
@@ -85,10 +86,21 @@ void rollEncounterOnStep(uint16_t tile) {
         return;
     }
 
+    // Snapshot the active lure's gather facts before enterBattle() destroys the
+    // world overlay. A deposited supported lure makes this a gatherable
+    // encounter whose rate is the authored per-tier value (item::lureRateOf,
+    // 1<<tier); an inert zone keeps the ordinary wild battle. Read once at entry,
+    // never per frame.
+    const bool gatherable = LureZone::active();
+    const uint8_t tierRate = gatherable
+        ? item::lureRateOf(LureZone::lureTier(LureZone::id()))
+        : 0;
+
     // The world member is destroyed by enterBattle(). Do not touch `world`
     // or any other WorldTransient field after this call.
     enterBattle();
-    battleSession().beginWild(decision.creatureId, decision.level, false, 0);
+    battleSession().beginWild(decision.creatureId, decision.level, gatherable,
+                              tierRate);
     gameState.state = GameState_t::BATTLE;
 #endif
 }
