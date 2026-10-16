@@ -107,6 +107,12 @@ source = { raw = "data/duelchart.bin" }
 [[entry]]
 name = "duelIcons"
 source = { image = { path = "images/DuelIcons_8x8.png", width = 8, height = 8, shades = 2, spacing = 0 } }
+
+# d73i.4 folded duel content: per-move/species/retype folded type tables, beta
+# trainer persona/rate/overrides, and the demo sample teams. Appended after the
+# duel icons so every earlier field address stays fixed.
+[[entry]]
+source = { expand = { path = "fxdata/generated/duel.txt" } }
 [save]
 sectors = 8
 
