@@ -36,6 +36,7 @@
 #include "../src/save/Compaction.hpp"
 #include "../src/save/FlashBackend.hpp"
 #include "../src/creature/LevelCurve.hpp"
+#include "../src/creature/Evolution.hpp"
 #include "../src/lib/ReadData.hpp"
 #include "../src/fxdata.h"
 
@@ -1286,6 +1287,197 @@ void duelWildWinExpSurvivesSave(Test &test) {
     }
 }
 
+// --- jp8.11.12: apply a pending evolution to its stable instance ------------
+
+// Host fixture for the packed mapping. Evolution's parallel arrays are declared
+// contiguously (source, target, level) and end exactly where Rewards begins, so
+// one buffer anchored at Evolution::evolutionSource feeds both the edge reads
+// and the (here zeroed, so no-material) reward reads. Offsets come from the
+// published addresses, never a literal.
+void installEvolutionFixture() {
+    const uint32_t targetOffset = static_cast<uint32_t>(
+        Evolution::evolutionTarget - Evolution::evolutionSource);
+    const uint32_t levelOffset = static_cast<uint32_t>(
+        Evolution::evolutionLevel - Evolution::evolutionSource);
+    fxDataFake::dataBase = Evolution::evolutionSource;
+    memset(fxDataFake::dataBytes, 0, sizeof(fxDataFake::dataBytes));
+    fxDataFake::dataBytes[0] = 0;
+    fxDataFake::dataBytes[1] = 3;
+    fxDataFake::dataBytes[2] = 6;
+    fxDataFake::dataBytes[targetOffset + 0] = 1;
+    fxDataFake::dataBytes[targetOffset + 1] = 4;
+    fxDataFake::dataBytes[targetOffset + 2] = 7;
+    fxDataFake::dataBytes[levelOffset + 0] = 8;
+    fxDataFake::dataBytes[levelOffset + 1] = 8;
+    fxDataFake::dataBytes[levelOffset + 2] = 8;
+}
+
+// Install explicit species/exp/missing fixtures into stable slots 0..2 and
+// mirror them into the live Player, so the stable record and the party member
+// agree on the same instance (evolution rewrites the record, not a battle copy).
+void seedSpeciesInstances(const uint8_t (&species)[PARTY_SIZE],
+                          const uint16_t (&exps)[PARTY_SIZE],
+                          const uint8_t (&missing)[PARTY_SIZE]) {
+    flashFakeReset();
+    for (uint8_t i = 0; i < PARTY_SIZE; ++i) {
+        player.party[i].id = species[i];
+        player.party[i].level = levelFromExp(exps[i]);
+        player.party[i].attackMask = 2;
+        player.party[i].setStats(getCreatureFromStore(species[i]));
+        const uint8_t maxHp = player.party[i].statlist.hp;
+        const uint8_t curHp = missing[i] >= maxHp ? 0
+                                                   : static_cast<uint8_t>(maxHp - missing[i]);
+        player.creatureHPs[i] = curHp;
+        StoreRecord record = {};
+        record.id = species[i];
+        record.exp = exps[i];
+        record.attackMask = 2;
+        record.hpEncoded = curHp >= maxHp ? 0 : static_cast<uint8_t>(curHp + 1);
+        storeWrite(i, record);
+        storeAssign(i, i, curHp);
+    }
+}
+
+uint8_t storedSpecies(uint8_t slot) {
+    StoreRecord record;
+    storeRead(slot, record);
+    return record.id;
+}
+
+// Crossing the level-8 edge on the growth terminal rewrites each stable
+// instance to its explicit target in place: species id changes, the derived
+// level/exp and the stable slot are preserved, and the moved are untouched.
+void duelWildWinEvolvesAtEdge(Test &test) {
+    installEvolutionFixture();
+    const uint16_t before = static_cast<uint16_t>(levelExpThreshold(8) - 1); // level 7
+    const uint8_t species[PARTY_SIZE] = {0, 3, 6};
+    const uint16_t exps[PARTY_SIZE] = {before, before, before};
+    seedSpeciesInstances(species, exps, kFull);
+    beginWildWinSession(1, false); // gain 8 crosses the level-8 edge
+    wildKoToWorld();
+
+    test.assert(player.party[0].id, static_cast<uint8_t>(1), "species 0 evolves to 1");
+    test.assert(player.party[1].id, static_cast<uint8_t>(4), "species 3 evolves to 4");
+    test.assert(player.party[2].id, static_cast<uint8_t>(7), "species 6 evolves to 7");
+    test.assert(storedSpecies(0), static_cast<uint8_t>(1), "the stable slot holds the target");
+    test.assert(storedSpecies(2), static_cast<uint8_t>(7), "the third stable slot evolves");
+    test.assert(player.party[0].level, static_cast<uint8_t>(8),
+                "the derived level reaches the edge");
+    test.assert(storedExp(0), static_cast<uint16_t>(before + 8),
+                "exp is preserved exactly across evolution");
+    test.assert(player.party[0].attackMask, static_cast<uint8_t>(2),
+                "the existing moves are preserved");
+}
+
+// A below-edge level-up changes no species, and a species without an authored
+// edge never evolves even at a high level (no inferred id adjacency).
+void duelWildWinNoEdgeNoEvolution(Test &test) {
+    installEvolutionFixture();
+
+    // Species 0 one below its threshold after the gain: no evolution.
+    const uint16_t below = static_cast<uint16_t>(levelExpThreshold(8) - 9); // +8 stays level 7
+    const uint8_t edgeSpecies[PARTY_SIZE] = {0, 3, 6};
+    const uint16_t exps[PARTY_SIZE] = {below, below, below};
+    seedSpeciesInstances(edgeSpecies, exps, kFull);
+    beginWildWinSession(1, false);
+    wildKoToWorld();
+    test.assert(player.party[0].id, static_cast<uint8_t>(0),
+                "below the edge the species is unchanged");
+    test.assert(storedExp(0), static_cast<uint16_t>(below + 8),
+                "below the edge the exact exp is stored");
+
+    // Non-edge species at level 8 still level up but never evolve.
+    const uint16_t atEdge = levelExpThreshold(8);
+    const uint8_t plainSpecies[PARTY_SIZE] = {2, 5, 9};
+    const uint16_t plainExps[PARTY_SIZE] = {atEdge, atEdge, atEdge};
+    seedSpeciesInstances(plainSpecies, plainExps, kFull);
+    beginWildWinSession(1, false);
+    wildKoToWorld();
+    for (uint8_t i = 0; i < PARTY_SIZE; ++i)
+        test.assert(player.party[i].id, plainSpecies[i],
+                    "a species without an authored edge never evolves");
+    test.assert(player.party[0].level, static_cast<uint8_t>(8),
+                "a non-edge species still keeps its derived level");
+}
+
+// Evolution happens once per accepted transformation: the target species has no
+// further edge, so a later eligible win keeps the target and only grows exp.
+void duelWildWinEvolutionOnce(Test &test) {
+    installEvolutionFixture();
+    const uint16_t before = static_cast<uint16_t>(levelExpThreshold(8) - 1);
+    const uint8_t species[PARTY_SIZE] = {0, 3, 6};
+    const uint16_t exps[PARTY_SIZE] = {before, before, before};
+    seedSpeciesInstances(species, exps, kFull);
+    beginWildWinSession(1, false);
+    wildKoToWorld();
+    test.assert(player.party[0].id, static_cast<uint8_t>(1), "the first eligible win evolves");
+    const uint16_t afterFirst = storedExp(0);
+
+    beginWildWinSession(1, false);
+    wildKoToWorld();
+    test.assert(player.party[0].id, static_cast<uint8_t>(1),
+                "the evolved target never re-evolves");
+    test.assert(storedSpecies(1), static_cast<uint8_t>(4), "the second edge stays evolved");
+    test.assert(storedExp(0), static_cast<uint16_t>(afterFirst + 8),
+                "the target still grows exp");
+}
+
+// Evolution preserves a living member's missing HP, leaves a KO member KO and
+// never evolves it. The damaged and KO members are non-active party slots so the
+// battle's HP sync on the active slot cannot mask the preservation.
+void duelWildWinEvolutionPreservesHP(Test &test) {
+    installEvolutionFixture();
+    const uint16_t before = static_cast<uint16_t>(levelExpThreshold(8) - 1);
+    const uint8_t species[PARTY_SIZE] = {0, 3, 6};
+    const uint16_t exps[PARTY_SIZE] = {before, before, before};
+    const uint8_t missing[PARTY_SIZE] = {0, 5, 255}; // member 2 KO
+    seedSpeciesInstances(species, exps, missing);
+    beginWildWinSession(1, false);
+    wildKoToWorld();
+
+    test.assert(player.party[1].id, static_cast<uint8_t>(4), "the damaged member evolves");
+    const uint8_t newMax = player.party[1].statlist.hp;
+    test.assert(player.creatureHPs[1], static_cast<uint8_t>(newMax - 5),
+                "evolution preserves the damaged member's missing HP");
+    test.assert(player.party[2].id, static_cast<uint8_t>(6),
+                "a KO member does not evolve");
+    test.assert(player.creatureHPs[2], static_cast<uint8_t>(0),
+                "a KO member is never revived");
+}
+
+// The evolved stable instance survives an explicit v3 checkpoint and reload.
+void duelWildWinEvolutionSurvivesSave(Test &test) {
+    installEvolutionFixture();
+    const uint16_t before = static_cast<uint16_t>(levelExpThreshold(8) - 1);
+    const uint8_t species[PARTY_SIZE] = {0, 3, 6};
+    const uint16_t exps[PARTY_SIZE] = {before, before, before};
+    seedSpeciesInstances(species, exps, kFull);
+    beginWildWinSession(1, false);
+    wildKoToWorld();
+
+    SaveFile save = {};
+    memset(save.partySlots, 255, 3);
+    saveBegin();
+    SaveStep step = SaveStep::Idle;
+    for (uint16_t s = 0; s < 256 && saveInProgress(); ++s) step = saveStepAdvance(save);
+    test.assert(step, SaveStep::Done, "the evolution checkpoint completes");
+
+    SaveFile reboot = {};
+    memset(reboot.partySlots, 255, 3);
+    test.assert(storeBoot(reboot), true, "the evolution checkpoint reboots");
+    test.assert(storedSpecies(0), static_cast<uint8_t>(1),
+                "the evolved species survives reboot");
+    test.assert(storedSpecies(2), static_cast<uint8_t>(7),
+                "the third evolved species survives reboot");
+    test.assert(storedExp(0), static_cast<uint16_t>(before + 8),
+                "the exact exp survives reboot");
+
+    for (uint8_t i = 0; i < PARTY_SIZE; ++i) player.party[i].id = 255;
+    test.assert(SaveController::load(), true, "the evolution checkpoint loads");
+    test.assert(player.party[0].id, static_cast<uint8_t>(1),
+                "the live party reloads the evolved species");
+}
+
 } // namespace duel_session_test_detail
 
 inline void DuelSessionIntegrationSuite(TestRunner &runner) {    using namespace duel_session_test_detail;
@@ -1433,6 +1625,26 @@ inline void DuelSessionIntegrationSuite(TestRunner &runner) {    using namespace
     Test xpSave(__func__);
     duelWildWinExpSurvivesSave(xpSave);
     suite.addTest(xpSave);
+
+    Test evoEdge(__func__);
+    duelWildWinEvolvesAtEdge(evoEdge);
+    suite.addTest(evoEdge);
+
+    Test evoNone(__func__);
+    duelWildWinNoEdgeNoEvolution(evoNone);
+    suite.addTest(evoNone);
+
+    Test evoOnce(__func__);
+    duelWildWinEvolutionOnce(evoOnce);
+    suite.addTest(evoOnce);
+
+    Test evoHp(__func__);
+    duelWildWinEvolutionPreservesHP(evoHp);
+    suite.addTest(evoHp);
+
+    Test evoSave(__func__);
+    duelWildWinEvolutionSurvivesSave(evoSave);
+    suite.addTest(evoSave);
 
     runner.addTestSuite(suite);
 }

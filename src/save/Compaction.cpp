@@ -4,6 +4,7 @@
 #include "Journal.hpp"
 #include "../lib/ReadData.hpp"
 #include "../creature/LevelCurve.hpp"
+#include "../creature/Evolution.hpp"
 
 namespace {
 constexpr uint16_t STORE_A = 8192, STORE_B = 12288;
@@ -185,6 +186,20 @@ bool storeWrite(uint8_t slot,const StoreRecord &in) {
     uint8_t entry;
     if(slot>=64 || in.id==255 || (!pendingEntry(slot,entry) && pendingCount==16)) return false;
     return append(LogOp::StoreAdd,slot,&in);
+}
+bool storeEvolve(uint8_t slot) {
+    StoreRecord record;
+    if(!storeRead(slot,record) || record.id==255) return false;
+    const uint8_t target = CreatureEvolution::targetFor(record.id,levelFromExp(record.exp));
+    if(target==CreatureEvolution::NO_TARGET || target==record.id) return false;
+    const uint8_t oldMax=maxHP(record), oldHP=storeInstanceHP(record);
+    const uint8_t missing=static_cast<uint8_t>(oldMax-oldHP);
+    record.id=target;
+    const uint8_t newMax=maxHP(record);
+    const uint8_t newHP=oldHP==0 ? 0
+        : (missing>=newMax ? 0 : static_cast<uint8_t>(newMax-missing));
+    record.hpEncoded=newHP>=newMax ? 0 : static_cast<uint8_t>(newHP+1);
+    return storeWrite(slot,record);
 }
 bool storeAdd(const StoreRecord &in,uint8_t &slot) {
     if(in.id==255) return false;

@@ -1360,3 +1360,100 @@ Log kept at `build/fxtest-build-all.log`.
 
 Worker ~70 min wall: recon ~25; implementation ~10; wildcard build 5:10 + targeted builds ~6; two
 device runs ~1:45; host+ram+storage ~3; report ~5. No commit/push; bead left `in_progress`.
+
+## jp8.11.12 — apply beta evolution
+
+### What changed
+
+- `src/creature/Evolution.hpp` (new): `CreatureEvolution::targetFor(species, level)` resolves the
+  packed first-beta edge mapping (0->1, 3->4, 6->7 @ level 8). The three parallel arrays are emitted
+  contiguously in `fxlayout` declaration order, so `kEdgeCount = evolutionTarget -
+  evolutionSource` (= 3, `static_assert`ed); the source column is read once, then the matched row's
+  threshold/target. No id adjacency is inferred — a species matches only an authored source row and
+  only at/above its authored threshold; otherwise `NO_TARGET`. Transition-only single-byte reads.
+- `src/engine/battle/BattleFlow.cpp`: `awardOrdinaryWildExp` now, on the same Win terminal edge and
+  in the same single `StoreRecord` write, replaces a living member's species with its explicit
+  target when its derived level has reached the edge. exp, stable slot and attack mask (moves) are
+  preserved; the target's stats/types are recomputed at the unchanged derived level and a living
+  member keeps its missing HP (a KO member is skipped before the reward path). A refused write
+  leaves the old species, so the pending evolution stays derivable from exp and retryable.
+- `src/save/Compaction.cpp`/`.hpp`: `storeEvolve(slot)` evolves one boxed stable instance in place
+  on the collection open/assignment transition when its accepted storedXP already qualifies; exp,
+  slot and attack mask are preserved and HP is re-encoded for the target at the same level (living
+  missing-HP kept, KO kept KO). Refusal leaves the record untouched. No v3 offset/version change and
+  the boxed HP encoding is unchanged.
+- Tests: host `tst/creature_test.hpp` (edge resolution / no-adjacency), `tst/save_test.hpp`
+  (`BoxedEvolutionTest`: each edge, no-edge species, duplicates, injured/KO HP, refusal/retry),
+  `tst/duel_session_integration_test.hpp` (five terminal tests: evolve at edge, no-edge/no-adjacency,
+  once, missing-HP+KO, save/reboot+reload); device `tst/fxdatatest/win_exp_test.hpp`
+  (`duelDeviceWildWinEvolution`, `duelDeviceBoxedEvolution`).
+
+### Commands, results, tails
+
+```
+make test BUILD_DIR=build            -> host 240506/0 (+99) + world 258/0 (baseline 240407)
+make testvm BUILD_DIR=build          -> 286/0
+make test-beta-area BUILD_DIR=build  -> tests 13 / pass 13 / fail 0
+make fxtest-headless BUILD_DIR=build ARDENS="$ARDENS" FXTEST_MS=30000 FXTEST_INOS='test_win_exp test_save test_world_player test_stack'
+  test_win_exp     PASSED=36  FAILED=0   (22176/29696, 7520 B free)
+  test_save        PASSED=304 FAILED=0   (23978/29696, 5718 B free)
+  test_world_player PASSED=65 FAILED=0   (24502/29696, 5194 B free)
+  test_stack       PASSED=4   FAILED=0   (17268/29696, 12428 B free; stack headroom 598, transition 695)
+make fxtest-headless BUILD_DIR=build ARDENS="$ARDENS"   # full wildcard
+  -> all 33 device suites PASS, 0 FAILED; min free flash 2752 B (test_duel_session)
+make ram BUILD_DIR=build             -> AVR_FLASH_BYTES=23380 (free 6316) ; AVR_STATIC_RAM_BYTES=1680 (free 480)
+```
+
+### Proofs
+
+- Edge: crossing level 8 evolves all three stable instances in place (0->1, 3->4, 6->7), exp
+  preserved exactly, stable slot and attack mask (moves) unchanged, derived level reaches the edge.
+- No-edge: species without an authored edge (2/5/9, and neighbours 1/4) never evolve even at level 8
+  or 31; a below-threshold level-up changes no species (no id adjacency).
+- Once: the evolved target has no further edge, so a later win keeps the target and only grows exp.
+- HP: a living member keeps its missing HP across evolution; a KO member neither evolves nor revives.
+- Persistence: after evolution an explicit v3 checkpoint + `storeBoot` and `SaveController::load`
+  return the evolved species and exact exp (host) and the evolved species survives a real
+  checkpoint/reboot through the FX save flash (device).
+- Boxed: a boxed slot whose storedXP already qualifies evolves through the real packed mapping,
+  preserving exp/moves; below-edge and no-edge species stay put; duplicates evolve independently;
+  a saturated journal refuses without changing the species and the evolution retries after the
+  drain (retryable-on-refusal).
+
+### Flash / SRAM delta
+
+Baseline (jp8.11.10) 23198 flash / 1680 static -> candidate **23380 flash (+182) / 1680 static (+0)**.
+Shipping targets (<=29184 plan / <=29696 hard, static <=2160): met with 5,804 B flash and 480 B
+static free; `test_stack` headroom 598 B (>=150 B reserve, unchanged).
+
+### Deviations
+
+- No "save-needed"/"evolved!" UI feedback and no per-transformation banner: the dispatch's SCOPE and
+  VERIFY require only the stable-instance rewrite and its proofs; jp8.11.10 likewise omitted
+  deferred-growth feedback. The pending evolution is retryable by construction, so nothing is lost.
+- Boxed collection-open wiring is delivered as the `storeEvolve(slot)` seam, not a call site: the
+  collection view (jp8.11.8) and party-slot replacement (jp8.11.9) are still open, so no collection
+  open/assignment transition exists yet. `storeEvolve` is proven directly on host and device and is
+  what that transition will call. It is dropped by LTO from the shipping image until referenced.
+- The evolve conditions include `target != record.id` (dead for generator-validated data; keeps the
+  host fixture deterministic when an unrelated fake data base reads zeroed bytes).
+- Device checkpoint loops call `FX::waitWhileBusy()` (the established device save pattern); without
+  it the loop spins while flash is busy.
+- The boxed device proof lives in `test_win_exp` (7520 B free) rather than `test_save`; both are in
+  the dispatch's FXTEST_INOS and both run green.
+- Bead's archived VERIFY named `build/box-adoption-gate`; the dispatch pinned `BUILD_DIR=build`, used.
+- No commit/push; bead left `in_progress` per dispatch.
+
+### Storage
+
+`df -h .` 63 GiB free before/after (>=10 GiB reserve held). `du -sh build` 1.4G -> 1.2G.
+`make clean-build-artifacts BUILD_DIR=build` previewed (108 candidates, 2.6 MB) then applied; removed
+the disposable `build/fxtest` device staging (231M). Retained `build/native-tools` (963M, active
+generator cache), `build/arduino-build` (49M) and the `build/evo-*.log` evidence. No `cgfx-pack.*`
+stage remains; no generated/tracked files changed.
+
+### Wall time
+
+Worker ~95 min wall: recon/design ~25; implementation ~15; host iteration ~6; device focused build +
+run ~15 (one earlier 13-min cold LTO build), full wildcard 7:41; ram + storage ~5; report ~10. No
+orchestrator gate run (bead left `in_progress`).
