@@ -11334,3 +11334,73 @@ Whole-image shipping (`make ram`): **22416 B flash / 1687 B static SRAM** — id
 
 ### Wall time
 gen 6.1 s; verify-generated/pack-parity ~2 s; host `make test` 2.8 s; testvm ~2 s; test-generated-libs ~3 s; focused device (3 suites) 29.2 s; `make ram` 12.4 s. Total implementation+verification ~8 min (single lane, no separate gate/orchestrator phase in this worker).
+
+## 0s0 — shared prologues timing + stack evidence
+
+Bead `CreatureGathererFX-0s0` (P2, post-beta, `difficulty:medium`); worker DeepSeek V4.1 Flash; tree HEAD `8ff5b39`.
+Single AVR/build lane reused `BUILD_DIR=build` (bead's dated `build/box-adoption-gate` ignored per dispatch). No source edits; no commit/push; bead left `in_progress`.
+Dependency `e5b` (linker relaxation) landed; `-mcall-prologues` is already in the default `AVR_RELAX_FLAGS` (Makefile line 11) and flows to shipping + every fxtest property set through that single variable.
+
+### Criterion-to-evidence map (written before editing)
+| Criterion | Deciding current measurement | Result |
+|---|---|---|
+| `-mcall-prologues` saves whole-image flash | `make ram` WITH vs WITHOUT the one flag, same tree/flags | WITH 22416 B, WITHOUT 23292 B → **saves 876 B** |
+| Static SRAM unchanged | `avr-size` Data bytes, both variants | 1687 B both → **0 B delta** |
+| Painted stack ≥400 B | `test_stack` painted headroom (fxtest-spike) | **625 B** (mode-transition 718 B) |
+| Documented ISR allowance (~69 B) honored | `MIN_HEADROOM=219` in `stack_test.hpp`; report headroom−69 | 625−69 = **556 B** ≥ 400 B |
+| Worst-case frame ≤52 Hz budget (19230 us) | `test_duel_resources` `frame=` (the only frame-timing instrumentation) | **8896 us** ≤ 19230 us |
+| Save round-trips | `test_save` device suite | **3300 passed / 0 failed** |
+| Flag shared by FX/Mini/device builds | single `AVR_RELAX_FLAGS` referenced by `AVR_SHIPPING_*` and all `AVR_FXTEST_*` property sets | confirmed by grep |
+
+### Commands + numbers (all `BUILD_DIR=build`, `ARDENS=…/Ardens`)
+```text
+make ram BUILD_DIR=build
+  # WITH -mcall-prologues (current default/control)
+  # RAM_FLASH_BYTES=22416/29696  RAM_STATIC_BYTES=1687/2560  RAM_FREE_BYTES=873
+make ram BUILD_DIR=build AVR_RELAX_FLAGS="-mrelax -fno-move-loop-invariants -mstrict-X"
+  # WITHOUT -mcall-prologues (counterfactual)
+  # RAM_FLASH_BYTES=23292/29696  RAM_STATIC_BYTES=1687/2560  RAM_FREE_BYTES=873
+make ram BUILD_DIR=build   # restored control: 22416/1687; cmp control ELF => identical (deterministic)
+```
+Whole-image shipping delta from the one flag on the current tree: **−876 B flash, 0 B static SRAM**.
+
+```text
+make fxtest-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_save.ino BUILD_DIR=build
+  test_save  PASSED=3300 FAILED=0  (RAM 1878/2160)  PASS
+  test_stack PASSED=4 FAILED=0  mode transition headroom=0x2CE (718)
+             stack headroom=0x271 (625 B)  PASS
+make fxtest-headless BUILD_DIR=build ARDENS="$ARDENS" \
+  FXTEST_INOS='tst/fxdatatest/test_stack.ino tst/fxdatatest/test_battlepresentation.ino'
+  test_stack  PASS (headroom 625)
+  test_battlepresentation PASSED=323 FAILED=0
+    presenter chain painted headroom=537 effective=468; caption chain painted=578 effective=509
+make fxtest-headless BUILD_DIR=build ARDENS="$ARDENS" FXTEST_INOS='tst/fxdatatest/test_duel_resources.ino'
+  headroom=601  frame=8896  PASSED=16 FAILED=0  PASS   (worst frame 8896 us ≤ 19230 us)
+```
+Counterfactual (flag removed) device measurements, same staging:
+```text
+test_stack          WITHOUT flag: headroom=0x274 (628 B)  PASSED=4   (vs 625 WITH → +3 B, noise)
+test_duel_resources WITHOUT flag: headroom=601 frame=8816 PASSED=16  (vs 8896 WITH → −80 us, noise)
+test_save           WITHOUT flag: Sketch uses 29720 > 29696 → **device build does not fit**
+```
+So the flag also buys the device-suites their headroom: removing it overflows `test_save` (29720 B) and pushes `test_stack` to 17720 B (+670) / `test_duel_resources` to 21480 B (+960), while painted stack and frame time are materially unchanged.
+
+### Disposition (explicit)
+**RETAIN `-mcall-prologues`; acceptance PROVED, no follow-up code change required.**
+- Historical 229 B / 484 B painted-stack figures are SUPERSEDED: current same-source device measurement is 625 B (test_stack), 601 B (duel), 537 B painted / 468 B effective (battlepresentation) — all ≥ the bead's 400 B requirement, before and after the ~69 B ISR allowance.
+- Whole-image flash decides and the flag wins by 876 B with 0 B static-RAM cost.
+- Timing: worst frame 8896 us is 46% of the 19230 us (52 Hz) budget; removing the flag changes it by only ~80 us, so the flag is not a timing risk.
+
+### Remaining timing gap (reported, not a blocker)
+Automated frame-timing instrumentation exists **only** in `test_duel_resources` (the `worstOverall <= 19230 us` assertion). `test_save` and `test_stack` (the VERIFY suites) carry no frame/step wall-clock assertion, so "save timing" and "step timing" are covered only as pass/fail round-trip + painted-stack evidence, not as measured microsecond budgets. All three pointed VERIFY/design measurements were run; the frame-budget figure comes from the one suite that instruments it.
+
+### Deviations
+- Used `BUILD_DIR=build` (dispatch) instead of the bead's dated `build/box-adoption-gate`.
+- The flag is already the default, so the dispatch's "control vs candidate" mapping is inverted from the old planning prose: the *enabled* shipping state is the control, and the flag-removed build is the counterfactual. Both were measured on the current tree.
+- No code change: the criterion is met by the shipping configuration; adding test instrumentation to `test_save`/`test_stack` would be a redesign beyond this bounded evidence bead.
+
+### Storage
+`df -h . /private/tmp` before: 65 GiB free; after: 65 GiB free (≥10 GiB reserve maintained). `du -sh build` 2.1 G → 1.8 G. Previewed `make clean-build-artifacts BUILD_DIR=build` (108 candidates, 2,581,955 B) then applied; also removed regenerable device staging `build/fxtest`. Retained compact evidence: `build/0s0-evidence/{control-with-prologues,variant-without-prologues}.{elf,hex}`. No other worker's directories touched.
+
+### Wall time
+Control+variant `make ram` 11.0 s + 11.2 s + 11.0 s (restore); fxtest-spike 21.0 s; focused device runs 19.5 s + 10.9 s; counterfactual device runs ~30 s. Implementation+verification total ~12 min (single lane).
