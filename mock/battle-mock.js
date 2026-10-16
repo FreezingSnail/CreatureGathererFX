@@ -178,6 +178,8 @@ function stanceBeats(order, stance, other) {
 const benchIndexFor = (index) => (index + 1) % DATA.creatures.length;
 const SWITCH_BASE = 100; // pick encoding: >= 100 means "switch to party slot pick-100"
 const isSwitchPick = (pick) => pick === -1 || pick >= SWITCH_BASE;
+const WAIT_PICK = -2; // pick encoding: -2 means the kit has no usable attack (WAIT)
+const isWaitPick = (pick) => pick === WAIT_PICK;
 
 function nextLivingSlot(state, side, excludeSlot) {
   const duelState = state.duelState;
@@ -361,6 +363,7 @@ function aiDuelPick(state) {
   duelState.thisReadFired = false;
   const persona = duelPersona(state);
   const options = duelOptions(state, 1);
+  if (!options.length) return WAIT_PICK; // unusable kit -> WAIT, no rng consumed (kernel chooseAction)
   const rate = persona.readRate != null ? persona.readRate : state.duel.aiRead;
   if (persona.memory === 'none' || state.rng.next() * 100 >= rate) {
     // No read this round: attack (never a random swap), preferring the best
@@ -497,8 +500,14 @@ function duelResolve(state) {
   }
 
   const mine = duelMoves(state, 0), theirs = duelMoves(state, 1);
-  const yourMove = youSwitch ? null : (mine[duelState.picks[0]] || mine[0]);
-  const foeMove = foeSwitch ? null : (theirs[duelState.picks[1]] || theirs[0]);
+  const yourMove = (youSwitch || isWaitPick(duelState.picks[0]))
+    ? null : (mine[duelState.picks[0]] || mine[0] || null);
+  const foeMove = (foeSwitch || isWaitPick(duelState.picks[1]))
+    ? null : (theirs[duelState.picks[1]] || theirs[0] || null);
+  // A side with no usable attack (empty kit) waits: it commits no attack and
+  // receives the opponent's default win (kernel resolveRound unusable-kit path).
+  const youWait = !youSwitch && !yourMove;
+  const foeWait = !foeSwitch && !foeMove;
   let yourDamage = 0, foeDamage = 0;
   const scoring = state.duel.scoring;
   const previous = [null, null];
@@ -525,6 +534,21 @@ function duelResolve(state) {
     const hit = Math.max(1, Math.round(FLAT_WIN * modifier));
     if (attackerSide === 0) yourDamage = hit; else foeDamage = hit;
     duelState.lines = ['DEFAULT WIN', `-${yourDamage} -${foeDamage}`];
+    duelState.last = [yourMove ? yourMove.type : null, foeMove ? foeMove.type : null];
+  } else if (youWait || foeWait) {
+    if (youWait && foeWait) {
+      // Both waiting: no attack, no damage (kernel both-wait branch).
+      duelState.lines = ['WAIT', 'both sides wait'];
+    } else {
+      // The waiting side receives the other side's default win.
+      const attacker = youWait ? 1 : 0;
+      const attackerMove = attacker === 0 ? yourMove : foeMove;
+      const modifier = scoring === 'bonus' && attackerMove
+        ? duelCreatureBonus(state, attacker, attackerMove.type) : 1;
+      const hit = Math.max(1, Math.round(FLAT_WIN * modifier));
+      if (attacker === 0) yourDamage = hit; else foeDamage = hit;
+      duelState.lines = ['DEFAULT WIN', `-${yourDamage} -${foeDamage}`];
+    }
     duelState.last = [yourMove ? yourMove.type : null, foeMove ? foeMove.type : null];
   } else {
     // Flat numbers: relation decides. In the bonus spelling the creature-type
@@ -615,8 +639,12 @@ function step(state, input) {
         const count = Math.max(1, options.length + (showSwap ? 1 : 0));
         if (edge === 'left' || edge === 'up') duelState.cursor = (duelState.cursor + count - 1) % count;
         else if (edge === 'right' || edge === 'down') duelState.cursor = (duelState.cursor + 1) % count;
-        else if (edge === 'a' && options.length) {
-          duelPick(state, duelState.cursor >= options.length ? -1 : duelState.cursor);
+        else if (edge === 'a') {
+          // No usable attack and no bench: commit WAIT (kernel Skip -> Wait).
+          const pick = duelState.cursor >= options.length
+            ? (showSwap ? -1 : WAIT_PICK)
+            : duelState.cursor;
+          duelPick(state, pick);
         }
       }
     } else if (state.scene === 'end') {
@@ -955,6 +983,7 @@ if (typeof module !== 'undefined' && module.exports) {
     duelKind, stanceSet, stanceBeats, duelOptions, duelOptionsFor,
     DUEL_PERSONAS, duelPersona, predictPlayerType, counterOptions, recordPlayerPick,
     duelCreature, duelBench, benchCounterExists, benchCounterSlot, sideAlive, isSwitchPick,
+    WAIT_PICK, isWaitPick,
     livingBenchSlots, switchTargetSlot, rollTeam, SWITCH_BASE,
     duelMatrix, duelValue, duelBeats, foldType, MATRIX_DATA, TEAM_DATA,
     duelTypeList, presetTeam,

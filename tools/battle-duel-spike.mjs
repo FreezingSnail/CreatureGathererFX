@@ -166,7 +166,7 @@ function makePlayerRng(seed) {
 //   anti-repeat- avoid repeating the last revealed own type (retained)
 export function playerPick(mock, state, policy, rng) {
   const options = mock.duelOptions(state, 0);
-  if (options.length === 0) return 0;
+  if (options.length === 0) return mock.WAIT_PICK; // unusable kit -> WAIT
   const history = state.duelState.history || [];
   const lastMine = history.length ? history[history.length - 1] : null;
   const indexOfType = (type) => options.findIndex((option) => option.type === type);
@@ -267,7 +267,7 @@ export function playDuel(opts = {}) {
     metrics.rounds += 1;
     const preHp = [state.duelState.hp[0].slice(), state.duelState.hp[1].slice()];
     const pick = playerPick(mock, state, policy, rng);
-    if (pick < 0 || pick >= mock.SWITCH_BASE) metrics.switches += 1;
+    if (pick === -1 || pick >= mock.SWITCH_BASE) metrics.switches += 1;
     mock.duelPick(state, pick);
     mock.duelUpdate(state, 1000);
     mock.duelUpdate(state, 2000);
