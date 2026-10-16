@@ -12,6 +12,9 @@
 // Run: node tools/battle-duel-spike.mjs [--battles 1000] [--rounds 200]
 //      node tools/battle-duel-spike.mjs --persona reader --policy counter --read 45
 import path from 'node:path';
+import { createHash } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 
@@ -22,6 +25,82 @@ export function loadMock() {
   return require(path.join(repo, 'mock/battle-mock.js'));
 }
 
+// ---- provenance helpers (pinned in every --json artifact) ------------------
+// Deterministic hashing: canonical (key-sorted) JSON so a fixture hash does not
+// depend on object insertion order. No timestamps are ever emitted, so the same
+// scenario + seed produces byte-identical JSON.
+export function canonicalJson(value) {
+  if (value === null || typeof value !== 'object') return JSON.stringify(value);
+  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(',')}]`;
+  const keys = Object.keys(value).sort();
+  return `{${keys.map((key) => `${JSON.stringify(key)}:${canonicalJson(value[key])}`).join(',')}}`;
+}
+
+export function sha256Hex(text) {
+  return createHash('sha256').update(text).digest('hex');
+}
+
+// Files whose bytes identify the reporting seam.
+export const PROVENANCE_FILES = [
+  'tools/battle-duel-spike.mjs',
+  'mock/battle-mock.js',
+  'src/engine/battle/DuelKernel.hpp',
+];
+
+function fileSha(rel) {
+  try {
+    return sha256Hex(readFileSync(path.join(repo, rel)));
+  } catch {
+    return null;
+  }
+}
+
+function gitRevision() {
+  try {
+    return execFileSync('git', ['rev-parse', 'HEAD'], { cwd: repo, encoding: 'utf8' }).trim();
+  } catch {
+    return null;
+  }
+}
+
+function gitDirty() {
+  try {
+    return execFileSync('git', ['status', '--porcelain'], { cwd: repo, encoding: 'utf8' }).trim().length > 0;
+  } catch {
+    return null;
+  }
+}
+
+// SHA-256 of the authored duel fixtures the run depends on: creature records,
+// the active matrix table, and the sample teams.
+export function fixtureHashes() {
+  const mock = loadMock();
+  const matrix5 = (mock.MATRIX_DATA && mock.MATRIX_DATA.matrices
+    ? mock.MATRIX_DATA.matrices.find((matrix) => matrix.id === DEFAULT_MATRIX_ID)
+    : null) ?? null;
+  return {
+    creatures: sha256Hex(canonicalJson(mock.DATA.creatures)),
+    matrix5: sha256Hex(canonicalJson(matrix5)),
+    teams: sha256Hex(canonicalJson(mock.TEAM_DATA.teams)),
+  };
+}
+
+// Provenance block pinned into the --json artifact: repository revision, the
+// seed keys used, and SHA-256 of the seam files and duel fixtures.
+export function buildProvenance(opts = {}) {
+  const battles = opts.battles ?? 200;
+  const files = {};
+  for (const rel of PROVENANCE_FILES) files[rel] = fileSha(rel);
+  return {
+    gitRevision: gitRevision(),
+    gitDirty: gitDirty(),
+    nodeVersion: process.version,
+    seedKeys: { scheme: 'seed = 1..battles per cell (identical across cells)', battles },
+    files,
+    fixtures: fixtureHashes(),
+  };
+}
+
 // Balanced head-to-head pairing used by the singleton read-rate isolate:
 // player ScrambleSnail [wind, plant] vs AI ScatterCrab [earth, lightning].
 export const SPIKE_MATCHUP = { you: 'ScrambleSnail', foe: 'ScatterCrab' };
@@ -30,6 +109,11 @@ export const DEFAULT_MATRIX_ID = '5';
 export const DEFAULT_TEAM_SIZE = 3;
 export const DEFAULT_SCORING = 'bonus';
 export const DEFAULT_MAX_ROUNDS = 200;
+
+// Version of the machine-readable `--json` artifact. Bump on any breaking
+// schema change (renamed/retyped/removed field). Additive fields keep the
+// version; see docs/battle-simulator.md for the documented schema.
+export const DUEL_SPIKE_SCHEMA_VERSION = 1;
 
 export const PERSONAS = ['reader', 'frequency', 'anti-repeat', 'exploiter', 'random'];
 // Balance contract policies: random / repeat / counter / rotation / swap, plus
@@ -254,6 +338,32 @@ export function runMatrix(opts = {}) {
   };
 }
 
+// A per-cell machine-readable row: the runMatrix aggregate over seed keys
+// 1..battles, plus the cell's selecting options. Shared by the pair-sweep and
+// grid JSON emitters so a "cell" always carries the same metric fields.
+export function cellFromResult(result, extra = {}) {
+  return {
+    ...extra,
+    battles: result.battles,
+    wins: result.wins,
+    losses: result.losses,
+    draws: result.draws,
+    timeouts: result.timeouts,
+    rounds: result.rounds,
+    avgRounds: result.avgRounds,
+    medianRounds: result.medianRounds,
+    p95Rounds: result.p95Rounds,
+    switches: result.switches,
+    switchRate: result.switchRate,
+    kos: result.kos,
+    oneHitKOs: result.oneHitKOs,
+    attacks: result.attacks,
+    typeUse: result.typeUse,
+    speciesSamples: result.speciesSamples,
+    speciesUse: result.speciesUse,
+  };
+}
+
 // All authored sample-team ordered pairs; .4 can extend with its beta teams by
 // passing `pairs: [{ you, foe }, ...]` to runPairSweep.
 export const TEAM_PAIRS = (() => {
@@ -295,6 +405,7 @@ export function runPairSweepReport(opts = {}) {
     let wins = 0, losses = 0, draws = 0, timeouts = 0, total = 0;
     let allCellsSweep = true;
     let anyTimeout = false;
+    const cells = [];
     for (const policy of policies) {
       for (const readRate of rates) {
         const r = runMatrix({ battles, maxRounds, persona, policy, readRate,
@@ -303,12 +414,18 @@ export function runPairSweepReport(opts = {}) {
         total += r.battles;
         if (r.timeouts > 0) anyTimeout = true;
         if (r.wins / battles <= PAIR_SWEEP_WIN_FLAG) allCellsSweep = false;
+        cells.push(cellFromResult(r, {
+          policy,
+          rate: readRate,
+          seed: { from: 1, to: battles, count: battles },
+        }));
       }
     }
     rows.push({
       you, foe, wins, losses, draws, timeouts, total,
       playerWinRate: total ? wins / total : 0,
       flags: { timeouts: anyTimeout, sweep: allCellsSweep },
+      cells,
     });
   }
   const flagged = rows.filter((r) => r.flags.timeouts || r.flags.sweep);
@@ -331,6 +448,87 @@ export function formatPairSweepReport(sweep) {
   const s = sweep.flagged.filter((r) => r.flags.sweep).length;
   lines.push(`  flags: ${t} pair(s) with timeouts, ${s} pair(s) sweeping >80% in every cell`);
   return lines.join('\n');
+}
+
+// ---- machine-readable artifact (`--json`) ----------------------------------
+// One versioned object: schemaVersion + mode + config + pinned provenance +
+// rows. Pair-sweep nests per-cell rows under each pair; grid emits a flat cell
+// list. Always serialized with JSON.stringify(value, null, 2).
+function configBlock(overrides = {}) {
+  return {
+    matrixId: DEFAULT_MATRIX_ID,
+    teamSize: DEFAULT_TEAM_SIZE,
+    scoring: DEFAULT_SCORING,
+    ...overrides,
+  };
+}
+
+export function buildPairSweepJson(sweep) {
+  return {
+    schemaVersion: DUEL_SPIKE_SCHEMA_VERSION,
+    mode: 'pair-sweep',
+    config: configBlock({
+      maxRounds: sweep.maxRounds,
+      battles: sweep.battles,
+      persona: sweep.persona,
+      policies: sweep.policies,
+      rates: sweep.rates,
+    }),
+    provenance: buildProvenance({ battles: sweep.battles }),
+    pairs: sweep.rows,
+    flagged: sweep.flagged,
+  };
+}
+
+// Build the JSON artifact for any CLI invocation. `--pair-sweep` emits the
+// paired sweep; otherwise a flat grid over personas x policies x read rates
+// (mirrors the text runReport defaults).
+export function buildJsonReport(args = {}) {
+  if (args['pair-sweep']) {
+    return buildPairSweepJson(runPairSweepReport({
+      battles: args.battles ?? 200,
+      maxRounds: args.rounds ?? DEFAULT_MAX_ROUNDS,
+      persona: args.persona ?? 'reader',
+      policies: args.policy !== undefined ? [args.policy] : undefined,
+      rates: args.read !== undefined ? [args.read] : undefined,
+    }));
+  }
+  const battles = args.battles ?? 200;
+  const maxRounds = args.rounds ?? DEFAULT_MAX_ROUNDS;
+  const matrixId = args.matrix !== undefined ? String(args.matrix) : DEFAULT_MATRIX_ID;
+  const teamSize = args.team ?? DEFAULT_TEAM_SIZE;
+  const scoring = args.scoring ?? DEFAULT_SCORING;
+  const youPreset = args['you-preset'] ?? null;
+  const foePreset = args['foe-preset'] ?? null;
+  const base = { battles, maxRounds, matrixId, teamSize, scoring, youPreset, foePreset };
+  const personas = args.persona !== undefined ? [args.persona]
+    : ['reader', 'frequency', 'anti-repeat', 'exploiter'];
+  const policies = args.policy !== undefined ? [args.policy] : POLICIES;
+  const rates = args.read !== undefined ? [args.read] : READ_RATES;
+  const seed = { from: 1, to: battles, count: battles };
+  const cells = [];
+  for (const persona of personas) {
+    for (const policy of policies) {
+      for (const readRate of rates) {
+        const result = runMatrix({ ...base, persona, policy, readRate });
+        cells.push(cellFromResult(result, { persona, policy, rate: readRate, seed }));
+      }
+    }
+  }
+  return {
+    schemaVersion: DUEL_SPIKE_SCHEMA_VERSION,
+    mode: 'grid',
+    config: configBlock({
+      matrixId, teamSize, scoring, maxRounds, battles,
+      personas, policies, rates, youPreset, foePreset,
+    }),
+    provenance: buildProvenance({ battles }),
+    cells,
+  };
+}
+
+export function formatJsonReport(report) {
+  return JSON.stringify(report, null, 2);
 }
 
 export function parseArgs(argv) {
@@ -427,7 +625,9 @@ function footer() {
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const args = parseArgs(process.argv.slice(2));
-  if (args['pair-sweep']) {
+  if (args.json) {
+    process.stdout.write(`${formatJsonReport(buildJsonReport(args))}\n`);
+  } else if (args['pair-sweep']) {
     process.stdout.write(`${formatPairSweepReport(runPairSweepReport({
       battles: args.battles ?? 200,
       maxRounds: args.rounds ?? DEFAULT_MAX_ROUNDS,

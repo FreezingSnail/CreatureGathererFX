@@ -66,6 +66,73 @@ Its own regression suite is
 accounting, and rotation/read behaviour. The wider duel tool family and their
 test counts are listed in `docs/duel-system-brief.md`.
 
+### Machine-readable artifact: `--json`
+
+Adding `--json` switches the tool from the human-readable text (the default) to a
+single versioned JSON object printed with two-space indentation. Text output is
+unchanged when `--json` is absent.
+
+```sh
+node tools/battle-duel-spike.mjs --json --pair-sweep --battles 1000 --rounds 200
+```
+
+The object's `schemaVersion` is `1` (exported as `DUEL_SPIKE_SCHEMA_VERSION`);
+bump it on any breaking field change. Additive fields keep the version. Shape:
+
+```jsonc
+{
+  "schemaVersion": 1,
+  "mode": "pair-sweep",           // or "grid" when --pair-sweep is absent
+  "config": {
+    "matrixId": "5", "teamSize": 3, "scoring": "bonus", "maxRounds": 200,
+    "battles": 1000, "persona": "reader",
+    "policies": ["random", "repeat", "counter", "rotation", "swap", "anti-repeat"],
+    "rates": [0, 25, 50, 75, 100]
+  },
+  "provenance": {
+    "gitRevision": "<40-hex sha or null>",
+    "gitDirty": false,
+    "nodeVersion": "vX.Y.Z",
+    "seedKeys": { "scheme": "seed = 1..battles per cell (identical across cells)",
+                  "battles": 1000 },
+    "files": { "tools/battle-duel-spike.mjs": "<sha256>",
+               "mock/battle-mock.js": "<sha256>",
+               "src/engine/battle/DuelKernel.hpp": "<sha256>" },
+    "fixtures": { "creatures": "<sha256>", "matrix5": "<sha256>", "teams": "<sha256>" }
+  },
+  "pairs": [                       // pair-sweep mode
+    { "you": "balanced", "foe": "anchors",
+      "wins": 0, "losses": 0, "draws": 0, "timeouts": 0, "total": 0,
+      "playerWinRate": 0.0, "flags": { "timeouts": false, "sweep": false },
+      "cells": [ /* one per policy x read-rate */ ] }
+  ],
+  "flagged": [ /* pairs with timeouts or a >80% sweep in every cell */ ]
+}
+```
+
+Each **cell** is the `runMatrix` aggregate over seed keys `1..battles` for one
+`policy`/`rate` (and, in grid mode, `persona`):
+
+```jsonc
+{
+  "policy": "counter", "rate": 100, "persona": "reader",   // persona: grid mode only
+  "seed": { "from": 1, "to": 1000, "count": 1000 },
+  "battles": 1000,
+  "wins": 0, "losses": 0, "draws": 0, "timeouts": 0,
+  "rounds": 0, "avgRounds": 0.0, "medianRounds": 0, "p95Rounds": 0,
+  "switches": 0, "switchRate": 0.0,
+  "kos": 0, "oneHitKOs": 0,
+  "attacks": 0, "typeUse": { /* folded type -> committed attacks */ },
+  "speciesSamples": 0, "speciesUse": { /* species -> party samples */ }
+}
+```
+
+Provenance notes: file hashes are over raw bytes; fixture hashes are over a
+canonical (key-sorted) JSON serialization, so they do not depend on object
+insertion order. No timestamps are emitted, so the same seed/scenario produces
+byte-identical JSON; the seed keys are identical across cells, so same-seed
+cells are correlated by construction and are not independent samples.
+
 ## Reporting seam
 
 - **Kernel correctness** is reported by `make sim-test`
