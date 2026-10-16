@@ -240,12 +240,42 @@ void EncounterWorldIntegrationTest(TestSuite &suite) {
 #endif
     test.assert(battleSession().state().active[static_cast<uint8_t>(battle::Side::Player)].id,
                 player.party[0].id, "battle entry binds persistent player party");
+    test.assert(battleSession().state().gatherable, false,
+                "inert zone enters an ordinary wild battle");
+    test.assert(battleSession().state().gather.tierRate, static_cast<uint8_t>(0),
+                "inert zone carries no gather rate");
     test.assert(fxDataFake::readCount, readsBeforeStep,
                 "battle entry uses cached encounter data only");
     const uint8_t callsAfterEntry = rngCalls;
     onStep(tile);
     test.assert(rngCalls, callsAfterEntry,
                 "battle state prevents duplicate encounter entry");
+
+    // A deposited supported lure turns the same encounter into a gatherable
+    // battle whose rate is the authored per-tier value. Snapshot two distinct
+    // tiers through the real step hook so the entry rate cannot be a constant.
+    exitBattle();
+    gameState.state = GameState_t::WORLD;
+    prepareWorld(tile, true);
+    LureZone::deposit(LureZone::lureId(0, 0));
+    forcedRoll = 9;
+    onStep(tile);
+    test.assert(battleSession().state().gatherable, true,
+                "active tier-zero lure enters a gatherable battle");
+    test.assert(battleSession().state().gather.tierRate, item::lureRateOf(0),
+                "tier-zero lure enters at its authored rate");
+
+    exitBattle();
+    gameState.state = GameState_t::WORLD;
+    prepareWorld(tile, true);
+    LureZone::deposit(LureZone::lureId(0, 1));
+    forcedRoll = 9;
+    onStep(tile);
+    test.assert(battleSession().state().gatherable, true,
+                "active tier-one lure enters a gatherable battle");
+    test.assert(battleSession().state().gather.tierRate, item::lureRateOf(1),
+                "tier-one lure enters at the distinct authored rate");
+    exitBattle();
 
     suite.addTest(test);
 }
