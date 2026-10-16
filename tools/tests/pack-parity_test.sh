@@ -70,7 +70,14 @@ perturbed_layout=$fixtures/fxlayout-expand-20-perturbed.toml
 # Previous cart sha256 69dede79..., now 518f4d84.... Intentional rebaseline.
 # The permanent layout-equivalence fixtures now reference vendored copies of the
 # retired moves.txt/movelists.txt/moves.bin beside this script.
-expected=518f4d84ac9e1df0d161a6de70904e8847de0cbeccec7b427ef8c0c840aa0299
+# jp8.11.21: the appends GiveItem opcode 9 generator (sibling HEAD 94c24be,
+# binary sha256 87918fe2...) stamps generator identity 0.3.0+g94c24bef instead
+# of 0.3.0+ge3d84b31. Only the 27-byte generator_version payload changes (the
+# identity string length is unchanged, so no field address moves); every other
+# packed byte is identical. Verified by re-packing with the prior identity
+# string, which reproduces 518f4d84.... Previous cart sha256 518f4d84..., now
+# fe067475.... Intentional rebaseline.
+expected=fe0674756f9e5cf780ade6957e4cb4ad7d3dd84a010a1dec633d2f8d6023ca21
 
 for layout in "$old_layout" "$new_layout" "$perturbed_layout"; do
     test -f "$layout" || {

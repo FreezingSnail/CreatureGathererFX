@@ -11495,3 +11495,137 @@ Log: `build/sim-audit-jp8.11.18/pair-sweep.txt`.
 
 ### Wall time
 Audit + commands ≈ 15 min wall (single session); measured command CPU: sim-test 1.2 s, node tests 1.5 s, `make test` 3.1 s, verify-generated <1 s, replay/timeout/pair-sweep <0.5 s each; `make sim` failed at 1.8 s.
+
+## jp8.11.21 — GiveItem opcode9
+
+Generator-side opcode-9 `GiveItem` with native DSL operands. Game repo HEAD 6096429; sibling
+`../CreatureGathererTools` HEAD 94c24be plus this worker's uncommitted generator edits. Bead left
+`in_progress` per dispatch; no commit/push in either repo. `BUILD_DIR=build`.
+
+### Pinned ABI (contract revision 2026-10-12)
+
+- Opcode byte **9** = `GiveItem`; existing `Msg=0 … ReadFlag=8` unchanged, `End=255` unchanged.
+- Exactly three unsigned byte operands, in order: **`kind`, `id`, `count`**.
+- Pinned four-byte command stream: `[9, kind, id, count]`; the existing End sentinel `0xFF`
+  terminates the chunk. No u16 branch offsets change (an `If` branch length byte counts the 4
+  GiveItem bytes dynamically).
+- DSL: `giveitem <kind> <id> <count>` — kind `0`=lure (id `0..23`), `1`=consumable (id `0..7`),
+  `2`=key (id `0..7`); count `1..99` for lure/consumable, exactly `1` for key. Authored operands
+  are validated host-side in the canonical AST before any byte is emitted; out-of-range authoring
+  (and kinds >2) is rejected at generation.
+
+### Changed (sibling `../CreatureGathererTools`, uncommitted)
+
+| File | Change |
+| --- | --- |
+| `crates/core/src/processor/ast.rs` | `Opcode::GiveItem=9`, `Cmd::GiveItem{kind,id,count}`, `VARIANT_NAMES[9]`, `to_bytes`, `validate_give_item` + bounds; unit tests |
+| `crates/core/src/script/mod.rs` | DSL `giveitem` parser (builder path) + boundary/invalid/branch-offset/old-stream tests |
+| `crates/core/src/processor/script_parser.rs` | DSL `giveitem` parser (legacy path) + tests |
+| `crates/core/src/builder.rs` | generated `opcodes.hpp` appends `GiveItem = 9`; stream + authoring-error tests |
+| `crates/core/src/writer/c.rs` | opcode header refactored to testable text; unit test |
+| `crates/core/src/fixtures.rs` | pinned `giveItemStreamFixture[] = { 9, 0, 23, 99, 255 }` in `script_data.hpp` |
+| `crates/core/tests/{fixtures,go_parity}.rs`, `src-tauri/src/lib.rs` | fixture/encoder parity tests; Tauri `cmd_json` arm |
+
+Not changed: `processor/lexer.rs`, `script/lexer.rs` (existing Number/Ident tokens already suffice),
+`maps/world_map.json` (see deviations), firmware, and `tools/check-world-script-profile.cpp`
+(GiveItem already hits its `default:` → rejected; guard not relaxed).
+
+### Tool identity
+
+```
+before: cgfx-tools 0.3.0+ge3d84b31  sha256 c7211eaf78eef81c421368ff0a2f9f99ed737d98d018686a79fcd6cdf0100ca4
+built : cargo build --locked --release -p cgfx-core --bin cgfx-tools   (14.2 s)
+after : cgfx-tools 0.3.0+g94c24bef  sha256 87918fe2a916a977411770f97c0ab06e3fce45d105290df924a310b020b336a7
+```
+Installed to `~/Applications/CreatureGathererTools/bin/cgfx-tools` (CLI only; the full `install.sh`
+also rebuilds the Tauri app bundle, which `make gen` does not use). Revision is
+`git rev-parse --short=8 HEAD`=94c24be; because the sibling changes are uncommitted (dispatch
+`NO git commit/push`), the embedded revision does not by itself name the GiveItem content — the
+binary sha256 above is the content identity.
+
+### Verification (commands + tails)
+
+```
+cargo test --offline --manifest-path ../CreatureGathererTools/Cargo.toml -p cgfx-core
+  unittests src/lib.rs: 215 passed; 0 failed
+  integration suites:   155 passed; 0 failed (incl. go_parity 10, fixtures 2)
+  (one early parallel run flaked arena_demo::emitter_rejects_unmapped_label_glyphs on temp-dir
+   font decode; passes standalone and on rerun — pre-existing, unrelated to this change)
+```
+```
+make gen BUILD_DIR=build
+  tracked diff: src/vm/opcodes.hpp (+GiveItem = 9),
+                tst/fxdatatest/generated/script_data.hpp (+giveItemStreamFixture),
+                tst/fxdatatest/generated/version_data.hpp (identity string)
+  fxdata/generated/* is gitignored; scripts.bin/map/data payloads byte-identical (no map change)
+make verify-generated BUILD_DIR=build                 exit 0
+make test-generated-libs BUILD_DIR=build              48 passed/0 failed + 5+28 invariant passes
+make test-pack-parity BUILD_DIR=build                 layout equivalence PASS; pack parity PASS
+make testvm BUILD_DIR=build                           Total Passed: 278  Failed: 0
+make test-world-script-profile BUILD_DIR=build        profile/opcode/size/text cases passed
+make test BUILD_DIR=build                             host Total Passed: 258  Failed: 0
+make ram BUILD_DIR=build                              RAM_FLASH_BYTES=22416  RAM_STATIC_BYTES=1687
+```
+Touched device suites (stack proof): `make fxtest-spike FXTEST_SPIKE_INO=… BUILD_DIR=build`
+```
+test_scripts  PASSED=72  FAILED=0   PASS   (opcodes.hpp consumer)
+test_tiles    PASSED=125 FAILED=0   PASS   (script_data.hpp consumer)
+test_stack    PASSED=4   FAILED=0   headroom=0x271 (625) / mode-transition 0x2CE (718)  PASS (both)
+```
+
+### Hashes
+
+```
+fxdata/generated/opcodes.hpp == src/vm/opcodes.hpp   d6ca33d289225682728e8056babbe5288fbde8963f9efbdb29bd8814d34d3802
+tst/fxdatatest/generated/script_data.hpp             241c4a85c320f0d327a06d9f96cc143eeec22c7d397e1251500143964b75a5a5
+dist/fxdata.bin                                       fe0674756f9e5cf780ade6957e4cb4ad7d3dd84a010a1dec633d2f8d6023ca21
+build/CreatureGathererFX.ino.elf                      486ff460058ce2861d1bf6f7ecce002b23ce6c2c8d54fb802e7471ba54b1f45e
+build/CreatureGathererFX.ino.hex                      974897bd1fe3ba34d6a966c7e84f059f0a9b098be1f3baecc96f1a55d22db14a
+```
+
+### Pack-parity rebaseline (intentional)
+
+`518f4d84ac9e1df0d161a6de70904e8847de0cbeccec7b427ef8c0c840aa0299` →
+`fe0674756f9e5cf780ade6957e4cb4ad7d3dd84a010a1dec633d2f8d6023ca21` in
+`tools/tests/pack-parity_test.sh`, with provenance comment.
+
+Isolation proof that only `generator_version` changed: re-packing the current tree with
+`fxdata/generated/tool_version.bin` temporarily set to the prior identity
+`cgfx-tools 0.3.0+ge3d84b31\0` reproduced the previous baseline hash `518f4d84…` exactly; restoring
+the new identity reproduced `fe067475…`. The identity string length is unchanged (27 bytes
+incl. NUL), so no packed field address moves and `src/fxdata.h` is byte-identical.
+
+### Resource delta (whole image)
+
+`make ram BUILD_DIR=build`: **22416 B flash / 1687 B static SRAM** — delta vs control 22416/1687 is
+**0 B / 0 B**. Expected: the change is generator/opcode-table only; no firmware code consumes
+GiveItem yet (that is jp8.5.17). Static-RAM free 873 B; device stack headroom 625 B (unchanged).
+
+### Deviations
+
+- Ran with `BUILD_DIR=build` per dispatch, not the bead's dated `build/box-adoption-gate`.
+- Did **not** edit `maps/world_map.json` (listed in the bead's OWNERSHIP): the shipped `scripts.bin`
+  must remain the compact If/TpIf/End profile, which `tools/check-world-script-profile.cpp` (run by
+  `make build`/`make check`) rejects any GiveItem content in. Authoring shipped GiveItem content and
+  promoting the full-world profile belong to jp8.5.17 / jp8.11.16. A generator-produced pinned
+  GiveItem stream is therefore emitted into the device fixture (`giveItemStreamFixture`) for
+  jp8.5.17 to consume instead.
+- `version_data.hpp`/manifest generator identity advanced `ge3d84b31`→`g94c24bef` as a consequence
+  of installing the rebuilt tool; the sibling edits are uncommitted so the binary sha256 is the
+  content identity (documented above).
+- CLI-only install (skipped the Tauri app-bundle rebuild) since `make gen` uses only `cgfx-tools`.
+
+### Storage
+
+`df -h . /private/tmp` 64 GiB free before and after (≥10 GiB reserve held). `du -sh build` 1.8 G
+→ 1.8 G. Previewed `make clean-build-artifacts BUILD_DIR=build` (108 candidates, 2,581,975 B) then
+applied `CLEAN_APPLY=1`; no `cgfx-pack.*` leftovers (0). Sibling `target/` release build reused, not
+duplicated.
+
+### Wall time
+
+Worker loop ≈ 25 min wall (single session, single build lane): exploration ~6 min; Rust edits +
+`cargo test -p cgfx-core` ~3 min; sibling release build 14.2 s; `make gen` 6.2 s; pack-parity
+isolation + rebaseline ~4 min; VM/world-profile 2.5 s; `make test` 2.6 s; `make ram` 12.6 s;
+device spikes 21.0 s + 21.7 s; cleanup + report ~4 min. Gate/orchestrator final-gate not run here.
+

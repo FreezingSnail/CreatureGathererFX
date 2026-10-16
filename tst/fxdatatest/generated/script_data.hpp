@@ -17,3 +17,6 @@ const ScriptAddressFixture scriptAddressFixtures[] PROGMEM = {
     { 2047, { 0x80, 0xFF, 0x03 } },
 };
 constexpr uint8_t scriptAddressFixtureCount = 3;
+// Pinned GiveItem opcode-9 stream: GiveItem(kind=lure=0, id=23, count=99) + End.
+const uint8_t giveItemStreamFixture[] PROGMEM = { 9, 0, 23, 99, 255 };
+constexpr uint8_t giveItemStreamFixtureCount = 5;
