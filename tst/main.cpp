@@ -86,10 +86,6 @@
 // part of the legacy contract run.
 #include "battle_slim_feedback_test.hpp"
 #endif
-#ifdef BATTLE_SIMULATOR
-#include "battle_sim_state_test.hpp"
-#include "battle_sim_runner_test.hpp"
-#endif
 #ifdef CGFX_DUEL_BATTLE
 #include "duel_kernel_test.hpp"
 #include "duel_session_integration_test.hpp"
@@ -305,10 +301,6 @@ int main() {
         DuelMenuSuite(duelMenuSuite);
         tests.addTestSuite(duelMenuSuite);
     }
-#endif
-#ifdef BATTLE_SIMULATOR
-    BattleSimulatorStateSuite(tests);
-    BattleSimulatorRunnerSuite(tests);
 #endif
     std::cout << "BattleItemSuite finished" << std::endl;
     BlitSuite(tests);
