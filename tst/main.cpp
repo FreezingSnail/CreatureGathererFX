@@ -6,13 +6,6 @@
 #include "opponent_test.hpp"
 #include "type_test.hpp"
 #include "effect_test.hpp"
-#ifndef CGFX_DUEL_BATTLE
-// battle_effects/setup assert the legacy stats/status/stat-stage and packed-Move
-// contracts that the compact duel representation removes; they belong to the
-// legacy contract run.
-#include "battle_effects_test.hpp"
-#include "battle_setup_test.hpp"
-#endif
 #include "gamestate_test.hpp"
 #include "save_test.hpp"
 #include "item_test.hpp"
@@ -20,30 +13,12 @@
 #include "menu_test.hpp"
 #include "chunk_test.hpp"
 #include "dialog_test.hpp"
-// mode_state/transition drive the full battle flow and assume legacy immediate
-// resolution; the duel build adds 29/68-frame timing, so they belong to the
-// legacy contract run (no macro).
-#ifndef CGFX_DUEL_BATTLE
-#include "mode_state_test.hpp"
-#endif
 #include "world_interact_test.hpp"
 #include "step_test.hpp"
 #include "encounter_test.hpp"
 #include "lure_zone_test.hpp"
-#ifndef CGFX_DUEL_BATTLE
-#include "transition_test.hpp"
-#endif
 #include "fx_read_counter_test.hpp"
 #include "battle_view_test.hpp"
-#ifndef CGFX_DUEL_BATTLE
-// battle_test/ai/resolve/faint assert the legacy packed-Move, stats, status and
-// stage mechanics; the compact duel representation removes those fields, so they
-// are part of the legacy contract run.
-#include "battle_test.hpp"
-#include "battle_ai_test.hpp"
-#include "battle_resolve_test.hpp"
-#include "battle_faint_test.hpp"
-#endif
 #include "battle_presentation_test.hpp"
 #include "battle_hp_spike_test.hpp"
 #include "renderer_test.hpp"
@@ -52,40 +27,13 @@
 #include "../src/globals.hpp"
 #include "../src/engine/menu/MenuV2.hpp"
 #include <cstring>
-// battle_session/flow/slim_session assert the legacy sequential two-actor
-// contract; the CGFX_DUEL_BATTLE build replaces that path, so they belong to
-// the legacy contract run (no macro).
-#ifndef CGFX_DUEL_BATTLE
-#include "battle_session_test.hpp"
-#include "battle_playback_test.hpp"
-#include "battle_flow_test.hpp"
-#endif
 #include "arena_lifecycle_test.hpp"
 #include "arena_catalog_test.hpp"
 #include "arena_navigation_test.hpp"
 #include "arena_view_test.hpp"
 #include "arena_flow_test.hpp"
 #include "battle_presets_test.hpp"
-#ifndef CGFX_DUEL_BATTLE
-// battle_item drives the legacy battle item route (stats/moves fields).
-#include "battle_item_test.hpp"
-#endif
-// battle_utility asserts the PP/use-bank contract; the duel has no PP and
-// aliases moveUsesSpent, so it belongs to the legacy contract run (no macro).
-#ifndef CGFX_DUEL_BATTLE
-#include "battle_utility_test.hpp"
-#endif
 #include "battle_slim_test.hpp"
-#ifndef CGFX_DUEL_BATTLE
-#include "battle_slim_session_test.hpp"
-// battle_slim_menu asserts the legacy options/move/replacement pages, which the
-// CGFX_DUEL_BATTLE build replaces with the compact duel pick/picker/action pages.
-#include "battle_slim_menu_test.hpp"
-// battle_slim_feedback pins the legacy scene raster tail (player frame last) and
-// the legacy feedback footer; the duel scene appends badges/pips/footer, so it is
-// part of the legacy contract run.
-#include "battle_slim_feedback_test.hpp"
-#endif
 #ifdef CGFX_DUEL_BATTLE
 #include "duel_kernel_test.hpp"
 #include "duel_session_integration_test.hpp"
@@ -202,12 +150,6 @@ int main() {
     std::cout << "OpponentSuite finished" << std::endl;
     EffectSuite(tests);
     std::cout << "EffectSuite finished" << std::endl;
-#ifndef CGFX_DUEL_BATTLE
-    BattleEffectsSuite(tests);
-    std::cout << "BattleEffectsSuite finished" << std::endl;
-    BattleSetupSuite(tests);
-    std::cout << "BattleSetupSuite finished" << std::endl;
-#endif
     GameStateSuite(tests);
     std::cout << "GameStateSuite finished" << std::endl;
     SaveSuite(tests);
@@ -222,10 +164,6 @@ int main() {
     std::cout << "ChunkSuite finished" << std::endl;
     DialogSuite(tests);
     std::cout << "DialogSuite finished" << std::endl;
-#ifndef CGFX_DUEL_BATTLE
-    ModeStateSuite(tests);
-    std::cout << "ModeStateSuite finished" << std::endl;
-#endif
     WorldInteractionSuite(tests);
     std::cout << "WorldInteractionSuite finished" << std::endl;
     StepSuite(tests);
@@ -234,54 +172,20 @@ int main() {
     std::cout << "EncounterSuite finished" << std::endl;
     LureZoneSuite(tests);
     std::cout << "LureZoneSuite finished" << std::endl;
-#ifndef CGFX_DUEL_BATTLE
-    TransitionSuite(tests);
-    std::cout << "TransitionSuite finished" << std::endl;
-#endif
     FxReadCounterSuite(tests);
     std::cout << "FxReadCounterSuite finished" << std::endl;
     BattleViewSuite(tests);
     std::cout << "BattleViewSuite finished" << std::endl;
-#ifndef CGFX_DUEL_BATTLE
-    BattleSuite(tests);
-    std::cout << "BattleSuite finished" << std::endl;
-    BattleAiSuite(tests);
-    std::cout << "BattleAiSuite finished" << std::endl;
-    BattleResolveSuite(tests);
-    std::cout << "BattleResolveSuite finished" << std::endl;
-    BattleFaintSwitchSuite(tests);
-    std::cout << "BattleFaintSwitchSuite finished" << std::endl;
-#endif
     BattlePresentationSuite(tests);
     BattleHpSpikeSuite(tests);
     std::cout << "BattlePresentationSuite finished" << std::endl;
-#ifndef CGFX_DUEL_BATTLE
-    BattleSessionSuite(tests);
-    std::cout << "BattleSessionSuite finished" << std::endl;
-    // The compact flow suite covers single-phase feedback and action boundaries.
-    BattleFlowSuite(tests);
-    std::cout << "Slim battle frame controller finished" << std::endl;
-#endif
     ArenaLifecycleSuite(tests);
     ArenaCatalogSuite(tests);
     ArenaNavigationSuite(tests);
     ArenaViewSuite(tests);
     ArenaFlowSuite(tests);
     BattlePresetsSuite(tests);
-#ifndef CGFX_DUEL_BATTLE
-    BattleItemSuite(tests);
-#endif
-#ifndef CGFX_DUEL_BATTLE
-    BattleUtilitySuite(tests);
-#endif
     battle_slim_fixture::BattleSlimScaffoldSuite(tests);
-#ifndef CGFX_DUEL_BATTLE
-    battle_slim_session_test_detail::BattleSlimSessionSuite(tests);
-    // The legacy options/move/replacement menu contract is replaced by the duel
-    // pages, so it is not part of the duel build.
-    BattleSlimMenuSuite(tests);
-    battle_slim_feedback_fixture::SlimFeedbackSuite(tests);
-#endif
 #ifdef CGFX_DUEL_BATTLE
     std::cout << "DuelKernelSuite" << std::endl;
     DuelKernelSuite(tests);
@@ -302,7 +206,6 @@ int main() {
         tests.addTestSuite(duelMenuSuite);
     }
 #endif
-    std::cout << "BattleItemSuite finished" << std::endl;
     BlitSuite(tests);
     NativeRendererSuite(tests);
     std::cout << "NativeRendererSuite finished" << std::endl;

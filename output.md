@@ -1560,3 +1560,69 @@ NOTES
   conflict.
 - Scope: only `Makefile` (fxtest-build recipe + help) and `docs/dev-flow.md` changed. No commit
   (orchestrator commits).
+
+## rhs7.1 — archive legacy battle contract run (host suites + dormant TUs)
+
+HOST-ONLY. No AVR build run; no `src/` or `tst/fxdatatest/` change.
+
+### Changed
+- `tst/main.cpp` — dropped all `#ifndef CGFX_DUEL_BATTLE` includes/registrations
+  (legacy contract run) and the orphan `"BattleItemSuite finished"` print.
+- `Makefile` — removed `src/engine/battle/{Ai,Damage,Effects}.cpp` from
+  `TEST_SOURCES`; kept `Resolve.cpp` (live duel helpers, see Deviations); added a
+  4-line comment recording the split.
+- Deleted from `tst/` (17 legacy headers): `battle_effects_test.hpp`,
+  `battle_setup_test.hpp`, `mode_state_test.hpp`, `transition_test.hpp`,
+  `battle_test.hpp`, `battle_ai_test.hpp`, `battle_resolve_test.hpp`,
+  `battle_faint_test.hpp`, `battle_session_test.hpp`, `battle_playback_test.hpp`,
+  `battle_flow_test.hpp`, `battle_item_test.hpp`, `battle_utility_test.hpp`,
+  `battle_slim_session_test.hpp`, `battle_slim_menu_test.hpp`,
+  `battle_slim_feedback_test.hpp`, `moves_test.hpp`.
+- `archive/battle-legacy/tst/` — added `transition_test.hpp`, `mode_state_test.hpp`,
+  `moves_test.hpp` (the 14 other suites were already archived byte-identical to
+  the live files).
+- `archive/battle-legacy/README.md` — provenance section naming rhs7.1 and the
+  reason (duel replaced the ordered-turn engine).
+- `archive/battle-legacy/INVENTORY.txt` — appended SHA-256/bytes for the 3 added
+  headers under a labeled `rhs7.1 supplement` comment.
+
+### Legacy surface inventory (exact)
+`#ifndef CGFX_DUEL_BATTLE` registrations in `tst/main.cpp`: transition, battle,
+battle_ai, battle_resolve, battle_faint, battle_session, battle_playback (included
+but **never registered** — `BattlePlaybackSuite` had no call site), battle_flow,
+battle_item, battle_utility, battle_slim_session, battle_slim_menu,
+battle_slim_feedback, battle_effects, battle_setup, mode_state; plus orphan
+`moves_test.hpp` (`MoveSuite`, no include/call site). TU lifeline in `TEST_SOURCES`:
+`src/engine/battle/{Ai,Damage,Effects,Resolve}.cpp`.
+
+### Commands + results
+- BEFORE (clean tree 780cbb5): `make test` → host 240501 / 0, world 258 / 0;
+  `make testvm` → 286 / 0.
+- AFTER: `make test` → host 240501 / 0, world 258 / 0; `make testvm` → 286 / 0.
+  Deltas 0/0/0: the removed suites never ran under `-DCGFX_DUEL_BATTLE`
+  (`CPPFLAGS ?= -I. -DCGFX_DUEL_BATTLE`), so the counts are identical and the
+  removal is fully attributable.
+- `git diff --stat -- src/ tst/fxdatatest/` → empty (untouched). No `src/` change
+  ⇒ whole-image byte-identity expected; `make ram` not run (AVR off-lane).
+- `grep -n '<legacy suites>' tst/main.cpp Makefile` → none. `ls archive/battle-legacy/tst`
+  → archived copies present.
+
+### Deviations / overlaps
+- **`Resolve.cpp` kept.** First attempt removing all four TUs failed to link:
+  `battle::sideDefeated` / `battle::canSwitch` (defined unguarded in
+  `Resolve.cpp:460,478`) are called by the live duel path in `BattleSession.cpp`
+  (e.g. `duelResolveRound`, `submitIntent`). `Ai/Damage/Effects.cpp` are fully
+  `#ifndef CGFX_DUEL_BATTLE` and were removed. Bead premise that all four are
+  dormant is corrected here.
+- **Five extra legacy suites beyond the bead text** were also `#ifndef`-only and
+  are included: `battle_effects`, `battle_setup`, `mode_state`, `battle_slim_menu`,
+  `battle_slim_feedback`. All were already in `archive/battle-legacy/tst/`
+  (identical bytes), confirming they were always part of the legacy archive.
+- **No legacy-only Makefile helper variable** found to remove (step 3 was
+  conditional); only the `TEST_SOURCES` entries were legacy-specific.
+- `tst/encounter_test.hpp` retains an inline `#ifndef CGFX_DUEL_BATTLE` assertion
+  arm; it is a live suite, so it is left for rhs7.2.
+
+### Wall time
+≈30 min worker (recon ~15, edits + 2 host gates ~15). Files changed, no commit
+(orchestrator commits).
