@@ -244,20 +244,12 @@ uint8_t render() {
 #endif
     case GameState_t::BATTLE: {
         battle::BattleMode &mode = modeState.battle;
-#ifdef CGFX_DUEL_BATTLE
         // The duel scene owns the pick row, centre and result footer, all drawn
         // from resident state; the menu paints only its picker/action pages.
         battle::BattleScene::draw(battleSession().state(),
                                   mode.ui.menu.duelCursor());
         if (battleSession().state().feedback == 0 && mode.ui.menu.initialized())
             mode.ui.menu.draw();
-#else
-        battle::BattleScene::draw(battleSession().state());
-#endif
-#ifndef CGFX_DUEL_BATTLE
-        if (battleSession().isPresenting()) mode.ui.feedback.draw();
-        else if (mode.ui.menu.initialized()) mode.ui.menu.draw();
-#endif
         return 0;
     }
     case GameState_t::WORLD:

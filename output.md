@@ -1626,3 +1626,81 @@ battle_slim_feedback, battle_effects, battle_setup, mode_state; plus orphan
 ### Wall time
 ≈30 min worker (recon ~15, edits + 2 host gates ~15). Files changed, no commit
 (orchestrator commits).
+
+## rhs7.2 — delete dead legacy arms + dormant Move/Effect/PP surface
+
+WHAT: removed every `#ifndef CGFX_DUEL_BATTLE` arm from the shared battle sources and
+unwrapped the now-vestigial `#ifdef CGFX_DUEL_BATTLE` guards into the single duel path;
+deleted the dormant `BATTLE_SIMULATOR` blocks (1cge); pruned includes that only the dead
+arms needed. Also removed the duel-unreachable BattleFlow feedback arm (obbp) after a
+measured win. Owned the single AVR lane.
+
+### Premise check (no-macro legacy build)
+`make build ... AVR_SHIPPING_CPP_FLAGS='<relax> -DCGFX_SHIPPING_NO_USB -DCGFX_TRAINER_DEMO'`
+(the `battle-test` trainer-demo profile, the only no-`CGFX_DUEL_BATTLE` build) FAILS at HEAD
+2b33e4b: `BattleFlow.cpp:63: 'const struct battle::Combatant' has no member named 'attackMask'`
+(build/reports/rhs7/battle-test-probe.log). So the `#ifndef` arms compile in no build — the
+bead premise holds. Probe tree removed.
+
+### Changed (12 files, +26 / -749)
+- `CreatureGathererFX.ino` — render() BATTLE case unwrapped; dropped the dead
+  `#ifndef` feedback-draw arm (obbp).
+- `BattleState.hpp` — Combatant/BenchSlot/BattleState reduced to duel fields; dropped
+  Move/Stats/StatusEffect/StatModifier includes and the legacy AVR size asserts.
+- `BattleSetup.cpp` — dropped legacy clear/copy/switch arms, `BATTLE_SIMULATOR` from the
+  species-count guard, `EMPTY_MOVE`.
+- `BattleSession.{hpp,cpp}` — unwrapped duel arms; deleted `beginPrepared` + simulator
+  validators, legacy submitPlayerAction/advance/view/moves arms; removed unused
+  NEXT_END_TURN/INVALID_*/otherSide/sideBit.
+- `BattleFlow.cpp` — unwrapped duel arms; dropped dead beginOptions/beginReplacement branch
+  and the obbp feedback arm (`beginFeedback`, isPresenting block, advance()-result block).
+- `BattleMenu.{hpp,cpp}` — duel pick/action/party pages only; dropped MovePayload/legacy
+  options+moves+replacement pages, PpGlyph PP glyphs, MoveIds/ReadData/BattleFeedback/PpGlyph
+  includes, PAGE_REPLACEMENT/PARTY_FORCED; added explicit `<Arduboy2.h>` (was transitive).
+- `BattleScene.{cpp,hpp}` — unwrapped duel HUD arms; comment updated.
+- `MoveUses.hpp` — kept only `resetMoveUses` (duel setup zeroes the attack-mask bytes);
+  deleted moveUseLimit/remainingMoveUses/spendMoveUse/UNLIMITED_MOVE_USES.
+- `tst/encounter_test.hpp` — dropped the inline `#ifndef` stat arm.
+
+### AVR whole-image A/B (pinned lane)
+`make ram BUILD_DIR=build/rhs7-lane ARDUINO_BUILD_PATH=build/rhs7-lane/arduino-build ARDUINO_BUILD_CACHE_PATH=build/rhs7-lane/arduino-cache`
+- CONTROL (HEAD 2b33e4b): 23380 flash / 1680 static (text 23338 + data 42; bss 1638).
+- Candidate A (dead arms only): 23380 / 1680 → **0 B**.
+- Candidate B (final, obbp arm removed): **23268 / 1680 → -112 B flash, 0 B static**.
+- `avr-nm` candidate B: `battle::BattleSession::finishPresentation()` and every
+  BattleFeedback symbol are GC'd (present in control/A). SRAM unchanged ⇒ BattleUi stays 27 B.
+- ELFs: `build/reports/rhs7/{control-rhs7.2,candidate-rhs7.2-A,candidate-rhs7.2-B}.elf`
+  (+ `*-size.txt`, `*-nm.txt`).
+
+### Verification
+- `make test BUILD_DIR=build/rhs7-lane` → host 240501/0, world 258/0.
+- `make testvm BUILD_DIR=build/rhs7-lane` → 286/0.
+- `make fxtest-headless ... FXTEST_BUILD_DIR=build/rhs7-lane/fxtest` (focused 4): battlepresentation
+  102/0, dialog 9/0, mode_state 239/0, stack 4/0 — all PASS. `test_stack` headroom 0x256 (598 B),
+  unchanged from the ob83 baseline.
+- Full `make fxtest-headless` → **34/34 suites PASS, 0 FAIL**.
+- `grep -rn BATTLE_SIMULATOR src/ tst/ tools/ Makefile` → 0 hits.
+- `git diff --stat` → only the 12 files above; no generated/`fxdata.h` drift; `tst/fxdatatest/` untouched.
+
+### Move/Effect/PP disposition (what remains + why)
+- Kept with live callers: `Move.hpp` (MenuV2.cpp, draw.h), `MoveIds.hpp` (MenuV2.cpp, draw.h,
+  renderer_test, duel_session_integration host+device), `Effect.hpp` (Type.hpp, StatusEffect.hpp,
+  ReadData.hpp, ActionResult.hpp, effect_test, world_interact_test), `PackedMoveInfo.hpp`
+  (MenuV2.cpp, menu_test). `MenuV2`/dialog deps stay per the bead; PpGlyph.hpp stays
+  (BattleScene/LureZoneView/draw.h/renderer+blit device suites).
+- Duel-reachable headers now free of the packed `Move`/`MoveBitSet`/`PpGlyph`/`PackedMoveInfo`
+  types. `Effect` remains in `ActionResult.hpp` (host non-compact `Consequence` fact surface) and
+  `Effects.hpp`; `MoveSnapshot` is a 9-byte uint8 POD (BattleView.hpp), not the packed type.
+- Out of OWNERSHIP (left, all dead in every compiling build): `Resolve.cpp`, `Ai.cpp`,
+  `Damage.cpp`, `Effects.cpp` legacy arms. `Resolve.cpp`/`Ai.cpp` still call the removed
+  `remainingMoveUses`/`spendMoveUse` in their uncompiled `#ifndef` arms — harmless.
+
+### Deviations
+- BattlePresenter/BattleFeedback had no `CGFX_DUEL_BATTLE` arms (only `__AVR__`/COMPACT), so no edit.
+- `finishPresentation` retained (device `test_stack` calls it); `isPresenting`/`finishNormalResult`/
+  `emitReplacement`/`beginResultIfNeeded` remain declared but GC-excluded.
+- Kept `build/rhs7-lane` (100 M) for orchestrator re-verification; no other tree touched.
+  `df -h .` 59 GiB free.
+
+### Wall time
+≈70 min worker (recon ~30, edits + host/device loops ~25, AVR A/B ~15). No commit (orchestrator commits).

@@ -5,9 +5,7 @@
 #include "BattleState.hpp"
 #include "BattleView.hpp"
 #include "../menu/MenuIntent.hpp"
-#ifdef CGFX_DUEL_BATTLE
 #include "DuelKernel.hpp"
-#endif
 
 namespace battle {
 
@@ -39,12 +37,6 @@ class BattleSession {
 
     void beginWild(uint8_t id, uint8_t level, bool gatherable, uint8_t tierRate);
     void beginTrainer(uint8_t id);
-#ifdef BATTLE_SIMULATOR
-    // Host simulator entry point. Bench HP limits travel with the prepared
-    // state so validation can stay data-driven without adding resident fields.
-    bool beginPrepared(const BattleState &prepared,
-                       const uint8_t (&benchMaxHp)[2][PARTY_SIZE - 1]);
-#endif
 
     void setRng(Rng rng);
     bool submitIntent(MenuIntent intent);
@@ -86,7 +78,6 @@ class BattleSession {
     bool submitPlayerAction(BattleAction action);
     void finishNormalResult();
 
-#ifdef CGFX_DUEL_BATTLE
     // Spike-inc.1 resident duel state (11 bytes). Options are derived on demand
     // from the active member's usable authored attack slots (status/utility/
     // empty filtered, original slot order), so no duplicate option maps are
@@ -114,19 +105,12 @@ class BattleSession {
         return cursor_.phase == SessionPhase::Result ||
                cursor_.phase == SessionPhase::Terminal;
     }
-#endif
 };
 
 #ifdef __AVR__
-#ifdef CGFX_DUEL_BATTLE
 // The duel session keeps the existing overlay: BattleSession + 27-byte UI must
 // stay within the 191-byte BattleMode / 193-byte ModeState union.
 static_assert(sizeof(BattleSession) <= 164, "duel session must fit the battle overlay");
-#elif defined(CGFX_BATTLE_COMPACT_RESULT)
-static_assert(sizeof(BattleSession) == 142, "compact battle session budget");
-#else
-static_assert(sizeof(BattleSession) == 163, "battle session AVR budget");
-#endif
 #endif
 
 } // namespace battle
