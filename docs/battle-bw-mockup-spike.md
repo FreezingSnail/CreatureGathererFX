@@ -32,13 +32,13 @@ remains open as CreatureGathererFX-86e.
 ```sh
 make fxtest-spike BUILD_DIR=build/battle-bw-mockup/spike \
   FXTEST_SPIKE_INO=tst/fxdatatest/test_battlepresentation.ino FXTEST_MS=10000 \
-  ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+  ARDENS=/Users/connorfranc/code/arduboy/Ardens/build/Ardens.app/Contents/MacOS/Ardens
 make ram BUILD_DIR=build/battle-bw-mockup/ram
 cmp build/battle-art-only/final/CreatureGathererFX.ino.hex \
   build/battle-bw-mockup/ram/CreatureGathererFX.ino.hex
 xmllint --noout docs/assets/battle-bw-native.svg
 make final-gate BUILD_DIR=build/battle-bw-mockup/final FXTEST_MS=10000 \
-  ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+  ARDENS=/Users/connorfranc/code/arduboy/Ardens/build/Ardens.app/Contents/MacOS/Ardens
 ```
 
 Focused presentation268/0, stack4/0. Presenter338 B painted /269 B effective

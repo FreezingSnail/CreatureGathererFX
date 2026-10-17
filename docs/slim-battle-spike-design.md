@@ -289,7 +289,7 @@ make ram BUILD_DIR=build/slim-battle/auto AVR_SHIPPING_CPP_FLAGS='-mrelax -mcall
 ```
 
 Device tests use `make fxtest-headless FXTEST_INOS='tst/fxdatatest/test_battle_slim.ino tst/fxdatatest/test_stack.ino'`
-with `ARDENS=/Users/connorfranc/code/Ardens/build/Ardens.app/Contents/MacOS/Ardens`
+with `ARDENS=/Users/connorfranc/code/arduboy/Ardens/build/Ardens.app/Contents/MacOS/Ardens`
 and `AVR_FXTEST_CPP_FLAGS` containing the same four relax flags, `-DFX_READ_COUNTER`
 and the selected `-DCGFX_BATTLE_AUTO_REPLACE=0` or `=1` (no shipping no-USB flag).
 The baseline bead creates the co-located slim suite before that command is used.
