@@ -173,3 +173,10 @@ ea3fe69e795499469bfdbfd0c4669eb9f9ab8dc5afb2b7c65ffc87b310488982  1018  src/save
 efb0af12240d30fc288df00e9ffb0ff8ee7387f63ca21cb5d24c959e71d8efdf  7829  tst/fxdatatest/test_world_player.ino
 7f02022d7629b00755993a8654e28f893b7b8402cb006ea24a33e9a72661fb3d  35944  tst/save_test.hpp
 8bcebb5b7cfc8dc553fc477d21baebd1a62f129a0e3d152f1544a30dc4163145  15941  tst/world_interact_test.hpp
+#
+# rhs7.1 supplement — legacy suite headers added 2026-10-17 by
+# CreatureGathererFX-rhs7.1 (repo HEAD 780cbb5), copied from the live tst/ tree
+# before removal. Columns as above.
+0b8d46e2ce7acc22351982d1eb648308d986e8b0d307cbb825f0c9ad92eac751  4775  tst/transition_test.hpp
+9960c98f85a0878bbf5cc164da21a7f4f168772c26e41652ab391c87e24d3559  5863  tst/mode_state_test.hpp
+47a32382f307c4208bf24e5b8826e06ddd3e2ac62dac8a489c5b46b3ec677ca8  3650  tst/moves_test.hpp

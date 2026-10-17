@@ -169,9 +169,6 @@ TEST_SOURCES = src/lib/Blit.cpp \
 	src/player/Player.cpp \
 	src/action/Action.cpp \
 	src/lib/ListView.cpp \
-	src/engine/battle/Ai.cpp \
-	src/engine/battle/Damage.cpp \
-	src/engine/battle/Effects.cpp \
 	src/engine/battle/Resolve.cpp \
 	src/engine/battle/BattleSession.cpp \
 	src/engine/battle/BattleFlow.cpp \
@@ -193,6 +190,11 @@ TEST_SOURCES = src/lib/Blit.cpp \
 	src/GameState.cpp \
 	src/flags/flag_bit_array.cpp \
 	tst/main.cpp
+
+# Legacy-only TUs archived by rhs7.1: src/engine/battle/{Ai,Damage,Effects}.cpp
+# are fully #ifndef CGFX_DUEL_BATTLE, so the host build no longer compiles them.
+# Resolve.cpp stays: its sideDefeated/canSwitch helpers are live in the duel
+# session even though the legacy resolve arms are not.
 
 # Common source files for VM tests. GiveItem executes against the one shared
 # Player bag, so the VM test links the Player/Inventory/key sources plus the

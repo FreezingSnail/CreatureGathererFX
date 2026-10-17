@@ -43,6 +43,27 @@ and outside ordinary test discovery and must not enter any shipping or test buil
 - **File/hash inventory:** see `INVENTORY.txt` (SHA-256 + byte size for retained
   files, including this README, relative to this directory; the inventory excludes itself).
 
+## rhs7.1 retirement supplement (2026-10-17)
+
+Bead `CreatureGathererFX-rhs7.1` ("Archive the legacy battle contract run")
+completed the retirement the capture above prepared: the duel's ordered-turn
+replacement, selected by `CGFX_DUEL_BATTLE` for every host build, made the
+no-macro legacy contract run dead surface. This bead removed the legacy host
+suites and their `tst/main.cpp` registrations and the dormant
+`src/engine/battle/{Ai,Damage,Effects}.cpp` host entries, and re-added the
+suites the initial capture missed. Added here by this bead:
+
+- `tst/transition_test.hpp`
+- `tst/mode_state_test.hpp`
+- `tst/moves_test.hpp` (orphan `MoveSuite`; not registered in `tst/main.cpp`)
+
+All other archived `tst/battle_*_test.hpp` copies listed above were already
+byte-identical to the live files removed by this bead, so no re-copy was needed.
+`src/engine/battle/Resolve.cpp` is **not** legacy-only: its `sideDefeated` and
+`canSwitch` helpers are live in the duel `BattleSession`, so the live file stays
+and is still compiled by the host build. The current live suite bytes are newer
+than the capture revision; the archive copies are the pinned reference.
+
 ## Tool versions (from `make doctor` at capture)
 
 - host: Darwin arm64
