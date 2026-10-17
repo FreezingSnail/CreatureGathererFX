@@ -1,0 +1,633 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CreatureGathererFX — Game Design Spec</title>
+<style>
+:root{color-scheme:dark;--bg:#101010;--panel:#181818;--line:#555;--line2:#333;--fg:#eee;--dim:#bbb;--accent:#ffd75e;--ok:#7fe08a;--warn:#ffb454;--bad:#ff7b7b}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.55 system-ui,sans-serif}
+main{max-width:1100px;margin:auto;padding:24px 20px 80px}
+h1{font-size:clamp(28px,4.6vw,44px);margin:8px 0 4px}
+h2{margin:44px 0 12px;padding-top:18px;border-top:1px solid var(--line);font-size:26px}
+h3{margin:26px 0 8px;font-size:19px}
+h4{margin:18px 0 6px;font-size:16px;color:var(--accent)}
+p{color:var(--dim);max-width:92ch}
+a{color:var(--accent)}
+code,kbd{font:14px/1.4 ui-monospace,Menlo,Consolas,monospace;background:#242424;border:1px solid var(--line2);padding:1px 5px;border-radius:3px;color:#fff}
+pre{background:var(--panel);border:1px solid var(--line2);padding:12px 14px;overflow:auto;font:13px/1.5 ui-monospace,Menlo,Consolas,monospace;color:#ddd}
+table{border-collapse:collapse;margin:12px 0;width:100%;font-size:14px}
+th,td{border:1px solid var(--line2);padding:5px 9px;text-align:left;vertical-align:top}
+th{background:#202020;color:#fff;white-space:nowrap}
+td code{font-size:12.5px}
+.sub{color:#999;font-size:15px;max-width:92ch}
+.meta{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0 6px}
+.meta span{border:1px solid var(--line);padding:3px 10px;font-size:13px;color:var(--dim)}
+.tag{display:inline-block;font-size:11px;padding:1px 7px;border:1px solid var(--line);border-radius:2px;margin-left:6px;vertical-align:2px;color:var(--dim);white-space:nowrap}
+.tag.live{color:var(--ok);border-color:#2f5b36}
+.tag.plan{color:var(--accent);border-color:#5e5021}
+.tag.ret{color:var(--bad);border-color:#5b2f2f}
+.tag.cont{color:var(--warn);border-color:#5e4a21}
+nav.toc{columns:2;gap:32px;border:1px solid var(--line);padding:14px 18px;background:var(--panel);margin:20px 0;max-width:900px}
+nav.toc a{display:block;text-decoration:none;padding:2px 0;font-size:14px}
+nav.toc a:hover{text-decoration:underline}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr));gap:16px}
+.card{border:1px solid var(--line2);background:var(--panel);padding:12px 16px}
+.card h4{margin-top:4px}
+.card p{margin:6px 0}
+.note{border-left:3px solid var(--accent);background:#1c1a14;padding:8px 14px;color:var(--dim);margin:14px 0;max-width:92ch}
+.note.bad{border-color:var(--bad);background:#1f1414}
+.note.ok{border-color:var(--ok);background:#141d15}
+figure{margin:16px 0;max-width:640px}
+figcaption{color:#999;font-size:13px;margin-top:6px}
+svg{background:var(--panel);border:1px solid var(--line2)}
+footer{border-top:1px solid var(--line);margin-top:48px;padding-top:16px;color:#888;font-size:14px}
+.w{color:var(--ok);font-weight:600}.l{color:var(--bad);font-weight:600}.t{color:var(--warn);font-weight:600}
+ul{color:var(--dim);max-width:92ch}
+li{margin:3px 0}
+</style></head>
+<body><main>
+
+<h1>CreatureGathererFX — Game Design Spec</h1>
+<p class="sub">Creature-collecting demake for the <strong>Arduboy FX</strong> (ATmega32u4), rendered in native 1bpp at 52 fps. A compact overworld where you gather lures, trigger wild creature duels, win or capture creatures, grow them by experience and evolution, and keep a 64-slot persistent collection on the cartridge.</p>
+<div class="meta">
+<span>Status: living spec</span><span>Date: 2026-10-17</span><span>Source HEAD: <code>52847cd</code></span><span>Owner: FreezingSnail</span><span>Engine: 5-type RPS duel (shipped)</span>
+</div>
+
+<p>Legend: <span class="tag live">LIVE</span> shipping behavior &nbsp; <span class="tag cont">CONTRACT</span> authored data not yet consumed by firmware &nbsp; <span class="tag plan">PLANNED</span> decided work (bead-linked) &nbsp; <span class="tag ret">RETIRED</span> archived mechanics kept only for reference.</p>
+
+<nav class="toc" aria-label="Table of contents">
+<a href="#overview">1. Overview, pillars, non-goals</a>
+<a href="#platform">2. Platform &amp; resource budgets</a>
+<a href="#loop">3. Core gameplay loop</a>
+<a href="#world">4. World &amp; exploration</a>
+<a href="#encounters">5. Encounters</a>
+<a href="#lures">6. Lures, zones &amp; gathering</a>
+<a href="#duel">7. Battle: the five-type duel</a>
+<a href="#battleui">8. Battle user interface</a>
+<a href="#progression">9. Progression: levels, evolution, stats</a>
+<a href="#creatures">10. Creatures &amp; content roster</a>
+<a href="#items">11. Items &amp; economy</a>
+<a href="#plants">12. Plants</a>
+<a href="#save">13. Party, collection &amp; save system</a>
+<a href="#menus">14. Menus, modes &amp; dialogs</a>
+<a href="#pipeline">15. Content pipeline &amp; tooling</a>
+<a href="#variants">16. Build variants &amp; demos</a>
+<a href="#testing">17. Testing &amp; evidence rules</a>
+<a href="#roadmap">18. Roadmap</a>
+<a href="#retired">19. Retired systems &amp; decision log</a>
+<a href="#open">20. Open questions</a>
+<a href="#appendix">A. Type tables</a>
+</nav>
+
+<section id="overview">
+<h2>1. Overview, pillars, non-goals</h2>
+<p>CreatureGathererFX is a Pokémon-style creature collecting demake compressed onto a 128×64 monochrome screen with roughly 23 KB of usable program flash. The design deliberately trades depth for readability: five creature types in a complete rock-paper-scissors web, one flat damage table, hidden simultaneous picks, and a single persistent save on the FX cartridge. Gathering is the second core verb: lure zones turn ordinary wild battles into capture (“gather”) encounters with a progress clock.</p>
+
+<div class="grid2">
+<div class="card"><h4>Design pillars</h4><ul>
+<li><strong>Legible at 128×64.</strong> Every battle decision must be explainable by the type chart and the pick row; no hidden damage formula, no PP ledgers, no stat-stage homework.</li>
+<li><strong>One flat table.</strong> Damage is 14 win / 4 chip / 6 trade, scaled only by type matchup (×1.5 / ×0.5).</li>
+<li><strong>Gather, don’t just fight.</strong> Lures create dedicated zones; gatherable wild battles bank progress toward capture instead of a knockout.</li>
+<li><strong>Persistent collection.</strong> 64 stable instance slots on cartridge flash, journaled and compacted against power loss, each instance carrying its own species, experience, HP and attack kit.</li>
+<li><strong>Authored data, validated in host tools.</strong> Content constraints (evolution edges, encounter tables, script profiles) fail generation or tests, not the device.</li>
+</ul></div>
+<div class="card"><h4>Engineering priorities</h4><ul>
+<li>Correctness of requested outcomes and mechanics comes first; measured smallest firmware second.</li>
+<li>Whole-image flash/RAM measurement decides; per-symbol sizes are only leads.</li>
+<li>Metadata reads (FX/OLED share SPI) happen on transitions only.</li>
+<li>Trust authored/internal invariants; no runtime defenses for impossible states.</li>
+<li>Tests prove mechanics and hardware outcomes, live permanently beside the code.</li>
+</ul></div>
+</div>
+
+<h3>Non-goals</h3>
+<ul>
+<li>No audio yet (feasibility epic <code>7v13</code> only).</li>
+<li>No multiplayer/link features.</li>
+<li>No stat spreads, statuses, PP, accuracy or turn order — removed with the duel <span class="tag ret">RETIRED</span>.</li>
+<li>No animation framework; battles are staged single-frame updates with timed phases.</li>
+</ul>
+</section>
+
+<section id="platform">
+<h2>2. Platform &amp; resource budgets</h2>
+<table>
+<tr><th>Property</th><th>Value</th></tr>
+<tr><td>Hardware</td><td>Arduboy FX, ATmega32u4; 128×64 SSD1306 1bpp; external FX flash for the cart image</td></tr>
+<tr><td>Rendering</td><td>Native <code>Arduboy2Base</code> framebuffer, one update+render per loop, <code>FX::display(CLEAR_BUFFER)</code> presents</td></tr>
+<tr><td>Frame rate</td><td>52 fps (<code>setFrameRate(52)</code>)</td></tr>
+<tr><td>Math</td><td>Integer/fixed-point only; no <code>float</code>/<code>double</code> on device</td></tr>
+<tr><td>RNG</td><td>Seeded once in setup from the hardware entropy source; xorshift16 (<code>randomRoll</code>); injectable <code>battle::Rng</code> seam for tests/parity</td></tr>
+<tr><td>USB</td><td>Shipping builds disable the USB/CDC stack; DOWN at boot (or hold while resetting) enters the bootloader for upload</td></tr>
+</table>
+
+<h3>Measured budgets <span class="tag live">LIVE</span></h3>
+<table>
+<tr><th>Metric</th><th>Current</th><th>Limit</th><th>Headroom</th></tr>
+<tr><td>Program flash (shipping FX)</td><td><strong>23,380 B</strong></td><td>29,184 B planning / 29,696 B hard</td><td>6,316 B to hard limit</td></tr>
+<tr><td>Static RAM (shipping FX)</td><td><strong>1,680 B</strong></td><td>2,160 B project / 2,560 B physical</td><td>480 B to project budget</td></tr>
+<tr><td>Painted stack headroom (test_stack)</td><td><strong>598 B</strong></td><td>219 B minimum asserted (≈150 B reserve + 69 B USB ISR)</td><td>379 B</td></tr>
+<tr><td>Arena demo firmware</td><td>23,382 B flash / 1,765 B static</td><td>29,184 B arena ceiling</td><td>5,802 B</td></tr>
+</table>
+<p>These are dated whole-image measurements (latest <code>make ram</code>, HEAD 2026-10-17), not guarantees. Every resource-changing work item measures a fresh same-source control and keeps the ~150 B effective reserve. Per <code>AGENTS.md</code>, LTO makes per-symbol arithmetic meaningless — only whole-image A/B counts.</p>
+
+<h3>Build profiles &amp; defines</h3>
+<table>
+<tr><th>Define</th><th>Effect</th></tr>
+<tr><td><code>CGFX_SHIPPING_NO_USB</code></td><td>Default shipping: USB/CDC stack removed</td></tr>
+<tr><td><code>CGFX_DUEL_BATTLE</code></td><td>5-type duel engine (default in shipping and device tests)</td></tr>
+<tr><td><code>CGFX_BATTLE_NO_FACTS</code> / <code>CGFX_BATTLE_COMPACT_RESULT</code></td><td>Compact result/feedback representation</td></tr>
+<tr><td><code>CGFX_COMPACT_WARP_VM</code></td><td>Default world script profile (If/TpIf/End only, no popups)</td></tr>
+<tr><td><code>CGFX_FULL_WORLD_VM</code></td><td>Opt-in full interpreter: messages, popup queue, <code>GiveItem</code></td></tr>
+<tr><td><code>FX_READ_COUNTER</code></td><td>Device-test builds: counts program-data reads; steady-state must add zero</td></tr>
+<tr><td><code>CGFX_TRAINER_DEMO</code>, <code>CGFX_WILD_DEMO</code>, <code>CGFX_ARENA_DEMO</code></td><td>Opt-in developer demos (see §16)</td></tr>
+</table>
+</section>
+
+<section id="loop">
+<h2>3. Core gameplay loop</h2>
+<pre>
+ walk the area ──► face a deposit tile + A ──► deposit a lure
+      │                                            │
+      │ step onto an encounter tile (10% roll)     ▼
+      ▼                                     active lure zone (rate 1/2/4)
+ wild duel begins ◄──────────────┐              │
+      │                          │              │
+      ├─ WIN (ordinary wild) ─► exp to living party,  material drop
+      ├─ WIN (gatherable) ────► GATHER progress banks toward capture
+      │                          │
+      │                          └─ progress reaches need ─► GATHERED: instance written to collection (64 slots)
+      ├─ ESCAPE (wild only) ──► return to world on the same tile
+      ├─ LOSE / DRAW ─────────► defeat recovery: party healed, returned to start
+      └─ FLED (gather clock ran out) ─► battle ends, no capture
+</pre>
+<p>Growth runs on the same terminal edge as rewards: ordinary wild wins grant experience to every living party member, which can raise levels, grow max HP, and trigger authored evolution. The collection is the end game: gathered instances keep their species, level, attack kit and damaged HP state across resets.</p>
+</section>
+
+<section id="world">
+<h2>4. World &amp; exploration</h2>
+<table>
+<tr><th>Aspect</th><th>Design</th></tr>
+<tr><td>Map</td><td>256×256 tiles, authored as <code>maps/world_map.json</code>, packed into the FX image (tile 16×16 px)</td></tr>
+<tr><td>View</td><td>Fixed player-centered camera; 8×4-tile (128×64 px) viewport; player drawn at screen (56, 24)</td></tr>
+<tr><td>Chunks</td><td>8×4-tile chunks (2048 total); tile property window caches a 9×5 area; script slot = 128 B per chunk</td></tr>
+<tr><td>Player</td><td>Masked 16×16 chibi, 4 directions × (idle + 2 walk frames), packed as append-only FX field</td></tr>
+<tr><td>Movement</td><td>One tile per 16 frames; priority LEFT &gt; RIGHT &gt; UP &gt; DOWN; no diagonals; walk animation from the 16-px step</td></tr>
+<tr><td>Collision</td><td>Destination tile must be in bounds, non-empty (GID ≠ 0) and carry <code>PROP_WALKABLE</code>; properties authored in <code>maps/tiles.tsx</code> (walkable / water / encounter / spare / plantable)</td></tr>
+<tr><td>Interactions</td><td>Face tile + A: deposit lure (<code>PROP_SPARE</code>), plant-claim (<code>PROP_PLANTABLE</code>), rest heal (authored rest tile), all coordinate/data driven</td></tr>
+</table>
+
+<h3>World scripts &amp; warps <span class="tag live">LIVE</span></h3>
+<p>The shipping profile is the compact warp VM: one forward pass over a 128-byte slot per chunk, big-endian operands, only <code>If</code> / <code>TpIf</code> / <code>End</code>. A build validator checks flag capacity, condition values, branch encoding, forward-jump command boundaries and map coordinates before firmware compilation; zero-filled slots leave state unchanged. Three warps are authored for the first beta (door/teleport pair plus a flag-gated door). Popup text, <code>Msg</code>/<code>TMsg</code>/<code>SMsg</code> and the <code>GiveItem</code> opcode exist only under the opt-in full VM profile; the generated-content guard rejects full-only content in default builds.</p>
+
+<div class="note">Current content status: the generated map is a test layout — it has <strong>no encounter tiles</strong> and only two scripted NPC markers. The first-beta area contract (§5, §6) is authored and validated but awaits its map-authoring integration. Shipping encounters today are exercised through demos and authored zone data.</div>
+</section>
+
+<section id="encounters">
+<h2>5. Encounters</h2>
+<p>Wild battles trigger from world steps: after plants tick and lure decay, the step commit checks the destination tile. If the tile carries <code>PROP_ENCOUNTER</code>, a <strong>10% roll</strong> starts an encounter. Selection is deterministic per zone:</p>
+<ul>
+<li>Zone definitions are packed per chunk: base table, table count, a 4-way lure-type nibble map, and a signed level offset.</li>
+<li>An active lure zone selects a table by its type nibble (types 0–3 exposed); inert zones use the base table.</li>
+<li>A slot is rolled from 10 entries; the wild level is <code>clamp(floor(party average level) + zone offset, table floor, table ceil)</code>.</li>
+<li>The encounter catalog is <strong>32 species</strong> in shipping (ids 0–31); ids 32–63 are the opt-in expansion roster used by test builds only.</li>
+</ul>
+
+<h3>First-beta tables <span class="tag cont">CONTRACT</span></h3>
+<p><code>data/beta-area.toml</code> pins exactly five 10-slot tables (base + spirit/water/wind/earth lure groups), levels 2–5, allowed species <code>[0, 3, 6, 9, 10, 12, 13, 14]</code>. Placeholder species (21/22) and expansion ids are excluded. These authored tables become packed encounter data when the map integration lands; the currently packed generic zone data uses the same two test chunks with level offset 0.</p>
+<table>
+<tr><th>Table</th><th>Lure</th><th>Slots (species ids)</th></tr>
+<tr><td>base</td><td>—</td><td>0, 3, 6, 9, 10, 12, 13, 14, 0, 6</td></tr>
+<tr><td>spirit</td><td>type 0</td><td>9 ×6 heavy, 0 ×2, 6, 13, 3, 14</td></tr>
+<tr><td>water</td><td>type 1</td><td>6 ×6 heavy, 3, 9, 14, 0</td></tr>
+<tr><td>wind</td><td>type 2</td><td>0 ×4, 13 ×4, 9, 6</td></tr>
+<tr><td>earth</td><td>type 3</td><td>3 ×4, 14 ×4, 9, 6</td></tr>
+</table>
+</section>
+
+<section id="lures">
+<h2>6. Lures, zones &amp; gathering</h2>
+<h3>Lure items</h3>
+<p>Lures are the primary resource. Item id = <code>type × 3 + tier</code> (8 authored types × 3 tiers = 24 ids). Tier sets the zone charge and the gather rate:</p>
+<table>
+<tr><th>Tier</th><th>Name</th><th>Charge (steps)</th><th>Gather rate</th></tr>
+<tr><td>0</td><td>crude</td><td>16</td><td>1 / round</td></tr>
+<tr><td>1</td><td>fine</td><td>32</td><td>2 / round</td></tr>
+<tr><td>2</td><td>pure</td><td>64</td><td>4 / round</td></tr>
+</table>
+<p>Types: spirit, water, wind, earth, fire, lightning, plant, elder. Encounter tables distinguish only the four low groups (spirit / water / wind / earth); higher types are future area content.</p>
+
+<h3>Depositing and zone life</h3>
+<ul>
+<li>Face a deposit tile (<code>PROP_SPARE</code>), press A, pick a lure from the 5-row picker. One lure is consumed.</li>
+<li>A zone belongs to the chunk where it was deposited, carries the lure’s type and tier, and burns 1 charge per committed world step.</li>
+<li>Leaving to a chunk without an authored zone clears the lure; expiry clears it and shows the “Lure Gone” feedback.</li>
+<li>While active, wild encounters on that chunk are <strong>gatherable</strong> and use the lure-type table.</li>
+</ul>
+
+<h3>Gathering in battle</h3>
+<ul>
+<li>Gatherable battles expose a <strong>GATHER</strong> action (wild only; trainer/boss battles refuse it).</li>
+<li>Each gather round adds the tier rate (1/2/4) to progress; the need is <code>clamp(8 + wildLevel / 2, 8, 24)</code> → levels 2–5 give 9–10.</li>
+<li>Fleeing is automatic at 6 gather rounds; a KO on either active pauses the countdown (progress is retained).</li>
+<li>Reaching the need captures the foe at its current HP into the collection; a full 64-slot store refuses losslessly.</li>
+<li>The renewable math (authoring contract): tier-1 = 2 progress × 6 rounds = 12 ≥ need 10, so a fresh player can capture without KO risk or first-battle luck.</li>
+</ul>
+<div class="note">The first-beta renewable loop is partially implemented: plant-claim tiles currently grant a lure directly, and the staged planting/harvest model is planned (<code>jp8.11.5</code>). See §12.</div>
+</section>
+
+<section id="duel">
+<h2>7. Battle: the five-type duel</h2>
+<p>The shipped battle is a hidden-simultaneous-pick duel over a five-type complete tournament. Both sides commit a hidden action; the round resolves atomically; the round feedback reveals both picks and the damage. No turn order, no PP, no accuracy, no statuses.</p>
+
+<h3>Type web</h3>
+<figure>
+<svg width="360" height="320" viewBox="0 0 360 320" role="img" aria-label="Five-type duel web">
+<defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#bbb"/></marker></defs>
+<!-- ring edges (attacker -> defender): spirit->fire->plant->water->earth->spirit -->
+<line x1="180" y1="60" x2="270" y2="118" stroke="#bbb" stroke-width="1.6" marker-end="url(#arr)"/>
+<line x1="270" y1="118" x2="232" y2="235" stroke="#bbb" stroke-width="1.6" marker-end="url(#arr)"/>
+<line x1="232" y1="235" x2="108" y2="235" stroke="#bbb" stroke-width="1.6" marker-end="url(#arr)"/>
+<line x1="108" y1="235" x2="70" y2="118" stroke="#bbb" stroke-width="1.6" marker-end="url(#arr)"/>
+<line x1="70" y1="118" x2="180" y2="60" stroke="#bbb" stroke-width="1.6" marker-end="url(#arr)"/>
+<!-- star edges: water->spirit, water->fire, earth->fire, earth->plant, plant->spirit -->
+<line x1="108" y1="235" x2="180" y2="60" stroke="#888" stroke-width="1.6" marker-end="url(#arr)"/>
+<line x1="108" y1="235" x2="270" y2="118" stroke="#888" stroke-width="1.6" marker-end="url(#arr)"/>
+<line x1="70" y1="118" x2="270" y2="118" stroke="#888" stroke-width="1.6" marker-end="url(#arr)"/>
+<line x1="70" y1="118" x2="232" y2="235" stroke="#888" stroke-width="1.6" marker-end="url(#arr)"/>
+<line x1="232" y1="235" x2="180" y2="60" stroke="#888" stroke-width="1.6" marker-end="url(#arr)"/>
+<circle cx="180" cy="60" r="17" fill="#202020" stroke="#fff"/><text x="180" y="65" fill="#fff" font-size="12" text-anchor="middle">SPR</text>
+<circle cx="270" cy="118" r="17" fill="#202020" stroke="#fff"/><text x="270" y="123" fill="#fff" font-size="12" text-anchor="middle">FIR</text>
+<circle cx="232" cy="235" r="17" fill="#202020" stroke="#fff"/><text x="232" y="240" fill="#fff" font-size="12" text-anchor="middle">PLA</text>
+<circle cx="108" cy="235" r="17" fill="#202020" stroke="#fff"/><text x="108" y="240" fill="#fff" font-size="12" text-anchor="middle">WAT</text>
+<circle cx="70" cy="118" r="17" fill="#202020" stroke="#fff"/><text x="70" y="123" fill="#fff" font-size="12" text-anchor="middle">ERT</text>
+<text x="180" y="300" fill="#999" font-size="12" text-anchor="middle">Every arrow points from the winning type to the losing type. 10 edges; each pair has exactly one winner.</text>
+</svg>
+<figcaption>Authored 8 types fold to 5: wind→water, lightning→fire, elder→spirit.</figcaption>
+</figure>
+
+<h3>Round resolution</h3>
+<table>
+<tr><th>Case</th><th>Result</th></tr>
+<tr><td>Attack vs attack, one beats the other</td><td>Winner deals <strong>14</strong>, loser chips <strong>4</strong></td></tr>
+<tr><td>Attack vs attack, mirror or neutral</td><td>Both deal <strong>6</strong> (trade)</td></tr>
+<tr><td>Exactly one side switches</td><td>The non-switching side lands a default win (<strong>14</strong>) against the incoming creature</td></tr>
+<tr><td>Both switch</td><td>No damage</td></tr>
+<tr><td>Exactly one side waits</td><td>The other lands a default win (<strong>14</strong>)</td></tr>
+<tr><td>Both wait / unusable kit</td><td>No damage</td></tr>
+</table>
+<p>Every attack then multiplies its base by its own matchup against the defender: <strong>×1.5</strong> if the move type beats any of the defender’s types, <strong>×0.5</strong> if it loses to any, otherwise ×1 (advantage checked first; no stacking of dual weaknesses). Fixed-point tenths, rounded up, minimum 1. Both damages are computed against the same pre-hit state and applied together, so simultaneous KOs are exact; if both sides are wiped the duel is a DRAW. A KO on a member that was swapped in reverts to the (living) outgoing member; otherwise the first living member promotes.</p>
+
+<h3>Attack kits</h3>
+<p>A creature’s moveset is a <strong>5-bit attack mask</strong>: one bit per duel type. The pick row shows one option per set bit, in ascending type order. Mask 0 means no usable attack (the pick row degenerates to WAIT). Each instance carries its own mask in the save record; species data carries the default kit. Trainer presets author masks per member.</p>
+
+<h3>Opponent AI (personas)</h3>
+<table>
+<tr><th>Persona</th><th>Model</th><th>Default read rate</th></tr>
+<tr><td>random</td><td>Never reads; still prefers its best creature-matchup tier</td><td>0%</td></tr>
+<tr><td>reader</td><td>Counters your last revealed type</td><td>25%</td></tr>
+<tr><td>frequency</td><td>Counters your most-used revealed type</td><td>50%</td></tr>
+<tr><td>anti-repeat</td><td>Modal type with the newest pick discounted</td><td>50%</td></tr>
+</table>
+<p>On a reading turn: pick a countering attack if the active kit has one; otherwise switch to a living bench member that counters; otherwise attack uniformly. On a non-reading turn: prefer the best creature-matchup tier, then uniform. Read rates are capped below 75% because a fully reading opponent is exploitable by predictable rotation. The AI reads only revealed history and public state — never the hidden pick. Wild battles use random/0; trainer personas in the current build are a temporary <code>trainerId % 3</code> fixture (reader 25 / frequency 50 / anti-repeat 50) — the authored <code>data/duel.toml</code> persona table is generated but not yet consumed by firmware.</p>
+
+<h3>Session flow &amp; timing <span class="tag live">LIVE</span></h3>
+<ul>
+<li>Choice: the pick row (attack cells, SWAP, WAIT) plus an action page (GATHER / ESCAPE) when legal. The opponent’s hidden pick is committed on Choice entry from the shared RNG.</li>
+<li>Conceal phase: <strong>29 frames</strong> (~558 ms at 52 fps) between commitment and reveal.</li>
+<li>Reveal + resolution: one atomic round; result dwell runs <strong>68 frames</strong> (~1308 ms); A accelerates feedback.</li>
+<li>HP ownership: the session writes damage back to <code>player.creatureHPs</code> by original party slot at the terminal edge; the world battle syncs HP both ways.</li>
+<li>Terminals: WIN / LOSE / DRAW / GATHERED / ESCAPED / FLED. LOSE and DRAW run defeat recovery (party healed, player returned to the authored start). ESCAPE is immediate on selection for wild battles.</li>
+</ul>
+
+<h3>Rewards on the terminal edge</h3>
+<ul>
+<li><strong>Ordinary wild win:</strong> every living occupied party member gains <code>8 × foe level</code> exp; the foe species’ authored material drops once (saturating bag).</li>
+<li><strong>Gatherable win (captured):</strong> the foe instance is written to the 64-slot collection with species, current exp, attack mask and HP-encoded state; no exp and no material.</li>
+<li><strong>Trainer/boss win (planned for beta):</strong> authored victory flag gates the ending; no repeated reward.</li>
+<li>Gathered/Fled/Escaped/Lose/Draw award nothing.</li>
+</ul>
+</section>
+
+<section id="battleui">
+<h2>8. Battle user interface</h2>
+<table>
+<tr><th>Element</th><th>Design</th></tr>
+<tr><td>Pick row</td><td>One cell per mask bit (type icon, up/down matchup marker) + SWAP cell (living bench) + WAIT cell when the kit is empty; cell width = 120/count; white selection box, black strip</td></tr>
+<tr><td>Centre strip</td><td>Round counter “R#”, selected type icon (or SWAP/WAIT label) drawn left of the sprites</td></tr>
+<tr><td>Action page</td><td>GATHER and ESCAPE rows, each present only when legal (wild only; trainers none)</td></tr>
+<tr><td>Party page</td><td>Up to 2 living non-active members; names cached on the transition; B cancels back to the SWAP cell</td></tr>
+<tr><td>Sprites</td><td>48×48 front/back per species (frame = id×2 + side), drawn with plus-mask</td></tr>
+<tr><td>HUD</td><td>HP bars both sides; duel shows numeric HP for both sides (3×5 digits); YOU label on the player row; foe row is numerals-only above the bar</td></tr>
+<tr><td>Team pips</td><td>3 slots per side: 2×3 alive cell, 2×1 underline for the active member</td></tr>
+<tr><td>Type badges</td><td>White 12×12 frames with 8×8 type icons on each sprite (foe bottom-left, you bottom-right), folded dual types deduped</td></tr>
+<tr><td>Feedback footer</td><td>Both revealed move icons + “vs” caption, then the outcome caption and outgoing damage figures</td></tr>
+<tr><td>Captions</td><td>BONUS WIN/LOSE, WEAK WIN/LOSE, RPS WIN/LOSE, TRADE, DEFAULT WIN, SWAP, WAIT, DRAW, GATHER progress, GATHERED, FLED, ESCAPED</td></tr>
+<tr><td>Colors</td><td>Black strips with white text; the selected cell inverts (white fill, dark glyphs)</td></tr>
+</table>
+<p>Controls: directions navigate, A confirms/accelerates, B backs out of optional submenus. Trainer battles offer no GATHER or ESCAPE rows.</p>
+</section>
+
+<section id="progression">
+<h2>9. Progression: levels, evolution, stats</h2>
+
+<h3>Experience &amp; levels</h3>
+<ul>
+<li>Curve: cumulative exp for level <em>L</em> is <em>L³</em> (level 1 = 1 exp), stored as a 32-entry u16 table; cap 29,791 at level 31. Level is derived from exp — it is never stored.</li>
+<li>Gain: <code>8 × foe level</code> per ordinary wild win, to every living occupied party member, saturating at the level-31 threshold.</li>
+<li>Level-up effect: max HP is recomputed from species seed and level; a living member keeps its missing HP (HP grows by the max-HP delta, capped at the new maximum).</li>
+</ul>
+
+<h3>Stats model <span class="tag plan">PLANNED</span></h3>
+<p>Authoring currently carries six stat seeds per species (atk, def, spcAtk, spcDef, hp, speed), but the duel reads only <strong>hp</strong>: max HP = <code>2×level + hpSeed×(level/3) + 30</code>. The five other seeds are unread in shipping and their trials were measured inert (e.g., a special-defense seed change moved 0/25 matchup pairs). Owner decision (2026-10-17): retire the five dead seeds, keep HP as the only stat, and make the <strong>attack mask the progression/customization axis</strong> — evolution unlocks types now, item-driven custom kits later. One attack-scaling seed and a per-level learnset table remain parked options (see §20).</p>
+
+<h3>Evolution</h3>
+<ul>
+<li>Edges are explicit authored <code>from → to @ level</code> mappings; id adjacency is never inferred. The generator validates duplicates, self/missing targets, thresholds, kit presence and cycles before packing.</li>
+<li>Live beta edges: <code>0→1</code>, <code>3→4</code>, <code>6→7</code>, each at level 8 (the starter trio).</li>
+<li>On the same wild-win terminal edge as exp: an instance at or over its edge threshold replaces its species in place, preserving exp, stable slot and current mask, and recomputing types/HP at the unchanged derived level; a living member keeps its missing HP.</li>
+<li>A refused save write leaves the old species in place — the evolution stays derivable from exp and retries on the next eligible transition. The collection path can evolve boxed instances the same way.</li>
+<li><span class="tag plan">PLANNED</span> Growth rearch (<code>rhs7</code>): author the full starter chains (<code>1→2</code>, <code>4→5</code>, <code>7→8</code> at level 16) and adopt the target species’ kit on evolution, which restores the “instance kit == species kit” invariant and turns stage transitions into type unlocks (crab gains fire at 8; snail gains plant and squid gains fire at 16).</li>
+</ul>
+</section>
+
+<section id="creatures">
+<h2>10. Creatures &amp; content roster</h2>
+<ul>
+<li><strong>64 authored species</strong> (ids 0–63): 32 shipping catalog + 32 expansion. Shipping encounters and the save format use the 32-catalog; expansion ids appear only in opt-in test builds.</li>
+<li>Each species record: id, up to two types (authored 8-type), evolution level, six stat seeds (retiring to hp), default attack mask.</li>
+<li>Art: 48×48 front/back masked sprites per species plus world scenery and fonts.</li>
+<li>Battle labels use the shipped 5×6 font with authored width metrics.</li>
+</ul>
+<table>
+<tr><th>Id</th><th>Species</th><th>Types</th><th>Default kit (folded)</th><th>Evolution</th></tr>
+<tr><td>0</td><td>SquibbleSnail</td><td>wind (→water)</td><td>water</td><td>→ 1 @ 8</td></tr>
+<tr><td>1</td><td>SquableSnail</td><td>wind</td><td>water</td><td><span class="tag plan">PLANNED</span> → 2 @ 16</td></tr>
+<tr><td>2</td><td>ScrambleSnail</td><td>wind / plant</td><td>water + plant</td><td>terminal</td></tr>
+<tr><td>3</td><td>SkitterCrab</td><td>earth</td><td>earth</td><td>→ 4 @ 8</td></tr>
+<tr><td>4</td><td>ScatterCrab</td><td>earth</td><td>earth + fire</td><td><span class="tag plan">PLANNED</span> → 5 @ 16</td></tr>
+<tr><td>5</td><td>ShatterCrab</td><td>earth / lightning (→fire)</td><td>earth + fire</td><td>terminal</td></tr>
+<tr><td>6</td><td>squid</td><td>water</td><td>water</td><td>→ 7 @ 8</td></tr>
+<tr><td>7</td><td>bigsquid</td><td>water</td><td>water</td><td><span class="tag plan">PLANNED</span> → 8 @ 16</td></tr>
+<tr><td>8</td><td>BiggestSquid</td><td>water / fire</td><td>water + fire</td><td>terminal</td></tr>
+<tr><td>31</td><td>ardu</td><td>—</td><td>boss kit</td><td>first-beta boss (planned)</td></tr>
+</table>
+<p>Other first-beta wild species: 9 bell, 10 ember, 12 hedge, 13 cloud, 14 rock. Full roster data lives in <code>data/json/creatures.json</code> and generated headers; see §15 for the pipeline.</p>
+</section>
+
+<section id="items">
+<h2>11. Items &amp; economy</h2>
+<table>
+<tr><th>Item class</th><th>Ids / capacity</th><th>Behavior</th></tr>
+<tr><td>Lures</td><td>24 ids (<code>type×3 + tier</code>)</td><td>Deposited in world zones; consumed on deposit; gather rate by tier</td></tr>
+<tr><td>Consumables</td><td>8 ids</td><td>tonic/salve/elixir (heal 16/32/64), remedy/herb/nectar (cure), essence/crystal (charge) — battle item UI planned</td></tr>
+<tr><td>Materials</td><td>derived per species</td><td>Ordinary wild KO drops the species’ authored material (one tier-2 lure of its folded type group, count 1) exactly once; saturates at 99</td></tr>
+<tr><td>Key items</td><td>8 bits, byte-packed</td><td>Unlocked by full-VM <code>GiveItem</code>; separate namespace from world flags</td></tr>
+</table>
+<ul>
+<li>The bag is one Player-owned inventory (24 lure counts + 8 consumable counts, saturating at 99) and is the same instance used by world deposits and battle.</li>
+<li>First-beta heal rewards: item 0/1, count 1 each, awarded on ordinary wild wins in the area.</li>
+<li>The bag UI contract is a non-wrapping 4-row list (BAG / COLLECTION / SAVE world menu) — <span class="tag plan">PLANNED</span> <code>jp8.11.23</code> (menu/SAVE) and <code>jp8.11.8</code> (collection view); battle item page <code>jp8.5.19</code>.</li>
+</ul>
+</section>
+
+<section id="plants">
+<h2>12. Plants</h2>
+<ul>
+<li>Model: 32 plant indices, each with a 2-bit stage (0–3) packed into 8 bytes; two plant pairs of (3-bit type + active flag) per byte.</li>
+<li>Growth: a 128-step world ticker increments every stage (mod 4) for each committed step; the ticker and stage bytes persist in the save snapshot.</li>
+<li>Planned staged loop (<code>jp8.11.5</code>): face a plantable tile, A plants free (stage 1); stage 3 (mature) + A grants one tier-1 lure and resets to stage 1; maturity is held rather than overflowing a full bag.</li>
+<li>Today the plant-claim tile grants one lure directly as a placeholder, and the authored plant source (type 0 / tier 1) is generated but not yet read by firmware.</li>
+</ul>
+</section>
+
+<section id="save">
+<h2>13. Party, collection &amp; save system</h2>
+<h3>Player &amp; party</h3>
+<ul>
+<li>Active party: 3 creature slots (<code>Player.party[3]</code>) plus live HP per slot (<code>creatureHPs[3]</code>); the same HP array is the battle contract.</li>
+<li>Heal party restores occupied slots to derived max and clears transient status; empty slots are skipped.</li>
+<li>Fresh games start from the authored <code>beta</code> preset (species 0/3/6 at level 3, kits water/earth/water), seed three stable store instances, and start at the authored tile (11, 5).</li>
+</ul>
+
+<h3>Collection &amp; instance records</h3>
+<p>The collection is <strong>64 eight-byte stable records</strong> (<code>StoreRecord</code>): species id, cumulative exp (u16), folded attack mask, 3 reserved bytes (zero), and an HP byte. HP encoding: 0 means full/derived max, otherwise <code>HP − 1</code> — this keeps the legacy “full” case free and encodes damaged instances exactly. Instances are the growth authority: level, max HP, evolution and (planned) kit all derive from the record.</p>
+
+<h3>Persistence architecture</h3>
+<table>
+<tr><th>Layer</th><th>Design</th></tr>
+<tr><td>Snapshot</td><td><code>SaveFile</code> v3, 96 bytes: location, 8 flag bytes, party slots + HP, plant stages/pairs/ticker, 24 lure counts, 8 consumable counts, 4 key-item bytes</td></tr>
+<tr><td>Journal</td><td>16-byte append records (StoreAdd / StoreRemove / PartyAssign); 256 records per sector; torn-tail detection via a final marker byte written last, so an interrupted append is un-overwritable and treated as end-of-log</td></tr>
+<tr><td>Compaction</td><td>Alternating A/B checkpoints with header magic, generation counter, dual checksums and commit bytes; validate, erase the journal, verify blank</td></tr>
+<tr><td>Sectors</td><td>8 sectors × 4,096 B: main snapshot 0, journal 4096, store A 8192, store B 12288, four reserved sectors</td></tr>
+<tr><td>Cadence</td><td>Explicit checkpoints (no autosave yet). Collection writes journal immediately; an explicit SAVE from the world menu is planned (<code>jp8.11.23</code>)</td></tr>
+<tr><td>Failure handling</td><td>A refused write leaves accepted state untouched (lossless refusals); unrecoverable boot conditions halt loudly on the device rather than running with an inconsistent store</td></tr>
+</table>
+</section>
+
+<section id="menus">
+<h2>14. Menus, modes &amp; dialogs</h2>
+<table>
+<tr><th>State</th><th>Meaning</th></tr>
+<tr><td><code>WORLD</code></td><td>Overworld update/render; interactions, encounters, rest</td></tr>
+<tr><td><code>BATTLE</code></td><td>Duel session + compact UI (menu/party/action pages, feedback)</td></tr>
+<tr><td><code>SAVING</code></td><td>Advance-driven save state machine with on-screen status (no FX reads while flash is busy)</td></tr>
+<tr><td><code>ARENA</code></td><td>Opt-in arena demo only</td></tr>
+</table>
+<ul>
+<li><code>ModeState</code> is a single union (battle/world-transient/arena) so the device keeps one live mode object; entering battle installs the battle RNG and builds a fresh session; exiting re-initializes the world.</li>
+<li>The battle menu is a small page stack (pick row → optional action page → party page) with intents: select move, select party slot, gather, escape, back, wait/pass.</li>
+<li>World menu + explicit SAVE + collection view are the remaining first-beta UI work (<code>jp8.11.23</code>, <code>jp8.11.8</code>).</li>
+<li>Popups/dialogs belong to the full world VM profile only; the compact shipping profile queues no messages by design.</li>
+<li>The 193-byte mode state also hosts the compact battle facts (round, feedback kind, damage, revealed types) that the renderer reads directly.</li>
+</ul>
+</section>
+
+<section id="pipeline">
+<h2>15. Content pipeline &amp; tooling</h2>
+<p>All content flows through one native generator (<code>cgfx-tools</code>, Rust) driven by <code>make gen</code>:</p>
+<pre>
+data/json/creatures.json ─┐
+maps/world_map.json ──────┤
+data/*.toml contracts ────┤   cgfx-tools --project cgfx-project.json
+data/*.csv tables ────────┼─► fxdata/generated/*  (headers, tables, fixtures)
+images/*.png, text ───────┘        │
+                                   ├─ copies: opcodes.hpp → src/vm, flags/* → src/flags
+                                   ├─ fixtures → tst/fxdatatest/generated
+                                   └─ pack (fxlayout.toml) → src/fxdata.h + dist/fxdata*.bin
+</pre>
+<ul>
+<li><code>fxlayout.toml</code> is an ordered flash layout (30 packed entries + 8 save sectors); declaration order is permanent ABI. Save offsets are sector-aligned and stable.</li>
+<li>Sprites/fonts regenerate natively from <code>fxsprites.toml</code>; the string table renders into a packed glyph sheet.</li>
+<li><code>make verify-generated</code> checks the manifest (inputs, outputs, hashes) without mutating; <code>test-pack-parity</code> pins the packed image SHA-256; <code>test-manifest</code> / <code>test-generated-libs</code> prove the packed bytes match the published header.</li>
+<li>Generated files are never hand-edited; change the JSON/CSV/TOML/PNG source and regenerate, staging the generated set as one commit.</li>
+</ul>
+
+<h3>Key make targets</h3>
+<table>
+<tr><th>Target</th><th>Purpose</th></tr>
+<tr><td><code>make gen</code></td><td>Full generation + pack (data, sprites/fonts, fixtures, image)</td></tr>
+<tr><td><code>make test</code> / <code>testvm</code></td><td>Host C++ suites (~240.5k assertions) and ScriptVM suites (286)</td></tr>
+<tr><td><code>make test-beta-area</code></td><td>Authored first-area contract vs generated data (node)</td></tr>
+<tr><td><code>make fxtest-headless ARDENS=…</code></td><td>All 34 device suites through headless Ardens serial, exact <code>P</code>/<code>F</code> markers</td></tr>
+<tr><td><code>make fxtest-spike FXTEST_SPIKE_INO=…</code></td><td>Touched device suite + <code>test_stack</code> headroom check</td></tr>
+<tr><td><code>make ram</code> / <code>build</code> / <code>mini</code></td><td>Whole-image flash/RAM report (budget enforced) / shipping build / Mini build</td></tr>
+<tr><td><code>make final-gate ARDENS=…</code></td><td>Full check + RAM report, logged under <code>build/final-gate/</code></td></tr>
+<tr><td><code>make arena-demo</code> / <code>arena-package</code></td><td>Launch arena demo / build the distributable <code>.arduboy</code> zip</td></tr>
+<tr><td><code>make clean-build-artifacts [CLEAN_APPLY=1]</code></td><td>Preview/apply cleanup of disposable build staging</td></tr>
+</table>
+<p>Lane and storage rules: one AVR/generation lane at a time; one shared <code>BUILD_DIR</code> per session; 5 GiB build + 5 GiB scratch budgets with a 10 GiB free reserve; clean each measured item after preserving evidence.</p>
+</section>
+
+<section id="variants">
+<h2>16. Build variants &amp; demos</h2>
+<table>
+<tr><th>Variant</th><th>Flag(s)</th><th>What it does</th></tr>
+<tr><td>Shipping FX</td><td>default</td><td>Ordinary game: authored beta start, save load/write through the test harness</td></tr>
+<tr><td>Trainer demo</td><td><code>CGFX_TRAINER_DEMO</code> (+ <code>_SWITCH_DRILL</code>, <code>_UTILITY</code>)</td><td>Boots straight into a 3v3 trainer duel from a named preset; no save load/write; A/B navigation; trainer rules refuse GATHER/ESCAPE</td></tr>
+<tr><td>Wild demo</td><td><code>CGFX_WILD_DEMO</code></td><td>Overworld entry + one forced ordinary wild encounter; exercises the real step → encounter → session path</td></tr>
+<tr><td>Arena demo</td><td><code>CGFX_ARENA_DEMO</code></td><td>Boots a random 3v3 duel (3 player teams × 5 opponent teams) and continuously re-rolls; menus are the pre-compact arena screens; distributable via <code>arena-package</code></td></tr>
+<tr><td>Expansion battle test</td><td><code>BATTLE_TEST_EXPANSION=1</code></td><td>Uses species 32–63 for player/trainer parties in an isolated build</td></tr>
+<tr><td>Lure demo</td><td><code>arena-demo</code>/lure targets</td><td>Alternate scenery in the lure clearing for art review</td></tr>
+</table>
+</section>
+
+<section id="testing">
+<h2>17. Testing &amp; evidence rules</h2>
+<ul>
+<li><strong>Host:</strong> C++ suites exercise kernel rules, session/flow wiring, save/journal/compaction, world stepping, encounters, menu navigation, arena lifecycle. Latest counts: ~240.5k passed / 0 failed, world suite 258 / 0, VM 286 / 0.</li>
+<li><strong>Device:</strong> 34 headless Ardens suites run the real firmware paths through serial, accepting only an exact <code>P</code>/<code>F</code> marker. Highlights: duel kernel relations and damage, real-session timing (29/68 frames), UI geometry/captions, painted stack headroom, save cuts/journal/flag extents, table read paths, script VM, FX read counter.</li>
+<li><strong>FX read rule:</strong> program-data reads occur on transitions only. The counter resets per frame; steady-state update must add zero reads, render is checked exactly, and transition owners declare their exact reads.</li>
+<li><strong>Determinism:</strong> RNG is seeded from hardware entropy on boot and injectable in tests; the duel kernel has a C++/JS parity check (<code>make sim-test</code>) against the canonical mock.</li>
+<li><strong>Evidence:</strong> every resource-changing item keeps a same-source control A/B, the touched device suites, and a compact report (commands, numbers, wall time, storage).</li>
+</ul>
+</section>
+
+<section id="roadmap">
+<h2>18. Roadmap</h2>
+<h3>First beta — one complete saved area (<code>jp8.11</code>)</h3>
+<p>Shipped: authored beta start + preset, exact wild-win exp and bounded levels, material/heal reward mappings, evolution on the authored beta edges, lure tier rates through the real encounter path, gather commit to the collection, first-beta contract tests.</p>
+<p>Remaining open: renewable planting/harvest (<code>.5</code>), four-row collection view (<code>.8</code>), party-slot replacement without healing (<code>.9</code>), fixed boss + persistent ending (<code>.13</code>), real-control loop proof (<code>.15</code>), explicit SAVE/recoverable failure (<code>.23</code>), release gate (<code>.16</code>).</p>
+
+<h3>Growth rearch (<code>rhs7</code>, 2026-10-17)</h3>
+<ol>
+<li>Archive the legacy battle contract run (host suites + dormant legacy TUs).</li>
+<li>Delete dead legacy arms and the dormant Move/Effect/PP surface from shared sources.</li>
+<li>Measured stat collapse: retire five dead stat seeds to hp (≈ −320 B flash data, SRAM down).</li>
+<li>Evolution as mask progression: full starter chains + target-kit adoption.</li>
+</ol>
+
+<h3>Post-beta (<code>jp8.12</code>, P3)</h3>
+<ul>
+<li>Fishing and fossil acquisition design; seven more themed areas; broader growth, shops and a larger arena.</li>
+</ul>
+
+<h3>Long-term M0–M6 arc (historical contract)</h3>
+<p>M0 overworld spine → M0.5 lure prototype → M1a flash store + SaveFile v2 → M1b items → M2 gathering sources → M3 lure zones → M4 ownership/growth (32-box collection) → M5 fishing → M6 eight areas, boss gates, shops, arena. The first-beta epic is the current slice of that arc.</p>
+
+<h3>Parallel workstreams</h3>
+<ul>
+<li><strong>Resource maintenance</strong> (<code>qu9</code>): enum-size audit, snapshot-buffer removal feasibility, budget reserve rules.</li>
+<li><strong>Audio feasibility</strong> (<code>7v13</code>, P2): FX-streamed music prototype (~+3 KB flash class), gated on whole-image measurement and stack budget.</li>
+<li><strong>Asset disposition</strong> (<code>u0ez</code>): remove 11 superseded legacy sprite sheets once fixtures are reworked.</li>
+<li><strong>Balance evidence</strong> (<code>ogh</code>): held-out trials on live levers (e.g., Rock HP seed); power/speed trials closed as retired-engine no-ops.</li>
+</ul>
+</section>
+
+<section id="retired">
+<h2>19. Retired systems &amp; decision log</h2>
+<table>
+<tr><th>Item</th><th>Status</th><th>Notes</th></tr>
+<tr><td>Ordered-turn battle engine (PP, accuracy, stat stages, statuses, effects, turn order, damage formula)</td><td><span class="tag ret">RETIRED</span></td><td>Source archived under <code>archive/battle-legacy/</code>; host-only legacy suites keep it compiling today — being archived to <code>archive/</code> in the rearch wave</td></tr>
+<tr><td>Packed <code>Move</code>/<code>MoveBitSet</code>/<code>Effect</code> movesets; <code>moves.json</code>; move power</td><td><span class="tag ret">RETIRED</span></td><td>Replaced by the 5-bit type mask; leftover types are being cleaned up (<code>rhs7.2</code>)</td></tr>
+<tr><td>Five secondary stat seeds (atk/def/spcAtk/spcDef/spd)</td><td><span class="tag ret">RETIRED</span> <span class="tag plan">PLAN rhs7.3</span></td><td>Provably unread in the duel; measured inert in trials</td></tr>
+<tr><td>Stances variant (4-type cycle demo)</td><td><span class="tag ret">RETIRED</span></td><td>Mock-only spelling; not shipped</td></tr>
+<tr><td>Superseded sprite sheets (creature/field/menu/fonts/letters)</td><td><span class="tag ret">RETIRED</span></td><td>11 sheets satisfied-broken; removal pending <code>u0ez</code></td></tr>
+<tr><td>Power/speed balance trials (<code>ogh.10/.11/.12/.13</code>)</td><td><span class="tag ret">RETIRED</span></td><td>Closed 2026-10-17 — targets no longer exist in the engine</td></tr>
+</table>
+
+<h3>Decision log</h3>
+<table>
+<tr><th>Date</th><th>Decision</th></tr>
+<tr><td>2026-10-10</td><td>Player-choice resource checkpoint recorded (23,488 B flash / 1,747 B static / 509 B stack headroom); budget rules formalized.</td></tr>
+<tr><td>2026-10-15</td><td>Duel brief + 5-bit mask contract: five types, hidden simultaneous picks, flat 14/4/6; movesets collapse to a type mask; save keeps an 8-byte record with a 1-byte mask.</td></tr>
+<tr><td>2026-10-16</td><td>Legacy ordered-turn engine and its batch simulator retired; duel parity kernel + mock become the balance toolchain; fxtest device gate rebuilt (persistent per-profile stages, full wildcard ~75 s).</td></tr>
+<tr><td>2026-10-17</td><td>Post-duel growth rearch: stats retire to HP; the mask is the progression axis; evolution adopts the target kit and extends to full starter chains; legacy contract run archived; per-level learnset and an attack seed parked (<code>docs/duel-growth-rearch-brief.md</code>, epic <code>rhs7</code>).</td></tr>
+</table>
+</section>
+
+<section id="open">
+<h2>20. Open questions</h2>
+<ul>
+<li><strong>Per-level learnset table</strong> — only if intra-stage type unlocks are wanted; evolution-only progression was chosen for now (authoring format ~3 B/species packed).</li>
+<li><strong>One attack seed</strong> — scaling the flat 14/4/6 by ±1–2 if HP-only fights feel flat; requires AI/mock/parity updates and a full balance re-baseline.</li>
+<li><strong>Zero-win compositions</strong> — the paired 3v3 sweep still shows 7/25 fully-decided matchups (mono/single-kit comps); an owner decision on composition rules (e.g., team-building constraints) rather than stat tweaks.</li>
+<li><strong>Type skew</strong> — water is ~42% of attacks in the sweep; encounter-table and mask authoring can rebalance availability without engine changes.</li>
+<li><strong>Boss behavior</strong> — species 31 ardu at level 8, trainer rules, victory flag <code>flag_beta_complete</code>; exact trigger/ending presentation owned by <code>jp8.11.13</code>.</li>
+<li><strong>Items in battle</strong> — heal/cure/charge data exists; the picker page and action wiring are open (<code>jp8.5.19</code>).</li>
+<li><strong>Save UX</strong> — explicit world-menu SAVE with recoverable failure states (<code>jp8.11.23</code>).</li>
+</ul>
+</section>
+
+<section id="appendix">
+<h2>Appendix A. Type tables</h2>
+<h3>Authored types (8) and the duel fold</h3>
+<table>
+<tr><th>Authored id</th><th>Name</th><th>Duel fold</th></tr>
+<tr><td>0</td><td>spirit</td><td>spirit</td></tr>
+<tr><td>1</td><td>water</td><td>water</td></tr>
+<tr><td>2</td><td>wind</td><td>water</td></tr>
+<tr><td>3</td><td>earth</td><td>earth</td></tr>
+<tr><td>4</td><td>fire</td><td>fire</td></tr>
+<tr><td>5</td><td>lightning</td><td>fire</td></tr>
+<tr><td>6</td><td>plant</td><td>plant</td></tr>
+<tr><td>7</td><td>elder</td><td>spirit</td></tr>
+</table>
+
+<h3>Attack vs single-type defender (attacker row)</h3>
+<table>
+<tr><th></th><th>SPR</th><th>WAT</th><th>ERT</th><th>FIR</th><th>PLA</th></tr>
+<tr><th>SPR</th><td class="t">T</td><td class="l">L</td><td class="l">L</td><td class="w">W</td><td class="l">L</td></tr>
+<tr><th>WAT</th><td class="w">W</td><td class="t">T</td><td class="w">W</td><td class="w">W</td><td class="l">L</td></tr>
+<tr><th>ERT</th><td class="w">W</td><td class="l">L</td><td class="t">T</td><td class="w">W</td><td class="w">W</td></tr>
+<tr><th>FIR</th><td class="l">L</td><td class="l">L</td><td class="l">L</td><td class="t">T</td><td class="w">W</td></tr>
+<tr><th>PLA</th><td class="w">W</td><td class="w">W</td><td class="l">L</td><td class="l">L</td><td class="t">T</td></tr>
+</table>
+<p><span class="w">W</span> = 14, <span class="l">L</span> = 4, <span class="t">T</span> = 6 before the creature matchup multiplier (×1.5 / ×0.5 / ×1).</p>
+
+<h3>Experience curve (cumulative, selected levels)</h3>
+<table>
+<tr><th>Level</th><td>1</td><td>3</td><td>5</td><td>8</td><td>16</td><td>24</td><td>31</td></tr>
+<tr><th>Exp</th><td>1</td><td>27</td><td>125</td><td>512</td><td>4,096</td><td>13,824</td><td>29,791</td></tr>
+</table>
+<p>Exp = L³. Max HP at a level = <code>2×L + hpSeed×(L/3) + 30</code>; starter seeds (hp 3–4) give 46–56 HP at level 8 for typical wild creatures.</p>
+
+<h3>Quick numbers</h3>
+<table>
+<tr><th>Constant</th><th>Value</th></tr>
+<tr><td>Damage win / chip / trade</td><td>14 / 4 / 6</td></tr>
+<tr><td>Matchup modifiers</td><td>×1.5 / ×1.0 / ×0.5 (tenths 15/10/5)</td></tr>
+<tr><td>Party size / team pips</td><td>3 per side</td></tr>
+<tr><td>Pick options cap</td><td>5 attack types (+ SWAP/WAIT cells)</td></tr>
+<tr><td>AI history cap</td><td>8 revealed player types</td></tr>
+<tr><td>Conceal / result dwell</td><td>29 / 68 frames at 52 fps</td></tr>
+<tr><td>Encounter step chance</td><td>10% on encounter tiles</td></tr>
+<tr><td>Gather need</td><td>clamp(8 + level/2, 8, 24)</td></tr>
+<tr><td>Gather flee window</td><td>6 rounds (paused on KO rounds)</td></tr>
+<tr><td>Wild win exp</td><td>8 × foe level</td></tr>
+<tr><td>Level cap / exp cap</td><td>31 / 29,791</td></tr>
+<tr><td>Lure charge / rate by tier</td><td>16/32/64 steps; 1/2/4 per gather round</td></tr>
+<tr><td>Item saturation</td><td>99 per stack</td></tr>
+<tr><td>Collection capacity</td><td>64 instances × 8 B records</td></tr>
+<tr><td>Save sectors</td><td>8 × 4,096 B (main, journal, store A/B, 4 reserved)</td></tr>
+<tr><td>Map / chunk / tile</td><td>256×256 tiles; 8×4 chunks; 16 px</td></tr>
+<tr><td>Movement step</td><td>1 tile per 16 frames</td></tr>
+<tr><td>Script slot</td><td>128 B per chunk, If/TpIf/End</td></tr>
+</table>
+</section>
+
+<footer>
+<p>Sources: <code>README.md</code>, <code>docs/duel-system-brief.md</code>, <code>docs/moveset-type-mask-brief.md</code>, <code>docs/duel-growth-rearch-brief.md</code>, <code>docs/battle-simulator.md</code>, <code>docs/m1-storage.md</code>, <code>data/beta-area.toml</code>, <code>data/duel.toml</code>, <code>data/consumables.csv</code>, generated headers, and current source at HEAD <code>52847cd</code>. Budget and balance figures are dated whole-image measurements; regenerate and remeasure before relying on them.</p>
+</footer>
+
+</main></body></html>
