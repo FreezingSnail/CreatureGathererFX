@@ -5,9 +5,7 @@
 #include "../../lib/Blit.hpp"
 #include "../../lib/Text.hpp"
 #include "../../fxdata.h"
-#ifdef CGFX_DUEL_BATTLE
 #include "DuelView.hpp"
-#endif
 
 #include <Arduboy2.h>
 #include <avr/pgmspace.h>
@@ -33,14 +31,10 @@ void drawHp(const Combatant &creature, uint8_t y, bool showValues) {
     static const uint16_t labels[] PROGMEM = {
         4815, 31599, 29391, 9389, 31599, 31597
     };
-#ifdef CGFX_DUEL_BATTLE
     // The duel HUD shows numerals on both sides; the foe panel drops the FOE
     // label and hugs its numerals to the top so they stay disjoint from the
-    // y=10 bar. The legacy path keeps the original label + y+7 numerals.
+    // y=10 bar.
     const bool showFoeNumbers = showValues && y == 0;
-#else
-    const bool showFoeNumbers = false;
-#endif
     if (!showFoeNumbers) {
         const uint8_t labelY = y == 0 ? 2 : y;
         const uint8_t offset = y == 0 ? 0 : 3;
@@ -48,11 +42,7 @@ void drawHp(const Combatant &creature, uint8_t y, bool showValues) {
             PpGlyph::draw(50 + i * 4, labelY, pgm_read_word(labels + offset + i));
     }
     if (showValues) {
-#ifdef CGFX_DUEL_BATTLE
         const uint8_t numberY = y == 0 ? 1 : y + 7;
-#else
-        const uint8_t numberY = y + 7;
-#endif
         const uint8_t end = PpGlyph::number(50, numberY, creature.hp);
         PpGlyph::draw(end, numberY, 0b001001010100100);
         PpGlyph::number(end + 4, numberY, creature.maxHp);
@@ -64,7 +54,6 @@ void drawHp(const Combatant &creature, uint8_t y, bool showValues) {
     Blit::fillRect(50, barY + 1, hpWidth(creature.hp, creature.maxHp), 1, WHITE);
 }
 
-#ifdef CGFX_DUEL_BATTLE
 // Duel team pips: one cell per original member, alive = 2x3, active underline
 // 2x1 at y+4. Positions match mock/duel-bonus.html (x = 72 + slot*3; foe y=2,
 // you y=27). Uses only resident state, so it is metadata-read free.
@@ -228,18 +217,15 @@ void drawDuelFeedback(const BattleState &state) {
     drawDamage(42, 56, state.damage[1]);
     drawDamage(66, 56, state.damage[0]);
 }
-#endif
 
 void drawCreature(const Combatant &creature, uint8_t side) {
     const uint8_t x = side == static_cast<uint8_t>(Side::Player)
         ? battle_layout::playerX : 0;
     Blit::fillRect(x, 0, battle_layout::spriteSize, battle_layout::spriteSize, BLACK);
-#ifdef CGFX_DUEL_BATTLE
     // level 0 is the empty-active sentinel (empty or exhausted party). Draw no
     // sprite, so a drained slot never renders species 0 as an occupied creature.
     // Species 0 at a real level is a normal creature and still draws.
     if (creature.level == 0) return;
-#endif
     if (creature.id >= SPECIES_COUNT) return;
 
     const uint16_t frame = static_cast<uint16_t>(creature.id) * 2u +
@@ -257,14 +243,9 @@ void draw(const BattleState &state, int8_t duelCursor) {
                  static_cast<uint8_t>(Side::Opponent));
     drawCreature(state.active[static_cast<uint8_t>(Side::Player)],
                  static_cast<uint8_t>(Side::Player));
-#ifdef CGFX_DUEL_BATTLE
     // The canonical duel HUD shows numeric HP and a bar on both sides.
     drawHp(state.active[static_cast<uint8_t>(Side::Opponent)], 0, true);
-#else
-    drawHp(state.active[static_cast<uint8_t>(Side::Opponent)], 0, false);
-#endif
     drawHp(state.active[static_cast<uint8_t>(Side::Player)], 20, true);
-#ifdef CGFX_DUEL_BATTLE
     drawBadges(state);
     // The native HUD keeps three-digit HP numerals (up to x77) and the pips both
     // visible: the pips move below the foe numerals (y13) and above the player
@@ -274,9 +255,6 @@ void draw(const BattleState &state, int8_t duelCursor) {
     drawPips(state, static_cast<uint8_t>(Side::Player), 21);
     if (state.feedback != 0) drawDuelFeedback(state);
     else if (duelCursor >= 0) drawDuelChoice(state, duelCursor);
-#else
-    (void)duelCursor;
-#endif
 }
 
 } // namespace BattleScene

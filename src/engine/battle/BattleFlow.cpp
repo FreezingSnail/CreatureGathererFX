@@ -18,16 +18,10 @@
 namespace BattleFlow {
 namespace {
 
-void beginFeedback(battle::BattleMode &mode) {
-    ::new (static_cast<void *>(&mode.ui.feedback)) battle::BattleFeedback();
-    mode.ui.feedback.begin(mode.result(), mode.state());
-}
-
 void beginMenu(battle::BattleMode &mode) {
     ::new (static_cast<void *>(&mode.ui.menu)) battle::BattleMenu();
 }
 
-#ifdef CGFX_DUEL_BATTLE
 // Construct the correct UI union arm in the SAME update the session enters the
 // phase, so the frame's draw never reads a stale arm. Returns true when a fresh
 // arm was built this frame (the caller then consumes no button edge).
@@ -46,7 +40,6 @@ bool duelSyncUi(battle::BattleMode &mode, battle::BattleSession &session) {
     }
     return false;
 }
-#endif
 
 // Commit a gathered wild instance to the existing 64-slot collection. The foe is
 // read from the still-resident session before exitBattle destroys the battle
@@ -185,7 +178,6 @@ bool update(uint8_t edgeButtons, TerminalCallback onFinished) {
     battle::BattleSession &session = mode;
 
     if (!session.isActive()) return false;
-#ifdef CGFX_DUEL_BATTLE
     // A finished duel result dwell is terminal (the duel never enters the
     // Presenting phase).
     if (session.exitReady()) {
@@ -195,44 +187,14 @@ bool update(uint8_t edgeButtons, TerminalCallback onFinished) {
     // Construct any pending duel UI arm (result feedback or a fresh Choice
     // menu) in this same update; consume no edge on a freshly built arm.
     if (duelSyncUi(mode, session)) return false;
-#endif
 #if CGFX_DIALOG_QUEUE_ENABLED
     if (dialogMenu.peek()) dialogMenu.clear();
 #endif
 
-    // Presentations own every edge until they finish. Reconstructing the menu
-    // happens after the boundary, so the completion edge cannot select again.
-    if (session.isPresenting()) {
-        mode.ui.feedback.update((edgeButtons & MENU_EDGE_A) != 0);
-        if (!mode.ui.feedback.done()) return false;
-
-        session.finishPresentation();
-        if (session.exitReady()) {
-            finishBattle(session, onFinished);
-            return true;
-        }
-        beginMenu(mode);
-        return false;
-    }
-
     if (session.awaitingPlayer()) {
         if (!mode.ui.menu.initialized()) {
-#ifdef CGFX_DUEL_BATTLE
             const battle::BattleState &state = session.state();
             mode.ui.menu.beginDuel(state, state.gatherable, !state.trainer);
-#else
-#if !CGFX_BATTLE_AUTO_REPLACE
-            if (session.awaitingReplacement()) {
-                mode.ui.menu.beginReplacement(session.replacementChoices());
-            } else {
-#endif
-                const battle::BattleState &state = session.state();
-                mode.ui.menu.beginOptions(session.moves(), state.gatherable,
-                                          !state.trainer);
-#if !CGFX_BATTLE_AUTO_REPLACE
-            }
-#endif
-#endif
             return false;
         }
 
@@ -243,35 +205,21 @@ bool update(uint8_t edgeButtons, TerminalCallback onFinished) {
         if (intent.kind != MenuIntentKind::None && session.submitIntent(intent)) {
             // Resolving starts on the next frame; this edge belongs only to the
             // accepted selection and is never replayed into another phase.
-#ifdef CGFX_DUEL_BATTLE
             // An immediate Escape enters the result dwell on this frame, so
             // build its feedback arm now rather than a frame late.
             duelSyncUi(mode, session);
-#endif
         }
         return false;
     }
 
-    // Ready/automatic replacement: advance once. A non-terminal end-turn step
-    // has no caption or dwell, so it is acknowledged immediately; everything
-    // else hands the compact UI arm to feedback. There is no additional
-    // controller phase byte in BattleMode.
-    if (session.advance()) {
-        const battle::ActionResult &result = session.result();
-        if (result.kind == battle::ResultKind::EndTurn &&
-            result.outcome == battle::Outcome::None && !session.state().over) {
-            session.finishPresentation();
-            beginMenu(mode);
-            return false;
-        }
-        beginFeedback(mode);
-    }
-#ifdef CGFX_DUEL_BATTLE
+    // Drive the duel timing phases (concealed interval / result dwell). In the
+    // duel this never returns true: the dwell's terminal exit is detected by
+    // exitReady() above on the following frame.
+    session.advance();
     // advance() may have entered the result dwell this frame; build its arm now
     // (unless the dwell already finalized to terminal, whose feedback arm is
     // still the active one).
     if (!session.exitReady()) duelSyncUi(mode, session);
-#endif
     return false;
 }
 
