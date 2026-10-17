@@ -1,0 +1,3 @@
+<footer>
+<p>Generated from <code>docs/game-design-spec/*.md</code> by <code>tools/build-design-spec.mjs</code> (<code>make spec</code>). Sources: <code>README.md</code>, <code>docs/duel-system-brief.md</code>, <code>docs/moveset-type-mask-brief.md</code>, <code>docs/duel-growth-rearch-brief.md</code>, <code>docs/battle-simulator.md</code>, <code>docs/m1-storage.md</code>, <code>data/beta-area.toml</code>, <code>data/duel.toml</code>, <code>data/consumables.csv</code>, generated headers, and current source. Budget and balance figures are dated whole-image measurements; regenerate and remeasure before relying on them.</p>
+</footer>
