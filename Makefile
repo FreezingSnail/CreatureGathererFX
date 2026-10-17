@@ -124,8 +124,10 @@ help:
 		'  fxtest   alias for fxtest-headless; skips only when ARDENS is unset' \
 		'  fxtest-headless  run every FX device sketch through Ardens serial capture; blocks unsupported Ardens' \
 		'  fxtest-spike  run one selected FX suite plus test_stack; set FXTEST_SPIKE_INO and ARDENS' \
+		'  fxtest-build  compile device suites through one persistent stage per flag profile' \
+		'                (suite.ino swap); set FXTEST_CLEAN=1 to rebuild from scratch' \
 		'' \
-		'Overrides: CXX, ARDUINO_CLI, FQBN, BUILD_DIR, ARDUINO_BUILD_PATH, ARDUINO_BUILD_CACHE_PATH, DIST_DIR, FXDATA_BIN, ARDENS, FXTEST_MS, FXTEST_RAM_BUDGET, AVR_FLASH_BUDGET, AVR_STATIC_RAM_BUDGET, RAM_ELF, AVR_SIZE, AVR_NM, AVR_RELAX_FLAGS, AVR_FXTEST_BUILD_PROPERTIES, AVR_FXTEST_NO_FACTS_BUILD_PROPERTIES, AVR_FXTEST_COMPACT_RESULT_BUILD_PROPERTIES, AVR_FXTEST_CPP_FLAGS, AVR_SHIPPING_BUILD_PROPERTIES, AVR_SHIPPING_CPP_FLAGS, WORLD_SCRIPT_PROFILE_INPUT, WORLD_SCRIPT_PROFILE_TEXT, ARENA_DEMO_BUILD_DIR, ARENA_DEMO_CART_DIR, ARENA_DEMO_CPP_FLAGS, ARENA_DEMO_FLASH_BUDGET, ARENA_PACKAGE, ARENA_PACKAGE_INFO.'
+		'Overrides: CXX, ARDUINO_CLI, FQBN, BUILD_DIR, ARDUINO_BUILD_PATH, ARDUINO_BUILD_CACHE_PATH, DIST_DIR, FXDATA_BIN, ARDENS, FXTEST_MS, FXTEST_RAM_BUDGET, FXTEST_CLEAN, AVR_FLASH_BUDGET, AVR_STATIC_RAM_BUDGET, RAM_ELF, AVR_SIZE, AVR_NM, AVR_RELAX_FLAGS, AVR_FXTEST_BUILD_PROPERTIES, AVR_FXTEST_NO_FACTS_BUILD_PROPERTIES, AVR_FXTEST_COMPACT_RESULT_BUILD_PROPERTIES, AVR_FXTEST_CPP_FLAGS, AVR_SHIPPING_BUILD_PROPERTIES, AVR_SHIPPING_CPP_FLAGS, WORLD_SCRIPT_PROFILE_INPUT, WORLD_SCRIPT_PROFILE_TEXT, ARENA_DEMO_BUILD_DIR, ARENA_DEMO_CART_DIR, ARENA_DEMO_CPP_FLAGS, ARENA_DEMO_FLASH_BUDGET, ARENA_PACKAGE, ARENA_PACKAGE_INFO.'
 
 setup:
 	@printf '%s\n' \
@@ -596,44 +598,69 @@ fxtest-headless-preflight:
 	@test -f "$(FXDATA_BIN)" || { echo "fxtest-headless: FX data image missing at $(FXDATA_BIN); run make gen or set FXDATA_BIN=/path/to/fxdata.bin" >&2; exit 1; }
 	@strings "$(ARDENS)" | grep -Fxq captureserial || { echo "fxtest-headless: BLOCKED (Ardens at $(ARDENS) lacks captureserial; install or build a headless-capable Ardens; the installed 0.24.4 bundle is incompatible)" >&2; exit 2; }
 
+# One persistent Arduino build stage per flag profile, with a stable sketch
+# path (suite.ino) whose content is swapped per suite. arduino-cli reuses the
+# shared src/ objects within a stage, so each suite only recompiles the sketch
+# TU and relinks (~1.4-2.3 s) instead of rebuilding the ~60 shared TUs
+# (~9.7 s). The sketch path must stay stable: arduino-cli full-rebuilds when
+# the sketch path changes. Stage inputs are re-copied once per profile per run
+# (staleness is content-based, so unchanged inputs keep their objects). Keeping
+# the stage's build/ directory is what makes repeat runs incremental; set
+# FXTEST_CLEAN=1 to wipe the profile stages for a from-scratch audit build.
 fxtest-build:
 	@set -e; \
+	if [ "$(FXTEST_CLEAN)" = "1" ]; then rm -rf "$(FXTEST_BUILD_DIR)/profiles"; fi; \
+	refreshed=" "; \
 	for ino in $(FXTEST_NAMES); do \
-		stage="$(FXTEST_BUILD_DIR)/$$ino"; \
-		rm -rf "$$stage"; \
-		mkdir -p "$$stage"; \
-		cp -R src "$$stage/src"; \
-		cp "tst/fxdatatest/$$ino.ino" "$$stage/"; \
-		cp tst/fxdatatest/*.hpp "$$stage/"; \
-		cp -R tst/fxdatatest/harness "$$stage/harness"; \
-		cp tst/fxdatatest/generated/*.hpp "$$stage/"; \
-		cp fxdata/generated/arena_demo_ids.hpp "$$stage/arena_demo_ids.hpp"; \
-		mkdir -p "$$stage/fxdata/generated"; \
-		cp fxdata/generated/arena_demo_ids.hpp "$$stage/fxdata/generated/arena_demo_ids.hpp"; \
-		mkdir "$$stage/generated"; \
-		for fixture in tst/fxdatatest/generated/*.hpp; do \
-			name="$$(basename "$$fixture")"; \
-			printf '#include "../%s"\n' "$$name" > "$$stage/generated/$$name"; \
-		done; \
+		case "$$ino" in \
+			test_battle_compact) profile=compact ;; \
+			test_battle_facts) profile=facts ;; \
+			test_battle_duel|test_duel_session|test_duel_resources|test_duel_ui|test_stack|test_win_exp) profile=duel ;; \
+			*) profile=default ;; \
+		esac; \
+		stage="$(FXTEST_BUILD_DIR)/profiles/$$profile/suite"; \
+		case "$$refreshed" in *" $$profile "*) ;; *) \
+			rm -rf "$$stage/src" "$$stage/harness" "$$stage/generated" "$$stage/fxdata"; \
+			rm -f "$$stage"/*.hpp; \
+			mkdir -p "$$stage"; \
+			cp -R src "$$stage/src"; \
+			cp tst/fxdatatest/*.hpp "$$stage/"; \
+			cp -R tst/fxdatatest/harness "$$stage/harness"; \
+			cp tst/fxdatatest/generated/*.hpp "$$stage/"; \
+			cp fxdata/generated/arena_demo_ids.hpp "$$stage/arena_demo_ids.hpp"; \
+			mkdir -p "$$stage/fxdata/generated"; \
+			cp fxdata/generated/arena_demo_ids.hpp "$$stage/fxdata/generated/arena_demo_ids.hpp"; \
+			mkdir -p "$$stage/generated"; \
+			for fixture in tst/fxdatatest/generated/*.hpp; do \
+				name="$$(basename "$$fixture")"; \
+				printf '#include "../%s"\n' "$$name" > "$$stage/generated/$$name"; \
+			done; \
+			refreshed="$$refreshed$$profile "; \
+		;; esac; \
+		outdir="$(FXTEST_BUILD_DIR)/$$ino/output"; \
+		mkdir -p "$$outdir"; \
+		cp -f "tst/fxdatatest/$$ino.ino" "$$stage/suite.ino"; \
 		echo $$ino; \
-		if [ "$$ino" = "test_battle_compact" ]; then \
+		if [ "$$profile" = "compact" ]; then \
 		    ARDUINO_BUILD_CACHE_PATH="$(ARDUINO_BUILD_CACHE_PATH)" $(ARDUINO_CLI) compile --fqbn "$(FQBN)" \
 		        $(AVR_FXTEST_COMPACT_RESULT_BUILD_PROPERTIES) \
-		        --build-path "$$stage/build" --output-dir "$$stage/output" "$$stage/$$ino.ino"; \
-		elif [ "$$ino" = "test_battle_facts" ]; then \
+		        --build-path "$$stage/build" --output-dir "$$stage/output" "$$stage/suite.ino"; \
+		elif [ "$$profile" = "facts" ]; then \
 		    ARDUINO_BUILD_CACHE_PATH="$(ARDUINO_BUILD_CACHE_PATH)" $(ARDUINO_CLI) compile --fqbn "$(FQBN)" \
 		        $(AVR_FXTEST_NO_FACTS_BUILD_PROPERTIES) \
-		        --build-path "$$stage/build" --output-dir "$$stage/output" "$$stage/$$ino.ino"; \
-		elif [ "$$ino" = "test_battle_duel" ] || [ "$$ino" = "test_duel_session" ] || [ "$$ino" = "test_duel_resources" ] || [ "$$ino" = "test_duel_ui" ] || [ "$$ino" = "test_stack" ] || [ "$$ino" = "test_win_exp" ]; then \
+		        --build-path "$$stage/build" --output-dir "$$stage/output" "$$stage/suite.ino"; \
+		elif [ "$$profile" = "duel" ]; then \
 		    ARDUINO_BUILD_CACHE_PATH="$(ARDUINO_BUILD_CACHE_PATH)" $(ARDUINO_CLI) compile --fqbn "$(FQBN)" \
 		        $(AVR_FXTEST_DUEL_BUILD_PROPERTIES) \
-		        --build-path "$$stage/build" --output-dir "$$stage/output" "$$stage/$$ino.ino"; \
+		        --build-path "$$stage/build" --output-dir "$$stage/output" "$$stage/suite.ino"; \
 		else \
 		    ARDUINO_BUILD_CACHE_PATH="$(ARDUINO_BUILD_CACHE_PATH)" $(ARDUINO_CLI) compile --fqbn "$(FQBN)" \
 		        $(AVR_FXTEST_BUILD_PROPERTIES) \
-		        --build-path "$$stage/build" --output-dir "$$stage/output" "$$stage/$$ino.ino"; \
+		        --build-path "$$stage/build" --output-dir "$$stage/output" "$$stage/suite.ino"; \
 		fi; \
-		./tools/check-fxtest-ram.sh "$$stage/build/$$ino.ino.elf" "$(AVR_SIZE)" "$(FXTEST_RAM_BUDGET)" "$$ino"; \
+		cp -f "$$stage/output/suite.ino.hex" "$$outdir/$$ino.ino.hex"; \
+		cp -f "$$stage/build/suite.ino.elf" "$$outdir/$$ino.ino.elf"; \
+		./tools/check-fxtest-ram.sh "$$outdir/$$ino.ino.elf" "$(AVR_SIZE)" "$(FXTEST_RAM_BUDGET)" "$$ino"; \
 	done
 
 fxtest-run:
