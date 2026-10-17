@@ -1,4 +1,4 @@
-.PHONY: help setup doctor plant test test-debug testvm testvm-debug sim-test gen gen-if-needed gen-data gen-sprites gen-fixtures pack full build mini ram run dev arena-demo arena-test arena-package lure-demo check final-gate verify-generated test-manifest test-generated-libs test-doctor test-fxtest-ram test-avr-build-budget test-world-script-profile world-script-profile-check test-encounter-profile encounter-profile-check encounter-packed-profile-check fxtest fxtest-headless fxtest-spike fxtest-preflight fxtest-headless-preflight fxtest-build fxtest-run new-fxtest clean-build-artifacts test-clean-build-artifacts
+.PHONY: help setup doctor plant test test-debug testvm testvm-debug sim-test gen gen-if-needed gen-data gen-sprites gen-fixtures pack full build mini ram run dev arena-demo arena-test arena-package lure-demo check final-gate verify-generated test-manifest test-generated-libs test-doctor test-fxtest-ram test-avr-build-budget test-world-script-profile world-script-profile-check test-encounter-profile encounter-profile-check encounter-packed-profile-check fxtest fxtest-headless fxtest-spike fxtest-preflight fxtest-headless-preflight fxtest-build fxtest-run new-fxtest clean-build-artifacts test-clean-build-artifacts spec test-spec
 
 # Public command API. Override tool, board, and output variables per workspace/CI.
 CXX ?= g++
@@ -117,6 +117,8 @@ help:
 		'  test-manifest run permanent generated-artifact tests' \
 		'  test-generated-libs check generated libs against the packed image; prerequisite: $(CXX)' \
 		'  test-pack-parity verify native packed-image SHA-256 baseline' \
+		'  spec     regenerate docs/game-design-spec.html from docs/game-design-spec/*.md' \
+		'  test-spec verify the committed design-spec HTML matches its markdown sources' \
 		'  test-doctor run permanent setup-diagnostic tests' \
 		'  clean-build-artifacts preview generated Arduino cache cleanup; add CLEAN_APPLY=1 to delete' \
 		'  test-clean-build-artifacts exercise cleanup safety in isolated build fixtures' \
@@ -551,6 +553,14 @@ sim-test:
 
 test-pack-parity:
 	./tools/tests/pack-parity_test.sh
+
+# The design spec is generated: edit docs/game-design-spec/*.md, run `make spec`;
+# `make test-spec` fails when the committed HTML is out of date.
+spec:
+	node tools/build-design-spec.mjs
+
+test-spec:
+	node tools/build-design-spec.mjs --check
 
 test:
 	$(call run_test,,$(TEST_FLAGS),$(TEST_SOURCES),$(HOST_TEST_BIN))
