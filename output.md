@@ -1515,3 +1515,48 @@ rngSeed(0xABCD); arena::boot() -> (0,4) again                    # deterministic
 
 `df -h .` 60 GiB free before → 59 GiB after (>=10 GiB reserve held). `du -sh build` 1.5G → 1.3G.
 `make clean-build-artifacts BUILD_DIR=build` preview (108 candidates, 2.6 MB) then `CLEAN_APPLY=1`; also applied for `build/arena-demo` (2.7 MB). Removed the disposable `build/fxtest` staged device builds (238M). Retained `build/native-tools` (963M active generator cache), `build/arduino-build` (49M), `dist/CreatureGathererFX-ArenaDemo.arduboy` (deliverable). No `cgfx-pack.*` / `arena-package.*` stage remains.
+
+## ob83 — fxtest device gate: one persistent stage per flag profile
+
+WHAT: Makefile `fxtest-build` now compiles device suites through one persistent
+`$(FXTEST_BUILD_DIR)/profiles/<profile>/suite` stage per flag profile (default / duel / facts /
+compact) with a stable `suite.ino`; inputs refreshed once per profile per run (build/ kept for
+object reuse). Per suite: copy the `.ino` to `suite.ino`, compile with the profile's exact current
+build properties, copy `suite.ino.hex`/`.elf` to `$(FXTEST_BUILD_DIR)/<name>/output/<name>.ino.hex`
+/`.elf`, run `check-fxtest-ram.sh` on the copied ELF. `FXTEST_CLEAN=1` wipes the profile stages.
+`help` text and `docs/dev-flow.md` device-loop notes updated. No source/harness/tool changes.
+
+COMMANDS + NUMBERS
+- `make test` → 258 pass / 0 fail, 3.43 s. `make testvm` → 286 pass / 0 fail, 1.15 s.
+- Baseline `test_stack` spike (BEFORE edit, real 11.18 s): sketch 17268 B, globals 1737 B,
+  RAM data 64 / bss 1673 / used 1737 / limit 2160 / free 423; mode-transition headroom 0x2B7 (695);
+  stack base 0x7C9 (1993) / top 0xA8A (2698) / low 0xA1F (2591) / headroom 0x256 (598);
+  `test_stack PASSED=4 FAILED=0` PASS.
+- Baseline focused (BEFORE, real 55.95 s): blit/items/save/duel_ui all PASS.
+- Focused AFTER: `make fxtest-headless FXTEST_INOS='...test_blit ...test_items ...test_save
+  ...test_duel_ui' ARDENS=...` → 4 PASS, real 33.57 s.
+- `make fxtest-build` warm full wildcard: real 57.08 s (34 suites). Cold full:
+  `make fxtest-build FXTEST_CLEAN=1` → **real 75.29 s (1:15)** vs 5:40 baseline (<=1:40 target met).
+- `make fxtest-headless ARDENS=...` full: **34 PASS / 0 FAIL**, real 75.06 s.
+- Determinism: `shasum -a 256 build/fxtest/test_save/output/test_save.ino.hex` =
+  `b1b860665a8dfdf4e77c16aa4d4fe9a3a6a5ac4a2735f651a6bdb04e2779b516` before and after rebuild.
+- `test_stack` spike AFTER: real 2.35 s, all RAM/stack numbers identical to baseline
+  (17268/1737/64/1673/1737/2160/423; 0x2B7(695); 0x256(598); PASSED=4) — PASS.
+- `make test-fxtest-ram` → `fxtest RAM guard: PASS`.
+- `FXTEST_CLEAN=1` probe (isolated `FXTEST_BUILD_DIR=build/ob83-clean-probe`,
+  `FXTEST_INOS=test_version.ino`): real 11.04 s, layout `profiles/default/suite` + `test_version/
+  output`, probe removed afterward.
+
+STORAGE
+- `du -sh build/fxtest`: 6.1 M (single warm stage) before → 35 M (5 old-layout stages, ~7 M each)
+  after baseline runs → **18 M** after the change (`profiles/` 13 M + 34 per-suite `output/`).
+  Old full 34-stage layout ≈ 240 M. `df -h .` 59 GiB free (>=10 GiB reserve).
+- Removed stale old-layout per-suite `build/`/`src`/`harness` trees and unused
+  `output/*.eep`/`*.with_bootloader.*`; no `cgfx-pack.*` stage remains.
+
+NOTES
+- Wildcard is **34** suites (fxdatatest.ino + 33 `test_*.ino`), not 35 as the bead text states.
+- Interactive arena-demo Ardens (pid 83703, fxport=d1) left untouched; serial captures did not
+  conflict.
+- Scope: only `Makefile` (fxtest-build recipe + help) and `docs/dev-flow.md` changed. No commit
+  (orchestrator commits).

@@ -15,6 +15,13 @@ agent. `AGENTS.md` carries the short list.
 - Full device gate: `make fxtest-headless` compiles every `tst/fxdatatest/*.ino` suite and
   requires each to print an exact `P` or `F` marker. Unset `ARDENS` reports a skip; an Ardens
   without `captureserial` is BLOCKED, never a pass.
+- Device compilation (`fxtest-build`) uses one persistent stage per flag profile
+  (`build/fxtest/profiles/<profile>/suite`) with a stable `suite.ino` whose content is swapped per
+  suite. Only the sketch TU recompiles and relinks per later suite (~1.4-2.3 s); the first suite
+  per profile is a full ~10 s compile on a cold stage. Repeat runs reuse the stage's objects, so
+  an unchanged `src/` is not recompiled. Run `make fxtest-build FXTEST_CLEAN=1` for a from-scratch
+  audit build that wipes the profile stages. Per-suite hex/ELF still land in
+  `build/fxtest/<name>/output/`, unchanged.
 - Final pre-commit gate: `make final-gate ARDENS=/path/to/Ardens` runs `make check` and then the
   shipping RAM report, sequentially. Confirm generation left no unexpected tracked changes; also
   run `make test-pack-parity` when packed bytes can change.
