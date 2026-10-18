@@ -32,7 +32,7 @@ void applyPlayerPreset(Player &player, const BattlePresets::Preset &stored)
 #endif
         creature.status.clearEffects();
         creature.statMods.clearModifiers();
-        player.creatureHPs[slot] = creature.statlist.hp;
+        player.creatureHPs[slot] = creature.hp;
     }
     FxReadCounter::transitionExact(reads);
 }

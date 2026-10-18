@@ -215,7 +215,7 @@ void WorldInteractionSuite(TestRunner &runner) {
     faceRest();
     worldInteractionFake::pressedA = true;
     WorldEngine::interact();
-    test.assert(player.creatureHPs[0], player.party[0].statlist.hp,
+    test.assert(player.creatureHPs[0], player.party[0].hp,
                 "single KO member heals to derived maxHP");
     test.assert(player.creatureHPs[1], static_cast<uint8_t>(0),
                 "unoccupied slot is not touched");
@@ -230,13 +230,13 @@ void WorldInteractionSuite(TestRunner &runner) {
     player.loadCreature(2, 6);
     player.creatureHPs[0] = 0;
     player.creatureHPs[1] = 1;
-    player.creatureHPs[2] = static_cast<uint8_t>(player.party[2].statlist.hp - 1);
+    player.creatureHPs[2] = static_cast<uint8_t>(player.party[2].hp - 1);
     player.party[1].status.applyEffect(Effect::SAPPD);
     faceRest();
     worldInteractionFake::pressedA = true;
     WorldEngine::interact();
     for (uint8_t i = 0; i < 3; ++i)
-        test.assert(player.creatureHPs[i], player.party[i].statlist.hp,
+        test.assert(player.creatureHPs[i], player.party[i].hp,
                     "every occupied member rests to full HP");
     test.assert(static_cast<uint8_t>(player.party[1].status.effects[0]),
                 static_cast<uint8_t>(Effect::NONE),
@@ -247,7 +247,7 @@ void WorldInteractionSuite(TestRunner &runner) {
     worldInteractionFake::pressedA = true;
     WorldEngine::interact();
     for (uint8_t i = 0; i < 3; ++i)
-        test.assert(player.creatureHPs[i], player.party[i].statlist.hp,
+        test.assert(player.creatureHPs[i], player.party[i].hp,
                     "repeated rest keeps full HP");
     test.assert(worldInteractionFake::readCount, static_cast<uint16_t>(0),
                 "repeated rest reads no script slot");
@@ -261,7 +261,7 @@ void WorldInteractionSuite(TestRunner &runner) {
     SaveController::seedParty();
     player.creatureHPs[0] = 0;
     player.creatureHPs[1] = 1;
-    player.creatureHPs[2] = static_cast<uint8_t>(player.party[2].statlist.hp - 1);
+    player.creatureHPs[2] = static_cast<uint8_t>(player.party[2].hp - 1);
     StoreRecord boxed = {};
     boxed.id = player.party[0].id;
     boxed.exp = levelExpThreshold(player.party[0].level);
@@ -275,7 +275,7 @@ void WorldInteractionSuite(TestRunner &runner) {
     worldInteractionFake::pressedA = true;
     WorldEngine::interact();
     for (uint8_t i = 0; i < 3; ++i)
-        test.assert(player.creatureHPs[i], player.party[i].statlist.hp,
+        test.assert(player.creatureHPs[i], player.party[i].hp,
                     "rest heals the live party before the checkpoint");
     test.assert(journalCount(), journalBefore,
                 "rest consumes no journal capacity");
@@ -285,7 +285,7 @@ void WorldInteractionSuite(TestRunner &runner) {
     for (uint8_t i = 0; i < 3; ++i) player.creatureHPs[i] = 0;
     test.assert(SaveController::load(), true, "rested checkpoint reloads");
     for (uint8_t i = 0; i < 3; ++i)
-        test.assert(player.creatureHPs[i], player.party[i].statlist.hp,
+        test.assert(player.creatureHPs[i], player.party[i].hp,
                     "reloaded party keeps rested full HP");
     StoreRecord restored = {};
     test.assert(storeRead(boxedSlot, restored), true, "boxed instance reloads");
@@ -315,13 +315,13 @@ void WorldInteractionSuite(TestRunner &runner) {
     const uint8_t journalAtCapacity = journalCount();
     player.creatureHPs[0] = 0;
     player.creatureHPs[1] = 1;
-    player.creatureHPs[2] = static_cast<uint8_t>(player.party[2].statlist.hp - 1);
+    player.creatureHPs[2] = static_cast<uint8_t>(player.party[2].hp - 1);
     faceRest();
     worldInteractionFake::reset();
     worldInteractionFake::pressedA = true;
     WorldEngine::interact();
     for (uint8_t i = 0; i < 3; ++i)
-        test.assert(player.creatureHPs[i], player.party[i].statlist.hp,
+        test.assert(player.creatureHPs[i], player.party[i].hp,
                     "rest recovers live HP while a write would be refused");
     test.assert(journalCount(), journalAtCapacity,
                 "rest publishes no instance record under refusal");
@@ -333,7 +333,7 @@ void WorldInteractionSuite(TestRunner &runner) {
     for (uint8_t i = 0; i < 3; ++i) player.creatureHPs[i] = 0;
     test.assert(SaveController::load(), true, "checkpoint after refusal reloads");
     for (uint8_t i = 0; i < 3; ++i)
-        test.assert(player.creatureHPs[i], player.party[i].statlist.hp,
+        test.assert(player.creatureHPs[i], player.party[i].hp,
                     "next explicit checkpoint mirrors recovered HP");
 
     dialogMenu.clear();

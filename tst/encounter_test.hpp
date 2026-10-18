@@ -50,9 +50,9 @@ void prepareParty(uint8_t first, uint8_t second, uint8_t third) {
     player.party[0].level = first;
     player.party[1].level = second;
     player.party[2].level = third;
-    player.creatureHPs[0] = player.party[0].statlist.hp;
-    player.creatureHPs[1] = player.party[1].statlist.hp;
-    player.creatureHPs[2] = player.party[2].statlist.hp;
+    player.creatureHPs[0] = player.party[0].hp;
+    player.creatureHPs[1] = player.party[1].hp;
+    player.creatureHPs[2] = player.party[2].hp;
 }
 
 void prepareFx(uint16_t chunkId, int8_t levelOffset = 0,

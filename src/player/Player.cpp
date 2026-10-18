@@ -40,7 +40,7 @@ void Player::setCreature(uint8_t index, CreatureData_t seed) {
     this->party[index].load(seed);
     // Player owns current HP between battle transitions. Installing a new
     // creature is the only path that initializes its full persistent HP.
-    this->creatureHPs[index] = this->party[index].statlist.hp;
+    this->creatureHPs[index] = this->party[index].hp;
 }
 
 bool Player::healParty() {
@@ -48,7 +48,7 @@ bool Player::healParty() {
     for (uint8_t index = 0; index < 3; ++index) {
         // 255 is the empty/tombstone slot id; every authored species is 0..63.
         if (this->party[index].id == 255) continue;
-        const uint8_t maxHP = this->party[index].statlist.hp;
+        const uint8_t maxHP = this->party[index].hp;
         if (this->creatureHPs[index] != maxHP) changed = true;
         this->creatureHPs[index] = maxHP;
         this->party[index].status.clearEffects();
@@ -59,7 +59,7 @@ bool Player::healParty() {
 void Player::restore(const Creature *savedParty, const uint8_t *savedHP) {
     for (uint8_t index = 0; index < 3; ++index) {
         this->party[index] = savedParty[index];
-        const uint8_t maxHP = this->party[index].statlist.hp;
+        const uint8_t maxHP = this->party[index].hp;
         this->creatureHPs[index] = savedHP[index] > maxHP ? maxHP : savedHP[index];
     }
 }

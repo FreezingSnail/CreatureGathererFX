@@ -18,12 +18,7 @@ void test_creatureData(FxTest &test, const CreatureData_t &actual,
     test.expectEqIdx(actual.type1, expected.type1, F("creature.type1"), index);
     test.expectEqIdx(actual.type2, expected.type2, F("creature.type2"), index);
     test.expectEqIdx(actual.evoLevel, expected.evoLevel, F("creature.evoLevel"), index);
-    test.expectEqIdx(actual.atkSeed, expected.atkSeed, F("creature.atkSeed"), index);
-    test.expectEqIdx(actual.defSeed, expected.defSeed, F("creature.defSeed"), index);
-    test.expectEqIdx(actual.spcAtkSeed, expected.spcAtkSeed, F("creature.spcAtkSeed"), index);
-    test.expectEqIdx(actual.spcDefSeed, expected.spcDefSeed, F("creature.spcDefSeed"), index);
     test.expectEqIdx(actual.hpSeed, expected.hpSeed, F("creature.hpSeed"), index);
-    test.expectEqIdx(actual.spdSeed, expected.spdSeed, F("creature.spdSeed"), index);
     test.expectEqIdx(actual.attackMask, expected.attackMask, F("creature.attackMask"), index);
 }
 
@@ -79,7 +74,7 @@ void test_creatures(FxTest &test) {
         // The current wild setup stores one active combatant and empty bench
         // slots. Provide a living player so setup can reach the FX load path.
         player.party[0].load(expected);
-        player.creatureHPs[0] = player.party[0].statlist.hp;
+        player.creatureHPs[0] = player.party[0].hp;
         for (uint8_t slot = 1; slot < PARTY_SIZE; ++slot)
             player.party[slot].level = 0;
         battle::BattleState encounter;

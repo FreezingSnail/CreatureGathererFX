@@ -98,11 +98,9 @@ inline void ArenaLifecycleSuite(TestRunner &runner)
                     "party species matches the rolled FX member");
         test.assert(player.party[slot].level, member[1],
                     "party level matches the rolled FX member");
-        test.assert(player.party[slot].statlist.hp, expected.statlist.hp,
+        test.assert(player.party[slot].hp, expected.hp,
                     "party HP stat is rebuilt from canonical species data");
-        test.assert(player.party[slot].statlist.attack, expected.statlist.attack,
-                    "party attack stat is rebuilt from canonical species data");
-        test.assert(player.creatureHPs[slot], expected.statlist.hp,
+        test.assert(player.creatureHPs[slot], expected.hp,
                     "new party HP starts at the canonical maximum");
         test.assert(player.party[slot].attackMask, member[2],
                     "party attack mask matches the rolled FX member");

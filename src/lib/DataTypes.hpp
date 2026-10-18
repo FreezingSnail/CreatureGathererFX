@@ -20,15 +20,17 @@ typedef struct CreatureD {
     uint8_t type1;
     uint8_t type2;
     uint8_t evoLevel;
-    uint8_t atkSeed;
-    uint8_t defSeed;
-    uint8_t spcAtkSeed;
-    uint8_t spcDefSeed;
+    // Authored HP seed; max HP = 2*level + hpSeed*(level/3) + 30. The five
+    // dead stat seeds were retired (CreatureGathererFX-rhs7.3): the duel reads
+    // only HP. Field order is a permanent packed ABI.
     uint8_t hpSeed;
-    uint8_t spdSeed;
     // Folded 5-bit duel attack set; 0 = no usable attack (WAIT).
     uint8_t attackMask;
 } CreatureData_t;
+
+#ifdef __AVR__
+static_assert(sizeof(CreatureData_t) == 6, "creature record is 6 bytes");
+#endif
 
 struct PopUpDialog {
     uint8_t x, y;

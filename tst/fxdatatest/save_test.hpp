@@ -238,7 +238,7 @@ inline void test_saveBoxedInstanceHP(FxTest &test)
     StoreRecord legacy = creature();
     Creature full;
     full.load(legacy);
-    test.expectEq(storeInstanceHP(legacy), full.statlist.hp, F("legacy zero defaults to full"));
+    test.expectEq(storeInstanceHP(legacy), full.hp, F("legacy zero defaults to full"));
     test.expectEq(static_cast<uint8_t>(save(state)), static_cast<uint8_t>(SaveStep::Done),
                   F("boxed HP checkpoint completes"));
     test.expectEq(saveByte(save_store_a + 112 + 7), 1, F("KO encoding checkpointed"));

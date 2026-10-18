@@ -44,7 +44,7 @@ void verify(FxTest &test, const BattlePresets::Preset &stored)
         test.expectEqIdx(actual.level, member.level, F("preset player level"), slot);
         const uint8_t maxHP = static_cast<uint8_t>(
             2 * member.level + source.hpSeed * (member.level / 3) + 30);
-        test.expectEqIdx(actual.statlist.hp, maxHP, F("preset player max HP"), slot);
+        test.expectEqIdx(actual.hp, maxHP, F("preset player max HP"), slot);
         test.expectEqIdx(player.creatureHPs[slot], maxHP,
                          F("preset player current HP"), slot);
         test.expectEqIdx(actual.attackMask, member.attackMask,
@@ -56,7 +56,7 @@ void verify(FxTest &test, const BattlePresets::Preset &stored)
     battle::applyPlayerPreset(player, stored);
     test.expectEq(FxReadCounter::count(), logicalBootstrapReads(preset),
                   F("preset reapply exact FX reads"));
-    test.expectEq(player.creatureHPs[0], player.party[0].statlist.hp,
+    test.expectEq(player.creatureHPs[0], player.party[0].hp,
                   F("preset reapply restores full HP"));
     test.expectEq(FxReadCounter::markUpdate(), true,
                   F("preset reapply transition accounted"));

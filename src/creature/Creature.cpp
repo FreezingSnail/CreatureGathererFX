@@ -6,12 +6,11 @@
 
 // This will need to load the creature seed from the progmemstore
 Creature::Creature() {
-    this->statlist.attack = 0;
-    this->statlist.defense = 0;
-    this->statlist.speed = 0;
-    this->statlist.hp = 0;
-    this->statlist.spcAtk = 0;
-    this->statlist.spcDef = 0;
+    // Deterministic empty state: a default Creature is an empty party slot
+    // (BattleSetup derives slot occupancy from level), so reset identity too.
+    this->id = 0;
+    this->level = 0;
+    this->hp = 0;
     this->attackMask = 0;
 }
 
@@ -54,13 +53,8 @@ void Creature::loadTypes(CreatureData_t seed) {
 }
 
 void Creature::setStats(CreatureData_t seed) {
-    this->statlist.attack = seedToStat((seed.atkSeed));
-    this->statlist.defense = seedToStat((seed.defSeed));
-    this->statlist.speed = seedToStat((seed.spdSeed));
     // need to bulk up lineraly
-    this->statlist.hp = seedToStat((seed.hpSeed)) + 30;
-    this->statlist.spcAtk = seedToStat((seed.spcAtkSeed));
-    this->statlist.spcDef = seedToStat((seed.spcDefSeed));
+    this->hp = seedToStat((seed.hpSeed)) + 30;
 }
 
 // some ai to find best advantage should move this out of this class though

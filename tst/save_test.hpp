@@ -110,7 +110,7 @@ inline void BoxedInstanceHPTest(TestSuite &suite) {
     test.assert(storeInstanceHP(duplicate),18,"encoded HP subtracts one");
     StoreRecord legacy=creature(27);
     Creature full;full.load(legacy);
-    test.assert(storeInstanceHP(legacy),full.statlist.hp,"legacy zero byte defaults to full HP");
+    test.assert(storeInstanceHP(legacy),full.hp,"legacy zero byte defaults to full HP");
     test.assert(save(state),SaveStep::Done,"boxed HP checkpoint completes");
     test.assert(flashFakeData()[8192+112+7],1,"checkpoint persists KO encoding");
     test.assert(flashFakeData()[8192+120+7],19,"checkpoint persists duplicate encoding");
@@ -644,7 +644,7 @@ inline void FreshBetaStartTest(TestSuite &suite) {
     SaveController::seedParty();
     gameState.playerLocation=betaLocation;
     for(uint8_t i=0;i<3;++i) {
-        const uint8_t maxHP=player.party[i].statlist.hp;
+        const uint8_t maxHP=player.party[i].hp;
         test.assert(player.party[i].id,betaSpecies[i],"fresh beta species");
         test.assert(player.party[i].level,3,"fresh beta level");
         test.assert(player.party[i].attackMask,betaMasks[i],"fresh beta authored moves");
@@ -756,14 +756,14 @@ inline void BoxedEvolutionTest(TestSuite &suite) {
     // Missing HP is preserved for a living instance; a KO instance stays KO.
     fresh();
     StoreRecord injured=creature(levelExpThreshold(8));injured.id=6;injured.attackMask=2;
-    Creature c6;c6.load(injured);const uint8_t max6=c6.statlist.hp;
+    Creature c6;c6.load(injured);const uint8_t max6=c6.hp;
     injured.hpEncoded=static_cast<uint8_t>(max6-5+1); // five HP missing
     uint8_t injuredSlot=255;
     test.assert(storeAdd(injured,injuredSlot),true,"add an injured edge instance");
     test.assert(storeEvolve(injuredSlot),true,"the injured instance evolves");
     StoreRecord evInj={};test.assert(storeRead(injuredSlot,evInj),true,"the injured evolved instance is readable");
     test.assert(evInj.id,7,"species 6 becomes 7");
-    Creature c7;c7.load(evInj);const uint8_t max7=c7.statlist.hp;
+    Creature c7;c7.load(evInj);const uint8_t max7=c7.hp;
     test.assert(storeInstanceHP(evInj),static_cast<uint8_t>(max7-5),"missing HP is preserved across evolution");
 
     StoreRecord ko=creature(levelExpThreshold(8));ko.id=0;ko.attackMask=2;ko.hpEncoded=1; // KO

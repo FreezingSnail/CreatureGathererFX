@@ -98,7 +98,14 @@ perturbed_layout=$fixtures/fxlayout-expand-20-perturbed.toml
 # 0.3.0+ge8afd0a7 (same 27-byte length), which rewrites only the 27-byte
 # generator_version payload. Previous cart sha256 fcda6f8b..., now
 # 418ac63b.... Intentional rebaseline.
-expected=418ac63b081f69db5c1702d572c70aaee72783a780c2fe68e82ed37d778df26a
+# rhs7.3: retire the five dead stat seeds. creatureData shrinks 11 -> 6 bytes
+# per record (64 records, -320 B payload); the appended fields after it shift
+# and the pack input fxdata/data/creatureData.txt loses the columns. The sibling
+# core generator rebuilt at the current tools HEAD also stamps generator
+# identity 0.3.0+g55501d10 (previously 0.3.0+ge8afd0a7), rewriting only the
+# 27-byte generator_version payload. Previous cart sha256 418ac63b..., now
+# 6bbcabeb.... Intentional rebaseline.
+expected=6bbcabebddc8e8481f64f801c05a07876d1f6a3734bcc0219490eaf7116dcbb9
 
 for layout in "$old_layout" "$new_layout" "$perturbed_layout"; do
     test -f "$layout" || {
