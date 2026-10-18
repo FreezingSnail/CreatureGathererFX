@@ -191,10 +191,11 @@ TEST_SOURCES = src/lib/Blit.cpp \
 	src/flags/flag_bit_array.cpp \
 	tst/main.cpp
 
-# Legacy-only TUs archived by rhs7.1: src/engine/battle/{Ai,Damage,Effects}.cpp
-# are fully #ifndef CGFX_DUEL_BATTLE, so the host build no longer compiles them.
-# Resolve.cpp stays: its sideDefeated/canSwitch helpers are live in the duel
-# session even though the legacy resolve arms are not.
+# Legacy-only TUs retired by rhs7.1 (unlisted) and deleted by 7cz9:
+# src/engine/battle/{Ai,Damage,Effects}.{hpp,cpp} are gone (archived in
+# archive/battle-legacy/src). Resolve.cpp stays: its sideDefeated/canSwitch
+# helpers are live in the duel session even though the legacy resolve arms
+# were deleted.
 
 # Common source files for VM tests. GiveItem executes against the one shared
 # Player bag, so the VM test links the Player/Inventory/key sources plus the

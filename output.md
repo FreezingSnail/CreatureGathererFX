@@ -1911,3 +1911,52 @@ level 16; comment updated) and `tools/tests/beta-area_test.mjs` expects the six
 pairs with per-edge `level == source evelevel`. `make test-beta-area` 13/13;
 second final gate PASS 23202/1665. The worker's focused suites did not include
 test-beta-area; noted for future cross-check dispatch prompts.
+
+## 7cz9 — remove orphaned Ai/Damage/Effects TUs + dead Resolve arms
+
+WHAT: deleted the three fully-orphaned, fully-`#ifndef CGFX_DUEL_BATTLE` battle TUs and their
+headers, trimmed `Resolve.cpp` to its live duel helpers, and dropped the vestigial `Ai.hpp`
+include. **Host-only** bead: no AVR build, no `make gen`, no device suite, no commit.
+
+Deleted (archived copies already in `archive/battle-legacy/src/engine/battle/`, left untouched):
+- `src/engine/battle/Ai.{hpp,cpp}`, `Damage.{hpp,cpp}`, `Effects.{hpp,cpp}`.
+
+Edited:
+- `src/engine/battle/Resolve.cpp` — removed all five `#ifndef CGFX_DUEL_BATTLE` arms plus the
+  helper graph they alone used (`captureBefore/After`, `markFaints`+`liveToZero`,
+  `setTerminalOutcome`, `boundedSpeedStage`/`stagedSpeed`, `actionPriority`, `validMove`+
+  `attackEffectiveness`, `appendFact` (`#ifndef CGFX_BATTLE_NO_FACTS`), `resolveAttack`,
+  `resolveSkip`, `resolveGather`, `extensionResult`, `firstMover`/`resolveAction`/`resolveEndTurn`,
+  `otherSide`, `MOVE_COUNT`). Dropped the now-unused includes `Damage.hpp`, `Effects.hpp`,
+  `../../lib/Type.hpp`, `MoveUses.hpp`. Kept only the live parts: `sideDefeated`, `canSwitch`,
+  `benchIndexForOriginalSlot`, `validSide`, `sideIndex`, `SIDE_COUNT`, `PARTY_LIMIT` (425 → 80
+  lines). Arms were `#ifndef`-excluded and helpers already unused in every compiling build, so 0 B
+  expected.
+- `src/engine/battle/BattleSession.cpp` — dropped `#include "Ai.hpp"` (Ai.hpp declared only
+  `battle::chooseDamageAction`/`battle::chooseAction`, both zero-caller; `duel::chooseAction` is
+  DuelKernel and unrelated). `Resolve.hpp`+`BattleSession.hpp` already supply `BattleState.hpp`.
+
+Deviations / decisions:
+- `Resolve.hpp` left **byte-unchanged**. It still declares the removed `firstMover`/`resolveAction`/
+  `resolveEndTurn` and the dead `ACQUISITION_PENDING` enum (kept by rhs7.2). Pinned contract scoped
+  the `.cpp` edits; the declarations have no callers, so link/behavior-neutral. Follow-up candidate.
+- `Makefile:194` comment still names the archived TUs — left untouched (build-input file; verification
+  scope is `src/engine/battle/` only). Follow-up candidate.
+- `Archive` copies are the rhs7.1 snapshots (slightly older than the deleted HEAD versions); adequate
+  provenance, not regenerated.
+
+Verification (host):
+- `make test` → host **240518/0**, world **258/0**.
+- `make testvm` → **286/0**.
+- `grep -rnE "Ai\.hpp|Damage\.hpp|Effects\.hpp|chooseDamageAction|battle::chooseAction" src/ tst/
+  CreatureGathererFX.ino` → **exit 1, 0 hits** (no live include/caller).
+- `git grep -nE 'Ai\.(cpp|hpp)|Damage\.(cpp|hpp)|Effects\.(cpp|hpp)' -- ':!archive' ':!build'` →
+  only `docs/`, `output.md`, `mock/` — no build/compile input.
+- `git diff --stat HEAD` → 8 files, all `src/engine/battle/` (6 deletes + 2 edits), **+0/-1113**;
+  no generated/`src/fxdata.h` drift; `tst/fxdatatest/` untouched.
+- `ls archive/battle-legacy/src/engine/battle/` → `Ai/Damage/Effects.{hpp,cpp}` archived copies present.
+
+Expected AVR: **0 B** (orchestrator final gate to confirm `make ram` stays 23202/1665).
+
+Wall time: host verify ≈26 s; total worker ≈15 min (recon/read + edits + host/VM verify + report).
+No commit/push; bead left open for the orchestrator.
