@@ -1302,15 +1302,25 @@ void installEvolutionFixture() {
         Evolution::evolutionLevel - Evolution::evolutionSource);
     fxDataFake::dataBase = Evolution::evolutionSource;
     memset(fxDataFake::dataBytes, 0, sizeof(fxDataFake::dataBytes));
+    // Authored chains 0->1->2, 3->4->5, 6->7->8 at levels 8, 16, 8, 16, 8, 16.
     fxDataFake::dataBytes[0] = 0;
-    fxDataFake::dataBytes[1] = 3;
-    fxDataFake::dataBytes[2] = 6;
+    fxDataFake::dataBytes[1] = 1;
+    fxDataFake::dataBytes[2] = 3;
+    fxDataFake::dataBytes[3] = 4;
+    fxDataFake::dataBytes[4] = 6;
+    fxDataFake::dataBytes[5] = 7;
     fxDataFake::dataBytes[targetOffset + 0] = 1;
-    fxDataFake::dataBytes[targetOffset + 1] = 4;
-    fxDataFake::dataBytes[targetOffset + 2] = 7;
+    fxDataFake::dataBytes[targetOffset + 1] = 2;
+    fxDataFake::dataBytes[targetOffset + 2] = 4;
+    fxDataFake::dataBytes[targetOffset + 3] = 5;
+    fxDataFake::dataBytes[targetOffset + 4] = 7;
+    fxDataFake::dataBytes[targetOffset + 5] = 8;
     fxDataFake::dataBytes[levelOffset + 0] = 8;
-    fxDataFake::dataBytes[levelOffset + 1] = 8;
+    fxDataFake::dataBytes[levelOffset + 1] = 16;
     fxDataFake::dataBytes[levelOffset + 2] = 8;
+    fxDataFake::dataBytes[levelOffset + 3] = 16;
+    fxDataFake::dataBytes[levelOffset + 4] = 8;
+    fxDataFake::dataBytes[levelOffset + 5] = 16;
 }
 
 // Install explicit species/exp/missing fixtures into stable slots 0..2 and
@@ -1347,7 +1357,8 @@ uint8_t storedSpecies(uint8_t slot) {
 
 // Crossing the level-8 edge on the growth terminal rewrites each stable
 // instance to its explicit target in place: species id changes, the derived
-// level/exp and the stable slot are preserved, and the moved are untouched.
+// level/exp and the stable slot are preserved, and the evolved instance adopts
+// the target species authored kit (crab mask 4 -> 12).
 void duelWildWinEvolvesAtEdge(Test &test) {
     installEvolutionFixture();
     const uint16_t before = static_cast<uint16_t>(levelExpThreshold(8) - 1); // level 7
@@ -1367,7 +1378,39 @@ void duelWildWinEvolvesAtEdge(Test &test) {
     test.assert(storedExp(0), static_cast<uint16_t>(before + 8),
                 "exp is preserved exactly across evolution");
     test.assert(player.party[0].attackMask, static_cast<uint8_t>(2),
-                "the existing moves are preserved");
+                "species 1 keeps the water kit (mask 2)");
+    test.assert(player.party[1].attackMask, static_cast<uint8_t>(12),
+                "species 4 adopts the earth/fire kit (mask 4 -> 12)");
+    StoreRecord crab = {};
+    test.assert(storeRead(1, crab), true, "the evolved crab slot is readable");
+    test.assert(crab.attackMask, static_cast<uint8_t>(12),
+                "the stable crab record stores the target kit mask");
+}
+
+// The second link of each starter chain is reachable at its authored level-16
+// threshold and adopts the target kit mask: snail 1 -> 2 (2 -> 18) and squid
+// 7 -> 8 (2 -> 10); a terminal species at 16 never evolves.
+void duelWildWinEvolutionChainMask(Test &test) {
+    installEvolutionFixture();
+    const uint16_t before = static_cast<uint16_t>(levelExpThreshold(16) - 1); // level 15
+    const uint8_t species[PARTY_SIZE] = {1, 7, 2};
+    const uint16_t exps[PARTY_SIZE] = {before, before, before};
+    seedSpeciesInstances(species, exps, kFull);
+    beginWildWinSession(1, false); // gain 8 crosses the level-16 edge
+    wildKoToWorld();
+
+    test.assert(player.party[0].id, static_cast<uint8_t>(2), "snail 1 evolves to 2");
+    test.assert(player.party[0].attackMask, static_cast<uint8_t>(18),
+                "snail 2 adopts the water/plant kit (mask 2 -> 18)");
+    test.assert(player.party[1].id, static_cast<uint8_t>(8), "squid 7 evolves to 8");
+    test.assert(player.party[1].attackMask, static_cast<uint8_t>(10),
+                "squid 8 adopts the water/fire kit (mask 2 -> 10)");
+    test.assert(player.party[2].id, static_cast<uint8_t>(2),
+                "a terminal species at level 16 never evolves");
+    StoreRecord snail = {};
+    test.assert(storeRead(0, snail), true, "the evolved snail slot is readable");
+    test.assert(snail.attackMask, static_cast<uint8_t>(18),
+                "the stable snail record stores the target kit mask");
 }
 
 // A below-edge level-up changes no species, and a species without an authored
@@ -1401,8 +1444,8 @@ void duelWildWinNoEdgeNoEvolution(Test &test) {
                 "a non-edge species still keeps its derived level");
 }
 
-// Evolution happens once per accepted transformation: the target species has no
-// further edge, so a later eligible win keeps the target and only grows exp.
+// Evolution happens once per accepted threshold: below the chain's next edge a
+// later eligible win keeps the target and only grows exp.
 void duelWildWinEvolutionOnce(Test &test) {
     installEvolutionFixture();
     const uint16_t before = static_cast<uint16_t>(levelExpThreshold(8) - 1);
@@ -1630,6 +1673,10 @@ inline void DuelSessionIntegrationSuite(TestRunner &runner) {    using namespace
     Test evoEdge(__func__);
     duelWildWinEvolvesAtEdge(evoEdge);
     suite.addTest(evoEdge);
+
+    Test evoChain(__func__);
+    duelWildWinEvolutionChainMask(evoChain);
+    suite.addTest(evoChain);
 
     Test evoNone(__func__);
     duelWildWinNoEdgeNoEvolution(evoNone);

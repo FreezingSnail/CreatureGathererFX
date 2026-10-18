@@ -1813,3 +1813,101 @@ mode-transition headroom 0x2CB.
 `df -h .` **62 GiB free** (>10 GiB). No commit/push in either repo; bead not closed.
 Wall time ≈55 min worker (tools recon/edit ~15, install ~2, game edit + host loops ~20,
 gen/VM/manifest ~5, device suites ~8, A/B + report ~5).
+
+## rhs7.4 — Evolution as mask progression: full starter chains and target-kit adoption
+
+WHAT: authored the full three-link starter chains in `data/json/creatures.json`
+(species 1->2, 4->5, 7->8; evelevel 16 already authored; terminals at 24 inert)
+and made evolution adopt the target species authored kit mask, restoring the
+instance-mask == species-mask invariant on both growth paths. Owned the single
+AVR/generation lane (pinned `BUILD_DIR=build/rhs7-lane`, evidence
+`build/reports/rhs7/`).
+
+### Game repo edits
+- `data/json/creatures.json` — `evolves_to` 2 on species 1, 5 on species 4, 8 on
+  species 7.
+- `src/engine/battle/BattleFlow.cpp` `awardOrdinaryWildExp` — inside the existing
+  evolved block: `record.attackMask = readCreatureMask(target);` before the same
+  `grown.load(record)` target read. exp / stable slot / missing-HP / retry
+  semantics unchanged.
+- `src/save/Compaction.cpp` `storeEvolve` — same adoption before `maxHP(record)`.
+- `src/lib/ReadData.{hpp,cpp}` (new `readCreatureMask`), device body reads the
+  authored per-species mask as one byte from `AttackMasks::attackMask` (the
+  table is generated from the same moves as `CreatureData_t.attackMask`).
+- `tst/src/ReadData.cpp` — host `readCreatureMask` returns
+  `getCreatureFromStore(id).attackMask` (fixture), matching how host already
+  substitutes `getCreatureFromStore`.
+- `tst/creature_test.hpp` — 6-edge fixture + chain/threshold/terminal asserts.
+- `tst/duel_session_integration_test.hpp` — 6-edge fixture; crab mask 4->12 on
+  the BattleFlow path; new `duelWildWinEvolutionChainMask` (snail 2->18, squid
+  2->10 at 16, terminal inert).
+- `tst/save_test.hpp` `BoxedEvolutionTest` — 6-edge fixture; crab 4->12 dup
+  assert + snail/squid chain cases (Compaction path).
+- `tst/fxdatatest/win_exp_test.hpp` — BattleFlow crab 4->12 assert; boxed crab /
+  snail / squid adoption cases.
+
+**Design deviation (documented):** the direct `getCreatureFromStore(target)
+.attackMask` read measured **+130 B** app flash (a fresh readDataObject<
+CreatureData_t> path), and a `loadTypes`/`setStats` restructure **+324 B**. A
+shared 1-byte `readCreatureMask` helper costs **+26 B** (see A/B below), so the
+read was factored into `ReadData` — still inside the same transition read, once
+per evolution.
+
+### Tools repo (CreatureGathererTools, crates/core/src/evolution.rs only; 3 pre-existing dirty files untouched)
+Added a `chained_edges()` fixture plus `accepts_three_link_chains_and_pins_their
+_arrays`, `a_chain_middle_is_not_rejected_as_a_cycle` and
+`a_back_edge_in_a_chain_is_rejected`. The existing validator already accepts
+three-link chains (the cycle walk follows `evolves_to` forward and only rejects a
+back edge). Validation-only change: the installed CLI is unchanged
+(`cgfx-tools 0.3.0+g55501d10`), so no rebuild/reinstall.
+`cargo test -p cgfx-core` → lib **233 passed / 0 failed** (+3), all integration
+suites green.
+
+### Generation / host / VM
+- `make gen` (installed tool 0.3.0+g55501d10) → `fxdata/generated/evolution.txt`
+  (gitignored) `evolutionSource {0,1,3,4,6,7}`, `evolutionTarget {1,2,4,5,7,8}`,
+  `evolutionLevel {8,16,8,16,8,16}` (+9 B cart payload vs the 3-edge baseline).
+- `src/fxdata.h` `FX_DATA_BYTES` 748546 → **748555** (+9); `evolutionTarget`
+  0x0B6B79, `evolutionLevel` 0x0B6B7F; `Rewards.*` shift +9.
+- `tst/fxdatatest/generated/evolution_data.hpp` 3 → 6 edges.
+- `make verify-generated` PASS; `make test-manifest` PASS; `make test-generated-libs`
+  PASS; `fxdata/generated/*` + `dist/*` are gitignored build outputs.
+- `make test` → host **240518/0**, world **258/0**. `make testvm` → **286/0**.
+
+### Device (single lane, Ardens)
+`make fxtest-headless FXTEST_INOS='test_win_exp test_save test_battle_duel test_stack'` → all PASS:
+win_exp **49/0** (+13 new asserts), save **304/0**, battle_duel **47/0**, stack **4/0**.
+`test_stack` headroom **0x26C (620 B)** = control; mode-transition 0x2CB.
+
+### AVR whole-image A/B (`make ram`, pinned dirs)
+- CONTROL (HEAD ceecdfe, rhs7.3): **23158 flash / 1665 static**.
+- HEAD code + regenerated fxdata.h: **23172** (+14).
+- Constant-stub line (`record.attackMask = 12`): **23176** (+4 code).
+- CANDIDATE rhs7.4: **23202 flash / 1665 static** → **+44 B flash, 0 B static**.
+- Breakdown: **+9 B** FX payload lives in the cart (`dist/fxdata.bin`), not app
+  flash. **+14 B** app flash from the reshuffled `fxdata.h` address/`FX_DATA_BYTES`
+  constants. **+26 B** for the shared 1-byte target-mask read on both paths.
+  **+4 B** for the added store. Compaction change measured **0 net**. Static RAM
+  unchanged (no new globals). ELF:
+  `build/reports/rhs7/candidate-rhs7.4.elf`; log `candidate-rhs7.4-ram.log`;
+  rebuilt control `control-rhs7.4-ram.log`.
+
+### Pack-parity rebaseline
+`tools/tests/pack-parity_test.sh` cart sha256 `6bbcabeb…` → **`f8bd14fd96b6f430c98a76e4266ff60a13ddb3f7871ebb16b233060bc66e9307`**
+(+9 B evolution payload, +9 shift of Rewards; generator identity unchanged
+0.3.0+g55501d10). `make test-pack-parity` PASS.
+
+### Storage / wall time
+`du -sh build/rhs7-lane` **104 M**; `df -h .` **57 GiB free** (>10 GiB). Scratch
+A/B source copies removed; evidence kept. No commit/push in either repo; bead not
+closed. Wall time ≈75 min worker (recon edit ~15, tools test ~3, gen/host/VM/
+generated ~10, device ~8, A/B + size-trim loop ~30, report ~9).
+
+### Orchestrator follow-up: test-beta-area gate failure + fix
+First `make final-gate` failed at `test-beta-area`: the contract pinned exactly
+three first-stage edges and `creatures.json` now authors six. Fixed inline:
+`data/beta-area.toml` gains the three second-stage edges (1->2, 4->5, 7->8 at
+level 16; comment updated) and `tools/tests/beta-area_test.mjs` expects the six
+pairs with per-edge `level == source evelevel`. `make test-beta-area` 13/13;
+second final gate PASS 23202/1665. The worker's focused suites did not include
+test-beta-area; noted for future cross-check dispatch prompts.

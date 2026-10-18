@@ -142,6 +142,8 @@ __attribute__((noinline)) void duelDeviceWildWinEvolution(FxTest &test) {
                   F("the derived level reaches the edge"));
     test.expectEq(player.party[0].attackMask, static_cast<uint8_t>(2),
                   F("the existing moves are preserved"));
+    test.expectEq(player.party[1].attackMask, static_cast<uint8_t>(12),
+                  F("the evolved crab adopts its target kit (4 -> 12)"));
     test.expectEq(player.creatureHPs[1],
                   static_cast<uint8_t>(player.party[1].hp - 5),
                   F("missing HP preserved across evolution"));
@@ -201,6 +203,54 @@ __attribute__((noinline)) void duelDeviceBoxedEvolution(FxTest &test) {
     test.expectEq(evolved.exp, levelExpThreshold(8), F("the boxed exp is preserved"));
     test.expectEq(evolved.attackMask, static_cast<uint8_t>(2), F("the boxed moves are preserved"));
     test.expectEq(storeEvolve(slot), false, F("an evolved boxed instance never re-evolves"));
+
+    // rhs7.4: the target species authored kit replaces the instance mask at the
+    // level-8 crab edge (4 -> 12) and both level-16 chain links (snail 2 -> 18,
+    // squid 2 -> 10); the stable slot keeps the adopted mask.
+    storeFresh();
+    StoreRecord crab = {};
+    crab.id = 3;
+    crab.exp = levelExpThreshold(8);
+    crab.attackMask = 2;
+    crab.hpEncoded = 0;
+    uint8_t crabSlot = 255;
+    test.expectEq(storeAdd(crab, crabSlot), true, F("a boxed crab is added"));
+    test.expectEq(storeEvolve(crabSlot), true, F("the boxed crab evolves"));
+    StoreRecord evCrab = {};
+    storeRead(crabSlot, evCrab);
+    test.expectEq(evCrab.id, static_cast<uint8_t>(4), F("the crab becomes 4"));
+    test.expectEq(evCrab.attackMask, static_cast<uint8_t>(12),
+                  F("the crab adopts the earth/fire kit (4 -> 12)"));
+
+    storeFresh();
+    StoreRecord snail = {};
+    snail.id = 1;
+    snail.exp = levelExpThreshold(16);
+    snail.attackMask = 2;
+    snail.hpEncoded = 0;
+    uint8_t snailSlot = 255;
+    test.expectEq(storeAdd(snail, snailSlot), true, F("a boxed snail is added"));
+    test.expectEq(storeEvolve(snailSlot), true, F("the boxed snail chain link evolves"));
+    StoreRecord evSnail = {};
+    storeRead(snailSlot, evSnail);
+    test.expectEq(evSnail.id, static_cast<uint8_t>(2), F("the snail becomes 2"));
+    test.expectEq(evSnail.attackMask, static_cast<uint8_t>(18),
+                  F("the snail adopts the water/plant kit (2 -> 18)"));
+
+    storeFresh();
+    StoreRecord squid = {};
+    squid.id = 7;
+    squid.exp = levelExpThreshold(16);
+    squid.attackMask = 2;
+    squid.hpEncoded = 0;
+    uint8_t squidSlot = 255;
+    test.expectEq(storeAdd(squid, squidSlot), true, F("a boxed squid is added"));
+    test.expectEq(storeEvolve(squidSlot), true, F("the boxed squid chain link evolves"));
+    StoreRecord evSquid = {};
+    storeRead(squidSlot, evSquid);
+    test.expectEq(evSquid.id, static_cast<uint8_t>(8), F("the squid becomes 8"));
+    test.expectEq(evSquid.attackMask, static_cast<uint8_t>(10),
+                  F("the squid adopts the water/fire kit (2 -> 10)"));
 
     storeFresh();
     StoreRecord low = {};

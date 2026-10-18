@@ -80,6 +80,14 @@ CreatureData_t getCreatureFromStore(uint8_t id) {
     return cseed;
 }
 
+uint8_t readCreatureMask(uint8_t id) {
+    // The authored per-species duel kit mask is a single byte in the packed
+    // AttackMasks table; read it directly instead of the whole species record.
+    uint8_t mask = 0;
+    FxRead::bytes(AttackMasks::attackMask + id, &mask, 1);
+    return mask;
+}
+
 uint16_t ReadFXu16(uint24_t addr) {
     return FxRead::littleEndian16(addr);
 }

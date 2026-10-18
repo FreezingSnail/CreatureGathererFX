@@ -18,6 +18,7 @@
     "type2": "none",
     "evelevel": 16,
     "hp": 8,
+    "evolves_to": 2,
     "moves": [
       "water"
     ]
@@ -53,6 +54,7 @@
     "type2": "none",
     "evelevel": 16,
     "hp": 9,
+    "evolves_to": 5,
     "moves": [
       "earth",
       "fire"
@@ -89,6 +91,7 @@
     "type2": "none",
     "evelevel": 16,
     "hp": 8,
+    "evolves_to": 8,
     "moves": [
       "water"
     ]

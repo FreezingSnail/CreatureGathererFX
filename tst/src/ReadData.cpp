@@ -59,3 +59,7 @@ CreatureData_t getCreatureFromStore(uint8_t id) {
     CreatureData_t cseed{};
     return cseed;
 }
+
+uint8_t readCreatureMask(uint8_t id) {
+    return getCreatureFromStore(id).attackMask;
+}

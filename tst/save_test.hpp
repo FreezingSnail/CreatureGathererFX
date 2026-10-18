@@ -688,12 +688,12 @@ inline void FreshBetaStartTest(TestSuite &suite) {
     test.assert(player.party[0].level,31,"restored level is not rewritten by the beta start");
     suite.addTest(test);
 }
-// jp8.11.12: a boxed (non-party) stable instance whose accepted stored
+// jp8.11.12 / rhs7.4: a boxed (non-party) stable instance whose accepted stored
 // experience has already reached its authored edge evolves in place on the
-// collection transition. exp, slot and attack mask (moves) are preserved; the
-// species id becomes the explicit target and HP is re-encoded for the target at
-// the same derived level, keeping a living instance's missing HP and leaving a KO
-// instance KO. A refused write leaves the old species, so the pending evolution
+// collection transition. exp and slot are preserved; the species id becomes the
+// explicit target and both the attack mask and HP are re-derived for the target
+// at the same derived level, keeping a living instance's missing HP and leaving a
+// KO instance KO. A refused write leaves the old species, so the pending evolution
 // stays derivable from exp and retryable after the journal drains.
 inline void BoxedEvolutionTest(TestSuite &suite) {
     using namespace save_test_detail;Test test(__func__);
@@ -705,9 +705,12 @@ inline void BoxedEvolutionTest(TestSuite &suite) {
     const uint32_t levelOffset = static_cast<uint32_t>(Evolution::evolutionLevel - Evolution::evolutionSource);
     fxDataFake::dataBase = Evolution::evolutionSource;
     memset(fxDataFake::dataBytes, 0, sizeof(fxDataFake::dataBytes));
-    fxDataFake::dataBytes[0]=0;fxDataFake::dataBytes[1]=3;fxDataFake::dataBytes[2]=6;
-    fxDataFake::dataBytes[targetOffset+0]=1;fxDataFake::dataBytes[targetOffset+1]=4;fxDataFake::dataBytes[targetOffset+2]=7;
-    fxDataFake::dataBytes[levelOffset+0]=8;fxDataFake::dataBytes[levelOffset+1]=8;fxDataFake::dataBytes[levelOffset+2]=8;
+    fxDataFake::dataBytes[0]=0;fxDataFake::dataBytes[1]=1;fxDataFake::dataBytes[2]=3;
+    fxDataFake::dataBytes[3]=4;fxDataFake::dataBytes[4]=6;fxDataFake::dataBytes[5]=7;
+    fxDataFake::dataBytes[targetOffset+0]=1;fxDataFake::dataBytes[targetOffset+1]=2;fxDataFake::dataBytes[targetOffset+2]=4;
+    fxDataFake::dataBytes[targetOffset+3]=5;fxDataFake::dataBytes[targetOffset+4]=7;fxDataFake::dataBytes[targetOffset+5]=8;
+    fxDataFake::dataBytes[levelOffset+0]=8;fxDataFake::dataBytes[levelOffset+1]=16;fxDataFake::dataBytes[levelOffset+2]=8;
+    fxDataFake::dataBytes[levelOffset+3]=16;fxDataFake::dataBytes[levelOffset+4]=8;fxDataFake::dataBytes[levelOffset+5]=16;
 
     // A full edge instance evolves to its explicit target; non-edge species and
     // out-of-range slots are refused; the evolved instance never re-evolves.
@@ -721,7 +724,7 @@ inline void BoxedEvolutionTest(TestSuite &suite) {
     StoreRecord evolved={};test.assert(storeRead(edgeSlot,evolved),true,"the evolved instance is readable");
     test.assert(evolved.id,1,"species 0 becomes its explicit target 1");
     test.assert(evolved.exp,levelExpThreshold(8),"exp is preserved");
-    test.assert(evolved.attackMask,2,"the attack mask (moves) is preserved");
+    test.assert(evolved.attackMask,2,"the target species kit mask is adopted (species 1, mask 2)");
     test.assert(evolved.hpEncoded,0,"a full instance stays full after evolution");
     test.assert(storeEvolve(edgeSlot),false,"an evolved instance never re-evolves");
     test.assert(storeEvolve(plainSlot),false,"a species without an authored edge never evolves");
@@ -743,6 +746,7 @@ inline void BoxedEvolutionTest(TestSuite &suite) {
     test.assert(dupRead.id,4,"the first duplicate became its target");
     test.assert(storeRead(dupSlotB,dupRead),true,"the second duplicate is readable");
     test.assert(dupRead.id,4,"the second duplicate became its target");
+    test.assert(dupRead.attackMask,12,"the evolved crab adopts the earth/fire kit (mask 4 -> 12)");
 
     // Below the edge: no evolution.
     fresh();
@@ -752,6 +756,24 @@ inline void BoxedEvolutionTest(TestSuite &suite) {
     test.assert(storeEvolve(lowSlot),false,"a below-edge instance does not evolve");
     held={};test.assert(storeRead(lowSlot,held),true,"the below-edge instance is readable");
     test.assert(held.id,0,"the below-edge species is unchanged");
+
+    // rhs7.4: the level-16 chain links adopt the target kit mask; a terminal
+    // species at 16 never evolves.
+    fresh();
+    StoreRecord snail=creature(levelExpThreshold(16));snail.id=1;snail.attackMask=2;snail.hpEncoded=0;
+    StoreRecord squid=creature(levelExpThreshold(16));squid.id=7;squid.attackMask=2;squid.hpEncoded=0;
+    uint8_t snailSlot=255,squidSlot=255;
+    test.assert(storeAdd(snail,snailSlot),true,"add the snail chain link");
+    test.assert(storeAdd(squid,squidSlot),true,"add the squid chain link");
+    test.assert(storeEvolve(snailSlot),true,"the snail chain link evolves");
+    test.assert(storeEvolve(squidSlot),true,"the squid chain link evolves");
+    StoreRecord evSnail={},evSquid={};
+    test.assert(storeRead(snailSlot,evSnail),true,"the evolved snail is readable");
+    test.assert(evSnail.id,2,"species 1 becomes 2");
+    test.assert(evSnail.attackMask,18,"the snail adopts the water/plant kit (mask 2 -> 18)");
+    test.assert(storeRead(squidSlot,evSquid),true,"the evolved squid is readable");
+    test.assert(evSquid.id,8,"species 7 becomes 8");
+    test.assert(evSquid.attackMask,10,"the squid adopts the water/fire kit (mask 2 -> 10)");
 
     // Missing HP is preserved for a living instance; a KO instance stays KO.
     fresh();

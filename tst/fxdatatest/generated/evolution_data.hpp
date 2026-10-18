@@ -5,8 +5,8 @@
 
 // Model fixture for the packed Evolution edge mapping.
 namespace EvolutionFixture {
-const uint8_t evolutionSource[] PROGMEM = { 0, 3, 6 };
-const uint8_t evolutionTarget[] PROGMEM = { 1, 4, 7 };
-const uint8_t evolutionLevel[] PROGMEM = { 8, 8, 8 };
-constexpr uint8_t evolutionEdgeCount = 3;
+const uint8_t evolutionSource[] PROGMEM = { 0, 1, 3, 4, 6, 7 };
+const uint8_t evolutionTarget[] PROGMEM = { 1, 2, 4, 5, 7, 8 };
+const uint8_t evolutionLevel[] PROGMEM = { 8, 16, 8, 16, 8, 16 };
+constexpr uint8_t evolutionEdgeCount = 6;
 } // namespace EvolutionFixture

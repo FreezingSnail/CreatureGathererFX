@@ -12,6 +12,7 @@
 #include "../../save/Compaction.hpp"
 #include "../../item/Inventory.hpp"
 #include "../../lib/FxRead.hpp"
+#include "../../lib/ReadData.hpp"
 #include "../../fxdata.h"
 #include "../world/World.hpp"
 
@@ -126,6 +127,9 @@ void awardOrdinaryWildExp(const battle::BattleState &state) {
         if (evolved) {
             const uint8_t missing = static_cast<uint8_t>(newMax - newHP);
             record.id = target;
+            // Adopt the target species authored kit: its mask replaces the source
+            // instance mask, so the record and the live member agree again.
+            record.attackMask = readCreatureMask(target);
             grown.load(record); // target species at the same derived level
             newMax = grown.hp;
             newHP = missing >= newMax ? 0 : static_cast<uint8_t>(newMax - missing);
