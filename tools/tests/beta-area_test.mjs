@@ -375,6 +375,63 @@ test('tier1 lure rate meets the encounter need within six turns', () => {
 });
 
 // ---------------------------------------------------------------------------
+// Growth pacing arithmetic (CreatureGathererFX-jp8.11.26).
+// ---------------------------------------------------------------------------
+// The brief docs/first-beta-pacing-brief.md pins these controls. Assertions read
+// the shipping sources so a future rebalance (curve, gain constant or encounter
+// level range) fails loudly instead of the numbers silently drifting.
+test('exp curve, ordinary-wild gain constant and win bounds to the level-8 edge', () => {
+  // LEVEL_EXP[n] = n^3 from the shipping level curve.
+  const levelCurve = readText('src/creature/LevelCurve.hpp');
+  const tableMatch = levelCurve.match(/LEVEL_EXP\[LEVEL_COUNT\][^=]*=\s*\{([^}]*)\}/);
+  assert.ok(tableMatch, 'LevelCurve.hpp declares the LEVEL_EXP table');
+  const LEVEL_EXP = tableMatch[1]
+    .split(',').map((v) => v.trim()).filter((v) => v !== '').map(Number);
+  assert.equal(LEVEL_EXP.length, 32, 'the level curve carries 32 cumulative thresholds');
+  for (let n = 0; n < LEVEL_EXP.length; n += 1) {
+    assert.equal(LEVEL_EXP[n], n * n * n, `LEVEL_EXP[${n}] must equal n^3`);
+  }
+  assert.equal(LEVEL_EXP[3], 27, 'level-3 threshold is 27');
+  assert.equal(LEVEL_EXP[8], 512, 'level-8 threshold is 512');
+
+  // First-stage evolution is the level-8 edge in the contract.
+  const firstStageLevel = Math.min(...edges.map((e) => e.level));
+  assert.equal(firstStageLevel, 8, 'the first evolution edge is level 8');
+  const startLevel = parties[0].level;
+  assert.equal(startLevel, 3, 'party start level is 3 (contract)');
+  const expToEdge = LEVEL_EXP[firstStageLevel] - LEVEL_EXP[startLevel];
+  assert.equal(expToEdge, 485, 'exp from level 3 to the level-8 edge is 512-27');
+
+  // Ordinary-wild exp gain is 8 * foeLevel, read from the shipping source.
+  const battleFlow = readText('src/engine/battle/BattleFlow.cpp');
+  const gainMatch = battleFlow.match(
+    /const uint16_t gain = static_cast<uint16_t>\(\s*state\.active\[[^\]]*\]\.level\) \* (\d+)u;/);
+  assert.ok(gainMatch,
+    'BattleFlow.cpp still computes the ordinary-wild gain as foeLevel * constant');
+  const gainPerLevel = Number(gainMatch[1]);
+  assert.equal(gainPerLevel, 8, 'ordinary-wild exp gain constant is 8 * foeLevel');
+
+  const levelMin = encounters.level_min;
+  const levelMax = encounters.level_max;
+  assert.deepEqual([levelMin, levelMax], [2, 5], 'authored encounter levels are 2..5');
+  const minGain = gainPerLevel * levelMin;
+  const maxGain = gainPerLevel * levelMax;
+  assert.deepEqual([minGain, maxGain], [16, 40], 'win gains span 16..40 exp');
+  assert.equal(Math.ceil(expToEdge / maxGain), 13, 'fastest path to the level-8 edge is 13 wins');
+  assert.equal(Math.ceil(expToEdge / minGain), 31, 'slowest path to the level-8 edge is 31 wins');
+});
+
+test('boss level 8 and the level-8 edges are the authored contract values', () => {
+  assert.equal(boss.level, 8, 'boss level 8 comes from the contract');
+  const level8Edges = edges.filter((e) => e.level === boss.level);
+  assert.equal(level8Edges.length, 3, 'three first-stage edges share the boss level');
+  for (const edge of level8Edges) {
+    assert.equal(creaturesById.get(edge.from_id).evelevel, boss.level,
+      `creature ${edge.from_id} authored evelevel equals the boss level`);
+  }
+});
+
+// ---------------------------------------------------------------------------
 // Evolution edges versus canonical creatures.
 // ---------------------------------------------------------------------------
 test('evolution edges match canonical evelevel and the named pairs', () => {

@@ -2018,3 +2018,43 @@ declaration order. No behavior/interface change.
 
 Wall time: gen→ram ≈5 min; total worker ≈10 min (recon + edit + gen/verify + host/VM + full device + A/B).
 Tree left uncommitted and consistent (generated artifacts regenerated from sources).
+
+## jp8.11.26 — Pin first-beta pacing and lure economy numbers
+
+HOST-ONLY (node + host C++). Not committed/closed per dispatch.
+
+Changed files:
+- `docs/first-beta-pacing-brief.md` (NEW): control numbers with exact formulas + file refs
+  (LevelCurve `n^3`, BattleFlow `8×foeLevel`, wildNeed/rate/flee, plant cadence 128, tier-2 return,
+  deposit charge `16<<tier`); exact win bounds **485 = 512−27, gains 16..40 → 13 fastest / 31 slowest**
+  (correcting the bead description's rough "12-30"); targets table (4 contract-implied + 6
+  OWNER-PENDING proposals); candidate-levers table with ownership + file to change.
+- `tools/tests/beta-area_test.mjs` (+57): two new tests — parse `LEVEL_EXP` from
+  `src/creature/LevelCurve.hpp`, assert `n^3` shape + `threshold(8)-threshold(3)==485`; read the
+  `8×foeLevel` gain constant from `src/engine/battle/BattleFlow.cpp` (not hardcoded); assert win
+  bounds 13..31 from authored encounter levels 2..5; assert boss/level-8 edge from the contract.
+- `output.md` (this section).
+
+Commands + results:
+- `make test-beta-area BUILD_DIR=build/rhs7-lane ...` → **15/0** (was 13/0; +2 new).
+- `make test BUILD_DIR=build/rhs7-lane` → host **240518/0**, world **258/0**.
+- `make test-tools` → **target does not exist** (`No rule to make target 'test-tools'`). Substituted
+  the tools suites that do exist: `make test-manifest` (fxdata-manifest PASS, ensure-generated PASS)
+  and `make test-generated-libs` (generated-libs-invariants PASS, arena-demo-data PASS, alias 28/0),
+  plus the changed node suite via `test-beta-area`.
+- `make verify-generated` → exit 0.
+- `git diff --stat` → only `tools/tests/beta-area_test.mjs` (+57) tracked; `docs/first-beta-pacing-brief.md`
+  is the only new untracked file. **ZERO drift** in `fxdata/generated/`, `src/fxdata.h`,
+  `fxdata/Sprites.txt`, `dist/` after the gen dependency ran. `data/beta-area.toml` unchanged.
+- `df -h .` → **56 GiB free**.
+
+Deviations:
+- `make test-tools` is not a Makefile target (also noted in the rhs7 wave report); used
+  `test-manifest` + `test-generated-libs` as the tools equivalent.
+
+Owner-pending proposals (surfaced, NOT accepted; contract unchanged):
+- Session length 15–25 min; 2–4 gatherable deposits to the boss; lure income/spend target;
+  capture attempts per lure (~3 per tier-1 deposit is the derived control, target unset);
+  KO/loss cost; accepted power-loss window (save model is explicit-only, needs owner confirmation).
+
+Wall time: ≈6 min (recon + brief + tests + verify).
