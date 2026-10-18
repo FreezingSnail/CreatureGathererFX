@@ -963,14 +963,6 @@ name = "numbersblack"
 source = { carray = { path = "../../../fxdata/Sprites.txt", symbol = "numbersblack" } }
 
 [[entry]]
-name = "creatureSprites"
-source = { carray = { path = "../../../fxdata/Sprites.txt", symbol = "creatureSprites" } }
-
-[[entry]]
-name = "fieldBacground"
-source = { carray = { path = "../../../fxdata/Sprites.txt", symbol = "fieldBacground" } }
-
-[[entry]]
 name = "characterSheet"
 source = { carray = { path = "../../../fxdata/Sprites.txt", symbol = "characterSheet" } }
 
@@ -987,24 +979,12 @@ name = "singlenumberswhite"
 source = { carray = { path = "../../../fxdata/Sprites.txt", symbol = "singlenumberswhite" } }
 
 [[entry]]
-name = "fightMenu"
-source = { carray = { path = "../../../fxdata/Sprites.txt", symbol = "fightMenu" } }
-
-[[entry]]
 name = "singlenumbersblack"
 source = { carray = { path = "../../../fxdata/Sprites.txt", symbol = "singlenumbersblack" } }
 
 [[entry]]
-name = "ArduFont"
-source = { carray = { path = "../../../fxdata/Sprites.txt", symbol = "ArduFont" } }
-
-[[entry]]
 name = "moveInfo"
 source = { carray = { path = "../../../fxdata/Sprites.txt", symbol = "moveInfo" } }
-
-[[entry]]
-name = "worldTiles"
-source = { carray = { path = "../../../fxdata/Sprites.txt", symbol = "worldTiles" } }
 
 [[entry]]
 name = "tiles"
@@ -1015,36 +995,12 @@ name = "maskedFont"
 source = { carray = { path = "../../../fxdata/Sprites.txt", symbol = "maskedFont" } }
 
 [[entry]]
-name = "npc"
-source = { carray = { path = "../../../fxdata/Sprites.txt", symbol = "npc" } }
-
-[[entry]]
-name = "ecreatureSprites"
-source = { carray = { path = "../../../fxdata/Sprites.txt", symbol = "ecreatureSprites" } }
-
-[[entry]]
-name = "arduboyFont"
-source = { carray = { path = "../../../fxdata/Sprites.txt", symbol = "arduboyFont" } }
-
-[[entry]]
 name = "battleMenu"
 source = { carray = { path = "../../../fxdata/Sprites.txt", symbol = "battleMenu" } }
 
 [[entry]]
-name = "blankMenu"
-source = { carray = { path = "../../../fxdata/Sprites.txt", symbol = "blankMenu" } }
-
-[[entry]]
 name = "ArduFontTrimmed"
 source = { carray = { path = "../../../fxdata/Sprites.txt", symbol = "ArduFontTrimmed" } }
-
-[[entry]]
-name = "tilesheet"
-source = { carray = { path = "../../../fxdata/Sprites.txt", symbol = "tilesheet" } }
-
-[[entry]]
-name = "letters"
-source = { carray = { path = "../../../fxdata/Sprites.txt", symbol = "letters" } }
 
 [[entry]]
 name = "amove20"

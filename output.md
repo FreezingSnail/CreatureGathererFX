@@ -1960,3 +1960,61 @@ Expected AVR: **0 B** (orchestrator final gate to confirm `make ram` stays 23202
 
 Wall time: host verify ≈26 s; total worker ≈15 min (recon/read + edits + host/VM verify + report).
 No commit/push; bead left open for the orchestrator.
+
+## u0ez — remove the 11 superseded legacy packed sprite sheets
+
+WHAT: dropped exactly the eleven dead packed sheets from the first `fxsprites.toml` `[[set]]`, regenerated
+the FX image, and rebaselined the pack-parity baseline + its layout-equivalence fixture.
+**Generation lane** — owns the single AVR lane (`build/rhs7-lane`, `build/reports/rhs7/`); no commit.
+
+Removed from the first `[[set]]` (kept everything else: all `images/*.png`, the `[strings]` section
+whose `font = "images/ArduFont_5x6.png"` is still the rendering source, the `battleEffects` `[[set]]`,
+and numbers/numberswhite/singlenumbers*/characterSheet/NewecreatureSprites/moveInfo/tiles/maskedFont/
+battleMenu/ArduFontTrimmed): `creatureSprites_32x32`, `fieldBacground_128x32`, `fightMenu_128x24`,
+`ArduFont_5x6`, `worldTiles_16x16`, `npc_16x16`, `ecreatureSprites_32x32`, `arduboyFont_6x8`,
+`blankMenu_128x24`, `tilesheet_16x16`, `letters_16x16`.
+
+Changed files (tracked): `fxsprites.toml`, `src/fxdata.h` (regenerated mirror; only constexpr FX address
+constants + `FX_DATA_PAGE 0xf413 → 0xf4af`), `tools/tests/pack-parity_test.sh`,
+`tools/tests/fixtures/fxlayout-old-304.toml` (381 → 370 entries). Ignored-but-regenerated: `fxdata/Sprites.txt`,
+`fxdata/generated/manifest.json`, `dist/fxdata.bin`.
+
+Live-reference check (bare `-w` symbols, src/ + tst/): only comments —
+`creatureSprites` (Creature.cpp:48), `letters` (BattlePresenter.cpp:179), `arduboyFont` (draw.h:189,
+commented-out `FX::setFont`). `npc`/`tilesheet`/`blankMenu`/`worldTiles`/`fightMenu`/`fieldBacground`/
+`ArduFont`/`ecreatureSprites`: 0 hits. No live reference — contract satisfied.
+
+FX image:
+- `dist/fxdata.bin` 781568 → 741632 B (**−39936**); sha256 `f8bd14fd…` → `617a72a5…`.
+- `FX_DATA_BYTES` 748555 → 708708 (**−39847**); `FX_DATA_PAGE` 0xf413 → 0xf4af.
+
+Rebaseline cause (pack-parity): removing 11 packed sheets shrinks the packed payload and shifts every
+kept symbol address, so the cart hash changes — intentional. The pack-parity test also *failed first* on
+the frozen layout-equivalence fixture: `fxlayout-old-304.toml` still listed the 11 removed `carray` sheet
+symbols, and `--assert-layout-equivalent` could not resolve `creatureSprites` against the slimmer live
+`fxdata/Sprites.txt`. Fixed by dropping the 11 entries from that fixture (mirror of `src/fxdata.h`, which
+lost the same 11 constants) and lowering the frozen-entry assertion 381 → 370. Old/new cart sha recorded
+in the script comment.
+
+Verification (all from repo root, pinned dirs `BUILD_DIR=build/rhs7-lane`, `ARDUINO_BUILD_PATH=build/rhs7-lane/arduino-build`,
+`ARDUINO_BUILD_CACHE_PATH=build/rhs7-lane/arduino-cache`, `FXTEST_BUILD_DIR=build/rhs7-lane/fxtest`):
+- `make gen` → clean; no `build/cgfx-pack.*` stage left.
+- `make verify-generated` → exit 0.
+- `make test-manifest` → fxdata-manifest PASS; ensure-generated PASS.
+- `make test-generated-libs` → generated-libs 48/0, invariants 5/0, arena-demo-data PASS, alias 28/0.
+- `make test-pack-parity` → layout equivalence PASS, perturbation diagnostic PASS, **pack parity PASS**.
+- `make test` → host **240518/0**, world **258/0**.
+- `make testvm` → **286/0**.
+- `make fxtest-headless` (ALL suites) → **33 suites PASS, 0 fail**; `test_stack` headroom **0x26C (620 B)**
+  vs control 620 B (unchanged).
+- `make ram` A/B → app **23196/1665** (control 23202/1665): flash **−6 B**, static **0 B**. Candidate ELF
+  saved `build/reports/rhs7/candidate-u0ez.elf`. The −6 B is LTO codegen ripple from the shifted 24-bit
+  FX address constants (the only `src/fxdata.h` delta besides `FX_DATA_PAGE`); the intended shrink is the
+  ~39 KB packed cart, not app flash.
+
+Deviation from pinned contract: the contract anticipated only the pack-parity SHA rebaseline; the
+layout-equivalence fixture (entry count + 11 entries) also had to move because it mirrors the live
+declaration order. No behavior/interface change.
+
+Wall time: gen→ram ≈5 min; total worker ≈10 min (recon + edit + gen/verify + host/VM + full device + A/B).
+Tree left uncommitted and consistent (generated artifacts regenerated from sources).
