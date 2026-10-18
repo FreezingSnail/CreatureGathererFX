@@ -7,7 +7,7 @@ using uint24_t = __uint24;
 // Initialize FX hardware using  FX::begin(FX_DATA_PAGE); in the setup() function.
 
 constexpr uint16_t FX_DATA_PAGE  = 0xf4af;
-constexpr uint24_t FX_DATA_BYTES = 708708;
+constexpr uint24_t FX_DATA_BYTES = 708801;
 
 constexpr uint16_t FX_SAVE_PAGE  = 0xFF80;
 constexpr uint24_t FX_SAVE_BYTES = 32768;
@@ -410,169 +410,170 @@ constexpr uint24_t lureTextPrompt = 0x016A33;
 constexpr uint24_t lureTextSet = 0x016A8D;
 constexpr uint24_t lureTextEmpty = 0x016AE7;
 constexpr uint24_t lureTextGathered = 0x016B41;
-constexpr uint24_t lureTextExpired = 0x016B9B;
-constexpr uint24_t lureTextFooter = 0x016BFF;
-constexpr uint24_t lureTextIntroTitle = 0x016C81;
-constexpr uint24_t lureTextIntroSet = 0x016CE5;
-constexpr uint24_t lureTextIntroBias = 0x016DA3;
-constexpr uint24_t lureTextIntroSteps = 0x016E57;
-constexpr uint24_t lureTextIntroGather = 0x016ECF;
-constexpr uint24_t lureTextIntroNoSave = 0x016F8D;
-constexpr uint24_t duelBonusWin = 0x01700F;
-constexpr uint24_t duelBonusLose = 0x017073;
-constexpr uint24_t duelWeakWin = 0x0170E1;
-constexpr uint24_t duelWeakLose = 0x01713B;
-constexpr uint24_t duelRpsWin = 0x01719F;
-constexpr uint24_t duelRpsLose = 0x0171EF;
-constexpr uint24_t duelTrade = 0x017249;
-constexpr uint24_t duelDefaultWin = 0x017285;
-constexpr uint24_t duelSwap = 0x0172FD;
-constexpr uint24_t duelWait = 0x01732F;
-constexpr uint24_t duelDraw = 0x017361;
-constexpr uint24_t duelVs = 0x017393;
-constexpr uint24_t duelRound = 0x0173B1;
+constexpr uint24_t lureTextFull = 0x016B9B;
+constexpr uint24_t lureTextExpired = 0x016BF5;
+constexpr uint24_t lureTextFooter = 0x016C59;
+constexpr uint24_t lureTextIntroTitle = 0x016CDB;
+constexpr uint24_t lureTextIntroSet = 0x016D3F;
+constexpr uint24_t lureTextIntroBias = 0x016DFD;
+constexpr uint24_t lureTextIntroSteps = 0x016EB1;
+constexpr uint24_t lureTextIntroGather = 0x016F29;
+constexpr uint24_t lureTextIntroNoSave = 0x016FE7;
+constexpr uint24_t duelBonusWin = 0x017069;
+constexpr uint24_t duelBonusLose = 0x0170CD;
+constexpr uint24_t duelWeakWin = 0x01713B;
+constexpr uint24_t duelWeakLose = 0x017195;
+constexpr uint24_t duelRpsWin = 0x0171F9;
+constexpr uint24_t duelRpsLose = 0x017249;
+constexpr uint24_t duelTrade = 0x0172A3;
+constexpr uint24_t duelDefaultWin = 0x0172DF;
+constexpr uint24_t duelSwap = 0x017357;
+constexpr uint24_t duelWait = 0x017389;
+constexpr uint24_t duelDraw = 0x0173BB;
+constexpr uint24_t duelVs = 0x0173ED;
+constexpr uint24_t duelRound = 0x01740B;
 namespace CreatureNames
 {
-  constexpr uint24_t CreatureNames = 0x0173C5;
+  constexpr uint24_t CreatureNames = 0x01741F;
 }
 
 namespace MoveNames
 {
-  constexpr uint24_t MoveNames = 0x017485;
+  constexpr uint24_t MoveNames = 0x0174DF;
 }
 
 namespace MenuStrings
 {
-  constexpr uint24_t MenuStrings = 0x01750C;
+  constexpr uint24_t MenuStrings = 0x017566;
 }
 
 namespace EffectStrings
 {
-  constexpr uint24_t EffectStrings = 0x01757E;
+  constexpr uint24_t EffectStrings = 0x0175D8;
 }
 
 namespace LureTierNames
 {
-  constexpr uint24_t LureTierNames = 0x017581;
+  constexpr uint24_t LureTierNames = 0x0175DB;
 }
 
 namespace LureTypeNames
 {
-  constexpr uint24_t LureTypeNames = 0x01758A;
+  constexpr uint24_t LureTypeNames = 0x0175E4;
 }
 
 namespace ConsumableNames
 {
-  constexpr uint24_t ConsumableNames = 0x0175A2;
+  constexpr uint24_t ConsumableNames = 0x0175FC;
 }
 
 namespace ArenaUiText
 {
-  constexpr uint24_t ArenaUiText = 0x0175BA;
+  constexpr uint24_t ArenaUiText = 0x017614;
 }
 
 namespace BattleFeedbackStrings
 {
-  constexpr uint24_t BattleFeedbackStrings = 0x0175C3;
+  constexpr uint24_t BattleFeedbackStrings = 0x01761D;
 }
 
 namespace LureText
 {
-  constexpr uint24_t LureText = 0x0175E4;
+  constexpr uint24_t LureText = 0x01763E;
 }
 
 namespace DuelText
 {
-  constexpr uint24_t DuelText = 0x017608;
+  constexpr uint24_t DuelText = 0x017665;
 }
 
-constexpr uint24_t basicBeamR = 0x01762F;
-constexpr uint24_t basicBeamL = 0x017E2F;
-constexpr uint24_t BasicWaveR = 0x01862F;
-constexpr uint24_t BasicWaveL = 0x018E2F;
-constexpr uint24_t fontTrimmed = 0x01962F;
+constexpr uint24_t basicBeamR = 0x01768C;
+constexpr uint24_t basicBeamL = 0x017E8C;
+constexpr uint24_t BasicWaveR = 0x01868C;
+constexpr uint24_t BasicWaveL = 0x018E8C;
+constexpr uint24_t fontTrimmed = 0x01968C;
 constexpr uint16_t fontTrimmedWidth  = 5;
 constexpr uint16_t fontTrimmedHeight = 6;
 constexpr uint8_t  fontTrimmedFrames = 75;
 
-constexpr uint24_t type_table = 0x0197AA;
-constexpr uint24_t map_data = 0x0197EA;
-constexpr uint24_t raw_map_data = 0x0397EA;
-constexpr uint24_t raw_map_text = 0x0597EA;
-constexpr uint24_t consumable_table = 0x0597EC;
-constexpr uint24_t generator_version = 0x0597FC;
-constexpr uint24_t scripts = 0x059817;
+constexpr uint24_t type_table = 0x019807;
+constexpr uint24_t map_data = 0x019847;
+constexpr uint24_t raw_map_data = 0x039847;
+constexpr uint24_t raw_map_text = 0x059847;
+constexpr uint24_t consumable_table = 0x059849;
+constexpr uint24_t generator_version = 0x059859;
+constexpr uint24_t scripts = 0x059874;
 namespace ArenaDemoData
 {
-  constexpr uint24_t playerMembers = 0x099817;
-  constexpr uint24_t opponentTrainerIds = 0x099832;
-  constexpr uint24_t opponentSpecies = 0x099837;
-  constexpr uint24_t player_blitz = 0x099846;
-  constexpr uint24_t player_bulwark = 0x099878;
-  constexpr uint24_t player_utility = 0x0998BE;
-  constexpr uint24_t opponent_starter = 0x099904;
-  constexpr uint24_t opponent_speed = 0x09994A;
-  constexpr uint24_t opponent_fortress = 0x09997C;
-  constexpr uint24_t opponent_tricks = 0x0999CC;
-  constexpr uint24_t opponent_champion = 0x099A08;
-  constexpr uint24_t playerLabels = 0x099A58;
-  constexpr uint24_t opponentLabels = 0x099A61;
-  constexpr uint24_t playerLabelWidths = 0x099A70;
-  constexpr uint24_t opponentLabelWidths = 0x099A73;
+  constexpr uint24_t playerMembers = 0x099874;
+  constexpr uint24_t opponentTrainerIds = 0x09988F;
+  constexpr uint24_t opponentSpecies = 0x099894;
+  constexpr uint24_t player_blitz = 0x0998A3;
+  constexpr uint24_t player_bulwark = 0x0998D5;
+  constexpr uint24_t player_utility = 0x09991B;
+  constexpr uint24_t opponent_starter = 0x099961;
+  constexpr uint24_t opponent_speed = 0x0999A7;
+  constexpr uint24_t opponent_fortress = 0x0999D9;
+  constexpr uint24_t opponent_tricks = 0x099A29;
+  constexpr uint24_t opponent_champion = 0x099A65;
+  constexpr uint24_t playerLabels = 0x099AB5;
+  constexpr uint24_t opponentLabels = 0x099ABE;
+  constexpr uint24_t playerLabelWidths = 0x099ACD;
+  constexpr uint24_t opponentLabelWidths = 0x099AD0;
 }
 
-constexpr uint24_t battleSprites48 = 0x099A78;
+constexpr uint24_t battleSprites48 = 0x099AD5;
 constexpr uint16_t battleSprites48Width  = 48;
 constexpr uint16_t battleSprites48Height = 48;
 constexpr uint8_t  battleSprites48Frames = 128;
 
-constexpr uint24_t battleOptions48 = 0x0ABA7C;
+constexpr uint24_t battleOptions48 = 0x0ABAD9;
 constexpr uint16_t battleOptions48Width  = 128;
 constexpr uint16_t battleOptions48Height = 16;
 constexpr uint8_t  battleOptions48Frames = 4;
 
-constexpr uint24_t worldPlayerSprites = 0x0ABE80;
+constexpr uint24_t worldPlayerSprites = 0x0ABEDD;
 constexpr uint16_t worldPlayerSpritesWidth  = 16;
 constexpr uint16_t worldPlayerSpritesHeight = 16;
 constexpr uint8_t  worldPlayerSpritesFrames = 12;
 
-constexpr uint24_t lureWorldTiles = 0x0AC184;
+constexpr uint24_t lureWorldTiles = 0x0AC1E1;
 constexpr uint16_t lureWorldTilesWidth  = 16;
 constexpr uint16_t lureWorldTilesHeight = 16;
 constexpr uint8_t  lureWorldTilesFrames = 96;
 
-constexpr uint24_t duelChartFixture = 0x0ACD88;
-constexpr uint24_t duelIcons = 0x0ACDA1;
+constexpr uint24_t duelChartFixture = 0x0ACDE5;
+constexpr uint24_t duelIcons = 0x0ACDFE;
 constexpr uint16_t duelIconsWidth  = 8;
 constexpr uint16_t duelIconsHeight = 8;
 constexpr uint8_t  duelIconsFrames = 14;
 
 namespace DuelData
 {
-  constexpr uint24_t duelSpeciesTypes = 0x0ACE85;
-  constexpr uint24_t duelTrainerPersona = 0x0ACF45;
-  constexpr uint24_t duelTrainerRate = 0x0ACF5D;
-  constexpr uint24_t duelDemoPersona = 0x0ACF75;
-  constexpr uint24_t duelDemoRate = 0x0ACF76;
-  constexpr uint24_t duelTrainerOverrides = 0x0ACF77;
-  constexpr uint24_t duelTeamMemberCounts = 0x0ACF7C;
-  constexpr uint24_t duelTeamMembers = 0x0ACF81;
+  constexpr uint24_t duelSpeciesTypes = 0x0ACEE2;
+  constexpr uint24_t duelTrainerPersona = 0x0ACFA2;
+  constexpr uint24_t duelTrainerRate = 0x0ACFBA;
+  constexpr uint24_t duelDemoPersona = 0x0ACFD2;
+  constexpr uint24_t duelDemoRate = 0x0ACFD3;
+  constexpr uint24_t duelTrainerOverrides = 0x0ACFD4;
+  constexpr uint24_t duelTeamMemberCounts = 0x0ACFD9;
+  constexpr uint24_t duelTeamMembers = 0x0ACFDE;
 }
 
 namespace Evolution
 {
-  constexpr uint24_t evolutionSource = 0x0ACFCC;
-  constexpr uint24_t evolutionTarget = 0x0ACFD2;
-  constexpr uint24_t evolutionLevel = 0x0ACFD8;
+  constexpr uint24_t evolutionSource = 0x0AD029;
+  constexpr uint24_t evolutionTarget = 0x0AD02F;
+  constexpr uint24_t evolutionLevel = 0x0AD035;
 }
 
 namespace Rewards
 {
-  constexpr uint24_t materialItem = 0x0ACFDE;
-  constexpr uint24_t materialCount = 0x0AD01E;
-  constexpr uint24_t plantItem = 0x0AD05E;
-  constexpr uint24_t plantCount = 0x0AD05F;
-  constexpr uint24_t healItem = 0x0AD060;
-  constexpr uint24_t healCount = 0x0AD062;
+  constexpr uint24_t materialItem = 0x0AD03B;
+  constexpr uint24_t materialCount = 0x0AD07B;
+  constexpr uint24_t plantItem = 0x0AD0BB;
+  constexpr uint24_t plantCount = 0x0AD0BC;
+  constexpr uint24_t healItem = 0x0AD0BD;
+  constexpr uint24_t healCount = 0x0AD0BF;
 }
 

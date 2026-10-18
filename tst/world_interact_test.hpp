@@ -8,6 +8,7 @@
 #include "../src/engine/world/LureZone.hpp"
 #include "../src/item/Inventory.hpp"
 #include "../src/item/ItemIds.hpp"
+#include "../src/fxdata.h"
 #include "../src/lib/Effect.hpp"
 #include "../src/creature/LevelCurve.hpp"
 #include "../src/save/Compaction.hpp"
@@ -152,19 +153,107 @@ void WorldInteractionSuite(TestRunner &runner) {
     test.assert(worldInteractionFake::readCount, static_cast<uint16_t>(0),
                 "box target skips the VM script slot");
 
+    // --- First-beta renewable plant plot (jp8.11.5) -------------------------
+    // The plant hook reads its faced tile from the RAM property window like the
+    // box, so every plant A press adds no FX read. Drive the authored plot index
+    // through plant/grow/harvest: an empty plot plants, a growing plot is inert,
+    // a mature plot yields one authored tier-1 lure (item::lureId(0,1)) and
+    // resets to planted, and a full bag holds maturity with the lureTextFull
+    // feedback so a retry can harvest once the bag has room.
+    auto facePlant = []() {
+        gameState.playerLocation = static_cast<uint16_t>((64U << 8) | 7U);
+        WorldEngine::init(worldState());
+        worldState().motion.directionAndFlags = static_cast<uint8_t>(Direction::RIGHT);
+        seedFacedProps(worldState(), 8, 64, TileProps::PROP_PLANTABLE);
+    };
+    auto pressPlant = []() {
+        worldInteractionFake::reset();
+        worldInteractionFake::pressedA = true;
+        WorldEngine::interact();
+    };
+    auto plantAges = [](uint8_t increments) {
+        for (uint8_t i = 0; i < increments; ++i)
+            plants.plantStages.increment(FIRST_BETA_PLOT_INDEX);
+    };
+
+    // Empty plot: A plants stage1 at no item cost and reads no script slot.
+    dialogMenu.clear();
     LureZone::closePicker();
-    worldInteractionFake::reset();
-    gameState.playerLocation = static_cast<uint16_t>((64U << 8) | 7U);
-    WorldEngine::init(worldState());
-    worldState().motion.directionAndFlags = static_cast<uint8_t>(Direction::RIGHT);
-    seedFacedProps(worldState(), 8, 64, TileProps::PROP_PLANTABLE);
-    worldInteractionFake::pressedA = true;
-    WorldEngine::interact();
+    plants = PlantGameState{};
+    item::inventoryClear(LureZone::inventory());
+    facePlant();
+    pressPlant();
+    test.assert(plants.plantStages.getStage(FIRST_BETA_PLOT_INDEX),
+                static_cast<uint8_t>(1), "A on an empty plot plants stage1");
+    test.assert(item::inventoryCount(LureZone::inventory(), item::ItemKind::Lure,
+                                     item::lureId(0, 1)),
+                static_cast<uint8_t>(0), "planting costs no lure");
+    test.assert(worldInteractionFake::readCount, static_cast<uint16_t>(0),
+                "empty plant target skips the VM script slot");
+
+    // Growing plot: A is inert (no item, stage held).
+    plants = PlantGameState{};
+    plantAges(2);
+    facePlant();
+    pressPlant();
+    test.assert(plants.plantStages.getStage(FIRST_BETA_PLOT_INDEX),
+                static_cast<uint8_t>(2), "A on a growing plot is inert");
+    test.assert(item::inventoryCount(LureZone::inventory(), item::ItemKind::Lure,
+                                     item::lureId(0, 1)),
+                static_cast<uint8_t>(0), "growing plot grants nothing");
+    test.assert(worldInteractionFake::readCount, static_cast<uint16_t>(0),
+                "growing plant target skips the VM script slot");
+
+    // Mature plot: A harvests one authored tier-1 lure, resets to planted, and
+    // shows the gathered feedback. The retired base lure is not granted.
+    plants = PlantGameState{};
+    plantAges(3);
+    facePlant();
+    pressPlant();
+    test.assert(item::inventoryCount(LureZone::inventory(), item::ItemKind::Lure,
+                                     item::lureId(0, 1)),
+                static_cast<uint8_t>(1), "mature harvest grants one tier-1 lure");
     test.assert(item::inventoryCount(LureZone::inventory(), item::ItemKind::Lure,
                                      item::lureId(0, 0)),
-                static_cast<uint8_t>(1), "plant face gathers one base lure");
+                static_cast<uint8_t>(0), "harvest no longer grants the base lure");
+    test.assert(plants.plantStages.getStage(FIRST_BETA_PLOT_INDEX),
+                static_cast<uint8_t>(1), "harvest resets the plot to planted");
+    test.assert(LureZone::messageAddr(), lureTextGathered,
+                "harvest shows the gathered feedback");
     test.assert(worldInteractionFake::readCount, static_cast<uint16_t>(0),
-                "plant target skips the VM script slot");
+                "mature harvest skips the VM script slot");
+
+    // Full bag: maturity holds for a retry and the bag-full feedback shows; the
+    // count stays at max. With room again the same mature plot harvests.
+    plants = PlantGameState{};
+    plantAges(3);
+    item::inventoryClear(LureZone::inventory());
+    item::inventoryAdd(LureZone::inventory(), item::ItemKind::Lure,
+                       item::lureId(0, 1), item::COUNT_MAX);
+    facePlant();
+    pressPlant();
+    test.assert(item::inventoryCount(LureZone::inventory(), item::ItemKind::Lure,
+                                     item::lureId(0, 1)),
+                static_cast<uint8_t>(item::COUNT_MAX), "full bag leaves the count at max");
+    test.assert(plants.plantStages.getStage(FIRST_BETA_PLOT_INDEX),
+                static_cast<uint8_t>(3), "full bag holds the mature plot for retry");
+    test.assert(LureZone::messageAddr(), lureTextFull,
+                "full bag shows the bag-full feedback");
+    test.assert(worldInteractionFake::readCount, static_cast<uint16_t>(0),
+                "full bag harvest skips the VM script slot");
+
+    item::inventoryClear(LureZone::inventory());
+    item::inventoryAdd(LureZone::inventory(), item::ItemKind::Lure,
+                       item::lureId(0, 1), static_cast<uint8_t>(item::COUNT_MAX - 1));
+    pressPlant();
+    test.assert(item::inventoryCount(LureZone::inventory(), item::ItemKind::Lure,
+                                     item::lureId(0, 1)),
+                static_cast<uint8_t>(item::COUNT_MAX), "retry after room harvests");
+    test.assert(plants.plantStages.getStage(FIRST_BETA_PLOT_INDEX),
+                static_cast<uint8_t>(1), "retry resets the plot to planted");
+    test.assert(LureZone::messageAddr(), lureTextGathered,
+                "retry shows the gathered feedback");
+    item::inventoryClear(LureZone::inventory());
 
     worldInteractionFake::reset();
     gameState.playerLocation = static_cast<uint16_t>((64U << 8) | 7U);

@@ -120,7 +120,15 @@ perturbed_layout=$fixtures/fxlayout-expand-20-perturbed.toml
 # (-39847 B) and every kept symbol address shifts, so the packed payload and cart
 # change. All kept images/PNGs and the [strings] ArduFont_5x6 rendering source stay.
 # Previous cart sha256 f8bd14fd..., now 617a72a5.... Intentional rebaseline.
-expected=617a72a5578095886f9aed6d603764c2e7f04b394dcc1bf7e4e60d812cbf5014
+# jp8.11.5: add the LureText "lureTextFull" = "Bag Full" string (adjacent to
+# lureTextGathered in both data/text/strings.txt and the fxsprites.toml [strings]
+# order) so the mature-harvest full-bag feedback has a symbol. The text block
+# grows by one 8-glyph string, so the packed payload and cart change and every
+# later symbol address shifts. The frozen 304-declaration migration fixture adds
+# "lureTextFull" to its exclude list to keep the proof at its original
+# declarations. Previous cart sha256 617a72a5..., now a91840f3.... Intentional
+# rebaseline.
+expected=a91840f3b0c5ca89e2a8133a9398f21542d37262dfe7355db0b8133be967ae32
 
 for layout in "$old_layout" "$new_layout" "$perturbed_layout"; do
     test -f "$layout" || {

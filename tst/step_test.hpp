@@ -289,16 +289,17 @@ void StepSuite(TestRunner &runner) {
     dialogMenu.clear();
 
     plants = PlantGameState{};
+    plants.plantStages.increment(FIRST_BETA_PLOT_INDEX); // plant plot 0 (0 -> 1)
     for (uint8_t step = 0; step < 127; ++step) onStep(0x0204);
     test.assert(plants.ticker, static_cast<uint8_t>(127),
                 "plant ticker advances once per step before rollover");
-    test.assert(plants.plantStages.getStage(0), static_cast<uint8_t>(0),
+    test.assert(plants.plantStages.getStage(FIRST_BETA_PLOT_INDEX), static_cast<uint8_t>(1),
                 "plant stage stays unchanged before the 128th step");
     onStep(0x0204);
     test.assert(plants.ticker, static_cast<uint8_t>(0),
                 "plant ticker resets on the 128th step");
-    test.assert(plants.plantStages.getStage(0), static_cast<uint8_t>(1),
-                "128th step advances plant stages");
+    test.assert(plants.plantStages.getStage(FIRST_BETA_PLOT_INDEX), static_cast<uint8_t>(2),
+                "128th step grows the planted plot");
 
     suite.addTest(test);
     LureStepTest(suite);

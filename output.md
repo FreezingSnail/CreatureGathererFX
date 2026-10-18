@@ -2058,3 +2058,65 @@ Owner-pending proposals (surfaced, NOT accepted; contract unchanged):
   KO/loss cost; accepted power-loss window (save model is explicit-only, needs owner confirmation).
 
 Wall time: ≈6 min (recon + brief + tests + verify).
+
+## jp8.11.5 — Make first-area planting and harvesting renewable (DeepSeek worker)
+
+Changed files (all tracked, generated set staged together):
+- `src/plants/PlantStage.cpp` — `incrementAll` now saturating per slot (0->0, 1->2, 2->3, 3->3) via
+  `low=v&0x55; high=v&0xAA; carried=(low<<1)|high; v=(carried&0xAA)|(high>>1)`. Standalone
+  `increment(index)` keeps wrap semantics (plant 0->1, harvest 3->0->1 = 2 calls).
+- `src/plants/PlantGamestate.hpp` — `constexpr uint8_t FIRST_BETA_PLOT_INDEX = 0` (comment names
+  authored plot tile (14,2) GID 551 / box GID 545 at (9,2)).
+- `src/engine/world/World.cpp` — PROP_PLANTABLE hook: stage0 plant; stage1/2 no-op; stage3 full bag
+  (`inventoryCount(Lure,lureId(0,1))==COUNT_MAX`) holds + `showMessage(lureTextFull,45,40)`;
+  stage3 else `inventoryAdd(Lure,lureId(0,1),1)` + reset to stage1 + `showMessage(lureTextGathered,45,40)`.
+  Replaced the old `lureId(0,0)` grant. RAM-window props only: zero added FX reads. Added
+  `extern PlantGameState plants;` + include under the `#ifdef TEST` block.
+- `data/text/strings.txt` — `lureTextFull = "Bag Full"` in LureText; `fxsprites.toml` [strings] order
+  adds `"lureTextFull"` after `"lureTextGathered"`.
+- Tests: `tst/plantStage_test.hpp` + `tst/fxdatatest/plant_stage_test.hpp` (saturating oracle; 256x8
+  exhaustive; saturation/hold replaces wrap-cycle; standalone wrap kept; planted-shelf ticker
+  boundary; plot-index assert); `tst/step_test.hpp` (ticker boundary seeds planted plot, expects 0->1
+  held then 1->2); `tst/world_interact_test.hpp` (plant case: empty->stage1 no item, growing inert,
+  mature +1 lureId(0,1)+reset stage1+lureTextGathered, full bag count 99 + stage3 held +
+  messageAddr()==lureTextFull + retry harvests; readCount==0 throughout);
+  `tst/fxdatatest/test_world_player.ino` (device plant-cycle case via `arduboy.currentButtonState`
+  seam + seeded RAM property window; 5 sub-cases, `FxReadCounter::count()==0`).
+- Fixture: `tools/tests/fixtures/fxlayout-expand-20.toml` — added `"lureTextFull"` to the 304-decl
+  migration exclude list (test demanded it).
+- `tools/tests/pack-parity_test.sh` — intentional rebaseline (jp8.11.5 provenance comment).
+- No save change: SAVE_VERSION stays 3; plantStages[8]+ticker round-trip already covered by
+  `ShippingSaveRestoreTest` in `tst/save_test.hpp` (no edit needed).
+
+Commands + results (all from HEAD 3b35e24 working tree):
+- `make gen BUILD_DIR=build/rhs7-lane` → OK; `FX_DATA_BYTES 708708 -> 708801` (+93 B text block).
+- `make test BUILD_DIR=build/rhs7-lane` → host **240623/0**, world **258/0**.
+- `make testvm` → **286/0**.
+- `make test-beta-area BUILD_DIR=build/rhs7-lane ...` → **15/0**.
+- `make verify-generated BUILD_DIR=build/rhs7-lane` → exit 0. `make test-manifest` → PASS.
+  `make test-generated-libs` → generated 48/0, invariants 5/0, arena-demo PASS, alias 28/0.
+- `make test-pack-parity` (exported lane vars) → **PASS** after rebaseline; layout-equivalence PASS.
+- `make fxtest-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_world_player.ino ... ARDENS=...` →
+  test_world_player **77/0 PASS**; test_stack **4/0 PASS, headroom 620 B** (control 620).
+- `make fxtest-headless FXTEST_INOS=tst/fxdatatest/test_plant_stage.ino ... ARDENS=...` →
+  **33115/0 PASS** (RAM used 1289/2160).
+
+A/B (pinned lane, `make ram BUILD_DIR=build/rhs7-lane ...`):
+- control `build/reports/rhs7/control-jp8-11-5.elf` = 23196 flash / 1665 static (sha 804501b3...).
+- candidate `build/reports/rhs7/candidate-jp8-11-5.elf` = **23252 flash / 1665 static**
+  (sha d849cd24..., matches working ELF). Delta vs control: **+56 flash, 0 static**.
+- Advancement-only delta vs box.12 modulo-four baseline: temp-reverted `incrementAll` builds 23248
+  (same source otherwise) → new saturating advancement costs **+4 B** whole-image
+  (`build/reports/rhs7/tmp-mod4-jp8-11-5.elf`). Full candidate 23252 <= 29184 target, static 1665
+  <= 2160, painted stack 620 >= 219 (~150 B reserve kept).
+- Pack parity SHAs: old `617a72a5578095886f9aed6d603764c2e7f04b394dcc1bf7e4e60d812cbf5014`,
+  new `a91840f3b0c5ca89e2a8133a9398f21542d37262dfe7355db0b8133be967ae32`.
+
+Storage: `du -sh build/rhs7-lane` = 102 MiB; `df -h .` = 54 GiB free (>10 GiB). Lane vars pinned as
+instructed. `tmp-mod4-jp8-11-5.elf` retained as the advancement-delta evidence.
+
+Deviations: `make test` total counts differ from the earlier wave (240623 vs 240518) because the
+plant suites gained coverage; expected. No `make test-tools` target used. No commit, no push, no bd
+close (per instructions). Full 34-suite gate left to the orchestrator.
+
+Wall time: ≈35 min (recon + edits + gen + host/vm/beta + parity + spike + ram A/B).

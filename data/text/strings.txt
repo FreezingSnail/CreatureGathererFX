@@ -211,6 +211,7 @@ namespace LureText {
     lureTextSet = "Lure Set"
     lureTextEmpty = "No Lures"
     lureTextGathered = "Gathered"
+    lureTextFull = "Bag Full"
     lureTextExpired = "Lure Gone"
     lureTextFooter = "A:Set B:Back"
     lureTextIntroTitle = "Lure Demo"

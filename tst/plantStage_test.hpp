@@ -8,14 +8,18 @@
 namespace plantStageTestDetail {
 
 // Independent oracle for the packed plant-stage byte. Advances each of the four
-// two-bit slots by one modulo four without sharing incrementAll's arithmetic, so
-// the packed transform can be checked against a per-slot reference.
+// two-bit slots by one with saturating growth, without sharing incrementAll's
+// arithmetic: an empty slot stays empty, planted->growing->mature and a mature
+// slot holds.
 inline uint8_t advanceByte(uint8_t packed) {
     uint8_t expected = 0;
     for (uint8_t slot = 0; slot < 4; ++slot) {
         const uint8_t shift = static_cast<uint8_t>(slot * 2);
         const uint8_t stage = static_cast<uint8_t>((packed >> shift) & 0x03u);
-        expected |= static_cast<uint8_t>(((stage + 1) & 0x03u) << shift);
+        uint8_t next = 0;
+        if (stage == 1) next = 2;
+        else if (stage >= 2) next = 3;
+        expected |= static_cast<uint8_t>(next << shift);
     }
     return expected;
 }
@@ -28,6 +32,9 @@ void plantStageTest(TestSuite &t) {
 
     const uint8_t byteCount = sizeof(PlantStage);   // eight packed bytes
     const uint8_t slotCount = byteCount * 4;        // thirty-two two-bit stages
+
+    test.assert(FIRST_BETA_PLOT_INDEX, static_cast<uint8_t>(0),
+                "authored first-beta plot is packed plant stage index 0");
 
     PlantStage stage = PlantStage();
     for (uint8_t i = 0; i < 32; ++i) {
@@ -50,8 +57,26 @@ void plantStageTest(TestSuite &t) {
 
     stage.incrementAll();
     for (uint8_t i = 0; i < 32; ++i) {
-        test.assert(stage.getStage(i), static_cast<uint8_t>(1),
-                    "incrementAll");
+        test.assert(stage.getStage(i), static_cast<uint8_t>(0),
+                    "incrementAll leaves an empty stage empty");
+    }
+    for (uint8_t i = 0; i < 32; ++i) {
+        stage.increment(i); // plant: 0 -> 1
+    }
+    stage.incrementAll();
+    for (uint8_t i = 0; i < 32; ++i) {
+        test.assert(stage.getStage(i), static_cast<uint8_t>(2),
+                    "incrementAll grows a planted stage");
+    }
+    stage.incrementAll();
+    for (uint8_t i = 0; i < 32; ++i) {
+        test.assert(stage.getStage(i), static_cast<uint8_t>(3),
+                    "incrementAll matures a growing stage");
+    }
+    stage.incrementAll();
+    for (uint8_t i = 0; i < 32; ++i) {
+        test.assert(stage.getStage(i), static_cast<uint8_t>(3),
+                    "incrementAll holds a mature stage instead of wrapping");
     }
 
     PlantStage encoded = PlantStage();
@@ -106,33 +131,32 @@ void plantStageTest(TestSuite &t) {
         }
     }
 
-    // Full modulo-four cycle: four incrementAll calls restore the original bytes.
-    PlantStage cycle = PlantStage();
-    cycle.restore(backgrounds[0]);
-    uint8_t start[8] = {};
-    cycle.serialize(start);
-    uint8_t running[8] = {};
+    // Saturating growth from a fully planted shelf: one pass grows every slot to
+    // growing (0x55 -> 0xAA), the next matures it (0xAA -> 0xFF), and a mature
+    // shelf holds byte-for-byte under further passes.
+    PlantStage saturate = PlantStage();
+    const uint8_t planted[8] = {0x55, 0x55, 0x55, 0x55,
+                                0x55, 0x55, 0x55, 0x55};
+    saturate.restore(planted);
+    uint8_t got[8] = {};
+    saturate.incrementAll();
+    saturate.serialize(got);
     for (uint8_t byte = 0; byte < byteCount; ++byte) {
-        running[byte] = backgrounds[0][byte];
+        test.assert(got[byte], static_cast<uint8_t>(0xAA),
+                    "one pass grows the fully planted shelf");
     }
-    for (uint8_t pass = 0; pass < 4; ++pass) {
-        cycle.incrementAll();
-        for (uint8_t byte = 0; byte < byteCount; ++byte) {
-            running[byte] = advanceByte(running[byte]);
-        }
-        uint8_t got[8] = {};
-        cycle.serialize(got);
-        if (pass < 3) {
-            for (uint8_t byte = 0; byte < byteCount; ++byte) {
-                test.assert(got[byte], running[byte],
-                            "incrementAll advances one stage per pass");
-            }
-        }
-    }
-    uint8_t finished[8] = {};
-    cycle.serialize(finished);
+    saturate.incrementAll();
+    saturate.serialize(got);
     for (uint8_t byte = 0; byte < byteCount; ++byte) {
-        test.assert(finished[byte], start[byte], "four incrementAll calls wrap to start");
+        test.assert(got[byte], static_cast<uint8_t>(0xFF),
+                    "the next pass matures the growing shelf");
+    }
+    saturate.incrementAll();
+    uint8_t held[8] = {};
+    saturate.serialize(held);
+    for (uint8_t byte = 0; byte < byteCount; ++byte) {
+        test.assert(held[byte], static_cast<uint8_t>(0xFF),
+                    "a mature shelf holds instead of wrapping");
     }
 
     // Standalone increment stays local: only the addressed two-bit field changes.
@@ -160,23 +184,27 @@ void plantStageTest(TestSuite &t) {
         }
     }
 
-    // Committed world-step timing: growth fires only on the 128th tick.
+    // Committed world-step timing: growth fires only on the 128th tick and moves
+    // a planted shelf to growing.
     PlantGameState clocked = PlantGameState();
+    for (uint8_t slot = 0; slot < slotCount; ++slot) {
+        clocked.plantStages.increment(slot); // plant every slot (0 -> 1)
+    }
     for (uint8_t tick = 0; tick < 127; ++tick) {
         clocked.tick();
     }
     test.assert(clocked.ticker, static_cast<uint8_t>(127),
                 "127 committed ticks stay before the growth boundary");
     for (uint8_t slot = 0; slot < slotCount; ++slot) {
-        test.assert(clocked.plantStages.getStage(slot), static_cast<uint8_t>(0),
+        test.assert(clocked.plantStages.getStage(slot), static_cast<uint8_t>(1),
                     "growth does not occur at tick 127");
     }
     clocked.tick();
     test.assert(clocked.ticker, static_cast<uint8_t>(0),
                 "128th committed tick resets ticker");
     for (uint8_t slot = 0; slot < slotCount; ++slot) {
-        test.assert(clocked.plantStages.getStage(slot), static_cast<uint8_t>(1),
-                    "128th tick advances every plant slot");
+        test.assert(clocked.plantStages.getStage(slot), static_cast<uint8_t>(2),
+                    "128th tick grows every planted slot");
     }
 
     t.addTest(test);
