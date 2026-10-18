@@ -21,4 +21,8 @@ OpponentSeed readOpponentSeed(uint8_t index);
 
 CreatureData_t getCreatureFromStore(uint8_t id);
 
+// The authored per-species duel kit mask. Lives here so both the battle and
+// compaction evolution paths adapt one shared read of the target species.
+uint8_t readCreatureMask(uint8_t id);
+
 uint16_t ReadFXu16(uint24_t addr);

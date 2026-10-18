@@ -123,12 +123,18 @@ escape_allowed = false
 repeat_reward = false
 victory_flag = "flag_beta_complete"
 
-# Exactly the three named first-stage evolution edges, each at level 8 (which
-# must equal the source creature's authored evelevel). No inferred id adjacency.
+# The six named evolution edges: the three first-stage edges at level 8 and the
+# three second-stage edges at level 16 (rhs7.4). Each level must equal the
+# source creature's authored evelevel. No inferred id adjacency.
 [[evolution.edge]]
 from_id = 0
 to_id = 1
 level = 8
+
+[[evolution.edge]]
+from_id = 1
+to_id = 2
+level = 16
 
 [[evolution.edge]]
 from_id = 3
@@ -136,9 +142,19 @@ to_id = 4
 level = 8
 
 [[evolution.edge]]
+from_id = 4
+to_id = 5
+level = 16
+
+[[evolution.edge]]
 from_id = 6
 to_id = 7
 level = 8
+
+[[evolution.edge]]
+from_id = 7
+to_id = 8
+level = 16
 
 # Battle label widths use the canonical 5-pixel glyph stride, so width is
 # glyph_width * len(text). Text must match the authored creature label in

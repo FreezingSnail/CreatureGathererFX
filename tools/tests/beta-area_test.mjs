@@ -218,7 +218,7 @@ test('contract pins every beta area/roster/table/reward/evolution/label field', 
   assert.equal(encounters.slots_per_table, 10);
   assert.equal(contract.encounters.table.length, 5, 'exactly five encounter tables');
   assert.equal(boss.species, 31);
-  assert.equal(edges.length, 3, 'exactly three first-stage evolution edges');
+  assert.equal(edges.length, 6, 'six authored evolution edges (two per starter chain)');
   assert.ok(labels.length >= 4, 'starter and boss labels must be pinned');
 });
 
@@ -379,9 +379,8 @@ test('tier1 lure rate meets the encounter need within six turns', () => {
 // ---------------------------------------------------------------------------
 test('evolution edges match canonical evelevel and the named pairs', () => {
   const pairs = edges.map((e) => [e.from_id, e.to_id]);
-  assert.deepEqual(pairs, [[0, 1], [3, 4], [6, 7]]);
+  assert.deepEqual(pairs, [[0, 1], [1, 2], [3, 4], [4, 5], [6, 7], [7, 8]]);
   for (const edge of edges) {
-    assert.equal(edge.level, 8, 'first-stage evolution threshold is level 8');
     assert.equal(creaturesById.get(edge.from_id).evelevel, edge.level,
       `creature ${edge.from_id} authored evelevel must equal the edge level`);
   }

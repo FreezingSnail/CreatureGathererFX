@@ -105,7 +105,15 @@ perturbed_layout=$fixtures/fxlayout-expand-20-perturbed.toml
 # identity 0.3.0+g55501d10 (previously 0.3.0+ge8afd0a7), rewriting only the
 # 27-byte generator_version payload. Previous cart sha256 418ac63b..., now
 # 6bbcabeb.... Intentional rebaseline.
-expected=6bbcabebddc8e8481f64f801c05a07876d1f6a3734bcc0219490eaf7116dcbb9
+# rhs7.4: author the first-beta starter chains 1->2, 4->5, 7->8 in
+# data/json/creatures.json (thresholds already authored at evelevel 16), so the
+# Evolution expand entry grows from 9 to 18 bytes (evolutionSource
+# {0,1,3,4,6,7}, evolutionTarget {1,2,4,5,7,8}, evolutionLevel
+# {8,16,8,16,8,16}); FX_DATA_BYTES grows 748546 -> 748555 and every field after
+# the Evolution entry (Rewards) shifts by +9. The tool change was test-only, so
+# the generator identity stays 0.3.0+g55501d10. Previous cart sha256
+# 6bbcabeb..., now f8bd14fd.... Intentional rebaseline.
+expected=f8bd14fd96b6f430c98a76e4266ff60a13ddb3f7871ebb16b233060bc66e9307
 
 for layout in "$old_layout" "$new_layout" "$perturbed_layout"; do
     test -f "$layout" || {

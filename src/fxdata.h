@@ -7,7 +7,7 @@ using uint24_t = __uint24;
 // Initialize FX hardware using  FX::begin(FX_DATA_PAGE); in the setup() function.
 
 constexpr uint16_t FX_DATA_PAGE  = 0xf413;
-constexpr uint24_t FX_DATA_BYTES = 748546;
+constexpr uint24_t FX_DATA_BYTES = 748555;
 
 constexpr uint16_t FX_SAVE_PAGE  = 0xFF80;
 constexpr uint24_t FX_SAVE_BYTES = 32768;
@@ -573,17 +573,17 @@ namespace DuelData
 namespace Evolution
 {
   constexpr uint24_t evolutionSource = 0x0B6B73;
-  constexpr uint24_t evolutionTarget = 0x0B6B76;
-  constexpr uint24_t evolutionLevel = 0x0B6B79;
+  constexpr uint24_t evolutionTarget = 0x0B6B79;
+  constexpr uint24_t evolutionLevel = 0x0B6B7F;
 }
 
 namespace Rewards
 {
-  constexpr uint24_t materialItem = 0x0B6B7C;
-  constexpr uint24_t materialCount = 0x0B6BBC;
-  constexpr uint24_t plantItem = 0x0B6BFC;
-  constexpr uint24_t plantCount = 0x0B6BFD;
-  constexpr uint24_t healItem = 0x0B6BFE;
-  constexpr uint24_t healCount = 0x0B6C00;
+  constexpr uint24_t materialItem = 0x0B6B85;
+  constexpr uint24_t materialCount = 0x0B6BC5;
+  constexpr uint24_t plantItem = 0x0B6C05;
+  constexpr uint24_t plantCount = 0x0B6C06;
+  constexpr uint24_t healItem = 0x0B6C07;
+  constexpr uint24_t healCount = 0x0B6C09;
 }
 

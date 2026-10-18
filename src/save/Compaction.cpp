@@ -195,6 +195,9 @@ bool storeEvolve(uint8_t slot) {
     const uint8_t oldMax=maxHP(record), oldHP=storeInstanceHP(record);
     const uint8_t missing=static_cast<uint8_t>(oldMax-oldHP);
     record.id=target;
+    // Adopt the target species authored kit: its mask replaces the source
+    // instance mask, so the record and the live member agree again.
+    record.attackMask=readCreatureMask(target);
     const uint8_t newMax=maxHP(record);
     const uint8_t newHP=oldHP==0 ? 0
         : (missing>=newMax ? 0 : static_cast<uint8_t>(newMax-missing));
