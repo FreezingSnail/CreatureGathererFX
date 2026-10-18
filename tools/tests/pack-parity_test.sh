@@ -113,7 +113,14 @@ perturbed_layout=$fixtures/fxlayout-expand-20-perturbed.toml
 # the Evolution entry (Rewards) shifts by +9. The tool change was test-only, so
 # the generator identity stays 0.3.0+g55501d10. Previous cart sha256
 # 6bbcabeb..., now f8bd14fd.... Intentional rebaseline.
-expected=f8bd14fd96b6f430c98a76e4266ff60a13ddb3f7871ebb16b233060bc66e9307
+# u0ez: remove the eleven superseded legacy packed sheets (creatureSprites,
+# fieldBacground, fightMenu, ArduFont, worldTiles, npc, ecreatureSprites,
+# arduboyFont, blankMenu, tilesheet, letters) from the first fxsprites.toml
+# [[set]]; no live symbol referenced them. FX_DATA_BYTES shrinks 748555 -> 708708
+# (-39847 B) and every kept symbol address shifts, so the packed payload and cart
+# change. All kept images/PNGs and the [strings] ArduFont_5x6 rendering source stay.
+# Previous cart sha256 f8bd14fd..., now 617a72a5.... Intentional rebaseline.
+expected=617a72a5578095886f9aed6d603764c2e7f04b394dcc1bf7e4e60d812cbf5014
 
 for layout in "$old_layout" "$new_layout" "$perturbed_layout"; do
     test -f "$layout" || {
@@ -121,8 +128,10 @@ for layout in "$old_layout" "$new_layout" "$perturbed_layout"; do
         exit 2
     }
 done
-test "$(grep -c '^\[\[entry\]\]' "$old_layout")" -eq 381 || {
-    printf 'layout equivalence: old fixture must contain 381 entries\n' >&2
+# u0ez removed the eleven superseded legacy packed sheets, so the frozen
+# migration fixture mirrors the slimmer live declaration order (370 entries).
+test "$(grep -c '^\[\[entry\]\]' "$old_layout")" -eq 370 || {
+    printf 'layout equivalence: old fixture must contain 370 entries\n' >&2
     exit 2
 }
 test "$(grep -c '^\[\[entry\]\]' "$new_layout")" -eq 20 || {

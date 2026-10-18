@@ -5,16 +5,12 @@ shades = 2
 [[set]]
 output = "fxdata/Sprites.txt"
 images = [
-  "images/numbersblack_7x8.png", "images/creatureSprites_32x32.png",
-  "images/fieldBacground_128x32.png", "images/characterSheet_16x16.png",
+  "images/numbersblack_7x8.png", "images/characterSheet_16x16.png",
   "images/NewecreatureSprites_32x32.png", "images/numberswhite_7x8.png",
-  "images/singlenumberswhite_3x8.png", "images/fightMenu_128x24.png",
-  "images/singlenumbersblack_3x8.png", "images/ArduFont_5x6.png",
-  "images/moveInfo_60x30.png", "images/worldTiles_16x16.png", "images/tiles_16x16.png",
-  "images/maskedFont_16x24.png", "images/npc_16x16.png",
-  "images/ecreatureSprites_32x32.png", "images/arduboyFont_6x8.png",
-  "images/battleMenu_128x24.png", "images/blankMenu_128x24.png",
-  "images/ArduFontTrimmed_5x6.png", "images/tilesheet_16x16.png", "images/letters_16x16.png",
+  "images/singlenumberswhite_3x8.png", "images/singlenumbersblack_3x8.png",
+  "images/moveInfo_60x30.png", "images/tiles_16x16.png",
+  "images/maskedFont_16x24.png", "images/battleMenu_128x24.png",
+  "images/ArduFontTrimmed_5x6.png",
 ]
 
 [[set]]
