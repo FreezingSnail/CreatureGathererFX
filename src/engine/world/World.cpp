@@ -16,8 +16,10 @@
 #else
 #include <Arduboy2.h>
 #include "../../GameState.hpp"
+#include "../../plants/PlantGamestate.hpp"
 extern GameState gameState;
 extern Player player;
+extern PlantGameState plants;
 extern bool worldInteractionJustPressedA();
 extern bool worldInteractionDialogActive();
 extern void worldInteractionPopDialog();
@@ -461,9 +463,34 @@ void WorldEngine::interact() {
             return;
         }
         if ((targetProps & TileProps::PROP_PLANTABLE) != 0) {
-            item::inventoryAdd(LureZone::inventory(), item::ItemKind::Lure,
-                               item::lureId(0, 0), 1);
-            LureZone::showMessage(lureTextGathered, 45, 40);
+            // The first-beta plot is authored at tile (14,2) (GID 551, the only
+            // PROP_PLANTABLE tile). It is a renewable loop on the RAM-window
+            // property read: an empty plot plants, a growing/mature plot reacts
+            // only when mature, and a mature harvest yields one authored tier-1
+            // lure (item::lureId(0,1) == 1, matching data/beta-area.toml
+            // [plant_source] item_id=1) before resetting the plot to planted.
+            // A full bag holds maturity so the harvest can be retried; nothing
+            // here adds an FX read on the A press.
+            const uint8_t stage =
+                plants.plantStages.getStage(FIRST_BETA_PLOT_INDEX);
+            if (stage == 0) {
+                plants.plantStages.increment(FIRST_BETA_PLOT_INDEX);
+            } else if (stage == 3) {
+                if (item::inventoryCount(LureZone::inventory(),
+                                         item::ItemKind::Lure,
+                                         item::lureId(0, 1)) == item::COUNT_MAX) {
+                    LureZone::showMessage(lureTextFull, 45, 40);
+                } else {
+                    item::inventoryAdd(LureZone::inventory(),
+                                       item::ItemKind::Lure,
+                                       item::lureId(0, 1), 1);
+                    // 3->0->1: reuse the standalone wrap increment twice to
+                    // reset the harvested plot to planted.
+                    plants.plantStages.increment(FIRST_BETA_PLOT_INDEX);
+                    plants.plantStages.increment(FIRST_BETA_PLOT_INDEX);
+                    LureZone::showMessage(lureTextGathered, 45, 40);
+                }
+            }
             return;
         }
     }

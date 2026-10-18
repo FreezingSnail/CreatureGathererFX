@@ -2,6 +2,9 @@
 #include "src/engine/draw.h"
 #include "src/engine/world/StepEvent.hpp"
 #include "src/engine/world/LureZone.hpp"
+#include "src/engine/world/TileProps.hpp"
+#include "src/engine/world/TilePropertyWindow.hpp"
+#include "src/lib/FxReadCounter.hpp"
 #include "src/engine/battle/BattleFlow.hpp"
 #include "src/engine/battle/DuelView.hpp"
 #include "src/item/Inventory.hpp"
@@ -276,6 +279,98 @@ void setup() {
                   F("tier-one lure enters at the distinct authored rate"));
     exitBattle();
     gameState.state = GameState_t::WORLD;
+
+    // jp8.11.5: the first-beta plant plot is a renewable loop driven from the RAM
+    // property window (map tile (14,2), the only PROP_PLANTABLE tile). An empty
+    // plot plants at no item cost, a growing plot is inert, a mature plot
+    // harvests one authored tier-1 lure and resets to planted, and a full bag
+    // holds maturity with the bag-full feedback so a retry can harvest. Every A
+    // press adds no FX read over the RAM-window property read.
+    {
+        auto facePlant = []() {
+            gameState.playerLocation = static_cast<uint16_t>((64u << 8) | 7u);
+            WorldEngine::init(worldState());
+            worldState().motion.directionAndFlags =
+                static_cast<uint8_t>(Direction::RIGHT);
+            TilePropertyWindow window(worldState().propertyWindow);
+            window.begin(7, 63);
+            uint16_t row[TilePropertyWindow::WINDOW_WIDTH] = {};
+            row[1] = TileProps::packTile(9, TileProps::PROP_PLANTABLE);
+            window.writeRow(1, row);
+        };
+        auto pressPlant = []() {
+            arduboy.currentButtonState = A_BUTTON;
+            arduboy.previousButtonState = 0;
+            FxReadCounter::resetFrame();
+            WorldEngine::interact();
+            arduboy.currentButtonState = arduboy.previousButtonState = 0;
+        };
+
+        // Empty plot: A plants stage1 at no item cost and adds no FX read.
+        plants = PlantGameState{};
+        item::inventoryClear(LureZone::inventory());
+        facePlant();
+        pressPlant();
+        test.expectEq(plants.plantStages.getStage(FIRST_BETA_PLOT_INDEX), 1,
+                      F("device A on an empty plot plants stage1"));
+        test.expectEq(item::inventoryCount(LureZone::inventory(), item::ItemKind::Lure,
+                                           item::lureId(0, 1)), 0,
+                      F("device planting costs no lure"));
+        test.expectEq(FxReadCounter::count(), static_cast<uint16_t>(0),
+                      F("device plant press adds no FX read"));
+
+        // Growing plot: A is inert, stage held.
+        plants = PlantGameState{};
+        plants.plantStages.increment(FIRST_BETA_PLOT_INDEX);
+        plants.plantStages.increment(FIRST_BETA_PLOT_INDEX);
+        facePlant();
+        pressPlant();
+        test.expectEq(plants.plantStages.getStage(FIRST_BETA_PLOT_INDEX), 2,
+                      F("device A on a growing plot is inert"));
+
+        // Mature plot: harvest one tier-1 lure and reset to planted.
+        plants = PlantGameState{};
+        for (uint8_t i = 0; i < 3; ++i)
+            plants.plantStages.increment(FIRST_BETA_PLOT_INDEX);
+        facePlant();
+        pressPlant();
+        test.expectEq(item::inventoryCount(LureZone::inventory(), item::ItemKind::Lure,
+                                           item::lureId(0, 1)), 1,
+                      F("device mature harvest grants one tier-1 lure"));
+        test.expectEq(plants.plantStages.getStage(FIRST_BETA_PLOT_INDEX), 1,
+                      F("device harvest resets the plot to planted"));
+        test.expectEq(LureZone::messageAddr(), lureTextGathered,
+                      F("device harvest shows the gathered feedback"));
+
+        // Full bag: maturity holds and the bag-full feedback shows; a retry with
+        // room harvests.
+        plants = PlantGameState{};
+        for (uint8_t i = 0; i < 3; ++i)
+            plants.plantStages.increment(FIRST_BETA_PLOT_INDEX);
+        item::inventoryClear(LureZone::inventory());
+        item::inventoryAdd(LureZone::inventory(), item::ItemKind::Lure,
+                           item::lureId(0, 1), item::COUNT_MAX);
+        facePlant();
+        pressPlant();
+        test.expectEq(plants.plantStages.getStage(FIRST_BETA_PLOT_INDEX), 3,
+                      F("device full bag holds the mature plot"));
+        test.expectEq(item::inventoryCount(LureZone::inventory(), item::ItemKind::Lure,
+                                           item::lureId(0, 1)), item::COUNT_MAX,
+                      F("device full bag keeps the count at max"));
+        test.expectEq(LureZone::messageAddr(), lureTextFull,
+                      F("device full bag shows the bag-full feedback"));
+        item::inventoryClear(LureZone::inventory());
+        item::inventoryAdd(LureZone::inventory(), item::ItemKind::Lure,
+                           item::lureId(0, 1),
+                           static_cast<uint8_t>(item::COUNT_MAX - 1));
+        pressPlant();
+        test.expectEq(item::inventoryCount(LureZone::inventory(), item::ItemKind::Lure,
+                                           item::lureId(0, 1)), item::COUNT_MAX,
+                      F("device retry after room harvests"));
+        test.expectEq(plants.plantStages.getStage(FIRST_BETA_PLOT_INDEX), 1,
+                      F("device retry resets the plot to planted"));
+        item::inventoryClear(LureZone::inventory());
+    }
 
     test.report(F("test_world_player"));
 }
