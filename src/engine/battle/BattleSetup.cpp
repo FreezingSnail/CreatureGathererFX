@@ -202,7 +202,7 @@ uint8_t fillTrainer(BattleState &state, const OpponentSeed &seed, uint8_t count)
         reads = static_cast<uint8_t>(reads + trainerCreatureReads(authored));
         if (slot == 0) {
             copyCreature(state.active[static_cast<uint8_t>(Side::Opponent)],
-                         creature, creature.statlist.hp);
+                         creature, creature.hp);
             continue;
         }
         const uint8_t benchSlot = static_cast<uint8_t>(slot - 1);
@@ -211,7 +211,7 @@ uint8_t fillTrainer(BattleState &state, const OpponentSeed &seed, uint8_t count)
         state.bench[static_cast<uint8_t>(Side::Opponent)][benchSlot].level =
             creature.level;
         state.bench[static_cast<uint8_t>(Side::Opponent)][benchSlot].hp =
-            creature.statlist.hp;
+            creature.hp;
         // Bench attack-type mask, indexed by original slot.
         state.moveUsesSpent[static_cast<uint8_t>(Side::Opponent)][slot] =
             duelAttackMask(creature);
@@ -316,7 +316,7 @@ void copyCreature(Combatant &destination, const Creature &source, uint8_t hp)
     destination.types = source.types;
     destination.level = source.level;
     destination.hp = hp;
-    destination.maxHp = source.statlist.hp;
+    destination.maxHp = source.hp;
     destination.attackMask = duelAttackMask(source);
 }
 
@@ -333,7 +333,7 @@ void beginWild(BattleState &state, uint8_t creatureId, uint8_t level,
     Creature creature;
     loadSpecies(creature, creatureId, level);
     copyCreature(state.active[static_cast<uint8_t>(Side::Opponent)],
-                 creature, creature.statlist.hp);
+                 creature, creature.hp);
     FxReadCounter::transitionExact(speciesCreatureReads(creature));
     state.partyCount[static_cast<uint8_t>(Side::Opponent)] = 1;
     state.activeSlot[static_cast<uint8_t>(Side::Opponent)] = 0;

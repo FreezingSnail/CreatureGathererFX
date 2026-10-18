@@ -171,7 +171,7 @@ bool load()
             continue;
         }
         player.party[i].load(record);
-        const uint8_t maxHP = player.party[i].statlist.hp;
+        const uint8_t maxHP = player.party[i].hp;
         player.creatureHPs[i] = saveState.partyHP[i] > maxHP ? maxHP : saveState.partyHP[i];
     }
     plants.plantStages.restore(saveState.plantStages);

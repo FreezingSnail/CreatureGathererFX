@@ -64,9 +64,9 @@ void setup() {
     // actual device. Prove the occupied-party restore, the authored start
     // return and that an empty slot is never touched.
     player.basic();
-    const uint8_t maxHp0 = player.party[0].statlist.hp;
-    const uint8_t maxHp1 = player.party[1].statlist.hp;
-    const uint8_t maxHp2 = player.party[2].statlist.hp;
+    const uint8_t maxHp0 = player.party[0].hp;
+    const uint8_t maxHp1 = player.party[1].hp;
+    const uint8_t maxHp2 = player.party[2].hp;
     player.creatureHPs[0] = 0;
     player.creatureHPs[1] = 1;
     player.creatureHPs[2] = static_cast<uint8_t>(maxHp2 - 1);

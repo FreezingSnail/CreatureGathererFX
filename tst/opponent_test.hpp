@@ -36,9 +36,9 @@ void OpponentTest(TestSuite &t) {
     encounter.attackMask = encounterSeed.attackMask;
     test.assert(encounter.id, encounterCreature, "Encounter Creature ID");
     test.assert(encounter.level, encounterLevel, "Encounter Creature Level");
-    test.assert(encounter.statlist.attack,
-                2 * encounterLevel + encounterSeed.atkSeed * (encounterLevel / 3),
-                "Encounter Creature Stats");
+    test.assert(encounter.hp,
+                2 * encounterLevel + encounterSeed.hpSeed * (encounterLevel / 3) + 30,
+                "Encounter Creature HP");
 
     t.addTest(test);
 }

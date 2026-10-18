@@ -59,7 +59,7 @@ bool applyPlayerTeam(uint8_t team, Player &target)
         creature.attackMask = member.attackMask;
         creature.status.clearEffects();
         creature.statMods.clearModifiers();
-        target.creatureHPs[slot] = creature.statlist.hp;
+        target.creatureHPs[slot] = creature.hp;
 
         // The member reader owns its three-byte FX read. Approve the canonical
         // creature record at this per-member boundary.

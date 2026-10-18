@@ -1704,3 +1704,112 @@ bead premise holds. Probe tree removed.
 
 ### Wall time
 ≈70 min worker (recon ~30, edits + host/device loops ~25, AVR A/B ~15). No commit (orchestrator commits).
+
+## rhs7.3 — Measured duel stat collapse: retire five dead stat seeds to hpSeed
+
+WHAT: `CreatureData_t` shrank 11 → 6 B (`{id,type1,type2,evoLevel,hpSeed,attackMask}`);
+`Creature` now carries one `uint8_t hp` instead of `stats_t statlist`; authoring JSON
+dropped atk/deff/spcatk/spcdef/spd. HP formula unchanged (`2*level + hpSeed*(level/3) + 30`).
+`StoreRecord` and the save wire format untouched. Owned the single AVR lane.
+
+### Tools repo (CreatureGathererTools, from HEAD 55501d1; 3 pre-existing dirty files untouched)
+- `crates/core/src/model.rs` — `Creature` drops the five stat fields, keeps `hp`.
+- `crates/core/src/builder.rs` — `build_creatures` emits 6-byte rows in the pinned order;
+  `build_fx_creature_descriptor` emits 6 fields; test vectors/lengths updated.
+- `crates/core/src/fixtures.rs` — device `creature_data.hpp` rows now `{id,t1,t2,evo,hp,mask}`.
+- `crates/core/src/store.rs` — fixture-field + `json_keys_match_go_tags` asserts trimmed.
+- `duel.rs`, `evolution.rs`, `battle_presets.rs`, `arena_demo.rs`, `rewards.rs` — test
+  `creature()` builders lose the five seeds.
+- `tests/go_parity.rs`, `tests/fixtures.rs` — 6-byte reference vectors; mutation probe
+  switches `atk=31` → `hp=31`.
+- `testdata/creatures.json`, `testdata/fxdata/data/creatureData.txt` (re-emitted by cargo test)
+  — 6-field canonical fixtures.
+- `ui/src/editorTypes.ts` — stat fields now optional (keeps pre-existing dirty `App.test.tsx`
+  compiling; editor never writes them back); `CreatureEditor.{tsx,test.tsx}`,
+  `lib/validation.{ts,test.ts}` drop the stat fields/errors/factories.
+
+Verification: `cargo test -p cgfx-core` → all suites green (unit 230 + integration, 0 failed);
+`cd ui && npm test` → 199/199; `npx tsc --noEmit` → clean.
+
+### CLI install
+`cargo build --release -p cgfx-core --bin cgfx-tools` → copied to
+`~/Applications/CreatureGathererTools/bin/cgfx-tools`.
+Installed binary sha256 `5f46d0edff8be079b3321f18f909e10fb450f6050e400b7d85e19bef6ffe3c3e`,
+size 3,895,392 B (prior `c80df77b…`). **Deviation**: the Tauri app bundle was intentionally not
+rebuilt (CLI-only install, as instructed). Generator identity moved `0.3.0+ge8afd0a7` →
+`0.3.0+g55501d10` (installed tool was stale relative to tools HEAD).
+
+### Game repo edits
+`data/json/creatures.json` (64 species, stat keys dropped via `jq del`); `src/lib/DataTypes.hpp`
+(6-byte `CreatureD` + static_assert); `src/lib/Stats.hpp` (`stats_t` removed; `StatType` kept);
+`src/creature/Creature.{hpp,cpp}`; `src/save/SaveController.cpp`; `src/player/Player.cpp`;
+`src/engine/arena/ArenaDemo.cpp`; `src/engine/battle/{BattleFlow,BattlePresets,BattleSetup}.cpp`.
+Consumer tests: `tst/arena_lifecycle_test.hpp`, `tst/battle_presets_test.hpp`,
+`tst/creature_test.hpp`, `tst/duel_session_integration_test.hpp`, `tst/encounter_test.hpp`,
+`tst/fxdatatest/creatures_test.hpp`, `tst/fxdatatest/preset_teams_test.hpp`,
+`tst/fxdatatest/save_test.hpp`, `tst/fxdatatest/test_world_player.ino`,
+`tst/fxdatatest/win_exp_test.hpp`, `tst/opponent_test.hpp`, `tst/save_test.hpp`,
+`tst/world_interact_test.hpp` (`statlist.hp` → `hp`, retired `statlist.*`/seed-field asserts).
+Spike: `tools/battle-design-spike-data.mjs` derives every mock stat from the one HP seed;
+`mock/data.js` regenerated.
+
+**Unplanned-required fix (documented):** `Creature()` previously left `id`/`level`
+indeterminate; the smaller record changed stack garbage so `player = Player()` no longer read as
+an empty party. `Creature()` now zeroes `id`/`level` deterministically (empty-party entry is a
+real state), and `tst/duel_session_integration_test.hpp::beginWildKoSession` dropped its
+redundant `player = Player()` (it wiped the prepared preset party, relying on the same UB) —
+`preparePlayer()` already installs a preset party over a fresh bag.
+
+### Generation / host / VM
+- `make gen` (new CLI) → captured `fxdata/data/creatureData.txt` + `fxdata/generated/creatureData.txt`
+  + `tst/fxdatatest/generated/creature_data.hpp` all 64 rows × 6 fields. No separate 32-species
+  fixture path exists: the pre-expansion (0..31) and expansion (32..63) rows live in the one
+  64-row set; `battlepresentation` exercises index 31, `test_creatures` sweeps all 64.
+- `make verify-generated` → PASS; `make test-manifest` → PASS.
+- `make test` → host **240493/0**, world **258/0**. `make testvm` → **286/0**.
+- `make test-generated-libs` → 48/0 + 5/0 + alias 28/0 PASS. `make test-beta-area` 13/0;
+  `make sim-test` pass; `make test-encounter-profile` PASS.
+- Makefile has **no `gen-check` or `test-tools` target** (brief assumed both); used
+  `make verify-generated` + `make test-generated-libs` + the tools `cargo test` instead.
+- Second `make gen` left tracked generated files byte-identical (deterministic).
+
+### Device suites (single lane, Ardens)
+`make fxtest-headless FXTEST_INOS='tst/fxdatatest/test_{creatures,save,win_exp,battle_duel,battle_presets,arenacatalog,arenademo,stack}.ino' ...`
+— all 8 PASS: creatures 418/0, save 304/0, win_exp 36/0, battle_duel 47/0, battle_presets 106/0,
+arenacatalog 46/0, arenademo 15/0, stack 4/0.
+`test_stack` headroom **0x26C (620 B)** vs control **0x256 (598 B)** (+22 B headroom);
+mode-transition headroom 0x2CB.
+
+### AVR whole-image A/B (`make ram`, pinned BUILD_DIR=build/rhs7-lane)
+- CONTROL (HEAD 19642d2): **23268 flash / 1680 static**.
+- Candidate rhs7.3: **23158 flash / 1665 static** → **-110 B flash, -15 B static**.
+- Delta explanation: the 64×5 = **-320 B** creature payload lives in the packed FX cart image
+  (`dist/fxdata.bin`), **not** in the app program flash — the firmware only compiles the
+  `src/fxdata.h` addresses. App flash moves by code only (`setStats` loses five `seedToStat`
+  calls, `Creature()` ctor shrinks) = -110 B. Static RAM -15 B = 3 party `Creature` instances ×
+  5 B (6 → 1 stat byte).
+- ELFs: `build/reports/rhs7/candidate-rhs7.3.elf` (+ `candidate-rhs7.3-ram.log`); control
+  `candidate-rhs7.2-B.elf` / `final-gate/ram.log`.
+
+### Rebaselined fixtures
+- `tools/tests/pack-parity_test.sh` cart sha256 `418ac63b…` → **`6bbcabeb…`**. Cause: creatureData
+  -320 B/64 rows, appended field addresses shift, pack input loses the columns, and the rebuilt
+  core stamps generator identity `0.3.0+g55501d10`. Layout-equivalence fixtures unchanged; a
+  second `make gen` produces an empty diff. `make test-pack-parity` → PASS.
+- `tst/fxdatatest/generated/version_data.hpp` — generator identity `ge8afd0a7` → `g55501d10`.
+- `fxdata/data/creatureData.txt`, `tst/fxdatatest/generated/creature_data.hpp`, `src/fxdata.h`
+  regenerated by `make gen`.
+
+### Frozen / not-updated (recorded, not edited)
+- `data/Creaturesheet.csv` + `data/CreatureGatherer Stat Sheet.xlsx` — frozen authoring
+  provenance: no build path reads them (only the dead `tst/src/parseCSV.hpp` names the CSV).
+- `tst/src/parseCSV.hpp` — already-uncompiled legacy (references retired seed *and* move fields);
+  left untouched, not in any test build.
+- `mock/battle-mock.js` (stances variant) unchanged; it consumes only `stats.attack`, now sourced
+  from the HP seed by the spike generator.
+
+### Storage / wall time
+`du -sh build/rhs7-lane` 103 M; `~/code/creaturegather/CreatureGathererTools/target` 1.2 G;
+`df -h .` **62 GiB free** (>10 GiB). No commit/push in either repo; bead not closed.
+Wall time ≈55 min worker (tools recon/edit ~15, install ~2, game edit + host loops ~20,
+gen/VM/manifest ~5, device suites ~8, A/B + report ~5).

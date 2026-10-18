@@ -957,8 +957,9 @@ void installMaterialFixture(uint8_t species, uint8_t itemId, uint8_t count) {
 // gather path. `gatherable` selects the ordinary vs lure-zone encounter shape.
 void beginWildKoSession(uint8_t foeSpecies, bool gatherable) {
     flashFakeReset();
+    // preparePlayer() already installs the preset party over a freshly cleared
+    // bag, so the duel has a real roster to enter with.
     preparePlayer();
-    player = Player();                       // fresh empty bag
     item::setBattleInventory(&player.inventory);
     menu.clear();
     dialogMenu.clear();
@@ -1080,7 +1081,7 @@ void seedPartyInstances(const uint16_t (&exps)[PARTY_SIZE],
     for (uint8_t i = 0; i < PARTY_SIZE; ++i) {
         player.party[i].level = levelFromExp(exps[i]);
         player.party[i].setStats(getCreatureFromStore(player.party[i].id));
-        const uint8_t maxHp = player.party[i].statlist.hp;
+        const uint8_t maxHp = player.party[i].hp;
         const uint8_t curHp = missing[i] >= maxHp ? 0 : static_cast<uint8_t>(maxHp - missing[i]);
         player.creatureHPs[i] = curHp;
         StoreRecord record = {};
@@ -1107,7 +1108,7 @@ void beginWildWinSession(uint8_t foeLevel, bool gatherable) {
     battleSession().setRng({scriptedRng});
     battleSession().beginWild(0, foeLevel, gatherable, gatherable ? 1 : 0);
     configureMatchup(battleSession(), FireAuthored, SpiritAuthored, FireAuthored,
-                     FireAuthored, player.party[0].statlist.hp, 1);
+                     FireAuthored, player.party[0].hp, 1);
 }
 
 uint16_t storedExp(uint8_t slot) {
@@ -1137,7 +1138,7 @@ void duelWildWinAwardsExactExp(Test &test) {
         test.assert(player.party[i].level, static_cast<uint8_t>(3),
                     "a member below the next threshold keeps its level");
     }
-    test.assert(player.creatureHPs[1], player.party[1].statlist.hp,
+    test.assert(player.creatureHPs[1], player.party[1].hp,
                 "a full member below the threshold keeps its current HP");
 }
 
@@ -1165,7 +1166,7 @@ void duelWildWinLevelUpBoundaries(Test &test) {
                 "exactly at the threshold: the exact total is stored");
     test.assert(player.party[1].level, static_cast<uint8_t>(4),
                 "exactly at the threshold: the derived level increases");
-    test.assert(player.creatureHPs[1], player.party[1].statlist.hp,
+    test.assert(player.creatureHPs[1], player.party[1].hp,
                 "a full member that levels up reaches its new derived maximum");
 
     test.assert(storedExp(2), static_cast<uint16_t>(132),
@@ -1173,7 +1174,7 @@ void duelWildWinLevelUpBoundaries(Test &test) {
     test.assert(player.party[2].level, static_cast<uint8_t>(5),
                 "over the threshold: the derived level increases");
     test.assert(player.creatureHPs[2],
-                static_cast<uint8_t>(player.party[2].statlist.hp - 5),
+                static_cast<uint8_t>(player.party[2].hp - 5),
                 "a damaged member that levels up preserves its missing HP");
 }
 
@@ -1324,7 +1325,7 @@ void seedSpeciesInstances(const uint8_t (&species)[PARTY_SIZE],
         player.party[i].level = levelFromExp(exps[i]);
         player.party[i].attackMask = 2;
         player.party[i].setStats(getCreatureFromStore(species[i]));
-        const uint8_t maxHp = player.party[i].statlist.hp;
+        const uint8_t maxHp = player.party[i].hp;
         const uint8_t curHp = missing[i] >= maxHp ? 0
                                                    : static_cast<uint8_t>(maxHp - missing[i]);
         player.creatureHPs[i] = curHp;
@@ -1436,7 +1437,7 @@ void duelWildWinEvolutionPreservesHP(Test &test) {
     wildKoToWorld();
 
     test.assert(player.party[1].id, static_cast<uint8_t>(4), "the damaged member evolves");
-    const uint8_t newMax = player.party[1].statlist.hp;
+    const uint8_t newMax = player.party[1].hp;
     test.assert(player.creatureHPs[1], static_cast<uint8_t>(newMax - 5),
                 "evolution preserves the damaged member's missing HP");
     test.assert(player.party[2].id, static_cast<uint8_t>(6),

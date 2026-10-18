@@ -107,7 +107,7 @@ void awardOrdinaryWildExp(const battle::BattleState &state) {
         StoreRecord record;
         // A 255/absent stable slot refuses here: storeRead's bound check.
         if (!storeRead(slot, record)) continue;
-        const uint8_t oldMax = player.party[i].statlist.hp;
+        const uint8_t oldMax = player.party[i].hp;
         uint8_t newMax = oldMax;
         uint8_t newHP = player.creatureHPs[i];
         const uint16_t room = static_cast<uint16_t>(cap - record.exp);
@@ -115,7 +115,7 @@ void awardOrdinaryWildExp(const battle::BattleState &state) {
         Creature grown;
         grown.load(record); // derived level and stats (one species read)
         if (grown.level > player.party[i].level) {
-            newMax = grown.statlist.hp;
+            newMax = grown.hp;
             const uint16_t grownHp = static_cast<uint16_t>(newHP) +
                                      static_cast<uint16_t>(newMax - oldMax);
             newHP = grownHp > newMax ? newMax : static_cast<uint8_t>(grownHp);
@@ -127,7 +127,7 @@ void awardOrdinaryWildExp(const battle::BattleState &state) {
             const uint8_t missing = static_cast<uint8_t>(newMax - newHP);
             record.id = target;
             grown.load(record); // target species at the same derived level
-            newMax = grown.statlist.hp;
+            newMax = grown.hp;
             newHP = missing >= newMax ? 0 : static_cast<uint8_t>(newMax - missing);
         }
         record.hpEncoded = newHP >= newMax ? 0 : static_cast<uint8_t>(newHP + 1);

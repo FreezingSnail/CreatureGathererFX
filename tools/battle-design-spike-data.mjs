@@ -159,17 +159,21 @@ export function buildSpikeData() {
     const moves = [...new Set(creature.moves)];
     for (const type of moves)
       if (!(type in DUEL.map)) throw Error(`bad authored move type ${type} on ${creature.name}`);
+    // The five authoring stat seeds were retired (CreatureGathererFX-rhs7.3):
+    // the duel reads only HP. This stances-variant spike keeps its `stats` shape
+    // for the mock preview, sourcing every field from the one retained HP seed.
+    const seed = creature.hp;
     return {
       id: creature.id, name: creature.name, types: types(creature),
       merged: mergedTypes(creature),
       stats: {
-        attack: stat(SPIKE_LEVEL, creature.atk),
-        defense: stat(SPIKE_LEVEL, creature.deff),
-        spcAtk: stat(SPIKE_LEVEL, creature.spcatk),
-        spcDef: stat(SPIKE_LEVEL, creature.spcdef),
-        speed: stat(SPIKE_LEVEL, creature.spd),
+        attack: stat(SPIKE_LEVEL, seed),
+        defense: stat(SPIKE_LEVEL, seed),
+        spcAtk: stat(SPIKE_LEVEL, seed),
+        spcDef: stat(SPIKE_LEVEL, seed),
+        speed: stat(SPIKE_LEVEL, seed),
       },
-      maxHp: stat(SPIKE_LEVEL, creature.hp) + 30,
+      maxHp: stat(SPIKE_LEVEL, seed) + 30,
       moves,
       attackMask: duelMask(moves),
       front: sprite.front, back: sprite.back,

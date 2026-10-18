@@ -17,12 +17,7 @@ void CreatureLoadTest(TestSuite &t) {
     test.assert(creature.types.getType1(), static_cast<int>(Type::WIND), "Creature Type 1");
     test.assert(creature.types.getType2(), static_cast<int>(Type::NONE), "Creature Type 2");
     test.assert(creature.attackMask, 2, "Creature attack mask (water)");
-    test.assert(creature.statlist.attack, creature.seedToStat(3), "Creature Attack");
-    test.assert(creature.statlist.defense, creature.seedToStat(3), "Creature Defense");
-    test.assert(creature.statlist.speed, creature.seedToStat(3), "Creature Speed");
-    test.assert(creature.statlist.hp, creature.seedToStat(3) + 30, "Creature HP");
-    test.assert(creature.statlist.spcAtk, creature.seedToStat(2), "Creature Special Attack");
-    test.assert(creature.statlist.spcDef, creature.seedToStat(2), "Creature Special Defense");
+    test.assert(creature.hp, creature.seedToStat(3) + 30, "Creature HP");
 
     t.addTest(test);
 }
@@ -40,9 +35,9 @@ void CreatureLoadFromOpponnetSeed(TestSuite &t) {
     creature.loadFromOpponentSeed({0, 17, 4});
     test.assert(creature.level, 17, "Creature uses opponent seed level");
     test.assert(creature.attackMask, 4, "Opponent seed attack mask follows the seed");
-    test.assert(creature.statlist.attack,
-                static_cast<uint8_t>(2 * 17 + 3 * (17 / 3)),
-                "Opponent stats use the seed level");
+    test.assert(creature.hp,
+                static_cast<uint8_t>(2 * 17 + 3 * (17 / 3) + 30),
+                "Opponent HP uses the seed level");
 
     t.addTest(test);
 }
@@ -55,8 +50,8 @@ void CreatureStoredRecordTest(TestSuite &t) {
     test.assert(creature.id, record.id, "Stored creature ID");
     test.assert(creature.level, 3, "Stored experience derives level");
     test.assert(creature.attackMask, record.attackMask, "Stored mask overrides species default");
-    test.assert(creature.statlist.attack, creature.seedToStat(3),
-                "Stored creature stats use derived level");
+    test.assert(creature.hp, creature.seedToStat(3) + 30,
+                "Stored creature HP uses derived level");
     t.addTest(test);
 }
 

@@ -23,7 +23,7 @@ __attribute__((noinline)) void seedPartyInstances(const uint16_t (&exps)[PARTY_S
     for (uint8_t i = 0; i < PARTY_SIZE; ++i) {
         player.party[i].level = levelFromExp(exps[i]);
         player.party[i].setStats(getCreatureFromStore(player.party[i].id));
-        const uint8_t maxHp = player.party[i].statlist.hp;
+        const uint8_t maxHp = player.party[i].hp;
         const uint8_t curHp = missing[i] >= maxHp ? 0 : static_cast<uint8_t>(maxHp - missing[i]);
         player.creatureHPs[i] = curHp;
         StoreRecord record = {};
@@ -48,7 +48,7 @@ __attribute__((noinline)) void beginWildWinSession(uint8_t foeLevel, bool gather
     battleSession().setRng({scriptedRng});
     battleSession().beginWild(0, foeLevel, gatherable, gatherable ? 1 : 0);
     configureMatchup(FireAuthored, SpiritAuthored, FireAuthored, FireAuthored,
-                     player.party[0].statlist.hp, 1);
+                     player.party[0].hp, 1);
 }
 
 __attribute__((noinline)) void wildWinToWorld() {
@@ -96,12 +96,12 @@ __attribute__((noinline)) void duelDeviceWildWinExp(FxTest &test) {
                   F("one below the threshold stores the exact total"));
     test.expectEq(player.party[1].level, static_cast<uint8_t>(4),
                   F("at the threshold the level increases"));
-    test.expectEq(player.creatureHPs[1], player.party[1].statlist.hp,
+    test.expectEq(player.creatureHPs[1], player.party[1].hp,
                   F("a full level-up reaches its new derived maximum"));
     test.expectEq(storedExp(2), static_cast<uint16_t>(132),
                   F("over the threshold keeps the exact remainder"));
     test.expectEq(player.creatureHPs[2],
-                  static_cast<uint8_t>(player.party[2].statlist.hp - 5),
+                  static_cast<uint8_t>(player.party[2].hp - 5),
                   F("a damaged level-up preserves its missing HP"));
 
     // Bounded growth at the level-31 cap; a KO member is untouched.
@@ -143,7 +143,7 @@ __attribute__((noinline)) void duelDeviceWildWinEvolution(FxTest &test) {
     test.expectEq(player.party[0].attackMask, static_cast<uint8_t>(2),
                   F("the existing moves are preserved"));
     test.expectEq(player.creatureHPs[1],
-                  static_cast<uint8_t>(player.party[1].statlist.hp - 5),
+                  static_cast<uint8_t>(player.party[1].hp - 5),
                   F("missing HP preserved across evolution"));
     test.expectEq(player.party[2].id, static_cast<uint8_t>(6),
                   F("a KO member does not evolve"));

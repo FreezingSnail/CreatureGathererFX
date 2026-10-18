@@ -16,7 +16,8 @@ class Creature {
 
     // Folded 5-bit duel attack set; bit i = duel type i, 0 = WAIT.
     uint8_t attackMask;
-    stats_t statlist;
+    // Maximum HP: 2*level + hpSeed*(level/3) + 30. The duel reads only HP.
+    uint8_t hp;
     StatusEffect status;
     StatModifer statMods;
 
