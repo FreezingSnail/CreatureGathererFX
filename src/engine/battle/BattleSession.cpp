@@ -1,6 +1,5 @@
 #include "BattleSession.hpp"
 
-#include "Ai.hpp"
 #include "BattleSetup.hpp"
 #include "Resolve.hpp"
 #include "MoveUses.hpp"
