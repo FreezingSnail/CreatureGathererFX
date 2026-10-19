@@ -128,7 +128,18 @@ perturbed_layout=$fixtures/fxlayout-expand-20-perturbed.toml
 # "lureTextFull" to its exclude list to keep the proof at its original
 # declarations. Previous cart sha256 617a72a5..., now a91840f3.... Intentional
 # rebaseline.
-expected=a91840f3b0c5ca89e2a8133a9398f21542d37262dfe7355db0b8133be967ae32
+# jp8.11.25: author the first-beta encounter, zone and warp content. fxdata/data/
+# encounters.txt moves zoneDefs from the three test zones (chunks 0/1/33) to the
+# four authored route chunks (1/33/65/66, lure nibbles 1..4, typeMask 0b1111) and
+# replaces the 0..31 test tables with the five contract tables (base, spirit,
+# water, wind, earth; floor 2 / ceil 5). maps/world_map.json replaces the
+# out-of-area @test_house/@test_teleport warp fixtures with the in-bounds
+# @beta_door (12,7) <-> @beta_gate (12,9) pair. No tile or property changed, so
+# raw_map is byte-identical; the encounters payload, the scripts payload and the
+# legacy map_data NPC markers change, so the cart changes while every symbol
+# address and src/fxdata.h stay byte-identical. Previous cart sha256
+# a91840f3..., now 2e56abb2.... Intentional rebaseline.
+expected=2e56abb2b4c04f8d413de3161cc75b730a6d934608adae09e8eac2874265fb55
 
 for layout in "$old_layout" "$new_layout" "$perturbed_layout"; do
     test -f "$layout" || {

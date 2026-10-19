@@ -45,16 +45,16 @@ void ChunkTest(TestSuite &suite) {
     test.assert(Chunk::scriptSlotAddr(base, 2047), static_cast<uint24_t>(base + 262016),
                 "last script slot address does not wrap");
     test.assert(Chunk::scriptSlotAddr(base, 0), base, "blob0 slot");
-    test.assert(Chunk::scriptSlotAddr(base, 32), static_cast<uint24_t>(base + 4096),
-                "blob32 slot");
     test.assert(Chunk::scriptSlotAddr(base, 33), static_cast<uint24_t>(base + 4224),
                 "blob33 slot");
+    test.assert(Chunk::scriptSlotAddr(base, 65), static_cast<uint24_t>(base + 8320),
+                "blob65 slot");
     test.assert(sizeof(blob0), static_cast<size_t>(15), "generated blob0 prefix size");
-    test.assert(sizeof(blob32), static_cast<size_t>(9), "generated blob32 prefix size");
     test.assert(sizeof(blob33), static_cast<size_t>(9), "generated blob33 prefix size");
+    test.assert(sizeof(blob65), static_cast<size_t>(9), "generated blob65 prefix size");
     test.assert(blob0[0], static_cast<uint8_t>(5), "generated blob0 first opcode");
-    test.assert(blob32[0], static_cast<uint8_t>(4), "generated blob32 first opcode");
     test.assert(blob33[0], static_cast<uint8_t>(4), "generated blob33 first opcode");
+    test.assert(blob65[0], static_cast<uint8_t>(4), "generated blob65 first opcode");
 
     test.assert(Chunk::chunkChanged(Chunk::chunkAt(7, 3), Chunk::chunkAt(7, 3)), false,
                 "no transition within a chunk");

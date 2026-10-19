@@ -196,9 +196,10 @@ against the 2,160 B limit.
 Build with `CGFX_WILD_DEMO` instead of `CGFX_TRAINER_DEMO`. It applies the named `opening`
 player preset, bypasses loading and writing a user save, and starts at the normal overworld entry
 location. Move once with the directions to start a wild battle through the regular world-step,
-encounter selection, `BattleSession`, and playback controller paths. The opt-in build substitutes a
-one-time first-step encounter trigger because the current generated map has no encounter tiles; the
-production map and normal encounter checks are unchanged. Reset to restart the demo.
+encounter selection, `BattleSession`, and playback controller paths. The production map carries
+encounter tiles across the authored first-beta area, so an ordinary boot already rolls wild
+encounters; the demo's one-time first-step trigger stays as its opt-in shortcut. Reset to restart
+the demo.
 
 ```sh
 make build BUILD_DIR=build/wild-demo \

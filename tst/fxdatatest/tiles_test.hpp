@@ -124,13 +124,13 @@ inline void test_chunk_slots(FxTest &test) {
     }
 
     bool sawChunk0 = false;
-    bool sawChunk32 = false;
     bool sawChunk33 = false;
+    bool sawChunk65 = false;
     for (uint16_t index = 0; index < scriptSlotFixtureCount; ++index) {
         const uint16_t chunk = pgm_read_word(&scriptSlotFixtures[index].chunk);
         sawChunk0 = sawChunk0 || chunk == 0;
-        sawChunk32 = sawChunk32 || chunk == 32;
         sawChunk33 = sawChunk33 || chunk == 33;
+        sawChunk65 = sawChunk65 || chunk == 65;
         const uint24_t address = Chunk::scriptSlotAddr(scripts, chunk);
         uint8_t prefix[4];
         FxRead::bytes(address, prefix, sizeof(prefix));
@@ -140,8 +140,8 @@ inline void test_chunk_slots(FxTest &test) {
         }
     }
     test.expectEq(sawChunk0, true, F("real script blob chunk 0"));
-    test.expectEq(sawChunk32, true, F("real script blob chunk 32"));
     test.expectEq(sawChunk33, true, F("real script blob chunk 33"));
+    test.expectEq(sawChunk65, true, F("real script blob chunk 65"));
 
     for (uint8_t index = 0; index < scriptAddressFixtureCount; ++index) {
         const uint16_t chunk = pgm_read_word(&scriptAddressFixtures[index].chunk);
