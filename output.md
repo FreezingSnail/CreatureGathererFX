@@ -2120,3 +2120,56 @@ plant suites gained coverage; expected. No `make test-tools` target used. No com
 close (per instructions). Full 34-suite gate left to the orchestrator.
 
 Wall time: ≈35 min (recon + edits + gen + host/vm/beta + parity + spike + ram A/B).
+
+## jp8.11.27 — first-session onboarding design (brief only)
+
+Design-only deliverable; **no source/AVR/asset/map/generator/build/gate change** (off the AVR lane).
+Bead closed after the brief + leaf follow-ups landed.
+
+### Changed / created (exact paths)
+- `docs/first-beta-onboarding-brief.md` (new) — first-session script, minimal affordance set,
+  per-moment state map, bounded estimates, observable acceptance, OWNER-PENDING list.
+- `README.md` — one pointer line to the brief after the intro paragraph.
+- `output.md` — this section.
+
+### What the recon found (current source, not historical)
+- Shipping ordinary fresh boot shows no onboarding: `LureZone::showIntro()` boot card is
+  `CGFX_LURE_WEDGE`-only (INO:169-174); compact profile has no VM message path
+  (`World.cpp:133-141`).
+- Already-shipped live affordances: distinct tile art; the **native** lure picker overlay on the
+  deposit tile (`World.cpp:461-463` → `LureZone::openPicker`/`drawOverlay`, INO:259; not a VM
+  popup); plant plant/harvest with native "Gathered" message (`World.cpp:474-491`); duel pick row
+  with up/down matchup markers (`DuelView.hpp:97-104`, `BattleScene.cpp:122-127`), SWAP/WAIT cells,
+  HP numbers+bars, team pips, sprite type badges, per-round captions.
+- Real gaps that render nothing today: **plant PlantStage** (map draws one static plot frame),
+  **gather progress** (`state.gather.progress/need` not drawn), and the wild **GATHER action is
+  hidden behind `B`** (`BattleMenu.cpp:169-179`) with no cue.
+
+### Selected approach
+Affordance-only (existing art + native picker + live duel HUD), with only the invisible state made
+visible. Rejected: one-shot hint flag (ABI), scripted-tour warp (pocket already exists), full-VM
+(no popups). Teaching moment → affordance → state table in the brief; deposit-charge and rest cues
+are called out as sufficient-for-first-capture and deferred OWNER-PENDING.
+
+### Created beads + edges
+- `CreatureGathererFX-jp8.11.30` P1 — visible plant plot growth/ripeness (state
+  `plants.plantStages.getStage(0)`; est. ~80-200 B flash, 0 static).
+- `CreatureGathererFX-jp8.11.31` P1 — surface GATHER in the shipping duel pick row for gatherable
+  encounters (state `state.gatherable`; est. ~120-300 B flash, 0 static).
+- `CreatureGathererFX-jp8.11.32` P2 — gather progress/need cue in the duel HUD (state
+  `BattleState::gather`; est. ~40-120 B flash, 0 static).
+- Edges: `bd dep add CreatureGathererFX-jp8.11.15 {30,31,32}` → jp8.11.15 now depends on all three.
+Labels `beta,first-beta,roadmap,impl-ready`; parent epic jp8.11. No gates touched; no other bead
+status changed. Estimates are from the dated `d8cfd1c` control (23,252 B / 1,665 B / 620 B stack);
+whole-image A/B decides.
+
+### Verification (read-only; no build/gate run)
+- `bd show CreatureGathererFX-jp8.11.27` acceptance satisfied: brief has script + affordance set +
+  state needs + observable acceptance + filed leaves.
+- `bd show CreatureGathererFX-jp8.11.15` → DEPENDS ON .30/.31/.32 present; `.31` BLOCKS .15.
+- `git status` → only `.beads/interactions.jsonl`, `README.md`, new brief.
+No commit, push, publication or full gate (per instructions). Wall time ≈25 min.
+
+### OWNER-PENDING (unchanged, not approved)
+15-25 min session length; deposits/wins; capture attempts; KO/loss cost; explicit-only power-loss
+window.

@@ -8,6 +8,9 @@ then presents the frame with `FX::display(CLEAR_BUFFER)`.
 Workflow conventions distilled from past waves live in `docs/dev-flow.md`; agent instructions live
 in `AGENTS.md`.
 
+The first-beta first-session script and its minimal (no-dialogue) affordance set are pinned in
+`docs/first-beta-onboarding-brief.md`.
+
 ## Generate and validate
 
 Run `make gen` to generate game data, native sprite/font sources, and package the FX image with
