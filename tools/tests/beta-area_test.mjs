@@ -593,3 +593,265 @@ test('starter attack types are the species authored type list', () => {
     }
   }
 });
+
+// ---------------------------------------------------------------------------
+// Authored first-beta map content (CreatureGathererFX-jp8.11.25).
+// ---------------------------------------------------------------------------
+// The packed encounter/zone bytes and the authored warp pair are the content
+// that makes the ordinary loop playable. These tests read the packed
+// fxdata/data/encounters.txt ABI text and the generated collision, never
+// literal generated indices, so a one-sided edit of the contract, the zone
+// ABI or the map fails the standard gate.
+const ENCOUNTER_ZONE_BYTES = 10;
+const ENCOUNTER_TABLE_BYTES = 12;
+const ENCOUNTER_SLOT_COUNT = 10;
+const ENCOUNTER_ZONE_COUNT = 8;
+const ENCOUNTER_TABLE_COUNT = 5;
+const ENCOUNTER_NIBBLE_COUNT = 4;
+const ENCOUNTER_SENTINEL = 0xffff;
+// Encounter tiles are exactly the tiles whose tileset tile declares the
+// `encounter` property; the packed property word carries it above bit 10.
+const PROP_ENCOUNTER_BIT = 1 << 4;
+
+function parseEncounterSource() {
+  const source = readText('fxdata/data/encounters.txt');
+  const array = (name) => {
+    const match = source.match(new RegExp(`uint8_t ${name}\\[\\] = \\{([^}]*)\\};`));
+    assert.ok(match, `encounters.txt declares ${name}`);
+    return match[1].split(',').map((v) => v.trim())
+      .filter((v) => v !== '').map(Number);
+  };
+  return { zones: array('zoneDefs'), tables: array('tables') };
+}
+
+// The `tp @from @to` source/destination pair of an authored warp script, or
+// null for any other script text (the flag-gated legacy demo is neither).
+function warpPair(scriptText) {
+  const match = scriptText.match(/^tp\s+@(\w+)\s+@(\w+);?$/);
+  return match ? { from: match[1], to: match[2] } : null;
+}
+
+function inArea(x, y) {
+  return x >= area.min_x && x <= area.max_x && y >= area.min_y && y <= area.max_y;
+}
+
+test('packed encounter tables equal the five authored contract groups in order', () => {
+  const { tables } = parseEncounterSource();
+  const expectedTables = [-1, 0, 1, 2, 3]
+    .map((lureType) => encounters.table.find((t) => t.lure_type === lureType));
+  assert.equal(expectedTables.filter(Boolean).length, ENCOUNTER_TABLE_COUNT,
+    'the contract authors the base table plus lure groups 0..3');
+  assert.equal(tables.length, ENCOUNTER_TABLE_COUNT * ENCOUNTER_TABLE_BYTES,
+    'encounters.txt packs exactly five tables');
+  for (let index = 0; index < ENCOUNTER_TABLE_COUNT; index += 1) {
+    const table = expectedTables[index];
+    const base = index * ENCOUNTER_TABLE_BYTES;
+    assert.deepEqual(tables.slice(base, base + ENCOUNTER_SLOT_COUNT), table.species,
+      `packed table ${index} (${table.name}) species match the contract`);
+    assert.equal(tables[base + ENCOUNTER_SLOT_COUNT], encounters.level_min,
+      `packed table ${table.name} floor is the authored level_min`);
+    assert.equal(tables[base + ENCOUNTER_SLOT_COUNT + 1], encounters.level_max,
+      `packed table ${table.name} ceil is the authored level_max`);
+  }
+});
+
+test('authored zone defs cover every route chunk and map each lure type to its themed table', () => {
+  const { zones } = parseEncounterSource();
+  assert.equal(zones.length, ENCOUNTER_ZONE_COUNT * ENCOUNTER_ZONE_BYTES,
+    'encounters.txt packs exactly the fixed zone slots');
+
+  // Encounter tiles come from the tileset property, so the zone coverage is
+  // derived from the authored tiles, not from the map's (unpacked) grids.
+  const encounterGids = new Set();
+  for (const match of readText('maps/tiles.tsx')
+    .matchAll(/<tile id="(\d+)"[^>]*>([\s\S]*?)<\/tile>/g)) {
+    if (/name="encounter" type="bool" value="true"/.test(match[2])) {
+      encounterGids.add(Number(match[1]) + 1);
+    }
+  }
+  assert.ok(encounterGids.size > 0, 'the tileset authors an encounter property');
+
+  const word = loadGeneratedCollision();
+  const routeChunks = new Set();
+  let encounterCells = 0;
+  for (let y = area.min_y; y <= area.max_y; y += 1) {
+    for (let x = area.min_x; x <= area.max_x; x += 1) {
+      if (!encounterGids.has(worldMap.tiles[y][x])) continue;
+      encounterCells += 1;
+      assert.notEqual((word(x, y) >> PROP_SHIFT) & PROP_ENCOUNTER_BIT, 0,
+        `packed encounter property at (${x},${y})`);
+      assert.notEqual(tileIdOf(word(x, y)), 0, `packed encounter tile at (${x},${y})`);
+      routeChunks.add(Math.floor(y / 4) * 32 + Math.floor(x / 8));
+    }
+  }
+  assert.ok(encounterCells > 0, 'the authored area carries encounter tiles');
+
+  const activeZones = [];
+  let sentinelSeen = false;
+  for (let index = 0; index < ENCOUNTER_ZONE_COUNT; index += 1) {
+    const base = index * ENCOUNTER_ZONE_BYTES;
+    const chunk = zones[base] | (zones[base + 1] << 8);
+    if (chunk === ENCOUNTER_SENTINEL) {
+      sentinelSeen = true;
+      assert.deepEqual(zones.slice(base + 2, base + ENCOUNTER_ZONE_BYTES),
+        new Array(ENCOUNTER_ZONE_BYTES - 2).fill(0), 'sentinel zone tail is zeroed');
+      continue;
+    }
+    assert.equal(sentinelSeen, false, 'active zones precede the sentinel tail');
+    activeZones.push({
+      chunk,
+      tableBase: zones[base + 2],
+      tableCount: zones[base + 3],
+      typeMask: zones[base + 4],
+      nibbles: zones.slice(base + 5, base + 5 + ENCOUNTER_NIBBLE_COUNT),
+      levelOffset: zones[base + 9],
+    });
+  }
+
+  const covered = new Set(activeZones.map((zone) => zone.chunk));
+  for (const chunk of routeChunks) {
+    assert.ok(covered.has(chunk),
+      `route chunk ${chunk} holds encounter tiles and must have an authored zone`);
+  }
+  assert.deepEqual([...covered].sort((a, b) => a - b),
+    [...routeChunks].sort((a, b) => a - b),
+    'the authored zones are exactly the route chunks');
+
+  const groupByLureType = new Map([-1, 0, 1, 2, 3].map((lureType) => [lureType,
+    encounters.table.find((t) => t.lure_type === lureType)]));
+  const startAverage = Math.floor(parties.reduce((sum, m) => sum + m.level, 0) / parties.length);
+  for (const zone of activeZones) {
+    assert.equal(zone.tableBase, 0, `zone ${zone.chunk} base is the first packed table`);
+    assert.equal(zone.tableCount, ENCOUNTER_TABLE_COUNT,
+      `zone ${zone.chunk} spans all five authored tables`);
+    assert.equal(zone.typeMask & ~((1 << ENCOUNTER_NIBBLE_COUNT) - 1), 0,
+      `zone ${zone.chunk} type mask names only supported lure types`);
+    for (let lureType = 0; lureType < ENCOUNTER_NIBBLE_COUNT; lureType += 1) {
+      assert.equal(zone.nibbles[lureType], lureType + 1,
+        `zone ${zone.chunk} lure type ${lureType} selects its themed table offset`);
+      const themed = groupByLureType.get(lureType);
+      assert.ok(themed, `the contract authors lure group ${lureType}`);
+      assert.equal(zone.tableBase + zone.nibbles[lureType],
+        [-1, 0, 1, 2, 3].indexOf(themed.lure_type),
+        `zone ${zone.chunk} lure type ${lureType} maps to the ${themed.name} table bytes`);
+    }
+    const level = startAverage + zone.levelOffset;
+    assert.ok(level >= encounters.level_min && level <= encounters.level_max,
+      `zone ${zone.chunk} level offset keeps the fresh party inside the authored 2..5 band`);
+  }
+});
+
+test('only the in-bounds beta door pair warps, and the authored area stays closed', () => {
+  const word = loadGeneratedCollision();
+  const locations = new Map(worldMap.npcs.map((npc) => [npc.script, npc]));
+  for (const [scriptName, npc] of locations) {
+    assert.match(scriptName, /^@/, 'every authored map marker is a @location');
+    assert.ok(inArea(npc.x, npc.y), `location ${scriptName} stays inside the authored area`);
+  }
+
+  const warps = [];
+  for (const script of worldMap.scripts) {
+    const pair = warpPair(script.script);
+    if (!pair) continue;
+    const from = locations.get(`@${pair.from}`);
+    const to = locations.get(`@${pair.to}`);
+    assert.ok(from && to, `warp ${script.script} names authored locations`);
+    warps.push({ script, from, to });
+  }
+  assert.equal(warps.length, 2, 'the area authors exactly one reciprocal door pair');
+  const [door, gate] = warps;
+  assert.deepEqual([door.from.x, door.from.y], [gate.to.x, gate.to.y],
+    'the door pair is reciprocal (door source is the gate destination)');
+  assert.deepEqual([door.to.x, door.to.y], [gate.from.x, gate.from.y],
+    'the door pair is reciprocal (gate source is the door destination)');
+
+  const reach = bfsReachable(word, area.start_x, area.start_y);
+  const bossApproach = { x: area.boss_x - 1, y: area.boss_y };
+  for (const warp of warps) {
+    for (const end of [warp.from, warp.to]) {
+      assert.ok(inArea(end.x, end.y),
+        `warp endpoint (${end.x},${end.y}) stays inside the authored area`);
+      assert.ok(isWalkableWord(word(end.x, end.y)),
+        `warp endpoint (${end.x},${end.y}) is walkable`);
+      assert.ok(reach.has(`${end.x},${end.y}`),
+        `warp endpoint (${end.x},${end.y}) is on the reachable route`);
+      assert.equal(end.x === bossApproach.x && end.y === bossApproach.y, false,
+        'the boss approach tile carries no warp endpoint');
+    }
+  }
+  for (const script of worldMap.scripts) {
+    const pair = warpPair(script.script);
+    if (!pair) continue;
+    const to = locations.get(`@${pair.to}`);
+    assert.ok(inArea(to.x, to.y), `warp ${script.script} never leaves the authored area`);
+  }
+
+  // The legacy out-of-area demo warps are gone; the only remaining extra script
+  // is the flag-gated door demo, which is inert because nothing sets flag_door.
+  for (const script of worldMap.scripts) {
+    assert.ok(!/@test_house|@test_teleport/.test(script.script),
+      'the pre-beta test warp fixtures are removed');
+  }
+  const flagScripts = worldMap.scripts.filter((script) => /flag_door/.test(script.script));
+  assert.ok(flagScripts.length >= 1, 'the generated flag_door demo script is preserved');
+  assert.ok(!worldMap.scripts.some((script) => /\bsetflag\b/i.test(script.script)),
+    'no map script sets flag_door, so the gated demo warp cannot fire');
+  const flagsHeader = readText('src/flags/flags.hpp');
+  assert.match(flagsHeader, /uint16_t flag_door = 0;/,
+    'generated flag_door keeps its index-0 ABI');
+
+  // The authored area is sealed by walking: the start's whole reachable set
+  // lies inside the authored bounds.
+  assert.ok(reach.size > 0, 'the start reaches authored walkable cells');
+  let areaWalkable = 0;
+  for (let y = area.min_y; y <= area.max_y; y += 1) {
+    for (let x = area.min_x; x <= area.max_x; x += 1) {
+      if (isWalkableWord(word(x, y))) areaWalkable += 1;
+    }
+  }
+  for (const key of reach) {
+    const [x, y] = key.split(',').map(Number);
+    assert.ok(inArea(x, y), `reachable cell (${x},${y}) must stay inside the authored area`);
+  }
+  assert.equal(reach.size, areaWalkable,
+    'every walkable cell of the authored area is reachable and none outside is');
+});
+
+test('the authored routes carry encounter tiles in every reachable chunk', () => {
+  const word = loadGeneratedCollision();
+  const reach = bfsReachable(word, area.start_x, area.start_y);
+  const reachChunks = new Set();
+  for (const key of reach) {
+    const [x, y] = key.split(',').map(Number);
+    reachChunks.add(Math.floor(y / 4) * 32 + Math.floor(x / 8));
+  }
+  const { zones } = parseEncounterSource();
+  const covered = new Set();
+  for (let index = 0; index < ENCOUNTER_ZONE_COUNT; index += 1) {
+    const base = index * ENCOUNTER_ZONE_BYTES;
+    const chunk = zones[base] | (zones[base + 1] << 8);
+    if (chunk !== ENCOUNTER_SENTINEL) covered.add(chunk);
+  }
+  for (const chunk of reachChunks) {
+    assert.ok(covered.has(chunk),
+      `reachable chunk ${chunk} must have an authored zone so a deposited lure survives`);
+  }
+  // A deposited lure is cleared when the destination chunk has encounter tiles
+  // but no zone, so the reachable set must be fully covered.
+  const contact = [...reach].every((key) => {
+    const [x, y] = key.split(',').map(Number);
+    return (word(x, y) >> PROP_SHIFT) & PROP_ENCOUNTER_BIT;
+  });
+  assert.equal(contact, true, 'every reachable route cell is an encounter tile');
+});
+
+test('the unpacked map encounter grids stay inert sentinels', () => {
+  assert.equal(worldMap.encounter_zones.length, 0,
+    'the unpacked encounter_zones list stays empty');
+  for (let y = area.min_y; y <= area.max_y; y += 1) {
+    for (let x = area.min_x; x <= area.max_x; x += 1) {
+      assert.equal(worldMap.encounters[y][x], -1,
+        `unpacked encounters[${y}][${x}] stays the -1 sentinel`);
+    }
+  }
+});

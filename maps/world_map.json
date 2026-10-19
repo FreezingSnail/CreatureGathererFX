@@ -66063,34 +66063,34 @@
       "x": 12,
       "y": 7,
       "sprite_id": 0,
-      "script": "@test_house"
+      "script": "@beta_door"
     },
     {
       "id": 9,
-      "x": 4,
-      "y": 4,
+      "x": 12,
+      "y": 9,
       "sprite_id": 0,
-      "script": "@test_teleport"
+      "script": "@beta_gate"
     }
   ],
   "scripts": [
-    {
-      "id": 5,
-      "x": 0,
-      "y": 4,
-      "script": "tp @test_teleport @test_house;"
-    },
-    {
-      "id": 6,
-      "x": 8,
-      "y": 4,
-      "script": "tp @test_house @test_teleport;"
-    },
     {
       "id": 11,
       "x": 2,
       "y": 2,
       "script": "if flag_door then tp 1 1 0 0 endif;"
+    },
+    {
+      "id": 5,
+      "x": 12,
+      "y": 7,
+      "script": "tp @beta_door @beta_gate;"
+    },
+    {
+      "id": 6,
+      "x": 12,
+      "y": 9,
+      "script": "tp @beta_gate @beta_door;"
     }
   ],
   "collision": [

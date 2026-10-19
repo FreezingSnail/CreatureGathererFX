@@ -7,7 +7,9 @@
 #include "src/engine/battle/BattleState.hpp"
 #include "src/engine/battle/ActionResult.hpp"
 #include "src/engine/world/Chunk.hpp"
+#include "src/engine/world/Encounter.hpp"
 #include "src/engine/world/World.hpp"
+#include "src/fxdata.h"
 #include "src/player/Player.hpp"
 
 inline void test_mode_state(FxTest &test)
@@ -60,7 +62,53 @@ inline void test_mode_state(FxTest &test)
     for (uint8_t i = 0; i < sizeof(worldState().propertyWindow); ++i) {
         test.expectEq(worldState().propertyWindow[i], 0, F("property window cleared"));
     }
+    // exitBattle() value-initialises the world, so the battle round trip is a
+    // world re-entry: the chunk-change transition loads the authored zone for
+    // the player's chunk. Read the packed zone independently and prove the
+    // cache holds exactly that payload after the transition.
+    const uint16_t chunk = Chunk::chunkOfLocation(0x0A0B);
+    uint8_t zone[Encounter::ZONE_BYTES] = {};
+    bool zoneFound = false;
+    for (uint8_t index = 0; index < Encounter::ZONE_COUNT; ++index) {
+        FX::readDataBytes(EncounterFXData::zoneDefs +
+                              static_cast<uint24_t>(index) * Encounter::ZONE_BYTES,
+                          zone, sizeof(zone));
+        if ((static_cast<uint16_t>(zone[0]) |
+             (static_cast<uint16_t>(zone[1]) << 8)) == chunk) {
+            zoneFound = true;
+            break;
+        }
+    }
+    test.expectEq(zoneFound, true, F("authored zone for the player chunk"));
+    uint8_t packedTable[Encounter::TABLE_BYTES];
+    FX::readDataBytes(EncounterFXData::tables +
+                          static_cast<uint24_t>(zone[2]) * Encounter::TABLE_BYTES,
+                      packedTable, sizeof(packedTable));
+    for (uint8_t i = 0; i < Encounter::TABLE_BYTES; ++i) {
+        test.expectEq(worldState().zoneTableCache[i], packedTable[i],
+                      F("cache holds the packed base table"));
+    }
+    test.expectEq(worldState().zoneTableCache[Encounter::CACHE_VALID_OFFSET], 1,
+                  F("zone cache valid after world re-entry"));
+    test.expectEq(worldState().zoneTableCache[Encounter::CACHE_CHUNK_LOW_OFFSET], zone[0],
+                  F("cache chunk low matches the packed zone"));
+    test.expectEq(worldState().zoneTableCache[Encounter::CACHE_TABLE_COUNT_OFFSET], zone[3],
+                  F("cache table count matches the packed zone"));
+    test.expectEq(worldState().zoneTableCache[Encounter::CACHE_TYPE_MASK_OFFSET], zone[4],
+                  F("cache type mask matches the packed zone"));
+    test.expectEq(worldState().zoneTableCache[Encounter::CACHE_LEVEL_OFFSET], zone[9],
+                  F("cache level offset matches the packed zone"));
+    test.expectEq(worldState().zoneTableCache[Encounter::CACHE_NIBBLES_OFFSET],
+                  static_cast<uint8_t>((zone[5] & 0x0F) | ((zone[6] & 0x0F) << 4)),
+                  F("cache lure nibbles match the packed zone"));
+    test.expectEq(worldState().zoneTableCache[Encounter::CACHE_NIBBLES_OFFSET + 1],
+                  static_cast<uint8_t>((zone[7] & 0x0F) | ((zone[8] & 0x0F) << 4)),
+                  F("cache lure nibbles match the packed zone"));
+
+    // Authored coverage ends at the area bounds: crossing into a chunk with no
+    // authored zone still invalidates the cache (Encounter::load failure).
+    WorldEngine::setPos(worldState(), 0, 0);
     for (uint8_t i = 0; i < sizeof(worldState().zoneTableCache); ++i) {
-        test.expectEq(worldState().zoneTableCache[i], 0, F("zone cache cleared"));
+        test.expectEq(worldState().zoneTableCache[i], 0, F("zoneless chunk clears the cache"));
     }
 }

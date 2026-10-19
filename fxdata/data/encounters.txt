@@ -6,29 +6,42 @@
 // offset inside [tableBase, tableBase + tableCount): a nibble of 1..4 selects
 // the lure-biased table, while an inert lure (no deposited charge) selects
 // table offset 0, the base wild table.
+//
+// First-beta authored content (data/beta-area.toml [encounters]): the five
+// tables in contract order base, spirit(0), water(1), wind(2), earth(3), so
+// lure type t selects tableBase + (t + 1) through nibbles 1..4. Every table
+// keeps floor 2 / ceil 5, the authored inclusive level bounds (party average 3
+// sits inside them, so an authored encounter spawns at level 3).
 namespace EncounterFXData {
-    // The pocket floor spans chunk 1 (x9..14,y2..3) and chunk 33 (y4..6 plus
-    // (12,7)) under Chunk::chunkAt's 8x4 tiles, so both carry the lure-zone
-    // table so a deposited lure survives the internal boundary crossing. The
-    // remaining entries are the inert 255 sentinels; the layout stays at the
-    // fixed eight zones.
+    // Every walkable cell of the authored area (x8..23, y0..11) is an
+    // encounter tile, so each of the four chunks the route crosses carries the
+    // same zone: 1 (pocket y2..3), 33 (pocket y4..6 and the (12,7) doorway),
+    // 65 (the (12,8) doorway and corridor x12..15,y9) and 66 (corridor
+    // x16..20,y9). A chunk with encounter tiles but no zone would clear an
+    // active lure on entry (WorldEngine::onChunkChange), so the route's chunks
+    // must all be authored. The remaining entries are the inert 255 sentinels;
+    // the layout stays at the fixed eight zones. typeMask bit t marks lure
+    // group t supported (stored, not read at runtime).
     uint8_t zoneDefs[] = {
-        0, 0, 0, 5, 1, 1, 2, 3, 4, 0,
-        1, 0, 0, 5, 1, 1, 2, 3, 4, 0,
-        33, 0, 0, 5, 1, 1, 2, 3, 4, 0,
-        255, 255, 0, 0, 0, 0, 0, 0, 0, 0,
+        1, 0, 0, 5, 15, 1, 2, 3, 4, 0,
+        33, 0, 0, 5, 15, 1, 2, 3, 4, 0,
+        65, 0, 0, 5, 15, 1, 2, 3, 4, 0,
+        66, 0, 0, 5, 15, 1, 2, 3, 4, 0,
         255, 255, 0, 0, 0, 0, 0, 0, 0, 0,
         255, 255, 0, 0, 0, 0, 0, 0, 0, 0,
         255, 255, 0, 0, 0, 0, 0, 0, 0, 0,
         255, 255, 0, 0, 0, 0, 0, 0, 0, 0
     };
 
+    // Authored tables, contract order, ten slots plus floor/ceil (2/5). Only
+    // first-area species are used; the material derivation and the beta-area
+    // host test pin the same IDs.
     uint8_t tables[] = {
-        0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 2, 5,
-        10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 2, 5,
-        20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 2, 5,
-        30, 31, 0, 1, 2, 3, 4, 5, 6, 7, 2, 5,
-        8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 2, 5
+        0, 3, 6, 9, 10, 12, 13, 14, 0, 6, 2, 5,
+        9, 9, 0, 6, 9, 13, 3, 9, 14, 9, 2, 5,
+        6, 6, 3, 6, 9, 6, 14, 6, 0, 6, 2, 5,
+        0, 13, 0, 13, 9, 0, 13, 6, 0, 13, 2, 5,
+        3, 14, 3, 14, 9, 3, 14, 6, 3, 14, 2, 5
     };
 }
 namespace_end

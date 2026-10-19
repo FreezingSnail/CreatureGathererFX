@@ -153,8 +153,11 @@ inline void testGiveItemGrants(FxTest &test, ScriptVm &vm, uint8_t *slot) {
 
 inline void testCompactWarps(FxTest &test, ScriptVm &vm, uint8_t *slot) {
 #ifndef CGFX_FULL_WORLD_VM
-    const uint16_t sources[] = {To1D(1,1), To1D(4,4), To1D(12,7)};
-    const uint16_t targets[] = {To1D(0,0), To1D(12,7), To1D(4,4)};
+    // The authored first-beta warp content: chunk 0 keeps the flag-gated demo
+    // script ((1,1)->(0,0)), and chunks 33/65 carry the reciprocal in-bounds
+    // door pair @beta_door (12,7) <-> @beta_gate (12,9).
+    const uint16_t sources[] = {To1D(1,1), To1D(12,7), To1D(12,9)};
+    const uint16_t targets[] = {To1D(0,0), To1D(12,9), To1D(12,7)};
     for (uint8_t index=0; index<3; ++index) {
         for (uint8_t flag=0; flag<2; ++flag) {
             FX::readDataBytes(Chunk::scriptSlotAddr(scripts,

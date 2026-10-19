@@ -53,11 +53,14 @@ inline void WarpVmTest(TestRunner &runner) {
     Test canonical("canonical fixture parity");
     const uint8_t fixtures[3][16] = {
         {op(VmOpcode::If),0,0,0,1,9,op(VmOpcode::TpIf),0,1,0,1,0,0,0,0,op(VmOpcode::End)},
-        {op(VmOpcode::TpIf),0,4,0,4,0,12,0,7,op(VmOpcode::End)},
-        {op(VmOpcode::TpIf),0,12,0,7,0,4,0,4,op(VmOpcode::End)}
+        {op(VmOpcode::TpIf),0,12,0,7,0,12,0,9,op(VmOpcode::End)},
+        {op(VmOpcode::TpIf),0,12,0,9,0,12,0,7,op(VmOpcode::End)}
     };
-    const uint16_t sources[] = {To1D(1,1), To1D(4,4), To1D(12,7)};
-    const uint16_t targets[] = {To1D(0,0), To1D(12,7), To1D(4,4)};
+    // The authored first-beta warp content: chunk 0 keeps the flag-gated demo
+    // script ((1,1)->(0,0)), and chunks 33/65 carry the reciprocal in-bounds
+    // door pair @beta_door (12,7) <-> @beta_gate (12,9).
+    const uint16_t sources[] = {To1D(1,1), To1D(12,7), To1D(12,9)};
+    const uint16_t targets[] = {To1D(0,0), To1D(12,9), To1D(12,7)};
     for (uint8_t index=0; index<3; ++index) {
         uint8_t slot[128] = {};
         std::memcpy(slot, fixtures[index], 16);
