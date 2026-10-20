@@ -1,0 +1,66 @@
+{
+  "version": "1.10",
+  "type": "map",
+  "orientation": "orthogonal",
+  "renderorder": "right-down",
+  "width": 8,
+  "height": 4,
+  "tilewidth": 16,
+  "tileheight": 16,
+  "infinite": false,
+  "nextlayerid": 2,
+  "nextobjectid": 1,
+  "tilesets": [
+    {
+      "firstgid": 1,
+      "source": "../tileset.tsx"
+    }
+  ],
+  "layers": [
+    {
+      "id": 1,
+      "name": "World tiles",
+      "type": "tilelayer",
+      "width": 8,
+      "height": 4,
+      "x": 0,
+      "y": 0,
+      "opacity": 1,
+      "visible": true,
+      "data": [
+        25,
+        26,
+        26,
+        26,
+        26,
+        26,
+        26,
+        27,
+        28,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        28,
+        28,
+        5,
+        29,
+        5,
+        5,
+        30,
+        5,
+        28,
+        28,
+        5,
+        5,
+        5,
+        31,
+        5,
+        5,
+        32
+      ]
+    }
+  ]
+}

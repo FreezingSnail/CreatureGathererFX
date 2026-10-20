@@ -2,6 +2,12 @@
 
 [Open the artwork viewer](world-environment-32-spike.html).
 
+For a fresh visual-identity pass comparing three art directions across cave,
+forest, rural town and city at 128×64, each with three monochrome texture
+treatments, see the
+[overworld identity spike](overworld-identity-spike.md) and
+[its viewer](overworld-identity-spike.html).
+
 ## All examples and asset-set comparisons on one page
 
 The page shows the river, town, city, light cave and inverted dark cave together;
