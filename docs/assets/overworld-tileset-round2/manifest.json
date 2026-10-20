@@ -1,0 +1,986 @@
+{
+  "reviewOnly": true,
+  "title": "Overworld reusable world-kit round 2",
+  "sourcePolicy": "Freshly generated tile sheets. No existing spike artwork used as a visual reference.",
+  "viewport": [
+    128,
+    64
+  ],
+  "mapTile": [
+    16,
+    16
+  ],
+  "viewportTiles": [
+    8,
+    4
+  ],
+  "player": {
+    "source": "images/Playerchibi_16x16.png",
+    "frame": "DOWN",
+    "size": [
+      16,
+      16
+    ],
+    "position": [
+      56,
+      24
+    ],
+    "center": [
+      64,
+      32
+    ],
+    "compositedAfterMap": true
+  },
+  "treatments": [
+    {
+      "id": "clean",
+      "label": "Clean threshold",
+      "method": "single threshold",
+      "amplitude": 0
+    },
+    {
+      "id": "light",
+      "label": "Light texture",
+      "method": "2x2 Bayer",
+      "amplitude": 72
+    },
+    {
+      "id": "heavy",
+      "label": "Heavy texture",
+      "method": "4x4 Bayer",
+      "amplitude": 104
+    }
+  ],
+  "tileGrid": [
+    8,
+    8
+  ],
+  "tileNames": [
+    {
+      "id": 0,
+      "name": "open grass"
+    },
+    {
+      "id": 1,
+      "name": "sparse grass"
+    },
+    {
+      "id": 2,
+      "name": "flowering grass"
+    },
+    {
+      "id": 3,
+      "name": "gravel"
+    },
+    {
+      "id": 4,
+      "name": "cave floor"
+    },
+    {
+      "id": 5,
+      "name": "cultivated soil"
+    },
+    {
+      "id": 6,
+      "name": "rough stone"
+    },
+    {
+      "id": 7,
+      "name": "paved ground"
+    },
+    {
+      "id": 8,
+      "name": "path horizontal"
+    },
+    {
+      "id": 9,
+      "name": "path vertical"
+    },
+    {
+      "id": 10,
+      "name": "path corner northwest"
+    },
+    {
+      "id": 11,
+      "name": "path corner northeast"
+    },
+    {
+      "id": 12,
+      "name": "path corner southwest"
+    },
+    {
+      "id": 13,
+      "name": "path corner southeast"
+    },
+    {
+      "id": 14,
+      "name": "path junction"
+    },
+    {
+      "id": 15,
+      "name": "path crossing"
+    },
+    {
+      "id": 16,
+      "name": "tree canopy left"
+    },
+    {
+      "id": 17,
+      "name": "tree canopy right"
+    },
+    {
+      "id": 18,
+      "name": "tree canopy alternate"
+    },
+    {
+      "id": 19,
+      "name": "shrub"
+    },
+    {
+      "id": 20,
+      "name": "fallen log"
+    },
+    {
+      "id": 21,
+      "name": "flower cluster"
+    },
+    {
+      "id": 22,
+      "name": "stump"
+    },
+    {
+      "id": 23,
+      "name": "ground detail"
+    },
+    {
+      "id": 24,
+      "name": "cave wall edge left"
+    },
+    {
+      "id": 25,
+      "name": "cave wall top"
+    },
+    {
+      "id": 26,
+      "name": "cave wall edge right"
+    },
+    {
+      "id": 27,
+      "name": "cave side wall"
+    },
+    {
+      "id": 28,
+      "name": "boulder"
+    },
+    {
+      "id": 29,
+      "name": "crystal cluster"
+    },
+    {
+      "id": 30,
+      "name": "stalagmite"
+    },
+    {
+      "id": 31,
+      "name": "cave entrance"
+    },
+    {
+      "id": 32,
+      "name": "cottage roof left"
+    },
+    {
+      "id": 33,
+      "name": "cottage roof right"
+    },
+    {
+      "id": 34,
+      "name": "cottage wall window"
+    },
+    {
+      "id": 35,
+      "name": "cottage wall door"
+    },
+    {
+      "id": 36,
+      "name": "cottage wall variant"
+    },
+    {
+      "id": 37,
+      "name": "fence"
+    },
+    {
+      "id": 38,
+      "name": "garden rows"
+    },
+    {
+      "id": 39,
+      "name": "garden bed"
+    },
+    {
+      "id": 40,
+      "name": "shop front left"
+    },
+    {
+      "id": 41,
+      "name": "shop front center-left"
+    },
+    {
+      "id": 42,
+      "name": "shop front center-right"
+    },
+    {
+      "id": 43,
+      "name": "shop front right"
+    },
+    {
+      "id": 44,
+      "name": "doorway"
+    },
+    {
+      "id": 45,
+      "name": "display window"
+    },
+    {
+      "id": 46,
+      "name": "curb"
+    },
+    {
+      "id": 47,
+      "name": "streetlamp"
+    },
+    {
+      "id": 48,
+      "name": "open water"
+    },
+    {
+      "id": 49,
+      "name": "bank horizontal"
+    },
+    {
+      "id": 50,
+      "name": "bank vertical"
+    },
+    {
+      "id": 51,
+      "name": "bank corner"
+    },
+    {
+      "id": 52,
+      "name": "bank edge variant"
+    },
+    {
+      "id": 53,
+      "name": "bridge horizontal"
+    },
+    {
+      "id": 54,
+      "name": "bridge vertical"
+    },
+    {
+      "id": 55,
+      "name": "stepping stones"
+    },
+    {
+      "id": 56,
+      "name": "well"
+    },
+    {
+      "id": 57,
+      "name": "signpost"
+    },
+    {
+      "id": 58,
+      "name": "crate"
+    },
+    {
+      "id": 59,
+      "name": "bench"
+    },
+    {
+      "id": 60,
+      "name": "vegetable patch"
+    },
+    {
+      "id": 61,
+      "name": "flowerpot"
+    },
+    {
+      "id": 62,
+      "name": "boulder variant"
+    },
+    {
+      "id": 63,
+      "name": "geode"
+    }
+  ],
+  "tileFamilies": [
+    {
+      "range": [
+        0,
+        7
+      ],
+      "family": "ground and base terrain"
+    },
+    {
+      "range": [
+        8,
+        15
+      ],
+      "family": "path segments and junctions"
+    },
+    {
+      "range": [
+        16,
+        23
+      ],
+      "family": "trees, shrubs and forest props"
+    },
+    {
+      "range": [
+        24,
+        31
+      ],
+      "family": "cave wall, floor and minerals"
+    },
+    {
+      "range": [
+        32,
+        39
+      ],
+      "family": "cottage pieces, fences and gardens"
+    },
+    {
+      "range": [
+        40,
+        47
+      ],
+      "family": "shops, street edges and lighting"
+    },
+    {
+      "range": [
+        48,
+        55
+      ],
+      "family": "water, banks and crossings"
+    },
+    {
+      "range": [
+        56,
+        63
+      ],
+      "family": "shared landmarks and props"
+    }
+  ],
+  "areas": [
+    {
+      "id": "cave",
+      "label": "Cave",
+      "description": "A small cave-room study built from the shared floor, wall, entrance and mineral tiles.",
+      "width": 8,
+      "height": 4,
+      "tileIds": [
+        24,
+        25,
+        25,
+        25,
+        25,
+        25,
+        25,
+        26,
+        27,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        27,
+        27,
+        4,
+        28,
+        4,
+        4,
+        29,
+        4,
+        27,
+        27,
+        4,
+        4,
+        4,
+        30,
+        4,
+        4,
+        31
+      ]
+    },
+    {
+      "id": "forest",
+      "label": "Forest",
+      "description": "Grass variants, single-cell tree and shrub props, flowers and connected path pieces.",
+      "width": 8,
+      "height": 4,
+      "tileIds": [
+        16,
+        17,
+        16,
+        17,
+        1,
+        16,
+        17,
+        1,
+        18,
+        19,
+        1,
+        9,
+        1,
+        21,
+        1,
+        18,
+        1,
+        1,
+        1,
+        9,
+        1,
+        1,
+        1,
+        1,
+        20,
+        1,
+        8,
+        14,
+        8,
+        1,
+        19,
+        1
+      ]
+    },
+    {
+      "id": "rural-town",
+      "label": "Rural town",
+      "description": "Two cottages use the same roof and wall pieces, with reusable fences, paths and garden props.",
+      "width": 8,
+      "height": 4,
+      "tileIds": [
+        32,
+        33,
+        1,
+        1,
+        32,
+        33,
+        1,
+        1,
+        34,
+        35,
+        1,
+        9,
+        34,
+        35,
+        1,
+        1,
+        37,
+        37,
+        8,
+        14,
+        8,
+        37,
+        37,
+        37,
+        56,
+        1,
+        8,
+        9,
+        8,
+        38,
+        39,
+        1
+      ]
+    },
+    {
+      "id": "city",
+      "label": "City",
+      "description": "A denser paved street with repeated shop frontage, curb, lamp and public seating.",
+      "width": 8,
+      "height": 4,
+      "tileIds": [
+        40,
+        41,
+        42,
+        43,
+        7,
+        40,
+        41,
+        42,
+        44,
+        45,
+        46,
+        9,
+        46,
+        44,
+        45,
+        47,
+        46,
+        46,
+        8,
+        14,
+        8,
+        46,
+        46,
+        46,
+        7,
+        59,
+        8,
+        9,
+        8,
+        47,
+        7,
+        7
+      ]
+    }
+  ],
+  "wholeWorld": {
+    "width": 16,
+    "height": 8,
+    "tilePixels": [
+      256,
+      128
+    ],
+    "viewportCount": [
+      2,
+      2
+    ],
+    "description": "Four locations joined as a traversable 16×8 tile study. Viewport guides divide it into four 128×64 screens.",
+    "tileIds": [
+      24,
+      25,
+      25,
+      25,
+      25,
+      25,
+      25,
+      26,
+      16,
+      17,
+      16,
+      17,
+      1,
+      16,
+      17,
+      1,
+      27,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      27,
+      18,
+      19,
+      1,
+      9,
+      1,
+      21,
+      1,
+      18,
+      27,
+      4,
+      28,
+      4,
+      4,
+      29,
+      4,
+      31,
+      1,
+      1,
+      1,
+      9,
+      1,
+      1,
+      1,
+      1,
+      27,
+      4,
+      4,
+      9,
+      30,
+      4,
+      4,
+      8,
+      8,
+      1,
+      8,
+      14,
+      9,
+      1,
+      19,
+      1,
+      32,
+      33,
+      1,
+      9,
+      32,
+      33,
+      1,
+      1,
+      40,
+      41,
+      42,
+      43,
+      9,
+      40,
+      41,
+      42,
+      34,
+      35,
+      1,
+      9,
+      34,
+      35,
+      1,
+      1,
+      44,
+      45,
+      46,
+      9,
+      46,
+      44,
+      45,
+      47,
+      37,
+      37,
+      8,
+      14,
+      8,
+      37,
+      37,
+      37,
+      46,
+      46,
+      8,
+      14,
+      8,
+      46,
+      46,
+      46,
+      56,
+      1,
+      8,
+      9,
+      8,
+      38,
+      39,
+      8,
+      8,
+      59,
+      8,
+      9,
+      8,
+      47,
+      7,
+      7
+    ]
+  },
+  "artDirections": [
+    {
+      "id": "layered",
+      "label": "Layered storybook",
+      "note": "Soft layered grayscale, clustered natural texture, and small illustrated accents.",
+      "source": "sources/layered.png",
+      "prompt": "sources/prompt-layered.json",
+      "outputs": [
+        {
+          "treatment": "clean",
+          "atlas": "layered/clean/atlas-128.png",
+          "preview": "layered/clean/atlas-preview-4x.png",
+          "world": "layered/clean/whole-world.png",
+          "worldPreview": "layered/clean/whole-world-viewport-grid-4x.png",
+          "worldTiledMap": "layered/clean/maps/whole-world.tmj",
+          "maps": [
+            {
+              "area": "cave",
+              "image": "layered/clean/cave.png",
+              "tiledMap": "layered/clean/maps/cave.tmj"
+            },
+            {
+              "area": "forest",
+              "image": "layered/clean/forest.png",
+              "tiledMap": "layered/clean/maps/forest.tmj"
+            },
+            {
+              "area": "rural-town",
+              "image": "layered/clean/rural-town.png",
+              "tiledMap": "layered/clean/maps/rural-town.tmj"
+            },
+            {
+              "area": "city",
+              "image": "layered/clean/city.png",
+              "tiledMap": "layered/clean/maps/city.tmj"
+            }
+          ]
+        },
+        {
+          "treatment": "light",
+          "atlas": "layered/light/atlas-128.png",
+          "preview": "layered/light/atlas-preview-4x.png",
+          "world": "layered/light/whole-world.png",
+          "worldPreview": "layered/light/whole-world-viewport-grid-4x.png",
+          "worldTiledMap": "layered/light/maps/whole-world.tmj",
+          "maps": [
+            {
+              "area": "cave",
+              "image": "layered/light/cave.png",
+              "tiledMap": "layered/light/maps/cave.tmj"
+            },
+            {
+              "area": "forest",
+              "image": "layered/light/forest.png",
+              "tiledMap": "layered/light/maps/forest.tmj"
+            },
+            {
+              "area": "rural-town",
+              "image": "layered/light/rural-town.png",
+              "tiledMap": "layered/light/maps/rural-town.tmj"
+            },
+            {
+              "area": "city",
+              "image": "layered/light/city.png",
+              "tiledMap": "layered/light/maps/city.tmj"
+            }
+          ]
+        },
+        {
+          "treatment": "heavy",
+          "atlas": "layered/heavy/atlas-128.png",
+          "preview": "layered/heavy/atlas-preview-4x.png",
+          "world": "layered/heavy/whole-world.png",
+          "worldPreview": "layered/heavy/whole-world-viewport-grid-4x.png",
+          "worldTiledMap": "layered/heavy/maps/whole-world.tmj",
+          "maps": [
+            {
+              "area": "cave",
+              "image": "layered/heavy/cave.png",
+              "tiledMap": "layered/heavy/maps/cave.tmj"
+            },
+            {
+              "area": "forest",
+              "image": "layered/heavy/forest.png",
+              "tiledMap": "layered/heavy/maps/forest.tmj"
+            },
+            {
+              "area": "rural-town",
+              "image": "layered/heavy/rural-town.png",
+              "tiledMap": "layered/heavy/maps/rural-town.tmj"
+            },
+            {
+              "area": "city",
+              "image": "layered/heavy/city.png",
+              "tiledMap": "layered/heavy/maps/city.tmj"
+            }
+          ]
+        }
+      ],
+      "contactSheet": "layered/contact-sheet-2x.png"
+    },
+    {
+      "id": "chunky",
+      "label": "Chunky silhouettes",
+      "note": "Large, high-contrast forms with blockier edges and clearer ground shapes.",
+      "source": "sources/chunky.png",
+      "prompt": "sources/prompt-chunky.json",
+      "outputs": [
+        {
+          "treatment": "clean",
+          "atlas": "chunky/clean/atlas-128.png",
+          "preview": "chunky/clean/atlas-preview-4x.png",
+          "world": "chunky/clean/whole-world.png",
+          "worldPreview": "chunky/clean/whole-world-viewport-grid-4x.png",
+          "worldTiledMap": "chunky/clean/maps/whole-world.tmj",
+          "maps": [
+            {
+              "area": "cave",
+              "image": "chunky/clean/cave.png",
+              "tiledMap": "chunky/clean/maps/cave.tmj"
+            },
+            {
+              "area": "forest",
+              "image": "chunky/clean/forest.png",
+              "tiledMap": "chunky/clean/maps/forest.tmj"
+            },
+            {
+              "area": "rural-town",
+              "image": "chunky/clean/rural-town.png",
+              "tiledMap": "chunky/clean/maps/rural-town.tmj"
+            },
+            {
+              "area": "city",
+              "image": "chunky/clean/city.png",
+              "tiledMap": "chunky/clean/maps/city.tmj"
+            }
+          ]
+        },
+        {
+          "treatment": "light",
+          "atlas": "chunky/light/atlas-128.png",
+          "preview": "chunky/light/atlas-preview-4x.png",
+          "world": "chunky/light/whole-world.png",
+          "worldPreview": "chunky/light/whole-world-viewport-grid-4x.png",
+          "worldTiledMap": "chunky/light/maps/whole-world.tmj",
+          "maps": [
+            {
+              "area": "cave",
+              "image": "chunky/light/cave.png",
+              "tiledMap": "chunky/light/maps/cave.tmj"
+            },
+            {
+              "area": "forest",
+              "image": "chunky/light/forest.png",
+              "tiledMap": "chunky/light/maps/forest.tmj"
+            },
+            {
+              "area": "rural-town",
+              "image": "chunky/light/rural-town.png",
+              "tiledMap": "chunky/light/maps/rural-town.tmj"
+            },
+            {
+              "area": "city",
+              "image": "chunky/light/city.png",
+              "tiledMap": "chunky/light/maps/city.tmj"
+            }
+          ]
+        },
+        {
+          "treatment": "heavy",
+          "atlas": "chunky/heavy/atlas-128.png",
+          "preview": "chunky/heavy/atlas-preview-4x.png",
+          "world": "chunky/heavy/whole-world.png",
+          "worldPreview": "chunky/heavy/whole-world-viewport-grid-4x.png",
+          "worldTiledMap": "chunky/heavy/maps/whole-world.tmj",
+          "maps": [
+            {
+              "area": "cave",
+              "image": "chunky/heavy/cave.png",
+              "tiledMap": "chunky/heavy/maps/cave.tmj"
+            },
+            {
+              "area": "forest",
+              "image": "chunky/heavy/forest.png",
+              "tiledMap": "chunky/heavy/maps/forest.tmj"
+            },
+            {
+              "area": "rural-town",
+              "image": "chunky/heavy/rural-town.png",
+              "tiledMap": "chunky/heavy/maps/rural-town.tmj"
+            },
+            {
+              "area": "city",
+              "image": "chunky/heavy/city.png",
+              "tiledMap": "chunky/heavy/maps/city.tmj"
+            }
+          ]
+        }
+      ],
+      "contactSheet": "chunky/contact-sheet-2x.png"
+    },
+    {
+      "id": "inked",
+      "label": "Hand-inked field guide",
+      "note": "Defined outlines and grouped marks with a more restrained, graphic texture.",
+      "source": "sources/inked.png",
+      "prompt": "sources/prompt-inked.json",
+      "outputs": [
+        {
+          "treatment": "clean",
+          "atlas": "inked/clean/atlas-128.png",
+          "preview": "inked/clean/atlas-preview-4x.png",
+          "world": "inked/clean/whole-world.png",
+          "worldPreview": "inked/clean/whole-world-viewport-grid-4x.png",
+          "worldTiledMap": "inked/clean/maps/whole-world.tmj",
+          "maps": [
+            {
+              "area": "cave",
+              "image": "inked/clean/cave.png",
+              "tiledMap": "inked/clean/maps/cave.tmj"
+            },
+            {
+              "area": "forest",
+              "image": "inked/clean/forest.png",
+              "tiledMap": "inked/clean/maps/forest.tmj"
+            },
+            {
+              "area": "rural-town",
+              "image": "inked/clean/rural-town.png",
+              "tiledMap": "inked/clean/maps/rural-town.tmj"
+            },
+            {
+              "area": "city",
+              "image": "inked/clean/city.png",
+              "tiledMap": "inked/clean/maps/city.tmj"
+            }
+          ]
+        },
+        {
+          "treatment": "light",
+          "atlas": "inked/light/atlas-128.png",
+          "preview": "inked/light/atlas-preview-4x.png",
+          "world": "inked/light/whole-world.png",
+          "worldPreview": "inked/light/whole-world-viewport-grid-4x.png",
+          "worldTiledMap": "inked/light/maps/whole-world.tmj",
+          "maps": [
+            {
+              "area": "cave",
+              "image": "inked/light/cave.png",
+              "tiledMap": "inked/light/maps/cave.tmj"
+            },
+            {
+              "area": "forest",
+              "image": "inked/light/forest.png",
+              "tiledMap": "inked/light/maps/forest.tmj"
+            },
+            {
+              "area": "rural-town",
+              "image": "inked/light/rural-town.png",
+              "tiledMap": "inked/light/maps/rural-town.tmj"
+            },
+            {
+              "area": "city",
+              "image": "inked/light/city.png",
+              "tiledMap": "inked/light/maps/city.tmj"
+            }
+          ]
+        },
+        {
+          "treatment": "heavy",
+          "atlas": "inked/heavy/atlas-128.png",
+          "preview": "inked/heavy/atlas-preview-4x.png",
+          "world": "inked/heavy/whole-world.png",
+          "worldPreview": "inked/heavy/whole-world-viewport-grid-4x.png",
+          "worldTiledMap": "inked/heavy/maps/whole-world.tmj",
+          "maps": [
+            {
+              "area": "cave",
+              "image": "inked/heavy/cave.png",
+              "tiledMap": "inked/heavy/maps/cave.tmj"
+            },
+            {
+              "area": "forest",
+              "image": "inked/heavy/forest.png",
+              "tiledMap": "inked/heavy/maps/forest.tmj"
+            },
+            {
+              "area": "rural-town",
+              "image": "inked/heavy/rural-town.png",
+              "tiledMap": "inked/heavy/maps/rural-town.tmj"
+            },
+            {
+              "area": "city",
+              "image": "inked/heavy/city.png",
+              "tiledMap": "inked/heavy/maps/city.tmj"
+            }
+          ]
+        }
+      ],
+      "contactSheet": "inked/contact-sheet-2x.png"
+    }
+  ],
+  "export": "Each 8×8 source cell is cropped independently, area-weighted to native 16×16, monochrome converted per tile, and reused by tile ID in every example map."
+}

@@ -1,0 +1,24 @@
+{
+  "useCase": "game-asset",
+  "assetType": "reusable 16x16 tile atlas for a monochrome 2D RPG",
+  "primaryRequest": "Create one grayscale 8-column by 8-row atlas of 64 distinct, reusable top-down overworld tiles. Keep a consistent cell scale and place one tile family in each row. Make the tile silhouettes and values read clearly when each cell is reduced to 16x16 pixels.",
+  "inputImages": [],
+  "style": "Layered storybook illustration, softly grouped gray values, clustered organic forms and modest internal detail.",
+  "layout": [
+    "Row 1: grass variants, flowers, gravel, stone, cultivated earth, pavement.",
+    "Row 2: connected horizontal, vertical, corner, T-junction and cross paths.",
+    "Row 3: tree canopy pieces, shrubs, fallen log, flowers and stump.",
+    "Row 4: cave wall edges, side wall, boulder, crystal, stalagmite and entrance.",
+    "Row 5: cottage roof and wall pieces, door/window, fence and garden bed.",
+    "Row 6: shop fronts, doorway, display window, curb and street lamp.",
+    "Row 7: water, shoreline segments, bank edges, bridges and stepping stones.",
+    "Row 8: well, signpost, crate, bench, vegetable patch, flowerpot, boulder and geode."
+  ],
+  "constraints": [
+    "Each cell is an independent tile image on an exact 8x8 grid.",
+    "Use no text, labels, palette swatches, UI, characters or watermarks.",
+    "Do not bake a dither pattern into the source.",
+    "Keep object silhouettes within their cells so the atlas can be sliced and reused.",
+    "Do not use existing spike artwork as a visual reference."
+  ]
+}

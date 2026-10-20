@@ -1,0 +1,1345 @@
+{
+  "reviewOnly": true,
+  "artDirections": [
+    {
+      "id": "layered",
+      "label": "Layered storybook",
+      "source": "source.png",
+      "prompt": "prompt.json"
+    },
+    {
+      "id": "chunky",
+      "label": "Chunky silhouettes",
+      "source": "sources/chunky.png",
+      "prompt": "prompt-chunky.json"
+    },
+    {
+      "id": "inked",
+      "label": "Hand-inked field guide",
+      "source": "sources/inked.png",
+      "prompt": "prompt-inked.json"
+    }
+  ],
+  "scenes": [
+    {
+      "id": "cave",
+      "label": "Cave",
+      "x": 5,
+      "y": 0,
+      "crop": [
+        5,
+        0,
+        864,
+        432
+      ]
+    },
+    {
+      "id": "forest",
+      "label": "Forest",
+      "x": 905,
+      "y": 0,
+      "crop": [
+        905,
+        0,
+        864,
+        432
+      ]
+    },
+    {
+      "id": "rural-town",
+      "label": "Rural town",
+      "x": 5,
+      "y": 455,
+      "crop": [
+        5,
+        455,
+        864,
+        432
+      ]
+    },
+    {
+      "id": "city",
+      "label": "City",
+      "x": 905,
+      "y": 455,
+      "crop": [
+        905,
+        455,
+        864,
+        432
+      ]
+    }
+  ],
+  "viewport": [
+    128,
+    64
+  ],
+  "mapTile": [
+    16,
+    16
+  ],
+  "viewportTiles": [
+    8,
+    4
+  ],
+  "player": {
+    "source": "images/Playerchibi_16x16.png",
+    "frame": "DOWN",
+    "size": [
+      16,
+      16
+    ],
+    "position": [
+      56,
+      24
+    ],
+    "center": [
+      64,
+      32
+    ],
+    "compositedAfterDither": true
+  },
+  "treatments": [
+    {
+      "id": "clean",
+      "label": "Clean threshold",
+      "method": "single threshold",
+      "amplitude": 0
+    },
+    {
+      "id": "light",
+      "label": "Light texture",
+      "method": "2x2 Bayer",
+      "amplitude": 72
+    },
+    {
+      "id": "heavy",
+      "label": "Heavy texture",
+      "method": "4x4 Bayer",
+      "amplitude": 104
+    }
+  ],
+  "contactSheets": [
+    {
+      "direction": "layered",
+      "file": "layered/contact-sheet-2x.png",
+      "size": [
+        800,
+        552
+      ],
+      "source": "source.png",
+      "prompt": "prompt.json"
+    },
+    {
+      "direction": "chunky",
+      "file": "chunky/contact-sheet-2x.png",
+      "size": [
+        800,
+        552
+      ],
+      "source": "sources/chunky.png",
+      "prompt": "prompt-chunky.json"
+    },
+    {
+      "direction": "inked",
+      "file": "inked/contact-sheet-2x.png",
+      "size": [
+        800,
+        552
+      ],
+      "source": "sources/inked.png",
+      "prompt": "prompt-inked.json"
+    }
+  ],
+  "export": "Area-weighted grayscale reduction to native pixels, then monochrome threshold / ordered Bayer conversion; nearest-neighbor 2x contact sheet.",
+  "views": [
+    {
+      "direction": "layered",
+      "scene": "cave",
+      "treatment": "clean",
+      "file": "layered/clean/cave.png",
+      "pixels": [
+        128,
+        64
+      ],
+      "tileGrid": [
+        8,
+        4
+      ],
+      "player": {
+        "frame": "down",
+        "size": [
+          16,
+          16
+        ],
+        "position": [
+          56,
+          24
+        ],
+        "center": [
+          64,
+          32
+        ]
+      },
+      "threshold": 128,
+      "method": "single threshold",
+      "ditherAmplitude": 0,
+      "terrainBlackPixels": 5669
+    },
+    {
+      "direction": "layered",
+      "scene": "cave",
+      "treatment": "light",
+      "file": "layered/light/cave.png",
+      "pixels": [
+        128,
+        64
+      ],
+      "tileGrid": [
+        8,
+        4
+      ],
+      "player": {
+        "frame": "down",
+        "size": [
+          16,
+          16
+        ],
+        "position": [
+          56,
+          24
+        ],
+        "center": [
+          64,
+          32
+        ]
+      },
+      "threshold": 128,
+      "method": "2x2 Bayer",
+      "ditherAmplitude": 72,
+      "terrainBlackPixels": 5593
+    },
+    {
+      "direction": "layered",
+      "scene": "cave",
+      "treatment": "heavy",
+      "file": "layered/heavy/cave.png",
+      "pixels": [
+        128,
+        64
+      ],
+      "tileGrid": [
+        8,
+        4
+      ],
+      "player": {
+        "frame": "down",
+        "size": [
+          16,
+          16
+        ],
+        "position": [
+          56,
+          24
+        ],
+        "center": [
+          64,
+          32
+        ]
+      },
+      "threshold": 128,
+      "method": "4x4 Bayer",
+      "ditherAmplitude": 104,
+      "terrainBlackPixels": 5620
+    },
+    {
+      "direction": "layered",
+      "scene": "forest",
+      "treatment": "clean",
+      "file": "layered/clean/forest.png",
+      "pixels": [
+        128,
+        64
+      ],
+      "tileGrid": [
+        8,
+        4
+      ],
+      "player": {
+        "frame": "down",
+        "size": [
+          16,
+          16
+        ],
+        "position": [
+          56,
+          24
+        ],
+        "center": [
+          64,
+          32
+        ]
+      },
+      "threshold": 128,
+      "method": "single threshold",
+      "ditherAmplitude": 0,
+      "terrainBlackPixels": 3119
+    },
+    {
+      "direction": "layered",
+      "scene": "forest",
+      "treatment": "light",
+      "file": "layered/light/forest.png",
+      "pixels": [
+        128,
+        64
+      ],
+      "tileGrid": [
+        8,
+        4
+      ],
+      "player": {
+        "frame": "down",
+        "size": [
+          16,
+          16
+        ],
+        "position": [
+          56,
+          24
+        ],
+        "center": [
+          64,
+          32
+        ]
+      },
+      "threshold": 128,
+      "method": "2x2 Bayer",
+      "ditherAmplitude": 72,
+      "terrainBlackPixels": 3342
+    },
+    {
+      "direction": "layered",
+      "scene": "forest",
+      "treatment": "heavy",
+      "file": "layered/heavy/forest.png",
+      "pixels": [
+        128,
+        64
+      ],
+      "tileGrid": [
+        8,
+        4
+      ],
+      "player": {
+        "frame": "down",
+        "size": [
+          16,
+          16
+        ],
+        "position": [
+          56,
+          24
+        ],
+        "center": [
+          64,
+          32
+        ]
+      },
+      "threshold": 128,
+      "method": "4x4 Bayer",
+      "ditherAmplitude": 104,
+      "terrainBlackPixels": 3408
+    },
+    {
+      "direction": "layered",
+      "scene": "rural-town",
+      "treatment": "clean",
+      "file": "layered/clean/rural-town.png",
+      "pixels": [
+        128,
+        64
+      ],
+      "tileGrid": [
+        8,
+        4
+      ],
+      "player": {
+        "frame": "down",
+        "size": [
+          16,
+          16
+        ],
+        "position": [
+          56,
+          24
+        ],
+        "center": [
+          64,
+          32
+        ]
+      },
+      "threshold": 128,
+      "method": "single threshold",
+      "ditherAmplitude": 0,
+      "terrainBlackPixels": 3496
+    },
+    {
+      "direction": "layered",
+      "scene": "rural-town",
+      "treatment": "light",
+      "file": "layered/light/rural-town.png",
+      "pixels": [
+        128,
+        64
+      ],
+      "tileGrid": [
+        8,
+        4
+      ],
+      "player": {
+        "frame": "down",
+        "size": [
+          16,
+          16
+        ],
+        "position": [
+          56,
+          24
+        ],
+        "center": [
+          64,
+          32
+        ]
+      },
+      "threshold": 128,
+      "method": "2x2 Bayer",
+      "ditherAmplitude": 72,
+      "terrainBlackPixels": 3511
+    },
+    {
+      "direction": "layered",
+      "scene": "rural-town",
+      "treatment": "heavy",
+      "file": "layered/heavy/rural-town.png",
+      "pixels": [
+        128,
+        64
+      ],
+      "tileGrid": [
+        8,
+        4
+      ],
+      "player": {
+        "frame": "down",
+        "size": [
+          16,
+          16
+        ],
+        "position": [
+          56,
+          24
+        ],
+        "center": [
+          64,
+          32
+        ]
+      },
+      "threshold": 128,
+      "method": "4x4 Bayer",
+      "ditherAmplitude": 104,
+      "terrainBlackPixels": 3506
+    },
+    {
+      "direction": "layered",
+      "scene": "city",
+      "treatment": "clean",
+      "file": "layered/clean/city.png",
+      "pixels": [
+        128,
+        64
+      ],
+      "tileGrid": [
+        8,
+        4
+      ],
+      "player": {
+        "frame": "down",
+        "size": [
+          16,
+          16
+        ],
+        "position": [
+          56,
+          24
+        ],
+        "center": [
+          64,
+          32
+        ]
+      },
+      "threshold": 128,
+      "method": "single threshold",
+      "ditherAmplitude": 0,
+      "terrainBlackPixels": 3469
+    },
+    {
+      "direction": "layered",
+      "scene": "city",
+      "treatment": "light",
+      "file": "layered/light/city.png",
+      "pixels": [
+        128,
+        64
+      ],
+      "tileGrid": [
+        8,
+        4
+      ],
+      "player": {
+        "frame": "down",
+        "size": [
+          16,
+          16
+        ],
+        "position": [
+          56,
+          24
+        ],
+        "center": [
+          64,
+          32
+        ]
+      },
+      "threshold": 128,
+      "method": "2x2 Bayer",
+      "ditherAmplitude": 72,
+      "terrainBlackPixels": 3434
+    },
+    {
+      "direction": "layered",
+      "scene": "city",
+      "treatment": "heavy",
+      "file": "layered/heavy/city.png",
+      "pixels": [
+        128,
+        64
+      ],
+      "tileGrid": [
+        8,
+        4
+      ],
+      "player": {
+        "frame": "down",
+        "size": [
+          16,
+          16
+        ],
+        "position": [
+          56,
+          24
+        ],
+        "center": [
+          64,
+          32
+        ]
+      },
+      "threshold": 128,
+      "method": "4x4 Bayer",
+      "ditherAmplitude": 104,
+      "terrainBlackPixels": 3349
+    },
+    {
+      "direction": "chunky",
+      "scene": "cave",
+      "treatment": "clean",
+      "file": "chunky/clean/cave.png",
+      "pixels": [
+        128,
+        64
+      ],
+      "tileGrid": [
+        8,
+        4
+      ],
+      "player": {
+        "frame": "down",
+        "size": [
+          16,
+          16
+        ],
+        "position": [
+          56,
+          24
+        ],
+        "center": [
+          64,
+          32
+        ]
+      },
+      "threshold": 128,
+      "method": "single threshold",
+      "ditherAmplitude": 0,
+      "terrainBlackPixels": 5357
+    },
+    {
+      "direction": "chunky",
+      "scene": "cave",
+      "treatment": "light",
+      "file": "chunky/light/cave.png",
+      "pixels": [
+        128,
+        64
+      ],
+      "tileGrid": [
+        8,
+        4
+      ],
+      "player": {
+        "frame": "down",
+        "size": [
+          16,
+          16
+        ],
+        "position": [
+          56,
+          24
+        ],
+        "center": [
+          64,
+          32
+        ]
+      },
+      "threshold": 128,
+      "method": "2x2 Bayer",
+      "ditherAmplitude": 72,
+      "terrainBlackPixels": 4977
+    },
+    {
+      "direction": "chunky",
+      "scene": "cave",
+      "treatment": "heavy",
+      "file": "chunky/heavy/cave.png",
+      "pixels": [
+        128,
+        64
+      ],
+      "tileGrid": [
+        8,
+        4
+      ],
+      "player": {
+        "frame": "down",
+        "size": [
+          16,
+          16
+        ],
+        "position": [
+          56,
+          24
+        ],
+        "center": [
+          64,
+          32
+        ]
+      },
+      "threshold": 128,
+      "method": "4x4 Bayer",
+      "ditherAmplitude": 104,
+      "terrainBlackPixels": 4764
+    },
+    {
+      "direction": "chunky",
+      "scene": "forest",
+      "treatment": "clean",
+      "file": "chunky/clean/forest.png",
+      "pixels": [
+        128,
+        64
+      ],
+      "tileGrid": [
+        8,
+        4
+      ],
+      "player": {
+        "frame": "down",
+        "size": [
+          16,
+          16
+        ],
+        "position": [
+          56,
+          24
+        ],
+        "center": [
+          64,
+          32
+        ]
+      },
+      "threshold": 128,
+      "method": "single threshold",
+      "ditherAmplitude": 0,
+      "terrainBlackPixels": 4456
+    },
+    {
+      "direction": "chunky",
+      "scene": "forest",
+      "treatment": "light",
+      "file": "chunky/light/forest.png",
+      "pixels": [
+        128,
+        64
+      ],
+      "tileGrid": [
+        8,
+        4
+      ],
+      "player": {
+        "frame": "down",
+        "size": [
+          16,
+          16
+        ],
+        "position": [
+          56,
+          24
+        ],
+        "center": [
+          64,
+          32
+        ]
+      },
+      "threshold": 128,
+      "method": "2x2 Bayer",
+      "ditherAmplitude": 72,
+      "terrainBlackPixels": 4268
+    },
+    {
+      "direction": "chunky",
+      "scene": "forest",
+      "treatment": "heavy",
+      "file": "chunky/heavy/forest.png",
+      "pixels": [
+        128,
+        64
+      ],
+      "tileGrid": [
+        8,
+        4
+      ],
+      "player": {
+        "frame": "down",
+        "size": [
+          16,
+          16
+        ],
+        "position": [
+          56,
+          24
+        ],
+        "center": [
+          64,
+          32
+        ]
+      },
+      "threshold": 128,
+      "method": "4x4 Bayer",
+      "ditherAmplitude": 104,
+      "terrainBlackPixels": 4330
+    },
+    {
+      "direction": "chunky",
+      "scene": "rural-town",
+      "treatment": "clean",
+      "file": "chunky/clean/rural-town.png",
+      "pixels": [
+        128,
+        64
+      ],
+      "tileGrid": [
+        8,
+        4
+      ],
+      "player": {
+        "frame": "down",
+        "size": [
+          16,
+          16
+        ],
+        "position": [
+          56,
+          24
+        ],
+        "center": [
+          64,
+          32
+        ]
+      },
+      "threshold": 128,
+      "method": "single threshold",
+      "ditherAmplitude": 0,
+      "terrainBlackPixels": 3395
+    },
+    {
+      "direction": "chunky",
+      "scene": "rural-town",
+      "treatment": "light",
+      "file": "chunky/light/rural-town.png",
+      "pixels": [
+        128,
+        64
+      ],
+      "tileGrid": [
+        8,
+        4
+      ],
+      "player": {
+        "frame": "down",
+        "size": [
+          16,
+          16
+        ],
+        "position": [
+          56,
+          24
+        ],
+        "center": [
+          64,
+          32
+        ]
+      },
+      "threshold": 128,
+      "method": "2x2 Bayer",
+      "ditherAmplitude": 72,
+      "terrainBlackPixels": 3338
+    },
+    {
+      "direction": "chunky",
+      "scene": "rural-town",
+      "treatment": "heavy",
+      "file": "chunky/heavy/rural-town.png",
+      "pixels": [
+        128,
+        64
+      ],
+      "tileGrid": [
+        8,
+        4
+      ],
+      "player": {
+        "frame": "down",
+        "size": [
+          16,
+          16
+        ],
+        "position": [
+          56,
+          24
+        ],
+        "center": [
+          64,
+          32
+        ]
+      },
+      "threshold": 128,
+      "method": "4x4 Bayer",
+      "ditherAmplitude": 104,
+      "terrainBlackPixels": 3445
+    },
+    {
+      "direction": "chunky",
+      "scene": "city",
+      "treatment": "clean",
+      "file": "chunky/clean/city.png",
+      "pixels": [
+        128,
+        64
+      ],
+      "tileGrid": [
+        8,
+        4
+      ],
+      "player": {
+        "frame": "down",
+        "size": [
+          16,
+          16
+        ],
+        "position": [
+          56,
+          24
+        ],
+        "center": [
+          64,
+          32
+        ]
+      },
+      "threshold": 128,
+      "method": "single threshold",
+      "ditherAmplitude": 0,
+      "terrainBlackPixels": 3302
+    },
+    {
+      "direction": "chunky",
+      "scene": "city",
+      "treatment": "light",
+      "file": "chunky/light/city.png",
+      "pixels": [
+        128,
+        64
+      ],
+      "tileGrid": [
+        8,
+        4
+      ],
+      "player": {
+        "frame": "down",
+        "size": [
+          16,
+          16
+        ],
+        "position": [
+          56,
+          24
+        ],
+        "center": [
+          64,
+          32
+        ]
+      },
+      "threshold": 128,
+      "method": "2x2 Bayer",
+      "ditherAmplitude": 72,
+      "terrainBlackPixels": 3311
+    },
+    {
+      "direction": "chunky",
+      "scene": "city",
+      "treatment": "heavy",
+      "file": "chunky/heavy/city.png",
+      "pixels": [
+        128,
+        64
+      ],
+      "tileGrid": [
+        8,
+        4
+      ],
+      "player": {
+        "frame": "down",
+        "size": [
+          16,
+          16
+        ],
+        "position": [
+          56,
+          24
+        ],
+        "center": [
+          64,
+          32
+        ]
+      },
+      "threshold": 128,
+      "method": "4x4 Bayer",
+      "ditherAmplitude": 104,
+      "terrainBlackPixels": 3337
+    },
+    {
+      "direction": "inked",
+      "scene": "cave",
+      "treatment": "clean",
+      "file": "inked/clean/cave.png",
+      "pixels": [
+        128,
+        64
+      ],
+      "tileGrid": [
+        8,
+        4
+      ],
+      "player": {
+        "frame": "down",
+        "size": [
+          16,
+          16
+        ],
+        "position": [
+          56,
+          24
+        ],
+        "center": [
+          64,
+          32
+        ]
+      },
+      "threshold": 128,
+      "method": "single threshold",
+      "ditherAmplitude": 0,
+      "terrainBlackPixels": 6066
+    },
+    {
+      "direction": "inked",
+      "scene": "cave",
+      "treatment": "light",
+      "file": "inked/light/cave.png",
+      "pixels": [
+        128,
+        64
+      ],
+      "tileGrid": [
+        8,
+        4
+      ],
+      "player": {
+        "frame": "down",
+        "size": [
+          16,
+          16
+        ],
+        "position": [
+          56,
+          24
+        ],
+        "center": [
+          64,
+          32
+        ]
+      },
+      "threshold": 128,
+      "method": "2x2 Bayer",
+      "ditherAmplitude": 72,
+      "terrainBlackPixels": 5982
+    },
+    {
+      "direction": "inked",
+      "scene": "cave",
+      "treatment": "heavy",
+      "file": "inked/heavy/cave.png",
+      "pixels": [
+        128,
+        64
+      ],
+      "tileGrid": [
+        8,
+        4
+      ],
+      "player": {
+        "frame": "down",
+        "size": [
+          16,
+          16
+        ],
+        "position": [
+          56,
+          24
+        ],
+        "center": [
+          64,
+          32
+        ]
+      },
+      "threshold": 128,
+      "method": "4x4 Bayer",
+      "ditherAmplitude": 104,
+      "terrainBlackPixels": 5912
+    },
+    {
+      "direction": "inked",
+      "scene": "forest",
+      "treatment": "clean",
+      "file": "inked/clean/forest.png",
+      "pixels": [
+        128,
+        64
+      ],
+      "tileGrid": [
+        8,
+        4
+      ],
+      "player": {
+        "frame": "down",
+        "size": [
+          16,
+          16
+        ],
+        "position": [
+          56,
+          24
+        ],
+        "center": [
+          64,
+          32
+        ]
+      },
+      "threshold": 128,
+      "method": "single threshold",
+      "ditherAmplitude": 0,
+      "terrainBlackPixels": 4617
+    },
+    {
+      "direction": "inked",
+      "scene": "forest",
+      "treatment": "light",
+      "file": "inked/light/forest.png",
+      "pixels": [
+        128,
+        64
+      ],
+      "tileGrid": [
+        8,
+        4
+      ],
+      "player": {
+        "frame": "down",
+        "size": [
+          16,
+          16
+        ],
+        "position": [
+          56,
+          24
+        ],
+        "center": [
+          64,
+          32
+        ]
+      },
+      "threshold": 128,
+      "method": "2x2 Bayer",
+      "ditherAmplitude": 72,
+      "terrainBlackPixels": 4716
+    },
+    {
+      "direction": "inked",
+      "scene": "forest",
+      "treatment": "heavy",
+      "file": "inked/heavy/forest.png",
+      "pixels": [
+        128,
+        64
+      ],
+      "tileGrid": [
+        8,
+        4
+      ],
+      "player": {
+        "frame": "down",
+        "size": [
+          16,
+          16
+        ],
+        "position": [
+          56,
+          24
+        ],
+        "center": [
+          64,
+          32
+        ]
+      },
+      "threshold": 128,
+      "method": "4x4 Bayer",
+      "ditherAmplitude": 104,
+      "terrainBlackPixels": 4714
+    },
+    {
+      "direction": "inked",
+      "scene": "rural-town",
+      "treatment": "clean",
+      "file": "inked/clean/rural-town.png",
+      "pixels": [
+        128,
+        64
+      ],
+      "tileGrid": [
+        8,
+        4
+      ],
+      "player": {
+        "frame": "down",
+        "size": [
+          16,
+          16
+        ],
+        "position": [
+          56,
+          24
+        ],
+        "center": [
+          64,
+          32
+        ]
+      },
+      "threshold": 128,
+      "method": "single threshold",
+      "ditherAmplitude": 0,
+      "terrainBlackPixels": 4171
+    },
+    {
+      "direction": "inked",
+      "scene": "rural-town",
+      "treatment": "light",
+      "file": "inked/light/rural-town.png",
+      "pixels": [
+        128,
+        64
+      ],
+      "tileGrid": [
+        8,
+        4
+      ],
+      "player": {
+        "frame": "down",
+        "size": [
+          16,
+          16
+        ],
+        "position": [
+          56,
+          24
+        ],
+        "center": [
+          64,
+          32
+        ]
+      },
+      "threshold": 128,
+      "method": "2x2 Bayer",
+      "ditherAmplitude": 72,
+      "terrainBlackPixels": 4153
+    },
+    {
+      "direction": "inked",
+      "scene": "rural-town",
+      "treatment": "heavy",
+      "file": "inked/heavy/rural-town.png",
+      "pixels": [
+        128,
+        64
+      ],
+      "tileGrid": [
+        8,
+        4
+      ],
+      "player": {
+        "frame": "down",
+        "size": [
+          16,
+          16
+        ],
+        "position": [
+          56,
+          24
+        ],
+        "center": [
+          64,
+          32
+        ]
+      },
+      "threshold": 128,
+      "method": "4x4 Bayer",
+      "ditherAmplitude": 104,
+      "terrainBlackPixels": 4092
+    },
+    {
+      "direction": "inked",
+      "scene": "city",
+      "treatment": "clean",
+      "file": "inked/clean/city.png",
+      "pixels": [
+        128,
+        64
+      ],
+      "tileGrid": [
+        8,
+        4
+      ],
+      "player": {
+        "frame": "down",
+        "size": [
+          16,
+          16
+        ],
+        "position": [
+          56,
+          24
+        ],
+        "center": [
+          64,
+          32
+        ]
+      },
+      "threshold": 128,
+      "method": "single threshold",
+      "ditherAmplitude": 0,
+      "terrainBlackPixels": 3727
+    },
+    {
+      "direction": "inked",
+      "scene": "city",
+      "treatment": "light",
+      "file": "inked/light/city.png",
+      "pixels": [
+        128,
+        64
+      ],
+      "tileGrid": [
+        8,
+        4
+      ],
+      "player": {
+        "frame": "down",
+        "size": [
+          16,
+          16
+        ],
+        "position": [
+          56,
+          24
+        ],
+        "center": [
+          64,
+          32
+        ]
+      },
+      "threshold": 128,
+      "method": "2x2 Bayer",
+      "ditherAmplitude": 72,
+      "terrainBlackPixels": 3669
+    },
+    {
+      "direction": "inked",
+      "scene": "city",
+      "treatment": "heavy",
+      "file": "inked/heavy/city.png",
+      "pixels": [
+        128,
+        64
+      ],
+      "tileGrid": [
+        8,
+        4
+      ],
+      "player": {
+        "frame": "down",
+        "size": [
+          16,
+          16
+        ],
+        "position": [
+          56,
+          24
+        ],
+        "center": [
+          64,
+          32
+        ]
+      },
+      "threshold": 128,
+      "method": "4x4 Bayer",
+      "ditherAmplitude": 104,
+      "terrainBlackPixels": 3609
+    }
+  ]
+}

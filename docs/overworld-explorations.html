@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Overworld visual explorations · Creature Gatherer</title>
+  <style>
+    :root { color-scheme: light; font-family: system-ui,-apple-system,sans-serif; color:#20201e; background:#f3f0e8; }
+    * { box-sizing:border-box; }
+    body { max-width:1180px; margin:0 auto; padding:24px; }
+    h1 { margin:4px 0 8px; font-size:clamp(26px,4vw,38px); }
+    h2 { margin:34px 0 8px; }
+    p { max-width:82ch; line-height:1.55; }
+    a { color:#2d5361; }
+    .eyebrow,.chip { display:inline-block; padding:5px 9px; border:1px solid #99958a; background:#fffdf8; }
+    .lede { font-size:17px; }
+    .links,.controls,.download-links { display:flex; gap:14px; flex-wrap:wrap; align-items:center; margin:18px 0; }
+    .controls { padding:12px; border:1px solid #aaa69b; background:#fffdf8; }
+    label { display:flex; gap:8px; align-items:center; }
+    select { font:inherit; padding:5px; }
+    .statline { display:flex; gap:8px; flex-wrap:wrap; }
+    .scroll { overflow-x:auto; }
+    .fresh-gallery { --fresh-zoom:2; width:max-content; }
+    .fresh-area + .fresh-area { margin-top:28px; }
+    .fresh-area h3 { margin:0 0 10px; }
+    .fresh-matrix { grid-template-columns:120px repeat(3,calc(128px * var(--fresh-zoom) + 22px)) !important; width:max-content; min-width:0 !important; }
+    .fresh-screen { position:relative; width:calc(128px * var(--fresh-zoom)); height:calc(64px * var(--fresh-zoom)); background:#fff; }
+    .fresh-screen img { display:block; width:100%; height:100%; image-rendering:pixelated; }
+    .fresh-screen.show-grid::after { content:""; position:absolute; inset:0; pointer-events:none; background:linear-gradient(90deg,#bf452670 1px,transparent 1px),linear-gradient(#bf452670 1px,transparent 1px); background-size:calc(16px * var(--fresh-zoom)) calc(16px * var(--fresh-zoom)); }
+    .fresh-world-frame { position:relative; width:min(100%,1024px); }
+    .fresh-world-frame img { display:block; width:100%; height:auto; image-rendering:pixelated; }
+    .fresh-world-frame svg { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
+    .fresh-atlas { display:block; width:min(100%,1024px); height:auto; image-rendering:pixelated; background:repeating-conic-gradient(#ddd 0% 25%,#fff 0% 50%) 0 0/16px 16px; }
+    .concept-gallery { display:grid; grid-template-columns:128px repeat(3,minmax(270px,1fr)); min-width:950px; border:1px solid #9e9a90; background:#fffdf8; }
+    .concept-gallery > div,.concept-gallery > figure { margin:0; padding:10px; border-right:1px solid #d3cfc5; border-bottom:1px solid #d3cfc5; }
+    .concept-gallery .head { font-weight:700; background:#e5e0d5; }
+    .concept-gallery .rowhead { display:flex; flex-direction:column; justify-content:center; font-weight:700; }
+    .concept-gallery figure p { margin:6px 0 0; font-size:12px; }
+    .concept-screen { position:relative; width:256px; height:128px; max-width:100%; background:#fff; border:1px solid #181818; image-rendering:pixelated; }
+    .concept-screen img { display:block; width:100%; height:100%; image-rendering:pixelated; }
+    .concept-screen.show-grid::after { content:""; position:absolute; inset:0; pointer-events:none; background-image:linear-gradient(to right,transparent 31px,rgba(32,93,180,.55) 31px,rgba(32,93,180,.55) 32px),linear-gradient(to bottom,transparent 31px,rgba(32,93,180,.55) 31px,rgba(32,93,180,.55) 32px); background-size:32px 32px; }
+    .gallery { display:grid; grid-template-columns:128px repeat(3,minmax(270px,1fr)); min-width:950px; border:1px solid #9e9a90; background:#fffdf8; }
+    .gallery > div,.gallery > figure { margin:0; padding:10px; border-right:1px solid #d3cfc5; border-bottom:1px solid #d3cfc5; }
+    .gallery .head { font-weight:700; background:#e5e0d5; }
+    .gallery .rowhead { display:flex; flex-direction:column; justify-content:center; font-weight:700; }
+    .gallery figure p { margin:6px 0 0; font-size:12px; }
+    .native-screen { position:relative; width:256px; height:128px; max-width:100%; background:#fff; border:1px solid #181818; image-rendering:pixelated; }
+    .native-screen img { display:block; width:100%; height:100%; image-rendering:pixelated; }
+    .native-screen.show-grid::after { content:""; position:absolute; inset:0; pointer-events:none; background-image:linear-gradient(to right,transparent 31px,rgba(206,42,32,.55) 31px,rgba(206,42,32,.55) 32px),linear-gradient(to bottom,transparent 31px,rgba(206,42,32,.55) 31px,rgba(206,42,32,.55) 32px); background-size:32px 32px; }
+    .world-preview,.atlas-preview,.contact { display:block; max-width:100%; height:auto; image-rendering:pixelated; border:1px solid #77736a; background:#fff; }
+    .world-preview { width:min(100%,1024px); }
+    .atlas-preview { width:min(100%,512px); }
+    .contact { width:min(100%,800px); }
+    .columns { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr)); gap:24px; align-items:start; }
+    .panel { padding:14px; border:1px solid #aaa69b; background:#fffdf8; }
+    table { border-collapse:collapse; background:#fffdf8; }
+    th,td { text-align:left; padding:8px 10px; border:1px solid #c8c3b9; }
+    code { padding:1px 4px; background:#e7e3da; }
+    details { margin:18px 0; }
+    details img { display:block; max-width:100%; height:auto; image-rendering:pixelated; margin-top:12px; }
+    @media (max-width:650px) { body{padding:15px}.gallery,.concept-gallery{grid-template-columns:105px repeat(3,minmax(250px,1fr));min-width:860px}.native-screen,.concept-screen{width:250px;height:125px} }
+  </style>
+</head>
+<body>
+  <header>
+    <span class="eyebrow">Creature Gatherer · overworld identity explorations</span>
+    <h1>Overworld visual directions</h1>
+    <p class="lede">Five new regions lead the fresh kit: mountain pass, marsh, ancient ruins, snowy highlands and volcanic badlands. Modern cities, coast, desert and the earlier studies follow. All views use the 128×64 viewport, across three art directions and three monochrome texture treatments.</p>
+    <div class="statline"><span class="chip">Fresh kit · 295 reusable tiles</span><span class="chip">16×16 map cells</span><span class="chip">128×64 viewport</span><span class="chip">96×60 layered world</span></div>
+    <nav class="links"><a href="#fresh-round">Fresh pass · modular world kit</a><a href="#scene-led-round">Round 1 · scene-led concepts</a><a href="#tileset-round">Round 2 · reusable tile set</a><a href="world-environment-32-spike.html">Existing environment spike</a><a href="index.html">All artwork spikes</a></nav>
+    <p>Each round has its own fresh generated art. Existing spikes helped identify the viewport and grid constraints; their artwork was not used as a visual reference.</p>
+  </header>
+
+  <section id="fresh-round">
+    <span class="eyebrow">Fresh kit · five new biomes</span>
+    <h2>A world kit built around the player</h2>
+    <p>One 295-tile kit builds all fifteen camera studies. New cliff faces, stairs, boardwalks, arches, columns, snow-capped pines and steam vents join the existing city, coast and desert pieces. Connected terrain tiles form mountain trails, marsh banks, frozen ponds and lava channels. Every view is a 128×64 crop of one layered 96×60 world, with the current 16×16 player drawn at (56,24).</p>
+    <div class="controls">
+      <label>View scale <select id="fresh-scale"><option value="1">1× native</option><option value="2" selected>2×</option><option value="3">3×</option></select></label>
+      <label><input type="checkbox" id="fresh-grid"> Show tile grid</label>
+    </div>
+    <p>Each area shows all nine combinations at once: Soft blocks, Ink silhouettes and Stepped etching in columns; clean, light and heavy textures in rows. Clean clears gray shadows, light uses 25% black pixels, and heavy uses 50%. Black contours stay fixed.</p>
+    <div class="scroll"><div id="fresh-gallery" class="fresh-gallery" role="region" aria-label="Fifteen areas, each with all nine style and texture combinations"></div></div>
+    <h3>The shared world</h3>
+    <div class="controls">
+      <label>World and atlas style <select id="fresh-direction"><option value="rounded">Soft blocks</option><option value="noir">Ink silhouettes</option><option value="etched">Stepped etching</option></select></label>
+      <label>World and atlas texture <select id="fresh-treatment"><option value="clean">Clean contours</option><option value="light" selected>Light shadow texture</option><option value="heavy">Heavy shadow texture</option></select></label>
+    </div>
+    <p>Orange boxes mark the fifteen camera crops. Mountain terraces and snowy highlands extend the eastern edge; marsh, ruins and volcanic terrain fill the southern row. Repeated cliff blocks form long ledges, pairs of stair tiles create wide ascents, and pier pieces become marsh boardwalks. Tower floors, palms and shoreline pieces remain shared across their earlier regions.</p>
+    <div class="fresh-world-frame">
+      <img id="fresh-world" src="assets/overworld-fresh/rounded/light/world.png" width="1536" height="960" alt="Shared layered world with mountain, marsh, ruins, snow, volcano, cities, coast and desert">
+      <svg viewBox="0 0 1536 960" aria-hidden="true"><g fill="none" stroke="#e25224" stroke-width="1.5"><rect x="1152" y="128" width="128" height="64"/><rect x="112" y="736" width="128" height="64"/><rect x="640" y="752" width="128" height="64"/><rect x="1232" y="432" width="128" height="64"/><rect x="1184" y="752" width="128" height="64"/><rect x="672" y="128" width="128" height="64"/><rect x="864" y="0" width="128" height="64"/><rect x="96" y="384" width="128" height="64"/><rect x="336" y="432" width="128" height="64"/><rect x="576" y="400" width="128" height="64"/><rect x="800" y="432" width="128" height="64"/><rect x="64" y="16" width="128" height="64"/><rect x="320" y="48" width="128" height="64"/><rect x="64" y="176" width="128" height="64"/><rect x="320" y="176" width="128" height="64"/></g></svg>
+    </div>
+    <div class="download-links"><a id="fresh-world-map" href="assets/overworld-fresh/rounded/light/world.tmj">Tiled world map</a><a id="fresh-tsx" href="assets/overworld-fresh/rounded/light/world.tsx">Matching tileset</a><a href="overworld-fresh.md">Fresh pass notes</a></div>
+    <h3>The 295 reusable tile pieces</h3>
+    <img id="fresh-atlas" class="fresh-atlas" src="assets/overworld-fresh/rounded/light/atlas-4x.png" width="1024" height="1216" alt="Fresh 16 by 16 world tiles, including transparent object pieces">
+    <div class="download-links"><a id="fresh-atlas-png" href="assets/overworld-fresh/rounded/light/atlas.png">Native atlas PNG</a><a href="assets/overworld-fresh/manifest.json">Tile names and building prefabs</a><a id="fresh-prompt" href="assets/overworld-fresh/sources/prompt-rounded.json">Base generation prompt</a><a id="fresh-extension-prompt" href="assets/overworld-fresh/sources/extension-prompt-rounded.json">City, water and desert prompt</a><a id="fresh-biomes-prompt" href="assets/overworld-fresh/sources/biomes-prompt-rounded.json">Five new biomes prompt</a></div>
+    <details><summary>Fresh direction contact sheet</summary><img id="fresh-contact" class="contact" src="assets/overworld-fresh/rounded/comparison.png" width="800" height="2048" alt="Fifteen areas with all three dithering amounts"></details>
+    <details><summary>Fresh generated sprite source</summary><img id="fresh-source" src="assets/overworld-fresh/sources/rounded.png" alt="Fresh transparent sprite seed sheet"></details>
+    <details><summary>Modern city, water and desert sprite source</summary><img id="fresh-extension-source" src="assets/overworld-fresh/sources/extension-rounded.png" alt="Transparent extension sheet with towers, water and desert sprites"></details>
+    <details><summary>Mountain, marsh, ruins, snow and volcano sprite source</summary><img id="fresh-biomes-source" src="assets/overworld-fresh/sources/biomes-rounded.png" alt="Fresh transparent source sheet for the five new regions"></details>
+  </section>
+
+  <section id="scene-led-round">
+    <span class="eyebrow">Round 1 · scene-led composition</span>
+    <h2>Concept directions at the device viewport</h2>
+    <p>This first pass starts from complete location concepts, reduced into the same 128×64 frame. It explores composition and grayscale character before the tilemap-focused second pass below.</p>
+    <div class="controls">
+      <label>Concept direction <select id="concept-direction"><option value="layered">Layered storybook</option><option value="chunky">Chunky silhouettes</option><option value="inked">Hand-inked field guide</option></select></label>
+      <label><input type="checkbox" id="concept-grid-toggle"> Show 16×16 grid</label>
+      <a id="concept-download" href="assets/overworld-identity-spike/layered/contact-sheet-2x.png">Download this direction’s 2× sheet</a>
+      <a id="concept-prompt" href="assets/overworld-identity-spike/prompt.json">Read its prompt</a>
+    </div>
+    <div class="scroll"><div id="concept-gallery" class="concept-gallery" role="table" aria-label="Scene-led cave, forest, rural-town and city views"></div></div>
+    <h3>Concept contact sheet</h3>
+    <img class="contact" id="concept-contact" src="assets/overworld-identity-spike/layered/contact-sheet-2x.png" width="800" height="552" alt="Scene-led concepts with four locations and three dither treatments">
+    <details><summary>View the selected scene-concept source</summary><img id="concept-source" src="assets/overworld-identity-spike/source.png" width="1774" height="887" alt="Fresh grayscale scene-led overworld concepts"></details>
+  </section>
+
+  <section id="tileset-round">
+    <span class="eyebrow">Round 2 · assembled from a reusable tileset</span>
+    <h2>Viewport examples from the same kit</h2>
+    <p>Each row uses the same map tile IDs in all three columns. Select a direction to switch the atlas source and a dithering treatment to change its atlas preview and Tiled export. The image files remain native 128×64; they are displayed at 2× nearest-neighbor for inspection.</p>
+    <div class="controls">
+      <label>Art direction <select id="direction"><option value="layered">Layered storybook</option><option value="chunky">Chunky silhouettes</option><option value="inked">Hand-inked field guide</option></select></label>
+      <label>Atlas treatment <select id="treatment"><option value="clean">Clean threshold</option><option value="light">Light · 2×2 Bayer</option><option value="heavy">Heavy · 4×4 Bayer</option></select></label>
+      <label><input type="checkbox" id="grid-toggle"> Show 16×16 grid</label>
+    </div>
+    <div class="scroll"><div id="gallery" class="gallery" role="table" aria-label="Four reusable world maps shown with three dithering treatments"></div></div>
+  </section>
+
+  <section>
+    <h2>One connected world</h2>
+    <p>The cave, forest, rural town and city are joined as a 16×8 tile map (256×128 pixels). The thin center guides split it into four 128×64 camera windows. The map uses the same atlas and tile IDs as the viewport studies; the downloadable Tiled map has no baked viewport guides or player sprite.</p>
+    <img id="world-map" class="world-preview" src="assets/overworld-tileset-round2/layered/clean/whole-world-viewport-grid-4x.png" width="1024" height="512" alt="A small connected overworld, divided into four camera viewports">
+    <div class="download-links"><a id="world-tmj" href="assets/overworld-tileset-round2/layered/clean/maps/whole-world.tmj">Open the joined world in Tiled</a><a id="world-png" href="assets/overworld-tileset-round2/layered/clean/whole-world.png">Download the unmarked world map</a></div>
+  </section>
+
+  <section>
+    <h2>Reusable atlas and Tiled exports</h2>
+    <div class="columns">
+      <div class="panel">
+        <p><strong id="atlas-label">Layered storybook · clean threshold</strong> · atlas enlarged 4× with nearest-neighbor scaling.</p>
+        <img id="atlas-preview" class="atlas-preview" src="assets/overworld-tileset-round2/layered/clean/atlas-preview-4x.png" width="512" height="512" alt="8 by 8 tile atlas preview">
+        <div class="download-links"><a id="atlas-png" href="assets/overworld-tileset-round2/layered/clean/atlas-128.png">Download 128×128 atlas PNG</a><a id="tileset-tsx" href="assets/overworld-tileset-round2/layered/clean/tileset.tsx">Open matching Tiled tileset</a><a href="assets/overworld-tileset-round2/manifest.json">Tile IDs and map manifest</a></div>
+        <p>Each style and dither treatment has its own matching atlas and Tiled tileset. Tile IDs are stable across all versions.</p>
+      </div>
+      <div class="panel">
+        <p><strong>Tile families</strong> · eight shared rows organize the world kit.</p>
+        <table><thead><tr><th>IDs</th><th>Family</th></tr></thead><tbody>
+          <tr><td>0–7</td><td>Base ground and terrain</td></tr><tr><td>8–15</td><td>Paths, corners and junctions</td></tr>
+          <tr><td>16–23</td><td>Trees, shrubs and forest props</td></tr><tr><td>24–31</td><td>Cave walls, floor and minerals</td></tr>
+          <tr><td>32–39</td><td>Cottage pieces, fences and gardens</td></tr><tr><td>40–47</td><td>Shops, street edges and lighting</td></tr>
+          <tr><td>48–55</td><td>Water, banks and crossings</td></tr><tr><td>56–63</td><td>Shared landmarks and props</td></tr>
+        </tbody></table>
+        <p>Tile names and IDs are in the manifest and in each Tiled tileset. These are exploratory pieces for world assembly, not installed game graphics.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Selected direction · all views and texture treatments</h2>
+    <p>Rows are cave, forest, rural town and city; columns are clean, light and heavy dithering. Each is a nearest-neighbor 2× enlargement of its native framebuffer.</p>
+    <img id="contact" class="contact" src="assets/overworld-tileset-round2/layered/contact-sheet-2x.png" width="800" height="552" alt="Four tilemap locations across three dithering treatments">
+    <details><summary>View the generated grayscale atlas source</summary><p>These independent 8×8 source sheets establish three treatments from the same family layout. Guides are cropped while slicing; the stored source remains unchanged.</p><img id="source-image" src="assets/overworld-tileset-round2/sources/layered.png" width="1254" height="1254" alt="Fresh layered storybook tile atlas before grayscale conversion"><p><a id="prompt-link" href="assets/overworld-tileset-round2/sources/prompt-layered.json">Read the selected direction prompt</a></p></details>
+  </section>
+
+  <script>
+    const freshRoot = 'assets/overworld-fresh';
+    const freshDirections = [{id:'rounded',label:'Soft blocks'},{id:'noir',label:'Ink silhouettes'},{id:'etched',label:'Stepped etching'}];
+    const freshAreas = [{id:'mountain-pass',label:'Mountain pass'},{id:'marsh',label:'Marsh boardwalk'},{id:'ancient-ruins',label:'Ancient ruins'},{id:'snowy-highlands',label:'Snowy highlands'},{id:'volcanic-badlands',label:'Volcanic badlands'},{id:'modern-city',label:'Modern city · street'},{id:'high-rises',label:'Modern city · tower tops'},{id:'waterfront',label:'Waterfront'},{id:'islands',label:'Islands'},{id:'desert',label:'Desert'},{id:'oasis',label:'Desert oasis'},{id:'cave',label:'Cave'},{id:'forest',label:'Forest'},{id:'rural-town',label:'Rural town'},{id:'city',label:'Classic city'}];
+    const freshTreatments = [{id:'clean',label:'Clean contours'},{id:'light',label:'Light shadows · 25%'},{id:'heavy',label:'Heavy shadows · 50%'}];
+    const freshGallery = document.getElementById('fresh-gallery');
+    for(const area of freshAreas) {
+      const headings='<div class="head" role="columnheader">Texture</div>'+freshDirections.map(direction=>`<div class="head" role="columnheader">${direction.label}</div>`).join('');
+      const rows=freshTreatments.map(treatment=>`<div class="rowhead" role="rowheader">${treatment.label}</div>`+freshDirections.map(direction=>`<figure><div class="fresh-screen"><img data-fresh-area="${area.id}" data-fresh-direction="${direction.id}" data-fresh-treatment="${treatment.id}" src="${freshRoot}/${direction.id}/${treatment.id}/${area.id}.png" width="128" height="64" alt="${direction.label} · ${area.label}, ${treatment.label}"></div><p>128×64 · <a data-fresh-map="${area.id}" data-fresh-direction="${direction.id}" data-fresh-treatment="${treatment.id}" href="${freshRoot}/${direction.id}/${treatment.id}/${area.id}.tmj">Tiled crop</a></p></figure>`).join('')).join('');
+      freshGallery.insertAdjacentHTML('beforeend',`<section class="fresh-area" aria-labelledby="fresh-area-${area.id}"><h3 id="fresh-area-${area.id}">${area.label}</h3><div class="gallery fresh-matrix" role="table" aria-label="${area.label}, all nine style and texture combinations">${headings}${rows}</div></section>`);
+    }
+    function updateFresh() {
+      const direction=document.getElementById('fresh-direction').value, treatment=document.getElementById('fresh-treatment').value;
+      const selected=`${freshRoot}/${direction}/${treatment}`;
+      document.getElementById('fresh-world').src=`${selected}/world.png`;
+      document.getElementById('fresh-world-map').href=`${selected}/world.tmj`;
+      document.getElementById('fresh-tsx').href=`${selected}/world.tsx`;
+      document.getElementById('fresh-atlas').src=`${selected}/atlas-4x.png`;
+      document.getElementById('fresh-atlas-png').href=`${selected}/atlas.png`;
+      document.getElementById('fresh-contact').src=`${freshRoot}/${direction}/comparison.png`;
+      document.getElementById('fresh-source').src=`${freshRoot}/sources/${direction}.png`;
+      document.getElementById('fresh-prompt').href=`${freshRoot}/sources/prompt-${direction}.json`;
+      document.getElementById('fresh-extension-source').src=`${freshRoot}/sources/extension-${direction}.png`;
+      document.getElementById('fresh-extension-prompt').href=`${freshRoot}/sources/extension-prompt-${direction}.json`;
+      document.getElementById('fresh-biomes-source').src=`${freshRoot}/sources/biomes-${direction}.png`;
+      document.getElementById('fresh-biomes-prompt').href=`${freshRoot}/sources/biomes-prompt-${direction}.json`;
+    }
+    document.getElementById('fresh-direction').addEventListener('change',updateFresh);
+    document.getElementById('fresh-treatment').addEventListener('change',updateFresh);
+    document.getElementById('fresh-scale').addEventListener('change',event=>freshGallery.style.setProperty('--fresh-zoom',event.target.value));
+    document.getElementById('fresh-grid').addEventListener('change',event=>document.querySelectorAll('.fresh-screen').forEach(screen=>screen.classList.toggle('show-grid',event.target.checked)));
+
+    const conceptRoot = 'assets/overworld-identity-spike';
+    const conceptDirections = {
+      layered: { label: 'Layered storybook', source: 'source.png', prompt: 'prompt.json' },
+      chunky: { label: 'Chunky silhouettes', source: 'sources/chunky.png', prompt: 'prompt-chunky.json' },
+      inked: { label: 'Hand-inked field guide', source: 'sources/inked.png', prompt: 'prompt-inked.json' },
+    };
+    const conceptTreatments = [
+      { id: 'clean', label: 'Clean · threshold only' },
+      { id: 'light', label: 'Light · 2×2 Bayer' },
+      { id: 'heavy', label: 'Heavy · 4×4 Bayer' },
+    ];
+    const conceptAreas = [
+      { id: 'cave', label: 'Cave' }, { id: 'forest', label: 'Forest' },
+      { id: 'rural-town', label: 'Rural town' }, { id: 'city', label: 'City' },
+    ];
+    const conceptGallery = document.getElementById('concept-gallery');
+    conceptGallery.innerHTML = '<div class="head" role="columnheader">Area</div>' + conceptTreatments.map(t => `<div class="head" role="columnheader">${t.label}</div>`).join('');
+    for (const area of conceptAreas) {
+      conceptGallery.insertAdjacentHTML('beforeend', `<div class="rowhead" role="rowheader">${area.label}</div>`);
+      for (const treatment of conceptTreatments) conceptGallery.insertAdjacentHTML('beforeend', `<figure><div class="concept-screen"><img data-concept-area="${area.id}" data-concept-treatment="${treatment.id}" src="${conceptRoot}/layered/${treatment.id}/${area.id}.png" width="128" height="64" alt="Scene-led ${area.label}, ${treatment.label}"></div><p>128×64 · concept crop · ${treatment.label}</p></figure>`);
+    }
+    const conceptDirection = document.getElementById('concept-direction');
+    conceptDirection.addEventListener('change', () => {
+      const id = conceptDirection.value, direction = conceptDirections[id];
+      document.querySelectorAll('[data-concept-area][data-concept-treatment]').forEach(img => { img.src = `${conceptRoot}/${id}/${img.dataset.conceptTreatment}/${img.dataset.conceptArea}.png`; });
+      const contactPath = `${conceptRoot}/${id}/contact-sheet-2x.png`;
+      document.getElementById('concept-contact').src = contactPath;
+      document.getElementById('concept-contact').alt = `${direction.label}: four scene-led areas and three dither treatments`;
+      document.getElementById('concept-download').href = contactPath;
+      document.getElementById('concept-source').src = `${conceptRoot}/${direction.source}`;
+      document.getElementById('concept-prompt').href = `${conceptRoot}/${direction.prompt}`;
+    });
+    document.getElementById('concept-grid-toggle').addEventListener('change', event => document.querySelectorAll('.concept-screen').forEach(frame => frame.classList.toggle('show-grid', event.target.checked)));
+
+    const root = 'assets/overworld-tileset-round2';
+    const directions = {
+      layered: { label: 'Layered storybook', source: 'layered.png', prompt: 'prompt-layered.json' },
+      chunky: { label: 'Chunky silhouettes', source: 'chunky.png', prompt: 'prompt-chunky.json' },
+      inked: { label: 'Hand-inked field guide', source: 'inked.png', prompt: 'prompt-inked.json' },
+    };
+    const treatments = [
+      { id: 'clean', label: 'Clean · threshold only' },
+      { id: 'light', label: 'Light · 2×2 Bayer' },
+      { id: 'heavy', label: 'Heavy · 4×4 Bayer' },
+    ];
+    const areas = [
+      { id: 'cave', label: 'Cave' }, { id: 'forest', label: 'Forest' },
+      { id: 'rural-town', label: 'Rural town' }, { id: 'city', label: 'City' },
+    ];
+    const gallery = document.getElementById('gallery');
+    gallery.innerHTML = '<div class="head" role="columnheader">Area</div>' + treatments.map(t => `<div class="head" role="columnheader">${t.label}</div>`).join('');
+    for (const area of areas) {
+      gallery.insertAdjacentHTML('beforeend', `<div class="rowhead" role="rowheader">${area.label}</div>`);
+      for (const treatment of treatments) gallery.insertAdjacentHTML('beforeend', `<figure><div class="native-screen"><img data-area="${area.id}" data-treatment="${treatment.id}" src="${root}/layered/${treatment.id}/${area.id}.png" width="128" height="64" alt="${area.label}, ${treatment.label}, assembled from 16 by 16 tiles"></div><p>128×64 · 8×4 cells · <a data-map="${area.id}" data-treatment="${treatment.id}" href="${root}/layered/${treatment.id}/maps/${area.id}.tmj">Tiled map</a></p></figure>`);
+    }
+    const directionSelect = document.getElementById('direction');
+    const treatmentSelect = document.getElementById('treatment');
+    function update() {
+      const direction = directionSelect.value, treatment = treatmentSelect.value;
+      document.querySelectorAll('[data-area][data-treatment]').forEach(img => { img.src = `${root}/${direction}/${img.dataset.treatment}/${img.dataset.area}.png`; });
+      document.querySelectorAll('[data-map]').forEach(link => { link.href = `${root}/${direction}/${link.dataset.treatment}/maps/${link.dataset.map}.tmj`; });
+      const selected = `${root}/${direction}/${treatment}`;
+      document.getElementById('atlas-label').textContent = `${directions[direction].label} · ${treatmentSelect.options[treatmentSelect.selectedIndex].text}`;
+      document.getElementById('atlas-preview').src = `${selected}/atlas-preview-4x.png`;
+      document.getElementById('atlas-png').href = `${selected}/atlas-128.png`;
+      document.getElementById('tileset-tsx').href = `${selected}/tileset.tsx`;
+      document.getElementById('world-map').src = `${selected}/whole-world-viewport-grid-4x.png`;
+      document.getElementById('world-tmj').href = `${selected}/maps/whole-world.tmj`;
+      document.getElementById('world-png').href = `${selected}/whole-world.png`;
+      document.getElementById('contact').src = `${root}/${direction}/contact-sheet-2x.png`;
+      document.getElementById('source-image').src = `${root}/sources/${directions[direction].source}`;
+      document.getElementById('prompt-link').href = `${root}/sources/${directions[direction].prompt}`;
+    }
+    directionSelect.addEventListener('change', update);
+    treatmentSelect.addEventListener('change', update);
+    document.getElementById('grid-toggle').addEventListener('change', event => document.querySelectorAll('.native-screen').forEach(frame => frame.classList.toggle('show-grid', event.target.checked)));
+  </script>
+</body>
+</html>

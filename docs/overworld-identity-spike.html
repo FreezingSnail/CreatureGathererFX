@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Overworld visual identity spike · Creature Gatherer</title>
+  <style>
+    :root { color-scheme: light; font-family: system-ui, -apple-system, sans-serif; color: #171717; background: #f4f1e8; }
+    body { margin: 0 auto; max-width: 1100px; padding: 24px; }
+    h1 { margin: 0 0 8px; font-size: 30px; }
+    h2 { margin: 32px 0 10px; }
+    p { max-width: 76ch; line-height: 1.55; }
+    a { color: #304f5b; }
+    .lede { font-size: 17px; }
+    .links { display: flex; gap: 18px; flex-wrap: wrap; margin: 16px 0 24px; }
+    .spec { display: inline-block; padding: 8px 12px; border: 1px solid #aaa69c; background: #fffdf8; }
+    .scroll { overflow-x: auto; }
+    .gallery { display: grid; grid-template-columns: 112px repeat(3, 1fr); min-width: 620px; border: 1px solid #8f8b82; background: #fffdf8; }
+    .gallery > div, .gallery > figure { margin: 0; padding: 10px; border-right: 1px solid #d5d0c5; border-bottom: 1px solid #d5d0c5; }
+    .gallery .head { font-weight: 700; background: #e7e2d7; }
+    .gallery .rowhead { display: flex; flex-direction: column; justify-content: center; font-weight: 650; }
+    .gallery figure { min-width: 128px; }
+    .gallery figure p { margin: 6px 0 0; font-size: 12px; }
+    .native-screen { position: relative; width: 128px; height: 64px; background: #fff; border: 1px solid #111; image-rendering: pixelated; }
+    .native-screen img { display: block; width: 128px; height: 64px; image-rendering: pixelated; }
+    .native-screen.show-grid::after { content: ""; position: absolute; inset: 0; pointer-events: none; background-image: linear-gradient(to right, transparent 15px, rgba(210, 32, 24, .55) 15px, rgba(210, 32, 24, .55) 16px), linear-gradient(to bottom, transparent 15px, rgba(210, 32, 24, .55) 15px, rgba(210, 32, 24, .55) 16px); background-size: 16px 16px; }
+    .contact { display: block; width: min(100%, 800px); height: auto; image-rendering: pixelated; border: 1px solid #777; }
+    .direction-control { padding: 10px; background: #fffdf8; border: 1px solid #aaa69c; }
+    details { margin-top: 18px; }
+    details img { display: block; width: min(100%, 1100px); height: auto; image-rendering: pixelated; margin-top: 12px; }
+    code { background: #e9e5db; padding: 1px 4px; }
+    @media (max-width: 680px) { body { padding: 16px; } h1 { font-size: 24px; } }
+  </style>
+</head>
+<body>
+  <header>
+    <p class="spec">Exploration · three art directions</p>
+    <h1>Overworld visual identity</h1>
+    <p class="lede">Four locations, three base-art directions, and three monochrome texture treatments. The native view keeps the same player size and viewport scale throughout.</p>
+    <div class="links"><a href="overworld-explorations.html">Open the combined overworld comparison</a><a href="overworld-tileset-round2.html">Open round 2 · assembled from a reusable tileset</a><a href="world-environment-32-spike.html">Open the existing environment and tile spike</a><a id="download-contact" href="assets/overworld-identity-spike/layered/contact-sheet-2x.png">Download the selected 2× contact sheet</a><a id="prompt-link" href="assets/overworld-identity-spike/prompt.json">Read this direction’s prompt</a></div>
+    <p>Each native frame is exactly 128×64 pixels: eight columns by four rows of 16×16 map cells. The current down-facing 16×16 player sprite is composited at its rendered position, (56,24), so its center lands at the viewport center, (64,32).</p>
+  </header>
+
+  <section>
+    <h2>Native viewport comparison</h2>
+    <p class="direction-control"><label>Art direction <select id="direction-select"><option value="layered">Layered storybook</option><option value="chunky">Chunky silhouettes</option><option value="inked">Hand-inked field guide</option></select></label><br><span id="direction-note">Layered grayscale scenery with clustered natural detail.</span></p>
+    <p><label><input type="checkbox" id="grid-toggle"> Show the 16×16 cell grid</label> · The grid is an inspection overlay; it is not baked into the art.</p>
+    <div class="scroll">
+      <div class="gallery" role="table" aria-label="Four overworld areas in three monochrome treatments">
+        <div class="head" role="columnheader">Area</div>
+        <div class="head" role="columnheader">Clean · threshold only</div>
+        <div class="head" role="columnheader">Light · 2×2 Bayer</div>
+        <div class="head" role="columnheader">Heavy · 4×4 Bayer</div>
+
+        <div class="rowhead" role="rowheader">Cave</div>
+        <figure><div class="native-screen"><img data-area="cave" data-treatment="clean" src="assets/overworld-identity-spike/layered/clean/cave.png" width="128" height="64" alt="Cave with clean monochrome threshold"></div><p>128×64 · 1×</p></figure>
+        <figure><div class="native-screen"><img data-area="cave" data-treatment="light" src="assets/overworld-identity-spike/layered/light/cave.png" width="128" height="64" alt="Cave with light ordered dithering"></div><p>128×64 · 1×</p></figure>
+        <figure><div class="native-screen"><img data-area="cave" data-treatment="heavy" src="assets/overworld-identity-spike/layered/heavy/cave.png" width="128" height="64" alt="Cave with heavy ordered dithering"></div><p>128×64 · 1×</p></figure>
+
+        <div class="rowhead" role="rowheader">Forest</div>
+        <figure><div class="native-screen"><img data-area="forest" data-treatment="clean" src="assets/overworld-identity-spike/layered/clean/forest.png" width="128" height="64" alt="Forest with clean monochrome threshold"></div><p>128×64 · 1×</p></figure>
+        <figure><div class="native-screen"><img data-area="forest" data-treatment="light" src="assets/overworld-identity-spike/layered/light/forest.png" width="128" height="64" alt="Forest with light ordered dithering"></div><p>128×64 · 1×</p></figure>
+        <figure><div class="native-screen"><img data-area="forest" data-treatment="heavy" src="assets/overworld-identity-spike/layered/heavy/forest.png" width="128" height="64" alt="Forest with heavy ordered dithering"></div><p>128×64 · 1×</p></figure>
+
+        <div class="rowhead" role="rowheader">Rural town</div>
+        <figure><div class="native-screen"><img data-area="rural-town" data-treatment="clean" src="assets/overworld-identity-spike/layered/clean/rural-town.png" width="128" height="64" alt="Rural town with clean monochrome threshold"></div><p>128×64 · 1×</p></figure>
+        <figure><div class="native-screen"><img data-area="rural-town" data-treatment="light" src="assets/overworld-identity-spike/layered/light/rural-town.png" width="128" height="64" alt="Rural town with light ordered dithering"></div><p>128×64 · 1×</p></figure>
+        <figure><div class="native-screen"><img data-area="rural-town" data-treatment="heavy" src="assets/overworld-identity-spike/layered/heavy/rural-town.png" width="128" height="64" alt="Rural town with heavy ordered dithering"></div><p>128×64 · 1×</p></figure>
+
+        <div class="rowhead" role="rowheader">City</div>
+        <figure><div class="native-screen"><img data-area="city" data-treatment="clean" src="assets/overworld-identity-spike/layered/clean/city.png" width="128" height="64" alt="City with clean monochrome threshold"></div><p>128×64 · 1×</p></figure>
+        <figure><div class="native-screen"><img data-area="city" data-treatment="light" src="assets/overworld-identity-spike/layered/light/city.png" width="128" height="64" alt="City with light ordered dithering"></div><p>128×64 · 1×</p></figure>
+        <figure><div class="native-screen"><img data-area="city" data-treatment="heavy" src="assets/overworld-identity-spike/layered/heavy/city.png" width="128" height="64" alt="City with heavy ordered dithering"></div><p>128×64 · 1×</p></figure>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Selected direction · 2× contact sheet</h2>
+    <p>Rows are cave, forest, rural town and city; columns are clean threshold, light 2×2 Bayer and heavy 4×4 Bayer. The sheet is nearest-neighbor enlarged.</p>
+    <img class="contact" id="contact-sheet" src="assets/overworld-identity-spike/layered/contact-sheet-2x.png" width="800" height="552" alt="Layered storybook direction: rows are four areas and columns are three monochrome treatments">
+    <details><summary>View the selected grayscale source</summary><p>Each art direction has its own independent generated source and prompt; none is derived from the existing environment artwork.</p><img id="source-image" src="assets/overworld-identity-spike/source.png" width="1774" height="887" alt="Fresh grayscale concept showing cave, forest, rural town and city"></details>
+  </section>
+  <script>
+    const root = 'assets/overworld-identity-spike';
+    const directions = {
+      layered: { label: 'Layered storybook', note: 'Layered grayscale scenery with clustered natural detail.', source: 'source.png', prompt: 'prompt.json' },
+      chunky: { label: 'Chunky silhouettes', note: 'Large tonal masses, simplified landmarks and more open ground.', source: 'sources/chunky.png', prompt: 'prompt-chunky.json' },
+      inked: { label: 'Hand-inked field guide', note: 'Bold contours and grouped ink-like shadows with more internal marks.', source: 'sources/inked.png', prompt: 'prompt-inked.json' },
+    };
+    const directionSelect = document.getElementById('direction-select');
+    const showDirection = () => {
+      const id = directionSelect.value;
+      const direction = directions[id];
+      document.getElementById('direction-note').textContent = direction.note;
+      document.querySelectorAll('[data-area][data-treatment]').forEach(image => {
+        image.src = `${root}/${id}/${image.dataset.treatment}/${image.dataset.area}.png`;
+      });
+      const contactPath = `${root}/${id}/contact-sheet-2x.png`;
+      document.getElementById('contact-sheet').src = contactPath;
+      document.getElementById('contact-sheet').alt = `${direction.label}: rows are four areas and columns are three monochrome treatments`;
+      document.getElementById('download-contact').href = contactPath;
+      document.getElementById('source-image').src = `${root}/${direction.source}`;
+      document.getElementById('prompt-link').href = `${root}/${direction.prompt}`;
+    };
+    directionSelect.addEventListener('change', showDirection);
+    document.getElementById('grid-toggle').addEventListener('change', event => {
+      document.querySelectorAll('.native-screen').forEach(screen => screen.classList.toggle('show-grid', event.target.checked));
+    });
+  </script>
+</body>
+</html>
