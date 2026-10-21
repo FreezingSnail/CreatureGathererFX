@@ -117,6 +117,53 @@ source = { expand = { path = "fxdata/generated/evolution.txt" } }
 # every earlier field address stays fixed.
 [[entry]]
 source = { expand = { path = "fxdata/generated/rewards.txt" } }
+
+# 9ha9.1 Creature Gatherer theme streams (0xC1 streaming loops, ring 64).
+# Append-only, theme order pinned so every earlier field address stays fixed.
+[[entry]]
+name = "music_overworld"
+source = { raw = "data/music/overworld.bin" }
+
+[[entry]]
+name = "music_combat"
+source = { raw = "data/music/combat.bin" }
+
+[[entry]]
+name = "music_victory"
+source = { raw = "data/music/victory.bin" }
+
+[[entry]]
+name = "music_defeat"
+source = { raw = "data/music/defeat.bin" }
+
+[[entry]]
+name = "music_opening"
+source = { raw = "data/music/opening.bin" }
+
+[[entry]]
+name = "music_village"
+source = { raw = "data/music/village.bin" }
+
+[[entry]]
+name = "music_forest"
+source = { raw = "data/music/forest.bin" }
+
+[[entry]]
+name = "music_coast"
+source = { raw = "data/music/coast.bin" }
+
+[[entry]]
+name = "music_marsh"
+source = { raw = "data/music/marsh.bin" }
+
+[[entry]]
+name = "music_ruins"
+source = { raw = "data/music/ruins.bin" }
+
+[[entry]]
+name = "music_exploration"
+source = { raw = "data/music/exploration.bin" }
+
 [save]
 sectors = 8
 

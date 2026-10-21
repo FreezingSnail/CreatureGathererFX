@@ -139,7 +139,13 @@ perturbed_layout=$fixtures/fxlayout-expand-20-perturbed.toml
 # legacy map_data NPC markers change, so the cart changes while every symbol
 # address and src/fxdata.h stay byte-identical. Previous cart sha256
 # a91840f3..., now 2e56abb2.... Intentional rebaseline.
-expected=2e56abb2b4c04f8d413de3161cc75b730a6d934608adae09e8eac2874265fb55
+# 9ha9.1: append the eleven Creature Gatherer theme streams as named raw FX
+# entries before [save] (data/music/<theme>.bin, 42584 B total at
+# 0x0AD0C1..0x0B7719). Every earlier field address is byte-identical and
+# FX_DATA_BYTES grows 708801 -> 751385, so only the appended payload changes
+# the cart. Previous cart sha256 2e56abb2..., now d6f8daa3.... Intentional
+# append-only rebaseline.
+expected=d6f8daa3e53ee32e13c7a3441eeaaf595637e3278be801f090eb99982e931989
 
 for layout in "$old_layout" "$new_layout" "$perturbed_layout"; do
     test -f "$layout" || {

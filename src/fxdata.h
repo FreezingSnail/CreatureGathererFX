@@ -6,8 +6,8 @@ using uint24_t = __uint24;
 
 // Initialize FX hardware using  FX::begin(FX_DATA_PAGE); in the setup() function.
 
-constexpr uint16_t FX_DATA_PAGE  = 0xf4af;
-constexpr uint24_t FX_DATA_BYTES = 708801;
+constexpr uint16_t FX_DATA_PAGE  = 0xf408;
+constexpr uint24_t FX_DATA_BYTES = 751385;
 
 constexpr uint16_t FX_SAVE_PAGE  = 0xFF80;
 constexpr uint24_t FX_SAVE_BYTES = 32768;
@@ -577,3 +577,14 @@ namespace Rewards
   constexpr uint24_t healCount = 0x0AD0BF;
 }
 
+constexpr uint24_t music_overworld = 0x0AD0C1;
+constexpr uint24_t music_combat = 0x0AE979;
+constexpr uint24_t music_victory = 0x0B0005;
+constexpr uint24_t music_defeat = 0x0B053F;
+constexpr uint24_t music_opening = 0x0B07E1;
+constexpr uint24_t music_village = 0x0B2409;
+constexpr uint24_t music_forest = 0x0B2A85;
+constexpr uint24_t music_coast = 0x0B42C1;
+constexpr uint24_t music_marsh = 0x0B4E55;
+constexpr uint24_t music_ruins = 0x0B5401;
+constexpr uint24_t music_exploration = 0x0B6F91;

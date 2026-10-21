@@ -114,3 +114,24 @@ Worker (`slugineer-worker`) cancelled by a server restart after edits + `make ge
 orchestrator finished verification inline (outcome recorded, no partial files left). No abandoned
 `build/cgfx-pack.*` stages; `build/` 1.3 GiB; disk free 48 GiB. Wall time: worker partial ~45 min
 (cancelled, no report), orchestrator inline ~40 min.
+
+## 9ha9.1 — Pack theme streams + catalog (worker)
+
+Changed: `data/music/{overworld,combat,victory,defeat,opening,village,forest,coast,marsh,ruins,exploration}.bin`
+(42584 B total, upstream ATMlib2FX `c3d5e7c`, all magic 0xC1), `data/music/README.md`,
+`data/music/catalog.tsv`, `fxlayout.toml` (11 named raw entries appended before `[save]`),
+`src/audio/MusicCatalog.hpp` (enum + `kMusicTracks[11]`), `tst/audio/music_catalog_test.cpp`,
+`Makefile` (`test-music`, in `check`), `tools/tests/pack-parity_test.sh`.
+
+- `make gen`: PASS, 7.9 s. `src/fxdata.h` diff is append-only: only `FX_DATA_PAGE`
+  `0xf4af->0xf408`, `FX_DATA_BYTES` `708801->751385`, plus 11 new `music_*` lines.
+- Music address range `0x0AD0C1..0x0B7719` (exclusive end), exactly 42584 B.
+- `make test-music`: 104 passed, 0 failed (2.8 s). Covers exact sizes, magic, loop_start_rel
+  boundary/length, record framing to END, catalog/header agreement, symbol publish + order.
+- `make test-generated-libs`: 59 passed, 0 failed + invariants/arena/alias suites PASS (1.6 s).
+- `make test-manifest`: PASS (9.6 s).
+- `make test-pack-parity`: PASS after rebaseline `2e56abb2.. -> d6f8daa3..` with append-only note (8.0 s).
+- `make test`: 258 passed, 0 failed (2.8 s).
+- Header syntax: `avr-g++ -fsyntax-only` on `MusicCatalog.hpp` OK (not part of runtime yet).
+- Deviations: none. No commit/push. Storage: shared `build/` 1.3 GiB, disk free 61 GiB.
+- Wall time: ~25 min.
