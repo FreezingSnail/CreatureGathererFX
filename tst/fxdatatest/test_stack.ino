@@ -5,6 +5,11 @@ ScriptVm vm;
 
 void setup() {
     fxTestSetup();
+#if CGFX_AUDIO
+    // Measure mode/battle with the music timer live; the save chain pauses it.
+    audio::begin();
+    audio::service();
+#endif
     FxTest test;
     stack_fx_test_detail::measureModeTransition(test);
     test_stack(test);

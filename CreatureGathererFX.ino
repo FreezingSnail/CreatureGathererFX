@@ -297,4 +297,10 @@ void loop() {
     }
 #endif
     FX::display(CLEAR_BUFFER);
+#if CGFX_AUDIO
+    // Music refill runs after the OLED transaction so its FX fetch never shares
+    // SPI with the display, and outside update/render so its reads stay out of
+    // the metadata frame budget.
+    audio::service();
+#endif
 }

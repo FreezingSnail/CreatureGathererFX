@@ -14,41 +14,46 @@ WORLD_VM_PROFILE_FLAGS = $(filter -DCGFX_FULL_WORLD_VM -DCGFX_FULL_WORLD_VM=%,$(
 COMPACT_WARP_VM_FLAGS = $(filter -DCGFX_COMPACT_WARP_VM -DCGFX_COMPACT_WARP_VM=%,$(AVR_SHIPPING_CPP_FLAGS))
 BATTLE_AUTO_REPLACE_FLAGS = $(filter -DCGFX_BATTLE_AUTO_REPLACE -DCGFX_BATTLE_AUTO_REPLACE=%,$(AVR_SHIPPING_CPP_FLAGS))
 # Instrument FX test firmware with the logical read counter while preserving
-# the stock USB main used by the serial P/F harness.
+# the stock USB main used by the serial P/F harness. AUDIO=1 adds the same
+# engine defines as shipping plus the compact diagnostics so audio proofs and
+# stack measurements can read underruns/error/service gap. AUDIO=0 is
+# byte-identical to the previous profiles.
 AVR_FXTEST_CPP_FLAGS ?= $(AVR_RELAX_FLAGS) -DFX_READ_COUNTER -DCGFX_DUEL_BATTLE $(WORLD_VM_PROFILE_FLAGS) $(COMPACT_WARP_VM_FLAGS) $(BATTLE_AUTO_REPLACE_FLAGS)
-AVR_FXTEST_BUILD_PROPERTIES ?= --build-property "compiler.cpp.extra_flags=$(AVR_FXTEST_CPP_FLAGS)" \
-	--build-property "compiler.c.extra_flags=$(AVR_RELAX_FLAGS)" \
+AUDIO ?= 0
+AVR_AUDIO_DEFINES = -DCGFX_AUDIO=1 -DATM_HAS_FX_COMPACT=1 -DATM_FX_COMPACT_LOOP=1 -DATM_FX_COMPACT_LOOP_STREAMING=1 -DATM_FX_COMPACT_RING=64
+AVR_AUDIO_FLAGS = $(if $(filter 1,$(AUDIO)),$(AVR_AUDIO_DEFINES))
+AVR_FXTEST_AUDIO_FLAGS = $(if $(filter 1,$(AUDIO)),$(AVR_AUDIO_DEFINES) -DATM_FX_COMPACT_DIAG=1)
+AVR_FXTEST_BUILD_PROPERTIES ?= --build-property "compiler.cpp.extra_flags=$(AVR_FXTEST_CPP_FLAGS) $(AVR_FXTEST_AUDIO_FLAGS)" \
+	--build-property "compiler.c.extra_flags=$(AVR_RELAX_FLAGS) $(AVR_FXTEST_AUDIO_FLAGS)" \
 	--build-property "compiler.c.elf.extra_flags=$(AVR_RELAX_FLAGS)"
-AVR_FXTEST_NO_FACTS_BUILD_PROPERTIES ?= --build-property "compiler.cpp.extra_flags=$(AVR_FXTEST_CPP_FLAGS) -DCGFX_BATTLE_NO_FACTS" \
-	--build-property "compiler.c.extra_flags=$(AVR_RELAX_FLAGS)" \
+AVR_FXTEST_NO_FACTS_BUILD_PROPERTIES ?= --build-property "compiler.cpp.extra_flags=$(AVR_FXTEST_CPP_FLAGS) -DCGFX_BATTLE_NO_FACTS $(AVR_FXTEST_AUDIO_FLAGS)" \
+	--build-property "compiler.c.extra_flags=$(AVR_RELAX_FLAGS) $(AVR_FXTEST_AUDIO_FLAGS)" \
 	--build-property "compiler.c.elf.extra_flags=$(AVR_RELAX_FLAGS)"
-AVR_FXTEST_COMPACT_RESULT_BUILD_PROPERTIES ?= --build-property "compiler.cpp.extra_flags=$(AVR_FXTEST_CPP_FLAGS) -DCGFX_BATTLE_NO_FACTS -DCGFX_BATTLE_COMPACT_RESULT" \
-	--build-property "compiler.c.extra_flags=$(AVR_RELAX_FLAGS)" \
+AVR_FXTEST_COMPACT_RESULT_BUILD_PROPERTIES ?= --build-property "compiler.cpp.extra_flags=$(AVR_FXTEST_CPP_FLAGS) -DCGFX_BATTLE_NO_FACTS -DCGFX_BATTLE_COMPACT_RESULT $(AVR_FXTEST_AUDIO_FLAGS)" \
+	--build-property "compiler.c.extra_flags=$(AVR_RELAX_FLAGS) $(AVR_FXTEST_AUDIO_FLAGS)" \
 	--build-property "compiler.c.elf.extra_flags=$(AVR_RELAX_FLAGS)"
 # The dedicated duel suite must compile every TU with the compact duel profile;
 # a sketch-local define alone would not reach separately compiled TUs and could
 # silently build a legacy implementation. Selected for test_battle_duel only.
-AVR_FXTEST_DUEL_BUILD_PROPERTIES ?= --build-property "compiler.cpp.extra_flags=$(AVR_FXTEST_CPP_FLAGS) -DCGFX_BATTLE_NO_FACTS -DCGFX_BATTLE_COMPACT_RESULT -DCGFX_DUEL_BATTLE" \
-	--build-property "compiler.c.extra_flags=$(AVR_RELAX_FLAGS)" \
+AVR_FXTEST_DUEL_BUILD_PROPERTIES ?= --build-property "compiler.cpp.extra_flags=$(AVR_FXTEST_CPP_FLAGS) -DCGFX_BATTLE_NO_FACTS -DCGFX_BATTLE_COMPACT_RESULT -DCGFX_DUEL_BATTLE $(AVR_FXTEST_AUDIO_FLAGS)" \
+	--build-property "compiler.c.extra_flags=$(AVR_RELAX_FLAGS) $(AVR_FXTEST_AUDIO_FLAGS)" \
 	--build-property "compiler.c.elf.extra_flags=$(AVR_RELAX_FLAGS)"
 # Music runtime toggle. AUDIO=0 is the zero-cost default: no engine flags, and
 # the vendored C translation units compile empty. AUDIO=1 enables the compact
 # ATMlib2FX backend, and the ring/loop flags must match data/music/*.bin
 # (--ring 64 --streaming-loops). Both C and C++ TUs need the same defines
 # because the engine is C and the facade is C++.
-AUDIO ?= 0
-AVR_AUDIO_DEFINES = -DCGFX_AUDIO=1 -DATM_HAS_FX_COMPACT=1 -DATM_FX_COMPACT_LOOP=1 -DATM_FX_COMPACT_LOOP_STREAMING=1 -DATM_FX_COMPACT_RING=64
-AVR_AUDIO_FLAGS = $(if $(filter 1,$(AUDIO)),$(AVR_AUDIO_DEFINES))
 # Only shipping FX/Mini sketches compile their no-USB main. Device-test
 # sketches keep the stock core main so Serial P/F output remains available.
 AVR_SHIPPING_CPP_FLAGS ?= $(AVR_RELAX_FLAGS) -DCGFX_SHIPPING_NO_USB -fno-inline-small-functions -DCGFX_BATTLE_NO_FACTS -DCGFX_BATTLE_COMPACT_RESULT -DCGFX_COMPACT_WARP_VM -DCGFX_DUEL_BATTLE
 AVR_SHIPPING_BUILD_PROPERTIES ?= --build-property "compiler.cpp.extra_flags=$(AVR_SHIPPING_CPP_FLAGS) $(AVR_AUDIO_FLAGS)" \
 	--build-property "compiler.c.extra_flags=$(AVR_RELAX_FLAGS) $(AVR_AUDIO_FLAGS)" \
 	--build-property "compiler.c.elf.extra_flags=$(AVR_RELAX_FLAGS)"
-# Audio-enabled duel suite profile reserved for the service/save bead. The
-# default fxtest profile stays audio-off.
-AVR_FXTEST_AUDIO_DUEL_BUILD_PROPERTIES ?= --build-property "compiler.cpp.extra_flags=$(AVR_FXTEST_CPP_FLAGS) -DCGFX_BATTLE_NO_FACTS -DCGFX_BATTLE_COMPACT_RESULT -DCGFX_DUEL_BATTLE $(AVR_AUDIO_DEFINES)" \
-	--build-property "compiler.c.extra_flags=$(AVR_RELAX_FLAGS) $(AVR_AUDIO_DEFINES)" \
+# Audio-enabled duel suite profile reserved for the service/save bead. Like
+# every fxtest profile it is audio-off unless AUDIO=1; then it also carries the
+# compact diagnostics.
+AVR_FXTEST_AUDIO_DUEL_BUILD_PROPERTIES ?= --build-property "compiler.cpp.extra_flags=$(AVR_FXTEST_CPP_FLAGS) -DCGFX_BATTLE_NO_FACTS -DCGFX_BATTLE_COMPACT_RESULT -DCGFX_DUEL_BATTLE $(AVR_FXTEST_AUDIO_FLAGS)" \
+	--build-property "compiler.c.extra_flags=$(AVR_RELAX_FLAGS) $(AVR_FXTEST_AUDIO_FLAGS)" \
 	--build-property "compiler.c.elf.extra_flags=$(AVR_RELAX_FLAGS)"
 # Use the physical application flash limit. Keep 400 B static free as an
 # independent guard; it does not measure painted stack.

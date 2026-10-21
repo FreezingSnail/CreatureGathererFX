@@ -6,6 +6,73 @@
 #include "src/fxdata.h"
 #include "src/engine/draw.h"
 
+#if CGFX_AUDIO
+#include "src/audio/Audio.hpp"
+#include "src/globals.hpp"
+#include "src/save/Compaction.hpp"
+#include "src/save/SaveController.hpp"
+// The vendored engine is C; atm_synth.h supplies the state structs that
+// atm_fx_compact.h requires.
+extern "C" {
+#include "src/audio/atm/atm_synth.h"
+#include "src/audio/atm/atm_fx_compact.h"
+}
+#endif
+
+namespace readcounter_audio_detail {
+#if CGFX_AUDIO
+inline void run(FxTest &test) {
+    audio::begin();
+
+    bool audioReadsSeen = false;
+    bool metadataDirty = false;
+    for (uint8_t i = 0; i < 100; ++i) {
+        FX::display(CLEAR_BUFFER);
+        FxReadCounter::resetFrame();
+        audio::service();
+        if (FxReadCounter::audioCount() != 0) audioReadsSeen = true;
+        if (FxReadCounter::count() != 0) metadataDirty = true;
+        delay(20);
+    }
+    test.expectEq(audioReadsSeen, true, F("audio service reads FX data"));
+    test.expectEq(metadataDirty, false, F("audio reads stay out of metadata budget"));
+
+    Serial.print(F("audio ticks="));
+    Serial.print(atm_fx_compact_state.ticks);
+    Serial.print(F(" serviced="));
+    Serial.print(atm_fx_compact_state.serviced);
+    Serial.print(F(" underruns="));
+    Serial.print(atm_fx_compact_state.underruns);
+    Serial.print(F(" error="));
+    Serial.print(atm_fx_compact_state.error);
+    Serial.print(F(" max_service_gap="));
+    Serial.println(atm_fx_compact_state.max_service_gap);
+
+    test.expectEq(atm_fx_compact_state.active, 1, F("audio player stays armed"));
+    test.expectEq(atm_fx_compact_state.underruns, 0, F("audio loop has no underruns"));
+    test.expectEq(atm_fx_compact_state.error, 0, F("audio stream format accepted"));
+    test.expectEq(atm_fx_compact_state.max_service_gap <= 10, true,
+                  F("audio service gap stays sane"));
+
+    // Blank save sectors: partySlots are 255, so capture needs no store setup.
+    gameState.state = GameState_t::WORLD;
+    SaveController::begin(GameState_t::WORLD);
+    test.expectEq(audio::isPaused(), true, F("save begin pauses audio"));
+    for (uint16_t i = 0; i < 256 && gameState.state == GameState_t::SAVING; ++i) {
+        SaveController::advance();
+        FX::waitWhileBusy();
+    }
+    test.expectEq(gameState.state == GameState_t::SAVING, false,
+                  F("save sequence completes"));
+    test.expectEq(audio::isPaused(), false, F("save completion resumes audio"));
+
+    audio::stop();
+}
+#else
+inline void run(FxTest &) {}
+#endif
+} // namespace readcounter_audio_detail
+
 inline void test_readcounter(FxTest &test) {
     uint8_t row[16];
     FxReadCounter::resetFrame();
@@ -37,4 +104,6 @@ inline void test_readcounter(FxTest &test) {
     readCreatureNameAddress(0);
     test.expectEq(FxReadCounter::count(), static_cast<uint8_t>(1),
                   F("read from another translation unit counted"));
+
+    readcounter_audio_detail::run(test);
 }
