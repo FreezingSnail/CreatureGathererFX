@@ -12,6 +12,13 @@ inline uint8_t &frameReads() {
     return reads;
 }
 
+// Music fetches are a separate category: they run after the OLED transaction
+// and never contribute to the metadata frame budget.
+inline uint8_t &audioReads() {
+    static uint8_t reads = 0;
+    return reads;
+}
+
 inline bool &updatePassed() {
     static bool passed = true;
     return passed;
@@ -34,6 +41,7 @@ inline bool &renderPassed() {
 
 inline void resetFrame() {
     frameReads() = 0;
+    audioReads() = 0;
     allowedTransitionReads() = 0;
     updatePassed() = true;
     transitionPassed() = true;
@@ -44,7 +52,12 @@ inline void record() {
     if (frameReads() != UINT8_MAX) ++frameReads();
 }
 
+inline void recordAudio() {
+    if (audioReads() != UINT8_MAX) ++audioReads();
+}
+
 inline uint8_t count() { return frameReads(); }
+inline uint8_t audioCount() { return audioReads(); }
 inline bool exact(uint8_t expected) { return count() == expected; }
 
 // A transition owner calls this immediately after its known lookup sequence.
@@ -79,7 +92,9 @@ inline bool framePassed() {
 #else
 inline void resetFrame() {}
 inline void record() {}
+inline void recordAudio() {}
 inline uint8_t count() { return 0; }
+inline uint8_t audioCount() { return 0; }
 inline bool exact(uint8_t expected) { return expected == 0; }
 inline bool transitionExact(uint8_t) { return true; }
 inline bool markUpdate() { return true; }

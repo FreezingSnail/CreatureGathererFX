@@ -166,3 +166,34 @@ Verification (`BUILD_DIR=build/rhs7-lane`, existing cache):
 - Header syntax: default and `-DTEST -DCGFX_AUDIO=1` both bind no-op inlines.
 - No device gate (per bead). No commit/push. Storage: `build/rhs7-lane` 107M, disk free 61 GiB.
 - Wall time ~25 min.
+
+## 9ha9.3 — music service, save pause, audio read accounting, device proof (worker)
+
+Changes: `CreatureGathererFX.ino` calls `audio::service()` after `FX::display` under `CGFX_AUDIO`;
+`SaveController::begin` pauses before `captureLiveSaveState`, `advance` resumes on `Done`/`Failed`
+(state restore unchanged for Done only); `FxReadCounter` adds `audioReads()`/`recordAudio()`/
+`audioCount()`, zeroed by `resetFrame`, never in `frameReads`; `Audio.cpp fetch` records the audio
+category; Makefile adds `$(AVR_FXTEST_AUDIO_FLAGS)` (five defines + `ATM_FX_COMPACT_DIAG=1` only
+when `AUDIO=1`) to default/no-facts/compact/duel/audio-duel C++ and C flags. `readcounter_test.hpp`
+gains the audio proof under `CGFX_AUDIO`; `test_stack.ino`/`stack_test.hpp` start audio, service
+once, and pause/resume around `runSave`.
+
+Verification (`BUILD_DIR=build/rhs7-lane`, lane shared with 9ha9.2):
+- `AUDIO=1 make fxtest-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_readcounter.ino
+  FXTEST_BUILD_DIR=build/rhs7-lane/fxtest-audio`: `test_readcounter PASSED=20 FAILED=0`,
+  `audio ticks=107 serviced=100 underruns=0 error=0 max_service_gap=2`; test_stack PASSED=4,
+  mode-transition headroom 469 B, save stack headroom 374 B (>=219). readcounter RAM 2070/2160.
+- `AUDIO=0` same spike into `fxtest-control`: readcounter PASSED=11, test_stack PASSED=4,
+  save headroom 622 B; RAM 1595/2160.
+- `AUDIO=0 make ram`: flash 23252, static 1665 (free 6444/895). Control ELF preserved at
+  `build/rhs7-lane/control-AUDIO0.elf/.hex`. Raw flash image (`avr-objcopy -O binary`) sha256
+  `ccc80921...e6f26` matches the 9ha9.2 control image exactly, so AUDIO=0 stays byte-identical.
+- `AUDIO=1 make ram`: flash 27204 (+3952), static 1895 (+230), flash free 2492, static free 665;
+  candidate ELF `build/rhs7-lane/candidate-AUDIO1.elf`. Top audio symbols: `atm_fx_compact_state`
+  103 B, `channels` 84 B, `osc_params_array` 22 B, `osc_cb` 18 B, `osc_pha_acc_array` 8 B.
+- `make test`: host 240623 passed, world 258 passed, 0 failed.
+- Deviations: audio proof lives in `test_readcounter` rather than a new `test_audio` suite per
+  dispatch; ~100 x 20 ms loop (~2 s emulated) instead of the bead's 30 s. No full AUDIO=1 fxtest,
+  no final gate (per dispatch). Save proof writes one checkpoint from blank sectors; assertions were
+  not weakened.
+- Storage: `build/rhs7-lane` 139M, disk free 61 GiB. No commit/push. Wall time ~20 min.

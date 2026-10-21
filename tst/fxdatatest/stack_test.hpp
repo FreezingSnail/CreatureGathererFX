@@ -1,6 +1,7 @@
 #pragma once
 
 #include "fxtest.hpp"
+#include "src/audio/Audio.hpp"
 #include "src/save/Compaction.hpp"
 #include "src/save/SaveFile.hpp"
 #include "src/vm/opcodes.hpp"
@@ -54,6 +55,11 @@ inline void printAddress(const __FlashStringHelper *name, uint16_t value)
 __attribute__((noinline)) inline SaveStep runSave()
 {
     SaveFile state = {};
+#if CGFX_AUDIO
+    // The save flash window runs with music paused so its measured stack does
+    // not include the audio timer ISR.
+    audio::pause();
+#endif
     saveBegin();
     SaveStep step = SaveStep::Idle;
     // The v3 checkpoint verifies both 4096-byte regions in 64-byte chunks, so a
@@ -62,6 +68,9 @@ __attribute__((noinline)) inline SaveStep runSave()
         step = saveStepAdvance(state);
         FX::waitWhileBusy();
     }
+#if CGFX_AUDIO
+    audio::resume();
+#endif
     return step;
 }
 

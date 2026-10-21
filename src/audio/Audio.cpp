@@ -13,11 +13,15 @@ extern "C" {
 }
 
 #include "MusicCatalog.hpp"
+#include "../lib/FxReadCounter.hpp"
 
 // Platform byte source for the compact decoder. Offsets are data-section
 // relative; the FX library adds the data page exactly once. Called from the
 // foreground service only, never from the timer.
 extern "C" void atm_fx_compact_fetch(uint32_t offset, uint8_t *dst, uint8_t n) {
+    // Music reads are accounted separately so they can never consume the
+    // metadata update/render budget.
+    FxReadCounter::recordAudio();
     FX::readDataBytes(static_cast<uint24_t>(offset), dst, n);
 }
 

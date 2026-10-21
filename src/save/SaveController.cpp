@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <string.h>
 
+#include "../audio/Audio.hpp"
 #include "../common.hpp"
 #include "../globals.hpp"
 #include "../plants/PlantGamestate.hpp"
@@ -120,6 +121,9 @@ void drawSavingStatus(bool failed)
 
 void begin(GameState_t returnState)
 {
+    // Mute and unregister the music timer before the snapshot mutates the
+    // journal/store, so no audio FX fetch overlaps a save flash operation.
+    audio::pause();
     captureLiveSaveState();
     stateBeforeSaving = returnState;
     savingStarted = true;
@@ -133,7 +137,13 @@ void advance()
         begin(GameState_t::WORLD);
     }
 
-    if (saveStepAdvance(saveState) == SaveStep::Done) {
+    const SaveStep step = saveStepAdvance(saveState);
+    if (step == SaveStep::Done || step == SaveStep::Failed) {
+        // Both terminal steps end the flash-busy window; failure keeps the
+        // status screen, but music must not stay muted behind it.
+        audio::resume();
+    }
+    if (step == SaveStep::Done) {
         savingStarted = false;
         gameState.state = stateBeforeSaving;
     }
