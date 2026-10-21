@@ -6,6 +6,7 @@
 #include "BattleSession.hpp"
 #include "../ModeState.hpp"
 #include "../../GameState.hpp"
+#include "../../audio/Audio.hpp"
 #include "../../globals.hpp"
 #include "../../creature/LevelCurve.hpp"
 #include "../../creature/Evolution.hpp"
@@ -173,6 +174,13 @@ void finishBattle(battle::BattleSession &session, TerminalCallback callback) {
         WorldEngine::queueDefeatRecovery();
     exitBattle();
     gameState.state = GameState_t::WORLD;
+    // Bounded result cue after the world theme is restored: it replaces the
+    // overworld track and service() returns to it after kResultCueFrames. Other
+    // outcomes (Fled/Escaped) keep the plain world theme.
+    if (outcome == battle::Outcome::Win || outcome == battle::Outcome::Gathered)
+        audio::playResult(MusicTrack_Victory, kResultCueFrames);
+    else if (outcome == battle::Outcome::Lose || outcome == battle::Outcome::Draw)
+        audio::playResult(MusicTrack_Defeat, kResultCueFrames);
 }
 
 } // namespace

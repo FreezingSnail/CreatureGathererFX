@@ -32,6 +32,26 @@ agent. `AGENTS.md` carries the short list.
 - `make check` bundles gen + host + VM + manifest + generated-libs + verify-generated + fxtest
   (device stage skipped without `ARDENS`). It does not include pack-parity or doctor tests.
 
+## AUDIO builds
+
+- `AUDIO=0` is the default and the shipping image: no engine translation units, no theme table, no
+  runtime state — the flash image is byte-identical to a build that never had audio. `AUDIO=1` adds
+  the compact ATMlib2FX runtime and the packed theme streams; it is FX-only (`make mini AUDIO=1`
+  fails intentionally). `AUDIO=1` is not part of `make check` or `final-gate`, so a bead touching
+  audio must run both profiles explicitly.
+- Focused verification:
+  - `AUDIO=1 make ram` and `AUDIO=0 make ram` (link + flash/static delta).
+  - `AUDIO=1 make fxtest-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_readcounter.ino` — proves the
+    service path, save pause/resume, state routing, stream health (`underruns`, `error`,
+    `max_service_gap`) and painted stack headroom in one run.
+  - `AUDIO=0` spike of the same suite as the control: the binary must stay identical and the suite
+    must still pass.
+- Theme data: `make test-music` validates the packed streams, `data/music/catalog.tsv` and the
+  `src/audio/MusicCatalog.hpp` rows. Never hand-edit a theme `.bin`; follow `data/music/README.md`.
+- Routing lives at the state edges (`ModeState::enterBattle`/`exitBattle`,
+  `BattleFlow::finishBattle`); keep transitions off the per-frame path so FX reads only happen on
+  changes. The theme table is PROGMEM-resident and read once per change.
+
 ## Generated artifacts
 
 - `make gen` is the only generation entry; it requires `cgfx-tools` on `PATH` (`make doctor`

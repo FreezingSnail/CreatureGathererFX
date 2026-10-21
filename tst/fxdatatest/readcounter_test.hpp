@@ -66,6 +66,21 @@ inline void run(FxTest &test) {
                   F("save sequence completes"));
     test.expectEq(audio::isPaused(), false, F("save completion resumes audio"));
 
+    // Routing smoke test (not a battle): state transitions select the intended
+    // themes, and a bounded result cue falls back to the world theme on its own.
+    enterBattle();
+    test.expectEq(audio::currentTrack(), MusicTrack_Combat, F("battle entry selects combat"));
+    exitBattle();
+    test.expectEq(audio::currentTrack(), MusicTrack_Overworld,
+                  F("battle exit selects overworld"));
+    audio::playResult(MusicTrack_Victory, 2);
+    test.expectEq(audio::currentTrack(), MusicTrack_Victory, F("result cue starts"));
+    audio::service();
+    delay(20);
+    audio::service();
+    test.expectEq(audio::currentTrack(), MusicTrack_Overworld,
+                  F("result cue returns to overworld"));
+
     audio::stop();
 }
 #else

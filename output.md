@@ -197,3 +197,39 @@ Verification (`BUILD_DIR=build/rhs7-lane`, lane shared with 9ha9.2):
   no final gate (per dispatch). Save proof writes one checkpoint from blank sectors; assertions were
   not weakened.
 - Storage: `build/rhs7-lane` 139M, disk free 61 GiB. No commit/push. Wall time ~20 min.
+
+## 9ha9.4 — route themes by state + docs (worker)
+
+Changes: new host-safe `src/audio/MusicTracks.hpp` (enum + `kResultCueFrames = 104`);
+`Audio.hpp/.cpp` add `playTrack`/`playResult`/`currentTrack` behind a 3-byte ready/countdown state
+(each also a no-op inline under `AUDIO=0`/`TEST`); `ModeState::enterBattle` -> `Combat`,
+`exitBattle` -> `Overworld`; `BattleFlow::finishBattle` plays `Victory` for
+`Win`/`Gathered` and `Defeat` for `Lose`/`Draw` after the world state is restored (`Fled`/`Escaped`
+keep the plain world theme); `readcounter_test.hpp` routing smoke test (4 assertions);
+`README.md` + `docs/dev-flow.md` AUDIO sections.
+
+Verification (`BUILD_DIR=build/rhs7-lane`, lane reused from 9ha9.2/3):
+- `make test`: host 240623/0, world 258/0. `make test-music`: 104/0.
+- `AUDIO=0 make ram`: 23252 flash / 1665 static (free 6444/895). `avr-objcopy -O binary` sha256
+  `ccc80921...e6f26` == `build/rhs7-lane/control-AUDIO0.elf`: shipping image unchanged.
+- `AUDIO=1 make ram`: 27524 flash / 1898 static (flash free 2172, static free 662). Pre-routing
+  9ha9.3 was 27204/1895, so routing = **+320 flash / +3 static**. `kMusicTracks` is PROGMEM
+  (`.data` 55 B before the move).
+- `AUDIO=1 make fxtest-spike FXTEST_SPIKE_INO=tst/fxdatatest/test_readcounter.ino`
+  (`FXTEST_BUILD_DIR=build/rhs7-lane/fxtest-audio`, Ardens = local captureserial build):
+  `test_readcounter PASSED=24 FAILED=0`, `audio ticks=107 serviced=100 underruns=0 error=0
+  max_service_gap=2`, suite RAM 2100/2160 (60 free); `test_stack PASSED=4 FAILED=0`,
+  mode-transition headroom 466 B, stack headroom **373 B** (9ha9.3: 469/374).
+- `AUDIO=0` control spike (`fxtest-control`): `test_readcounter PASSED=11`, `test_stack PASSED=4`,
+  headroom 622 B / mode 715 B.
+- No `make gen`: no authored or generated input changed; `git status` shows no generated diff.
+
+Deviations:
+- Enum moved from `MusicCatalog.hpp` to `MusicTracks.hpp`: the facade takes `MusicTrack` in the
+  `AUDIO=0`/`TEST` stubs, and `MusicCatalog.hpp` includes device-only `fxdata.h` (`__uint24`), which
+  broke the host build.
+- First measurement (RAM table) was `AUDIO=1` 27516/1954 and suite 2156/2160 (4 B free); moving the
+  theme table to PROGMEM recovered 56 B static for +8 B flash. No other design change.
+- Did not run the full final gate or a full AUDIO=1 fxtest sweep (per dispatch).
+
+Storage: `build/rhs7-lane` 139M, disk free 60 GiB. No commit/push. Wall time ~50 min.
