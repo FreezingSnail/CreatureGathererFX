@@ -137,6 +137,13 @@ void setup() {
     enterBattle();
     battleSession().beginTrainer(preset.trainerId);
     gameState.state = GameState_t::BATTLE;
+#if CGFX_AUDIO
+    // This demo bootstrap returns before the ordinary audio start block.
+    // Enter the fight with the combat theme already armed.
+    arduboy.audio.on();
+    audio::begin();
+    audio::playTrack(MusicTrack_Combat);
+#endif
     return;
 #elif defined(CGFX_ARENA_DEMO)
     arena::boot();

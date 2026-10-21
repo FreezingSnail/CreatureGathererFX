@@ -53,7 +53,8 @@ path does not enter the bootloader, double-tap reset and start the upload prompt
 
 Music is off by default: `AUDIO=0` (the default) compiles no engine code and costs no flash or
 static RAM, so shipping images are byte-identical with or without this feature present. Build the
-soundtrack with `AUDIO=1 make build` or inspect it with `AUDIO=1 make ram`. The runtime is FX-only;
+soundtrack with `AUDIO=1 make build` or inspect it with `AUDIO=1 make ram`. `AUDIO=1 make
+battle-test` starts the trainer demo with the combat theme. The runtime is FX-only;
 `make mini AUDIO=1` fails intentionally, because the 11 theme streams live in the packed FX image
 (`dist/fxdata.bin`, 42,584 B total, appended after the existing data; see `data/music/README.md`
 and `fxlayout.toml`).

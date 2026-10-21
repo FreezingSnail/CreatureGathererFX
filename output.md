@@ -246,3 +246,15 @@ stack 373 B. `test_readcounter` is near the static test limit (2,100/2,160, 60 B
 compiled with audio only for the focused `AUDIO=1` suite. No SFX; remaining area themes are packed
 but not selected. No network/download; all runtime sources copied from the local pinned ATMlib2FX
 checkout.
+
+## ww7r — combat music in trainer battle-test
+
+`CGFX_TRAINER_DEMO` now starts `arduboy.audio.on(); audio::begin();
+audio::playTrack(MusicTrack_Combat)` after `enterBattle`/`beginTrainer` and before its early
+return. `BATTLE_TEST_CPP_FLAGS` now derives from the shipping profile so the target has the duel
+flags the current source requires. `AUDIO=0` remains silent.
+
+Builds with the battle-test profile (`CGFX_SHIPPING_NO_USB + CGFX_DUEL_BATTLE +
+CGFX_TRAINER_DEMO`): AUDIO=0 21,924 B flash / 1,748 B static; AUDIO=1 25,842 B flash / 1,977 B
+static (+3,918/+229; 183 B static free). Ardens absim boot of the AUDIO=1 trainer image exited 0.
+Default final gate unchanged (audio-less code path).
