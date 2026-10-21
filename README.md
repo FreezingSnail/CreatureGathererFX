@@ -155,7 +155,7 @@ mkdir -p build/trainer-demo/isolated
 cp -f dist/fxdata.bin build/trainer-demo/isolated/fxdata.bin
 cp -f dist/fxdata-save.bin build/trainer-demo/isolated/fxdata-save.bin
 /path/to/Ardens fxport=d1 display=ssd1306 \
-  file=build/trainer-demo/CreatureGathererFX.ino.hex \
+  file=build/trainer-demo/CreatureGathererFX.ino.elf \
   file=build/trainer-demo/isolated/fxdata.bin \
   save=build/trainer-demo/isolated/fxdata-save.bin
 ```
@@ -216,7 +216,7 @@ mkdir -p build/arena-demo/isolated
 cp -f dist/fxdata-data.bin build/arena-demo/isolated/fxdata-data.bin
 cp -f dist/fxdata-save.bin build/arena-demo/isolated/fxdata-save.bin
 /path/to/Ardens fxport=d1 display=ssd1306 \
-  file=build/arena-demo/CreatureGathererFX.ino.hex \
+  file=build/arena-demo/CreatureGathererFX.ino.elf \
   file=build/arena-demo/isolated/fxdata-data.bin \
   save=build/arena-demo/isolated/fxdata-save.bin
 ```
@@ -251,7 +251,7 @@ mkdir -p build/wild-demo/isolated
 cp -f dist/fxdata.bin build/wild-demo/isolated/fxdata.bin
 cp -f dist/fxdata-save.bin build/wild-demo/isolated/fxdata-save.bin
 /path/to/Ardens fxport=d1 display=ssd1306 \
-  file=build/wild-demo/CreatureGathererFX.ino.hex \
+  file=build/wild-demo/CreatureGathererFX.ino.elf \
   file=build/wild-demo/isolated/fxdata.bin \
   save=build/wild-demo/isolated/fxdata-save.bin
 ```

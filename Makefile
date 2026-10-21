@@ -67,7 +67,7 @@ DIST_DIR ?= dist
 FXDATA_BIN ?= $(DIST_DIR)/fxdata.bin
 FXDATA_DATA_BIN ?= $(DIST_DIR)/fxdata-data.bin
 FXDATA_SAVE_BIN ?= $(DIST_DIR)/fxdata-save.bin
-RUN_HEX ?= $(BUILD_DIR)/CreatureGathererFX.ino.hex
+RUN_ELF ?= $(BUILD_DIR)/CreatureGathererFX.ino.elf
 RUN_FXPORT ?= d1
 RUN_DISPLAY ?= ssd1306
 FX_LAYOUT ?= fxlayout.toml
@@ -158,7 +158,7 @@ help:
 		'  fxtest-build  compile device suites through one persistent stage per flag profile' \
 		'                (suite.ino swap); set FXTEST_CLEAN=1 to rebuild from scratch' \
 		'' \
-		'Overrides: CXX, ARDUINO_CLI, FQBN, BUILD_DIR, ARDUINO_BUILD_PATH, ARDUINO_BUILD_CACHE_PATH, DIST_DIR, FXDATA_BIN, ARDENS, FXTEST_MS, FXTEST_RAM_BUDGET, FXTEST_CLEAN, AUDIO, AVR_FLASH_BUDGET, AVR_STATIC_RAM_BUDGET, RAM_ELF, AVR_SIZE, AVR_NM, AVR_RELAX_FLAGS, AVR_FXTEST_BUILD_PROPERTIES, AVR_FXTEST_NO_FACTS_BUILD_PROPERTIES, AVR_FXTEST_COMPACT_RESULT_BUILD_PROPERTIES, AVR_FXTEST_AUDIO_DUEL_BUILD_PROPERTIES, AVR_FXTEST_CPP_FLAGS, AVR_SHIPPING_BUILD_PROPERTIES, AVR_SHIPPING_CPP_FLAGS, WORLD_SCRIPT_PROFILE_INPUT, WORLD_SCRIPT_PROFILE_TEXT, ARENA_DEMO_BUILD_DIR, ARENA_DEMO_CART_DIR, ARENA_DEMO_CPP_FLAGS, ARENA_DEMO_FLASH_BUDGET, ARENA_PACKAGE, ARENA_PACKAGE_INFO.'
+		'Overrides: CXX, ARDUINO_CLI, FQBN, BUILD_DIR, ARDUINO_BUILD_PATH, ARDUINO_BUILD_CACHE_PATH, DIST_DIR, FXDATA_BIN, ARDENS, FXTEST_MS, FXTEST_RAM_BUDGET, FXTEST_CLEAN, AUDIO, AVR_FLASH_BUDGET, AVR_STATIC_RAM_BUDGET, RUN_ELF, RAM_ELF, AVR_SIZE, AVR_NM, AVR_RELAX_FLAGS, AVR_FXTEST_BUILD_PROPERTIES, AVR_FXTEST_NO_FACTS_BUILD_PROPERTIES, AVR_FXTEST_COMPACT_RESULT_BUILD_PROPERTIES, AVR_FXTEST_AUDIO_DUEL_BUILD_PROPERTIES, AVR_FXTEST_CPP_FLAGS, AVR_SHIPPING_BUILD_PROPERTIES, AVR_SHIPPING_CPP_FLAGS, WORLD_SCRIPT_PROFILE_INPUT, WORLD_SCRIPT_PROFILE_TEXT, ARENA_DEMO_BUILD_DIR, ARENA_DEMO_CART_DIR, ARENA_DEMO_CPP_FLAGS, ARENA_DEMO_FLASH_BUDGET, ARENA_PACKAGE, ARENA_PACKAGE_INFO.'
 
 setup:
 	@printf '%s\n' \
@@ -306,12 +306,12 @@ mini: world-script-profile-check encounter-packed-profile-check
 run: build
 	@test -n "$(ARDENS)" || { echo "run: ARDENS is unset; set ARDENS=/path/to/Ardens" >&2; exit 1; }
 	@test -x "$(ARDENS)" || { echo "run: Ardens executable not found at $(ARDENS)" >&2; exit 1; }
-	@test -f "$(RUN_HEX)" || { echo "run: sketch hex missing at $(RUN_HEX); run make build" >&2; exit 1; }
+	@test -f "$(RUN_ELF)" || { echo "run: sketch ELF missing at $(RUN_ELF); run make build" >&2; exit 1; }
 	@test -f "$(FXDATA_DATA_BIN)" || { echo "run: FX data image missing at $(FXDATA_DATA_BIN); run make gen" >&2; exit 1; }
 	@test -f "$(FXDATA_SAVE_BIN)" || { echo "run: FX save image missing at $(FXDATA_SAVE_BIN); run make gen" >&2; exit 1; }
 	"$(ARDENS)" \
 	    fxport=$(RUN_FXPORT) display=$(RUN_DISPLAY) \
-	    file="$(RUN_HEX)" \
+	    file="$(RUN_ELF)" \
 	    file="$(FXDATA_DATA_BIN)" \
 	    save="$(FXDATA_SAVE_BIN)"
 
@@ -340,7 +340,7 @@ battle-test: gen
 	@cp -f "$(FXDATA_SAVE_BIN)" "$(BATTLE_TEST_CART_DIR)/fxdata-save.bin"
 	"$(ARDENS)" \
 	    fxport=$(RUN_FXPORT) display=$(RUN_DISPLAY) \
-	    file="$(BATTLE_TEST_BUILD_DIR)/CreatureGathererFX.ino.hex" \
+	    file="$(BATTLE_TEST_BUILD_DIR)/CreatureGathererFX.ino.elf" \
 	    file="$(BATTLE_TEST_CART_DIR)/fxdata-data.bin" \
 	    save="$(BATTLE_TEST_CART_DIR)/fxdata-save.bin"
 
@@ -363,7 +363,7 @@ arena-demo:
 	@test -x "$(ARDENS)" || { echo "arena-demo: Ardens executable not found at $(ARDENS)" >&2; exit 1; }
 	@$(MAKE) --no-print-directory -j1 gen-if-needed
 	@$(MAKE) --no-print-directory ram BUILD_DIR="$(ARENA_DEMO_BUILD_DIR)" AVR_SHIPPING_CPP_FLAGS="$(ARENA_DEMO_CPP_FLAGS)" AVR_FLASH_BUDGET="$(ARENA_DEMO_FLASH_BUDGET)"
-	@test -f "$(ARENA_DEMO_BUILD_DIR)/CreatureGathererFX.ino.hex" || { echo "arena-demo: sketch hex missing from $(ARENA_DEMO_BUILD_DIR)" >&2; exit 1; }
+	@test -f "$(ARENA_DEMO_BUILD_DIR)/CreatureGathererFX.ino.elf" || { echo "arena-demo: sketch ELF missing from $(ARENA_DEMO_BUILD_DIR)" >&2; exit 1; }
 	@test -f "$(FXDATA_DATA_BIN)" || { echo "arena-demo: FX data image missing at $(FXDATA_DATA_BIN); run make gen" >&2; exit 1; }
 	@test -f "$(FXDATA_SAVE_BIN)" || { echo "arena-demo: FX save image missing at $(FXDATA_SAVE_BIN); run make gen" >&2; exit 1; }
 	@mkdir -p "$(ARENA_DEMO_CART_DIR)"
@@ -371,7 +371,7 @@ arena-demo:
 	@cp -f "$(FXDATA_SAVE_BIN)" "$(ARENA_DEMO_CART_DIR)/fxdata-save.bin"
 	"$(ARDENS)" \
 	    fxport=$(RUN_FXPORT) display=$(RUN_DISPLAY) \
-	    file="$(ARENA_DEMO_BUILD_DIR)/CreatureGathererFX.ino.hex" \
+	    file="$(ARENA_DEMO_BUILD_DIR)/CreatureGathererFX.ino.elf" \
 	    file="$(ARENA_DEMO_CART_DIR)/fxdata-data.bin" \
 	    save="$(ARENA_DEMO_CART_DIR)/fxdata-save.bin"
 
@@ -418,7 +418,7 @@ lure-demo:
 	@test -x "$(ARDENS)" || { echo "lure-demo: Ardens executable not found at $(ARDENS)" >&2; exit 1; }
 	@$(MAKE) --no-print-directory -j1 gen-if-needed
 	@$(MAKE) --no-print-directory ram BUILD_DIR="$(LURE_DEMO_BUILD_DIR)" AVR_SHIPPING_CPP_FLAGS="$(LURE_DEMO_CPP_FLAGS)" AVR_FLASH_BUDGET="$(LURE_DEMO_FLASH_BUDGET)"
-	@test -f "$(LURE_DEMO_BUILD_DIR)/CreatureGathererFX.ino.hex" || { echo "lure-demo: sketch hex missing from $(LURE_DEMO_BUILD_DIR)" >&2; exit 1; }
+	@test -f "$(LURE_DEMO_BUILD_DIR)/CreatureGathererFX.ino.elf" || { echo "lure-demo: sketch ELF missing from $(LURE_DEMO_BUILD_DIR)" >&2; exit 1; }
 	@test -f "$(FXDATA_DATA_BIN)" || { echo "lure-demo: FX data image missing at $(FXDATA_DATA_BIN); run make gen" >&2; exit 1; }
 	@test -f "$(FXDATA_SAVE_BIN)" || { echo "lure-demo: FX save image missing at $(FXDATA_SAVE_BIN); run make gen" >&2; exit 1; }
 	@mkdir -p "$(LURE_DEMO_CART_DIR)"
@@ -426,7 +426,7 @@ lure-demo:
 	@cp -f "$(FXDATA_SAVE_BIN)" "$(LURE_DEMO_CART_DIR)/fxdata-save.bin"
 	"$(ARDENS)" \
 	    fxport=$(RUN_FXPORT) display=$(RUN_DISPLAY) \
-	    file="$(LURE_DEMO_BUILD_DIR)/CreatureGathererFX.ino.hex" \
+	    file="$(LURE_DEMO_BUILD_DIR)/CreatureGathererFX.ino.elf" \
 	    file="$(LURE_DEMO_CART_DIR)/fxdata-data.bin" \
 	    save="$(LURE_DEMO_CART_DIR)/fxdata-save.bin"
 
