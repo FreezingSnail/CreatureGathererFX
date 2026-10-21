@@ -73,7 +73,15 @@ RUN_DISPLAY ?= ssd1306
 FX_LAYOUT ?= fxlayout.toml
 FXDATA_MANIFEST ?= fxdata/generated/manifest.json
 FXDATA_DIST_DIR ?= $(DIST_DIR)
-ARDENS ?= $(shell command -v Ardens 2>/dev/null)
+# Prefer the local headless build over the GUI-only /Applications bundle.
+# A stale exported ARDENS is replaced unless the caller passed ARDENS=.
+ARDENS_HEADLESS ?= $(HOME)/code/arduboy/Ardens/build/Ardens.app/Contents/MacOS/Ardens
+ARDENS ?= $(firstword $(wildcard $(ARDENS_HEADLESS)) $(shell command -v Ardens 2>/dev/null))
+ifneq ($(origin ARDENS),command line)
+  ifeq ($(wildcard $(ARDENS)),)
+    ARDENS := $(firstword $(wildcard $(ARDENS_HEADLESS)) $(shell command -v Ardens 2>/dev/null))
+  endif
+endif
 # Emulated serial-capture window. The v3 save suite performs several full
 # 4096-byte checkpoint verify/erase cycles, so it needs more emulated time than
 # the former 3000 default; raise the window rather than drop device coverage.

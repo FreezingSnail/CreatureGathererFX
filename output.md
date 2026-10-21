@@ -258,3 +258,12 @@ Builds with the battle-test profile (`CGFX_SHIPPING_NO_USB + CGFX_DUEL_BATTLE +
 CGFX_TRAINER_DEMO`): AUDIO=0 21,924 B flash / 1,748 B static; AUDIO=1 25,842 B flash / 1,977 B
 static (+3,918/+229; 183 B static free). Ardens absim boot of the AUDIO=1 trainer image exited 0.
 Default final gate unchanged (audio-less code path).
+
+## gy31 — stale ARDENS fallback
+
+An exported `ARDENS=$HOME/code/Ardens/...` (nonexistent) blocked `battle-test` before Makefile
+discovery. `ARDENS` now prefers the local headless build
+`$HOME/code/arduboy/Ardens/build/Ardens.app/Contents/MacOS/Ardens`, falls back from a stale
+environment path, and still lets an explicit command-line `ARDENS=` win. Verified `make -n
+battle-test` with the stale env selects the local headless path, and a full default `final-gate`
+without an explicit ARDENS ran all device suites and passed (23,252/1,665/622).
