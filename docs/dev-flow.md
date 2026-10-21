@@ -46,6 +46,8 @@ agent. `AGENTS.md` carries the short list.
     `max_service_gap`) and painted stack headroom in one run.
   - `AUDIO=0` spike of the same suite as the control: the binary must stay identical and the suite
     must still pass.
+  - `AUDIO=1 make battle-test` boots the trainer demo on the combat theme; `AUDIO=0` keeps it
+    silent. The battle-test build now uses the shipping profile plus `CGFX_TRAINER_DEMO`.
 - Theme data: `make test-music` validates the packed streams, `data/music/catalog.tsv` and the
   `src/audio/MusicCatalog.hpp` rows. Never hand-edit a theme `.bin`; follow `data/music/README.md`.
 - Routing lives at the state edges (`ModeState::enterBattle`/`exitBattle`,
