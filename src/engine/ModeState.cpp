@@ -1,5 +1,6 @@
 #include "ModeState.hpp"
 
+#include "../audio/Audio.hpp"
 #include "../lib/random.hpp"
 #include "world/World.hpp"
 
@@ -21,6 +22,7 @@ void ModeState::enterBattle() {
     // fresh active member without reading or clearing inactive world data.
     ::new (static_cast<void *>(&battle)) battle::BattleMode();
     battle.setRng({battleRandomRoll});
+    audio::playTrack(MusicTrack_Combat);
 #if (defined(TEST) || defined(FX_READ_COUNTER)) && !defined(CGFX_BATTLE_COMPACT_RESULT)
     testBattlePresenter.reset();
 #endif
@@ -33,6 +35,7 @@ void ModeState::exitBattle() {
     WorldEngine::init(world);
     WorldEngine::loadMap(world, 0, 0);
     WorldEngine::syncFromLocation(world);
+    audio::playTrack(MusicTrack_Overworld);
 }
 
 #if defined(CGFX_ARENA_DEMO) || defined(TEST) || defined(FX_READ_COUNTER)

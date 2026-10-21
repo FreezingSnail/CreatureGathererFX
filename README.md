@@ -49,6 +49,48 @@ upload, connect USB, hold DOWN while resetting the Arduboy, then start the uploa
 bootloader is active; shipping startup also checks DOWN and transfers to the bootloader. If that
 path does not enter the bootloader, double-tap reset and start the upload promptly.
 
+## Music (AUDIO=1)
+
+Music is off by default: `AUDIO=0` (the default) compiles no engine code and costs no flash or
+static RAM, so shipping images are byte-identical with or without this feature present. Build the
+soundtrack with `AUDIO=1 make build` or inspect it with `AUDIO=1 make ram`. The runtime is FX-only;
+`make mini AUDIO=1` fails intentionally, because the 11 theme streams live in the packed FX image
+(`dist/fxdata.bin`, 42,584 B total, appended after the existing data; see `data/music/README.md`
+and `fxlayout.toml`).
+
+Theme routing is selected by game state (`src/engine/ModeState.cpp` and
+`src/engine/battle/BattleFlow.cpp`):
+
+| State | Theme |
+| --- | --- |
+| World / battle exit | `overworld` |
+| Battle entry | `combat` |
+| Win or Gathered result | `victory` cue, 104 frames (~2 s), then `overworld` |
+| Lose or Draw result | `defeat` cue, 104 frames (~2 s), then `overworld` |
+
+The remaining catalog entries (`opening`, `village`, `forest`, `coast`, `marsh`, `ruins`,
+`exploration`) are packed for future areas; no area state selects them yet. `overworld` is the
+current world theme everywhere. There are no sound effects.
+
+Playback pauses (and mutes) while a save is written and resumes afterwards, so save timing is
+unchanged. Music data reads use the separate audio read category and never consume the per-frame
+metadata/render read budget. Compact streaming needs one foreground service call per frame after
+`FX::display`; that call also counts down the bounded result cue.
+
+Measured with Arduino CLI 1.2.0 / AVR-GCC 7.3.0-atmel3.6.1-arduino7, `-mrelax`, LTO:
+
+| Build | Flash | Static RAM |
+| --- | --- | --- |
+| `AUDIO=0 make ram` (default) | 23,252 B | 1,665 B |
+| `AUDIO=1 make ram` (pre-routing, 9ha9.3) | 27,204 B | 1,895 B |
+| `AUDIO=1 make ram` (routing, current) | 27,524 B | 1,898 B |
+
+So the whole soundtrack runtime is +4,272 B flash / +233 B static RAM over the default image, of
+which state routing is +320 B flash / +3 B static. The theme table itself is read from PROGMEM on
+each theme change, not every frame. The `AUDIO=1` device suite (`test_readcounter` +
+`test_stack`) reports 0 underruns, 0 stream errors, a maximum service gap of 2, and 373 B painted
+stack headroom.
+
 ## Lure world scenery (opt-in)
 
 `make lure-demo ARDENS=/path/to/Ardens` uses the clear, sparse environment scenery

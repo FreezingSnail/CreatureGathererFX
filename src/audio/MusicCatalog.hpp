@@ -7,28 +7,26 @@
 #include <stdint.h>
 
 #include "../fxdata.h"
+#include "MusicTracks.hpp"
 
-enum MusicTrack : uint8_t {
-    MusicTrack_Overworld,
-    MusicTrack_Combat,
-    MusicTrack_Victory,
-    MusicTrack_Defeat,
-    MusicTrack_Opening,
-    MusicTrack_Village,
-    MusicTrack_Forest,
-    MusicTrack_Coast,
-    MusicTrack_Marsh,
-    MusicTrack_Ruins,
-    MusicTrack_Exploration,
-    MusicTrack_Count,
-};
-
+// Game-state routing (implemented by the callers; no table is needed because
+// each state names one track):
+//   world / battle exit        -> MusicTrack_Overworld
+//   battle entry               -> MusicTrack_Combat
+//   Win / Gathered result      -> MusicTrack_Victory for kResultCueFrames
+//   Lose / Draw result         -> MusicTrack_Defeat  for kResultCueFrames
+// The cue then falls back to MusicTrack_Overworld on its own. The remaining
+// catalog entries (opening/village/forest/coast/marsh/ruins/exploration) are
+// packed for future areas; no area state selects them yet.
+//
+// The table lives in PROGMEM: it is read once per theme change, never per frame,
+// and 55 B of static RAM is worth more than the small flash cost of the read.
 struct MusicTrackEntry {
     uint24_t address;
     uint16_t length;
 };
 
-constexpr MusicTrackEntry kMusicTracks[MusicTrack_Count] = {
+const MusicTrackEntry kMusicTracks[MusicTrack_Count] PROGMEM = {
     {music_overworld, 6328},
     {music_combat, 5772},
     {music_victory, 1338},
