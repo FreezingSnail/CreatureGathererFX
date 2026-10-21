@@ -15,6 +15,7 @@
 #include "src/item/Inventory.hpp"
 #include "src/item/ItemIds.hpp"
 #include "src/fxdata.h"
+#include "src/audio/Audio.hpp"
 #include "src/save/SaveController.hpp"
 #include "src/save/Journal.hpp"
 #include "src/player/Player.hpp"
@@ -184,6 +185,13 @@ void setup() {
         SaveController::seedParty();
     }
 #endif
+#endif
+
+#if CGFX_AUDIO
+    // Start the overworld theme after the save load / new-game seed is settled.
+    // Music service and save-pause hooks arrive with the next audio bead.
+    arduboy.audio.on();
+    audio::begin();
 #endif
 
     // buffer = arduboy.sBuffer;
