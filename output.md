@@ -267,3 +267,12 @@ discovery. `ARDENS` now prefers the local headless build
 environment path, and still lets an explicit command-line `ARDENS=` win. Verified `make -n
 battle-test` with the stale env selects the local headless path, and a full default `final-gate`
 without an explicit ARDENS ran all device suites and passed (23,252/1,665/622).
+
+## kdss — demo targets load ELF
+
+Interactive `run`, `battle-test`, `arena-demo` and `lure-demo` now pass the built
+`CreatureGathererFX.ino.elf` to Ardens instead of the HEX. `RUN_HEX` became `RUN_ELF`. Packaging
+still uses HEX (`arena-package`), and device suites still load their HEX files. README manual
+launch examples were updated to ELF. Verified `make -n` for all four targets, built `AUDIO=1
+battle-test` (25,842/1,977), and loaded its ELF through local headless Ardens with
+`captureserial` (exit 0).
