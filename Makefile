@@ -31,11 +31,24 @@ AVR_FXTEST_COMPACT_RESULT_BUILD_PROPERTIES ?= --build-property "compiler.cpp.ext
 AVR_FXTEST_DUEL_BUILD_PROPERTIES ?= --build-property "compiler.cpp.extra_flags=$(AVR_FXTEST_CPP_FLAGS) -DCGFX_BATTLE_NO_FACTS -DCGFX_BATTLE_COMPACT_RESULT -DCGFX_DUEL_BATTLE" \
 	--build-property "compiler.c.extra_flags=$(AVR_RELAX_FLAGS)" \
 	--build-property "compiler.c.elf.extra_flags=$(AVR_RELAX_FLAGS)"
+# Music runtime toggle. AUDIO=0 is the zero-cost default: no engine flags, and
+# the vendored C translation units compile empty. AUDIO=1 enables the compact
+# ATMlib2FX backend, and the ring/loop flags must match data/music/*.bin
+# (--ring 64 --streaming-loops). Both C and C++ TUs need the same defines
+# because the engine is C and the facade is C++.
+AUDIO ?= 0
+AVR_AUDIO_DEFINES = -DCGFX_AUDIO=1 -DATM_HAS_FX_COMPACT=1 -DATM_FX_COMPACT_LOOP=1 -DATM_FX_COMPACT_LOOP_STREAMING=1 -DATM_FX_COMPACT_RING=64
+AVR_AUDIO_FLAGS = $(if $(filter 1,$(AUDIO)),$(AVR_AUDIO_DEFINES))
 # Only shipping FX/Mini sketches compile their no-USB main. Device-test
 # sketches keep the stock core main so Serial P/F output remains available.
 AVR_SHIPPING_CPP_FLAGS ?= $(AVR_RELAX_FLAGS) -DCGFX_SHIPPING_NO_USB -fno-inline-small-functions -DCGFX_BATTLE_NO_FACTS -DCGFX_BATTLE_COMPACT_RESULT -DCGFX_COMPACT_WARP_VM -DCGFX_DUEL_BATTLE
-AVR_SHIPPING_BUILD_PROPERTIES ?= --build-property "compiler.cpp.extra_flags=$(AVR_SHIPPING_CPP_FLAGS)" \
-	--build-property "compiler.c.extra_flags=$(AVR_RELAX_FLAGS)" \
+AVR_SHIPPING_BUILD_PROPERTIES ?= --build-property "compiler.cpp.extra_flags=$(AVR_SHIPPING_CPP_FLAGS) $(AVR_AUDIO_FLAGS)" \
+	--build-property "compiler.c.extra_flags=$(AVR_RELAX_FLAGS) $(AVR_AUDIO_FLAGS)" \
+	--build-property "compiler.c.elf.extra_flags=$(AVR_RELAX_FLAGS)"
+# Audio-enabled duel suite profile reserved for the service/save bead. The
+# default fxtest profile stays audio-off.
+AVR_FXTEST_AUDIO_DUEL_BUILD_PROPERTIES ?= --build-property "compiler.cpp.extra_flags=$(AVR_FXTEST_CPP_FLAGS) -DCGFX_BATTLE_NO_FACTS -DCGFX_BATTLE_COMPACT_RESULT -DCGFX_DUEL_BATTLE $(AVR_AUDIO_DEFINES)" \
+	--build-property "compiler.c.extra_flags=$(AVR_RELAX_FLAGS) $(AVR_AUDIO_DEFINES)" \
 	--build-property "compiler.c.elf.extra_flags=$(AVR_RELAX_FLAGS)"
 # Use the physical application flash limit. Keep 400 B static free as an
 # independent guard; it does not measure painted stack.
@@ -106,6 +119,7 @@ help:
 		'  test-world-script-profile validate the compact world VM script profile' \
 		'  build    compile Arduboy FX sketch; prerequisite: $(ARDUINO_CLI); output: $(BUILD_DIR)' \
 		'  ram      build and report FX flash/RAM plus largest static symbols; prerequisite: $(ARDUINO_CLI), avr-size, avr-nm' \
+		'  AUDIO=1  include the compact ATMlib2FX music runtime (build/ram; Mini rejects it)' \
 		'  arena-demo generate FX data, build the opt-in arena+duel firmware, then launch Ardens' \
 		'  arena-test alias for arena-demo' \
 		'  arena-package build the arena demo and write dist/CreatureGathererFX-ArenaDemo.arduboy (no Ardens)' \
@@ -131,7 +145,7 @@ help:
 		'  fxtest-build  compile device suites through one persistent stage per flag profile' \
 		'                (suite.ino swap); set FXTEST_CLEAN=1 to rebuild from scratch' \
 		'' \
-		'Overrides: CXX, ARDUINO_CLI, FQBN, BUILD_DIR, ARDUINO_BUILD_PATH, ARDUINO_BUILD_CACHE_PATH, DIST_DIR, FXDATA_BIN, ARDENS, FXTEST_MS, FXTEST_RAM_BUDGET, FXTEST_CLEAN, AVR_FLASH_BUDGET, AVR_STATIC_RAM_BUDGET, RAM_ELF, AVR_SIZE, AVR_NM, AVR_RELAX_FLAGS, AVR_FXTEST_BUILD_PROPERTIES, AVR_FXTEST_NO_FACTS_BUILD_PROPERTIES, AVR_FXTEST_COMPACT_RESULT_BUILD_PROPERTIES, AVR_FXTEST_CPP_FLAGS, AVR_SHIPPING_BUILD_PROPERTIES, AVR_SHIPPING_CPP_FLAGS, WORLD_SCRIPT_PROFILE_INPUT, WORLD_SCRIPT_PROFILE_TEXT, ARENA_DEMO_BUILD_DIR, ARENA_DEMO_CART_DIR, ARENA_DEMO_CPP_FLAGS, ARENA_DEMO_FLASH_BUDGET, ARENA_PACKAGE, ARENA_PACKAGE_INFO.'
+		'Overrides: CXX, ARDUINO_CLI, FQBN, BUILD_DIR, ARDUINO_BUILD_PATH, ARDUINO_BUILD_CACHE_PATH, DIST_DIR, FXDATA_BIN, ARDENS, FXTEST_MS, FXTEST_RAM_BUDGET, FXTEST_CLEAN, AUDIO, AVR_FLASH_BUDGET, AVR_STATIC_RAM_BUDGET, RAM_ELF, AVR_SIZE, AVR_NM, AVR_RELAX_FLAGS, AVR_FXTEST_BUILD_PROPERTIES, AVR_FXTEST_NO_FACTS_BUILD_PROPERTIES, AVR_FXTEST_COMPACT_RESULT_BUILD_PROPERTIES, AVR_FXTEST_AUDIO_DUEL_BUILD_PROPERTIES, AVR_FXTEST_CPP_FLAGS, AVR_SHIPPING_BUILD_PROPERTIES, AVR_SHIPPING_CPP_FLAGS, WORLD_SCRIPT_PROFILE_INPUT, WORLD_SCRIPT_PROFILE_TEXT, ARENA_DEMO_BUILD_DIR, ARENA_DEMO_CART_DIR, ARENA_DEMO_CPP_FLAGS, ARENA_DEMO_FLASH_BUDGET, ARENA_PACKAGE, ARENA_PACKAGE_INFO.'
 
 setup:
 	@printf '%s\n' \
@@ -256,6 +270,10 @@ ram: build
 	echo 'RAM_TOP_SYMBOLS_END'
 
 mini: world-script-profile-check encounter-packed-profile-check
+	@if [ "$(AUDIO)" = "1" ]; then \
+		echo "mini: AUDIO=1 is not supported; the ATMlib2FX music runtime is FX-only" >&2; \
+		exit 1; \
+	fi
 	@mkdir -p "$(BUILD_DIR)"
 	@mkdir -p "$(ARDUINO_BUILD_PATH)/mini"
 	@set -eu; \

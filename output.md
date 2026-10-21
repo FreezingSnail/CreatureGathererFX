@@ -135,3 +135,34 @@ Changed: `data/music/{overworld,combat,victory,defeat,opening,village,forest,coa
 - Header syntax: `avr-g++ -fsyntax-only` on `MusicCatalog.hpp` OK (not part of runtime yet).
 - Deviations: none. No commit/push. Storage: shared `build/` 1.3 GiB, disk free 61 GiB.
 - Wall time: ~25 min.
+
+## 9ha9.2 — vendor ATMlib2FX + AUDIO toggle (worker)
+
+Created `src/audio/atm/`: upstream `c3d5e7c` `atm_synth.{c,h}`, `osc.{c,h}`, `cmd_parse.c`,
+`atm_cmd_constants.h`, `atm_fx_compact.{c,h}`, BSD-3 `LICENSE`, and `README.md` pinning commit +
+upstream sha256s. No `atm_fx_stream.*`, `ATMlib.cpp`/`.h`. Added `src/audio/MusicConfig.hpp`
+(`CGFX_AUDIO` default 0, compile-time only), `src/audio/Audio.hpp` (inline no-ops under
+`!CGFX_AUDIO || TEST`), `src/audio/Audio.cpp` (whole body guarded; vendored C headers in
+`extern "C"`; provides `atm_fx_compact_fetch` via `FX::readDataBytes`). INO includes the facade and
+calls `arduboy.audio.on(); audio::begin();` under `#if CGFX_AUDIO` after save load/seed. Makefile:
+`AUDIO ?= 0`; `AUDIO=1` adds all five defines to both `compiler.cpp.extra_flags` and
+`compiler.c.extra_flags`; `AVR_FXTEST_AUDIO_DUEL_BUILD_PROPERTIES` reserved for 9ha9.3; Mini
+rejects `AUDIO=1`; help/overrides updated.
+
+Local vendored edits: `atm_synth.c` + `osc.c` outer `#if CGFX_AUDIO` only.
+`cmd_parse.c`/`atm_fx_compact.c` keep upstream guards (`ATM_PATTERN_STACK_DEPTH`,
+`ATM_FX_COMPACT_IMPL`) and compile empty standalone.
+
+Verification (`BUILD_DIR=build/rhs7-lane`, existing cache):
+- Control preserved at `build/rhs7-lane/control-9ha9.2.elf`: `.text` 23210, Program 23252, static 1665.
+- `make build/ram AUDIO=0`: `.text` 23210, Program 23252, static 1665; raw flash images identical
+  (`avr-objcopy -O binary` both sha256 `ccc80921df886708208c42e5c637960e43cd3c8af56f5bb944d1a234271e6f26`);
+  no `atm_`/`osc_` symbols.
+- `make ram AUDIO=1`: links; `.text` 26884, Program 26926 (**+3674**), static 1895 (**+230**);
+  free flash 2770/29696, static free 665/2560.
+- `make mini AUDIO=1`: fails before compile, `mini: AUDIO=1 is not supported; the ATMlib2FX music
+  runtime is FX-only`.
+- `make test`: host 240623 passed / 0 failed, world 258 / 0.
+- Header syntax: default and `-DTEST -DCGFX_AUDIO=1` both bind no-op inlines.
+- No device gate (per bead). No commit/push. Storage: `build/rhs7-lane` 107M, disk free 61 GiB.
+- Wall time ~25 min.
