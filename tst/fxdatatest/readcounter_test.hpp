@@ -81,6 +81,14 @@ inline void run(FxTest &test) {
     test.expectEq(audio::currentTrack(), MusicTrack_Overworld,
                   F("result cue returns to overworld"));
 
+    audio::playResult(MusicTrack_Defeat, 2);
+    test.expectEq(audio::currentTrack(), MusicTrack_Defeat, F("defeat cue starts"));
+    audio::service();
+    delay(20);
+    audio::service();
+    test.expectEq(audio::currentTrack(), MusicTrack_Overworld,
+                  F("defeat cue returns to overworld"));
+
     audio::stop();
 }
 #else
