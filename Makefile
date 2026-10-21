@@ -1,4 +1,4 @@
-.PHONY: help setup doctor plant test test-debug testvm testvm-debug sim-test gen gen-if-needed gen-data gen-sprites gen-fixtures pack full build mini ram run dev arena-demo arena-test arena-package lure-demo check final-gate verify-generated test-manifest test-generated-libs test-doctor test-fxtest-ram test-avr-build-budget test-world-script-profile world-script-profile-check test-encounter-profile encounter-profile-check encounter-packed-profile-check fxtest fxtest-headless fxtest-spike fxtest-preflight fxtest-headless-preflight fxtest-build fxtest-run new-fxtest clean-build-artifacts test-clean-build-artifacts spec test-spec
+.PHONY: help setup doctor plant test test-debug testvm testvm-debug sim-test gen gen-if-needed gen-data gen-sprites gen-fixtures pack full build mini ram run dev arena-demo arena-test arena-package lure-demo check final-gate verify-generated test-manifest test-music test-generated-libs test-doctor test-fxtest-ram test-avr-build-budget test-world-script-profile world-script-profile-check test-encounter-profile encounter-profile-check encounter-packed-profile-check fxtest fxtest-headless fxtest-spike fxtest-preflight fxtest-headless-preflight fxtest-build fxtest-run new-fxtest clean-build-artifacts test-clean-build-artifacts spec test-spec
 
 # Public command API. Override tool, board, and output variables per workspace/CI.
 CXX ?= g++
@@ -74,6 +74,7 @@ HOST_TEST_BIN ?= $(BUILD_DIR)/tests/host
 WORLD_TEST_BIN ?= $(BUILD_DIR)/tests/world
 VM_TEST_BIN ?= $(BUILD_DIR)/tests/vm
 GENERATED_TEST_BIN ?= $(BUILD_DIR)/tests/generated
+MUSIC_TEST_BIN ?= $(BUILD_DIR)/tests/music
 WORLD_SCRIPT_PROFILE_BIN ?= $(BUILD_DIR)/tools/check-world-script-profile
 WORLD_SCRIPT_PROFILE_TEST_BIN ?= $(BUILD_DIR)/tests/world-script-profile
 WORLD_SCRIPT_PROFILE_INPUT ?= fxdata/generated/scripts.bin
@@ -115,6 +116,7 @@ help:
 		'  dev      regenerate FX data, rebuild, then launch Ardens (gen + run); prerequisite: cgfx-tools, ARDENS' \
 		'  check    run generation, host tests, VM tests, then optional FX runtime tests' \
 		'  test-manifest run permanent generated-artifact tests' \
+		'  test-music verify the packaged FX theme streams and their catalog' \
 		'  test-generated-libs check generated libs against the packed image; prerequisite: $(CXX)' \
 		'  test-pack-parity verify native packed-image SHA-256 baseline' \
 		'  spec     regenerate docs/game-design-spec.html from docs/game-design-spec/*.md' \
@@ -452,7 +454,7 @@ pack: encounter-profile-check
 	./tools/assert-fxdata-manifest.sh "$(FX_LAYOUT)" "$(FXDATA_MANIFEST)"; \
 	"$(ENCOUNTER_PROFILE_BIN)" "$(ENCOUNTER_PROFILE_INPUT)" src/fxdata.h "$(FXDATA_DATA_BIN)"
 
-check: gen test testvm test-beta-area test-world-script-profile test-encounter-profile test-manifest test-generated-libs test-fxtest-ram test-avr-build-budget verify-generated build fxtest
+check: gen test testvm test-beta-area test-world-script-profile test-encounter-profile test-manifest test-music test-generated-libs test-fxtest-ram test-avr-build-budget verify-generated build fxtest
 
 # Authored first-beta contract (CreatureGathererFX-o845). The node suite pins the
 # authored start/rest/landmarks, the generated collision and the shipping
@@ -480,6 +482,13 @@ verify-generated:
 test-manifest:
 	./tools/tests/fxdata-manifest_test.sh
 	./tools/tests/ensure-generated_test.sh
+
+# Packaged Creature Gatherer theme streams: exact catalogued sizes, 0xC1
+# streaming-loop framing, and the music_* FX symbol for each theme.
+test-music:
+	@mkdir -p "$(dir $(MUSIC_TEST_BIN))"
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) tst/audio/music_catalog_test.cpp -o "$(MUSIC_TEST_BIN)"
+	"$(MUSIC_TEST_BIN)" .
 
 # Generated-library integration tests: packed image <-> src/fxdata.h <-> the
 # generated sources, plus generated-header drift and text-block framing.
