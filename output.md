@@ -233,3 +233,16 @@ Deviations:
 - Did not run the full final gate or a full AUDIO=1 fxtest sweep (per dispatch).
 
 Storage: `build/rhs7-lane` 139M, disk free 60 GiB. No commit/push. Wall time ~50 min.
+
+## 9ha9 orchestrator closeout
+
+Commits: `bd7e53c` (9ha9.1), `ccbd0c7` (9ha9.2), `bd638d5` (9ha9.3), `4c691a1` (9ha9.4),
+`3077848` (defeat-cue test). Default `AUDIO=0` final gate at `build/rhs7-lane/final-gate-9ha9-4`:
+PASS, 23,252 B flash / 1,665 B static / 622 B test_stack. `AUDIO=0` `.text` sha256
+`359eade6...a083` equals the pre-audio control. `AUDIO=1`: 27,524 B flash / 1,898 B static
+(+4,272/+233), free 2,172/662 against the hard limits; focused audio spike
+`test_readcounter PASSED=26`, `test_stack PASSED=4`, underruns 0, error 0, max_service_gap 2,
+stack 373 B. `test_readcounter` is near the static test limit (2,100/2,160, 60 B free); it is
+compiled with audio only for the focused `AUDIO=1` suite. No SFX; remaining area themes are packed
+but not selected. No network/download; all runtime sources copied from the local pinned ATMlib2FX
+checkout.
