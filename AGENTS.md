@@ -66,6 +66,45 @@ device iterations. Run the final gate after implementation and edge-case fixes a
 `$(BUILD_DIR)/final-gate/{check,ram}.log` (override `FINAL_GATE_LOG_DIR` to relocate them).
 It always runs every FX suite, even if a focused `FXTEST_INOS` override is present.
 
+## Ardens launches
+
+Use the executable inside the app bundle, not the `.app` directory and not a bare `Ardens` from
+`PATH`. The installed `/Applications/Ardens.app` (0.24.4) is GUI-only and lacks `captureserial`, so
+it cannot run device suites; it reports `fxtest-headless: BLOCKED`. On this host the usable build is
+`$HOME/code/arduboy/Ardens/build/Ardens.app/Contents/MacOS/Ardens`.
+
+Always set an explicit absolute `ARDENS` and verify it before a device run:
+
+```sh
+export ARDENS="$HOME/code/arduboy/Ardens/build/Ardens.app/Contents/MacOS/Ardens"
+test -x "$ARDENS" || echo "not executable: $ARDENS"
+strings "$ARDENS" | grep -Fxq captureserial || echo "no captureserial: build/locate headless Ardens"
+```
+
+Prefer the Make targets; do not reconstruct their command lines unless debugging:
+
+```sh
+make fxtest-headless ARDENS="$ARDENS"         # all suites (skips only when ARDENS is empty)
+make final-gate ARDENS="$ARDENS"              # full gate; requires captureserial
+make run ARDENS="$ARDENS"                     # interactive FX build
+make arena-demo ARDENS="$ARDENS"              # interactive arena demo
+```
+
+Rules for launching:
+
+- Run Ardens in the foreground and wait for it; do not use `open`, `open -a`, `nohup`, or `&` for
+  headless/device runs. Those detach the process and lose stdout, stderr, and the exit status.
+  `open` also drops the `key=value` arguments the tests need.
+- Headless serial form (the form `fxtest-headless` uses):
+  `"$ARDENS" captureserial=<ms> fxport=d1 display=ssd1306 file=<sketch.hex> file=<fxdata.bin>`.
+  Serial output goes to stdout; diagnostics go to stderr. Add `save=<save.bin>` when a save is
+  required.
+- Ardens parses `key=value` arguments. Every file needs `file=` or `save=`; a bare path is parsed as
+  an empty value and fails with `Could not open file: ""`. Use absolute paths.
+- For a failed headless run, check `captureserial` support, executable path, `file=` arguments, ROM
+  load, and `FXTEST_MS` in that order. Empty output means crash, hang, or no ROM, not a pass.
+- Never run a second Ardens device instance while one build/device lane is active.
+
 ## Hard rules
 
 - **Visual verification**: Manual visual checks and Ardens observations are not required for acceptance unless the user explicitly requests them. Use automated tests and device-suite results as verification.
