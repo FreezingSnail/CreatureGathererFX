@@ -435,5 +435,34 @@ for (const direction of DIRECTIONS) {
 const shipping = sheetFor(SHIPPING_DIRECTION);
 fs.writeFileSync(path.join(ROOT, 'images/tiles.png'), encodePng(shipping));
 fs.writeFileSync(path.join(ROOT, 'images/tiles_16x16.png'), encodePng(shipping));
+
+// Editor-only sheet: the desktop canvas and palette index tiles by map GID,
+// while firmware draws GID N as frame N-1. Put one blank frame at index 0 so
+// editor index N shows the GID N art and painting index N writes GID N. The FX
+// sheet stays unchanged and canonical.
+const editorRows = Math.ceil((SHEET_CELLS + 1) / COLUMNS);
+const editor = {
+  width: COLUMNS * TILE,
+  height: editorRows * TILE,
+  pixels: new Uint8Array(COLUMNS * TILE * editorRows * TILE * 4).fill(255),
+};
+for (let frame = 0; frame < SHEET_CELLS; frame += 1) {
+  for (let y = 0; y < TILE; y += 1) {
+    for (let x = 0; x < TILE; x += 1) {
+      const si = ((Math.floor(frame / COLUMNS) * TILE + y) * shipping.width +
+        (frame % COLUMNS) * TILE + x) * 4;
+      const di = ((Math.floor((frame + 1) / COLUMNS) * TILE + y) * editor.width +
+        ((frame + 1) % COLUMNS) * TILE + x) * 4;
+      editor.pixels.set(shipping.pixels.subarray(si, si + 4), di);
+    }
+  }
+}
+fs.writeFileSync(path.join(ROOT, 'images/tiles-editor.png'), encodePng(editor));
+const projectPath = path.join(ROOT, 'cgfx-project.json');
+const project = JSON.parse(fs.readFileSync(projectPath, 'utf8'));
+project.map_tileset_png = 'images/tiles-editor.png';
+fs.writeFileSync(projectPath, `${JSON.stringify(project, null, 2)}\n`);
+manifest.editorSheet = 'images/tiles-editor.png';
+manifest.editorIndexing = 'editor index N displays and writes shipping GID N art; frame 0 is blank';
 fs.writeFileSync(path.join(OUT, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`);
-console.log(`PASS: ${walkable.size} walkable cells, ${byGid.size} combos; shipping ${SHIPPING_DIRECTION}; sheets ${DIRECTIONS.join('/')}`);
+console.log(`PASS: ${walkable.size} walkable cells, ${byGid.size} combos; shipping ${SHIPPING_DIRECTION}; sheets ${DIRECTIONS.join('/')} + editor`);

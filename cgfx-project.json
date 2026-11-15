@@ -2,7 +2,7 @@
   "creatures_json": "data/json/creatures.json",
   "map_json": "maps/world_map.json",
   "tileset_png": "images/tiles.png",
-  "map_tileset_png": "images/tiles.png",
+  "map_tileset_png": "images/tiles-editor.png",
   "npc_tileset_png": "images/npc_16x16.png",
   "output_dir": "fxdata/generated",
   "fixture_dir": "tst/fxdatatest/generated",

@@ -108,6 +108,36 @@ test('shipping sheet and the three candidate sheets carry the same GID cells', (
   assert.notDeepEqual(etched.pixels, shipping.pixels, 'etched is a distinct art option');
 });
 
+test('editor sheet indexes shipping GID art at the map GID, with a blank frame 0', () => {
+  const shipping = image('images/tiles.png');
+  const editor = image(manifest.editorSheet);
+  assert.deepEqual([editor.width, editor.height], [shipping.width, shipping.height + tile]);
+  const project = readJson('cgfx-project.json');
+  assert.equal(project.map_tileset_png, manifest.editorSheet);
+  assert.equal(project.tileset_png, 'images/tiles.png');
+  for (let gid = 1; gid < columns * (manifest.sheet[1] / tile); gid += 1) {
+    const sx = ((gid - 1) % columns) * tile;
+    const sy = Math.floor((gid - 1) / columns) * tile;
+    const ex = (gid % columns) * tile;
+    const ey = Math.floor(gid / columns) * tile;
+    for (let y = 0; y < tile; y += 1) {
+      for (let x = 0; x < tile; x += 1) {
+        const si = ((sy + y) * shipping.width + sx + x) * 4;
+        const ei = ((ey + y) * editor.width + ex + x) * 4;
+        assert.deepEqual(editor.pixels.subarray(ei, ei + 4), shipping.pixels.subarray(si, si + 4),
+          `editor index ${gid} mirrors shipping GID ${gid}`);
+      }
+    }
+  }
+  for (let y = 0; y < tile; y += 1) {
+    for (let x = 0; x < tile; x += 1) {
+      const i = (y * editor.width + x) * 4;
+      assert.deepEqual(editor.pixels.subarray(i, i + 4), new Uint8Array([255, 255, 255, 255]),
+        'editor frame 0 is blank');
+    }
+  }
+});
+
 test('native previews exist for all three directions and are 128x64', () => {
   for (const direction of manifest.directions) {
     for (const view of manifest.views) {

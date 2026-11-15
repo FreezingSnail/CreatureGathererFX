@@ -1769,5 +1769,7 @@
       "x": 11,
       "y": 4
     }
-  ]
+  ],
+  "editorSheet": "images/tiles-editor.png",
+  "editorIndexing": "editor index N displays and writes shipping GID N art; frame 0 is blank"
 }
