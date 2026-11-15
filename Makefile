@@ -493,7 +493,7 @@ check: gen test testvm test-beta-area test-world-script-profile test-encounter-p
 # fails the standard gate. It validates the generated collision, so it depends on
 # gen (also ordered by check before the other gate prerequisites).
 test-beta-area: gen
-	node --test tools/tests/beta-area_test.mjs
+	node --test tools/tests/beta-area_test.mjs tools/tests/starter-area_test.mjs
 
 # Final pre-commit gate. Keep the integrated check and shipping RAM build
 # sequential even when the caller invokes make with -j.

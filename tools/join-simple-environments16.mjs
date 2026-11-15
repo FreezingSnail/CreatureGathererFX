@@ -77,8 +77,14 @@ html=html.replace(/<!-- combined16-start -->[\s\S]*?<!-- combined16-end -->/,'<!
 
 // ---------------------------------------------------------------------------
 // Shipping install: write the approved simple redraw of the selected base
-// catalogue cells into the ordinary game sheets at their existing GIDs. This is
-// the only writer of images/tiles_16x16.png and images/tiles.png (or the Tiled
+// catalogue cells into the ordinary game sheets at their existing GIDs. The
+// fresh starter-area generator now owns those sheets; refuse rather than
+// silently undoing its layout, pinned fixtures and fresh art.
+if (fs.existsSync('docs/assets/overworld-fresh/starter-area/manifest.json')) {
+  console.error('join-simple: shipping install is superseded by tools/build-starter-area.mjs; refusing to overwrite images/tiles*.png');
+  process.exit(1);
+}
+// This is the only writer of images/tiles_16x16.png and images/tiles.png (or the Tiled
 // source); every other cell is copied through byte-for-byte. The review
 // catalogue above stays review-only; no appended32px cell is installed.
 // ---------------------------------------------------------------------------

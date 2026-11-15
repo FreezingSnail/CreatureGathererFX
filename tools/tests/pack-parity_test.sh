@@ -145,7 +145,15 @@ perturbed_layout=$fixtures/fxlayout-expand-20-perturbed.toml
 # FX_DATA_BYTES grows 708801 -> 751385, so only the appended payload changes
 # the cart. Previous cart sha256 2e56abb2..., now d6f8daa3.... Intentional
 # append-only rebaseline.
-expected=d6f8daa3e53ee32e13c7a3441eeaaf595637e3278be801f090eb99982e931989
+# Starter area: rebuild the 16x12 first-beta town/route/collection layout from
+# the light-shadow fresh atlases, install the rounded Soft-blocks cells at the
+# pinned GIDs plus fresh 600-series combos, add the (2,34) encounter zones, and
+# expand the authored walkable graph from 39 to 88 cells. The tiles payload,
+# raw_map/map_data words, encounters payload and scripts metadata change.
+# The final layout uses the mud-textured two-tile route and a wider collection
+# clearing (93 walkable cells); previous 7265a527..., now 6af073f9....
+# Intentional rebaseline.
+expected=6af073f9c21ecc0f91b89bc402987b84afc5d51be1a770382fac56a6e2d6a697
 
 for layout in "$old_layout" "$new_layout" "$perturbed_layout"; do
     test -f "$layout" || {

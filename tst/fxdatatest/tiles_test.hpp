@@ -222,11 +222,11 @@ inline void test_spawn_reachability(FxTest &test) {
                   F("plant carries plantable prop"));
     test.expectEq(packedWalkableAt(13, 2), true, F("plant approach walkable"));
 
-    // Sealed clearing: the start reaches exactly the 39 authored walkable cells,
+    // Sealed clearing: the start reaches exactly the 93 authored walkable cells,
     // including both interaction approaches; the route is reversible.
-    uint16_t seen[64];
-    const uint8_t fromStart = clearingBfs(static_cast<uint16_t>((5u << 8) | 11u), seen, 64);
-    test.expectEq(fromStart, 39, F("beta clearing walkable cell count"));
+    uint16_t seen[128];
+    const uint8_t fromStart = clearingBfs(static_cast<uint16_t>((5u << 8) | 11u), seen, 128);
+    test.expectEq(fromStart, 93, F("beta clearing walkable cell count"));
     bool boxReachable = false;
     bool plantReachable = false;
     for (uint8_t at = 0; at < fromStart; ++at) {
@@ -236,11 +236,11 @@ inline void test_spawn_reachability(FxTest &test) {
     test.expectEq(boxReachable, true, F("lure box approach reachable from spawn"));
     test.expectEq(plantReachable, true, F("plant approach reachable from spawn"));
 
-    const uint8_t fromBox = clearingBfs(static_cast<uint16_t>((2u << 8) | 10u), seen, 64);
+    const uint8_t fromBox = clearingBfs(static_cast<uint16_t>((2u << 8) | 10u), seen, 128);
     bool startReachable = false;
     for (uint8_t at = 0; at < fromBox; ++at)
         if (seen[at] == static_cast<uint16_t>((5u << 8) | 11u)) startReachable = true;
-    test.expectEq(fromBox, 39, F("return traversal walkable cell count"));
+    test.expectEq(fromBox, 93, F("return traversal walkable cell count"));
     test.expectEq(startReachable, true, F("return path reaches the spawn"));
 }
 

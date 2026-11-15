@@ -14,21 +14,23 @@
 // sits inside them, so an authored encounter spawns at level 3).
 namespace EncounterFXData {
     // Every walkable cell of the authored area (x8..23, y0..11) is an
-    // encounter tile, so each of the four chunks the route crosses carries the
-    // same zone: 1 (pocket y2..3), 33 (pocket y4..6 and the (12,7) doorway),
-    // 65 (the (12,8) doorway and corridor x12..15,y9) and 66 (corridor
-    // x16..20,y9). A chunk with encounter tiles but no zone would clear an
-    // active lure on entry (WorldEngine::onChunkChange), so the route's chunks
-    // must all be authored. The remaining entries are the inert 255 sentinels;
-    // the layout stays at the fixed eight zones. typeMask bit t marks lure
-    // group t supported (stored, not read at runtime).
+    // encounter tile, so each of the six chunks the starter town, route and
+    // collection area cross carries the same zone: 1 (town west), 2
+    // (collection north-west), 33 (town east and the (12,7) doorway), 34
+    // (collection south-west), 65 (the (12,8) doorway and route x12..15,y9)
+    // and 66 (route x16..20,y9 and the boss approach). A chunk with encounter
+    // tiles but no zone would clear an active lure on entry
+    // (WorldEngine::onChunkChange), so every reachable chunk must be authored.
+    // The remaining entries are the inert 255 sentinels; the layout stays at
+    // the fixed eight zones. typeMask bit t marks lure group t supported
+    // (stored, not read at runtime).
     uint8_t zoneDefs[] = {
         1, 0, 0, 5, 15, 1, 2, 3, 4, 0,
+        2, 0, 0, 5, 15, 1, 2, 3, 4, 0,
         33, 0, 0, 5, 15, 1, 2, 3, 4, 0,
+        34, 0, 0, 5, 15, 1, 2, 3, 4, 0,
         65, 0, 0, 5, 15, 1, 2, 3, 4, 0,
         66, 0, 0, 5, 15, 1, 2, 3, 4, 0,
-        255, 255, 0, 0, 0, 0, 0, 0, 0, 0,
-        255, 255, 0, 0, 0, 0, 0, 0, 0, 0,
         255, 255, 0, 0, 0, 0, 0, 0, 0, 0,
         255, 255, 0, 0, 0, 0, 0, 0, 0, 0
     };

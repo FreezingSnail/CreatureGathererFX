@@ -75,3 +75,30 @@ Rebuild the exports with:
 ```sh
 node tools/generate-overworld-fresh.mjs
 ```
+
+## Shipping starter area
+
+The first-beta area now uses the light-shadow (25%) fresh atlases for a
+16×12 starter town, first route and collection clearing. `tools/build-starter-area.mjs`
+owns that content: it flattens ground/object combinations into opaque 16×16
+cells, keeps the pinned first-beta GIDs (`275` spawn floor, `545` lure box,
+`551` plant, `261`/`262` door jambs), writes the shipping sheets and TSX
+properties, and replaces only the authored map cells. Every walkable cell is
+an encounter tile; the six reachable chunks (`1, 2, 33, 34, 65, 66`) each carry
+the same authored zone in `fxdata/data/encounters.txt`.
+
+Soft blocks (`rounded`) is the shipping sheet. Ink silhouettes (`noir`) and
+Stepped etching (`etched`) use the same GID mapping and are exported for
+comparison under `assets/overworld-fresh/starter-area/<direction>/`, with a
+native 128×64 town/route/collection view each. The map, NPC and script
+fixtures outside the starter area are untouched.
+
+```sh
+node tools/build-starter-area.mjs
+make gen
+node --test tools/tests/beta-area_test.mjs tools/tests/starter-area_test.mjs
+```
+
+The old `tools/join-simple-environments16.mjs` shipping install is superseded
+by this generator; it now refuses to overwrite the sheets when the starter-area
+manifest exists.

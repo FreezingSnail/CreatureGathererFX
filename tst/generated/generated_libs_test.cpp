@@ -995,7 +995,7 @@ void checkSpawnReachability(Report &report, const std::string &image, uint32_t a
     constexpr int BOX_X = 9, BOX_Y = 2;
     constexpr int PLANT_X = 14, PLANT_Y = 2;
     constexpr int WIDTH = 256, HEIGHT = 256;
-    constexpr std::size_t CLEARING_CELLS = 39; // authored sealed pocket, all walkable
+    constexpr std::size_t CLEARING_CELLS = 93; // authored sealed pocket, all walkable
     const int neighbours[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
 
     auto wordAt = [&](int x, int y) -> uint16_t {
