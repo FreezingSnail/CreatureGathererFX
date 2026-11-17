@@ -302,6 +302,13 @@ not duplicate build caches, metadata or old experiments.
 - **One full gate per bead.** The worker runs host/VM suites, touched device suites, and generation
   checks; the orchestrator runs the final full gate once before committing. Focused checks do not
   replace that final gate.
+- **Release engineering is separate and timeboxed.** Validate a clean selected source revision with
+  `make gen` before tagging, use `make release-check` for the pin, and keep release work in its own
+  bead. If release reproducibility is blocked, finish the playable slice on its local gate and leave
+  the release bead open with the exact blockage.
+- **Shared test fixtures need compile-all.** After editing a shared `tst/fxdatatest/*.hpp` or packed
+  fixture, run `make fxtest-compile-all` before closing; focused spikes do not prove other suites
+  compile. Use `make suite-report` for authoritative suite counts and margins.
 - **Parallelize non-overlapping source work.** Docs/tooling beads can run alongside code beads;
   same-file edits serialize, and AVR/generation/gate work always uses the single build lane above.
   Split oversized beads before dispatch (2–3 logical layers each).

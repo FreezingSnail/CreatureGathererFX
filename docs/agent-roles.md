@@ -85,7 +85,9 @@ concrete `file:line` or artifact references and bounded actions. Missing require
 `INCOMPLETE`; unrelated or invented checks are not required. Repairs stay inside the accepted scope
 and a focused re-review covers the relevant revisions. The reviewer cannot review its own
 implementation, and approval does not replace producer acceptance, the integration gate, or an owner
-decision.
+decision. For journey-level slices, schedule the first review after the first integrated end-to-end
+path (including acquisition/economy), before widening UI/presentation polish; a final whole-wave
+review is not a substitute for that early acceptance-path review.
 
 Proposals stay labeled **PROPOSED** until adopted by owner direction or existing delegated
 authority. Routine choices already authorized proceed normally. Do not silently change existing

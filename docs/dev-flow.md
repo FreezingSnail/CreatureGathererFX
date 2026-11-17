@@ -32,6 +32,21 @@ agent. `AGENTS.md` carries the short list.
 - `make check` bundles gen + host + VM + manifest + generated-libs + verify-generated + fxtest
   (device stage skipped without `ARDENS`). It does not include pack-parity or doctor tests.
 
+## Release engineering and shared test fixtures
+
+- Keep release engineering separate from a playable-slice bead and timebox it. `make release-check`
+  is the pin checkpoint: doctor, clean generation, verify-generated, manifest, generated-libs,
+  packed parity, spec sync. It is not an inner-loop target. If the release is blocked by a runner,
+  provenance or clean-generation mismatch, finish the slice on its local gate and keep a separate
+  release bead; do not let release work consume the slice budget. See `docs/release-checklist.md`.
+- After editing a shared `tst/fxdatatest/*.hpp` header or a packed fixture, run
+  `make fxtest-compile-all` before closing. It compiles every `test_*.ino` suite without Ardens.
+  Focused spikes do not prove the other suites still compile; a shared-header trim once broke
+  `test_duel_resources` and `test_win_exp` outside the touched suite.
+- Use `make suite-report` (or pass a gate `check.log`) for the authoritative suite count and the
+  latest flash/static/stack margins. Do not carry worker summary counts into reports without
+  checking the gate log.
+
 ## AUDIO builds
 
 - `AUDIO=0` is the default and the shipping image: no engine translation units, no theme table, no

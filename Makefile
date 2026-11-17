@@ -1,4 +1,4 @@
-.PHONY: help setup doctor plant test test-debug testvm testvm-debug sim-test gen gen-if-needed gen-data gen-sprites gen-fixtures pack full build mini ram run dev arena-demo arena-test arena-package lure-demo check final-gate verify-generated test-manifest test-music test-generated-libs test-doctor test-fxtest-ram test-avr-build-budget test-world-script-profile world-script-profile-check test-encounter-profile encounter-profile-check encounter-packed-profile-check fxtest fxtest-headless fxtest-spike fxtest-preflight fxtest-headless-preflight fxtest-build fxtest-run new-fxtest clean-build-artifacts test-clean-build-artifacts spec test-spec
+.PHONY: help setup doctor plant test test-debug testvm testvm-debug sim-test gen gen-if-needed gen-data gen-sprites gen-fixtures pack full build mini ram run dev arena-demo arena-test arena-package lure-demo check final-gate release-check verify-generated test-manifest test-music test-generated-libs test-doctor test-fxtest-ram test-avr-build-budget test-world-script-profile world-script-profile-check test-encounter-profile encounter-profile-check encounter-packed-profile-check fxtest fxtest-headless fxtest-spike fxtest-preflight fxtest-headless-preflight fxtest-build fxtest-compile-all fxtest-run new-fxtest suite-report clean-build-artifacts test-clean-build-artifacts spec test-spec
 
 # Public command API. Override tool, board, and output variables per workspace/CI.
 CXX ?= g++
@@ -139,6 +139,8 @@ help:
 		'  lure-demo  generate FX data, build the opt-in lure-wedge firmware, then launch Ardens' \
 		'  test-avr-build-budget exercise the fail-closed shipping flash/RAM parser' \
 		'  final-gate  run the full check then the shipping RAM report; requires ARDENS' \
+		'  release-check  doctor/gen/verify/manifest/generated-libs/parity/spec for a release pin' \
+		'  suite-report  summarize authoritative suite count and latest gate margins' \
 		'  run      launch Ardens with the sketch, FX data, and FX save images; prerequisite: ARDENS' \
 		'  dev      regenerate FX data, rebuild, then launch Ardens (gen + run); prerequisite: cgfx-tools, ARDENS' \
 		'  check    run generation, host tests, VM tests, then optional FX runtime tests' \
@@ -157,6 +159,7 @@ help:
 		'  fxtest-spike  run one selected FX suite plus test_stack; set FXTEST_SPIKE_INO and ARDENS' \
 		'  fxtest-build  compile device suites through one persistent stage per flag profile' \
 		'                (suite.ino swap); set FXTEST_CLEAN=1 to rebuild from scratch' \
+		'  fxtest-compile-all  compile every tst/fxdatatest/*.ino without Ardens' \
 		'' \
 		'Overrides: CXX, ARDUINO_CLI, FQBN, BUILD_DIR, ARDUINO_BUILD_PATH, ARDUINO_BUILD_CACHE_PATH, DIST_DIR, FXDATA_BIN, ARDENS, FXTEST_MS, FXTEST_RAM_BUDGET, FXTEST_CLEAN, AUDIO, AVR_FLASH_BUDGET, AVR_STATIC_RAM_BUDGET, RUN_ELF, RAM_ELF, AVR_SIZE, AVR_NM, AVR_RELAX_FLAGS, AVR_FXTEST_BUILD_PROPERTIES, AVR_FXTEST_NO_FACTS_BUILD_PROPERTIES, AVR_FXTEST_COMPACT_RESULT_BUILD_PROPERTIES, AVR_FXTEST_AUDIO_DUEL_BUILD_PROPERTIES, AVR_FXTEST_CPP_FLAGS, AVR_SHIPPING_BUILD_PROPERTIES, AVR_SHIPPING_CPP_FLAGS, WORLD_SCRIPT_PROFILE_INPUT, WORLD_SCRIPT_PROFILE_TEXT, ARENA_DEMO_BUILD_DIR, ARENA_DEMO_CART_DIR, ARENA_DEMO_CPP_FLAGS, ARENA_DEMO_FLASH_BUDGET, ARENA_PACKAGE, ARENA_PACKAGE_INFO.'
 
@@ -506,6 +509,30 @@ final-gate:
 	@test -n "$(ARDENS)" || { echo "final-gate: ARDENS is unset; set ARDENS=/path/to/Ardens" >&2; exit 1; }
 	@./tools/run-logged-command.sh "$(FINAL_GATE_LOG_DIR)/check.log" $(MAKE) --no-print-directory -j1 check FXTEST_INOS="$(wildcard tst/fxdatatest/*.ino)"
 	@./tools/run-logged-command.sh "$(FINAL_GATE_LOG_DIR)/ram.log" $(MAKE) --no-print-directory -j1 ram
+
+# Release-pin checkpoint. Use a clean, selected cgfx-tools on PATH (the lock
+# release), not a stale local build. This regenerates artifacts, so run it only
+# for a release pin, not in the inner loop.
+release-check:
+	@command -v cgfx-tools >/dev/null || { echo "release-check: cgfx-tools is not on PATH" >&2; exit 1; }
+	@$(MAKE) --no-print-directory -j1 doctor
+	@$(MAKE) --no-print-directory -j1 gen
+	@$(MAKE) --no-print-directory -j1 verify-generated
+	@$(MAKE) --no-print-directory -j1 test-manifest
+	@$(MAKE) --no-print-directory -j1 test-generated-libs
+	@$(MAKE) --no-print-directory -j1 test-pack-parity
+	@$(MAKE) --no-print-directory -j1 test-spec
+
+# Compile every device suite without launching Ardens. Use after editing a
+# shared tst/fxdatatest/*.hpp or a packed fixture; focused spikes do not prove
+# the other suites still compile.
+fxtest-compile-all:
+	@$(MAKE) --no-print-directory -j1 fxtest-build FXTEST_INOS="$(wildcard tst/fxdatatest/*.ino)"
+
+# Authoritative suite/margin summary from the most recent gate check.log (or
+# pass SUITE_REPORT_LOG=<path>).
+suite-report:
+	@./tools/suite-report.sh "$(SUITE_REPORT_LOG)"
 
 verify-generated:
 	@if test ! -e "$(FXDATA_DIST_DIR)/fxdata-data.bin" && test ! -e "$(FXDATA_DIST_DIR)/fxdata.bin"; then \
