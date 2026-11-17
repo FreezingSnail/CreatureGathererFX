@@ -16,13 +16,14 @@ inline uint16_t textSignature() {
     return hash;
 }
 
-inline void drawRawReference(const uint8_t *text, uint8_t length) {
+inline void drawRawReference(const uint8_t *text, uint8_t length,
+                             uint8_t mode) {
     for (uint8_t index = 0; index < length; ++index) {
         const uint8_t character = text[index];
         if (character == ' ') continue;
         if (character >= '0' && character <= 'z')
             Blit::draw(8 + (index % 18) * 6, 42 + (index / 18) * 8, 5, 6,
-                       ArduFontTrimmed, FRAME(character - '0'), Blit::OVERWRITE);
+                       ArduFontTrimmed, FRAME(character - '0'), mode);
     }
 }
 
@@ -40,8 +41,8 @@ inline void expectScriptTextMatches(FxTest &test, const uint8_t *text,
     const uint16_t actual = textSignature();
 
     arduboy.clear();
-    Blit::draw(0, 40, 128, 24, battleMenu, FRAME(0), Blit::OVERWRITE);
-    drawRawReference(text, length);
+    Blit::draw(0, 40, 128, 24, battleMenu, FRAME(0), Blit::NEGATIVE);
+    drawRawReference(text, length, Blit::NEGATIVE);
     test.expectEq(actual, textSignature(), label);
 }
 } // namespace dialogs_test_detail

@@ -41,13 +41,14 @@ uint8_t loadScriptText(uint16_t index, uint8_t *text, uint8_t capacity,
     return renderedLength;
 }
 
-void drawScriptText(const uint8_t *text, uint8_t renderedLength, int16_t x, int16_t y) {
+void drawScriptText(const uint8_t *text, uint8_t renderedLength, int16_t x,
+                    int16_t y, uint8_t mode) {
 
     for (uint8_t i = 0; i < renderedLength; ++i) {
         const uint8_t line = i / 18;
         const uint8_t column = i % 18;
         const uint8_t character = text[i];
-        drawGlyph(x + column * 6, y + line * 8, character, Blit::OVERWRITE);
+        drawGlyph(x + column * 6, y + line * 8, character, mode);
     }
 }
 } // namespace
@@ -70,7 +71,9 @@ void DialogMenu::prepareHead() {
 void DialogMenu::drawPopMenu() {
     if (!peek()) return;
     PopUpDialog curMenu = head();
-    Blit::draw(0, 40, 128, 24, battleMenu, FRAME(0), Blit::OVERWRITE);
+    const bool inverted = curMenu.type == SCRIPT_TEXT;
+    Blit::draw(0, 40, 128, 24, battleMenu, FRAME(0),
+               inverted ? Blit::NEGATIVE : Blit::OVERWRITE);
 
     switch (curMenu.type) {
     case TEXT: {
@@ -80,7 +83,10 @@ void DialogMenu::drawPopMenu() {
         break;
     }
     case SCRIPT_TEXT: {
-        drawScriptText(scriptText, curMenu.width, curMenu.x + 8, curMenu.y + 2);
+        // The authored outline font becomes white strokes on the inverted
+        // black popup; the source's white cell background lands on black.
+        drawScriptText(scriptText, curMenu.width, curMenu.x + 8,
+                       curMenu.y + 2, Blit::NEGATIVE);
         break;
     }
     default:

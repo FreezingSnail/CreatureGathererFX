@@ -72,3 +72,13 @@ full VM remains opt-in. `make test-beta-area` 38/38, focused `test_scripts` 99/0
 28,538 B flash / 1,867 B static / 693 B free static; `test_beta_area` is now near the device
 flash limit at 29,410/29,696 (286 B free), noted for the next test-budget trim. Pack parity was
 intentionally rebaselined `24948525... -> b3ad0b4f...` for the appended NPC field and script/text.
+
+## ykrp — guide dialog white-on-black text
+
+Script dialogs now draw the `battleMenu` popup with `Blit::NEGATIVE` and render the outline
+glyphs through the same mode. The white popup interior becomes black, its black border becomes
+white, and the font's black strokes become white; the separate `TEXT` dialog path keeps its
+original white box and overwrite rendering. `test_dialog` 9/0 (the reference compositor was
+updated to the same modes), final gate PASS in `build/reports/rhs7/final-gate-ykrp/`, 35/35 device
+suites, shipping 28,566 B flash / 1,867 B static / 693 B static free. `test_beta_area` remains at
+29,410/29,696 (286 B free).
