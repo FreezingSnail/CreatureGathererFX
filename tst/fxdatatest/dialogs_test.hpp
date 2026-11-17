@@ -74,8 +74,8 @@ inline void test_dialogs(FxTest &test) {
     test.expectEq(dialogMenu.head().width, 0,
                   F("invalid script text resolves to empty"));
 
-    // The current generated map has no script text entries; scripts_test
-    // exercises real Msg dispatch when data provides one.
+    // scripts_test exercises the real authored guide Msg dispatch; this suite
+    // keeps the renderer and queue behavior independent of map content.
     dialogMenu.drawPopMenu();
     test.expectEq(dialogMenu.peek(), true,
                   F("drawing leaves queued dialog in place"));

@@ -170,6 +170,12 @@ source = { raw = "data/music/exploration.bin" }
 name = "pocketProps"
 source = { image = { path = "images/pocketProps_16x16.png", width = 16, height = 16, shades = 2, spacing = 0 } }
 
+# First-beta guide NPC. Append-only: the existing image and music addresses
+# remain fixed; the transparent 16x16 frame draws over the authored floor tile.
+[[entry]]
+name = "npcSprites"
+source = { image = { path = "images/npc_16x16.png", width = 16, height = 16, shades = 2, spacing = 0 } }
+
 [save]
 sectors = 8
 

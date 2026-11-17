@@ -34,6 +34,24 @@ static bool pocketFramePixelsMatch(uint8_t frame) {
     return true;
 }
 
+static bool npcSpritePixelsMatch() {
+    // Player at (13,4) puts the guide at (16,4) on screen (96,32). The NPC
+    // is masked over terrain, so uncovered bits retain the already-drawn map.
+    for (uint8_t page = 0; page < 2; ++page)
+        for (uint8_t col = 0; col < 16; ++col) {
+            uint8_t bytes[2];
+            FX::readDataBytes(npcSprites + 4 +
+                                  static_cast<uint24_t>(page * 16 + col) * 2,
+                              bytes, 2);
+            const uint8_t actual =
+                Arduboy2Base::sBuffer[(page + 4) * 128 + 96 + col];
+            const uint8_t expected =
+                (actual & ~bytes[1]) | (bytes[0] & bytes[1]);
+            if (actual != expected) return false;
+        }
+    return true;
+}
+
 void setup() {
     fxTestSetup();
     FxTest test;
@@ -99,6 +117,24 @@ void setup() {
                       F("deposit box renders the lure-box frame"));
     }
     plants = PlantGameState{};
+
+    // The authored guide is visible on the floor cell and its fixed collision
+    // guard keeps the player from walking through the sprite.
+    test.expectEq(npcSpritesWidth, 16, F("npc width"));
+    test.expectEq(npcSpritesHeight, 16, F("npc height"));
+    test.expectEq(npcSpritesFrames, 1, F("one guide frame"));
+    gameState.playerLocation = static_cast<uint16_t>((4u << 8) | 13u);
+    WorldEngine::init(worldState());
+    memset(Arduboy2Base::sBuffer, 0xA5, 1024);
+    drawMapFast(worldState());
+    test.expectEq(npcSpritePixelsMatch(), true,
+                  F("guide NPC renders over its floor tile"));
+    gameState.playerLocation = static_cast<uint16_t>((5u << 8) | 16u);
+    WorldEngine::init(worldState());
+    worldState().motion.directionAndFlags =
+        static_cast<uint8_t>(Direction::UP);
+    test.expectEq(WorldEngine::moveable(worldState()), false,
+                  F("guide NPC blocks its authored cell"));
 
     // Frame-budget proof on the real world step: runMap + map/player/overlay
     // render + the real FX display, using the shared micros() instrumentation.

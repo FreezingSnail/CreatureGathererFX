@@ -8,8 +8,8 @@ then presents the frame with `FX::display(CLEAR_BUFFER)`.
 Workflow conventions distilled from past waves live in `docs/dev-flow.md`; agent instructions live
 in `AGENTS.md`.
 
-The first-beta first-session script and its minimal (no-dialogue) affordance set are pinned in
-`docs/first-beta-onboarding-brief.md`.
+The first-beta first-session script and its affordance set are pinned in
+`docs/first-beta-onboarding-brief.md`; the current guide NPC adds one compact `Msg` dialog.
 
 ## Generate and validate
 
@@ -106,14 +106,15 @@ See [native previews and art notes](docs/world-environment-32-spike.html#lure-wo
 
 ## World script profile
 
-Shipping world interactions use the compact `If`, `TpIf`, and `End` profile
-for the three authored warps. Default builds select `CGFX_COMPACT_WARP_VM`: a
-single forward pass over each 128-byte slot with big-endian operands and live
-player-position checks. The build validator checks flag capacity, conditions,
-branch encoding, forward jumps onto command boundaries, and map coordinates
-before firmware compilation. Zero-filled slots leave gameplay state unchanged.
-Default world interactions omit popup handling because this profile cannot queue
-messages. Tactical battle AI, battle menus, and battle rendering use the same paths.
+Shipping world interactions use the compact `If`, `TpIf`, `Msg`, and `End`
+profile. Default builds select `CGFX_COMPACT_WARP_VM`: a single forward pass over
+each 128-byte slot with big-endian operands and live player-position checks. The
+compact `Msg` opcode queues the existing script-text dialog for the authored
+guide NPC; the popup is drawn after the world overlay and A dismisses it. The
+build validator checks flag capacity, conditions, branch encoding, forward jumps
+onto command boundaries, map coordinates, text framing, and text indices before
+firmware compilation. Zero-filled slots leave gameplay state unchanged. Tactical
+battle AI, battle menus, and battle rendering use the same paths.
 
 Replace `CGFX_COMPACT_WARP_VM` with `CGFX_FULL_WORLD_VM` in the shipping C++ flags to select the full world
 interpreter and popup behavior. `ScriptVm::initVM/run` remain available to callers;
@@ -122,8 +123,9 @@ executes the generated `GiveItem` opcode (9) with three `kind,id,count` operands
 into the one shared Player bag: kind 0 lures and kind 1 consumables add through
 `item::inventoryAdd` (saturating at 99), kind 2 unlocks a Player key bit through
 `item::keyItemUnlock` without an inventory row. The generated-content guard
-rejects full-only commands or script text in a default build, including commands
-inside skipped branches. Choose the full profile when authoring that content.
+rejects full-only commands in a default build, including commands inside skipped
+branches, while allowing compact `Msg` text. Choose the full profile when
+authoring full-only content.
 
 ## Player artwork and walking
 

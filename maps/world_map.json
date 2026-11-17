@@ -66071,6 +66071,13 @@
       "y": 9,
       "sprite_id": 0,
       "script": "@beta_gate"
+    },
+    {
+      "id": 10,
+      "x": 16,
+      "y": 4,
+      "sprite_id": 0,
+      "script": "msg {Plant a lure. The pocket answers.}"
     }
   ],
   "scripts": [

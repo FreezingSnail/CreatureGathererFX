@@ -24,9 +24,53 @@ bool validateWorldScriptProfile(const std::vector<uint8_t>& image,
                 std::to_string(kSlotCount * kSlotSize) + kFullVmRemedy;
         return false;
     }
-    if (text.size() != 2 || text[0] != 0 || text[1] != 0) {
-        error = "text.bin must contain exactly two zero bytes for empty script text" +
-                std::string(kFullVmRemedy);
+    if (text.size() < 2) {
+        error = "text.bin is missing its little-endian string count";
+        return false;
+    }
+    const std::size_t textCount =
+        static_cast<std::size_t>(text[0]) |
+        (static_cast<std::size_t>(text[1]) << 8);
+    if (textCount > 4096) {
+        error = "text.bin string count is implausible";
+        return false;
+    }
+    const std::size_t textBlobStart = 2 + textCount * 2;
+    if (text.size() < textBlobStart) {
+        error = "text.bin is truncated before its string offsets";
+        return false;
+    }
+    std::size_t previousOffset = 0;
+    std::size_t textEnd = textBlobStart;
+    for (std::size_t index = 0; index < textCount; ++index) {
+        const std::size_t at = 2 + index * 2;
+        const std::size_t offset = static_cast<std::size_t>(text[at]) |
+                                   (static_cast<std::size_t>(text[at + 1]) << 8);
+        if (index > 0 && offset <= previousOffset) {
+            error = "text.bin string offsets do not ascend";
+            return false;
+        }
+        if (textBlobStart + offset + 2 > text.size()) {
+            error = "text.bin string " + std::to_string(index) +
+                    " has a truncated length";
+            return false;
+        }
+        const std::size_t lengthAddress = textBlobStart + offset;
+        const std::size_t length =
+            static_cast<std::size_t>(text[lengthAddress]) |
+            (static_cast<std::size_t>(text[lengthAddress + 1]) << 8);
+        if (length == 0 || lengthAddress + 2 + length > text.size()) {
+            error = "text.bin string " + std::to_string(index) +
+                    " has an invalid length";
+            return false;
+        }
+        if (lengthAddress + 2 + length > textEnd) {
+            textEnd = lengthAddress + 2 + length;
+        }
+        previousOffset = offset;
+    }
+    if (textEnd != text.size()) {
+        error = "text.bin has trailing bytes after its string blob";
         return false;
     }
 
@@ -59,6 +103,9 @@ bool validateWorldScriptProfile(const std::vector<uint8_t>& image,
             case VmOpcode::TpIf:
                 operandBytes = 8;
                 break;
+            case VmOpcode::Msg:
+                operandBytes = 2;
+                break;
             case VmOpcode::End:
                 ended = true;
                 endOffset = commandOffset;
@@ -78,7 +125,17 @@ bool validateWorldScriptProfile(const std::vector<uint8_t>& image,
                         ": truncated operands" + std::string(kFullVmRemedy);
                 return false;
             }
-            if (opcode == VmOpcode::If) {
+            if (opcode == VmOpcode::Msg) {
+                const std::size_t textIndex =
+                    (static_cast<std::size_t>(image[base + offset]) << 8) |
+                    image[base + offset + 1];
+                if (textIndex >= textCount) {
+                    error = "slot " + std::to_string(slot) + " offset " +
+                            std::to_string(commandOffset) +
+                            ": Msg text index exceeds generated text";
+                    return false;
+                }
+            } else if (opcode == VmOpcode::If) {
                 const uint8_t condition = image[base + offset];
                 const std::size_t flag =
                     (static_cast<std::size_t>(image[base + offset + 1]) << 8) |
@@ -164,7 +221,7 @@ int main(int argc, char** argv) {
         return 1;
     }
     std::cout << "world-script-profile: " << kSlotCount
-              << " slots, compact If/TpIf/End profile valid\n";
+              << " slots, compact If/TpIf/Msg/End profile valid\n";
     return 0;
 }
 #endif

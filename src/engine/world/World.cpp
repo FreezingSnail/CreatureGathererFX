@@ -146,7 +146,7 @@ bool interactionJustPressedA() {
 bool interactionDialogActive() {
 #ifdef TEST
     return worldInteractionDialogActive();
-#elif defined(CGFX_FULL_WORLD_VM)
+#elif CGFX_DIALOG_QUEUE_ENABLED
     return dialogMenu.peek();
 #else
     return false;
@@ -156,7 +156,7 @@ bool interactionDialogActive() {
 void popInteractionDialog() {
 #ifdef TEST
     worldInteractionPopDialog();
-#elif defined(CGFX_FULL_WORLD_VM)
+#elif CGFX_DIALOG_QUEUE_ENABLED
     dialogMenu.popMenu();
 #endif
 }
@@ -464,6 +464,7 @@ bool WorldEngine::moveable(const WorldTransient &world) {
     case Direction::LEFT: --x; break;
     case Direction::RIGHT: ++x; break;
     }
+    if (x == FIRST_BETA_NPC_X && y == FIRST_BETA_NPC_Y) return false;
     return WorldCollision::canEnter(x, y, Chunk::MAP_WIDTH_TILES,
                                     Chunk::MAP_HEIGHT_TILES, world.propertyWindow);
 }

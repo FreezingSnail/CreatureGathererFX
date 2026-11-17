@@ -448,6 +448,10 @@ static uint8_t drawMapFast(WorldTransient &world) {
                                Blit::OVERWRITE);
                 }
             }
+            if (mapX == FIRST_BETA_NPC_X && mapY == FIRST_BETA_NPC_Y) {
+                Blit::draw(x, y, 16, 16, npcSprites + 4, FRAME(0),
+                           Blit::PLUSMASK);
+            }
         }
     }
     return rowReads;

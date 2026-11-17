@@ -198,11 +198,13 @@ test('contract pins every beta area/roster/table/reward/evolution/label field', 
   assert.equal(contract.contract, 'first-beta');
   assert.equal(contract.scope, 'beta-area');
   for (const key of ['min_x', 'max_x', 'min_y', 'max_y', 'start_x', 'start_y',
-    'rest_x', 'rest_y', 'box_x', 'box_y', 'plant_x', 'plant_y', 'boss_x', 'boss_y']) {
+    'npc_x', 'npc_y', 'rest_x', 'rest_y', 'box_x', 'box_y', 'plant_x', 'plant_y',
+    'boss_x', 'boss_y']) {
     assert.ok(Number.isInteger(area[key]), `area.${key} must be pinned`);
   }
   assert.deepEqual([area.min_x, area.max_x, area.min_y, area.max_y], [8, 23, 0, 11]);
   assert.deepEqual([area.start_x, area.start_y], [11, 5]);
+  assert.deepEqual([area.npc_x, area.npc_y], [16, 4]);
   assert.deepEqual([area.box_x, area.box_y], [9, 2]);
   assert.deepEqual([area.plant_x, area.plant_y], [14, 2]);
   assert.deepEqual([area.rest_x, area.rest_y], [10, 4]);
@@ -743,11 +745,17 @@ test('authored zone defs cover every route chunk and map each lure type to its t
 
 test('only the in-bounds beta door pair warps, and the authored area stays closed', () => {
   const word = loadGeneratedCollision();
-  const locations = new Map(worldMap.npcs.map((npc) => [npc.script, npc]));
+  const markers = worldMap.npcs.filter((npc) => npc.script.startsWith('@'));
+  const locations = new Map(markers.map((npc) => [npc.script, npc]));
   for (const [scriptName, npc] of locations) {
     assert.match(scriptName, /^@/, 'every authored map marker is a @location');
     assert.ok(inArea(npc.x, npc.y), `location ${scriptName} stays inside the authored area`);
   }
+  const guide = worldMap.npcs.find((npc) => npc.x === area.npc_x && npc.y === area.npc_y);
+  assert.ok(guide, 'the authored guide NPC is present');
+  assert.ok(inArea(guide.x, guide.y), 'the guide NPC stays inside the authored area');
+  assert.match(guide.script, /^msg \{.+\}$/, 'the guide NPC uses a scripted message');
+  assert.ok(!guide.script.startsWith('@'), 'the guide is executable content, not a location marker');
 
   const warps = [];
   for (const script of worldMap.scripts) {

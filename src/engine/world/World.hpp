@@ -20,6 +20,14 @@ struct ViewOffset {
     uint8_t mask;
 };
 
+// Visible first-beta guide. The map NPC at this cell owns the compact Msg
+// script; the sprite and collision guard are fixed to the same authored cell.
+constexpr uint8_t FIRST_BETA_NPC_X = 16;
+constexpr uint8_t FIRST_BETA_NPC_Y = 4;
+constexpr uint16_t FIRST_BETA_NPC_TILE =
+    static_cast<uint16_t>((static_cast<uint16_t>(FIRST_BETA_NPC_Y) << 8) |
+                          FIRST_BETA_NPC_X);
+
 // Stateless world operations use the active WorldTransient storage. Persistent
 // coordinates live in GameState, outside ModeState.
 class WorldEngine {

@@ -239,13 +239,6 @@ void run() {
         SaveController::advance();
         return;
     }
-#if defined(CGFX_FULL_WORLD_VM) || defined(TEST) || defined(FX_READ_COUNTER)
-    if (dialogMenu.peek()) {
-        dialogMenu.drawPopMenu();
-    } else
-#endif
-    if (gameState.state == GameState_t::BATTLE) {
-    }
 }
 
 uint8_t render() {
@@ -278,6 +271,9 @@ uint8_t render() {
         const uint8_t rowsRead = drawMapFast(worldState());
         drawPlayer(worldState());
         LureZone::drawOverlay();
+#if CGFX_DIALOG_QUEUE_ENABLED
+        if (dialogMenu.peek()) dialogMenu.drawPopMenu();
+#endif
         return rowsRead;
     }
     case GameState_t::SAVING:

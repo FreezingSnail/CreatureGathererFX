@@ -181,7 +181,11 @@ perturbed_layout=$fixtures/fxlayout-expand-20-perturbed.toml
 # the atk-less creature model, Tools 421f85c), so regeneration moves the packed
 # generator_version payload and the cart hash. Previous cart sha256 847beef8...,
 # now 24948525.... Intentional rebaseline.
-expected=24948525ee326f04bc1dd8fc285742482aaad16f7950940721311bc75ea23a5c
+# 75sj: append the one-frame npcSprites FX field after pocketProps and author
+# the guide NPC's compact Msg script/text; every earlier field address is fixed,
+# while the appended image, chunk-34 script and text payload change the cart.
+# Previous cart sha256 24948525..., now b3ad0b4f.... Intentional rebaseline.
+expected=b3ad0b4f04c343363aa3f95de35f28a1feaf878d9731ce2e37053659f5d1b4f1
 
 for layout in "$old_layout" "$new_layout" "$perturbed_layout"; do
     test -f "$layout" || {

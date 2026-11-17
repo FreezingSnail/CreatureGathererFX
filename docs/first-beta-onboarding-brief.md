@@ -6,6 +6,11 @@ runtime/AVR change, no asset or map change, no generator change, no new flag and
 no popup. It names the small implementation leaves it requires; those leaves
 block `CreatureGathererFX-jp8.11.15` (integration proof).
 
+> **Update 2026-11-16:** the owner requested a visible guide NPC with scripted
+> dialog. The compact profile now supports `Msg` and the existing popup queue.
+> The no-dialogue acceptance below remains the historical `jp8.11.15` scope; the
+> current guide interaction is the intentional exception.
+
 The goal in one line: a first-time player boots a fresh ordinary game and reaches
 a **first capture** using only on-screen affordances, without external
 instructions and without failing the gather window.

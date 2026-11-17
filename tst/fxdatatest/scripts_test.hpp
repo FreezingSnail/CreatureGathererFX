@@ -96,9 +96,9 @@ inline void testScriptTextDispatch(FxTest &test, ScriptVm &vm, uint8_t *slot) {
     dialogMenu.clear();
     const uint16_t count = readScriptTextCount();
 
-    // The current generated map has no script text. Host ScriptVM tests cover
-    // valid Msg/TMsg/SMsg payloads and coordinate filtering; if later map data
-    // adds text, this device suite also exercises a valid Msg and its renderer.
+    // The authored guide supplies one script-text entry. Host ScriptVM tests
+    // cover the remaining Msg/TMsg/SMsg payloads and coordinate filtering; this
+    // device suite exercises the real generated Msg and its renderer.
     if (count != 0) {
         slot[0] = static_cast<uint8_t>(VmOpcode::Msg);
         slot[1] = 0;
@@ -116,6 +116,42 @@ inline void testScriptTextDispatch(FxTest &test, ScriptVm &vm, uint8_t *slot) {
         }
         dialogMenu.clear();
     }
+
+#ifndef CGFX_FULL_WORLD_VM
+    // Compact runner path: a message opcode starts with byte 0, so the slot
+    // must be recognized as populated by its terminal End even though byte 0
+    // is zero. This is the actual shipping NPC path.
+    slot[0] = static_cast<uint8_t>(VmOpcode::Msg);
+    slot[1] = 0;
+    slot[2] = 0;
+    slot[3] = static_cast<uint8_t>(VmOpcode::End);
+    dialogMenu.clear();
+    vm.initWarpVM(slot, 0, 0);
+    test.expectEq(vm.valid, true, F("compact Msg slot is populated"));
+    vm.runWarpVM();
+    test.expectEq(dialogMenu.peek(), true, F("compact Msg queues a dialog"));
+    if (dialogMenu.peek()) {
+        test.expectEq(dialogMenu.head().type, SCRIPT_TEXT,
+                      F("compact Msg uses typed script text dialog"));
+    }
+    dialogMenu.clear();
+
+    // Actual authored NPC path: chunk 34's guide script is reached from the
+    // north approach and must queue the same typed text dialog.
+    gameState.playerLocation = To1D(16, 5);
+    WorldEngine::init(worldState());
+    worldState().motion.directionAndFlags = static_cast<uint8_t>(Direction::UP);
+    arduboy.currentButtonState = A_BUTTON;
+    arduboy.previousButtonState = 0;
+    WorldEngine::interact();
+    test.expectEq(dialogMenu.peek(), true, F("map NPC queues a dialog"));
+    if (dialogMenu.peek()) {
+        test.expectEq(dialogMenu.head().type, SCRIPT_TEXT,
+                      F("map NPC uses script text"));
+    }
+    dialogMenu.clear();
+    arduboy.currentButtonState = arduboy.previousButtonState = 0;
+#endif
 
     const uint16_t invalidIndex = count;
     slot[0] = static_cast<uint8_t>(VmOpcode::Msg);
@@ -233,10 +269,10 @@ inline void testCompactWarps(FxTest &test, ScriptVm &vm, uint8_t *slot) {
     arduboy.previousButtonState=0;
     FxReadCounter::resetFrame();
     WorldEngine::runMap(worldState());
-#if defined(CGFX_FULL_WORLD_VM) || defined(TEST)
-    test.expectEq(gameState.playerLocation, To1D(1,1), F("full world popup blocks script"));
-    test.expectEq(FxReadCounter::count(), 0, F("full popup avoids script read"));
-    test.expectEq(dialogMenu.peek(),false,F("full world A dismisses popup"));
+#if CGFX_DIALOG_QUEUE_ENABLED
+    test.expectEq(gameState.playerLocation, To1D(1,1), F("world popup blocks script"));
+    test.expectEq(FxReadCounter::count(), 0, F("world popup avoids script read"));
+    test.expectEq(dialogMenu.peek(),false,F("world A dismisses popup"));
 #else
     test.expectEq(gameState.playerLocation, To1D(0,0), F("compact world skips popup handling"));
     test.expectEq(FxReadCounter::count(), 1, F("compact popup still reads script"));

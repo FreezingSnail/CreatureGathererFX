@@ -7,9 +7,10 @@ struct ScriptSlotFixture { uint16_t chunk; uint8_t prefix[4]; };
 const ScriptSlotFixture scriptSlotFixtures[] PROGMEM = {
     { 0, { 0x05, 0x00, 0x00, 0x00 } },
     { 33, { 0x04, 0x00, 0x0C, 0x00 } },
+    { 34, { 0x00, 0x00, 0x00, 0xFF } },
     { 65, { 0x04, 0x00, 0x0C, 0x00 } },
 };
-constexpr uint16_t scriptSlotFixtureCount = 3;
+constexpr uint16_t scriptSlotFixtureCount = 4;
 struct ScriptAddressFixture { uint16_t chunk; uint8_t offset[3]; };
 const ScriptAddressFixture scriptAddressFixtures[] PROGMEM = {
     { 3, { 0x80, 0x01, 0x00 } },

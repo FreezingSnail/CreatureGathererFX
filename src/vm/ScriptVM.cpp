@@ -289,9 +289,20 @@ void ScriptVm::initWarpVM(uint8_t *script, uint16_t current, uint16_t target) {
     this->endPtr = script;
     this->currentTile = current;
     this->targetTile = target;
-    this->valid = script != nullptr && script[0] != 0;
+    this->valid = false;
 
 #ifdef CGFX_COMPACT_WARP_VM
+    // A Msg script starts with opcode 0, so an opcode-byte test would mistake
+    // it for an empty zero-filled slot. Any nonzero command/operand marks a
+    // populated slot; the build validator guarantees its terminal End.
+    if (script != nullptr) {
+        for (uint8_t offset = 0; offset < 128; ++offset) {
+            if (script[offset] != 0) {
+                this->valid = true;
+                break;
+            }
+        }
+    }
     return;
 #else
     this->valid = false;
@@ -327,11 +338,19 @@ void ScriptVm::initWarpVM(uint8_t *script, uint16_t current, uint16_t target) {
 
 void ScriptVm::runWarpVM() {
 #ifdef CGFX_COMPACT_WARP_VM
-    // Build-time validation guarantees a forward-only If/TpIf/End slot.
+    // Build-time validation guarantees a forward-only If/TpIf/Msg/End slot.
     if (!this->valid || this->base == nullptr) return;
     uint8_t offset = 0;
     for (;;) {
         switch (static_cast<VmOpcode>(this->base[offset++])) {
+        case VmOpcode::Msg: {
+            const uint16_t textIndex =
+                (static_cast<uint16_t>(this->base[offset]) << 8) |
+                this->base[offset + 1];
+            offset += 2;
+            queueScriptText(textIndex);
+            break;
+        }
         case VmOpcode::TpIf: {
             uint16_t x = (static_cast<uint16_t>(this->base[offset]) << 8) |
                          this->base[offset + 1];

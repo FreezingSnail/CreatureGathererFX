@@ -57,3 +57,18 @@ Default `make test`: 244,009 passed / 0 failed; `CGFX_DEV` host run: 244,007 pas
 dev AVR build succeeded with `-DCGFX_DEV`. Final gate PASS in
 `build/reports/rhs7/final-gate-nsv1/`; 35/35 device suites; shipping unchanged at
 27,520 B flash / 1,782 B static / 622 B stack.
+
+## 75sj — visible guide NPC with compact scripted dialog
+
+Added `Msg` to the compact world VM, enabled the existing dialog queue/popup for compact builds,
+and moved popup drawing after the world overlay. Authored guide NPC at `(16,4)` with
+`msg {Plant a lure. The pocket answers.}`, a fixed collision guard, and an appended 16x16
+`npcSprites` field; the player approaches from `(16,5)` and A dismisses the two-line text.
+
+The script-profile validator now validates nonempty text framing and every `Msg` index; the
+full VM remains opt-in. `make test-beta-area` 38/38, focused `test_scripts` 99/0,
+`test_world_player` 65/0, `test_dialog` 9/0, `testvm` 286/0. Final gate PASS in
+`build/reports/rhs7/final-gate-75sj/`; 35/35 device suites, stack 361 B. Shipping is
+28,538 B flash / 1,867 B static / 693 B free static; `test_beta_area` is now near the device
+flash limit at 29,410/29,696 (286 B free), noted for the next test-budget trim. Pack parity was
+intentionally rebaselined `24948525... -> b3ad0b4f...` for the appended NPC field and script/text.

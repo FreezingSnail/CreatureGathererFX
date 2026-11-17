@@ -576,8 +576,9 @@ $(WORLD_SCRIPT_PROFILE_BIN): tools/check-world-script-profile.cpp src/vm/opcodes
 	@mkdir -p "$(dir $@)"
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) tools/check-world-script-profile.cpp -o "$@"
 
-# Compact world scripts have no dialog text: scripts.bin stays fixed-size and
-# text.bin is the two-byte zero-count header. Full-VM opt-in skips both checks.
+# Compact world scripts may carry Msg dialog text; scripts.bin stays fixed-size
+# and text.bin is validated against its little-endian framing. Full-VM opt-in
+# skips both checks because it has its own opcode set.
 world-script-profile-check: $(WORLD_SCRIPT_PROFILE_BIN) $(WORLD_SCRIPT_PROFILE_INPUT) $(WORLD_SCRIPT_PROFILE_TEXT)
 	@if test -n "$(WORLD_VM_PROFILE_FLAGS)"; then \
 		echo 'world-script-profile: full VM opt-in enabled'; \

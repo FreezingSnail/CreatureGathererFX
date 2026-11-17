@@ -59,8 +59,8 @@ int main() {
     require(accepts(image), "0xFF operands treated as commands");
 
     const uint8_t unsupported[] = {
-        static_cast<uint8_t>(VmOpcode::Msg), static_cast<uint8_t>(VmOpcode::TMsg),
-        static_cast<uint8_t>(VmOpcode::SMsg), static_cast<uint8_t>(VmOpcode::Tp),
+        static_cast<uint8_t>(VmOpcode::TMsg), static_cast<uint8_t>(VmOpcode::SMsg),
+        static_cast<uint8_t>(VmOpcode::Tp),
         static_cast<uint8_t>(VmOpcode::SetFlag), static_cast<uint8_t>(VmOpcode::UnsetFlag),
         static_cast<uint8_t>(VmOpcode::ReadFlag),
         static_cast<uint8_t>(VmOpcode::GiveItem), 42
@@ -75,6 +75,20 @@ int main() {
         require(diagnostic.find("-DCGFX_FULL_WORLD_VM") != std::string::npos,
                 "unsupported opcode diagnostic lacks full-VM remedy");
     }
+
+    const std::vector<uint8_t> oneText = {1, 0, 0, 0, 2, 0, 'H', 'i'};
+    image.assign(kImageSize, 0);
+    put(image, 7, {static_cast<uint8_t>(VmOpcode::Msg), 0, 0,
+                   static_cast<uint8_t>(VmOpcode::End)});
+    require(accepts(image, oneText), "valid Msg with framed text rejected");
+    image.assign(kImageSize, 0);
+    put(image, 7, {static_cast<uint8_t>(VmOpcode::Msg), 0, 1,
+                   static_cast<uint8_t>(VmOpcode::End)});
+    std::string msgDiagnostic;
+    require(!accepts(image, oneText, &msgDiagnostic),
+            "Msg with an out-of-range text index accepted");
+    require(msgDiagnostic.find("Msg text index") != std::string::npos,
+            "Msg text-index diagnostic mismatch");
 
     // A GiveItem inside an If branch that a compact runtime would skip must
     // still fail the compact profile: the guard scans every command boundary,
@@ -150,14 +164,13 @@ int main() {
 
     image.assign(kImageSize, 0);
     require(accepts(image, {0, 0}), "two-zero-byte text framing rejected");
+    require(accepts(image, oneText), "valid framed text rejected");
     for (const std::vector<uint8_t>& text : {
              std::vector<uint8_t>{}, std::vector<uint8_t>{0},
              std::vector<uint8_t>{0, 1}, std::vector<uint8_t>{0, 0, 0}}) {
         require(!accepts(image, text, &diagnostic), "invalid text framing accepted");
         require(diagnostic.find("text.bin") != std::string::npos,
                 "text framing diagnostic omits text.bin");
-        require(diagnostic.find("-DCGFX_FULL_WORLD_VM") != std::string::npos,
-                "text framing diagnostic lacks full-VM remedy");
     }
 
     std::cout << "world-script-profile-test: profile, opcode, size, and text framing cases passed\n";
