@@ -7,6 +7,99 @@ the workflow conventions distilled from past waves.
 
 This project uses **bd** (beads) for issue tracking. Run `bd prime` for full workflow context.
 
+## Project agent roles
+
+Project-local OpenCode roles live in `.opencode/agents/`; `cg-producer` is the default primary
+role and the five domain specialists are available with `opencode run --agent <role>` (`cg-world`,
+`cg-story`, `cg-art`, `cg-gameplay`, `cg-tooling`). `cg-reviewer` is a fresh read-only subagent
+dispatched by the producer after implementation; its role denies edits/shell and forbids mutations
+even if a hosting/session overlay exposes extra tools. For these
+roles, OpenCode/DeepSeek is the primary implementation preference and supersedes historical fixed
+Sol/Luna implementation routing; preserve high-risk design/review escalation with evidence. Read
+`docs/agent-roles.md` for the shared task contract, ownership boundaries, Beads dispatch rules,
+review flow, build-lane serialization, and bridge launch examples.
+
+## Content authoring: start here
+
+- This repository owns game content and firmware; sibling `../CreatureGathererTools`
+  owns the supported desktop editor and native `cgfx-tools` compiler/packer. Read
+  its `AGENTS.md` and `README.md` before changing authoring behavior. Starting a
+  session in their parent directory is not a substitute for reading both files.
+- Before editing content, identify the selected project manifest, map, tileset,
+  reusable blocks, intended preview and validation command. Briefly state what
+  existing workflow/assets you will reuse. A dirty file is not evidence that its
+  repository is active; inspect the selected pipeline and task status.
+- Use the existing tools first. Do not introduce another editor, map format,
+  renderer, converter or asset generator just because a request says "example",
+  "play area" or "continue". If the current tools lack a required capability,
+  explain the concrete gap before implementing a replacement.
+
+### Project and editor entry points
+
+1. Read `cgfx-project.json`: it selects `maps/world_map.json`,
+   `images/tiles.png` for the map sheet, `images/npc_16x16.png` for NPCs, and
+   the content contracts/output locations. Relative values resolve from the
+   manifest's directory, not the shell's working directory.
+2. Launch the existing CreatureGathererTools desktop app and use **Open project**
+   to choose this repository's `cgfx-project.json`. A project folder's default
+   manifest name is `creature-tools.json`; the picker accepts another JSON
+   filename. Do not create a duplicate manifest merely to rename the existing one.
+   For development, run `ui/node_modules/.bin/tauri dev` from the Tools root;
+   see its README for prerequisites. Reuse the installed app/CLI when suitable;
+   `../CreatureGathererTools/install.sh` rebuilds and replaces both.
+3. Use **Map** for tile/script authoring and **Blocks** for reusable assemblies.
+   `blocks_json` defaults to `blocks.json` beside the manifest. Inspect the actual
+   library rather than assuming houses, trees or other prefabs already exist.
+   **WFC** consumes blocks/pieces and recipes for deterministic hunks; it does
+   not by itself establish game collision or route connectivity.
+
+### Map and asset authority
+
+- Author maps in the Tools `GameMap` JSON schema (`crates/core/src/model.rs`),
+  loaded/saved through `Store`/the editor. Preserve `tilesets`, NPCs, scripts,
+  collision/encounter grids and types, WFC data and stamps. Tiled is explicit
+  import/export interchange, not a reason to make TMJ the default deliverable.
+- The runtime uses `maps/tiles.tsx` properties resolved by Tools `Store` and
+  `builder::build_map`: GID 0 is void; GID N draws frame N-1; GIDs occupy the
+  low ten bits (maximum 1023). Do not infer walkability, encounters or gathering
+  from a PNG, a tile name, or the editor's legacy collision/encounter grids.
+  Check `src/engine/world/WorldCollision.hpp`, `TileProps.hpp` and `World.cpp`.
+- `data/beta-area.toml` owns first-beta bounds, landmarks and content mappings;
+  `fxdata/data/encounters.txt` owns encounter zone/table sources. Decorative
+  flowers or crops do not implement a gathering zone. Verify the requested
+  mechanics against these contracts and the runtime before claiming gameplay.
+- Art studies are documented in `docs/overworld-explorations.md` and
+  `docs/overworld-fresh.md`; their atlas IDs and transparent object layers are
+  not interchangeable with the production sheet/map. Follow the user's selected
+  style and shadow treatment. Inspect existing art before proposing generation.
+  Preserve IDs and reuse blocks where possible. If adoption needs remapping or
+  compositing, identify the mapping and property requirements first; do not
+  silently replace the selected sheet or bake each placement into new tile IDs.
+- Design at 128×64, 1bpp, with 16×16 world tiles/player. Rich high-resolution
+  concepts are not usable tiles by virtue of downscaling. When art is too noisy,
+  refine the specified tiles while preserving their character; do not substitute
+  primitive placeholder artwork or switch the whole style without direction.
+
+### Verification and previews
+
+- Verify candidate maps through the native loader/compiler and intended editor,
+  with the selected sheet and TSX. Use an isolated candidate manifest/output
+  directory for experiments; never validate by overwriting shipping sources.
+  Check actual routes and required interactions, not just JSON shape or pixels.
+- The shipping pipeline is `make doctor`, `make gen` and the relevant checks
+  below. Tools **Compile all** is useful authoring feedback, not a substitute for
+  the complete FX generation/pack/device checks. Compilation writes outputs.
+- A visual/playable preview should consume the authored map and selected assets,
+  preserving the actual camera, masking and tile movement. Use `World.cpp`,
+  `src/engine/draw.h` and `fxlayout.toml` as references; prefer the existing
+  runtime/Ardens for gameplay verification. Label unimplemented interactions.
+  For an explicit visual review request, inspect representative native-size
+  views; dimensions, binary palette and connectivity alone do not prove quality.
+- Report what actually ran: native load/build, editor opening, automated tests,
+  browser preview or device run are different evidence. Give full local paths
+  for deliverables. Do not claim editor/runtime compatibility from a custom
+  preview or a pixel-for-pixel reconstruction alone.
+
 ## Engineering priorities
 
 1. **Correct requested outcomes and game mechanics.** Preserve the behavior the owner wants,
