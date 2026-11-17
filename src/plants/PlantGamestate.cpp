@@ -2,7 +2,7 @@
 
 void PlantGameState::tick() {
     ticker++;
-    if (ticker == 128) {
+    if (ticker == GROWTH_STEPS) {
         ticker = 0;
         plantStages.incrementAll();
     }

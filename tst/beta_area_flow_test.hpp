@@ -478,23 +478,20 @@ inline void FirstBetaAreaFlowSuite(TestRunner &runner) {
                 static_cast<uint8_t>(0), "planting spends no lure");
 
     const uint16_t plantStepBase = hud.steps;
-    flow.assert(walk(Direction::LEFT, 1), true, "step off the plot lane");
-    flow.assert(walk(Direction::RIGHT, 1), true, "step back onto the plot lane");
-    for (uint8_t i = 0; i < 63; ++i) {
-        if (!walk(Direction::LEFT, 1)) break;
-        if (!walk(Direction::RIGHT, 1)) break;
+    constexpr uint8_t growthSteps = PlantGameState::GROWTH_STEPS;
+    for (uint8_t i = 0; i < growthSteps; ++i) {
+        if (!walk((i & 1) ? Direction::RIGHT : Direction::LEFT, 1)) break;
     }
-    flow.assert(hud.steps - plantStepBase, static_cast<uint16_t>(128),
-                "the plot advances after exactly 128 ordinary steps");
+    flow.assert(hud.steps - plantStepBase, static_cast<uint16_t>(growthSteps),
+                "the plot advances after the configured growth steps");
     flow.assert(plants.plantStages.getStage(FIRST_BETA_PLOT_INDEX),
                 static_cast<uint8_t>(2), "the planted plot is growing");
 
-    for (uint8_t i = 0; i < 64; ++i) {
-        if (!walk(Direction::LEFT, 1)) break;
-        if (!walk(Direction::RIGHT, 1)) break;
+    for (uint8_t i = 0; i < growthSteps; ++i) {
+        if (!walk((i & 1) ? Direction::RIGHT : Direction::LEFT, 1)) break;
     }
     flow.assert(plants.plantStages.getStage(FIRST_BETA_PLOT_INDEX),
-                static_cast<uint8_t>(3), "the plot is mature after 256 steps");
+                static_cast<uint8_t>(3), "the plot matures after two growth windows");
     face(Direction::UP, PLOT_X, PLOT_Y, TileProps::PROP_PLANTABLE);
     pressA(PLOT_X, PLOT_Y, TileProps::PROP_PLANTABLE);
     flow.assert(item::inventoryCount(player.inventory, item::ItemKind::Lure,

@@ -184,27 +184,28 @@ void plantStageTest(TestSuite &t) {
         }
     }
 
-    // Committed world-step timing: growth fires only on the 128th tick and moves
-    // a planted shelf to growing.
+    // World-step timing: growth fires only on the configured boundary and moves
+    // a planted shelf to growing. The dev profile shortens GROWTH_STEPS to 8.
     PlantGameState clocked = PlantGameState();
     for (uint8_t slot = 0; slot < slotCount; ++slot) {
         clocked.plantStages.increment(slot); // plant every slot (0 -> 1)
     }
-    for (uint8_t tick = 0; tick < 127; ++tick) {
+    constexpr uint8_t growthBeforeBoundary = PlantGameState::GROWTH_STEPS - 1;
+    for (uint8_t tick = 0; tick < growthBeforeBoundary; ++tick) {
         clocked.tick();
     }
-    test.assert(clocked.ticker, static_cast<uint8_t>(127),
-                "127 committed ticks stay before the growth boundary");
+    test.assert(clocked.ticker, growthBeforeBoundary,
+                "ticks before the growth boundary stay pending");
     for (uint8_t slot = 0; slot < slotCount; ++slot) {
         test.assert(clocked.plantStages.getStage(slot), static_cast<uint8_t>(1),
-                    "growth does not occur at tick 127");
+                    "growth does not occur before the boundary");
     }
     clocked.tick();
     test.assert(clocked.ticker, static_cast<uint8_t>(0),
-                "128th committed tick resets ticker");
+                "growth-boundary tick resets ticker");
     for (uint8_t slot = 0; slot < slotCount; ++slot) {
         test.assert(clocked.plantStages.getStage(slot), static_cast<uint8_t>(2),
-                    "128th tick grows every planted slot");
+                    "growth-boundary tick grows every planted slot");
     }
 
     t.addTest(test);

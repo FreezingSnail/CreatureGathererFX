@@ -280,7 +280,7 @@ inline void test_beta_area(FxTest &test) {
     test.expectEq(pressA(), true, F("world"));
     test.expectEq(plants.plantStages.getStage(FIRST_BETA_PLOT_INDEX), 1, F("plant"));
     test.expectEq(lastInteractReads, 0, F("no read"));
-    for (uint16_t tick = 0; tick < 256; ++tick) plants.tick();
+    for (uint16_t tick = 0; tick < PlantGameState::GROWTH_STEPS * 2; ++tick) plants.tick();
     test.expectEq(plants.plantStages.getStage(FIRST_BETA_PLOT_INDEX), 3, F("mature"));
     face(Direction::UP);
     test.expectEq(pressA(), true, F("world"));

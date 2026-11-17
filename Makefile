@@ -49,6 +49,10 @@ AVR_SHIPPING_CPP_FLAGS ?= $(AVR_RELAX_FLAGS) -DCGFX_SHIPPING_NO_USB -fno-inline-
 AVR_SHIPPING_BUILD_PROPERTIES ?= --build-property "compiler.cpp.extra_flags=$(AVR_SHIPPING_CPP_FLAGS) $(AVR_AUDIO_FLAGS)" \
 	--build-property "compiler.c.extra_flags=$(AVR_RELAX_FLAGS) $(AVR_AUDIO_FLAGS)" \
 	--build-property "compiler.c.elf.extra_flags=$(AVR_RELAX_FLAGS)"
+# Development-only iteration profile. `make dev` adds CGFX_DEV, which shortens
+# the plant growth ticker to 8 steps. Shipping, mini, demo, gate and device-test
+# builds do not use this variable.
+DEV_CPP_FLAGS ?= $(AVR_SHIPPING_CPP_FLAGS) -DCGFX_DEV
 # Audio-enabled duel suite profile reserved for the service/save bead. Like
 # every fxtest profile it is audio-off unless AUDIO=1; then it also carries the
 # compact diagnostics.
@@ -142,7 +146,7 @@ help:
 		'  release-check  doctor/gen/verify/manifest/generated-libs/parity/spec for a release pin' \
 		'  suite-report  summarize authoritative suite count and latest gate margins' \
 		'  run      launch Ardens with the sketch, FX data, and FX save images; prerequisite: ARDENS' \
-		'  dev      regenerate FX data, rebuild, then launch Ardens (gen + run); prerequisite: cgfx-tools, ARDENS' \
+		'  dev      regenerate FX data, rebuild with CGFX_DEV (8-step plant growth), then launch Ardens' \
 		'  check    run generation, host tests, VM tests, then optional FX runtime tests' \
 		'  test-manifest run permanent generated-artifact tests' \
 		'  test-music verify the packaged FX theme streams and their catalog' \
@@ -161,7 +165,7 @@ help:
 		'                (suite.ino swap); set FXTEST_CLEAN=1 to rebuild from scratch' \
 		'  fxtest-compile-all  compile every tst/fxdatatest/*.ino without Ardens' \
 		'' \
-		'Overrides: CXX, ARDUINO_CLI, FQBN, BUILD_DIR, ARDUINO_BUILD_PATH, ARDUINO_BUILD_CACHE_PATH, DIST_DIR, FXDATA_BIN, ARDENS, FXTEST_MS, FXTEST_RAM_BUDGET, FXTEST_CLEAN, AUDIO, AVR_FLASH_BUDGET, AVR_STATIC_RAM_BUDGET, RUN_ELF, RAM_ELF, AVR_SIZE, AVR_NM, AVR_RELAX_FLAGS, AVR_FXTEST_BUILD_PROPERTIES, AVR_FXTEST_NO_FACTS_BUILD_PROPERTIES, AVR_FXTEST_COMPACT_RESULT_BUILD_PROPERTIES, AVR_FXTEST_AUDIO_DUEL_BUILD_PROPERTIES, AVR_FXTEST_CPP_FLAGS, AVR_SHIPPING_BUILD_PROPERTIES, AVR_SHIPPING_CPP_FLAGS, WORLD_SCRIPT_PROFILE_INPUT, WORLD_SCRIPT_PROFILE_TEXT, ARENA_DEMO_BUILD_DIR, ARENA_DEMO_CART_DIR, ARENA_DEMO_CPP_FLAGS, ARENA_DEMO_FLASH_BUDGET, ARENA_PACKAGE, ARENA_PACKAGE_INFO.'
+		'Overrides: CXX, ARDUINO_CLI, FQBN, BUILD_DIR, ARDUINO_BUILD_PATH, ARDUINO_BUILD_CACHE_PATH, DIST_DIR, FXDATA_BIN, ARDENS, FXTEST_MS, FXTEST_RAM_BUDGET, FXTEST_CLEAN, AUDIO, AVR_FLASH_BUDGET, AVR_STATIC_RAM_BUDGET, RUN_ELF, RAM_ELF, AVR_SIZE, AVR_NM, AVR_RELAX_FLAGS, AVR_FXTEST_BUILD_PROPERTIES, AVR_FXTEST_NO_FACTS_BUILD_PROPERTIES, AVR_FXTEST_COMPACT_RESULT_BUILD_PROPERTIES, AVR_FXTEST_AUDIO_DUEL_BUILD_PROPERTIES, AVR_FXTEST_CPP_FLAGS, AVR_SHIPPING_BUILD_PROPERTIES, AVR_SHIPPING_CPP_FLAGS, DEV_CPP_FLAGS, WORLD_SCRIPT_PROFILE_INPUT, WORLD_SCRIPT_PROFILE_TEXT, ARENA_DEMO_BUILD_DIR, ARENA_DEMO_CART_DIR, ARENA_DEMO_CPP_FLAGS, ARENA_DEMO_FLASH_BUDGET, ARENA_PACKAGE, ARENA_PACKAGE_INFO.'
 
 setup:
 	@printf '%s\n' \
@@ -352,7 +356,7 @@ battle-test: gen
 # Full interactive loop: fresh FX data, normal sketch, then Ardens. Sequenced
 # through a sub-make so `make -j dev` cannot launch before generation finishes.
 dev: gen
-	@$(MAKE) --no-print-directory run
+	@$(MAKE) --no-print-directory run AVR_SHIPPING_CPP_FLAGS="$(DEV_CPP_FLAGS)"
 
 # Opt-in arena demo. Generate the cart, build/report the isolated firmware, copy
 # the split FX data/save inputs beside it, then launch Ardens.

@@ -6,6 +6,9 @@ agent. `AGENTS.md` carries the short list.
 ## Inner loop vs full gate
 
 - Host: `make test`; ScriptVM: `make testvm`.
+- `make dev` builds with `-DCGFX_DEV` and advances plant growth every 8 overworld steps instead of
+  the authored 128. `make run`, `build`, mini, demo and gate builds keep 128; do not use the dev
+  profile as acceptance evidence.
 - One device suite while iterating:
   `make fxtest-headless FXTEST_INOS=tst/fxdatatest/test_save.ino` (`FXTEST_INOS` is a `?=` override;
   the default is the whole wildcard).

@@ -11,6 +11,14 @@ constexpr uint8_t FIRST_BETA_PLOT_INDEX = 0;
 
 class PlantGameState {
   public:
+    // make dev adds CGFX_DEV so the single-beta plot can be iterated quickly;
+    // shipping, mini, demos and device tests keep the authored 128-step pace.
+#ifdef CGFX_DEV
+    static constexpr uint8_t GROWTH_STEPS = 8;
+#else
+    static constexpr uint8_t GROWTH_STEPS = 128;
+#endif
+
     PlantStage plantStages;
     PlantPair plantPairs[2];
     uint8_t ticker = 0;

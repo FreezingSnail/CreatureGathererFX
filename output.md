@@ -44,3 +44,16 @@ Focused `test_world_player` 60/0; final gate PASS in
 `build/reports/rhs7/final-gate-wc89/`; shipping unchanged at 27,520 B flash / 1,782 B static /
 622 B stack. The camera remains tile-anchored at viewport cell 3,2 rather than half-tile centered;
 if the owner wants the sprite centered, that is a separate camera/window change.
+
+## nsv1 — 8-step plant growth in `make dev`
+
+`make dev` now passes `AVR_SHIPPING_CPP_FLAGS="$(DEV_CPP_FLAGS)"`, where
+`DEV_CPP_FLAGS = shipping flags + -DCGFX_DEV`; `PlantGameState::GROWTH_STEPS` is 8 under
+`CGFX_DEV` and 128 otherwise. Shipping, `run`, build, mini, demos and device-test profiles are
+unchanged. The host/device growth-boundary tests now derive their tick counts from
+`GROWTH_STEPS`, so the default 128 and the dev 8 both validate the same code.
+
+Default `make test`: 244,009 passed / 0 failed; `CGFX_DEV` host run: 244,007 passed / 0 failed;
+dev AVR build succeeded with `-DCGFX_DEV`. Final gate PASS in
+`build/reports/rhs7/final-gate-nsv1/`; 35/35 device suites; shipping unchanged at
+27,520 B flash / 1,782 B static / 622 B stack.
