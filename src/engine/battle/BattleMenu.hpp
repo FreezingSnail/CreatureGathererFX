@@ -19,7 +19,9 @@ namespace battle {
 // Text addresses are prepared on page transitions; update/draw are RAM-only.
 // The 27-byte object drives the compact duel pages: a single pick row (attack
 // cells + SWAP + WAIT) whose geometry the duel scene draws from resident state,
-// a two-row living-bench picker, and a wild-only gather/escape action page.
+// a two-row living-bench picker, a B action page (GATHER for a gatherable wild,
+// ITEMS in every duel, ESCAPE for a wild), and a Heal-only four-row bag page
+// cached in a file static (the page storage is mutually exclusive with ModeState).
 class BattleMenu {
   public:
     BattleMenu();

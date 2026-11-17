@@ -76,11 +76,12 @@ inline void ArenaLifecycleSuite(TestRunner &runner)
                 "boot starts a live battle session");
     test.assert(battleSession().state().over, false,
                 "boot rolled match is not already over");
+    // jp8.11.28: trainer entry now ends boot with the authored persona/rate
+    // transition read for the rolled row. The party reconstruction below and
+    // the explicit applyPlayerTeam check still prove the member-table load.
     test.assert(fxDataFake::lastDataAddress,
-                ArenaDemoData::playerMembers +
-                    ArenaDemoIds::player_bulwark * ArenaDemoIds::PlayerBytes +
-                    2 * ArenaDemoIds::MemberBytes,
-                "boot party loader reads the rolled FX member table");
+                DuelData::duelTrainerRate + battleSession().state().trainerId,
+                "boot ends on the rolled trainer's authored rate read");
 
     // The rolled team reconstructs every slot from the canonical creature data,
     // clearing the deliberately dirty status/modifiers/HP.

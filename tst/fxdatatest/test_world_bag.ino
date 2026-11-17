@@ -1,5 +1,6 @@
 #include "harness/fx_globals.hpp"
 #include "fxtest.hpp"
+#include "menurun_test.hpp"
 #include "src/engine/world/LureZone.hpp"
 #include "src/item/Inventory.hpp"
 #include "src/item/ItemIds.hpp"
@@ -53,6 +54,9 @@ void setup() {
                   F("consumable count restored"));
     test.expectEq(item::keyItemUnlocked(player.keyItems, 5), true,
                   F("key unlock restored"));
+
+    // jp8.4.10: transition-only metadata reads for every current beta menu.
+    menurun_test_detail::test_menurun(test);
 
     test.report(F("test_world_bag"));
 }

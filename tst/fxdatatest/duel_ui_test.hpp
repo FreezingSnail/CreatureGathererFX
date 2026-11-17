@@ -9,11 +9,82 @@
 
 #include "fxtest.hpp"
 #include "src/engine/battle/DuelView.hpp"
-#include "duel_session_integration_test.hpp"
+#include "src/engine/battle/BattleFlow.hpp"
+#include "src/engine/battle/BattlePresets.hpp"
+#include "src/engine/battle/BattleScene.hpp"
+#include "src/engine/battle/BattleSession.hpp"
+#include "src/engine/ModeState.hpp"
+#include "src/engine/game/Gamestate.hpp"
+#include "src/engine/menu/MenuV2.hpp"
+#include "src/item/Inventory.hpp"
+#include "src/lib/FxReadCounter.hpp"
+#include "src/player/Player.hpp"
 
 namespace duel_ui_test_detail {
 
-using namespace duel_session_test_detail;
+// Self-contained framebuffer fixtures. The boss-focused device session header
+// owns only its own proof, so this suite carries the framing helpers it needs.
+
+const uint8_t SpiritAuthored = static_cast<uint8_t>(Type::SPIRIT);
+const uint8_t FireAuthored = static_cast<uint8_t>(Type::FIRE);
+
+uint8_t rngDraws = 0;
+
+uint8_t scriptedRng(uint8_t bound) {
+    ++rngDraws;
+    return bound == 0 ? 0 : static_cast<uint8_t>((rngDraws - 1) % bound);
+}
+
+void preparePlayer() {
+    battle::applyPlayerPreset(player, BattlePresets::opening);
+}
+
+void beginWildDuel(bool gatherable, uint8_t tierRate) {
+    menu.clear();
+    dialogMenu.clear();
+    enterBattle();
+    gameState.state = GameState_t::BATTLE;
+    rngDraws = 0;
+    battleSession().setRng({scriptedRng});
+    FxReadCounter::resetFrame();
+    battleSession().beginWild(4, 1, gatherable, tierRate);
+}
+
+// Known matchup on the resident session; only the packed move TYPE is retyped.
+__attribute__((noinline)) void configureMatchup(uint8_t playerType, uint8_t playerMove,
+                                                uint8_t opponentType, uint8_t opponentMove,
+                                                uint8_t playerHp, uint8_t opponentHp) {
+    battle::BattleState &state =
+        const_cast<battle::BattleState &>(battleSession().state());
+    battle::Combatant &hero = state.active[static_cast<uint8_t>(battle::Side::Player)];
+    hero.types = DualType(static_cast<Type>(playerType));
+    hero.hp = hero.maxHp = playerHp;
+    hero.attackMask = static_cast<uint8_t>(1u << duel::foldType(playerMove));
+
+    battle::Combatant &foe = state.active[static_cast<uint8_t>(battle::Side::Opponent)];
+    foe.types = DualType(static_cast<Type>(opponentType));
+    foe.hp = foe.maxHp = opponentHp;
+    if (foe.attackMask != 0)
+        foe.attackMask = static_cast<uint8_t>(1u << duel::foldType(opponentMove));
+}
+
+bool runToResult(battle::BattleSession &session, uint16_t &ticks) {
+    for (ticks = 0; ticks < 400; ++ticks) {
+        if (session.isResultDwell()) return true;
+        session.advance();
+    }
+    return session.isResultDwell();
+}
+
+// Mirror the production BATTLE draw dispatch: the scene owns the pick row,
+// centre and footer; the menu paints only its own pages.
+__attribute__((noinline)) void renderBattle() {
+    battle::BattleScene::draw(battleSession().state(),
+                              modeState.battle.ui.menu.duelCursor());
+    if (battleSession().state().feedback == 0 &&
+        modeState.battle.ui.menu.initialized())
+        modeState.battle.ui.menu.draw();
+}
 
 // Shared framing prologue for the framebuffer/HUD tests: a non-gatherable wild
 // duel with a fully known matchup, so the fixtures stay small.
@@ -139,7 +210,7 @@ void duelDeviceThreeDigitHp(FxTest &test) {
     test.expectEq(duelAnyPixel(74, 77, 27, 31), 1, F("player three-digit numerals drawn"));
 }
 
-// Five-cell pick row + centre strip geometry: four attacks + SWAP, no overflow.
+// Six-cell worst case + centre strip geometry: five attacks + SWAP, no overlap.
 void duelDevicePickRowGeometry(FxTest &test) {
     duelPrep(SpiritAuthored, SpiritAuthored, static_cast<uint8_t>(Type::WATER),
              SpiritAuthored, 52, 52);
@@ -148,21 +219,101 @@ void duelDevicePickRowGeometry(FxTest &test) {
     state.partyCount[0] = 3;
     state.bench[0][0].hp = 10;
     state.bench[0][1].hp = 10;
-    // Four set mask bits -> four attack cells plus the SWAP cell.
-    state.active[0].attackMask = 0x0F;
+    // All five set mask bits -> five attack cells plus the SWAP cell.
+    state.active[0].attackMask = 0x1F;
     BattleFlow::update(0); // choice entry -> pick row
     duelClearBuffer();
     renderBattle();
 
-    // Four attacks + SWAP = five cells: cell = 24, boxes at x = 4, 28, 52, 76, 100.
+    // Five attacks + SWAP = six cells: cell = 20, boxes at x = 4, 24, 44, 64, 84,
+    // 104 with an 18px white box, so adjacent boxes keep a 2px black gap.
     test.expectEq(duelPixel(5, 49), 1, F("selected first cell is a white box"));
-    test.expectEq(duelPixel(26, 49), 0, F("gap between cells stays black"));
-    test.expectEq(duelAnyPixel(100, 121, 48, 61), 1, F("SWAP cell draws its label"));
+    test.expectEq(duelPixel(22, 49), 0, F("gap between cell 0 and cell 1 stays black"));
+    test.expectEq(duelPixel(42, 49), 0, F("gap between cell 1 and cell 2 stays black"));
+    test.expectEq(duelPixel(62, 49), 0, F("gap between cell 2 and cell 3 stays black"));
+    test.expectEq(duelPixel(82, 49), 0, F("gap between cell 3 and cell 4 stays black"));
+    test.expectEq(duelPixel(102, 49), 0, F("gap between cell 4 and SWAP stays black"));
+    test.expectEq(duelAnyPixel(104, 121, 48, 61), 1, F("SWAP cell draws its label"));
     test.expectEq(duelAnyPixel(122, 127, 48, 61), 0, F("row stays inside 122px"));
     // Centre strip stays within x48..79; the selected icon ends by x65.
     test.expectEq(duelAnyPixel(48, 56, 41, 45), 1, F("centre R# is drawn"));
     test.expectEq(duelAnyPixel(57, 64, 40, 47), 1, F("centre selected type icon drawn"));
-    test.expectEq(duelAnyPixel(66, 79, 41, 47), 0, F("centre stays left of the sprite"));
+    test.expectEq(duelAnyPixel(68, 79, 41, 47), 0,
+                  F("ordinary wild centre stays left of the sprite"));
+}
+
+// The persistent GATHER cue: present iff the encounter is a gatherable wild,
+// replacing the round/type content at x48/y41 and keeping y47 clear.
+__attribute__((noinline)) void duelDeviceGatherCue(FxTest &test) {
+    duelPrep(SpiritAuthored, SpiritAuthored, static_cast<uint8_t>(Type::WATER),
+             SpiritAuthored, 52, 52);
+    battle::BattleState &state =
+        const_cast<battle::BattleState &>(battleSession().state());
+    state.partyCount[0] = 3;
+    state.bench[0][0].hp = 10;
+    state.bench[0][1].hp = 10;
+    state.active[0].attackMask = 0x1F; // six-cell worst case
+    BattleFlow::update(0);
+    duelClearBuffer();
+    renderBattle();
+
+    // Ordinary wild: round/type content only, no cue tail.
+    test.expectEq(duelAnyPixel(68, 77, 41, 46), 0,
+                  F("an ordinary wild shows no gather cue"));
+
+    // Same geometry in a real gatherable wild: the cue replaces the content.
+    beginWildDuel(true, 0);
+    battle::BattleState &gatherable =
+        const_cast<battle::BattleState &>(battleSession().state());
+    gatherable.partyCount[0] = 3;
+    gatherable.bench[0][0].hp = 10;
+    gatherable.bench[0][1].hp = 10;
+    gatherable.active[0].attackMask = 0x1F; // six-cell worst case
+    BattleFlow::update(0);
+    duelClearBuffer();
+    renderBattle();
+    test.expectEq(duelAnyPixel(48, 77, 41, 46), 1,
+                  F("a gatherable wild draws the centre cue"));
+    test.expectEq(duelAnyPixel(68, 77, 41, 46), 1,
+                  F("the cue replaces the round/type content"));
+    test.expectEq(duelAnyPixel(48, 79, 47, 47), 0,
+                  F("the cue leaves the progress row clear"));
+    test.expectEq(duelAnyPixel(78, 79, 40, 47), 0,
+                  F("the cue stays left of the player sprite"));
+    // The six-cell row is unaffected by the cue.
+    test.expectEq(duelPixel(5, 49), 1, F("cue keeps the pick row's selected cell"));
+    test.expectEq(duelAnyPixel(104, 121, 48, 61), 1, F("cue keeps the SWAP cell"));
+    test.expectEq(duelAnyPixel(122, 127, 48, 61), 0, F("cue keeps the row inside 122px"));
+}
+
+// The B action page stays the selector: opening it and committing the first row
+// issues the existing Gather intent and banks tier progress.
+__attribute__((noinline)) void duelDeviceGatherActionPage(FxTest &test) {
+    preparePlayer();
+    beginWildDuel(true, 1); // gatherable wild, tierRate 1 (need is 8 at level 1)
+    configureMatchup(SpiritAuthored, SpiritAuthored, FireAuthored, SpiritAuthored, 52, 52);
+
+    test.expectEq(BattleFlow::update(0), 0, F("choice frame stays in battle"));
+    test.expectEq(BattleFlow::update(MENU_EDGE_B), 0,
+                  F("B opens the action page without resolving"));
+    test.expectEq(BattleFlow::update(MENU_EDGE_A), 0,
+                  F("A on the first action row commits gather"));
+    test.expectEq(battleSession().isResultDwell(), 0,
+                  F("the gather commit starts the concealed phase"));
+    test.expectEq(battleSession().state().gather.progress, 0,
+                  F("progress waits for the reveal"));
+
+    uint16_t frames = 0;
+    while (!battleSession().isResultDwell() && frames < 400) {
+        BattleFlow::update(0);
+        ++frames;
+    }
+    test.expectEq(battleSession().isResultDwell(), 1, F("the gather round reveals"));
+    test.expectEq(battleSession().state().feedback,
+                  static_cast<uint8_t>(duel::Feedback::Gather),
+                  F("the reveal is a gather round, not an attack"));
+    test.expectEq(battleSession().state().gather.progress, 1,
+                  F("the action page issued the Gather intent"));
 }
 
 // Result footer: both revealed move icons, the caption, and the player-outgoing
@@ -339,11 +490,12 @@ __attribute__((noinline)) void duelDevicePartyStripColors(FxTest &test) {
     test.expectEq(duelPixel(2, 58), 0, F("unselected picker row stays on the black strip"));
 }
 
-// The wild action page (GATHER/ESCAPE) matches the same convention as the pick
-// row: a BLACK strip with a WHITE selected cell.
+// The wild action page (GATHER/ITEMS/ESCAPE) matches the same convention as
+// the pick row: a BLACK strip with a WHITE selected cell. The three-row page
+// narrows to the left column so the player sprite stays visible.
 __attribute__((noinline)) void duelDeviceActionStripColors(FxTest &test) {
     preparePlayer();
-    beginWildDuel(true, 1); // gatherable wild -> GATHER + ESCAPE rows
+    beginWildDuel(true, 1); // gatherable wild -> GATHER + ITEMS + ESCAPE rows
     configureMatchup(SpiritAuthored, SpiritAuthored, FireAuthored, SpiritAuthored, 52, 52);
 
     BattleFlow::update(0);           // choice entry -> pick row
@@ -351,9 +503,54 @@ __attribute__((noinline)) void duelDeviceActionStripColors(FxTest &test) {
     duelClearBuffer();
     renderBattle();
 
-    test.expectEq(duelPixel(100, 50), 1, F("action selected row is a white cell"));
-    test.expectEq(duelPixel(2, 50), 1, F("action selected cell spans the row width"));
-    test.expectEq(duelPixel(100, 58), 0, F("action strip stays black below the selection"));
+    test.expectEq(duelPixel(2, 42), 1, F("action selected row is a white cell"));
+    test.expectEq(duelPixel(70, 42), 1, F("action selected cell spans the left column"));
+    test.expectEq(duelPixel(2, 50), 0, F("the ITEMS row stays black"));
+    test.expectEq(duelPixel(2, 58), 0, F("the ESCAPE row stays black"));
+}
+
+// jp8.5.19: the ITEMS row opens the cached four-row Heal bag over the duel and
+// the confirmed selection heals once through the real Flow.
+__attribute__((noinline)) void duelDeviceItemPage(FxTest &test) {
+    preparePlayer();
+    item::inventoryClear(player.inventory);
+    item::inventoryAdd(player.inventory, item::ItemKind::Consumable, 0, 1);
+    item::setBattleInventory(&player.inventory);
+    beginWildDuel(false, 0); // non-gatherable -> ITEMS first on the B page
+    configureMatchup(FireAuthored, FireAuthored, SpiritAuthored, SpiritAuthored,
+                     100, 100);
+    battle::BattleState &state =
+        const_cast<battle::BattleState &>(battleSession().state());
+    state.active[0].maxHp = 30;
+    state.active[0].hp = 20;
+
+    BattleFlow::update(0);           // choice entry
+    BattleFlow::update(MENU_EDGE_B); // action page (ITEMS first)
+    FxReadCounter::resetFrame();
+    test.expectEq(BattleFlow::update(MENU_EDGE_A), 0,
+                  F("A opens the bag without an action"));
+    test.expectEq(FxReadCounter::markUpdate(), 1,
+                  F("bag-open reads are transition-only"));
+    test.expectEq(item::inventoryCount(player.inventory,
+                                       item::ItemKind::Consumable, 0),
+                  static_cast<uint8_t>(1), F("opening the bag takes nothing"));
+    duelClearBuffer();
+    renderBattle();
+    test.expectEq(duelAnyPixel(17, 48, 8, 14), 1, F("the tonic row is drawn"));
+
+    test.expectEq(BattleFlow::update(MENU_EDGE_A), 0,
+                  F("A confirms the cached tonic"));
+    test.expectEq(item::inventoryCount(player.inventory,
+                                       item::ItemKind::Consumable, 0),
+                  static_cast<uint8_t>(0), F("the tonic is taken once"));
+    uint16_t frames = 0;
+    while (!battleSession().isResultDwell() && frames < 400) {
+        BattleFlow::update(0);
+        ++frames;
+    }
+    test.expectEq(battleSession().isResultDwell(), 1, F("the item round reveals"));
+    test.expectEq(state.active[0].hp, static_cast<uint8_t>(9),
+                  F("the clamped heal lands before the committed hit"));
 }
 
 } // namespace duel_ui_test_detail
@@ -368,8 +565,11 @@ inline void test_duel_ui(FxTest &test) {
     duelDeviceWaitRow(test);
     duelDeviceThreeDigitHp(test);
     duelDevicePickRowGeometry(test);
+    duelDeviceGatherCue(test);
+    duelDeviceGatherActionPage(test);
     duelDevicePartyStripColors(test);
     duelDeviceActionStripColors(test);
+    duelDeviceItemPage(test);
     duelDeviceFeedback(test);
     duelDeviceExhaustedEntryLoses(test);
     duelDeviceEmptyEntryRender(test);

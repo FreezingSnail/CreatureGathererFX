@@ -49,7 +49,7 @@ void ChunkTest(TestSuite &suite) {
                 "blob33 slot");
     test.assert(Chunk::scriptSlotAddr(base, 65), static_cast<uint24_t>(base + 8320),
                 "blob65 slot");
-    test.assert(sizeof(blob0), static_cast<size_t>(15), "generated blob0 prefix size");
+    test.assert(sizeof(blob0), static_cast<size_t>(30), "generated blob0 prefix size");
     test.assert(sizeof(blob33), static_cast<size_t>(9), "generated blob33 prefix size");
     test.assert(sizeof(blob65), static_cast<size_t>(9), "generated blob65 prefix size");
     test.assert(blob0[0], static_cast<uint8_t>(5), "generated blob0 first opcode");

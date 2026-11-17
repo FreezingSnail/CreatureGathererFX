@@ -8,9 +8,11 @@
 namespace {
 
 // Same fixed glyph counts as InventoryMenu so the shared name sprites line up.
+// Counts are the authored strings.txt lengths; earth is 5, like thunder-typed
+// peers, so the browser can never truncate a lure type name.
 uint8_t lurePartWidth(uint8_t id, uint8_t part) {
     static const uint8_t tierChars[] = {5, 4, 4};
-    static const uint8_t typeChars[] = {6, 5, 4, 4, 4, 9, 5, 5};
+    static const uint8_t typeChars[] = {6, 5, 4, 5, 4, 9, 5, 5};
     if (id >= item::LURE_COUNT) return 0;
     const uint8_t chars = part == 0 ? tierChars[item::lureTierOf(id)]
                                     : typeChars[item::lureTypeOf(id)];

@@ -153,7 +153,35 @@ perturbed_layout=$fixtures/fxlayout-expand-20-perturbed.toml
 # The final layout uses the mud-textured two-tile route and a wider collection
 # clearing (93 walkable cells); previous 7265a527..., now 6af073f9....
 # Intentional rebaseline.
-expected=6af073f9c21ecc0f91b89bc402987b84afc5d51be1a770382fac56a6e2d6a697
+# jp8.11.30: append the `pocketProps` image entry (80x16 -> 5 native 16x16
+# frames, +164 B with the 4-byte header) after the music entries and before the
+# save region, so the authored plant plot and lure box render their own frames.
+# Every earlier field address is byte-identical, the generator identity is
+# unchanged, and only the appended payload plus the shifted save region change.
+# Previous cart sha256 6af073f9..., now 22270704.... Intentional rebaseline.
+# jp8.11.13: append the one-member level-8 ardu opponent row (9 B), its authored
+# reader persona/rate (2 B), and the LureText "ardu yields the clearing" string.
+# The inert out-of-area (2,2) demo script gains a flag_beta_complete If and a
+# numeric self-tp, so the generator mints flag_beta_complete at index 1 while
+# flag_door stays index 0. The text block growth shifts every later symbol
+# address; raw_map/map_data stay unchanged. The frozen migration fixture excludes
+# the new string to keep its original declaration count. Previous cart sha256
+# 22270704..., now 3ff85462.... Intentional rebaseline.
+# b2a.6: author the plural action-row label "items" (BattleActionText) so the
+# battle ITEMS row no longer borrows the singular creature-name sentinel
+# "creature21". The five-glyph string is appended to the [strings] order and
+# its one-entry BattleActionText table follows the existing appended string
+# groups; every earlier bitmap and table address is unchanged and only the
+# namespace markers after the appended group shift. Previous cart sha256
+# 3ff85462..., now 847beef8.... Intentional append-only rebaseline.
+# jp8.11.29: beta generation is now pinned to the clean cgfx-tools v0.3.0
+# release built from CreatureGathererTools 67b2036 (identity 0.3.0+gfe328be2,
+# macOS asset sha256 fe72d827...). The previous cart was produced by a dirty
+# 55501d10 build that cannot be reproduced from any clean revision (it predates
+# the atk-less creature model, Tools 421f85c), so regeneration moves the packed
+# generator_version payload and the cart hash. Previous cart sha256 847beef8...,
+# now 24948525.... Intentional rebaseline.
+expected=24948525ee326f04bc1dd8fc285742482aaad16f7950940721311bc75ea23a5c
 
 for layout in "$old_layout" "$new_layout" "$perturbed_layout"; do
     test -f "$layout" || {

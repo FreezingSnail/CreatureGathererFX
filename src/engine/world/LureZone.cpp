@@ -58,7 +58,10 @@ bool lureNth(const item::Inventory &inv, uint8_t n, uint8_t &idOut) {
     }
 }
 
-void refreshPickerRows() {
+// Returns the name-table lookups this window resolved (a lure name is two
+// parts) so the caller can declare its transition.
+uint8_t refreshPickerRows() {
+    uint8_t reads = 0;
     for (uint8_t row = 0; row < LureZone::PICKER_ROWS; ++row) {
         gPickerRowId[row] = 0;
         gPickerRowParts[row] = 0;
@@ -69,11 +72,13 @@ void refreshPickerRows() {
         uint8_t id;
         if (!lureNth(player.inventory, nth, id)) continue;
         const item::ItemName name = item::itemNameAddr(item::ItemKind::Lure, id);
+        reads = static_cast<uint8_t>(reads + name.parts);
         gPickerRowId[row] = id;
         gPickerRowParts[row] = name.parts;
         gPickerRowName[row][0] = name.part[0];
         gPickerRowName[row][1] = name.part[1];
     }
+    return reads;
 }
 
 // Keeps the cursor inside the list and the window following the cursor.
@@ -138,7 +143,7 @@ void openPicker() {
     gPickerCursor = 0;
     gPickerWindow = 0;
     gPickerCount = lureCount(player.inventory);
-    refreshPickerRows();
+    FxReadCounter::transitionExact(refreshPickerRows());
 }
 
 void closePicker() {
@@ -156,7 +161,7 @@ bool pickerDeposit() {
     gPickerFeedback = true;
     gPickerCount = lureCount(player.inventory);
     clampPicker();
-    refreshPickerRows();
+    FxReadCounter::transitionExact(refreshPickerRows());
     return true;
 }
 
@@ -173,13 +178,19 @@ void pickerInput(uint8_t buttons) {
     if (buttons & PICKER_BTN_UP) {
         if (gPickerCursor > 0) --gPickerCursor;
         gPickerFeedback = false;
+        const uint8_t before = gPickerWindow;
         clampPicker();
-        refreshPickerRows();
+        // Only a scrolled window changes which lure names are visible; an
+        // in-window cursor move keeps the cache and reads nothing.
+        if (before != gPickerWindow)
+            FxReadCounter::transitionExact(refreshPickerRows());
     } else if (buttons & PICKER_BTN_DOWN) {
         if (static_cast<uint8_t>(gPickerCursor + 1) < gPickerCount) ++gPickerCursor;
         gPickerFeedback = false;
+        const uint8_t before = gPickerWindow;
         clampPicker();
-        refreshPickerRows();
+        if (before != gPickerWindow)
+            FxReadCounter::transitionExact(refreshPickerRows());
     }
 }
 

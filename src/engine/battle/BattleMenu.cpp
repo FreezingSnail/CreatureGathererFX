@@ -2,9 +2,11 @@
 #include "BattleNameCache.hpp"
 #include "DuelView.hpp"
 
+#include "../../item/Inventory.hpp"
 #include "../../lib/Blit.hpp"
 #include "../../lib/FxReadCounter.hpp"
 #include "../../lib/Text.hpp"
+#include "../menu/InventoryMenu.hpp"
 #include <Arduboy2.h>
 #ifdef __AVR__
 // Keep this identical to the AVR placement-new shim in ModeState.hpp.
@@ -22,10 +24,12 @@ constexpr uint8_t PAGE_MASK = 0x03;
 constexpr uint8_t PAGE_OPTIONS = 0;
 constexpr uint8_t PAGE_MOVES = 1;
 constexpr uint8_t PAGE_PARTY = 2;
-// Duel page aliases. PAGE_MOVES is unused by the duel, so the wild action page
-// takes that slot; PAGE_PARTY is shared with the bench picker.
+// Duel page aliases. PAGE_MOVES is unused by the duel, so the action page
+// takes that slot; PAGE_PARTY is shared with the bench picker and PAGE_OPTIONS
+// with the pick row.
 constexpr uint8_t PAGE_DUEL_PICK = PAGE_OPTIONS;
 constexpr uint8_t PAGE_DUEL_ACTION = PAGE_MOVES;
+constexpr uint8_t PAGE_DUEL_ITEMS = 3;
 constexpr uint8_t ALLOW_GATHER = 1u << 2;
 constexpr uint8_t ALLOW_ESCAPE = 1u << 3;
 constexpr uint8_t PASS_SENT = 1u << 4;
@@ -50,25 +54,36 @@ constexpr uint8_t CREATURE_ID_COUNT = 32;
 MenuIntent noIntent() { return {MenuIntentKind::None, 0}; }
 MenuIntent intent(MenuIntentKind kind, uint8_t index = 0) { return {kind, index}; }
 
-// Wild action rows in a fixed order: GATHER then ESCAPE, each present only when
-// allowed. The cursor indexes this list; trainers offer no action page.
+// B action rows in a fixed order: GATHER (gatherable wild only), ITEMS (every
+// duel), then ESCAPE (wild only). The cursor indexes this list.
 uint8_t actionRowCount(uint8_t flags) {
-    return static_cast<uint8_t>(((flags & ALLOW_GATHER) ? 1 : 0) +
+    return static_cast<uint8_t>(1 + ((flags & ALLOW_GATHER) ? 1 : 0) +
                                 ((flags & ALLOW_ESCAPE) ? 1 : 0));
 }
 
-MenuIntent actionIntent(uint8_t flags, uint8_t row) {
-    if ((flags & ALLOW_GATHER) && row == 0) return intent(MenuIntentKind::Gather);
-    const uint8_t escapeRow = (flags & ALLOW_GATHER) ? 1 : 0;
-    if ((flags & ALLOW_ESCAPE) && row == escapeRow)
-        return intent(MenuIntentKind::Escape);
-    return noIntent();
+uint8_t actionItemRow(uint8_t flags) {
+    return (flags & ALLOW_GATHER) ? 1 : 0;
 }
 
-// Caption widths for the re-homed wild gather/escape labels (5x6 glyphs with a
-// retained leading blank cell).
+// The battle bag page reuses the world four-row cache but lives in a file
+// static: page storage is mutually exclusive with ModeState and never aliases
+// the save buffer. Names are cached on open/scroll only.
+InventoryMenu itemPicker;
+
+// Caption widths for the re-homed action labels (5x6 glyphs with a retained
+// leading blank cell). ITEMS is its own authored plural: the bag row opens a
+// multi-item list, so the singular creature-name sentinel no longer labels it.
 constexpr uint8_t gatherWidth = (6 + 1) * 5;
 constexpr uint8_t escapeWidth = (6 + 1) * 5;
+constexpr uint8_t itemWidth = (5 + 1) * 5;
+constexpr uint24_t itemLabel = items;
+
+// One action row: selected cells invert, matching the pick-row convention.
+void drawActionRow(uint8_t y, uint8_t width, uint24_t address,
+                   uint8_t labelWidth, bool selected) {
+    if (selected) Blit::fillRect(0, y, width, 8, WHITE);
+    drawText(4, y, address, labelWidth, selected ? 1 : 0);
+}
 
 } // namespace
 
@@ -139,11 +154,10 @@ MenuIntent BattleMenu::update(uint8_t buttons) {
             cursor_ = static_cast<uint8_t>((cursor_ + 1) % bounded);
 
         if (buttons & EDGE_B) {
-            if ((flags_ & (ALLOW_GATHER | ALLOW_ESCAPE)) != 0) {
-                flags_ = static_cast<uint8_t>((flags_ & ~PAGE_MASK) |
-                                              PAGE_DUEL_ACTION);
-                cursor_ = 0;
-            }
+            // Every duel offers ITEMS on the B page, so B always opens it.
+            flags_ = static_cast<uint8_t>((flags_ & ~PAGE_MASK) |
+                                          PAGE_DUEL_ACTION);
+            cursor_ = 0;
             return noIntent();
         }
         if (!(buttons & EDGE_A)) return noIntent();
@@ -168,14 +182,55 @@ MenuIntent BattleMenu::update(uint8_t buttons) {
 
     if (page == PAGE_DUEL_ACTION) {
         const uint8_t rows = actionRowCount(flags_);
-        if (rows > 1 && (buttons & (NAV_UP | NAV_DOWN))) cursor_ ^= 1;
+        if (rows > 1) {
+            if (buttons & (NAV_UP | NAV_LEFT))
+                cursor_ = cursor_ == 0 ? static_cast<uint8_t>(rows - 1)
+                                       : static_cast<uint8_t>(cursor_ - 1);
+            else if (buttons & (NAV_DOWN | NAV_RIGHT))
+                cursor_ = static_cast<uint8_t>((cursor_ + 1) % rows);
+        }
         if (buttons & EDGE_B) {
             flags_ = static_cast<uint8_t>((flags_ & ~PAGE_MASK) | PAGE_DUEL_PICK);
             cursor_ = 0;
             return noIntent();
         }
         if (!(buttons & EDGE_A)) return noIntent();
-        return actionIntent(flags_, cursor_);
+        if ((flags_ & ALLOW_GATHER) && cursor_ == 0)
+            return intent(MenuIntentKind::Gather);
+        if (cursor_ == actionItemRow(flags_)) {
+            // Opening the bag spends nothing; a refusal keeps this choice.
+            inventoryMenuOpenHeal(itemPicker, *item::battleInventory());
+            flags_ = static_cast<uint8_t>((flags_ & ~PAGE_MASK) |
+                                          PAGE_DUEL_ITEMS);
+            cursor_ = 0;
+            return noIntent();
+        }
+        if (flags_ & ALLOW_ESCAPE) return intent(MenuIntentKind::Escape);
+        return noIntent();
+    }
+
+    if (page == PAGE_DUEL_ITEMS) {
+        if (buttons & EDGE_B) {
+            // Cancel back to the action page with the ITEMS row selected.
+            flags_ = static_cast<uint8_t>((flags_ & ~PAGE_MASK) |
+                                          PAGE_DUEL_ACTION);
+            cursor_ = actionItemRow(flags_);
+            return noIntent();
+        }
+        const item::Inventory &bag = *item::battleInventory();
+        if (buttons & (NAV_UP | NAV_LEFT))
+            inventoryMenuMoveHeal(itemPicker, bag, -1);
+        else if (buttons & (NAV_DOWN | NAV_RIGHT))
+            inventoryMenuMoveHeal(itemPicker, bag, 1);
+        if (!(buttons & EDGE_A)) return noIntent();
+        const MenuIntent selected = inventoryMenuSelectHeal(itemPicker);
+        if (selected.kind != MenuIntentKind::None) {
+            // An accepted item leaves the page before the concealed interval;
+            // a refused use keeps the pick row visible like an attack refusal.
+            flags_ = static_cast<uint8_t>((flags_ & ~PAGE_MASK) | PAGE_DUEL_PICK);
+            cursor_ = 0;
+        }
+        return selected;
     }
 
     if (page == PAGE_PARTY) {
@@ -208,21 +263,31 @@ void BattleMenu::draw() const {
     // state); the menu only paints the pages it owns.
     if (page == PAGE_DUEL_PICK) return;
 
+    if (page == PAGE_DUEL_ITEMS) {
+        drawInventoryMenu(itemPicker, *item::battleInventory());
+        return;
+    }
+
     if (page == PAGE_DUEL_ACTION) {
-        // Black strip; the selected action row is a white cell with dark text,
-        // matching the pick row (drawDuelChoice) convention.
-        Blit::fillRect(0, 48, 128, 16, BLACK);
-        const bool gatherAllowed = (flags_ & ALLOW_GATHER) != 0;
-        const uint8_t escapeRow = gatherAllowed ? 1 : 0;
-        if (gatherAllowed) {
-            if (cursor_ == 0) Blit::fillRect(0, 48, 128, 8, WHITE);
-            drawText(4, 48, gather, gatherWidth, cursor_ == 0 ? normalFrame : selectedFrame);
+        // BLACK strip; the selected row is a WHITE cell with dark text. The
+        // three-row gatherable page narrows to the free left column so the
+        // player sprite (x80..127, y0..47) and HP bar stay visible.
+        const uint8_t rows = actionRowCount(flags_);
+        const uint8_t width = rows == 3 ? 80 : 128;
+        const uint8_t firstY = rows == 3 ? 40 : 48;
+        Blit::fillRect(0, firstY, width, static_cast<uint8_t>(rows * 8), BLACK);
+        uint8_t row = 0;
+        if (flags_ & ALLOW_GATHER) {
+            drawActionRow(static_cast<uint8_t>(firstY + row * 8), width, gather,
+                          gatherWidth, cursor_ == row);
+            ++row;
         }
-        if (flags_ & ALLOW_ESCAPE) {
-            if (cursor_ == escapeRow) Blit::fillRect(0, 56, 128, 8, WHITE);
-            drawText(4, 56, escape, escapeWidth,
-                     cursor_ == escapeRow ? normalFrame : selectedFrame);
-        }
+        drawActionRow(static_cast<uint8_t>(firstY + row * 8), width, itemLabel,
+                      itemWidth, cursor_ == row);
+        ++row;
+        if (flags_ & ALLOW_ESCAPE)
+            drawActionRow(static_cast<uint8_t>(firstY + row * 8), width, escape,
+                          escapeWidth, cursor_ == row);
         return;
     }
 

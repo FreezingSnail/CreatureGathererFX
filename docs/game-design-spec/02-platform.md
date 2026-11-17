@@ -8,6 +8,7 @@
 | Math | Integer/fixed-point only; no `float`/`double` on device |
 | RNG | Seeded once in setup from the hardware entropy source; xorshift16 (`randomRoll`); injectable `battle::Rng` seam for tests/parity |
 | USB | Shipping builds disable the USB/CDC stack; DOWN at boot (or hold while resetting) enters the bootloader for upload |
+| Generator | `cgfx-tools 0.3.0+gfe328be2` — the pinned [CreatureGathererTools] `v0.3.0` release recorded by `tools/toolchain.lock` (tag + per-platform SHA-256) |
 
 ## Measured budgets <span class="tag live">LIVE</span>
 

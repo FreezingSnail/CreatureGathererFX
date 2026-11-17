@@ -35,5 +35,33 @@ jobs:
     - name: Install bitmap library
       run: arduino-cli lib install ArdBitmap
 
+    # The packed FX inputs are generated, not committed, so this job is the
+    # clean-checkout generation gate: the pinned release in tools/toolchain.lock
+    # is the only generator, and its checksum is verified before use.
+    - name: Install pinned cgfx-tools
+      run: |
+        . tools/toolchain.lock
+        install_dir="$HOME/.local/bin"
+        mkdir -p "$install_dir"
+        curl --fail --location --retry 3 --connect-timeout 15 \
+          --output "$install_dir/cgfx-tools" \
+          "https://github.com/$RELEASE_REPOSITORY/releases/download/$RELEASE_TAG/cgfx-tools-linux-x64"
+        printf '%s  %s\n' "$SHA256_CGFX_TOOLS_LINUX_X64" "$install_dir/cgfx-tools" | sha256sum --check --status
+        chmod +x "$install_dir/cgfx-tools"
+        printf '%s\n' "$install_dir" >> "$GITHUB_PATH"
+
+    - name: Generate FX data from authored inputs
+      run: |
+        make gen
+        test -s dist/fxdata.bin
+        test -s fxdata/generated/manifest.json
+
+    - name: Verify manifest and generated libraries
+      run: |
+        make verify-generated
+        make test-manifest
+        make test-generated-libs
+        make test-pack-parity
+
     - name: Build FX and report flash/RAM
       run: make ram

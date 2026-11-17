@@ -142,3 +142,11 @@ persona = "anti_repeat"
 [[trainer.member]]
 slot = 0
 types = ["fire"]
+
+# First-beta boss (jp8.11.13): data/opponents.csv's appended ardu row is a
+# single level-8 member because its second/third slots are level 0. The row's
+# authoring triple repeats ardu so it stays distinct from the retired
+# three-member ardu demo row above; the persona applies to the one real member.
+[[trainer]]
+trainer_species = ["ardu", "ardu", "ardu"]
+persona = "reader"

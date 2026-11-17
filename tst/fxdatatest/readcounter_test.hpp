@@ -123,6 +123,48 @@ inline void test_readcounter(FxTest &test) {
     test.expectEq(FxReadCounter::transitionExact(1), true, F("table transition exact"));
     test.expectEq(FxReadCounter::markUpdate(), true, F("transition leaves zero update"));
 
+    // Several transitions can occur inside one update; each declaration covers
+    // exactly its own reads and a steady frame leaves the allowance untouched.
+    FxReadCounter::resetFrame();
+    FxRead::indexed24(CreatureNames::CreatureNames, 0);
+    test.expectEq(FxReadCounter::transitionExact(1), true, F("first transition exact"));
+    FxRead::indexed24(CreatureNames::CreatureNames, 1);
+    FxRead::indexed24(CreatureNames::CreatureNames, 2);
+    test.expectEq(FxReadCounter::transitionExact(1), false,
+                  F("second declaration counts only its delta"));
+    FxReadCounter::resetFrame();
+    FxRead::indexed24(CreatureNames::CreatureNames, 0);
+    FxReadCounter::transitionExact(1);
+    FxRead::indexed24(CreatureNames::CreatureNames, 1);
+    FxRead::indexed24(CreatureNames::CreatureNames, 2);
+    test.expectEq(FxReadCounter::transitionExact(2), true,
+                  F("second transition exact"));
+    test.expectEq(FxReadCounter::markUpdate(), true,
+                  F("two declared transitions stay in the update budget"));
+    test.expectEq(FxReadCounter::renderExact(0), true,
+                  F("declared transitions leave the render budget empty"));
+    FxReadCounter::resetFrame();
+    FxRead::indexed24(CreatureNames::CreatureNames, 0);
+    test.expectEq(FxReadCounter::transitionExact(0), false,
+                  F("an undeclared transition read is visible"));
+    FxReadCounter::resetFrame();
+    test.expectEq(FxReadCounter::transitionExact(0), true,
+                  F("a no-read transition is exact"));
+    test.expectEq(FxReadCounter::markUpdate(), true,
+                  F("a no-read transition stays steady"));
+
+    // The store-backed swap declares a data-dependent lookup count as one
+    // boundary; its device suite still asserts the exact totals.
+    FxReadCounter::resetFrame();
+    FxRead::indexed24(CreatureNames::CreatureNames, 0);
+    FxRead::indexed24(CreatureNames::CreatureNames, 1);
+    test.expectEq(FxReadCounter::transitionCurrent(), true,
+                  F("variable transition declared"));
+    test.expectEq(FxReadCounter::markUpdate(), true,
+                  F("variable transition leaves steady zero"));
+    test.expectEq(FxReadCounter::renderExact(0), true,
+                  F("variable transition leaves render zero"));
+
     FxReadCounter::resetFrame();
     readCreatureNameAddress(0);
     test.expectEq(FxReadCounter::count(), static_cast<uint8_t>(1),

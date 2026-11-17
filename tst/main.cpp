@@ -10,6 +10,8 @@
 #include "save_test.hpp"
 #include "item_test.hpp"
 #include "listview_test.hpp"
+#include "inventory_menu_test.hpp"
+#include "collection_menu_test.hpp"
 #include "menu_test.hpp"
 #include "chunk_test.hpp"
 #include "dialog_test.hpp"
@@ -34,6 +36,7 @@
 #include "arena_flow_test.hpp"
 #include "battle_presets_test.hpp"
 #include "battle_slim_test.hpp"
+#include "beta_area_flow_test.hpp"
 #ifdef CGFX_DUEL_BATTLE
 #include "duel_kernel_test.hpp"
 #include "duel_session_integration_test.hpp"
@@ -158,6 +161,10 @@ int main() {
     std::cout << "ItemSuite finished" << std::endl;
     ListViewSuite(tests);
     std::cout << "ListViewSuite finished" << std::endl;
+    InventoryMenuSuite(tests);
+    std::cout << "InventoryMenuSuite finished" << std::endl;
+    CollectionMenuSuite(tests);
+    std::cout << "CollectionMenuSuite finished" << std::endl;
     MenuNavSuite(tests);
     std::cout << "MenuNavSuite finished" << std::endl;
     ChunkSuite(tests);
@@ -186,6 +193,9 @@ int main() {
     ArenaFlowSuite(tests);
     BattlePresetsSuite(tests);
     battle_slim_fixture::BattleSlimScaffoldSuite(tests);
+    std::cout << "FirstBetaAreaFlowSuite" << std::endl;
+    FirstBetaAreaFlowSuite(tests);
+    std::cout << "FirstBetaAreaFlowSuite finished" << std::endl;
 #ifdef CGFX_DUEL_BATTLE
     std::cout << "DuelKernelSuite" << std::endl;
     DuelKernelSuite(tests);

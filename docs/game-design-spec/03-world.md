@@ -36,7 +36,7 @@ Growth runs on the same terminal edge as rewards: ordinary wild wins grant exper
 
 The shipping profile is the compact warp VM: one forward pass over a 128-byte slot per chunk, big-endian operands, only `If` / `TpIf` / `End`. A build validator checks flag capacity, condition values, branch encoding, forward-jump command boundaries and map coordinates before firmware compilation; zero-filled slots leave state unchanged. Three warps are authored for the first beta (door/teleport pair plus a flag-gated door). Popup text, `Msg`/`TMsg`/`SMsg` and the `GiveItem` opcode exist only under the opt-in full VM profile; the generated-content guard rejects full-only content in default builds.
 
-> **Current content status.** The generated map is a test layout — it has **no encounter tiles** and only two scripted NPC markers. The first-beta area contract (encounters, lures, deposits, boss) is authored and validated but awaits its map-authoring integration; bead `jp8.11.25` owns it. Shipping encounters today are exercised through demos and authored zone data.
+> **Current content status.** The authored first-beta area (`jp8.11.25`, closed 2026-10-19) is packed, not a test layout: every one of the 93 walkable cells in x8..23, y0..11 carries the encounter property, six active zone defs (chunks 1, 2, 33, 34, 65, 66) cover those cells with the five authored tables, the deposit box sits at (9,2), the plant plot at (14,2), and the warp pair plus flag-gated door close the area. A fresh boot can plant, deposit a lure, meet a wild encounter, rest and reach the fixed boss with no demo flags. The two scripted NPC markers remain placeholders; trainer dialogue stays outside the compact VM profile.
 
 ## Encounters
 
@@ -49,7 +49,7 @@ Wild battles trigger from world steps: after plants tick and lure decay, the ste
 
 ### First-beta tables <span class="tag cont">CONTRACT</span>
 
-`data/beta-area.toml` pins exactly five 10-slot tables (base + spirit/water/wind/earth lure groups), levels 2–5, allowed species `[0, 3, 6, 9, 10, 12, 13, 14]`. Placeholder species (21/22) and expansion ids are excluded. These authored tables become packed encounter data with the map authoring (`jp8.11.25`); the currently packed generic zone data uses the same two test chunks with level offset 0.
+`data/beta-area.toml` pins exactly five 10-slot tables (base + spirit/water/wind/earth lure groups), levels 2–5, allowed species `[0, 3, 6, 9, 10, 12, 13, 14]`; `fxdata/data/encounters.txt` packs them in contract order behind six authored zone defs (lure nibbles 1–4, inert 0/255 sentinels). Placeholder species (21/22) and expansion ids are excluded.
 
 | Table | Lure | Slots (species ids) |
 |---|---|---|

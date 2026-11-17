@@ -197,6 +197,60 @@ inline void DuelViewContractSuite(TestSuite &suite)
     test.assert(view.swap, 1, "empty mask with living bench shows SWAP");
     test.assert(view.count, 2, "WAIT plus SWAP cells");
 
+    // --- persistent GATHER cue: a gatherable wild only ----------------------
+    BattleState cue = {};
+    test.assert(duel::gatherCue(cue), false, "an ordinary wild shows no cue");
+    cue.gatherable = 1;
+    test.assert(duel::gatherCue(cue), true, "a gatherable wild shows the cue");
+    cue.trainer = 1;
+    test.assert(duel::gatherCue(cue), false, "a gatherable trainer shows no cue");
+    cue.gatherable = 0;
+    test.assert(duel::gatherCue(cue), false, "a plain trainer shows no cue");
+
+    // The cue replaces the centre content but never adds a pick cell: the
+    // six-cell worst case (five attacks + SWAP) is unchanged when gatherable.
+    BattleState cueRow = {};
+    cueRow.gatherable = 1;
+    cueRow.partyCount[0] = 2;
+    cueRow.activeSlot[0] = 0;
+    cueRow.bench[0][0].hp = 4;
+    cueRow.active[0].attackMask = 0x1F;
+    duel::buildCells(cueRow, 0, view);
+    test.assert(view.options, 5, "five attacks stay options with the cue");
+    test.assert(view.swap, 1, "the cue keeps the SWAP cell");
+    test.assert(view.wait, 0, "the cue adds no WAIT cell");
+    test.assert(view.count, 6, "the cue leaves the six-cell worst case unchanged");
+
+    // --- capture track: round(32*progress/need), a gatherable wild only ------
+    BattleState track = {};
+    test.assert(duel::gatherTrackWidth(track), 0,
+                "an ordinary wild draws no capture track");
+    track.gatherable = 1;
+    track.gather.need = 8;
+    test.assert(duel::gatherTrackWidth(track), 0, "a fresh capture has no fill");
+    track.gather.progress = 1;
+    test.assert(duel::gatherTrackWidth(track), 4, "one of eight fills 4px");
+    track.gather.progress = 5;
+    test.assert(duel::gatherTrackWidth(track), 20, "five of eight fills 20px");
+    track.gather.progress = 8;
+    test.assert(duel::gatherTrackWidth(track), 32, "a full capture fills the track");
+    track.gather.need = 10;
+    track.gather.progress = 3;
+    test.assert(duel::gatherTrackWidth(track), 10, "track rounds 9.6px up to 10px");
+    track.gather.need = 16;
+    track.gather.progress = 5;
+    test.assert(duel::gatherTrackWidth(track), 10, "five of sixteen fills 10px");
+    track.gather.need = 24;
+    track.gather.progress = 12;
+    test.assert(duel::gatherTrackWidth(track), 16, "half of twenty-four fills 16px");
+    track.trainer = 1;
+    test.assert(duel::gatherTrackWidth(track), 0,
+                "a gatherable trainer draws no capture track");
+    track.trainer = 0;
+    track.gatherable = 0;
+    test.assert(duel::gatherTrackWidth(track), 0,
+                "a non-gatherable wild draws no capture track");
+
     // --- caption classification ----------------------------------------------
     test.assert(duel::attackFeedback(duel::REL_WIN, duel::MOD_BONUS, duel::MOD_SAME),
                 Feedback::BonusWin, "bonus win");

@@ -73,6 +73,59 @@ void eraseSaves()
     }
 }
 
+// Independent Fletcher-16 oracle for the 12-byte normalized header. It
+// reimplements the bound-and-wrap rule so generation fixtures do not reuse the
+// shipping checksum path.
+uint16_t fixtureFletcher(const uint8_t bytes[12])
+{
+    uint8_t a = 0, b = 0;
+    for (uint8_t i = 0; i < 12; ++i) {
+        uint16_t n = static_cast<uint16_t>(a) + bytes[i];
+        a = n >= 255 ? static_cast<uint8_t>(n - 255) : static_cast<uint8_t>(n);
+        n = static_cast<uint16_t>(b) + a;
+        b = n >= 255 ? static_cast<uint8_t>(n - 255) : static_cast<uint8_t>(n);
+    }
+    return static_cast<uint16_t>((static_cast<uint16_t>(b) << 8) | a);
+}
+
+// Test-only fixture: stream one valid checkpoint into the erased spare sector
+// with a chosen generation, preserving every body byte and re-deriving only the
+// 14-byte header/checksum. No production hook or RAM checkpoint copy is added.
+void copyCheckpointWithGeneration(uint16_t fromBase, uint16_t toBase, uint16_t generation)
+{
+    uint8_t chunk[64];
+    for (uint16_t at = 0; at < 624; at += 64) {
+        const uint16_t count = static_cast<uint16_t>(at + 64 <= 624 ? 64 : 48);
+        flash.readBytes(fromBase + at, chunk, count);
+        if (at == 0) {
+            chunk[4] = static_cast<uint8_t>(generation);
+            chunk[5] = static_cast<uint8_t>(generation >> 8);
+            uint8_t check[12];
+            memcpy(check, chunk, sizeof(check));
+            check[9] = 1;
+            const uint16_t sum = fixtureFletcher(check);
+            chunk[12] = static_cast<uint8_t>(sum);
+            chunk[13] = static_cast<uint8_t>(sum >> 8);
+        }
+        flash.writeBytes(toBase + at, chunk, count);
+        FX::waitWhileBusy();
+    }
+}
+
+// Compare a recovered 96-byte snapshot field-by-field through the production
+// wire encoder, in bounded chunks so no second snapshot lives on the stack.
+void expectSnapshot(FxTest &test, const SaveFile &want, const SaveFile &got)
+{
+    for (uint8_t at = 0; at < 96; at += 32) {
+        uint8_t a[32], b[32];
+        saveFileEncode(want, at, a, 32);
+        saveFileEncode(got, at, b, 32);
+        for (uint8_t i = 0; i < 32; ++i)
+            test.expectEq(b[i], a[i], F("snapshot byte matches authority"));
+    }
+}
+
+
 void fresh() { eraseSaves(); storeFresh(); }
 
 SaveFile snapshot(uint16_t location = 0)
@@ -395,6 +448,168 @@ inline void test_saveControllerCaptureHPCuts(FxTest &test)
     }
 }
 
+// jp8.2.7 full-journal: a real 256-record journal (16 distinct pending slots
+// plus a PartyAssign, the largest legal pending set) still folds into one
+// explicit checkpoint without an append, and the captured party HP reaches the
+// matching record byte. Every snapshot byte and all 64 records are compared.
+inline void test_saveFullJournal(FxTest &test)
+{
+    using namespace save_fx_test_detail;
+    fresh();
+    SaveFile state = snapshot(0x0f0f);
+    uint8_t slots[16];
+    for (uint8_t i = 0; i < 16; ++i) {
+        StoreRecord record = creature(static_cast<uint16_t>(20 + i));
+        record.id = i;
+        record.attackMask = static_cast<uint8_t>(i & 0x1f);
+        record.hpEncoded = static_cast<uint8_t>(i + 2);
+        test.expectEq(storeAdd(record, slots[i]), true, F("seed full-journal slot"));
+        test.expectEq(slots[i], i, F("full-journal slot is stable"));
+    }
+    test.expectEq(storeAssign(0, slots[0], 5), true, F("full-journal party assignment"));
+    uint8_t updates[16] = {};
+    while (!journalFull())
+        for (uint8_t i = 0; i < 16 && !journalFull(); ++i) {
+            const uint8_t next = static_cast<uint8_t>(updates[i] + 1);
+            StoreRecord record = creature(static_cast<uint16_t>(20 + i + next));
+            record.id = i;
+            record.attackMask = static_cast<uint8_t>((i + next) & 0x1f);
+            record.hpEncoded = static_cast<uint8_t>(i + 2 + next);
+            test.expectEq(storeWrite(slots[i], record), true, F("fill the journal to capacity"));
+            updates[i] = next;
+        }
+    test.expectEq(journalCount(), JOURNAL_CAPACITY, F("journal holds 256 records"));
+    test.expectEq(storeWrite(slots[0], creature()), false, F("full journal refuses another append"));
+    storeSetPartyHP(0, 5); // live authority without an append
+    test.expectEq(static_cast<uint8_t>(save(state)), static_cast<uint8_t>(SaveStep::Done),
+                  F("explicit save completes at full capacity"));
+    test.expectEq(journalCount(), static_cast<uint16_t>(0), F("full journal erased"));
+    SaveFile loaded = snapshot();
+    test.expectEq(storeBoot(loaded), true, F("full-journal checkpoint boots"));
+    expectSnapshot(test, state, loaded);
+    test.expectEq(loaded.partyHP[0], 5, F("captured party HP is snapshot authority"));
+    for (uint8_t i = 0; i < 64; ++i) {
+        StoreRecord got = {};
+        test.expectEq(storeRead(i, got), true, F("full-journal record readable"));
+        if (i < 16) {
+            test.expectEq(got.id, i, F("record id matches last accepted write"));
+            test.expectEq(got.exp, static_cast<uint16_t>(20 + i + updates[i]),
+                          F("record exp matches last accepted write"));
+            test.expectEq(got.attackMask, static_cast<uint8_t>((i + updates[i]) & 0x1f),
+                          F("record mask matches last accepted write"));
+            test.expectEq(got.hpEncoded,
+                          i == 0 ? static_cast<uint8_t>(6)
+                                 : static_cast<uint8_t>(i + 2 + updates[i]),
+                          F("record hp matches checkpoint authority"));
+        } else {
+            test.expectEq(got.id, static_cast<uint8_t>(255), F("unused slot is a tombstone"));
+            test.expectEq(got.exp, static_cast<uint16_t>(0), F("tombstone exp zero"));
+            test.expectEq(got.attackMask, static_cast<uint8_t>(0), F("tombstone mask zero"));
+            test.expectEq(got.hpEncoded, static_cast<uint8_t>(0), F("tombstone hp zero"));
+        }
+    }
+}
+
+// jp8.2.7 endurance: repeated explicit saves roll over generation 0xFFFF -> 0
+// (signed 16-bit adjacency) and a refused dirty tail is cleared by the next
+// explicit save. The fixture copies a valid checkpoint through the erased spare
+// sector with a patched generation; no production hook is added.
+inline void test_saveEndurance(FxTest &test)
+{
+    using namespace save_fx_test_detail;
+    fresh();
+    SaveFile state = snapshot(0x0A0A);
+    test.expectEq(static_cast<uint8_t>(save(state)), static_cast<uint8_t>(SaveStep::Done),
+                  F("pre-wrap checkpoint"));
+    // Publish the valid checkpoint into the blank sector at generation 0xFFFF,
+    // then erase the old sector so boot selects the 0xFFFF generation.
+    copyCheckpointWithGeneration(save_store_a, save_store_b, 0xffff);
+    flash.eraseSector(32);
+    while (flash.busy()) {}
+    SaveFile loaded = snapshot();
+    test.expectEq(storeBoot(loaded), true, F("0xFFFF checkpoint boots"));
+    test.expectEq(loaded.playerLocation, 0x0A0A, F("seeded 0xFFFF checkpoint selected"));
+    // Wrap save: generation becomes 0, which boot must treat as newer.
+    loaded.playerLocation = 0x0B0B;
+    test.expectEq(static_cast<uint8_t>(save(loaded)), static_cast<uint8_t>(SaveStep::Done),
+                  F("wrap save completes"));
+    test.expectEq(saveByte(save_store_a + 4), static_cast<uint8_t>(0), F("generation low byte wraps to 0"));
+    test.expectEq(saveByte(save_store_a + 5), static_cast<uint8_t>(0), F("generation high byte wraps to 0"));
+    SaveFile after = snapshot();
+    test.expectEq(storeBoot(after), true, F("post-wrap boot"));
+    test.expectEq(after.playerLocation, 0x0B0B, F("0xFFFF -> 0 selects the wrapped checkpoint"));
+    // Repeated saves keep alternating sectors; every boot sees the newest.
+    const uint16_t locations[2] = {0x0C0C, 0x0D0D};
+    for (uint8_t i = 0; i < 2; ++i) {
+        after.playerLocation = locations[i];
+        test.expectEq(static_cast<uint8_t>(save(after)), static_cast<uint8_t>(SaveStep::Done),
+                      F("continuation save completes"));
+        SaveFile next = snapshot();
+        test.expectEq(storeBoot(next), true, F("continuation boot"));
+        test.expectEq(next.playerLocation, locations[i], F("newest generation selected"));
+    }
+    // A refused dirty tail is cleared by the next explicit save and its torn
+    // record never publishes.
+    StoreRecord guard = creature(27);
+    guard.id = 4;
+    guard.hpEncoded = 9;
+    uint8_t slot = 255;
+    test.expectEq(storeAdd(guard, slot), true, F("seed dirty-tail record"));
+    test.expectEq(static_cast<uint8_t>(save(after)), static_cast<uint8_t>(SaveStep::Done),
+                  F("dirty-tail baseline checkpoint"));
+    StoreRecord torn = creature(77);
+    torn.id = 4;
+    torn.hpEncoded = 3;
+    cutBegin(15);
+    test.expectEq(storeWrite(slot, torn), false, F("torn record stays unpublished"));
+    cutEnd();
+    test.expectEq(static_cast<uint8_t>(save(after)), static_cast<uint8_t>(SaveStep::Done),
+                  F("explicit save clears the dirty tail"));
+    test.expectEq(journalCount(), static_cast<uint16_t>(0), F("dirty tail cleared"));
+    SaveFile clean = snapshot();
+    test.expectEq(storeBoot(clean), true, F("endurance checkpoint boots"));
+    test.expectEq(clean.playerLocation, locations[1], F("endurance location retained"));
+    StoreRecord got = {};
+    test.expectEq(storeRead(slot, got), true, F("dirty-tail record readable"));
+    test.expectEq(got.exp, guard.exp, F("torn record never publishes"));
+    test.expectEq(got.hpEncoded, guard.hpEncoded, F("torn HP byte never publishes"));
+    test.expectEq(storeInstanceHP(got), static_cast<uint8_t>(guard.hpEncoded - 1),
+                  F("torn HP value never publishes"));
+}
+
+// jp8.2.7 HP cut-matrix: a growth/evolution StoreRecord update survives a cut
+// on either side of the checkpoint commit without inventing a heal. The real
+// authored edge is species 0 -> 1 at level 8; KO stays KO and exp is exact.
+inline void test_saveEvolutionPublicationCut(FxTest &test)
+{
+    using namespace save_fx_test_detail;
+    const int32_t cuts[] = {4719, 4720};
+    for (uint8_t c = 0; c < sizeof(cuts) / sizeof(cuts[0]); ++c) {
+        fresh();
+        SaveFile state = snapshot(0x2020);
+        StoreRecord edge = creature(levelExpThreshold(8));
+        edge.id = 0;
+        edge.attackMask = 2;
+        edge.hpEncoded = 1; // KO
+        uint8_t slot = 255;
+        test.expectEq(storeAdd(edge, slot), true, F("seed evolution candidate"));
+        test.expectEq(static_cast<uint8_t>(save(state)), static_cast<uint8_t>(SaveStep::Done),
+                      F("evolution baseline checkpoint"));
+        test.expectEq(storeEvolve(slot), true, F("evolution journal update accepted"));
+        cutBegin(cuts[c]);
+        save(state);
+        cutEnd();
+        SaveFile loaded = snapshot();
+        test.expectEq(storeBoot(loaded), true, F("evolution cut reboots"));
+        StoreRecord got = {};
+        test.expectEq(storeRead(slot, got), true, F("evolved record readable"));
+        test.expectEq(got.id, 1, F("species update survives the publication cut"));
+        test.expectEq(storeInstanceHP(got), 0, F("growth does not heal a KO instance"));
+        test.expectEq(got.exp, levelExpThreshold(8), F("growth keeps exact experience"));
+        test.expectEq(storeBootFailed(), false, F("evolution cut stays recoverable"));
+    }
+}
+
 inline void test_saveCollectionCapacity(FxTest &test)
 {
     using namespace save_fx_test_detail;
@@ -423,18 +638,24 @@ inline void test_saveCheckpointCuts(FxTest &test)
 {
     using namespace save_fx_test_detail;
     // Byte-write-budget boundaries of one save with the real device write-limit
-    // seam (the erase completes atomically, then the budget is reduced):
+    // seam (the erase completes atomically, then the budget is reduced), one per
+    // observable publication phase:
     //   0    before the inactive erase; nothing written
-    //   4096 inactive erase complete; no header yet
+    //   4096 inactive erase complete; no snapshot yet
+    //   4144 snapshot half written (48 of the first 64-byte chunk)
+    //   4192 snapshot complete; no records yet
     //   4608 mid record streaming; no header yet
-    //   4718 header written, commit bytes absent
+    //   4704 records complete; no header yet
+    //   4710 header half written (6 of 14 bytes)
+    //   4718 header complete, commit bytes absent
     //   4719 one of two commit bytes present
     //   4720 commit complete -> new checkpoint authoritative
-    //   4730 cleanup-bit clear blocked after the journal erase
+    //   4730 candidate read-back passed; partial journal erase blocks cleanup
     //   8816 journal erased, cleanup bit still pending
-    //   8817 cleanup bit cleared
+    //   8817 cleanup bit cleared and verified
     // (The 4608 below is the separate FIRST-save case, not prior-checkpoint 4608.)
-    const int32_t cuts[] = {0, 4096, 4608, 4718, 4719, 4720, 4730, 8816, 8817};
+    const int32_t cuts[] = {0, 4096, 4144, 4192, 4608, 4704, 4710, 4718,
+                            4719, 4720, 4730, 8816, 8817};
     const StoreRecord expected = creature();
     const uint8_t emptyMask = 0;
     uint8_t expectedSnapshot[96];
@@ -585,6 +806,72 @@ inline void test_savePlayerStore(FxTest &test)
     test.expectEq(player.creatureHPs[2], 0, F("empty entry restores HP zero"));
 }
 
+// jp8.2.7 integration: the one bag and the party share the 96-byte snapshot, so
+// a cut before the commit recovers the previous bag AND party HP together, and
+// a committed cut recovers both new values together. No mixed pair.
+inline void test_saveInventoryParty(FxTest &test)
+{
+    using namespace save_fx_test_detail;
+    const int32_t cuts[] = {4719, 4720};
+    for (uint8_t c = 0; c < sizeof(cuts) / sizeof(cuts[0]); ++c) {
+        fresh();
+        player = Player();
+        player.basic();
+        SaveController::seedParty();
+        item::inventoryClear(player.inventory);
+        item::keyItemsClear(player.keyItems);
+        item::inventoryAdd(player.inventory, item::ItemKind::Lure, item::lureId(0, 1), 2);
+        item::inventoryAdd(player.inventory, item::ItemKind::Consumable, 3, 4);
+        item::keyItemUnlock(player.keyItems, 2);
+        const uint8_t fullHP = player.party[0].hp;
+        player.creatureHPs[0] = static_cast<uint8_t>(fullHP - 3);
+        player.creatureHPs[1] = 0;
+        gameState.state = GameState_t::WORLD;
+        SaveController::begin(GameState_t::WORLD);
+        for (uint16_t i = 0; i < 256 && saveInProgress(); ++i) {
+            SaveController::advance();
+            FX::waitWhileBusy();
+        }
+        test.expectEq(gameState.state, GameState_t::WORLD,
+                      F("baseline pair checkpoint completes"));
+        test.expectEq(SaveController::load(), true, F("baseline pair reloads"));
+        // Build the newer pair in live RAM only; no store append is needed.
+        item::inventoryClear(player.inventory);
+        item::keyItemsClear(player.keyItems);
+        item::inventoryAdd(player.inventory, item::ItemKind::Lure, item::lureId(1, 2), 7);
+        item::inventoryAdd(player.inventory, item::ItemKind::Consumable, 5, 6);
+        item::keyItemUnlock(player.keyItems, 6);
+        player.creatureHPs[0] = fullHP;
+        player.creatureHPs[1] = 3;
+        cutBegin(cuts[c]);
+        SaveController::begin(GameState_t::WORLD);
+        for (uint16_t i = 0; i < 256 && saveInProgress(); ++i) {
+            SaveController::advance();
+            FX::waitWhileBusy();
+        }
+        cutEnd();
+        player = Player();
+        test.expectEq(SaveController::load(), true, F("pair checkpoint reloads after the cut"));
+        const bool committed = cuts[c] >= 4720;
+        test.expectEq(item::inventoryCount(player.inventory, item::ItemKind::Lure,
+                                           item::lureId(committed ? 1 : 0, committed ? 2 : 1)),
+                      static_cast<uint8_t>(committed ? 7 : 2),
+                      F("bag follows the same publication authority"));
+        test.expectEq(item::inventoryCount(player.inventory, item::ItemKind::Consumable,
+                                           committed ? 5 : 3),
+                      static_cast<uint8_t>(committed ? 6 : 4),
+                      F("consumables agree with the bag"));
+        test.expectEq(item::keyItemUnlocked(player.keyItems, committed ? 6 : 2), true,
+                      F("key bit agrees with the bag"));
+        test.expectEq(player.creatureHPs[0],
+                      static_cast<uint8_t>(committed ? fullHP : fullHP - 3),
+                      F("party HP agrees with the same authority"));
+        test.expectEq(player.creatureHPs[1], static_cast<uint8_t>(committed ? 3 : 0),
+                      F("second member HP agrees"));
+        test.expectEq(storeBootFailed(), false, F("pair cut stays recoverable"));
+    }
+}
+
 inline void test_saveStatusRender(FxTest &test)
 {
     using namespace save_fx_test_detail;
@@ -660,6 +947,140 @@ inline void test_saveFrameBudget(FxTest &test)
     budget.expectWithinBudget(test, F("worst save frame <= 19230 us"));
 }
 
+// jp8.11.23: a failed explicit checkpoint is recoverable on the real FX save
+// flash. The failed screen keeps the last published checkpoint authoritative;
+// fresh B returns to WORLD without claiming persistence, fresh A retries the
+// live snapshot, a held button never retries, busy frames ignore A/B, and a cut
+// after the commit returns the checkpoint that really was published. There is
+// no automatic save: every sequence here starts from an explicit begin().
+// One reusable snapshot keeps this frame small; test_save's painted stack has
+// little room for several 96-byte locals on top of the save call chain.
+inline void test_saveFailureRecovery(FxTest &test)
+{
+    using namespace save_fx_test_detail;
+    SaveFile base = snapshot(0x1111);
+    auto clearEdges = []() {
+        arduboy.currentButtonState = 0;
+        arduboy.previousButtonState = 0;
+    };
+    auto drain = []() {
+        for (uint16_t i = 0; i < 256 && saveInProgress(); ++i) {
+            SaveController::advance();
+            FX::waitWhileBusy();
+        }
+    };
+    auto failWithCut = [&](int32_t cut) {
+        cutBegin(cut);
+        SaveController::begin(GameState_t::WORLD);
+        drain();
+        cutEnd();
+    };
+
+    fresh();
+    clearEdges();
+    test.expectEq(static_cast<uint8_t>(save(base)),
+                  static_cast<uint8_t>(SaveStep::Done),
+                  F("failure-recovery baseline checkpoint"));
+
+    // Cut before publication: the spare erase consumes the budget, no snapshot
+    // or header is written, and Verify fails while the old checkpoint holds.
+    gameState.state = GameState_t::WORLD;
+    gameState.playerLocation = 0x2222;
+    failWithCut(4096);
+    test.expectEq(saveInProgress(), false, F("pre-publication cut reaches Failed"));
+    test.expectEq(gameState.state, GameState_t::SAVING, F("failure keeps the screen"));
+
+    // Fresh B returns to WORLD and leaves live RAM alone; a reload returns the
+    // old checkpoint, so cancellation never claims persistence.
+    arduboy.currentButtonState = B_BUTTON;
+    arduboy.previousButtonState = 0;
+    SaveController::advance();
+    clearEdges();
+    test.expectEq(gameState.state, GameState_t::WORLD, F("fresh B returns to the world"));
+    test.expectEq(gameState.playerLocation, static_cast<uint16_t>(0x2222),
+                  F("cancel leaves live RAM alone"));
+    test.expectEq(SaveController::load(), true, F("cancel reloads the last checkpoint"));
+    test.expectEq(gameState.playerLocation, static_cast<uint16_t>(0x1111),
+                  F("cancel does not claim persistence"));
+
+    // Fresh A retries the same live RAM; the retried checkpoint reloads the
+    // location, party HP and bag exactly. Held A is not a fresh edge.
+    fresh();
+    test.expectEq(static_cast<uint8_t>(save(base)),
+                  static_cast<uint8_t>(SaveStep::Done),
+                  F("retry baseline checkpoint"));
+    gameState.state = GameState_t::WORLD;
+    gameState.playerLocation = 0x3333;
+    player.basic();
+    SaveController::seedParty();
+    player.creatureHPs[0] = 0;
+    item::inventoryClear(player.inventory);
+    item::inventoryAdd(player.inventory, item::ItemKind::Lure, item::lureId(0, 1), 2);
+    failWithCut(4096);
+    test.expectEq(gameState.state, GameState_t::SAVING, F("retry case failed on screen"));
+    arduboy.currentButtonState = A_BUTTON;
+    arduboy.previousButtonState = 0;
+    SaveController::advance();
+    test.expectEq(saveInProgress(), true, F("fresh A restarts the sequence"));
+    arduboy.previousButtonState = A_BUTTON; // held: no fresh edge
+    drain();
+    clearEdges();
+    test.expectEq(saveInProgress(), false, F("held A does not restart the retry"));
+    test.expectEq(gameState.state, GameState_t::WORLD, F("retry completes into the world"));
+    test.expectEq(SaveController::load(), true, F("retried checkpoint reloads"));
+    test.expectEq(gameState.playerLocation, static_cast<uint16_t>(0x3333),
+                  F("retry publishes the live location"));
+    test.expectEq(player.creatureHPs[0], static_cast<uint8_t>(0),
+                  F("retry keeps the live KO HP"));
+    test.expectEq(item::inventoryCount(player.inventory, item::ItemKind::Lure,
+                                       item::lureId(0, 1)),
+                  static_cast<uint8_t>(2), F("retry keeps the live bag"));
+
+    // Cut after publication: the commit is authoritative before the cleanup
+    // fails, so cancelling returns that checkpoint rather than the older one.
+    fresh();
+    base.playerLocation = 0x4444;
+    test.expectEq(static_cast<uint8_t>(save(base)),
+                  static_cast<uint8_t>(SaveStep::Done),
+                  F("post-publication baseline checkpoint"));
+    gameState.state = GameState_t::WORLD;
+    gameState.playerLocation = 0x5555;
+    failWithCut(4730);
+    test.expectEq(gameState.state, GameState_t::SAVING,
+                  F("post-publication cut reports Failed"));
+    arduboy.currentButtonState = B_BUTTON;
+    arduboy.previousButtonState = 0;
+    SaveController::advance();
+    clearEdges();
+    test.expectEq(gameState.state, GameState_t::WORLD,
+                  F("post-publication cancel returns"));
+    test.expectEq(SaveController::load(), true,
+                  F("post-publication checkpoint loads"));
+    test.expectEq(gameState.playerLocation, static_cast<uint16_t>(0x5555),
+                  F("cancel keeps the checkpoint published before failure"));
+
+    // Busy frames suppress A/B: forcing a fresh edge every frame cannot restart
+    // or cancel the in-flight sequence, which still completes exactly once.
+    fresh();
+    gameState.state = GameState_t::WORLD;
+    gameState.playerLocation = 0x6666;
+    SaveController::begin(GameState_t::WORLD);
+    for (uint16_t frames = 0; saveInProgress() && frames < 256; ++frames) {
+        test.expectEq(gameState.state, GameState_t::SAVING,
+                      F("busy save owns the state"));
+        arduboy.currentButtonState = (frames & 1) == 0 ? A_BUTTON : B_BUTTON;
+        arduboy.previousButtonState = 0;
+        SaveController::advance();
+        FX::waitWhileBusy();
+    }
+    clearEdges();
+    test.expectEq(saveInProgress(), false, F("busy input cannot restart or cancel"));
+    test.expectEq(gameState.state, GameState_t::WORLD, F("busy save completes"));
+    test.expectEq(SaveController::load(), true, F("busy-save checkpoint loads"));
+    test.expectEq(gameState.playerLocation, static_cast<uint16_t>(0x6666),
+                  F("busy save published the live state"));
+}
+
 inline void test_save(FxTest &test)
 {
     test_saveJournalLayout(test);
@@ -669,7 +1090,9 @@ inline void test_save(FxTest &test)
     test_saveJournalPublication(test);
     test_savePlayerStore(test);
     test_saveStatusRender(test);
+    test_saveInventoryParty(test);
     test_saveFrameBudget(test);
+    test_saveFailureRecovery(test);
 }
 
 // Interrupted-write "cut" proofs, split into a co-located sketch
@@ -681,4 +1104,7 @@ inline void test_save_cuts(FxTest &test)
     test_saveBoxedHPPublicationCuts(test);
     test_saveControllerCaptureHPCuts(test);
     test_saveCheckpointCuts(test);
+    test_saveFullJournal(test);
+    test_saveEndurance(test);
+    test_saveEvolutionPublicationCut(test);
 }

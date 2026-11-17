@@ -7,10 +7,15 @@
 
 #include <string.h>
 
-#include "duel_session_integration_test.hpp"
+#include "fxtest.hpp"
+#include "duel_session_fixture.hpp"
+#include "src/creature/LevelCurve.hpp"
+#include "src/engine/battle/BattleFlow.hpp"
+#include "src/lib/ReadData.hpp"
+#include "src/save/Compaction.hpp"
 
 namespace win_exp_test_detail {
-using namespace duel_session_test_detail;
+using namespace duel_session_fixture;
 
 // Install a real three-member beta party as stable store instances (slots 0..2)
 // and mirror them into the live Player. `exps` pins each member's stored

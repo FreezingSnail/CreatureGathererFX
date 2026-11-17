@@ -26,7 +26,10 @@ marker. Set `ARDENS=/path/to/Ardens` to enable this device-test stage; without i
 skip. An Ardens binary without `captureserial` is blocked rather than treated as a pass (the
 installed 0.24.4 bundle is incompatible). CI builds the pinned headless Ardens source with
 `captureserial`; use that runner for device-suite execution rather than a graphical/manual Ardens
-path.
+path. When `ARDENS` is not passed, the Makefile default resolves
+`$HOME/code/arduboy/Ardens/build/Ardens.app/Contents/MacOS/Ardens` first, then `Ardens` on `PATH`;
+that build-directory runner is the supported local headless binary on this host, while
+`/Applications/Ardens.app` (0.24.4) has no `captureserial`.
 
 `cgfx-tools` must be available on `PATH`. Run `make doctor` to verify the selected executable.
 

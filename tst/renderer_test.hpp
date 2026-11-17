@@ -9,6 +9,7 @@
 #include "../src/save/FlashBackend.hpp"
 #include "../src/save/SaveController.hpp"
 #include "../src/lib/MoveIds.hpp"
+#include "../src/plants/PlantGamestate.hpp"
 
 namespace renderer_test_detail {
 inline uint16_t litPixels()
@@ -96,6 +97,31 @@ inline void PpGlyphPixelEquivalenceTest(TestSuite &suite)
 
     suite.addTest(test);
 }
+}
+
+inline void PocketPropsFrameTest(TestSuite &suite)
+{
+    Test test = Test(__func__);
+    // The authored plot at GID 551 selects its frame from the RAM plant stage;
+    // the deposit box at GID 545 uses the appended frame 4. Every other tile
+    // keeps the shared tile sheet.
+    plants = PlantGameState{};
+    test.assert(pocketPropsFrame(551, 0), static_cast<uint8_t>(0),
+                "empty plot selects pocketProps frame 0");
+    for (uint8_t stage = 1; stage <= 3; ++stage) {
+        plants.plantStages.increment(FIRST_BETA_PLOT_INDEX);
+        test.assert(pocketPropsFrame(551,
+                                     plants.plantStages.getStage(FIRST_BETA_PLOT_INDEX)),
+                    stage, "plot frame tracks the RAM plant stage");
+    }
+    test.assert(pocketPropsFrame(545, 0), static_cast<uint8_t>(4),
+                "lure box selects pocketProps frame 4");
+    test.assert(pocketPropsFrame(550, 0), POCKET_PROPS_NONE,
+                "other tiles keep the shared tile sheet");
+    test.assert(pocketPropsFrame(0, 0), POCKET_PROPS_NONE,
+                "empty GID keeps the shared tile sheet");
+    plants = PlantGameState{};
+    suite.addTest(test);
 }
 
 inline void Arduboy2NativeRendererTest(TestSuite &suite)
@@ -200,6 +226,7 @@ inline void NativeRendererSuite(TestRunner &runner)
 {
     TestSuite suite("Native Arduboy2Base renderer integration");
     Arduboy2NativeRendererTest(suite);
+    PocketPropsFrameTest(suite);
     renderer_test_detail::PpGlyphPixelEquivalenceTest(suite);
     NativeFrameSavePathTest(suite);
     runner.addTestSuite(suite);

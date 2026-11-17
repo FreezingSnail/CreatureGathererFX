@@ -48,10 +48,11 @@ order = [
   "battleCannotAct", "battleHurtItself", "battleEnters", "battleCannotEscape",
   "battlePass", "battleTurnEnd",
   "lureTextPrompt", "lureTextSet", "lureTextEmpty", "lureTextGathered",
-  "lureTextFull", "lureTextExpired", "lureTextFooter",
+  "lureTextFull", "lureTextExpired", "lureTextBetaComplete", "lureTextFooter",
   "lureTextIntroTitle", "lureTextIntroSet", "lureTextIntroBias",
   "lureTextIntroSteps", "lureTextIntroGather", "lureTextIntroNoSave",
   "duelBonusWin", "duelBonusLose", "duelWeakWin", "duelWeakLose",
   "duelRpsWin", "duelRpsLose", "duelTrade", "duelDefaultWin",
-  "duelSwap", "duelWait", "duelDraw", "duelVs", "duelRound"
+  "duelSwap", "duelWait", "duelDraw", "duelVs", "duelRound",
+  "items"
 ]

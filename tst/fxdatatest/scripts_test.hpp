@@ -33,8 +33,12 @@ inline uint16_t readScriptTextCount() {
 }
 
 inline void expectRealScriptSlot(FxTest &test, uint8_t *slot) {
+    // Two authored flag clauses: flag_door ((1,1)->(0,0)) then
+    // flag_beta_complete (tp 2 2 2 2), sharing the slot's closing End.
     static const uint8_t expected[] PROGMEM = {
-        5, 0, 0, 0, 1, 9, 4, 0, 1, 0, 1, 0, 0, 0, 0, 255,
+        5, 0, 0, 0, 1, 9, 4, 0, 1, 0, 1, 0, 0, 0, 0,
+        5, 0, 0, 1, 1, 9, 4, 0, 2, 0, 2, 0, 2, 0, 2,
+        255,
     };
     const uint24_t address = Chunk::scriptSlotAddr(scripts, 0);
     uint8_t addressBytes[sizeof(address)];
@@ -65,7 +69,9 @@ inline void expectRealScriptSlot(FxTest &test, uint8_t *slot) {
     test.expectEq(slot[12], 0, F("TpIf target x low byte"));
     test.expectEq(slot[13], 0, F("TpIf target y high byte"));
     test.expectEq(slot[14], 0, F("TpIf target y low byte"));
-    test.expectEq(slot[15], static_cast<uint8_t>(VmOpcode::End),
+    test.expectEq(slot[15], static_cast<uint8_t>(VmOpcode::If),
+                  F("real script chains boss-complete clause"));
+    test.expectEq(slot[30], static_cast<uint8_t>(VmOpcode::End),
                   F("real script terminates"));
 }
 

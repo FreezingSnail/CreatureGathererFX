@@ -274,3 +274,55 @@ retained only as a **superseded, unadopted design direction**; current main has 
 claim every outcome the experiment targeted is proved: the durable-collection / party / HP / exact-XP
 outcome comparison is jp8.2.14's own deliverable (see `proposed-bead-updates.json`). No resource
 figure from the draft is current.
+
+## Interruption and endurance acceptance (2026-11-16, jp8.2.7)
+
+The post-integration matrix cuts the byte-write budget once per observable publication phase. Host
+`CheckpointCutTest` and device `test_saveCheckpointCuts` cut on the same seams and reboot into a
+complete comparison of the 96-byte snapshot and all 64 records through the wire encoder, not just
+generation/count:
+
+| Budget | Observable state at the cut |
+| --- | --- |
+| 0 | Nothing written; prior checkpoint plus its journal remain authoritative |
+| 4096 | Inactive sector erased; no snapshot yet |
+| 4144 | Snapshot half written (48 of the first 64-byte chunk) |
+| 4192 | Snapshot complete; no record block yet |
+| 4608 | Mid record streaming; no header |
+| 4704 | All 64 records written; no header |
+| 4710 | Header half written (6 of 14 bytes) |
+| 4718 | Header complete; commit bytes absent |
+| 4719 | First commit byte only |
+| 4720 | Commit complete; new checkpoint authoritative |
+| 4730 | Candidate read-back passed; partial journal erase blocks cleanup |
+| 8816 | Journal blank; cleanup bit still pending |
+| 8817 | Cleanup bit cleared and verified |
+
+The device seam is the real FX write-limit wrapper; the host seam is the equivalent fake. Both
+retain the pending barrier: a cut before the commit falls back to the previous checkpoint plus the
+valid journal prefix.
+
+Full journal: host `FullJournalSaveTest` and device `test_saveFullJournal` fill a real 256-record
+journal with 16 distinct pending slots and one PartyAssign (the largest legal pending set; a 17th
+distinct slot is refused before append), refuse the next append, and then complete an explicit save
+with no capture append. Captured party HP is folded into the matching spare-sector record byte, and
+every snapshot and record byte is compared after reboot. A refused dirty tail is cleared by the next
+explicit save without publishing the torn record.
+
+Endurance: host `GenerationWrapTest` and device `test_saveEndurance` publish a valid checkpoint at
+generation 0xFFFF through a copy fixture, prove the 0xFFFF -> 0 save is selected by signed 16-bit
+adjacency, continue alternating sectors, and clear a refused dirty tail with an explicit save.
+
+HP authority (jp8.11.22): `BoxedInstanceHPTest`, `BoxedHPPublicationCutsTest`,
+`SaveControllerCaptureHPCutsTest`, `EvolutionPublicationCutTest` (host) and
+`test_saveBoxedInstanceHP`, `test_saveBoxedHPPublicationCuts`, `test_saveControllerCaptureHPCuts`,
+`test_saveEvolutionPublicationCut` (device) prove encoded nonzero record HP over an older snapshot,
+legacy zero-byte records leaving snapshot/PartyAssign HP authoritative, a later PartyAssign over
+record HP, outgoing-HP mirror then reassignment, growth/evolution record updates, and cuts on both
+sides of the commit. Growth/evolution never heals a KO instance.
+
+Player integration: `PlayerBagPersistenceTest`, `PlayerStoreIntegrationTest` and
+`InventoryPartyCheckpointTest` (host), plus `test_savePlayerStore` and `test_saveInventoryParty`
+(device), reload the bag, key bits, party identity and party HP from the same snapshot. A cut before
+the commit recovers the previous bag and party together; a committed cut recovers both new values
+together.

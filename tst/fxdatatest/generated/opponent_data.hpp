@@ -124,5 +124,10 @@ const OpponentSeed opponentSeeds[] PROGMEM = {
         { 29, 31, 3 },
         { 30, 31, 13 },
     },
+    {
+        { 31, 8, 29 },
+        { 31, 0, 0 },
+        { 31, 0, 0 },
+    },
 };
-constexpr uint8_t opponentSeedCount = 24;
+constexpr uint8_t opponentSeedCount = 25;

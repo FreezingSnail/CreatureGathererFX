@@ -138,13 +138,25 @@ void advance()
     }
 
     const SaveStep step = saveStepAdvance(saveState);
-    if (step == SaveStep::Done || step == SaveStep::Failed) {
-        // Both terminal steps end the flash-busy window; failure keeps the
-        // status screen, but music must not stay muted behind it.
+    if (step == SaveStep::Failed) {
+        // saveStepAdvance only reports Failed after its flash-busy gate, so the
+        // failure screen and these fresh edges never race an erase or program.
+        // Failure keeps the status screen, but music must not stay muted
+        // behind it. A retries the live snapshot; B returns without claiming
+        // persistence, so a held button produces no edge and cannot repeat or
+        // cancel a save that is still in flight.
         audio::resume();
+        if (arduboy.justPressed(A_BUTTON)) {
+            begin(GameState_t::WORLD);
+        } else if (arduboy.justPressed(B_BUTTON)) {
+            savingStarted = false;
+            gameState.state = stateBeforeSaving;
+        }
+        return;
     }
     if (step == SaveStep::Done) {
         savingStarted = false;
+        audio::resume();
         gameState.state = stateBeforeSaving;
     }
 }

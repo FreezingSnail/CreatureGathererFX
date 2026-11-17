@@ -19,6 +19,17 @@ images/*.png, text ───────┘        │
 - Sprites/fonts regenerate natively from `fxsprites.toml`; the string table renders into a packed glyph sheet.
 - `make verify-generated` checks the manifest (inputs, outputs, hashes) without mutating; `test-pack-parity` pins the packed image SHA-256; `test-manifest` / `test-generated-libs` prove the packed bytes match the published header.
 - Generated files are never hand-edited; change the JSON/CSV/TOML/PNG source and regenerate, staging the generated set as one commit.
+- The generator itself is pinned: `tools/toolchain.lock` names the `cgfx-tools` release tag plus the macOS-arm64 and Linux-x64 SHA-256 values; CI downloads that exact binary, verifies the checksum, then generates. The accepted beta artifacts were produced by `cgfx-tools 0.3.0+gfe328be2`.
+
+## CI coverage
+
+| Workflow | Trigger | Coverage |
+|---|---|---|
+| `build.yml` | every push | Installs the pinned `cgfx-tools` release from `tools/toolchain.lock` (SHA-256 verified), runs `make gen` from authored inputs, then `verify-generated`, `test-manifest`, `test-generated-libs`, `test-pack-parity` and `make ram` for the whole-image flash/static-RAM report |
+| `uint_tests.yml` | every push | Host C++ suites (`make test`) and ScriptVM suites (`make testvm`) |
+| `fxtest.yml` | manual dispatch | Builds headless Ardens from the pinned source revision, then runs every device suite through `make fxtest-headless` |
+
+The device job is an explicit **required checkpoint** for the one-area beta release gate (`jp8.11.16`), not automatic per-push coverage: building Ardens from source is too expensive for every push. No CI job may report a device pass when Ardens is absent, and CI does not replace the local `make final-gate ARDENS=…` integration gate.
 
 ## Key make targets
 

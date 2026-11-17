@@ -6,7 +6,9 @@
 // per-phase update+render+FX::display frame timing (newChoice / conceal / result
 // / terminal), a real both-switch round, incoming-KO and ordinary-KO HP1 cases,
 // and the save chain. The stock test_stack loop stops after the first false
-// advance, so it is not session proof; this suite closes that gap.
+// advance, so it is not session proof; this suite closes that gap. The ordinary
+// session fixtures come from duel_session_fixture.hpp (the boss-only session
+// sketch no longer carries them).
 
 #if !defined(CGFX_DUEL_BATTLE) || !defined(CGFX_BATTLE_COMPACT_RESULT) || \
     !defined(CGFX_BATTLE_NO_FACTS)
@@ -18,9 +20,12 @@
 
 #include "fxtest.hpp"
 #include "frame_budget_test.hpp"
-#include "duel_session_integration_test.hpp"
 #include "stack_test.hpp"
+#include "duel_session_fixture.hpp"
 #include "generated/opponent_data.hpp"
+#include "src/engine/battle/BattleFlow.hpp"
+#include "src/engine/battle/BattlePresets.hpp"
+#include "src/engine/battle/BattleScene.hpp"
 #include "src/lib/ReadData.hpp"
 
 namespace duel_resource_detail {
@@ -50,7 +55,6 @@ uint8_t worstPhase;
 
 inline uint8_t phaseOf()
 {
-    using namespace duel_session_test_detail;
     if (gameState.state != GameState_t::BATTLE) return PH_TERMINAL;
     if (!battleSession().isActive() || battleSession().exitReady())
         return PH_TERMINAL;
@@ -73,7 +77,6 @@ inline void record(uint8_t phase, uint32_t dt)
 // menu arm.
 inline void renderFrame()
 {
-    using namespace duel_session_test_detail;
     battle::BattleScene::draw(battleSession().state());
     if (battleSession().duelFeedbackActive())
         modeState.battle.ui.feedback.draw();
@@ -86,7 +89,6 @@ inline void renderFrame()
 // the BATTLE game state: after finishBattle the battle union is inactive World.
 inline void timeFlowFrame(uint8_t edges)
 {
-    using namespace duel_session_test_detail;
     const uint8_t phase = phaseOf();
     const unsigned long t0 = micros();
     BattleFlow::update(edges);
@@ -100,7 +102,6 @@ inline void timeFlowFrame(uint8_t edges)
 // Timed trainer setup transition (beginTrainer + first-choice commit).
 inline void beginTrainerTimed(uint8_t trainerId)
 {
-    using namespace duel_session_test_detail;
     const unsigned long t0 = micros();
     battleSession().beginTrainer(trainerId);
     const uint32_t dt = static_cast<uint32_t>(micros() - t0);
@@ -110,7 +111,6 @@ inline void beginTrainerTimed(uint8_t trainerId)
 // Drive a submitted round through BattleFlow until the next Choice/terminal.
 inline void driveRound()
 {
-    using namespace duel_session_test_detail;
     for (uint16_t i = 0; i < 400; ++i) {
         if (gameState.state != GameState_t::BATTLE) break;
         if (!battleSession().isActive() || battleSession().exitReady() ||
@@ -124,7 +124,7 @@ inline void driveRound()
 
 inline void duel_resource_test(FxTest &test)
 {
-    using namespace duel_session_test_detail;
+    using namespace duel_session_fixture;
     using namespace duel_resource_detail;
 
     const uint8_t WaterAuthored = static_cast<uint8_t>(Type::WATER);

@@ -16,6 +16,7 @@
 #include "../src/item/Inventory.hpp"
 #include "../src/item/KeyItems.hpp"
 #include "../src/plants/PlantGamestate.hpp"
+#include <Arduboy2.h>
 
 namespace save_test_detail {
 inline SaveFile snapshot(uint16_t location=0) {
@@ -28,6 +29,24 @@ inline SaveStep save(SaveFile &state) {
 }
 inline StoreRecord creature(uint16_t exp=27) { return {0,exp,2,{0,0,0},0}; }
 inline void fresh() { flashFakeReset();storeFresh(); }
+// Compare one recovered checkpoint against an expected snapshot and all 64
+// records through the production wire encoder, so every published byte is
+// covered rather than only generation/count.
+inline void expectCheckpoint(Test &test,const SaveFile &expected,const StoreRecord records[64]) {
+    SaveFile loaded=snapshot();
+    test.assert(storeBoot(loaded),true,"checkpoint boots after the cut");
+    uint8_t want[96],got[96];
+    saveFileEncode(expected,0,want,96);saveFileEncode(loaded,0,got,96);
+    for(uint8_t i=0;i<96;++i) test.assert(got[i],want[i],"snapshot byte is the published authority");
+    for(uint8_t i=0;i<64;++i) {
+        StoreRecord have={};
+        test.assert(storeRead(i,have),true,"record slot readable");
+        test.assert(have.id,records[i].id,"record id matches authority");
+        test.assert(have.exp,records[i].exp,"record exp matches authority");
+        test.assert(have.attackMask,records[i].attackMask,"record mask matches authority");
+        test.assert(have.hpEncoded,records[i].hpEncoded,"record hp byte matches authority");
+    }
+}
 
 // Independent Fletcher-16 oracle for the 12-byte normalized header. Reimplements
 // the bound-and-wrap rule so the test does not reuse the shipping checksum path.
@@ -263,6 +282,68 @@ inline void SaveControllerCaptureHPCutsTest(TestSuite &suite) {
     }
     suite.addTest(test);
 }
+// Named full-journal proof (jp8.2.7): a real journal at all 256 records (16
+// distinct pending slots x 16 accepted writes, the largest legal pending set)
+// still folds into one explicit checkpoint without appending anything. Party HP
+// is folded into the matching spare-sector record from the captured snapshot,
+// and a refused dirty tail is cleared by the next explicit save. Every
+// recovered byte of the 96-byte snapshot and all 64 records is compared.
+inline void FullJournalSaveTest(TestSuite &suite) {
+    using namespace save_test_detail;Test test(__func__);
+    StoreRecord expectedRecords[64];
+    for(uint8_t i=0;i<64;++i) { memset(&expectedRecords[i],0,sizeof(StoreRecord)); expectedRecords[i].id=255; }
+    fresh();SaveFile state=snapshot(0x0f0f);
+    uint8_t slots[16];
+    for(uint8_t i=0;i<16;++i) {
+        StoreRecord record=creature(static_cast<uint16_t>(20+i));
+        record.id=i;record.attackMask=static_cast<uint8_t>(i&0x1f);record.hpEncoded=static_cast<uint8_t>(i+2);
+        test.assert(storeAdd(record,slots[i]),true,"seed full-journal slot");
+        test.assert(slots[i],i,"full-journal slot is stable");
+        expectedRecords[i]=record;
+    }
+    test.assert(storeAssign(0,slots[0],5),true,"full-journal party assignment");
+    // Add the PartyAssign above to the 16 adds, then fill accepted updates until
+    // the log reports full. Every accepted write is tracked for the comparison.
+    uint8_t updates[16]={};
+    while(!journalFull())
+        for(uint8_t i=0;i<16 && !journalFull();++i) {
+            const uint8_t next=static_cast<uint8_t>(updates[i]+1);
+            StoreRecord record=creature(static_cast<uint16_t>(20+i+next));
+            record.id=i;record.attackMask=static_cast<uint8_t>((i+next)&0x1f);
+            record.hpEncoded=static_cast<uint8_t>(i+2+next);
+            test.assert(storeWrite(slots[i],record),true,"fill the journal to capacity");
+            updates[i]=next;
+            expectedRecords[i]=record;
+        }
+    test.assert(journalCount(),JOURNAL_CAPACITY,"journal holds all 256 records");
+    test.assert(storeWrite(slots[0],creature()),false,"full journal refuses another append");
+    // Live party HP is the checkpoint authority. Set it without an append (as
+    // SaveController capture does) so the fold must come from the snapshot.
+    storeSetPartyHP(0,5);
+    test.assert(save(state),SaveStep::Done,"explicit save completes at full capacity");
+    test.assert(journalCount(),0,"full journal is erased by the checkpoint");
+    expectedRecords[0].hpEncoded=6; // runtime party HP 5 folds in without an append
+    expectCheckpoint(test,state,expectedRecords);
+    // The drained journal accepts ordinary appends again.
+    test.assert(storeWrite(slots[3],expectedRecords[3]),true,"journal accepts appends after the fold");
+
+    // A refused dirty tail is also cleared by the next explicit save; its valid
+    // prefix folds and the torn record never publishes.
+    fresh();state=snapshot(0x1010);
+    for(uint8_t i=0;i<64;++i) { memset(&expectedRecords[i],0,sizeof(StoreRecord)); expectedRecords[i].id=255; }
+    StoreRecord prefix=creature(27);prefix.id=3;prefix.hpEncoded=9;
+    uint8_t slot=255;test.assert(storeAdd(prefix,slot),true,"seed dirty-tail slot");
+    test.assert(save(state),SaveStep::Done,"dirty-tail baseline checkpoint");
+    StoreRecord torn=creature(77);torn.id=3;torn.hpEncoded=3;
+    flashFakeSetWriteLimit(15);
+    test.assert(storeWrite(slot,torn),false,"torn tail stays unpublished");
+    flashFakeSetWriteLimit(-1);
+    test.assert(save(state),SaveStep::Done,"explicit save clears the dirty tail");
+    test.assert(journalCount(),0,"dirty tail cleared by the checkpoint");
+    expectedRecords[slot]=prefix;
+    expectCheckpoint(test,state,expectedRecords);
+    suite.addTest(test);
+}
 inline void CollectionCapacityTest(TestSuite &suite) {
     using namespace save_test_detail;Test test(__func__);fresh();SaveFile state=snapshot();
     StoreRecord record=creature();uint8_t slot=255;
@@ -279,18 +360,23 @@ inline void CollectionCapacityTest(TestSuite &suite) {
 }
 inline void CheckpointCutTest(TestSuite &suite) {
     using namespace save_test_detail;Test test(__func__);
-    // Byte-write-budget boundaries of one save (erase 4096 + snapshot 96 +
-    // records 512 + header 14 + commit 2 + journal-erase 4096 + clear 1 = 8817):
+    // Byte-write-budget boundaries of one save, one per observable publication
+    // phase (erase 4096 + snapshot 96 + records 512 + header 14 + commit 2 +
+    // journal-erase 4096 + clear 1 = 8817):
     //   0    before the inactive erase; nothing written
-    //   4096 inactive erase complete; no header yet
-    //   4608 mid record streaming; no header yet
-    //   4718 header written, commit bytes absent
+    //   4096 inactive erase complete; no snapshot yet
+    //   4144 snapshot half written (48 of the 64-byte first chunk)
+    //   4192 snapshot complete; no records yet
+    //   4608 mid record streaming (6.5 of 8 blocks); no header yet
+    //   4704 records complete; no header yet
+    //   4710 header half written (6 of 14 bytes)
+    //   4718 header complete, commit bytes absent
     //   4719 one of two commit bytes present
     //   4720 commit complete -> new checkpoint authoritative
-    //   4730 cleanup-bit clear still blocked after the journal erase budget
+    //   4730 candidate read-back passed; partial journal erase blocks cleanup
     //   8816 journal erased, cleanup bit still pending
-    //   8817 cleanup bit cleared
-    const int32_t cuts[]={0,4096,4608,4718,4719,4720,4730,8816,8817};
+    //   8817 cleanup bit cleared and verified
+    const int32_t cuts[]={0,4096,4144,4192,4608,4704,4710,4718,4719,4720,4730,8816,8817};
     const uint8_t emptyMask=0;
     uint8_t expectedSnapshot[96];
     saveFileEncode(snapshot(0),0,expectedSnapshot,96);
@@ -816,12 +902,220 @@ inline void BoxedEvolutionTest(TestSuite &suite) {
     suite.addTest(test);
 }
 
+// jp8.11.23: an explicit checkpoint that fails must not soft-lock. The failed
+// screen keeps the last published checkpoint authoritative; a fresh A retries
+// the live snapshot, a fresh B returns to WORLD without claiming persistence,
+// and held/repeated activation never restarts a save.
+inline void SaveFailureRecoveryTest(TestSuite &suite) {
+    using namespace save_test_detail;Test test(__func__);
+    auto noEdges=[](){arduboy.currentButtonState=0;arduboy.previousButtonState=0;};
+    auto drain=[&](){for(uint16_t i=0;i<256 && saveInProgress();++i) SaveController::advance();};
+    auto failWithCut=[&](int32_t cut){
+        flashFakeSetWriteLimit(cut);SaveController::begin(GameState_t::WORLD);drain();
+        flashFakeSetWriteLimit(-1);
+    };
+
+    // Cut before publication: the spare erase happens but no snapshot or header
+    // is written, so Verify fails and the previous checkpoint stays current.
+    fresh();
+    SaveFile basePub=snapshot(0x1111);test.assert(save(basePub),SaveStep::Done,"pre-publication baseline checkpoint");
+    noEdges();
+    gameState.state=GameState_t::WORLD;
+    gameState.playerLocation=0x2222;
+    failWithCut(4096);
+    test.assert(saveInProgress(),false,"pre-publication cut reaches a terminal step");
+    test.assert(gameState.state,GameState_t::SAVING,"failure keeps the truthful screen");
+
+    // Fresh B returns to WORLD without claiming a save; the published checkpoint
+    // is unchanged and live RAM survives the cancellation.
+    arduboy.currentButtonState=B_BUTTON;arduboy.previousButtonState=0;
+    SaveController::advance();
+    noEdges();
+    test.assert(gameState.state,GameState_t::WORLD,"fresh B returns to the world");
+    test.assert(saveInProgress(),false,"cancel ends the failed sequence");
+    test.assert(gameState.playerLocation,static_cast<uint16_t>(0x2222),"cancel leaves live RAM alone");
+    test.assert(SaveController::load(),true,"cancel reloads the last checkpoint");
+    test.assert(gameState.playerLocation,static_cast<uint16_t>(0x1111),"cancel does not claim persistence");
+
+    // Fresh A retries the same live snapshot and publishes it exactly once: the
+    // held activation produces no further edge, and the party HP, bag and key
+    // bits all reload from the retried checkpoint.
+    fresh();
+    SaveFile baseRetry=snapshot(0x1111);test.assert(save(baseRetry),SaveStep::Done,"retry baseline checkpoint");
+    gameState.state=GameState_t::WORLD;
+    gameState.playerLocation=0x2222;
+    player.basic();SaveController::seedParty();
+    player.creatureHPs[0]=0;
+    player.keyItems.bits[0]=0x05;
+    item::inventoryClear(player.inventory);
+    item::inventoryAdd(player.inventory,item::ItemKind::Lure,item::lureId(0,1),2);
+    const uint8_t partyMask=static_cast<uint8_t>(player.party[1].attackMask);
+    failWithCut(4096);
+    test.assert(gameState.state,GameState_t::SAVING,"retry case failed on screen");
+    arduboy.currentButtonState=A_BUTTON;arduboy.previousButtonState=0;
+    SaveController::advance();
+    test.assert(saveInProgress(),true,"fresh A restarts the sequence");
+    arduboy.previousButtonState=A_BUTTON;   // held: no fresh edge
+    drain();
+    test.assert(saveInProgress(),false,"held A does not restart the retry");
+    test.assert(gameState.state,GameState_t::WORLD,"retry completes into the world");
+    noEdges();
+    test.assert(SaveController::load(),true,"retried checkpoint reloads");
+    test.assert(gameState.playerLocation,static_cast<uint16_t>(0x2222),"retry publishes the live location");
+    test.assert(player.creatureHPs[0],static_cast<uint8_t>(0),"retried party HP is the live KO");
+    test.assert(player.party[1].attackMask,partyMask,"retried moves reload exactly");
+    test.assert(player.keyItems.bits[0],static_cast<uint8_t>(0x05),"retried key bits reload");
+    test.assert(item::inventoryCount(player.inventory,item::ItemKind::Lure,item::lureId(0,1)),
+                static_cast<uint8_t>(2),"retried bag reloads");
+
+    // Held A on the failure screen is not a fresh edge: the screen holds until a
+    // real release/re-press, and only that retry publishes the live state.
+    fresh();
+    SaveFile baseHeld=snapshot(0x1111);test.assert(save(baseHeld),SaveStep::Done,"held baseline checkpoint");
+    gameState.state=GameState_t::WORLD;
+    gameState.playerLocation=0x3333;
+    failWithCut(4096);
+    arduboy.currentButtonState=A_BUTTON;arduboy.previousButtonState=A_BUTTON;
+    for(uint8_t frame=0;frame<3;++frame) {
+        SaveController::advance();
+        test.assert(gameState.state,GameState_t::SAVING,"held A keeps the failure screen");
+        test.assert(saveInProgress(),false,"held A does not retry");
+    }
+    arduboy.previousButtonState=0;
+    SaveController::advance();
+    test.assert(saveInProgress(),true,"released A retries");
+    noEdges();
+    drain();
+    test.assert(gameState.state,GameState_t::WORLD,"held-A retry completes");
+    test.assert(SaveController::load(),true,"held-A retry checkpoint loads");
+    test.assert(gameState.playerLocation,static_cast<uint16_t>(0x3333),"fresh A publishes the live state");
+
+    // Cut after publication: the commit is authoritative before the journal
+    // cleanup fails, so cancelling returns the newly published checkpoint
+    // instead of the stale one, and still reports Failed on screen.
+    fresh();
+    SaveFile baseCut=snapshot(0x4444);test.assert(save(baseCut),SaveStep::Done,"post-publication baseline checkpoint");
+    gameState.state=GameState_t::WORLD;
+    gameState.playerLocation=0x5555;
+    failWithCut(4730);
+    test.assert(gameState.state,GameState_t::SAVING,"post-publication cut reports Failed");
+    arduboy.currentButtonState=B_BUTTON;arduboy.previousButtonState=0;
+    SaveController::advance();
+    noEdges();
+    test.assert(gameState.state,GameState_t::WORLD,"post-publication cancel returns");
+    test.assert(SaveController::load(),true,"post-publication checkpoint loads");
+    test.assert(gameState.playerLocation,static_cast<uint16_t>(0x5555),
+                "cancel keeps the checkpoint published before the failure");
+
+    // Busy frames suppress A/B: forcing a fresh edge every frame cannot restart
+    // or cancel the in-flight sequence, which still completes exactly once.
+    fresh();
+    gameState.state=GameState_t::WORLD;
+    gameState.playerLocation=0x6666;
+    SaveController::begin(GameState_t::WORLD);
+    uint16_t busyFrames=0;
+    while(saveInProgress() && busyFrames<256) {
+        test.assert(gameState.state,GameState_t::SAVING,"busy save owns the state");
+        if((busyFrames&1)==0){arduboy.currentButtonState=A_BUTTON;arduboy.previousButtonState=0;}
+        else{arduboy.currentButtonState=B_BUTTON;arduboy.previousButtonState=0;}
+        SaveController::advance();
+        ++busyFrames;
+    }
+    noEdges();
+    test.assert(saveInProgress(),false,"busy input cannot restart or cancel the save");
+    test.assert(gameState.state,GameState_t::WORLD,"busy save completes into the world");
+    test.assert(SaveController::load(),true,"busy-save checkpoint loads");
+    test.assert(gameState.playerLocation,static_cast<uint16_t>(0x6666),"busy save published the live state");
+    suite.addTest(test);
+}
+
+// jp8.2.7 HP cut-matrix: a growth/evolution StoreRecord update is published
+// through the journal and must survive a cut on either side of the checkpoint
+// commit without inventing a heal. KO stays KO and exact experience is kept.
+inline void EvolutionPublicationCutTest(TestSuite &suite) {
+    using namespace save_test_detail;Test test(__func__);
+    const uint32_t targetOffset = static_cast<uint32_t>(Evolution::evolutionTarget - Evolution::evolutionSource);
+    const uint32_t levelOffset = static_cast<uint32_t>(Evolution::evolutionLevel - Evolution::evolutionSource);
+    const int32_t cuts[]={4719,4720};
+    for(int32_t cut:cuts) {
+        fxDataFake::dataBase = Evolution::evolutionSource;
+        memset(fxDataFake::dataBytes, 0, sizeof(fxDataFake::dataBytes));
+        fxDataFake::dataBytes[0]=0;fxDataFake::dataBytes[1]=1;fxDataFake::dataBytes[2]=3;
+        fxDataFake::dataBytes[targetOffset+0]=1;
+        fxDataFake::dataBytes[levelOffset+0]=8;
+        fresh();SaveFile state=snapshot(0x2020);
+        StoreRecord edge=creature(levelExpThreshold(8));edge.id=0;edge.attackMask=2;edge.hpEncoded=1; // KO
+        uint8_t slot=255;
+        test.assert(storeAdd(edge,slot),true,"seed evolution candidate");
+        test.assert(save(state),SaveStep::Done,"evolution baseline checkpoint");
+        test.assert(storeEvolve(slot),true,"evolution journal update accepted");
+        flashFakeSetWriteLimit(cut);save(state);flashFakeSetWriteLimit(-1);
+        SaveFile loaded=snapshot();test.assert(storeBoot(loaded),true,"evolution cut reboots");
+        StoreRecord got={};test.assert(storeRead(slot,got),true,"evolved record readable");
+        test.assert(got.id,1,"species update survives the publication cut");
+        test.assert(storeInstanceHP(got),0,"growth/evolution does not heal a KO instance");
+        test.assert(got.exp,levelExpThreshold(8),"growth keeps the exact stored experience");
+        test.assert(storeBootFailed(),false,"evolution cut stays recoverable");
+    }
+    suite.addTest(test);
+}
+// jp8.2.7 integration: the one bag and the party share the 96-byte snapshot, so
+// a cut before the commit must recover the previous bag AND party HP together,
+// while a committed cut recovers both new values together. No mixed pair.
+inline void InventoryPartyCheckpointTest(TestSuite &suite) {
+    using namespace save_test_detail;Test test(__func__);
+    const int32_t cuts[]={4719,4720};
+    for(int32_t cut:cuts) {
+        fresh();
+        player=Player();player.basic();SaveController::seedParty();
+        item::inventoryClear(player.inventory);item::keyItemsClear(player.keyItems);
+        item::inventoryAdd(player.inventory,item::ItemKind::Lure,item::lureId(0,1),2);
+        item::inventoryAdd(player.inventory,item::ItemKind::Consumable,3,4);
+        item::keyItemUnlock(player.keyItems,2);
+        const uint8_t fullHP=player.party[0].hp;
+        player.creatureHPs[0]=static_cast<uint8_t>(fullHP-3);
+        player.creatureHPs[1]=0;
+        gameState.state=GameState_t::WORLD;
+        SaveController::begin(GameState_t::WORLD);
+        for(uint16_t i=0;i<256&&saveInProgress();++i) SaveController::advance();
+        test.assert(gameState.state,GameState_t::WORLD,"baseline pair checkpoint completes");
+        test.assert(SaveController::load(),true,"baseline pair reloads");
+        // Build the newer pair in live RAM only; no store append is needed.
+        item::inventoryClear(player.inventory);item::keyItemsClear(player.keyItems);
+        item::inventoryAdd(player.inventory,item::ItemKind::Lure,item::lureId(1,2),7);
+        item::inventoryAdd(player.inventory,item::ItemKind::Consumable,5,6);
+        item::keyItemUnlock(player.keyItems,6);
+        player.creatureHPs[0]=fullHP;
+        player.creatureHPs[1]=3;
+        flashFakeSetWriteLimit(cut);
+        SaveController::begin(GameState_t::WORLD);
+        for(uint16_t i=0;i<256&&saveInProgress();++i) SaveController::advance();
+        flashFakeSetWriteLimit(-1);
+        player=Player();
+        test.assert(SaveController::load(),true,"pair checkpoint reloads after the cut");
+        const bool committed=cut>=4720;
+        test.assert(item::inventoryCount(player.inventory,item::ItemKind::Lure,item::lureId(committed?1:0,committed?2:1)),
+                    static_cast<uint8_t>(committed?7:2),"bag follows the same publication authority");
+        test.assert(item::inventoryCount(player.inventory,item::ItemKind::Consumable,committed?5:3),
+                    static_cast<uint8_t>(committed?6:4),"consumables agree with the bag");
+        test.assert(item::keyItemUnlocked(player.keyItems,committed?6:2),true,"key bit agrees with the bag");
+        test.assert(player.creatureHPs[0],static_cast<uint8_t>(committed?fullHP:fullHP-3),
+                    "party HP agrees with the same authority");
+        test.assert(player.creatureHPs[1],static_cast<uint8_t>(committed?3:0),
+                    "second member HP agrees");
+        test.assert(storeBootFailed(),false,"pair cut stays recoverable");
+    }
+    suite.addTest(test);
+}
+
 inline void SaveSuite(TestRunner &runner) {
     TestSuite suite("Save Suite");CheckpointCollectionTest(suite);CollectionCapacityTest(suite);
     BoxedInstanceHPTest(suite);BoxedHPPublicationCutsTest(suite);SaveControllerCaptureHPCutsTest(suite);
     CheckpointCutTest(suite);JournalDecodeTest(suite);JournalPublicationTest(suite);ShippingSaveRestoreTest(suite);
     SaveFlagExtentTest(suite);GenerationWrapTest(suite);LegacyResetTest(suite);LiveReadBoundedTest(suite);
     PlayerStoreIntegrationTest(suite);PlayerBagPersistenceTest(suite);FreshBetaStartTest(suite);
-    BoxedEvolutionTest(suite);
+    BoxedEvolutionTest(suite);SaveFailureRecoveryTest(suite);
+    FullJournalSaveTest(suite);EvolutionPublicationCutTest(suite);
+    InventoryPartyCheckpointTest(suite);
     runner.addTestSuite(suite);
 }

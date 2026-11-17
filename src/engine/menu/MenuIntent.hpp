@@ -10,6 +10,7 @@ enum class MenuIntentKind : uint8_t {
     Escape,
     Back,
     Pass,
+    SelectItem,
 };
 
 struct MenuIntent {

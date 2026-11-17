@@ -152,7 +152,16 @@ void drawDuelChoice(const BattleState &state, int8_t cursor) {
     }
 
     // Centre: R# then the selected cell's type icon (or SWAP label). The visible
-    // glyphs keep the strip within x48..79 (R 5px, digits, then content).
+    // glyphs keep the strip within x48..79 (R 5px, digits, then content). A
+    // gatherable wild replaces that content with the persistent GATHER cue (30px
+    // label, 35px frame) at the same origin; the 32px capture-progress track
+    // fills its 1px row at y47 below the cue.
+    if (duel::gatherCue(state)) {
+        drawDuelLabel(48, 41, gather, 30, false);
+        const uint8_t filled = duel::gatherTrackWidth(state);
+        if (filled != 0) Blit::fillRect(48, 47, filled, 1, WHITE);
+        return;
+    }
     drawDuelLabel(48, 41, duelRound, 5, false);
     const uint8_t numberEnd = PpGlyph::number(53, 41, cells.round);
     const uint8_t contentX = numberEnd > 60 ? 60 : numberEnd;

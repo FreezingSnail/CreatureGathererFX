@@ -9,6 +9,8 @@
 #include "../lib/ReadData.hpp"
 #include "PpGlyph.hpp"
 #include "menu/PackedMoveInfo.hpp"
+#include "menu/InventoryMenu.hpp"
+#include "menu/CollectionMenu.hpp"
 #include "../lib/FxRead.hpp"
 #include "world/Chunk.hpp"
 #include "world/TilePropertyWindow.hpp"
@@ -426,7 +428,19 @@ static uint8_t drawMapFast(WorldTransient &world) {
                            FRAME(mapY * 12 + mapX - 4), Blit::OVERWRITE);
             } else
 #endif
-            Blit::draw(x, y, 16, 16, tiles, FRAME(tileId - 1), Blit::OVERWRITE);
+            {
+                if (tileId == 551 || tileId == 545) {
+                    const uint8_t plotStage = tileId == 551
+                        ? plants.plantStages.getStage(FIRST_BETA_PLOT_INDEX)
+                        : 0;
+                    Blit::draw(x, y, 16, 16, pocketProps + 4,
+                               FRAME(pocketPropsFrame(tileId, plotStage)),
+                               Blit::OVERWRITE);
+                } else {
+                    Blit::draw(x, y, 16, 16, tiles, FRAME(tileId - 1),
+                               Blit::OVERWRITE);
+                }
+            }
         }
     }
     return rowReads;

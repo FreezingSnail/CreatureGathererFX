@@ -1,18 +1,11 @@
 #include "harness/fx_globals.hpp"
 #include "src/engine/draw.h"
-#include "src/engine/world/StepEvent.hpp"
 #include "src/engine/world/LureZone.hpp"
 #include "src/engine/world/TileProps.hpp"
 #include "src/engine/world/TilePropertyWindow.hpp"
 #include "src/lib/FxReadCounter.hpp"
-#include "src/engine/battle/BattleFlow.hpp"
-#include "src/engine/battle/DuelView.hpp"
 #include "src/item/Inventory.hpp"
 #include "src/item/ItemIds.hpp"
-#include "src/item/KeyItems.hpp"
-#include "src/save/Compaction.hpp"
-#include "src/save/SaveController.hpp"
-#include "src/save/SaveFile.hpp"
 #include "fxtest.hpp"
 #include "frame_budget_test.hpp"
 #include "stack_test.hpp"
@@ -21,9 +14,24 @@
 // global, so this suite must too once it drives a world frame.
 ScriptVm vm;
 
-namespace lureWedgeTest {
-uint8_t forcedRoll = 0;
-uint8_t forcedRng(uint8_t, uint8_t) { return forcedRoll; }
+// Generated flag id (defined once by World.cpp's flags mirror include).
+extern uint16_t flag_beta_complete;
+
+// The host world/interaction/step/duel suites own the full logic matrix. This
+// device suite keeps the world/player/plot/box checks that are not host-proven:
+// pixel rendering, stack reserves, the real frame budget, the real A-button
+// plant path with no FX metadata reads, and the faced boss trigger/ending.
+static bool pocketFramePixelsMatch(uint8_t frame) {
+    for (uint8_t page = 0; page < 2; ++page)
+        for (uint8_t col = 0; col < 16; ++col) {
+            uint8_t expected;
+            FX::readDataBytes(pocketProps + 4 +
+                                  static_cast<uint24_t>(frame) * 32 +
+                                  page * 16 + col,
+                              &expected, 1);
+            if (Arduboy2Base::sBuffer[page * 128 + col] != expected) return false;
+        }
+    return true;
 }
 
 void setup() {
@@ -63,94 +71,42 @@ void setup() {
     test.expectEq(minimumHeadroom >= stack_fx_test_detail::MIN_HEADROOM, true, F("player render preserves stack reserve"));
     Serial.print(F("player render headroom=")); Serial.println(minimumHeadroom);
 
-    // First-beta free rest and defeat recovery share Player::healParty on the
-    // actual device. Prove the occupied-party restore, the authored start
-    // return and that an empty slot is never touched.
-    player.basic();
-    const uint8_t maxHp0 = player.party[0].hp;
-    const uint8_t maxHp1 = player.party[1].hp;
-    const uint8_t maxHp2 = player.party[2].hp;
-    player.creatureHPs[0] = 0;
-    player.creatureHPs[1] = 1;
-    player.creatureHPs[2] = static_cast<uint8_t>(maxHp2 - 1);
-    gameState.state = GameState_t::WORLD;
-    gameState.playerLocation = static_cast<uint16_t>((9u << 8) | 11u);
-    WorldEngine::queueDefeatRecovery();
-    WorldEngine::runMap(worldState());
-    test.expectEq(player.creatureHPs[0], maxHp0, F("defeat recovery heals ko member"));
-    test.expectEq(player.creatureHPs[1], maxHp1, F("defeat recovery heals injured member"));
-    test.expectEq(player.creatureHPs[2], maxHp2, F("defeat recovery heals partial member"));
-    test.expectEq(WorldEngine::location(), static_cast<uint16_t>((5u << 8) | 11u),
-                  F("defeat recovery returns to beta start"));
-    WorldEngine::runMap(worldState());
-    test.expectEq(WorldEngine::location(), static_cast<uint16_t>((5u << 8) | 11u),
-                  F("defeat recovery does not retrigger movement"));
-
-    player.party[2].id = 255;
-    player.creatureHPs[2] = 7;
-    player.healParty();
-    test.expectEq(player.creatureHPs[2], 7, F("rest skips an empty party slot"));
-
-
-#ifdef CGFX_LURE_WEDGE
-    test.expectEq(lureWorldTilesFrames,96,F("lure scenery has96 render cells"));
-    uint16_t mapHeadroom=65535;
-    for(uint8_t d=0;d<5;++d) {
-        gameState.playerLocation=static_cast<uint16_t>((5u<<8)|11u);
+    // Authored pocket props: the plot at (14,2) selects pocketProps frame = RAM
+    // plant stage and the deposit box at (9,2) selects frame 4. Frame selection
+    // logic is host-proven; this keeps the device pixel proof for one stage and
+    // the box.
+    test.expectEq(pocketPropsWidth, 16, F("pocket props width"));
+    test.expectEq(pocketPropsHeight, 16, F("pocket props height"));
+    test.expectEq(pocketPropsFrames, 5, F("four plot stages then the lure box"));
+    {
+        uint8_t stageBytes[8] = {};
+        stageBytes[0] = 3;
+        plants.plantStages.restore(stageBytes);
+        // Player at (17,4) puts the authored plot (14,2) at screen (0,0).
+        gameState.playerLocation = static_cast<uint16_t>((4u << 8) | 17u);
         WorldEngine::init(worldState());
-        worldState().motion.directionAndFlags=d<4?d:0;
-        worldState().motion.step=d<4?4:0;
-        // Match the motion mask used by normal16px movement.
-        if(d<4) worldState().motion.directionAndFlags |= static_cast<uint8_t>((d==0?3:d==1?2:d==2?4:1)<<3);
-        const ViewOffset offset=WorldEngine::view(worldState());
-        memset(Arduboy2Base::sBuffer,0,1024);
-        const uint16_t base=reinterpret_cast<uint16_t>(&stack_fx_test_detail::__bss_end);
-        const uint16_t top=stack_fx_test_detail::paintStack();
+        memset(Arduboy2Base::sBuffer, 0xA5, 1024);
         drawMapFast(worldState());
-        const uint16_t headroom=stack_fx_test_detail::lowWater(base,top)-base;
-        if(headroom<mapHeadroom)mapHeadroom=headroom;
-        bool matches=true;
-        for(uint8_t y=0;y<64;++y)for(uint8_t x=0;x<128;++x) {
-            const int16_t wx=128+x-offset.x,wy=48+y-offset.y;
-            const uint8_t mx=wx>>4,my=wy>>4;
-            uint24_t address;
-            uint16_t frame;
-            if(mx>=4&&mx<16&&my<8){address=lureWorldTiles+4;frame=my*12+mx-4;}
-            else {
-                uint16_t word;
-                FX::readDataBytes(raw_map_data+(static_cast<uint24_t>(my)*256+mx)*2,reinterpret_cast<uint8_t *>(&word),2);
-                if(TileProps::tileId(word)==0) {
-                    if((Arduboy2Base::sBuffer[(y>>3)*128+x]>>(y&7))&1)matches=false;
-                    continue;
-                }
-                frame=TileProps::tileId(word)-1;address=tiles;
-            }
-            uint8_t byte;
-            FX::readDataBytes(address+static_cast<uint24_t>(frame)*32+((wy&15)>>3)*16+(wx&15),&byte,1);
-            const uint8_t expected=(byte>>(wy&7))&1;
-            const uint8_t actual=(Arduboy2Base::sBuffer[(y>>3)*128+x]>>(y&7))&1;
-            if(expected!=actual)matches=false;
-        }
-        test.expectEq(matches,true,F("lure map idle and scrolling match packed art"));
+        test.expectEq(pocketFramePixelsMatch(3), true,
+                      F("plot renders its mature pocketProps frame"));
+        // Player at (12,4) puts the deposit box (9,2) at screen (0,0).
+        gameState.playerLocation = static_cast<uint16_t>((4u << 8) | 12u);
+        WorldEngine::init(worldState());
+        memset(Arduboy2Base::sBuffer, 0xA5, 1024);
+        drawMapFast(worldState());
+        test.expectEq(pocketFramePixelsMatch(4), true,
+                      F("deposit box renders the lure-box frame"));
     }
-    test.expectEq(mapHeadroom>=stack_fx_test_detail::MIN_HEADROOM,true,F("lure map render preserves stack reserve"));
-    Serial.print(F("lure map headroom="));Serial.println(mapHeadroom);
-#endif
+    plants = PlantGameState{};
 
-    // A pocket encounter tile fires an encounter under the deterministic roll
-    // seam while a lure is deposited, exercising the authored chunk-33 zone.
-    item::inventoryAdd(LureZone::inventory(), item::ItemKind::Lure,
-                       item::lureId(0, 0), 1);
-    LureZone::clear();
+    // Frame-budget proof on the real world step: runMap + map/player/overlay
+    // render + the real FX display, using the shared micros() instrumentation.
+    // The deliberately slowed frame proves the assertion is non-vacuous.
     gameState.state = GameState_t::WORLD;
     gameState.playerLocation = static_cast<uint16_t>((7u << 8) | 12u);
     WorldEngine::init(worldState());
     WorldEngine::loadMap(worldState(), 0, 0);
     drawMapFast(worldState());
-
-    // Frame-budget proof on the real world step: runMap + map/player/overlay
-    // render + the real FX display, using the shared micros() instrumentation.
-    // The deliberately slowed frame proves the assertion is non-vacuous.
     {
         frame_budget_test_detail::FrameBudget budget;
         budget.reset();
@@ -180,112 +136,10 @@ void setup() {
         budget.expectWithinBudget(test, F("worst world frame <= 19230 us"));
     }
 
-    LureZone::deposit(LureZone::lureId(0, 0));
-    test.expectEq(LureZone::active(), true, F("pocket lure is active"));
-    player.basic();
-    for (uint8_t slot = 1; slot < PARTY_SIZE; ++slot) player.party[slot].level = 0;
-    player.party[0].level = 5;
-    lureWedgeTest::forcedRoll = 0;
-    StepEventTest::setEncounterRng(lureWedgeTest::forcedRng);
-    onStep(static_cast<uint16_t>((7u << 8) | 12u));
-    test.expectEq(gameState.state, GameState_t::BATTLE,
-                  F("pocket encounter tile fires a wild battle"));
-    test.expectEq(battleSession().isActive(), true, F("encounter battle session active"));
-    // jp8.11.6: a deposited lure makes the encounter gatherable at the authored
-    // per-tier rate (tier 0 -> 1<<0 = 1), not a constant.
-    test.expectEq(battleSession().state().gatherable, true,
-                  F("deposited lure enters a gatherable battle"));
-    test.expectEq(battleSession().state().gather.tierRate,
-                  static_cast<uint8_t>(item::lureRateOf(0)),
-                  F("tier-zero lure enters at the authored rate"));
-
-    // Gap 2 (CreatureGathererFX-o845): drive the live encounter through a full
-    // battle and a non-Lose exit, then prove the world resumes on the exact
-    // pre-battle tile with the battle HP persisted. The matchup is pinned so the
-    // round is a known spirit-over-fire trade (21 to the player, 4 to the foe)
-    // that cannot terminate the battle.
-    const uint16_t preBattleLocation = WorldEngine::location();
-    test.expectEq(preBattleLocation, static_cast<uint16_t>((7u << 8) | 12u),
-                  F("encounter pinned the pre-battle tile"));
-
-    battle::BattleState &duel =
-        const_cast<battle::BattleState &>(battleSession().state());
-    duel.active[0].types = DualType(Type::FIRE);
-    duel.active[0].hp = duel.active[0].maxHp = 100;
-    duel.active[0].attackMask =
-        static_cast<uint8_t>(1u << duel::foldType(static_cast<uint8_t>(Type::FIRE)));
-    duel.active[1].types = DualType(Type::FIRE);
-    duel.active[1].hp = duel.active[1].maxHp = 100;
-    duel.active[1].attackMask =
-        static_cast<uint8_t>(1u << duel::foldType(static_cast<uint8_t>(Type::SPIRIT)));
-
-    BattleFlow::update(0);           // choice entry -> pick row
-    BattleFlow::update(MENU_EDGE_A); // commit the single attack cell
-
-    uint16_t roundFrames = 0;
-    while (!battleSession().awaitingPlayer() &&
-           gameState.state == GameState_t::BATTLE && roundFrames < 400) {
-        BattleFlow::update(0);
-        ++roundFrames;
-    }
-    test.expectEq(gameState.state == GameState_t::BATTLE, true,
-                  F("the trade round stays in battle"));
-    test.expectEq(battleSession().awaitingPlayer(), true,
-                  F("the trade round returns to a fresh choice"));
-    test.expectEq(battleSession().state().active[0].hp, 79,
-                  F("the trade round damaged the player active"));
-    const uint8_t damagedHp = battleSession().state().active[0].hp;
-
-    BattleFlow::update(MENU_EDGE_B);    // wild action page (GATHER then ESCAPE)
-    BattleFlow::update(MENU_NAV_DOWN);  // cursor -> ESCAPE (gatherable page)
-    BattleFlow::update(MENU_EDGE_A);    // ESCAPE -> immediate non-Lose result
-
-    uint16_t exitFrames = 0;
-    while (gameState.state != GameState_t::WORLD && exitFrames < 400) {
-        BattleFlow::update(0);
-        ++exitFrames;
-    }
-    test.expectEq(gameState.state, GameState_t::WORLD,
-                  F("a non-Lose exit returns to the world"));
-    test.expectEq(WorldEngine::location(), preBattleLocation,
-                  F("the world resumes on the exact pre-battle tile"));
-    test.expectEq(player.creatureHPs[0], damagedHp,
-                  F("the battle HP persists into the world party"));
-    test.expectEq(player.creatureHPs[0], 79,
-                  F("the persisted HP is the damaged value, not a reset"));
-
-    // jp8.11.6 negative: a lure of a different tier must enter the same
-    // encounter tile at its own authored rate (tier 1 -> 1<<1 = 2), proving the
-    // entry rate is read from the lure rather than a constant.
-    LureZone::clear();
-    LureZone::deposit(LureZone::lureId(0, 1));
-    gameState.state = GameState_t::WORLD;
-    gameState.playerLocation = static_cast<uint16_t>((7u << 8) | 12u);
-    WorldEngine::init(worldState());
-    WorldEngine::loadMap(worldState(), 0, 0);
-    drawMapFast(worldState());
-    player.basic();
-    for (uint8_t slot = 1; slot < PARTY_SIZE; ++slot) player.party[slot].level = 0;
-    player.party[0].level = 5;
-    lureWedgeTest::forcedRoll = 0;
-    StepEventTest::setEncounterRng(lureWedgeTest::forcedRng);
-    onStep(static_cast<uint16_t>((7u << 8) | 12u));
-    test.expectEq(gameState.state, GameState_t::BATTLE,
-                  F("tier-one lure fires a wild battle"));
-    test.expectEq(battleSession().state().gatherable, true,
-                  F("tier-one lure enters a gatherable battle"));
-    test.expectEq(battleSession().state().gather.tierRate,
-                  static_cast<uint8_t>(item::lureRateOf(1)),
-                  F("tier-one lure enters at the distinct authored rate"));
-    exitBattle();
-    gameState.state = GameState_t::WORLD;
-
-    // jp8.11.5: the first-beta plant plot is a renewable loop driven from the RAM
-    // property window (map tile (14,2), the only PROP_PLANTABLE tile). An empty
-    // plot plants at no item cost, a growing plot is inert, a mature plot
-    // harvests one authored tier-1 lure and resets to planted, and a full bag
-    // holds maturity with the bag-full feedback so a retry can harvest. Every A
-    // press adds no FX read over the RAM-window property read.
+    // jp8.11.5 device path: the real A edge on the authored plot is driven from
+    // the RAM property window. The full stage/full-bag/retry matrix is host-
+    // proven; keep the empty-plant and mature-harvest device proof plus the
+    // no-FX-read guarantee.
     {
         auto facePlant = []() {
             gameState.playerLocation = static_cast<uint16_t>((64u << 8) | 7u);
@@ -306,7 +160,6 @@ void setup() {
             arduboy.currentButtonState = arduboy.previousButtonState = 0;
         };
 
-        // Empty plot: A plants stage1 at no item cost and adds no FX read.
         plants = PlantGameState{};
         item::inventoryClear(LureZone::inventory());
         facePlant();
@@ -319,16 +172,6 @@ void setup() {
         test.expectEq(FxReadCounter::count(), static_cast<uint16_t>(0),
                       F("device plant press adds no FX read"));
 
-        // Growing plot: A is inert, stage held.
-        plants = PlantGameState{};
-        plants.plantStages.increment(FIRST_BETA_PLOT_INDEX);
-        plants.plantStages.increment(FIRST_BETA_PLOT_INDEX);
-        facePlant();
-        pressPlant();
-        test.expectEq(plants.plantStages.getStage(FIRST_BETA_PLOT_INDEX), 2,
-                      F("device A on a growing plot is inert"));
-
-        // Mature plot: harvest one tier-1 lure and reset to planted.
         plants = PlantGameState{};
         for (uint8_t i = 0; i < 3; ++i)
             plants.plantStages.increment(FIRST_BETA_PLOT_INDEX);
@@ -341,35 +184,48 @@ void setup() {
                       F("device harvest resets the plot to planted"));
         test.expectEq(LureZone::messageAddr(), lureTextGathered,
                       F("device harvest shows the gathered feedback"));
+    }
 
-        // Full bag: maturity holds and the bag-full feedback shows; a retry with
-        // room harvests.
-        plants = PlantGameState{};
-        for (uint8_t i = 0; i < 3; ++i)
-            plants.plantStages.increment(FIRST_BETA_PLOT_INDEX);
-        item::inventoryClear(LureZone::inventory());
-        item::inventoryAdd(LureZone::inventory(), item::ItemKind::Lure,
-                           item::lureId(0, 1), item::COUNT_MAX);
-        facePlant();
-        pressPlant();
-        test.expectEq(plants.plantStages.getStage(FIRST_BETA_PLOT_INDEX), 3,
-                      F("device full bag holds the mature plot"));
-        test.expectEq(item::inventoryCount(LureZone::inventory(), item::ItemKind::Lure,
-                                           item::lureId(0, 1)), item::COUNT_MAX,
-                      F("device full bag keeps the count at max"));
-        test.expectEq(LureZone::messageAddr(), lureTextFull,
-                      F("device full bag shows the bag-full feedback"));
-        item::inventoryClear(LureZone::inventory());
-        item::inventoryAdd(LureZone::inventory(), item::ItemKind::Lure,
-                           item::lureId(0, 1),
-                           static_cast<uint8_t>(item::COUNT_MAX - 1));
-        pressPlant();
-        test.expectEq(item::inventoryCount(LureZone::inventory(), item::ItemKind::Lure,
-                                           item::lureId(0, 1)), item::COUNT_MAX,
-                      F("device retry after room harvests"));
-        test.expectEq(plants.plantStages.getStage(FIRST_BETA_PLOT_INDEX), 1,
-                      F("device retry resets the plot to planted"));
-        item::inventoryClear(LureZone::inventory());
+    // jp8.11.13 device path: the faced (21,9) coordinate from (20,9) starts the
+    // one-member boss; once complete the same interaction shows the ending and
+    // never restarts the fight. Host world/duel suites own the full flow.
+    {
+        auto faceBoss = []() {
+            gameState.playerLocation = static_cast<uint16_t>((9u << 8) | 20u);
+            WorldEngine::init(worldState());
+            worldState().motion.directionAndFlags =
+                static_cast<uint8_t>(Direction::RIGHT);
+        };
+        auto pressA = []() {
+            arduboy.currentButtonState = A_BUTTON;
+            arduboy.previousButtonState = 0;
+            WorldEngine::interact();
+            arduboy.currentButtonState = arduboy.previousButtonState = 0;
+        };
+
+        gameState.clearFlag(flag_beta_complete);
+        player.basic();
+        gameState.state = GameState_t::WORLD;
+        faceBoss();
+        pressA();
+        test.expectEq(gameState.state, GameState_t::BATTLE,
+                      F("device boss trigger starts the fight"));
+        test.expectEq(battleSession().state().partyCount[1], 1,
+                      F("device boss is one member"));
+        test.expectEq(battleSession().state().active[1].id, 31,
+                      F("device boss is ardu"));
+        test.expectEq(battleSession().state().active[1].level, 8,
+                      F("device boss is level 8"));
+        exitBattle();
+        gameState.state = GameState_t::WORLD;
+
+        gameState.setFlag(flag_beta_complete);
+        faceBoss();
+        pressA();
+        test.expectEq(gameState.state, GameState_t::WORLD,
+                      F("device completed boss stays in world"));
+        test.expectEq(LureZone::messageAddr(), lureTextBetaComplete,
+                      F("device completed boss shows the ending"));
     }
 
     test.report(F("test_world_player"));

@@ -3,17 +3,22 @@
 #include "BattleSetup.hpp"
 #include "Resolve.hpp"
 #include "MoveUses.hpp"
+#include "../../item/ConsumableDef.hpp"
+#include "../../item/Inventory.hpp"
+#include "../../lib/FxReadCounter.hpp"
 #include "../../player/Player.hpp"
 #include "DuelKernel.hpp"
 #include "DuelView.hpp"
-#if defined(CGFX_DUEL_BATTLE) && defined(__AVR__)
-#include "../../fxdata.h"
+#if defined(CGFX_DUEL_BATTLE)
 #include "../../lib/FxRead.hpp"
+#include "../../fxdata.h"
+#if defined(__AVR__)
 // Resident chart cache for the canonical AVR duel route; loaded once per
 // encounter.
 namespace duel {
 uint8_t duelChart[TYPE_COUNT * TYPE_COUNT];
 }
+#endif
 #endif
 
 #ifndef CGFX_BATTLE_AUTO_REPLACE
@@ -41,37 +46,50 @@ BattleAction skipAction()
     return {ActionKind::Skip, 255};
 }
 
-// Spike-inc.1 adapter (CreatureGathererFX-d73i.1). The authored 8->5 fold runs
-// at runtime only because step 4 has not emitted a build-time fold table yet;
-// the final authoring fold stays build-time. Attack eligibility mirrors the
-// mock: a slot is usable when its authored move type is a real attack type
-// (not STATUS/NONE). One option per usable authored slot, in slot order.
-// Temporary spike fixture persona/rate mapping so all four planned beta
-// personas are reachable and exercised: wild encounters never read (Random/0);
-// trainers rotate Reader 25% (introductory), Frequency 50% (ordinary) and
-// AntiRepeat 50% (boss) by trainer id. This maps onto real authored encounters
-// until step 4 emits authored persona/rate values.
-duel::Persona duelFixturePersona(const BattleState &state)
+// Authored encounter persona/rate (jp8.11.28). The session reads the current
+// trainer row's generated DuelData pair exactly once at encounter entry and
+// keeps it for every Choice commit, so chooseAction stays pure and no frame
+// re-reads the cart. Wild encounters never read: Random/0. The arena demo
+// bootstrap installs its own authored demo preset at entry instead of a
+// trainer row (its preset owns the demo window).
+#if defined(CGFX_DUEL_BATTLE)
+duel::Persona duelTrainerPersona(uint8_t trainerId)
 {
-    if (!state.trainer) return duel::Persona::Random;
-    switch (state.trainerId % 3) {
-    case 0: return duel::Persona::Reader;
-    case 1: return duel::Persona::Frequency;
-    default: return duel::Persona::AntiRepeat;
-    }
+#if defined(CGFX_ARENA_DEMO)
+    (void)trainerId;
+    uint8_t persona = 0;
+    FxRead::bytes(DuelData::duelDemoPersona, &persona, 1);
+    return static_cast<duel::Persona>(persona);
+#else
+    uint8_t persona = 0;
+    FxRead::bytes(DuelData::duelTrainerPersona + trainerId, &persona, 1);
+    return static_cast<duel::Persona>(persona);
+#endif
 }
 
-uint8_t duelFixtureReadRate(const BattleState &state)
+uint8_t duelTrainerReadRate(uint8_t trainerId)
 {
-    if (!state.trainer) return 0;
-    return state.trainerId % 3 == 0 ? 25 : 50;
+#if defined(CGFX_ARENA_DEMO)
+    (void)trainerId;
+    uint8_t rate = 0;
+    FxRead::bytes(DuelData::duelDemoRate, &rate, 1);
+    return rate;
+#else
+    uint8_t rate = 0;
+    FxRead::bytes(DuelData::duelTrainerRate + trainerId, &rate, 1);
+    return rate;
+#endif
 }
+#endif // CGFX_DUEL_BATTLE
 
 // At the shipping 52 FPS: 29 ticks = 557.7 ms for the concealed interval, 68
 // ticks = 1307.7 ms for the result dwell (the mock's 550 ms / 1300 ms).
 constexpr uint8_t DUEL_CONCEAL_TICKS = 29;
 constexpr uint8_t DUEL_RESULT_TICKS = 68;
 
+// Spike-inc.1 adapter (CreatureGathererFX-d73i.1). The authored 8->5 fold runs
+// at runtime only because step 4 has not emitted a build-time fold table yet;
+// the final authoring fold stays build-time.
 uint8_t duelFoldAuthored(uint8_t authored)
 {
     return duel::foldType(authored);
@@ -130,11 +148,13 @@ uint8_t duelBenchCounter(const BattleState &state, uint8_t side, uint8_t guessed
 } // namespace
 
 BattleSession::BattleSession()
-    : state_{}, result_{}, cursor_{}, rng_{nullptr}
+    : state_{}, result_{}, cursor_{}, rng_{nullptr}, duelItemHeal_{0},
+      duelPersona_{duel::Persona::Random}, duelReadRate_{0}
 {
     resetActionResult(result_);
     duelCommittedOpponent_ = {duel::ActionKind::Wait, duel::NO_SLOT};
     duelHistoryCount_ = 0;
+    duelItemHeal_ = 0;
     resetCursor(SessionPhase::Inactive);
 }
 
@@ -166,8 +186,11 @@ void BattleSession::beginWild(uint8_t id, uint8_t level, bool gatherable,
 {
     ::battle::beginWild(state_, id, level, gatherable, tierRate);
     resetActionResult(result_);
+    duelPersona_ = duel::Persona::Random; // wild never reads a persona
+    duelReadRate_ = 0;
 #if defined(CGFX_DUEL_BATTLE) && defined(__AVR__)
     FxRead::bytes(duelChartFixture, duel::duelChart, sizeof(duel::duelChart));
+    FxReadCounter::transitionExact(1); // the one resident chart load
 #endif
     duelHistoryCount_ = 0; // history resets per encounter
     state_.round = 1;
@@ -189,8 +212,17 @@ void BattleSession::beginTrainer(uint8_t id)
 {
     ::battle::beginTrainer(state_, id);
     resetActionResult(result_);
+    // The authored persona/rate is read once here, at encounter entry, and
+    // approved as its own transition lookup; every later Choice reuses the
+    // stored pair. The arena demo reads its own preset pair instead of a row.
+#if defined(CGFX_DUEL_BATTLE)
+    duelPersona_ = duelTrainerPersona(state_.trainerId);
+    duelReadRate_ = duelTrainerReadRate(state_.trainerId);
+    FxReadCounter::transitionExact(2);
+#endif
 #if defined(CGFX_DUEL_BATTLE) && defined(__AVR__)
     FxRead::bytes(duelChartFixture, duel::duelChart, sizeof(duel::duelChart));
+    FxReadCounter::transitionExact(1); // the one resident chart load
 #endif
     duelHistoryCount_ = 0; // history resets per encounter
     state_.round = 1;
@@ -270,6 +302,28 @@ bool BattleSession::emitReplacement(Side side, uint8_t originalSlot)
 bool BattleSession::submitPlayerAction(BattleAction action)
 {
     if (state_.over) return false;
+    if (action.kind == ActionKind::UseItem) {
+        // jp8.5.21: the committed Choice transition validates the authored
+        // consumable, takes it exactly once and keeps its heal amount for the
+        // round. Empty/default inventory rows, a KO or full-HP target, and the
+        // retired Cure/Charge effects refuse the turn without spending the item
+        // or letting the committed opponent action run. Lures and key items are
+        // not battle consumables and never reach here.
+        if (action.index >= item::CONSUMABLE_COUNT) return false;
+        item::Inventory *bag = item::battleInventory();
+        if (bag == nullptr || bag->consumables[action.index] == 0) return false;
+        const uint8_t playerSide = static_cast<uint8_t>(Side::Player);
+        const uint8_t hp = state_.active[playerSide].hp;
+        // Full HP refuses by owner policy (2026-11-15); a KO active must never
+        // be revived. Both refuse before the item metadata is even read.
+        if (hp == 0 || hp >= state_.active[playerSide].maxHp) return false;
+        const item::ConsumableDef def = item::readConsumableDef(action.index);
+        FxReadCounter::transitionExact(1); // the one metadata read of this use
+        if (def.kind != static_cast<uint8_t>(item::ConsumableKind::Heal))
+            return false;
+        --bag->consumables[action.index];
+        duelItemHeal_ = def.arg;
+    }
     cursor_.plan.action[static_cast<uint8_t>(Side::Player)] = action;
     // The opponent's concealed pick was already committed on Choice entry; the
     // legacy planner/mover must not run.
@@ -308,6 +362,11 @@ bool BattleSession::submitIntent(MenuIntent intent)
         case MenuIntentKind::SelectParty:
             if (!canSwitch(state_, Side::Player, intent.index)) return false;
             action = {ActionKind::Switch, intent.index};
+            break;
+        case MenuIntentKind::SelectItem:
+            // index is the consumable id; validation and the one-time take
+            // happen on the committed transition in submitPlayerAction.
+            action = {ActionKind::UseItem, intent.index};
             break;
         case MenuIntentKind::Pass:
             break;
@@ -365,9 +424,9 @@ void BattleSession::duelCommitOpponent()
     const uint8_t options = duelUsableOptionCount(state_, opponentSide);
     if (options == 0) return; // unusable kit -> WAIT
 
-    const duel::Persona persona = duelFixturePersona(state_);
+    const duel::Persona persona = duelPersona_;
     const bool reads = persona != duel::Persona::Random &&
-                       rng_.roll(100) < duelFixtureReadRate(state_);
+                       rng_.roll(100) < duelReadRate_;
     if (reads) {
         const uint8_t guessed = duel::predictPlayerType(
             duelHistory_, duelHistoryCount_, persona, rng_);
@@ -454,7 +513,17 @@ bool BattleSession::duelResolveRound()
         playerGathering = true;
         break;
     case ActionKind::UseItem:
-        // No battle item interface; the round commits no attack.
+        // The accepted heal lands here, before the opponent's committed action,
+        // and the player spends the round without an attack. The stack was
+        // already taken once on the Choice transition; only the clamped restore
+        // remains.
+        {
+            Combatant &hero = state_.active[playerSide];
+            const uint16_t healed =
+                static_cast<uint16_t>(hero.hp) + duelItemHeal_;
+            hero.hp = healed > hero.maxHp ? hero.maxHp
+                                          : static_cast<uint8_t>(healed);
+        }
         break;
     case ActionKind::Attack: {
         // playerAction.index is the pick-row option index (a set mask bit in
@@ -585,7 +654,9 @@ bool BattleSession::duelResolveRound()
     // Capture the round's identity and pre-promotion faint mask before any KO
     // auto-promotion transition, which rewrites its own scratch result.
     const ResultKind roundKind =
-        playerGathering ? ResultKind::Gather : ResultKind::Attack;
+        playerGathering ? ResultKind::Gather
+        : playerAction.kind == ActionKind::UseItem ? ResultKind::UseItem
+                                                   : ResultKind::Attack;
     const uint8_t roundIndex = playerAction.index;
     for (uint8_t side = 0; side < 2; ++side) {
         Combatant &active = state_.active[side];

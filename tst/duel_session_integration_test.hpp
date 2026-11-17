@@ -39,6 +39,7 @@
 #include "../src/creature/Evolution.hpp"
 #include "../src/lib/ReadData.hpp"
 #include "../src/fxdata.h"
+#include "fxdatatest/generated/duel_data.hpp"
 
 namespace duel_session_test_detail {
 
@@ -259,6 +260,7 @@ void duelEscapeEntryConsumedSameFrame(Test &test) {
 
     BattleFlow::update(0);              // choice entry -> pick row
     BattleFlow::update(MENU_EDGE_B);    // open the wild action page
+    BattleFlow::update(MENU_NAV_DOWN);  // cursor -> ITEMS
     BattleFlow::update(MENU_NAV_DOWN);  // cursor -> ESCAPE
     BattleFlow::update(MENU_EDGE_A);    // submit Escape -> immediate Result
     test.assert(battleSession().isResultDwell(), true,
@@ -628,6 +630,108 @@ void duelFleeCaption(Test &test) {
                 "an attack round banks no gather progress");
 }
 
+// jp8.11.28: the Choice commit uses the authored persona/rate of the current
+// trainer row, read exactly once at encounter entry. Rows here are the
+// data/duel.toml authored trainer entries; an un-authored row and wild both
+// stay Random/0.
+void installAuthoredPersonaFixture() {
+    fxDataFake::dataBase = DuelData::duelTrainerPersona;
+    const uint32_t rateOffset = static_cast<uint32_t>(
+        DuelData::duelTrainerRate - DuelData::duelTrainerPersona);
+    for (uint8_t row = 0; row < DuelFixture::trainerCount; ++row) {
+        fxDataFake::dataBytes[row] = DuelFixture::duelTrainerPersona[row];
+        fxDataFake::dataBytes[rateOffset + row] = DuelFixture::duelTrainerRate[row];
+    }
+}
+
+void duelAuthoredPersonaRows(Test &test) {
+    struct Row { uint8_t id; uint8_t persona; uint8_t rate; };
+    static const Row rows[] = {
+        {0, 1, 25},  // squibblesnail/skittercrab/squid   reader 25
+        {21, 1, 50}, // rock/shattercrab/biggestsquid    reader 50 override
+        {22, 2, 50}, // bell/hedge/cloud                  frequency 50
+        {23, 3, 50}, // ardu/dragon/skull (boss row)      anti-repeat 50
+        {19, 0, 0},  // un-authored trainer row:          random/0
+    };
+    const uint8_t rowCount = sizeof(rows) / sizeof(rows[0]);
+    installAuthoredPersonaFixture();
+    for (uint8_t i = 0; i < rowCount; ++i) {
+        test.assert(DuelFixture::duelTrainerPersona[rows[i].id], rows[i].persona,
+                    "the generated persona table pins this row");
+        test.assert(DuelFixture::duelTrainerRate[rows[i].id], rows[i].rate,
+                    "the generated rate table pins this row");
+
+        preparePlayer();
+        menu.clear();
+        dialogMenu.clear();
+        enterBattle();
+        gameState.state = GameState_t::BATTLE;
+        rngDraws = 0;
+        battleSession().setRng({scriptedRng});
+        FxReadCounter::resetFrame();
+        battleSession().beginTrainer(rows[i].id);
+        test.assert(battleSession().isActive(), true,
+                    "the authored row starts a duel");
+        test.assert(static_cast<uint8_t>(battleSession().duelPersona()),
+                    rows[i].persona, "the row's authored persona owns the choice");
+        test.assert(battleSession().duelReadRate(), rows[i].rate,
+                    "the row's authored rate owns the choice");
+        test.assert(FxReadCounter::count(), static_cast<uint8_t>(2),
+                    "the authored pair reads exactly once at entry");
+        FxReadCounter::resetFrame();
+        for (uint8_t frame = 0; frame < 4; ++frame) BattleFlow::update(0);
+        test.assert(FxReadCounter::count(), static_cast<uint8_t>(0),
+                    "steady choice frames read nothing");
+        exitBattle();
+    }
+
+    // Repeated entry and repeated Choice entries: one read set per entry, and
+    // every later round reuses the stored pair without touching the cart.
+    preparePlayer();
+    enterBattle();
+    gameState.state = GameState_t::BATTLE;
+    rngDraws = 0;
+    battleSession().setRng({scriptedRng});
+    FxReadCounter::resetFrame();
+    battleSession().beginTrainer(23);
+    const uint8_t firstEntryReads = FxReadCounter::count();
+    test.assert(firstEntryReads, static_cast<uint8_t>(2),
+                "the first entry reads the pair once");
+    configureMatchup(battleSession(), FireAuthored, FireAuthored, FireAuthored,
+                     FireAuthored, 200, 200);
+    bool roundClean = true;
+    for (uint8_t round = 0; round < 2; ++round) {
+        test.assert(battleSession().submitIntent({MenuIntentKind::Pass, 0}), true,
+                    "the repeated-entry round submits");
+        uint16_t ticks = 0;
+        while (!battleSession().awaitingPlayer() &&
+               !battleSession().exitReady() && ticks++ < 200) {
+            FxReadCounter::resetFrame();
+            battleSession().advance();
+            if (!battleSession().awaitingPlayer() && !battleSession().exitReady() &&
+                FxReadCounter::count() != 0)
+                roundClean = false;
+        }
+        test.assert(static_cast<uint8_t>(battleSession().duelPersona()),
+                    static_cast<uint8_t>(3),
+                    "a fresh Choice keeps the entry persona without a re-read");
+        test.assert(battleSession().duelReadRate(), static_cast<uint8_t>(50),
+                    "a fresh Choice keeps the entry rate");
+    }
+    test.assert(roundClean, true, "round frames never read the persona table");
+    test.assert(battleSession().awaitingPlayer(), true,
+                "the repeated rounds return to a fresh choice");
+    FxReadCounter::resetFrame();
+    battleSession().beginTrainer(23);
+    test.assert(FxReadCounter::count(), firstEntryReads,
+                "re-entry performs the same single entry read set");
+    test.assert(battleSession().duelReadRate(), static_cast<uint8_t>(50),
+                "re-entry restores the same authored rate");
+    exitBattle();
+    fxDataFake::dataBase = 0; // leave the shared fake unbound
+    memset(fxDataFake::dataBytes, 0, sizeof(fxDataFake::dataBytes));
+}
+
 // An empty or fully KO'd player party fails real setup. The duel has no Ready
 // transition, so it must terminate at entry as a loss; the Flow then runs its
 // normal defeat recovery (no opponent action, no win, no reward).
@@ -927,6 +1031,7 @@ void duelGatherIncompleteNoCommit(Test &test) {
                 "one gather banks partial progress without acquiring");
 
     BattleFlow::update(MENU_EDGE_B);    // wild action page
+    BattleFlow::update(MENU_NAV_DOWN);  // cursor -> ITEMS
     BattleFlow::update(MENU_NAV_DOWN);  // cursor -> ESCAPE
     BattleFlow::update(MENU_EDGE_A);    // submit Escape
     for (uint16_t f = 0; f < 4096 && gameState.state != GameState_t::WORLD; ++f)
@@ -1042,6 +1147,7 @@ void duelNonWinTerminalAwardsNothing(Test &test) {
     beginWildKoSession(0, true); // gatherable wild offers Escape
     BattleFlow::update(0);              // choice entry -> pick row
     BattleFlow::update(MENU_EDGE_B);    // wild action page
+    BattleFlow::update(MENU_NAV_DOWN);  // cursor -> ITEMS
     BattleFlow::update(MENU_NAV_DOWN);  // cursor -> ESCAPE
     BattleFlow::update(MENU_EDGE_A);    // submit Escape -> terminal
     for (uint16_t f = 0; f < 4096 && gameState.state != GameState_t::WORLD; ++f)
@@ -1227,6 +1333,7 @@ void duelNonWinAwardsNoExp(Test &test) {
     beginWildWinSession(4, true);
     BattleFlow::update(0);              // choice entry -> pick row
     BattleFlow::update(MENU_EDGE_B);    // wild action page
+    BattleFlow::update(MENU_NAV_DOWN);  // cursor -> ITEMS
     BattleFlow::update(MENU_NAV_DOWN);  // cursor -> ESCAPE
     BattleFlow::update(MENU_EDGE_A);    // submit Escape -> terminal
     for (uint16_t f = 0; f < 4096 && gameState.state != GameState_t::WORLD; ++f)
@@ -1522,6 +1629,470 @@ void duelWildWinEvolutionSurvivesSave(Test &test) {
                 "the live party reloads the evolved species");
 }
 
+// --- jp8.5.21: consumable healing in the shipping duel session ---------------
+
+// Authored consumable records for the host FX fake. The bytes mirror
+// data/consumables.csv (kind None/Heal/Cure/Charge, arg); the permanent device
+// items suite pins the same authored table.
+void installConsumableFixture() {
+    static const uint8_t kinds[] = {1, 1, 1, 2, 2, 2, 3, 3};
+    static const uint8_t args[] = {16, 32, 64, 1, 2, 3, 16, 32};
+    fxDataFake::dataBase = consumable_table;
+    memset(fxDataFake::dataBytes, 0, sizeof(fxDataFake::dataBytes));
+    for (uint8_t id = 0; id < 8; ++id) {
+        fxDataFake::dataBytes[static_cast<uint16_t>(id) * 2] = kinds[id];
+        fxDataFake::dataBytes[static_cast<uint16_t>(id) * 2 + 1] = args[id];
+    }
+}
+
+// A live wild duel whose foe kit is collapsed to one option. One WAIT round
+// consumes the beginWild commitment and re-commits on a fresh Choice against
+// the collapsed kit, so the item round's opponent action is deterministic
+// (one option -> index 0). The caller installs the HP window it wants to test.
+void beginItemDuel(uint8_t itemId, uint8_t count) {
+    installConsumableFixture();
+    preparePlayer();
+    item::inventoryClear(player.inventory);
+    if (count != 0)
+        item::inventoryAdd(player.inventory, item::ItemKind::Consumable,
+                           itemId, count);
+    item::setBattleInventory(&player.inventory);
+    menu.clear();
+    dialogMenu.clear();
+    enterBattle();
+    gameState.state = GameState_t::BATTLE;
+    rngDraws = 0;
+    battleSession().setRng({scriptedRng});
+    battleSession().beginWild(4, 1, false, 0);
+    configureMatchup(battleSession(), FireAuthored, SpiritAuthored,
+                     FireAuthored, SpiritAuthored, 100, 100);
+
+    battleSession().submitIntent({MenuIntentKind::Pass, 0});
+    uint16_t ticks = 0;
+    runToResult(battleSession(), ticks);
+    runToBoundary(battleSession(), ticks);
+}
+
+// A valid Heal is taken once on the committed transition, lands before the
+// already-committed opponent action (clamped), and the player's round carries
+// no attack. Metadata is read only on that transition.
+void duelItemHealBeforeOpponent(Test &test) {
+    beginItemDuel(0, 1); // tonic: Heal 16
+    battle::BattleState &state = battleSession().stateForTest();
+    state.active[0].maxHp = 30;
+    state.active[0].hp = 20;
+
+    FxReadCounter::resetFrame();
+    test.assert(battleSession().submitIntent({MenuIntentKind::SelectItem, 0}),
+                true, "a damaged active accepts an authored Heal");
+    test.assert(FxReadCounter::count(), static_cast<uint8_t>(1),
+                "the committed use reads the consumable record once");
+    test.assert(FxReadCounter::markUpdate(), true,
+                "the item read owns the submission transition");
+    test.assert(item::inventoryCount(player.inventory,
+                                     item::ItemKind::Consumable, 0),
+                static_cast<uint8_t>(0), "a successful use takes exactly one");
+    test.assert(state.active[0].hp, static_cast<uint8_t>(20),
+                "the heal never lands during the concealed interval");
+    test.assert(battleSession().isResultDwell(), false,
+                "the use starts the 29-frame concealed interval");
+    // A second submission in the same turn neither resolves nor spends again.
+    test.assert(battleSession().submitIntent({MenuIntentKind::SelectItem, 0}),
+                false, "a repeated frame cannot re-submit the item");
+    test.assert(item::inventoryCount(player.inventory,
+                                     item::ItemKind::Consumable, 0),
+                static_cast<uint8_t>(0), "the refused repeat cannot double-spend");
+
+    uint16_t ticks = 0;
+    bool cleanConceal = true;
+    for (; ticks < 400 && !battleSession().isResultDwell(); ++ticks) {
+        if (state.active[0].hp != 20) cleanConceal = false;
+        FxReadCounter::resetFrame();
+        battleSession().advance();
+        if (!battleSession().isResultDwell() && FxReadCounter::count() != 0)
+            cleanConceal = false;
+    }
+    test.assert(ticks, kConcealTicks, "the item round reveals after 29 frames");
+    test.assert(cleanConceal, true,
+                "concealed item frames leak neither HP nor metadata");
+
+    // Heal 16 clamps 20 -> 30 before the foe's Spirit-vs-Fire default win (21).
+    test.assert(state.active[0].hp, static_cast<uint8_t>(9),
+                "the clamped heal lands before the committed opponent hit");
+    test.assert(state.damage[0], static_cast<uint8_t>(21),
+                "the opponent's damage is unchanged by the heal");
+    test.assert(state.active[1].hp, static_cast<uint8_t>(100),
+                "the item round carries no player attack");
+    test.assert(static_cast<uint8_t>(battleSession().result().kind),
+                static_cast<uint8_t>(battle::ResultKind::UseItem),
+                "the compact result names the item round");
+    test.assert(battleSession().result().index, static_cast<uint8_t>(0),
+                "the result keeps the consumable id");
+    test.assert(state.feedback,
+                static_cast<uint8_t>(duel::Feedback::DefaultWin),
+                "the opponent's committed action still owns the round caption");
+}
+
+// Repeated turns take exactly one item each; a fresh Choice can use the next
+// stack, and every item round still takes the opponent's committed action.
+void duelItemOnePerTurn(Test &test) {
+    beginItemDuel(0, 2); // two tonics
+    battle::BattleState &state = battleSession().stateForTest();
+    state.active[0].maxHp = 30;
+    state.active[0].hp = 20;
+
+    test.assert(battleSession().submitIntent({MenuIntentKind::SelectItem, 0}),
+                true, "the first tonic submits");
+    test.assert(item::inventoryCount(player.inventory,
+                                     item::ItemKind::Consumable, 0),
+                static_cast<uint8_t>(1), "the first turn takes one");
+    uint16_t ticks = 0;
+    test.assert(runToResult(battleSession(), ticks), true, "the first use reveals");
+    test.assert(battleSession().submitIntent({MenuIntentKind::SelectItem, 0}),
+                false, "the result dwell cannot consume the second tonic");
+    test.assert(item::inventoryCount(player.inventory,
+                                     item::ItemKind::Consumable, 0),
+                static_cast<uint8_t>(1), "the dwell spends nothing");
+    test.assert(runToBoundary(battleSession(), ticks), true,
+                "the first item round returns to a choice");
+    test.assert(state.active[0].hp, static_cast<uint8_t>(9),
+                "round one: clamp to 30 then the 21 opponent hit");
+
+    test.assert(battleSession().submitIntent({MenuIntentKind::SelectItem, 0}),
+                true, "a fresh choice takes the second tonic");
+    test.assert(item::inventoryCount(player.inventory,
+                                     item::ItemKind::Consumable, 0),
+                static_cast<uint8_t>(0), "the second turn takes the last one");
+    test.assert(runToResult(battleSession(), ticks), true,
+                "the second use reveals");
+    test.assert(state.active[0].hp, static_cast<uint8_t>(4),
+                "round two: 9 + 16 - 21, the opponent still acts");
+}
+
+// Owner policy (2026-11-15): a full-HP target refuses without spending the item,
+// the turn, the opponent action or any FX read.
+void duelItemFullHpRefuses(Test &test) {
+    beginItemDuel(0, 1);
+    battle::BattleState &state = battleSession().stateForTest();
+    state.active[0].maxHp = 30;
+    state.active[0].hp = 30;
+    const uint8_t round = state.round;
+    const uint8_t priorKind =
+        static_cast<uint8_t>(battleSession().result().kind);
+
+    FxReadCounter::resetFrame();
+    test.assert(battleSession().submitIntent({MenuIntentKind::SelectItem, 0}),
+                false, "a full-HP target refuses the heal");
+    test.assert(FxReadCounter::count(), static_cast<uint8_t>(0),
+                "the full-HP refusal reads no item metadata");
+    test.assert(item::inventoryCount(player.inventory,
+                                     item::ItemKind::Consumable, 0),
+                static_cast<uint8_t>(1), "the refused heal spends nothing");
+    test.assert(battleSession().awaitingPlayer(), true,
+                "a refusal keeps the player's choice");
+    test.assert(static_cast<uint8_t>(battleSession().result().kind), priorKind,
+                "a refusal commits no new round");
+    for (uint8_t frame = 0; frame < 8; ++frame) battleSession().advance();
+    test.assert(state.active[0].hp, static_cast<uint8_t>(30),
+                "the refusal never heals");
+    test.assert(state.active[1].hp, static_cast<uint8_t>(100),
+                "the refusal never triggers the opponent action");
+    test.assert(state.round, round, "the refusal never advances the turn");
+}
+
+// An empty bag and a KO target refuse before any metadata read: no phantom
+// item, no revival, no turn.
+void duelItemEmptyAndKoRefuse(Test &test) {
+    beginItemDuel(0, 0); // empty stack
+    battle::BattleState &state = battleSession().stateForTest();
+    state.active[0].maxHp = 30;
+    state.active[0].hp = 20;
+    const uint8_t round = state.round;
+
+    FxReadCounter::resetFrame();
+    test.assert(battleSession().submitIntent({MenuIntentKind::SelectItem, 0}),
+                false, "an empty stack refuses the heal");
+    test.assert(FxReadCounter::count(), static_cast<uint8_t>(0),
+                "the empty-stack refusal reads no metadata");
+    test.assert(battleSession().awaitingPlayer(), true,
+                "the empty stack keeps the player's choice");
+
+    state.active[0].hp = 0; // a KO active is a real refusal state, never revival
+    FxReadCounter::resetFrame();
+    test.assert(battleSession().submitIntent({MenuIntentKind::SelectItem, 0}),
+                false, "a KO target refuses the heal");
+    test.assert(FxReadCounter::count(), static_cast<uint8_t>(0),
+                "the KO refusal reads no metadata");
+    test.assert(state.active[0].hp, static_cast<uint8_t>(0),
+                "the refusal never revives the KO target");
+    test.assert(state.round, round, "the refusals never advance the turn");
+}
+
+// Cure and Charge are outside beta: they refuse without consumption, and only
+// the one deciding metadata read touches FX.
+void duelItemUnsupportedRefuses(Test &test) {
+    beginItemDuel(3, 1); // remedy: Cure 1
+    battle::BattleState &state = battleSession().stateForTest();
+    state.active[0].maxHp = 30;
+    state.active[0].hp = 20;
+    item::inventoryAdd(player.inventory, item::ItemKind::Consumable, 6, 1);
+    const uint8_t round = state.round;
+
+    FxReadCounter::resetFrame();
+    test.assert(battleSession().submitIntent({MenuIntentKind::SelectItem, 3}),
+                false, "an authored Cure refuses in the duel");
+    test.assert(FxReadCounter::count(), static_cast<uint8_t>(1),
+                "the Cure decision reads its record once");
+    test.assert(FxReadCounter::markUpdate(), true,
+                "the Cure read owns the submission transition");
+    test.assert(item::inventoryCount(player.inventory,
+                                     item::ItemKind::Consumable, 3),
+                static_cast<uint8_t>(1), "the refused Cure is not consumed");
+    test.assert(battleSession().awaitingPlayer(), true,
+                "the Cure refusal keeps the player's choice");
+
+    FxReadCounter::resetFrame();
+    test.assert(battleSession().submitIntent({MenuIntentKind::SelectItem, 6}),
+                false, "an authored Charge refuses in the duel");
+    test.assert(FxReadCounter::count(), static_cast<uint8_t>(1),
+                "the Charge decision reads its record once");
+    test.assert(FxReadCounter::markUpdate(), true,
+                "the Charge read owns the submission transition");
+    test.assert(item::inventoryCount(player.inventory,
+                                     item::ItemKind::Consumable, 6),
+                static_cast<uint8_t>(1), "the refused Charge is not consumed");
+    test.assert(state.active[0].hp, static_cast<uint8_t>(20),
+                "no unsupported effect invents HP");
+    test.assert(state.round, round, "unsupported effects never advance the turn");
+}
+
+// A consumable id outside the authored table, or a missing target, refuses
+// without a read, a take or a turn.
+void duelItemMissingTargetRefuses(Test &test) {
+    beginItemDuel(0, 1);
+    battle::BattleState &state = battleSession().stateForTest();
+    state.active[0].maxHp = 30;
+    state.active[0].hp = 20;
+    const uint8_t round = state.round;
+
+    FxReadCounter::resetFrame();
+    test.assert(battleSession().submitIntent({MenuIntentKind::SelectItem, 200}),
+                false, "an id outside the authored table refuses");
+    test.assert(FxReadCounter::count(), static_cast<uint8_t>(0),
+                "the out-of-table id reads no metadata");
+    state.active[0].maxHp = 0; // missing target: no max HP to restore
+    state.active[0].hp = 0;
+    FxReadCounter::resetFrame();
+    test.assert(battleSession().submitIntent({MenuIntentKind::SelectItem, 0}),
+                false, "a missing target refuses the heal");
+    test.assert(FxReadCounter::count(), static_cast<uint8_t>(0),
+                "the missing-target refusal reads no metadata");
+    test.assert(item::inventoryCount(player.inventory,
+                                     item::ItemKind::Consumable, 0),
+                static_cast<uint8_t>(1), "missing targets never consume");
+    test.assert(state.round, round, "missing targets never advance the turn");
+}
+
+// The healed HP and the one-time decrement reach the live Player and survive a
+// real v3 checkpoint and reload.
+void duelItemHealPersists(Test &test) {
+    const uint16_t exps[PARTY_SIZE] = {levelExpThreshold(3), levelExpThreshold(3),
+                                       levelExpThreshold(3)};
+    seedPartyInstances(exps, kFull);
+    installConsumableFixture();
+    item::inventoryClear(player.inventory);
+    item::inventoryAdd(player.inventory, item::ItemKind::Consumable, 0, 1);
+    item::inventoryAdd(player.inventory, item::ItemKind::Consumable, 1, 3);
+    item::setBattleInventory(&player.inventory);
+    menu.clear();
+    dialogMenu.clear();
+    enterBattle();
+    gameState.state = GameState_t::BATTLE;
+    rngDraws = 0;
+    battleSession().setRng({scriptedRng});
+    battleSession().beginWild(4, 1, false, 0);
+    configureMatchup(battleSession(), FireAuthored, SpiritAuthored,
+                     FireAuthored, SpiritAuthored, 100, 100);
+    battleSession().submitIntent({MenuIntentKind::Pass, 0});
+    uint16_t ticks = 0;
+    runToResult(battleSession(), ticks);
+    runToBoundary(battleSession(), ticks);
+
+    battle::BattleState &state = battleSession().stateForTest();
+    const uint8_t maxHp = player.party[0].hp;
+    state.active[0].maxHp = maxHp;
+    state.active[0].hp = static_cast<uint8_t>(maxHp - 20);
+    test.assert(battleSession().submitIntent({MenuIntentKind::SelectItem, 0}),
+                true, "the persistence fixture uses the tonic");
+    test.assert(runToResult(battleSession(), ticks), true, "the use reveals");
+    test.assert(state.active[0].hp, static_cast<uint8_t>(maxHp - 25),
+                "20 missing + 16 heal clamps into the window, then 21 lands");
+    test.assert(runToBoundary(battleSession(), ticks), true,
+                "the item round returns to a choice");
+
+    // A wild escape then finishes the battle so the session syncs Player HP.
+    test.assert(battleSession().submitIntent({MenuIntentKind::Escape, 0}), true,
+                "the wild escape submits after the item round");
+    for (uint16_t f = 0; f < 4096 && gameState.state != GameState_t::WORLD; ++f)
+        BattleFlow::update(0);
+    test.assert(gameState.state, GameState_t::WORLD,
+                "the item session reaches the world terminal");
+    test.assert(player.creatureHPs[0], static_cast<uint8_t>(maxHp - 25),
+                "the live Player owns the healed-and-hit HP");
+    test.assert(item::inventoryCount(player.inventory,
+                                     item::ItemKind::Consumable, 0),
+                static_cast<uint8_t>(0), "the live bag owns the decrement");
+
+    SaveController::begin(GameState_t::WORLD);
+    for (uint16_t s = 0; s < 256 && saveInProgress(); ++s)
+        SaveController::advance();
+    test.assert(saveInProgress(), false, "the item checkpoint completes");
+
+    SaveFile reboot = {};
+    memset(reboot.partySlots, 255, 3);
+    test.assert(storeBoot(reboot), true, "the item checkpoint reboots");
+    item::inventoryClear(player.inventory);
+    player.creatureHPs[0] = 0;
+    test.assert(SaveController::load(), true, "the item checkpoint loads");
+    test.assert(player.creatureHPs[0], static_cast<uint8_t>(maxHp - 25),
+                "the healed HP survives the save/reload seam");
+    test.assert(player.inventory.consumables[0], static_cast<uint8_t>(0),
+                "the spent stack stays spent across the save/reload seam");
+    test.assert(player.inventory.consumables[1], static_cast<uint8_t>(3),
+                "the untouched stack survives the save/reload seam");
+}
+
+// jp8.5.19: the shipping B action page exposes ITEMS. Opening, browsing and
+// canceling spend no item, turn or RNG; the confirmed selection goes through
+// BattleFlow -> BattleSession, decrements once and heals after the reveal.
+void duelItemPageFlow(Test &test) {
+    installConsumableFixture();
+    preparePlayer();
+    item::inventoryClear(player.inventory);
+    item::inventoryAdd(player.inventory, item::ItemKind::Consumable, 0, 2);
+    item::inventoryAdd(player.inventory, item::ItemKind::Consumable, 3, 1); // Cure
+    item::setBattleInventory(&player.inventory);
+    menu.clear();
+    dialogMenu.clear();
+    enterBattle();
+    gameState.state = GameState_t::BATTLE;
+    rngDraws = 0;
+    battleSession().setRng({scriptedRng});
+    battleSession().beginWild(4, 1, false, 0); // ITEMS first (not gatherable)
+    configureMatchup(battleSession(), FireAuthored, SpiritAuthored, FireAuthored,
+                     SpiritAuthored, 30, 100);
+    battle::BattleState &state = battleSession().stateForTest();
+    state.active[0].hp = 20;
+    BattleFlow::update(0); // choice entry constructs the pick menu
+    BattleFlow::update(0); // steady pick row
+    const uint8_t round = state.round;
+    const uint8_t draws = rngDraws;
+
+    // B opens the action page (ITEMS first for a non-gatherable wild); B again
+    // cancels back to the pick row. Neither edge acts.
+    test.assert(BattleFlow::update(MENU_EDGE_B), false,
+                "B opens the action page without resolving");
+    test.assert(modeState.battle.ui.menu.duelCursor(), static_cast<int8_t>(-1),
+                "the action page owns the frame");
+    BattleFlow::update(MENU_EDGE_B);
+    test.assert(modeState.battle.ui.menu.duelCursor(), static_cast<int8_t>(0),
+                "B returns to the pick row");
+    test.assert(item::inventoryCount(player.inventory,
+                                     item::ItemKind::Consumable, 0),
+                static_cast<uint8_t>(2), "cancel spends no item");
+    test.assert(state.round, round, "cancel spends no turn");
+    test.assert(rngDraws, draws, "cancel spends no RNG");
+
+    // Open the bag; browsing and canceling are inert.
+    BattleFlow::update(MENU_EDGE_B);
+    BattleFlow::update(MENU_EDGE_A); // ITEMS row -> the four-row Heal page
+    test.assert(item::inventoryCount(player.inventory,
+                                     item::ItemKind::Consumable, 0),
+                static_cast<uint8_t>(2), "opening spends no item");
+    test.assert(modeState.battle.ui.menu.duelCursor(), static_cast<int8_t>(-1),
+                "the bag page replaces the pick row");
+    BattleFlow::update(0);
+    BattleFlow::update(MENU_EDGE_B); // bag -> action page
+    BattleFlow::update(MENU_EDGE_B); // action -> pick
+    test.assert(item::inventoryCount(player.inventory,
+                                     item::ItemKind::Consumable, 0),
+                static_cast<uint8_t>(2), "browsing spends no item");
+    test.assert(state.round, round, "browsing spends no turn");
+    test.assert(rngDraws, draws, "browsing spends no RNG");
+
+    // Reopen and confirm the tonic: exactly one take, then the conceal window.
+    BattleFlow::update(MENU_EDGE_B);
+    BattleFlow::update(MENU_EDGE_A);
+    BattleFlow::update(MENU_EDGE_A);
+    test.assert(item::inventoryCount(player.inventory,
+                                     item::ItemKind::Consumable, 0),
+                static_cast<uint8_t>(1), "confirmation takes exactly one tonic");
+    test.assert(item::inventoryCount(player.inventory,
+                                     item::ItemKind::Consumable, 3),
+                static_cast<uint8_t>(1), "the Cure stack is untouched");
+    test.assert(state.active[0].hp, static_cast<uint8_t>(20),
+                "the heal waits for the reveal");
+    test.assert(battleSession().isResultDwell(), false,
+                "the confirmed item starts the concealed interval");
+    BattleFlow::update(MENU_EDGE_A); // held selection cannot spend again
+    test.assert(item::inventoryCount(player.inventory,
+                                     item::ItemKind::Consumable, 0),
+                static_cast<uint8_t>(1), "the held edge cannot re-spend");
+
+    uint16_t ticks = 0;
+    while (!battleSession().isResultDwell() && ticks++ < 400)
+        BattleFlow::update(0);
+    test.assert(battleSession().isResultDwell(), true,
+                "the item round reveals after the conceal interval");
+    test.assert(state.active[0].hp, static_cast<uint8_t>(9),
+                "the clamped heal lands before the committed opponent hit");
+    for (ticks = 0; ticks < 400 && !battleSession().awaitingPlayer() &&
+                    !battleSession().exitReady(); ++ticks)
+        BattleFlow::update(0);
+    test.assert(battleSession().awaitingPlayer(), true,
+                "the item round returns to a fresh choice");
+    BattleFlow::update(MENU_EDGE_A); // cursor 0 is the attack cell
+    test.assert(battleSession().awaitingPlayer(), false,
+                "the pick row still attacks after the bag round");
+    exitBattle();
+    gameState.state = GameState_t::WORLD;
+}
+
+// A trainer reaches the same ITEMS page (its only B row) through real Flow.
+void duelTrainerItemPageFlow(Test &test) {
+    installConsumableFixture();
+    preparePlayer();
+    item::inventoryClear(player.inventory);
+    item::inventoryAdd(player.inventory, item::ItemKind::Consumable, 1, 1);
+    item::setBattleInventory(&player.inventory);
+    menu.clear();
+    dialogMenu.clear();
+    enterBattle();
+    gameState.state = GameState_t::BATTLE;
+    rngDraws = 0;
+    battleSession().setRng({scriptedRng});
+    battleSession().beginTrainer(0);
+    configureMatchup(battleSession(), FireAuthored, SpiritAuthored, FireAuthored,
+                     SpiritAuthored, 30, 100);
+    battle::BattleState &state = battleSession().stateForTest();
+    state.active[0].hp = 20;
+    BattleFlow::update(0);
+    BattleFlow::update(0);
+
+    BattleFlow::update(MENU_EDGE_B); // trainer action page: ITEMS only
+    test.assert(modeState.battle.ui.menu.duelCursor(), static_cast<int8_t>(-1),
+                "the trainer B page is the ITEMS page");
+    BattleFlow::update(MENU_EDGE_A); // open the bag
+    BattleFlow::update(MENU_EDGE_A); // select salve (semantic id 1)
+    test.assert(item::inventoryCount(player.inventory,
+                                     item::ItemKind::Consumable, 1),
+                static_cast<uint8_t>(0), "the trainer item takes once");
+    test.assert(battleSession().isResultDwell(), false,
+                "the trainer item starts the concealed interval");
+    exitBattle();
+    gameState.state = GameState_t::WORLD;
+}
+
 } // namespace duel_session_test_detail
 
 inline void DuelSessionIntegrationSuite(TestRunner &runner) {    using namespace duel_session_test_detail;
@@ -1591,6 +2162,9 @@ inline void DuelSessionIntegrationSuite(TestRunner &runner) {    using namespace
     duelExhaustedEntryIsLose(exhausted);
     suite.addTest(exhausted);
 
+    Test persona(__func__);
+    duelAuthoredPersonaRows(persona);
+    suite.addTest(persona);
     Test benchMask(__func__);
     duelBenchMaskSkipsEmptySlots(benchMask);
     suite.addTest(benchMask);
@@ -1693,6 +2267,42 @@ inline void DuelSessionIntegrationSuite(TestRunner &runner) {    using namespace
     Test evoSave(__func__);
     duelWildWinEvolutionSurvivesSave(evoSave);
     suite.addTest(evoSave);
+
+    Test itemHeal(__func__);
+    duelItemHealBeforeOpponent(itemHeal);
+    suite.addTest(itemHeal);
+
+    Test itemOnce(__func__);
+    duelItemOnePerTurn(itemOnce);
+    suite.addTest(itemOnce);
+
+    Test itemFull(__func__);
+    duelItemFullHpRefuses(itemFull);
+    suite.addTest(itemFull);
+
+    Test itemEmptyKo(__func__);
+    duelItemEmptyAndKoRefuse(itemEmptyKo);
+    suite.addTest(itemEmptyKo);
+
+    Test itemUnsupported(__func__);
+    duelItemUnsupportedRefuses(itemUnsupported);
+    suite.addTest(itemUnsupported);
+
+    Test itemMissing(__func__);
+    duelItemMissingTargetRefuses(itemMissing);
+    suite.addTest(itemMissing);
+
+    Test itemSave(__func__);
+    duelItemHealPersists(itemSave);
+    suite.addTest(itemSave);
+
+    Test itemPage(__func__);
+    duelItemPageFlow(itemPage);
+    suite.addTest(itemPage);
+
+    Test itemTrainer(__func__);
+    duelTrainerItemPageFlow(itemTrainer);
+    suite.addTest(itemTrainer);
 
     runner.addTestSuite(suite);
 }

@@ -1,5 +1,9 @@
 name: FX Device Tests
 
+# Required device-suite checkpoint, deliberately manual: this job builds Ardens
+# from the pinned source revision, so it is too expensive for every push. Run it
+# (workflow_dispatch) before the one-area beta release gate (jp8.11.16) and treat
+# a green run as a precondition of release, not as automatic per-push coverage.
 on:
   workflow_dispatch:
 

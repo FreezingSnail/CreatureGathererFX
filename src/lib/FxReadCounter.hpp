@@ -70,6 +70,15 @@ inline bool transitionExact(uint8_t expected) {
     return passed;
 }
 
+// Declare every lookup since the previous allowance as one transition. Only the
+// store-backed swap uses this: its HP encoding legitimately changes how many
+// species records the journal validation resolves. Suites still assert the
+// exact total; ordinary menu transitions keep the exact form above.
+inline bool transitionCurrent() {
+    allowedTransitionReads() = count();
+    return true;
+}
+
 // Call after run() and before render(). Transition lookups are checked at
 // their transition boundary; a steady update performs no program-data reads.
 inline bool markUpdate() {
@@ -97,6 +106,7 @@ inline uint8_t count() { return 0; }
 inline uint8_t audioCount() { return 0; }
 inline bool exact(uint8_t expected) { return expected == 0; }
 inline bool transitionExact(uint8_t) { return true; }
+inline bool transitionCurrent() { return true; }
 inline bool markUpdate() { return true; }
 inline bool updateExactZero() { return true; }
 inline bool renderExact(uint8_t) { return true; }

@@ -164,6 +164,12 @@ source = { raw = "data/music/ruins.bin" }
 name = "music_exploration"
 source = { raw = "data/music/exploration.bin" }
 
+# jp8.11.30 first-beta pocket props: frames 0..3 are the plant growth stages and
+# frame 4 is the lure deposit box. Append-only: every earlier address is fixed.
+[[entry]]
+name = "pocketProps"
+source = { image = { path = "images/pocketProps_16x16.png", width = 16, height = 16, shades = 2, spacing = 0 } }
+
 [save]
 sectors = 8
 

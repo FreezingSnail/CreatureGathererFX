@@ -17,8 +17,17 @@
 #include "../../fxdata.h"
 #include "../world/World.hpp"
 
+// Defined by the one generated flags mirror included in World.cpp; the boss win
+// path reads the generated flag id rather than a literal index.
+extern uint16_t flag_beta_complete;
+
 namespace BattleFlow {
 namespace {
+
+// First-beta fixed boss row (see World.cpp): the appended one-member ardu row.
+// Derived from generated addresses, never a hardcoded packed position.
+constexpr uint8_t BOSS_TRAINER_ID =
+    static_cast<uint8_t>((opponent_seed_24 - opponent_seeds) / 9);
 
 void beginMenu(battle::BattleMode &mode) {
     ::new (static_cast<void *>(&mode.ui.menu)) battle::BattleMenu();
@@ -80,6 +89,29 @@ void awardWildKoMaterial(const battle::BattleState &state) {
     FxRead::bytes(Rewards::materialCount + species, &count, 1);
     if (count == 0) return;
     item::inventoryAdd(*bag, item::ItemKind::Lure, itemId, count);
+}
+
+// rhs7: the same ordinary wild Win edge also grants every authored
+// [[reward.heal]] entry once through the live bag, so a fresh player reaches a
+// non-empty Heal page by ordinary play. The entry count is the generated packed
+// span between the two heal columns (the packer writes them back to back), never
+// a hand-copied length; the host suite pins it to RewardFixture::healRewardCount,
+// which also validates the ids/counts host-side. inventoryAdd owns the item-id
+// bound and saturates at COUNT_MAX (99).
+constexpr uint8_t HEAL_REWARD_COUNT = static_cast<uint8_t>(
+    static_cast<uint16_t>(Rewards::healCount) -
+    static_cast<uint16_t>(Rewards::healItem));
+
+void awardWildKoHeal() {
+    item::Inventory *bag = item::battleInventory();
+    if (bag == nullptr) return;
+    for (uint8_t i = 0; i < HEAL_REWARD_COUNT; ++i) {
+        uint8_t itemId = 0xFF;
+        uint8_t count = 0;
+        FxRead::bytes(Rewards::healItem + i, &itemId, 1);
+        FxRead::bytes(Rewards::healCount + i, &count, 1);
+        item::inventoryAdd(*bag, item::ItemKind::Consumable, itemId, count);
+    }
 }
 
 // jp8.11.10: an ordinary (non-trainer, non-gatherable) wild Win grants exactly
@@ -149,8 +181,16 @@ void finishBattle(battle::BattleSession &session, TerminalCallback callback) {
     if (outcome == battle::Outcome::Gathered) commitGathered(session);
     else if (outcome == battle::Outcome::Win) {
         const battle::BattleState &state = session.state();
-        if (!state.trainer && !state.gatherable) {
+        if (state.trainer) {
+            // The fixed first-beta boss records completion here, after the
+            // terminal feedback dwell and only on Win. Lose/Draw follow the
+            // existing defeat recovery, and a trainer win never awards the
+            // ordinary wild material/exp/heal.
+            if (state.trainerId == BOSS_TRAINER_ID)
+                gameState.setFlag(flag_beta_complete);
+        } else if (!state.gatherable) {
             awardWildKoMaterial(state);
+            awardWildKoHeal();
             awardOrdinaryWildExp(state);
         }
     }

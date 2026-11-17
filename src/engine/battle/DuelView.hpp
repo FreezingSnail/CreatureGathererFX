@@ -128,6 +128,28 @@ inline void buildCells(const battle::BattleState &state, uint8_t side, Cells &ou
     }
 }
 
+// Persistent centre-strip GATHER cue: a gatherable wild only. Trainers and
+// ordinary wilds keep the round/type content; the cue never adds a pick cell,
+// so the B action page stays the selector.
+inline bool gatherCue(const battle::BattleState &state)
+{
+    return state.gatherable != 0 && state.trainer == 0;
+}
+
+// Capture-progress track: the 1px fill at (48,47) spans round(32*progress/need)
+// pixels for a gatherable wild. Zero for trainers, ordinary wilds and a fresh
+// capture, so the renderer can draw nothing but the cue. `need` is always a
+// real wild requirement (8..24, BattleSetup::wildNeed), never zero.
+constexpr uint8_t GATHER_TRACK_WIDTH = 32;
+
+inline uint8_t gatherTrackWidth(const battle::BattleState &state)
+{
+    if (!gatherCue(state)) return 0;
+    return static_cast<uint8_t>(
+        (static_cast<uint16_t>(GATHER_TRACK_WIDTH) * state.gather.progress +
+         state.gather.need / 2) / state.gather.need);
+}
+
 // Caption for an attacking trade/win/lose round: the player's move relation
 // against the opponent's move, labelled by the creature-type bonus on the side
 // that lands the win (mock/duel-bonus.html drawDuelFeedback + duelResolve).

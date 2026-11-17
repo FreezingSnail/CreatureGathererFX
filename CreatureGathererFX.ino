@@ -269,6 +269,12 @@ uint8_t render() {
     }
     case GameState_t::WORLD:
     {
+        // The root menu and its pages fill the screen; draw no world raster or
+        // overlay beneath them and report zero metadata reads for this frame.
+        if (collectionMenuWorldOpen()) {
+            collectionMenuWorldDraw(LureZone::inventory());
+            return 0;
+        }
         const uint8_t rowsRead = drawMapFast(worldState());
         drawPlayer(worldState());
         LureZone::drawOverlay();

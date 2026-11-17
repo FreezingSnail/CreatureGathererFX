@@ -3,11 +3,13 @@
 #include "StepEvent.hpp"
 #include "Encounter.hpp"
 #include "LureZone.hpp"
+#include "../menu/CollectionMenu.hpp"
 #include "TileProps.hpp"
 #include "../../item/Inventory.hpp"
 #include "../../item/ItemIds.hpp"
 #include "../../lib/FxRead.hpp"
 #include "../../player/Player.hpp"
+#include "../../flags/flags.hpp"
 #include "../../fxdata.h"
 
 #ifndef TEST
@@ -47,6 +49,17 @@ constexpr uint16_t REST_TILE =
     static_cast<uint16_t>((static_cast<uint16_t>(REST_Y) << 8) | REST_X);
 constexpr uint8_t START_X = 11;
 constexpr uint8_t START_Y = 5;
+// First-beta fixed boss (data/beta-area.toml boss_x/boss_y = 21/9): a faced
+// coordinate trigger from the only walkable approach (20,9), like the rest
+// point. The appended ardu opponent row is one level-8 member because its
+// second/third authored slots are level 0; derive its row index from the
+// generated addresses so runtime never hardcodes a packed table position.
+constexpr uint8_t BOSS_X = 21;
+constexpr uint8_t BOSS_Y = 9;
+constexpr uint16_t BOSS_TILE =
+    static_cast<uint16_t>((static_cast<uint16_t>(BOSS_Y) << 8) | BOSS_X);
+constexpr uint8_t BOSS_TRAINER_ID =
+    static_cast<uint8_t>((opponent_seed_24 - opponent_seeds) / 9);
 
 #ifndef WORLD_TEST
 // Set on terminal Lose, consumed at the top of the next world frame so the
@@ -343,6 +356,20 @@ void WorldEngine::runMap(WorldTransient &world) {
         LureZone::pickerInput(pickerButtons());
         return;
     }
+#ifndef WORLD_TEST
+    // The root menu and its bag/collection pages own fresh edges and freeze
+    // the world while they are up. They open only from an idle world, so a
+    // held direction cannot pop the menu open mid-step; the world-test subset
+    // binary has no menu renderer.
+    if (collectionMenuWorldInput(pickerButtons(),
+                                 !moving(world.motion) && !interactionDialogActive(),
+                                 LureZone::inventory())) {
+        // Consume a confirmed box-to-party choice here in WORLD, after the menu
+        // has handled its own edges and before any world step can run.
+        collectionMenuWorldApplyChoice(player);
+        return;
+    }
+#endif
     if (interactionDialogActive()) {
         if (interactionJustPressedA()) popInteractionDialog();
     } else if (moving(world.motion) && moveable(world)) {
@@ -350,6 +377,9 @@ void WorldEngine::runMap(WorldTransient &world) {
     } else {
         const uint16_t beforeInteract = gameState.playerLocation;
         interact();
+        // A faced boss trigger starts a battle in this frame; the world union
+        // storage now belongs to the battle, so no input/step may touch it.
+        if (gameState.state != GameState_t::WORLD) return;
         if (gameState.playerLocation != beforeInteract) syncFromLocation(world);
         if (!interactionDialogActive() && !LureZone::pickerOpen()) input(world);
         // Match the previous sketch path: the first animation pixel is applied
@@ -496,6 +526,22 @@ void WorldEngine::interact() {
     }
 
 #ifndef WORLD_TEST
+    // The first-beta boss is a faced-tile coordinate trigger, not an NPC or
+    // script marker (data/beta-area.toml boss_x/boss_y). Once the one-shot
+    // completion flag is set the same interaction shows the compact ending
+    // line instead of starting another trainer fight, so no reward repeats and
+    // no unfinished area is entered.
+    if (targetTile == BOSS_TILE) {
+        if (gameState.getFlag(flag_beta_complete)) {
+            LureZone::showMessage(lureTextBetaComplete, 125, 60);
+            return;
+        }
+        enterBattle();
+        battleSession().beginTrainer(BOSS_TRAINER_ID);
+        gameState.state = GameState_t::BATTLE;
+        return;
+    }
+
     // The first-beta free rest point is a faced-tile coordinate trigger, not a
     // tile prop or map marker (data/beta-area.toml rest_x/rest_y). A fresh A on
     // the authored tile restores only the occupied party; boxed instances keep

@@ -181,6 +181,8 @@ TEST_SOURCES = src/lib/Blit.cpp \
 	src/engine/menu/DialogQueue.cpp \
 	src/engine/menu/MenuNav.cpp \
 	src/engine/menu/MenuV2.cpp \
+	src/engine/menu/InventoryMenu.cpp \
+	src/engine/menu/CollectionMenu.cpp \
 	src/save/SaveController.cpp \
 	tst/src/random.cpp \
 	tst/src/FlashBackendFake.cpp \
@@ -487,13 +489,16 @@ pack: encounter-profile-check
 
 check: gen test testvm test-beta-area test-world-script-profile test-encounter-profile test-manifest test-music test-generated-libs test-fxtest-ram test-avr-build-budget verify-generated build fxtest
 
-# Authored first-beta contract (CreatureGathererFX-o845). The node suite pins the
+# Authored first-beta contract (CreatureGathererFX-o845). The node suites pin the
 # authored start/rest/landmarks, the generated collision and the shipping
 # fresh-game start literal to each other, so a one-sided edit of either side
-# fails the standard gate. It validates the generated collision, so it depends on
-# gen (also ordered by check before the other gate prerequisites).
+# fails the standard gate. They also freeze the first-beta pocket props and the
+# b2a.6 label/width/position table (collection root/list/party and ending rows)
+# against the generated packed text/glyphs, so a drifted label fails the gate
+# instead of clipping on the device. They validate generated artifacts, so the
+# target depends on gen (also ordered by check before the other prerequisites).
 test-beta-area: gen
-	node --test tools/tests/beta-area_test.mjs tools/tests/starter-area_test.mjs
+	node --test tools/tests/beta-area_test.mjs tools/tests/starter-area_test.mjs tools/tests/pocket-props_test.mjs tools/tests/battle48-screen_test.mjs
 
 # Final pre-commit gate. Keep the integrated check and shipping RAM build
 # sequential even when the caller invokes make with -j.
@@ -668,7 +673,7 @@ fxtest-build:
 		case "$$ino" in \
 			test_battle_compact) profile=compact ;; \
 			test_battle_facts) profile=facts ;; \
-			test_battle_duel|test_duel_session|test_duel_resources|test_duel_ui|test_stack|test_win_exp) profile=duel ;; \
+			test_battle_duel|test_beta_area|test_duel_session|test_duel_resources|test_duel_ui|test_stack|test_win_exp) profile=duel ;; \
 			*) profile=default ;; \
 		esac; \
 		stage="$(FXTEST_BUILD_DIR)/profiles/$$profile/suite"; \
@@ -726,6 +731,7 @@ fxtest-run:
 		if [ "$$name" = "test_duel_resources" ]; then ms="$(FXTEST_MS_RESOURCES)"; fi; \
 		if [ "$$name" = "test_save" ]; then ms="$(FXTEST_MS_SAVE)"; fi; \
 		if [ "$$name" = "test_save_cuts" ]; then ms="$(FXTEST_MS_SAVE)"; fi; \
+		if [ "$$name" = "test_collection" ]; then ms="$(FXTEST_MS_SAVE)"; fi; \
 		if out="$$($(ARDENS) captureserial=$$ms fxport=d1 display=ssd1306 file=$$stage/output/$$name.ino.hex file=$$stage/fxdata.bin 2>&1)"; then \
 			runner_status=0; \
 		else \

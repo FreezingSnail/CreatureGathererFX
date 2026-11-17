@@ -86,6 +86,16 @@ class BattleSession {
     duel::Action duelCommittedOpponent_; // committed once on Choice entry
     uint8_t duelHistory_[duel::HISTORY_CAP];
     uint8_t duelHistoryCount_;
+    // Authored heal amount of the UseItem committed for the pending round. The
+    // def is read once on the Choice transition that accepts and takes the item;
+    // the heal itself lands in the atomic round before the opponent's action.
+    uint8_t duelItemHeal_;
+    // Authored duel persona/rate for this encounter, read once at entry (one
+    // transition): the trainer row's DuelData entry, or the demo preset under
+    // CGFX_ARENA_DEMO. Wild encounters stay Random/0 without a read. Every
+    // later Choice commit uses the stored pair, never the cart.
+    duel::Persona duelPersona_;
+    uint8_t duelReadRate_;
 
     void duelCommitOpponent();
     void duelRecordHistory(uint8_t type);
@@ -99,6 +109,10 @@ class BattleSession {
     // feedback captions on the transition rather than per frame.
     bool consumeResultEntry();
     bool isResultDwell() const { return cursor_.phase == SessionPhase::Result; }
+    // Encounter persona/rate the Choice commit uses (pinned by the session
+    // suites; inline so unused shipping calls cost nothing).
+    duel::Persona duelPersona() const { return duelPersona_; }
+    uint8_t duelReadRate() const { return duelReadRate_; }
     // True while the feedback UI arm must be drawn: the result dwell and the
     // pending terminal-exit frame (the menu arm is stale by then).
     bool duelFeedbackActive() const {

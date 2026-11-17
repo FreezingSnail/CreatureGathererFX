@@ -6,8 +6,8 @@ using uint24_t = __uint24;
 
 // Initialize FX hardware using  FX::begin(FX_DATA_PAGE); in the setup() function.
 
-constexpr uint16_t FX_DATA_PAGE  = 0xf408;
-constexpr uint24_t FX_DATA_BYTES = 751385;
+constexpr uint16_t FX_DATA_PAGE  = 0xf406;
+constexpr uint24_t FX_DATA_BYTES = 751879;
 
 constexpr uint16_t FX_SAVE_PAGE  = 0xFF80;
 constexpr uint24_t FX_SAVE_BYTES = 32768;
@@ -52,539 +52,552 @@ constexpr uint24_t opponent_seed_20 = 0x000140;
 constexpr uint24_t opponent_seed_21 = 0x000149;
 constexpr uint24_t opponent_seed_22 = 0x000152;
 constexpr uint24_t opponent_seed_23 = 0x00015B;
-constexpr uint24_t opts = 0x000164;
+constexpr uint24_t opponent_seed_24 = 0x000164;
+constexpr uint24_t opts = 0x00016D;
 namespace CreatureData
 {
-  constexpr uint24_t creatureData = 0x0001AC;
+  constexpr uint24_t creatureData = 0x0001B8;
 }
 
 namespace EventData
 {
-  constexpr uint24_t m1e1Text = 0x00032C;
-  constexpr uint24_t m1e1 = 0x000339;
-  constexpr uint24_t m1eTable = 0x00033C;
-  constexpr uint24_t m1s1e1Text = 0x000348;
-  constexpr uint24_t m1s1e1 = 0x000357;
-  constexpr uint24_t m1s1e21Text = 0x00035A;
-  constexpr uint24_t m1s1e2 = 0x000369;
-  constexpr uint24_t m1s1eTable = 0x00036C;
-  constexpr uint24_t m1Table = 0x000378;
-  constexpr uint24_t eventTable = 0x00037E;
+  constexpr uint24_t m1e1Text = 0x000338;
+  constexpr uint24_t m1e1 = 0x000345;
+  constexpr uint24_t m1eTable = 0x000348;
+  constexpr uint24_t m1s1e1Text = 0x000354;
+  constexpr uint24_t m1s1e1 = 0x000363;
+  constexpr uint24_t m1s1e21Text = 0x000366;
+  constexpr uint24_t m1s1e2 = 0x000375;
+  constexpr uint24_t m1s1eTable = 0x000378;
+  constexpr uint24_t m1Table = 0x000384;
+  constexpr uint24_t eventTable = 0x00038A;
 }
 
 namespace MapData
 {
-  constexpr uint24_t map1 = 0x000381;
-  constexpr uint24_t house1 = 0x0005D9;
-  constexpr uint24_t m1submaps = 0x000619;
-  constexpr uint24_t m1submapcount = 0x00061C;
-  constexpr uint24_t m1widths = 0x00061D;
-  constexpr uint24_t m1heights = 0x00061F;
-  constexpr uint24_t map1Warps = 0x000621;
-  constexpr uint24_t house1Warps = 0x000629;
-  constexpr uint24_t m1warpCounts = 0x00062D;
-  constexpr uint24_t m1warps = 0x00062F;
-  constexpr uint24_t warps = 0x000635;
-  constexpr uint24_t maps = 0x000638;
+  constexpr uint24_t map1 = 0x00038D;
+  constexpr uint24_t house1 = 0x0005E5;
+  constexpr uint24_t m1submaps = 0x000625;
+  constexpr uint24_t m1submapcount = 0x000628;
+  constexpr uint24_t m1widths = 0x000629;
+  constexpr uint24_t m1heights = 0x00062B;
+  constexpr uint24_t map1Warps = 0x00062D;
+  constexpr uint24_t house1Warps = 0x000635;
+  constexpr uint24_t m1warpCounts = 0x000639;
+  constexpr uint24_t m1warps = 0x00063B;
+  constexpr uint24_t warps = 0x000641;
+  constexpr uint24_t maps = 0x000644;
 }
 
 namespace AttackMasks
 {
-  constexpr uint24_t attackMask = 0x00064A;
+  constexpr uint24_t attackMask = 0x000656;
 }
 
 namespace MenuFXData
 {
-  constexpr uint24_t attackText = 0x00068A;
-  constexpr uint24_t enemyAttackText = 0x00069B;
-  constexpr uint24_t damageText = 0x0006A8;
-  constexpr uint24_t hpText = 0x0006B5;
-  constexpr uint24_t atkText = 0x0006BA;
-  constexpr uint24_t defText = 0x0006C0;
-  constexpr uint24_t spdText = 0x0006C6;
-  constexpr uint24_t satkText = 0x0006CC;
-  constexpr uint24_t sdefText = 0x0006D3;
-  constexpr uint24_t pointerText = 0x0006DA;
-  constexpr uint24_t SPIRIT = 0x0006DC;
-  constexpr uint24_t WATER = 0x0006E3;
-  constexpr uint24_t WIND = 0x0006E9;
-  constexpr uint24_t EARTH = 0x0006EE;
-  constexpr uint24_t FIRE = 0x0006F4;
-  constexpr uint24_t LIGHTNING = 0x0006F9;
-  constexpr uint24_t PLANT = 0x000703;
-  constexpr uint24_t ELDER = 0x000709;
-  constexpr uint24_t NONE = 0x00070F;
-  constexpr uint24_t Fainted = 0x000710;
-  constexpr uint24_t SwitchIn = 0x000718;
-  constexpr uint24_t win = 0x000729;
-  constexpr uint24_t lose = 0x000731;
-  constexpr uint24_t escaped = 0x00073C;
-  constexpr uint24_t changedIn = 0x000748;
-  constexpr uint24_t quarter = 0x00075C;
-  constexpr uint24_t half = 0x00076E;
-  constexpr uint24_t doubled = 0x00077B;
-  constexpr uint24_t quad = 0x000789;
-  constexpr uint24_t damage = 0x00079B;
-  constexpr uint24_t physical = 0x0007A2;
-  constexpr uint24_t special = 0x0007A7;
-  constexpr uint24_t power = 0x0007AC;
-  constexpr uint24_t move = 0x0007B3;
-  constexpr uint24_t change = 0x0007B8;
-  constexpr uint24_t escape = 0x0007BF;
-  constexpr uint24_t gather = 0x0007C6;
+  constexpr uint24_t attackText = 0x000696;
+  constexpr uint24_t enemyAttackText = 0x0006A7;
+  constexpr uint24_t damageText = 0x0006B4;
+  constexpr uint24_t hpText = 0x0006C1;
+  constexpr uint24_t atkText = 0x0006C6;
+  constexpr uint24_t defText = 0x0006CC;
+  constexpr uint24_t spdText = 0x0006D2;
+  constexpr uint24_t satkText = 0x0006D8;
+  constexpr uint24_t sdefText = 0x0006DF;
+  constexpr uint24_t pointerText = 0x0006E6;
+  constexpr uint24_t SPIRIT = 0x0006E8;
+  constexpr uint24_t WATER = 0x0006EF;
+  constexpr uint24_t WIND = 0x0006F5;
+  constexpr uint24_t EARTH = 0x0006FA;
+  constexpr uint24_t FIRE = 0x000700;
+  constexpr uint24_t LIGHTNING = 0x000705;
+  constexpr uint24_t PLANT = 0x00070F;
+  constexpr uint24_t ELDER = 0x000715;
+  constexpr uint24_t NONE = 0x00071B;
+  constexpr uint24_t Fainted = 0x00071C;
+  constexpr uint24_t SwitchIn = 0x000724;
+  constexpr uint24_t win = 0x000735;
+  constexpr uint24_t lose = 0x00073D;
+  constexpr uint24_t escaped = 0x000748;
+  constexpr uint24_t changedIn = 0x000754;
+  constexpr uint24_t quarter = 0x000768;
+  constexpr uint24_t half = 0x00077A;
+  constexpr uint24_t doubled = 0x000787;
+  constexpr uint24_t quad = 0x000795;
+  constexpr uint24_t damage = 0x0007A7;
+  constexpr uint24_t physical = 0x0007AE;
+  constexpr uint24_t special = 0x0007B3;
+  constexpr uint24_t power = 0x0007B8;
+  constexpr uint24_t move = 0x0007BF;
+  constexpr uint24_t change = 0x0007C4;
+  constexpr uint24_t escape = 0x0007CB;
+  constexpr uint24_t gather = 0x0007D2;
 }
 
 namespace Teams
 {
 namespace StockCreatures
 {
-    constexpr uint24_t null = 0x0007CD;
-    constexpr uint24_t SquibbleSnail = 0x0007CF;
-    constexpr uint24_t SquableSnail = 0x0007D1;
-    constexpr uint24_t ScrambleSnail = 0x0007D3;
-    constexpr uint24_t SkitterCrab = 0x0007D5;
-    constexpr uint24_t ScatterCrab = 0x0007D7;
-    constexpr uint24_t ShatterCrab = 0x0007D9;
-    constexpr uint24_t squid = 0x0007DB;
-    constexpr uint24_t bigsquid = 0x0007DD;
-    constexpr uint24_t BiggestSquid = 0x0007DF;
-    constexpr uint24_t bell = 0x0007E1;
-    constexpr uint24_t ember = 0x0007E3;
-    constexpr uint24_t cuircuit = 0x0007E5;
-    constexpr uint24_t hedge = 0x0007E7;
-    constexpr uint24_t cloud = 0x0007E9;
-    constexpr uint24_t rock = 0x0007EB;
-    constexpr uint24_t wiggleworm = 0x0007ED;
-    constexpr uint24_t waggleworm = 0x0007EF;
-    constexpr uint24_t skimskate = 0x0007F1;
-    constexpr uint24_t skimray = 0x0007F3;
-    constexpr uint24_t billow = 0x0007F5;
-    constexpr uint24_t howl = 0x0007F7;
-    constexpr uint24_t item = 0x0007F9;
-    constexpr uint24_t item2 = 0x0007FB;
-    constexpr uint24_t zip = 0x0007FD;
-    constexpr uint24_t zap = 0x0007FF;
-    constexpr uint24_t suculent = 0x000801;
-    constexpr uint24_t cactus = 0x000803;
-    constexpr uint24_t flickerfly = 0x000805;
-    constexpr uint24_t flitfly = 0x000807;
-    constexpr uint24_t dragon = 0x000809;
-    constexpr uint24_t skull = 0x00080B;
-    constexpr uint24_t ardu = 0x00080D;
-    constexpr uint24_t NibWeevil = 0x00080F;
-    constexpr uint24_t HuskWeevil = 0x000811;
-    constexpr uint24_t GranaryWeevil = 0x000813;
-    constexpr uint24_t DewBud = 0x000815;
-    constexpr uint24_t NectarBloom = 0x000817;
-    constexpr uint24_t Sporeling = 0x000819;
-    constexpr uint24_t SporeKeeper = 0x00081B;
-    constexpr uint24_t MossMole = 0x00081D;
-    constexpr uint24_t Conelet = 0x00081F;
-    constexpr uint24_t SpireSquid = 0x000821;
-    constexpr uint24_t Horseshoe = 0x000823;
-    constexpr uint24_t Shieldshoe = 0x000825;
-    constexpr uint24_t SiltSkorp = 0x000827;
-    constexpr uint24_t ReefReaper = 0x000829;
-    constexpr uint24_t Platefin = 0x00082B;
-    constexpr uint24_t AncientJaw = 0x00082D;
-    constexpr uint24_t CoalGrub = 0x00082F;
-    constexpr uint24_t CinderCocoon = 0x000831;
-    constexpr uint24_t FurnaceBeetle = 0x000833;
-    constexpr uint24_t Flintling = 0x000835;
-    constexpr uint24_t GeodeGuard = 0x000837;
-    constexpr uint24_t Tuftling = 0x000839;
-    constexpr uint24_t GustTuft = 0x00083B;
-    constexpr uint24_t StaticMite = 0x00083D;
-    constexpr uint24_t ChimeSeed = 0x00083F;
-    constexpr uint24_t BoughBell = 0x000841;
-    constexpr uint24_t ShardWisp = 0x000843;
-    constexpr uint24_t Reliquary = 0x000845;
-    constexpr uint24_t SaplingSage = 0x000847;
-    constexpr uint24_t GroveKeeper = 0x000849;
-    constexpr uint24_t FossilBloom = 0x00084B;
-    constexpr uint24_t OrbitRelic = 0x00084D;
+    constexpr uint24_t null = 0x0007D9;
+    constexpr uint24_t SquibbleSnail = 0x0007DB;
+    constexpr uint24_t SquableSnail = 0x0007DD;
+    constexpr uint24_t ScrambleSnail = 0x0007DF;
+    constexpr uint24_t SkitterCrab = 0x0007E1;
+    constexpr uint24_t ScatterCrab = 0x0007E3;
+    constexpr uint24_t ShatterCrab = 0x0007E5;
+    constexpr uint24_t squid = 0x0007E7;
+    constexpr uint24_t bigsquid = 0x0007E9;
+    constexpr uint24_t BiggestSquid = 0x0007EB;
+    constexpr uint24_t bell = 0x0007ED;
+    constexpr uint24_t ember = 0x0007EF;
+    constexpr uint24_t cuircuit = 0x0007F1;
+    constexpr uint24_t hedge = 0x0007F3;
+    constexpr uint24_t cloud = 0x0007F5;
+    constexpr uint24_t rock = 0x0007F7;
+    constexpr uint24_t wiggleworm = 0x0007F9;
+    constexpr uint24_t waggleworm = 0x0007FB;
+    constexpr uint24_t skimskate = 0x0007FD;
+    constexpr uint24_t skimray = 0x0007FF;
+    constexpr uint24_t billow = 0x000801;
+    constexpr uint24_t howl = 0x000803;
+    constexpr uint24_t item = 0x000805;
+    constexpr uint24_t item2 = 0x000807;
+    constexpr uint24_t zip = 0x000809;
+    constexpr uint24_t zap = 0x00080B;
+    constexpr uint24_t suculent = 0x00080D;
+    constexpr uint24_t cactus = 0x00080F;
+    constexpr uint24_t flickerfly = 0x000811;
+    constexpr uint24_t flitfly = 0x000813;
+    constexpr uint24_t dragon = 0x000815;
+    constexpr uint24_t skull = 0x000817;
+    constexpr uint24_t ardu = 0x000819;
+    constexpr uint24_t NibWeevil = 0x00081B;
+    constexpr uint24_t HuskWeevil = 0x00081D;
+    constexpr uint24_t GranaryWeevil = 0x00081F;
+    constexpr uint24_t DewBud = 0x000821;
+    constexpr uint24_t NectarBloom = 0x000823;
+    constexpr uint24_t Sporeling = 0x000825;
+    constexpr uint24_t SporeKeeper = 0x000827;
+    constexpr uint24_t MossMole = 0x000829;
+    constexpr uint24_t Conelet = 0x00082B;
+    constexpr uint24_t SpireSquid = 0x00082D;
+    constexpr uint24_t Horseshoe = 0x00082F;
+    constexpr uint24_t Shieldshoe = 0x000831;
+    constexpr uint24_t SiltSkorp = 0x000833;
+    constexpr uint24_t ReefReaper = 0x000835;
+    constexpr uint24_t Platefin = 0x000837;
+    constexpr uint24_t AncientJaw = 0x000839;
+    constexpr uint24_t CoalGrub = 0x00083B;
+    constexpr uint24_t CinderCocoon = 0x00083D;
+    constexpr uint24_t FurnaceBeetle = 0x00083F;
+    constexpr uint24_t Flintling = 0x000841;
+    constexpr uint24_t GeodeGuard = 0x000843;
+    constexpr uint24_t Tuftling = 0x000845;
+    constexpr uint24_t GustTuft = 0x000847;
+    constexpr uint24_t StaticMite = 0x000849;
+    constexpr uint24_t ChimeSeed = 0x00084B;
+    constexpr uint24_t BoughBell = 0x00084D;
+    constexpr uint24_t ShardWisp = 0x00084F;
+    constexpr uint24_t Reliquary = 0x000851;
+    constexpr uint24_t SaplingSage = 0x000853;
+    constexpr uint24_t GroveKeeper = 0x000855;
+    constexpr uint24_t FossilBloom = 0x000857;
+    constexpr uint24_t OrbitRelic = 0x000859;
 }
 
 namespace Names
 {
-    constexpr uint24_t jimbo = 0x00084F;
+    constexpr uint24_t jimbo = 0x00085B;
 }
 
-  constexpr uint24_t teamList = 0x000855;
+  constexpr uint24_t teamList = 0x000861;
 }
 
-constexpr uint24_t testmap = 0x0009E4;
-constexpr uint24_t numbersblack = 0x000C24;
-constexpr uint24_t characterSheet = 0x00119C;
-constexpr uint24_t NewecreatureSprites = 0x00131C;
-constexpr uint24_t numberswhite = 0x00931C;
-constexpr uint24_t singlenumberswhite = 0x009894;
-constexpr uint24_t singlenumbersblack = 0x0098D0;
-constexpr uint24_t moveInfo = 0x00990C;
-constexpr uint24_t tiles = 0x0099FC;
-constexpr uint24_t maskedFont = 0x00F9FC;
-constexpr uint24_t battleMenu = 0x0129FC;
-constexpr uint24_t ArduFontTrimmed = 0x012B7C;
-constexpr uint24_t amove20 = 0x012CF3;
-constexpr uint24_t amove3 = 0x012D25;
-constexpr uint24_t creature24 = 0x012D61;
-constexpr uint24_t special = 0x012D89;
-constexpr uint24_t creature30 = 0x012DC5;
-constexpr uint24_t damage = 0x012E01;
-constexpr uint24_t amove29 = 0x012E51;
-constexpr uint24_t amove4 = 0x012EBF;
-constexpr uint24_t amove5 = 0x012F05;
-constexpr uint24_t status = 0x012F4B;
-constexpr uint24_t creature6 = 0x012F91;
-constexpr uint24_t amove7 = 0x012FCD;
-constexpr uint24_t amove25 = 0x01301D;
-constexpr uint24_t creature27 = 0x013095;
-constexpr uint24_t wind = 0x013103;
-constexpr uint24_t lightning = 0x01313F;
-constexpr uint24_t creature0 = 0x0131AD;
-constexpr uint24_t creature9 = 0x013239;
-constexpr uint24_t amove12 = 0x01326B;
-constexpr uint24_t amove13 = 0x0132CF;
-constexpr uint24_t sdefText = 0x013329;
-constexpr uint24_t amove6 = 0x01336F;
-constexpr uint24_t amove15 = 0x0133A1;
-constexpr uint24_t satkText = 0x0133F1;
-constexpr uint24_t creature29 = 0x013437;
-constexpr uint24_t creature28 = 0x013487;
-constexpr uint24_t creature11 = 0x0134D7;
-constexpr uint24_t creature12 = 0x013531;
-constexpr uint24_t creature13 = 0x01356D;
-constexpr uint24_t creature25 = 0x0135A9;
-constexpr uint24_t creature3 = 0x013603;
-constexpr uint24_t amove26 = 0x01367B;
-constexpr uint24_t spdText = 0x0136D5;
-constexpr uint24_t creature26 = 0x013711;
-constexpr uint24_t amove14 = 0x013757;
-constexpr uint24_t gather = 0x0137B1;
-constexpr uint24_t amove30 = 0x0137F7;
-constexpr uint24_t amove24 = 0x013829;
-constexpr uint24_t fire = 0x01386F;
-constexpr uint24_t creature19 = 0x0138AB;
-constexpr uint24_t lose = 0x0138F1;
-constexpr uint24_t creature8 = 0x013969;
-constexpr uint24_t creature5 = 0x0139EB;
-constexpr uint24_t creature4 = 0x013A63;
-constexpr uint24_t Fainted = 0x013ADB;
-constexpr uint24_t amove27 = 0x013B35;
-constexpr uint24_t creature15 = 0x013B67;
-constexpr uint24_t half = 0x013BD5;
-constexpr uint24_t creature23 = 0x013C61;
-constexpr uint24_t hpText = 0x013C89;
-constexpr uint24_t amove2 = 0x013CBB;
-constexpr uint24_t elder = 0x013D01;
-constexpr uint24_t plant = 0x013D47;
-constexpr uint24_t amove1 = 0x013D8D;
-constexpr uint24_t water = 0x013DDD;
-constexpr uint24_t enemyAttackText = 0x013E23;
-constexpr uint24_t atkText = 0x013EAF;
-constexpr uint24_t amove9 = 0x013EEB;
-constexpr uint24_t amove8 = 0x013F31;
-constexpr uint24_t defText = 0x013F77;
-constexpr uint24_t none = 0x013FB3;
-constexpr uint24_t earth = 0x013FEF;
-constexpr uint24_t creature10 = 0x014035;
-constexpr uint24_t amove32 = 0x014071;
-constexpr uint24_t amove33 = 0x01407B;
-constexpr uint24_t amove34 = 0x0140CB;
-constexpr uint24_t amove35 = 0x0140FD;
-constexpr uint24_t amove36 = 0x014107;
-constexpr uint24_t amove37 = 0x014157;
-constexpr uint24_t amove38 = 0x0141A7;
-constexpr uint24_t amove39 = 0x0141F7;
-constexpr uint24_t amove40 = 0x014233;
-constexpr uint24_t amove41 = 0x014297;
-constexpr uint24_t amove42 = 0x0142F1;
-constexpr uint24_t amove43 = 0x014369;
-constexpr uint24_t amove44 = 0x0143D7;
-constexpr uint24_t damageText = 0x01441D;
-constexpr uint24_t physical = 0x0144A9;
-constexpr uint24_t win = 0x0144E5;
-constexpr uint24_t amove21 = 0x01453F;
-constexpr uint24_t amove19 = 0x014585;
-constexpr uint24_t amove18 = 0x0145C1;
-constexpr uint24_t creature14 = 0x0145FD;
-constexpr uint24_t amove28 = 0x01462F;
-constexpr uint24_t changedIn = 0x01466B;
-constexpr uint24_t amove16 = 0x01473D;
-constexpr uint24_t creature2 = 0x01476F;
-constexpr uint24_t amove17 = 0x0147FB;
-constexpr uint24_t amove22 = 0x01482D;
-constexpr uint24_t amove0 = 0x01485F;
-constexpr uint24_t escaped = 0x01489B;
-constexpr uint24_t creature17 = 0x01491D;
-constexpr uint24_t creature20 = 0x014981;
-constexpr uint24_t creature21 = 0x0149B3;
-constexpr uint24_t quad = 0x0149E5;
-constexpr uint24_t creature7 = 0x014AA3;
-constexpr uint24_t SwitchIn = 0x014AFD;
-constexpr uint24_t amove11 = 0x014BB1;
-constexpr uint24_t creature16 = 0x014BE3;
-constexpr uint24_t power = 0x014C51;
-constexpr uint24_t spirit = 0x014CA1;
-constexpr uint24_t doubled = 0x014CF1;
-constexpr uint24_t amove23 = 0x014D87;
-constexpr uint24_t pointerText = 0x014DAF;
-constexpr uint24_t attackText = 0x014DCD;
-constexpr uint24_t move = 0x014E81;
-constexpr uint24_t creature18 = 0x014EBD;
-constexpr uint24_t amove31 = 0x014F0D;
-constexpr uint24_t escape = 0x014F71;
-constexpr uint24_t creature1 = 0x014FC1;
-constexpr uint24_t applied = 0x015043;
-constexpr uint24_t amove10 = 0x0150D9;
-constexpr uint24_t quarter = 0x015129;
-constexpr uint24_t creature22 = 0x0151E7;
-constexpr uint24_t change = 0x015223;
-constexpr uint24_t creature31 = 0x015273;
-constexpr uint24_t lureTier0 = 0x0152A5;
-constexpr uint24_t lureTier1 = 0x0152E1;
-constexpr uint24_t lureTier2 = 0x015313;
-constexpr uint24_t lureType0 = 0x015345;
-constexpr uint24_t lureType1 = 0x01538B;
-constexpr uint24_t lureType2 = 0x0153C7;
-constexpr uint24_t lureType3 = 0x0153F9;
-constexpr uint24_t lureType4 = 0x015435;
-constexpr uint24_t lureType5 = 0x015467;
-constexpr uint24_t lureType6 = 0x0154CB;
-constexpr uint24_t lureType7 = 0x015507;
-constexpr uint24_t consumable0 = 0x015543;
-constexpr uint24_t consumable1 = 0x01557F;
-constexpr uint24_t consumable2 = 0x0155BB;
-constexpr uint24_t consumable3 = 0x015601;
-constexpr uint24_t consumable4 = 0x015647;
-constexpr uint24_t consumable5 = 0x015679;
-constexpr uint24_t consumable6 = 0x0156BF;
-constexpr uint24_t consumable7 = 0x01570F;
-constexpr uint24_t arenaChooseTeam = 0x01575F;
-constexpr uint24_t arenaChooseOpponent = 0x0157D7;
-constexpr uint24_t arenaControls = 0x015877;
-constexpr uint24_t creature32 = 0x015903;
-constexpr uint24_t creature33 = 0x015967;
-constexpr uint24_t creature34 = 0x0159D5;
-constexpr uint24_t creature35 = 0x015A61;
-constexpr uint24_t creature36 = 0x015AA7;
-constexpr uint24_t creature37 = 0x015B1F;
-constexpr uint24_t creature38 = 0x015B83;
-constexpr uint24_t creature39 = 0x015BFB;
-constexpr uint24_t creature40 = 0x015C55;
-constexpr uint24_t creature41 = 0x015CA5;
-constexpr uint24_t creature42 = 0x015D13;
-constexpr uint24_t creature43 = 0x015D77;
-constexpr uint24_t creature44 = 0x015DE5;
-constexpr uint24_t creature45 = 0x015E49;
-constexpr uint24_t creature46 = 0x015EB7;
-constexpr uint24_t creature47 = 0x015F11;
-constexpr uint24_t creature48 = 0x015F7F;
-constexpr uint24_t creature49 = 0x015FD9;
-constexpr uint24_t creature50 = 0x01605B;
-constexpr uint24_t creature51 = 0x0160E7;
-constexpr uint24_t creature52 = 0x01614B;
-constexpr uint24_t creature53 = 0x0161B9;
-constexpr uint24_t creature54 = 0x016213;
-constexpr uint24_t creature55 = 0x01626D;
-constexpr uint24_t creature56 = 0x0162DB;
-constexpr uint24_t creature57 = 0x01633F;
-constexpr uint24_t creature58 = 0x0163A3;
-constexpr uint24_t creature59 = 0x016407;
-constexpr uint24_t creature60 = 0x01646B;
-constexpr uint24_t creature61 = 0x0164E3;
-constexpr uint24_t creature62 = 0x01655B;
-constexpr uint24_t creature63 = 0x0165D3;
-constexpr uint24_t battleWin = 0x016641;
-constexpr uint24_t battleDefeat = 0x016669;
-constexpr uint24_t battleEscaped = 0x0166AF;
-constexpr uint24_t battleGathered = 0x0166FF;
-constexpr uint24_t battleFled = 0x016759;
-constexpr uint24_t battleCannotAct = 0x01678B;
-constexpr uint24_t battleHurtItself = 0x0167F9;
-constexpr uint24_t battleEnters = 0x016871;
-constexpr uint24_t battleCannotEscape = 0x01691B;
-constexpr uint24_t battlePass = 0x0169A7;
-constexpr uint24_t battleTurnEnd = 0x0169D9;
-constexpr uint24_t lureTextPrompt = 0x016A33;
-constexpr uint24_t lureTextSet = 0x016A8D;
-constexpr uint24_t lureTextEmpty = 0x016AE7;
-constexpr uint24_t lureTextGathered = 0x016B41;
-constexpr uint24_t lureTextFull = 0x016B9B;
-constexpr uint24_t lureTextExpired = 0x016BF5;
-constexpr uint24_t lureTextFooter = 0x016C59;
-constexpr uint24_t lureTextIntroTitle = 0x016CDB;
-constexpr uint24_t lureTextIntroSet = 0x016D3F;
-constexpr uint24_t lureTextIntroBias = 0x016DFD;
-constexpr uint24_t lureTextIntroSteps = 0x016EB1;
-constexpr uint24_t lureTextIntroGather = 0x016F29;
-constexpr uint24_t lureTextIntroNoSave = 0x016FE7;
-constexpr uint24_t duelBonusWin = 0x017069;
-constexpr uint24_t duelBonusLose = 0x0170CD;
-constexpr uint24_t duelWeakWin = 0x01713B;
-constexpr uint24_t duelWeakLose = 0x017195;
-constexpr uint24_t duelRpsWin = 0x0171F9;
-constexpr uint24_t duelRpsLose = 0x017249;
-constexpr uint24_t duelTrade = 0x0172A3;
-constexpr uint24_t duelDefaultWin = 0x0172DF;
-constexpr uint24_t duelSwap = 0x017357;
-constexpr uint24_t duelWait = 0x017389;
-constexpr uint24_t duelDraw = 0x0173BB;
-constexpr uint24_t duelVs = 0x0173ED;
-constexpr uint24_t duelRound = 0x01740B;
+constexpr uint24_t testmap = 0x0009F0;
+constexpr uint24_t numbersblack = 0x000C30;
+constexpr uint24_t characterSheet = 0x0011A8;
+constexpr uint24_t NewecreatureSprites = 0x001328;
+constexpr uint24_t numberswhite = 0x009328;
+constexpr uint24_t singlenumberswhite = 0x0098A0;
+constexpr uint24_t singlenumbersblack = 0x0098DC;
+constexpr uint24_t moveInfo = 0x009918;
+constexpr uint24_t tiles = 0x009A08;
+constexpr uint24_t maskedFont = 0x00FA08;
+constexpr uint24_t battleMenu = 0x012A08;
+constexpr uint24_t ArduFontTrimmed = 0x012B88;
+constexpr uint24_t amove20 = 0x012CFF;
+constexpr uint24_t amove3 = 0x012D31;
+constexpr uint24_t creature24 = 0x012D6D;
+constexpr uint24_t special = 0x012D95;
+constexpr uint24_t creature30 = 0x012DD1;
+constexpr uint24_t damage = 0x012E0D;
+constexpr uint24_t amove29 = 0x012E5D;
+constexpr uint24_t amove4 = 0x012ECB;
+constexpr uint24_t amove5 = 0x012F11;
+constexpr uint24_t status = 0x012F57;
+constexpr uint24_t creature6 = 0x012F9D;
+constexpr uint24_t amove7 = 0x012FD9;
+constexpr uint24_t amove25 = 0x013029;
+constexpr uint24_t creature27 = 0x0130A1;
+constexpr uint24_t wind = 0x01310F;
+constexpr uint24_t lightning = 0x01314B;
+constexpr uint24_t creature0 = 0x0131B9;
+constexpr uint24_t creature9 = 0x013245;
+constexpr uint24_t amove12 = 0x013277;
+constexpr uint24_t amove13 = 0x0132DB;
+constexpr uint24_t sdefText = 0x013335;
+constexpr uint24_t amove6 = 0x01337B;
+constexpr uint24_t amove15 = 0x0133AD;
+constexpr uint24_t satkText = 0x0133FD;
+constexpr uint24_t creature29 = 0x013443;
+constexpr uint24_t creature28 = 0x013493;
+constexpr uint24_t creature11 = 0x0134E3;
+constexpr uint24_t creature12 = 0x01353D;
+constexpr uint24_t creature13 = 0x013579;
+constexpr uint24_t creature25 = 0x0135B5;
+constexpr uint24_t creature3 = 0x01360F;
+constexpr uint24_t amove26 = 0x013687;
+constexpr uint24_t spdText = 0x0136E1;
+constexpr uint24_t creature26 = 0x01371D;
+constexpr uint24_t amove14 = 0x013763;
+constexpr uint24_t gather = 0x0137BD;
+constexpr uint24_t amove30 = 0x013803;
+constexpr uint24_t amove24 = 0x013835;
+constexpr uint24_t fire = 0x01387B;
+constexpr uint24_t creature19 = 0x0138B7;
+constexpr uint24_t lose = 0x0138FD;
+constexpr uint24_t creature8 = 0x013975;
+constexpr uint24_t creature5 = 0x0139F7;
+constexpr uint24_t creature4 = 0x013A6F;
+constexpr uint24_t Fainted = 0x013AE7;
+constexpr uint24_t amove27 = 0x013B41;
+constexpr uint24_t creature15 = 0x013B73;
+constexpr uint24_t half = 0x013BE1;
+constexpr uint24_t creature23 = 0x013C6D;
+constexpr uint24_t hpText = 0x013C95;
+constexpr uint24_t amove2 = 0x013CC7;
+constexpr uint24_t elder = 0x013D0D;
+constexpr uint24_t plant = 0x013D53;
+constexpr uint24_t amove1 = 0x013D99;
+constexpr uint24_t water = 0x013DE9;
+constexpr uint24_t enemyAttackText = 0x013E2F;
+constexpr uint24_t atkText = 0x013EBB;
+constexpr uint24_t amove9 = 0x013EF7;
+constexpr uint24_t amove8 = 0x013F3D;
+constexpr uint24_t defText = 0x013F83;
+constexpr uint24_t none = 0x013FBF;
+constexpr uint24_t earth = 0x013FFB;
+constexpr uint24_t creature10 = 0x014041;
+constexpr uint24_t amove32 = 0x01407D;
+constexpr uint24_t amove33 = 0x014087;
+constexpr uint24_t amove34 = 0x0140D7;
+constexpr uint24_t amove35 = 0x014109;
+constexpr uint24_t amove36 = 0x014113;
+constexpr uint24_t amove37 = 0x014163;
+constexpr uint24_t amove38 = 0x0141B3;
+constexpr uint24_t amove39 = 0x014203;
+constexpr uint24_t amove40 = 0x01423F;
+constexpr uint24_t amove41 = 0x0142A3;
+constexpr uint24_t amove42 = 0x0142FD;
+constexpr uint24_t amove43 = 0x014375;
+constexpr uint24_t amove44 = 0x0143E3;
+constexpr uint24_t damageText = 0x014429;
+constexpr uint24_t physical = 0x0144B5;
+constexpr uint24_t win = 0x0144F1;
+constexpr uint24_t amove21 = 0x01454B;
+constexpr uint24_t amove19 = 0x014591;
+constexpr uint24_t amove18 = 0x0145CD;
+constexpr uint24_t creature14 = 0x014609;
+constexpr uint24_t amove28 = 0x01463B;
+constexpr uint24_t changedIn = 0x014677;
+constexpr uint24_t amove16 = 0x014749;
+constexpr uint24_t creature2 = 0x01477B;
+constexpr uint24_t amove17 = 0x014807;
+constexpr uint24_t amove22 = 0x014839;
+constexpr uint24_t amove0 = 0x01486B;
+constexpr uint24_t escaped = 0x0148A7;
+constexpr uint24_t creature17 = 0x014929;
+constexpr uint24_t creature20 = 0x01498D;
+constexpr uint24_t creature21 = 0x0149BF;
+constexpr uint24_t quad = 0x0149F1;
+constexpr uint24_t creature7 = 0x014AAF;
+constexpr uint24_t SwitchIn = 0x014B09;
+constexpr uint24_t amove11 = 0x014BBD;
+constexpr uint24_t creature16 = 0x014BEF;
+constexpr uint24_t power = 0x014C5D;
+constexpr uint24_t spirit = 0x014CAD;
+constexpr uint24_t doubled = 0x014CFD;
+constexpr uint24_t amove23 = 0x014D93;
+constexpr uint24_t pointerText = 0x014DBB;
+constexpr uint24_t attackText = 0x014DD9;
+constexpr uint24_t move = 0x014E8D;
+constexpr uint24_t creature18 = 0x014EC9;
+constexpr uint24_t amove31 = 0x014F19;
+constexpr uint24_t escape = 0x014F7D;
+constexpr uint24_t creature1 = 0x014FCD;
+constexpr uint24_t applied = 0x01504F;
+constexpr uint24_t amove10 = 0x0150E5;
+constexpr uint24_t quarter = 0x015135;
+constexpr uint24_t creature22 = 0x0151F3;
+constexpr uint24_t change = 0x01522F;
+constexpr uint24_t creature31 = 0x01527F;
+constexpr uint24_t lureTier0 = 0x0152B1;
+constexpr uint24_t lureTier1 = 0x0152ED;
+constexpr uint24_t lureTier2 = 0x01531F;
+constexpr uint24_t lureType0 = 0x015351;
+constexpr uint24_t lureType1 = 0x015397;
+constexpr uint24_t lureType2 = 0x0153D3;
+constexpr uint24_t lureType3 = 0x015405;
+constexpr uint24_t lureType4 = 0x015441;
+constexpr uint24_t lureType5 = 0x015473;
+constexpr uint24_t lureType6 = 0x0154D7;
+constexpr uint24_t lureType7 = 0x015513;
+constexpr uint24_t consumable0 = 0x01554F;
+constexpr uint24_t consumable1 = 0x01558B;
+constexpr uint24_t consumable2 = 0x0155C7;
+constexpr uint24_t consumable3 = 0x01560D;
+constexpr uint24_t consumable4 = 0x015653;
+constexpr uint24_t consumable5 = 0x015685;
+constexpr uint24_t consumable6 = 0x0156CB;
+constexpr uint24_t consumable7 = 0x01571B;
+constexpr uint24_t arenaChooseTeam = 0x01576B;
+constexpr uint24_t arenaChooseOpponent = 0x0157E3;
+constexpr uint24_t arenaControls = 0x015883;
+constexpr uint24_t creature32 = 0x01590F;
+constexpr uint24_t creature33 = 0x015973;
+constexpr uint24_t creature34 = 0x0159E1;
+constexpr uint24_t creature35 = 0x015A6D;
+constexpr uint24_t creature36 = 0x015AB3;
+constexpr uint24_t creature37 = 0x015B2B;
+constexpr uint24_t creature38 = 0x015B8F;
+constexpr uint24_t creature39 = 0x015C07;
+constexpr uint24_t creature40 = 0x015C61;
+constexpr uint24_t creature41 = 0x015CB1;
+constexpr uint24_t creature42 = 0x015D1F;
+constexpr uint24_t creature43 = 0x015D83;
+constexpr uint24_t creature44 = 0x015DF1;
+constexpr uint24_t creature45 = 0x015E55;
+constexpr uint24_t creature46 = 0x015EC3;
+constexpr uint24_t creature47 = 0x015F1D;
+constexpr uint24_t creature48 = 0x015F8B;
+constexpr uint24_t creature49 = 0x015FE5;
+constexpr uint24_t creature50 = 0x016067;
+constexpr uint24_t creature51 = 0x0160F3;
+constexpr uint24_t creature52 = 0x016157;
+constexpr uint24_t creature53 = 0x0161C5;
+constexpr uint24_t creature54 = 0x01621F;
+constexpr uint24_t creature55 = 0x016279;
+constexpr uint24_t creature56 = 0x0162E7;
+constexpr uint24_t creature57 = 0x01634B;
+constexpr uint24_t creature58 = 0x0163AF;
+constexpr uint24_t creature59 = 0x016413;
+constexpr uint24_t creature60 = 0x016477;
+constexpr uint24_t creature61 = 0x0164EF;
+constexpr uint24_t creature62 = 0x016567;
+constexpr uint24_t creature63 = 0x0165DF;
+constexpr uint24_t battleWin = 0x01664D;
+constexpr uint24_t battleDefeat = 0x016675;
+constexpr uint24_t battleEscaped = 0x0166BB;
+constexpr uint24_t battleGathered = 0x01670B;
+constexpr uint24_t battleFled = 0x016765;
+constexpr uint24_t battleCannotAct = 0x016797;
+constexpr uint24_t battleHurtItself = 0x016805;
+constexpr uint24_t battleEnters = 0x01687D;
+constexpr uint24_t battleCannotEscape = 0x016927;
+constexpr uint24_t battlePass = 0x0169B3;
+constexpr uint24_t battleTurnEnd = 0x0169E5;
+constexpr uint24_t lureTextPrompt = 0x016A3F;
+constexpr uint24_t lureTextSet = 0x016A99;
+constexpr uint24_t lureTextEmpty = 0x016AF3;
+constexpr uint24_t lureTextGathered = 0x016B4D;
+constexpr uint24_t lureTextFull = 0x016BA7;
+constexpr uint24_t lureTextExpired = 0x016C01;
+constexpr uint24_t lureTextBetaComplete = 0x016C65;
+constexpr uint24_t lureTextFooter = 0x016D5F;
+constexpr uint24_t lureTextIntroTitle = 0x016DE1;
+constexpr uint24_t lureTextIntroSet = 0x016E45;
+constexpr uint24_t lureTextIntroBias = 0x016F03;
+constexpr uint24_t lureTextIntroSteps = 0x016FB7;
+constexpr uint24_t lureTextIntroGather = 0x01702F;
+constexpr uint24_t lureTextIntroNoSave = 0x0170ED;
+constexpr uint24_t duelBonusWin = 0x01716F;
+constexpr uint24_t duelBonusLose = 0x0171D3;
+constexpr uint24_t duelWeakWin = 0x017241;
+constexpr uint24_t duelWeakLose = 0x01729B;
+constexpr uint24_t duelRpsWin = 0x0172FF;
+constexpr uint24_t duelRpsLose = 0x01734F;
+constexpr uint24_t duelTrade = 0x0173A9;
+constexpr uint24_t duelDefaultWin = 0x0173E5;
+constexpr uint24_t duelSwap = 0x01745D;
+constexpr uint24_t duelWait = 0x01748F;
+constexpr uint24_t duelDraw = 0x0174C1;
+constexpr uint24_t duelVs = 0x0174F3;
+constexpr uint24_t duelRound = 0x017511;
+constexpr uint24_t items = 0x017525;
 namespace CreatureNames
 {
-  constexpr uint24_t CreatureNames = 0x01741F;
+  constexpr uint24_t CreatureNames = 0x017561;
 }
 
 namespace MoveNames
 {
-  constexpr uint24_t MoveNames = 0x0174DF;
+  constexpr uint24_t MoveNames = 0x017621;
 }
 
 namespace MenuStrings
 {
-  constexpr uint24_t MenuStrings = 0x017566;
+  constexpr uint24_t MenuStrings = 0x0176A8;
+}
+
+namespace BattleActionText
+{
+  constexpr uint24_t BattleActionText = 0x01771A;
 }
 
 namespace EffectStrings
 {
-  constexpr uint24_t EffectStrings = 0x0175D8;
+  constexpr uint24_t EffectStrings = 0x01771D;
 }
 
 namespace LureTierNames
 {
-  constexpr uint24_t LureTierNames = 0x0175DB;
+  constexpr uint24_t LureTierNames = 0x017720;
 }
 
 namespace LureTypeNames
 {
-  constexpr uint24_t LureTypeNames = 0x0175E4;
+  constexpr uint24_t LureTypeNames = 0x017729;
 }
 
 namespace ConsumableNames
 {
-  constexpr uint24_t ConsumableNames = 0x0175FC;
+  constexpr uint24_t ConsumableNames = 0x017741;
 }
 
 namespace ArenaUiText
 {
-  constexpr uint24_t ArenaUiText = 0x017614;
+  constexpr uint24_t ArenaUiText = 0x017759;
 }
 
 namespace BattleFeedbackStrings
 {
-  constexpr uint24_t BattleFeedbackStrings = 0x01761D;
+  constexpr uint24_t BattleFeedbackStrings = 0x017762;
 }
 
 namespace LureText
 {
-  constexpr uint24_t LureText = 0x01763E;
+  constexpr uint24_t LureText = 0x017783;
 }
 
 namespace DuelText
 {
-  constexpr uint24_t DuelText = 0x017665;
+  constexpr uint24_t DuelText = 0x0177AD;
 }
 
-constexpr uint24_t basicBeamR = 0x01768C;
-constexpr uint24_t basicBeamL = 0x017E8C;
-constexpr uint24_t BasicWaveR = 0x01868C;
-constexpr uint24_t BasicWaveL = 0x018E8C;
-constexpr uint24_t fontTrimmed = 0x01968C;
+constexpr uint24_t basicBeamR = 0x0177D4;
+constexpr uint24_t basicBeamL = 0x017FD4;
+constexpr uint24_t BasicWaveR = 0x0187D4;
+constexpr uint24_t BasicWaveL = 0x018FD4;
+constexpr uint24_t fontTrimmed = 0x0197D4;
 constexpr uint16_t fontTrimmedWidth  = 5;
 constexpr uint16_t fontTrimmedHeight = 6;
 constexpr uint8_t  fontTrimmedFrames = 75;
 
-constexpr uint24_t type_table = 0x019807;
-constexpr uint24_t map_data = 0x019847;
-constexpr uint24_t raw_map_data = 0x039847;
-constexpr uint24_t raw_map_text = 0x059847;
-constexpr uint24_t consumable_table = 0x059849;
-constexpr uint24_t generator_version = 0x059859;
-constexpr uint24_t scripts = 0x059874;
+constexpr uint24_t type_table = 0x01994F;
+constexpr uint24_t map_data = 0x01998F;
+constexpr uint24_t raw_map_data = 0x03998F;
+constexpr uint24_t raw_map_text = 0x05998F;
+constexpr uint24_t consumable_table = 0x059991;
+constexpr uint24_t generator_version = 0x0599A1;
+constexpr uint24_t scripts = 0x0599BC;
 namespace ArenaDemoData
 {
-  constexpr uint24_t playerMembers = 0x099874;
-  constexpr uint24_t opponentTrainerIds = 0x09988F;
-  constexpr uint24_t opponentSpecies = 0x099894;
-  constexpr uint24_t player_blitz = 0x0998A3;
-  constexpr uint24_t player_bulwark = 0x0998D5;
-  constexpr uint24_t player_utility = 0x09991B;
-  constexpr uint24_t opponent_starter = 0x099961;
-  constexpr uint24_t opponent_speed = 0x0999A7;
-  constexpr uint24_t opponent_fortress = 0x0999D9;
-  constexpr uint24_t opponent_tricks = 0x099A29;
-  constexpr uint24_t opponent_champion = 0x099A65;
-  constexpr uint24_t playerLabels = 0x099AB5;
-  constexpr uint24_t opponentLabels = 0x099ABE;
-  constexpr uint24_t playerLabelWidths = 0x099ACD;
-  constexpr uint24_t opponentLabelWidths = 0x099AD0;
+  constexpr uint24_t playerMembers = 0x0999BC;
+  constexpr uint24_t opponentTrainerIds = 0x0999D7;
+  constexpr uint24_t opponentSpecies = 0x0999DC;
+  constexpr uint24_t player_blitz = 0x0999EB;
+  constexpr uint24_t player_bulwark = 0x099A1D;
+  constexpr uint24_t player_utility = 0x099A63;
+  constexpr uint24_t opponent_starter = 0x099AA9;
+  constexpr uint24_t opponent_speed = 0x099AEF;
+  constexpr uint24_t opponent_fortress = 0x099B21;
+  constexpr uint24_t opponent_tricks = 0x099B71;
+  constexpr uint24_t opponent_champion = 0x099BAD;
+  constexpr uint24_t playerLabels = 0x099BFD;
+  constexpr uint24_t opponentLabels = 0x099C06;
+  constexpr uint24_t playerLabelWidths = 0x099C15;
+  constexpr uint24_t opponentLabelWidths = 0x099C18;
 }
 
-constexpr uint24_t battleSprites48 = 0x099AD5;
+constexpr uint24_t battleSprites48 = 0x099C1D;
 constexpr uint16_t battleSprites48Width  = 48;
 constexpr uint16_t battleSprites48Height = 48;
 constexpr uint8_t  battleSprites48Frames = 128;
 
-constexpr uint24_t battleOptions48 = 0x0ABAD9;
+constexpr uint24_t battleOptions48 = 0x0ABC21;
 constexpr uint16_t battleOptions48Width  = 128;
 constexpr uint16_t battleOptions48Height = 16;
 constexpr uint8_t  battleOptions48Frames = 4;
 
-constexpr uint24_t worldPlayerSprites = 0x0ABEDD;
+constexpr uint24_t worldPlayerSprites = 0x0AC025;
 constexpr uint16_t worldPlayerSpritesWidth  = 16;
 constexpr uint16_t worldPlayerSpritesHeight = 16;
 constexpr uint8_t  worldPlayerSpritesFrames = 12;
 
-constexpr uint24_t lureWorldTiles = 0x0AC1E1;
+constexpr uint24_t lureWorldTiles = 0x0AC329;
 constexpr uint16_t lureWorldTilesWidth  = 16;
 constexpr uint16_t lureWorldTilesHeight = 16;
 constexpr uint8_t  lureWorldTilesFrames = 96;
 
-constexpr uint24_t duelChartFixture = 0x0ACDE5;
-constexpr uint24_t duelIcons = 0x0ACDFE;
+constexpr uint24_t duelChartFixture = 0x0ACF2D;
+constexpr uint24_t duelIcons = 0x0ACF46;
 constexpr uint16_t duelIconsWidth  = 8;
 constexpr uint16_t duelIconsHeight = 8;
 constexpr uint8_t  duelIconsFrames = 14;
 
 namespace DuelData
 {
-  constexpr uint24_t duelSpeciesTypes = 0x0ACEE2;
-  constexpr uint24_t duelTrainerPersona = 0x0ACFA2;
-  constexpr uint24_t duelTrainerRate = 0x0ACFBA;
-  constexpr uint24_t duelDemoPersona = 0x0ACFD2;
-  constexpr uint24_t duelDemoRate = 0x0ACFD3;
-  constexpr uint24_t duelTrainerOverrides = 0x0ACFD4;
-  constexpr uint24_t duelTeamMemberCounts = 0x0ACFD9;
-  constexpr uint24_t duelTeamMembers = 0x0ACFDE;
+  constexpr uint24_t duelSpeciesTypes = 0x0AD02A;
+  constexpr uint24_t duelTrainerPersona = 0x0AD0EA;
+  constexpr uint24_t duelTrainerRate = 0x0AD103;
+  constexpr uint24_t duelDemoPersona = 0x0AD11C;
+  constexpr uint24_t duelDemoRate = 0x0AD11D;
+  constexpr uint24_t duelTrainerOverrides = 0x0AD11E;
+  constexpr uint24_t duelTeamMemberCounts = 0x0AD123;
+  constexpr uint24_t duelTeamMembers = 0x0AD128;
 }
 
 namespace Evolution
 {
-  constexpr uint24_t evolutionSource = 0x0AD029;
-  constexpr uint24_t evolutionTarget = 0x0AD02F;
-  constexpr uint24_t evolutionLevel = 0x0AD035;
+  constexpr uint24_t evolutionSource = 0x0AD173;
+  constexpr uint24_t evolutionTarget = 0x0AD179;
+  constexpr uint24_t evolutionLevel = 0x0AD17F;
 }
 
 namespace Rewards
 {
-  constexpr uint24_t materialItem = 0x0AD03B;
-  constexpr uint24_t materialCount = 0x0AD07B;
-  constexpr uint24_t plantItem = 0x0AD0BB;
-  constexpr uint24_t plantCount = 0x0AD0BC;
-  constexpr uint24_t healItem = 0x0AD0BD;
-  constexpr uint24_t healCount = 0x0AD0BF;
+  constexpr uint24_t materialItem = 0x0AD185;
+  constexpr uint24_t materialCount = 0x0AD1C5;
+  constexpr uint24_t plantItem = 0x0AD205;
+  constexpr uint24_t plantCount = 0x0AD206;
+  constexpr uint24_t healItem = 0x0AD207;
+  constexpr uint24_t healCount = 0x0AD209;
 }
 
-constexpr uint24_t music_overworld = 0x0AD0C1;
-constexpr uint24_t music_combat = 0x0AE979;
-constexpr uint24_t music_victory = 0x0B0005;
-constexpr uint24_t music_defeat = 0x0B053F;
-constexpr uint24_t music_opening = 0x0B07E1;
-constexpr uint24_t music_village = 0x0B2409;
-constexpr uint24_t music_forest = 0x0B2A85;
-constexpr uint24_t music_coast = 0x0B42C1;
-constexpr uint24_t music_marsh = 0x0B4E55;
-constexpr uint24_t music_ruins = 0x0B5401;
-constexpr uint24_t music_exploration = 0x0B6F91;
+constexpr uint24_t music_overworld = 0x0AD20B;
+constexpr uint24_t music_combat = 0x0AEAC3;
+constexpr uint24_t music_victory = 0x0B014F;
+constexpr uint24_t music_defeat = 0x0B0689;
+constexpr uint24_t music_opening = 0x0B092B;
+constexpr uint24_t music_village = 0x0B2553;
+constexpr uint24_t music_forest = 0x0B2BCF;
+constexpr uint24_t music_coast = 0x0B440B;
+constexpr uint24_t music_marsh = 0x0B4F9F;
+constexpr uint24_t music_ruins = 0x0B554B;
+constexpr uint24_t music_exploration = 0x0B70DB;
+constexpr uint24_t pocketProps = 0x0B7863;
+constexpr uint16_t pocketPropsWidth  = 16;
+constexpr uint16_t pocketPropsHeight = 16;
+constexpr uint8_t  pocketPropsFrames = 5;
+

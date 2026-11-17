@@ -19,6 +19,8 @@ void begin(GameState_t returnState);
 
 // Advances the save one step per frame and restores the pre-save state when the
 // sequence completes. Starts a WORLD-returning save if none is in progress.
+// Once a failed sequence's flash is idle, a fresh A retries the live snapshot
+// and a fresh B returns to the pre-save state without claiming persistence.
 void advance();
 
 // Draws save progress or failure from internal flash, without reading FX while

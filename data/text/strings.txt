@@ -154,6 +154,10 @@ namespace MenuStrings {
     gather = "gather" 
 } 
 
+namespace BattleActionText {
+    items = "items" 
+}
+
 namespace EffectStrings {
     applied = "applied effect"
 }
@@ -213,6 +217,7 @@ namespace LureText {
     lureTextGathered = "Gathered"
     lureTextFull = "Bag Full"
     lureTextExpired = "Lure Gone"
+    lureTextBetaComplete = "ardu yields the clearing"
     lureTextFooter = "A:Set B:Back"
     lureTextIntroTitle = "Lure Demo"
     lureTextIntroSet = "A at box: set lure"

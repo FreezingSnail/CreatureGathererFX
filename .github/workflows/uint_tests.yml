@@ -9,6 +9,11 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v4
-  
-    - name: test
+
+    # Host and ScriptVM suites compile the committed generated mirrors under
+    # src/ (flags, opcodes), so they need no generator run and no FX tooling.
+    - name: Host C++ suites
       run: make test
+
+    - name: ScriptVM suites
+      run: make testvm
