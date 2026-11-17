@@ -341,6 +341,13 @@ static void drawScene(const battle::BattleView &view, int8_t shakeX = 0, int8_t 
     drawPlayerHP(view, shakeX, shakeY);
 }
 
+// The world camera and the player sprite share one anchor. Keeping the tile
+// constants in one place prevents the sprite from drifting off the map grid.
+constexpr uint8_t PLAYER_VIEW_TILE_X = 3;
+constexpr uint8_t PLAYER_VIEW_TILE_Y = 2;
+constexpr uint8_t PLAYER_DRAW_X = PLAYER_VIEW_TILE_X * 16;
+constexpr uint8_t PLAYER_DRAW_Y = PLAYER_VIEW_TILE_Y * 16;
+
 static uint8_t drawMapFast(WorldTransient &world) {
     const uint16_t loc = WorldEngine::location();
     const ViewOffset view = WorldEngine::view(world);
@@ -349,10 +356,10 @@ static uint8_t drawMapFast(WorldTransient &world) {
     const int16_t playerX = loc & 0xFF;   // X coordinate (0-255)
     const int16_t playerY = loc >> 8;    // Y coordinate (0-255)
 
-    // Calculate the top-left corner of the 8x4 viewport in world coordinates
-    // Player is at tile 3,2 of the viewport
-    const int16_t viewportStartX = playerX - 3;   // 3 tiles left of player
-    const int16_t viewportStartY = playerY - 2;   // 2 tiles above player
+    // Calculate the top-left corner of the viewport in world coordinates.
+    // The player occupies the same viewport cell the sprite is drawn into.
+    const int16_t viewportStartX = playerX - PLAYER_VIEW_TILE_X;
+    const int16_t viewportStartY = playerY - PLAYER_VIEW_TILE_Y;
 
     const int8_t xOffset = view.x;
     const int8_t yOffset = view.y;
@@ -446,10 +453,7 @@ static uint8_t drawMapFast(WorldTransient &world) {
     return rowReads;
 }
 
-#define PLAYER_SIZE 16
-#define PLAYER_X_OFFSET WIDTH / 2 - PLAYER_SIZE / 2
-#define PLAYER_Y_OFFSET HEIGHT / 2 - PLAYER_SIZE / 2
 static void drawPlayer(const WorldTransient &world) {
-    Blit::draw(PLAYER_X_OFFSET, PLAYER_Y_OFFSET, 16, 16, worldPlayerSprites + 4,
+    Blit::draw(PLAYER_DRAW_X, PLAYER_DRAW_Y, 16, 16, worldPlayerSprites + 4,
                FRAME(WorldEngine::playerFrame(world)), Blit::PLUSMASK);
 }

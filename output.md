@@ -31,3 +31,16 @@ swap apply and the duel Heal page through the shipping menu seams. Menu-chain lo
 27,086 (2,610 free), static 1,998/2,160 (162 free); shipping unchanged 27,520/1,782/622. The suite
 now fails if the menu chain or save chain drops below 219 B. `make test` and the focused
 `fxtest-spike test_stack` pass; full compile-all is green.
+
+## wc89 — align the world player sprite with its map tile
+
+The idle sprite was drawn at screen `(56,24)` while the player's map cell (viewport tile 3,2) was
+drawn at `(48,32)`, so the 16x16 sprite straddled four tiles by 8 px on each axis. `draw.h` now
+defines the shared `PLAYER_VIEW_TILE_X/Y` anchor and uses it for both the map viewport and
+`PLAYER_DRAW_X/Y`; the sprite occupies its own cell at `(48,32)`. The focused player pixel proof
+now expects pages 4-5 / columns 48-63 and rejects pixels outside that cell.
+
+Focused `test_world_player` 60/0; final gate PASS in
+`build/reports/rhs7/final-gate-wc89/`; shipping unchanged at 27,520 B flash / 1,782 B static /
+622 B stack. The camera remains tile-anchored at viewport cell 3,2 rather than half-tile centered;
+if the owner wants the sprite centered, that is a separate camera/window change.

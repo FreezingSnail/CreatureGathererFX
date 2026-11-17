@@ -54,17 +54,18 @@ void setup() {
         const uint16_t headroom = stack_fx_test_detail::lowWater(base, top) - base;
         if (headroom < minimumHeadroom) minimumHeadroom = headroom;
         bool pixelsMatch = true;
+        // The player is viewport cell (3,2): pages 4-5, columns 48-63.
         for (uint8_t page = 0; page < 2; ++page) for (uint8_t col = 0; col < 16; ++col) {
             uint8_t bytes[2];
             FX::readDataBytes(worldPlayerSprites + 4 + static_cast<uint24_t>(frame) * 64 + (page * 16 + col) * 2, bytes, 2);
             const uint8_t expected = (0xA5 & ~bytes[1]) | (bytes[0] & bytes[1]);
-            if (Arduboy2Base::sBuffer[(page + 3) * 128 + 56 + col] != expected) pixelsMatch = false;
+            if (Arduboy2Base::sBuffer[(page + 4) * 128 + 48 + col] != expected) pixelsMatch = false;
         }
         test.expectEq(pixelsMatch, true, F("all masked columns match over terrain pattern"));
         bool outsideUnchanged = true;
         for (uint16_t i = 0; i < 1024; ++i) {
             const uint8_t page = i / 128, col = i % 128;
-            if ((page < 3 || page > 4 || col < 56 || col > 71) && Arduboy2Base::sBuffer[i] != 0xA5) outsideUnchanged = false;
+            if ((page < 4 || page > 5 || col < 48 || col > 63) && Arduboy2Base::sBuffer[i] != 0xA5) outsideUnchanged = false;
         }
         test.expectEq(outsideUnchanged, true, F("outside player slot unchanged"));
     }
